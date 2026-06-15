@@ -1583,15 +1583,27 @@ function totalXp(){let t=0;for(const sk in player.skills)t+=player.skills[sk]||0
 const SLOTS_KEY='aldervale-slots-v1';
 let SAVE_KEY=null;            /* active slot's storage key, set on load/new */
 let activeSlot=null;          /* active slot id */
+const STORE=(()=>{
+  try{ if(typeof window!=='undefined'&&window.storage) return window.storage; }catch(e){}
+  try{
+    const tk='__milv_probe__';
+    localStorage.setItem(tk,'1'); localStorage.removeItem(tk);
+    return {
+      get:async(key)=>{ const v=localStorage.getItem(key); return v===null?null:{key,value:v}; },
+      set:async(key,value)=>{ localStorage.setItem(key,String(value)); return {key,value}; },
+      delete:async(key)=>{ localStorage.removeItem(key); return {key,deleted:true}; }
+    };
+  }catch(e){ return null; }
+})();
 async function readSlots(){
-  if(!window.storage)return [];
-  try{const r=await window.storage.get(SLOTS_KEY);
+  if(!STORE)return [];
+  try{const r=await STORE.get(SLOTS_KEY);
     if(r&&r.value)return JSON.parse(r.value)||[];}catch(e){}
   return [];
 }
 async function writeSlots(list){
-  if(!window.storage)return;
-  try{await window.storage.set(SLOTS_KEY,JSON.stringify(list));}catch(e){}
+  if(!STORE)return;
+  try{await STORE.set(SLOTS_KEY,JSON.stringify(list));}catch(e){}
 }
 async function upsertSlot(id,name){
   const list=await readSlots();
@@ -2411,7 +2423,7 @@ function worldTick(){
 async function saveGame(silent){
   if(!storageOK||!SAVE_KEY)return;
   try{
-    await window.storage.set(SAVE_KEY,JSON.stringify({
+    await STORE.set(SAVE_KEY,JSON.stringify({
       skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
       equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,mapv:'sps3'}));
     if(activeSlot)await upsertSlot(activeSlot,player.name);
@@ -2420,10 +2432,10 @@ async function saveGame(silent){
   }catch(e){}
 }
 async function loadSlot(id){
-  if(!window.storage)return false;
+  if(!STORE)return false;
   storageOK=true;activeSlot=id;SAVE_KEY='aldervale-save-'+id;
   try{
-    const r=await window.storage.get(SAVE_KEY);
+    const r=await STORE.get(SAVE_KEY);
     if(r&&r.value){
       const s=JSON.parse(r.value);
       Object.assign(player.skills,s.skills);
@@ -2450,18 +2462,18 @@ async function loadSlot(id){
   return false;
 }
 function newSlot(name){
-  storageOK=!!window.storage;
+  storageOK=!!STORE;
   activeSlot='c'+Date.now().toString(36)+Math.floor(Math.random()*1000);
   SAVE_KEY='aldervale-save-'+activeSlot;
   player.name=name;
 }
 async function deleteSlot(id){
-  if(window.storage){try{await window.storage.delete('aldervale-save-'+id);}catch(e){}}
+  if(STORE){try{await STORE.delete('aldervale-save-'+id);}catch(e){}}
   const list=(await readSlots()).filter(sl=>sl.id!==id);
   await writeSlots(list);
 }
 async function resetGame(){
-  if(storageOK&&SAVE_KEY){try{await window.storage.delete(SAVE_KEY);}catch(e){}}
+  if(storageOK&&SAVE_KEY){try{await STORE.delete(SAVE_KEY);}catch(e){}}
   player.skills={attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0};
   player.inv=new Array(28).fill(null);
   player.hp=10;player.pray=100;player.style='stab';player.x=89;player.y=88;player.px=89;player.py=88;
@@ -9507,7 +9519,7 @@ document.getElementById('newbtn').addEventListener('click',startNew);
 document.getElementById('namefield').addEventListener('keydown',e=>{
   if(e.key==='Enter')startNew();
 });
-if(window.storage){storageOK=true;}
+if(STORE){storageOK=true;}
 refreshSlots();
 
 function roundRect9(g,x,y,w,h,r){
