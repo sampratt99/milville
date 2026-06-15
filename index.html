@@ -121,7 +121,7 @@
   }
   .panel.on{display:block;}
   /* skills */
-  #skillgrid{display:grid; grid-template-columns:1fr 1fr 1fr; gap:4px;}
+  #skillgrid{display:grid; grid-template-columns:1fr 1fr; gap:4px;}
   .skill{
     background:#3a3128; border:1px solid #0d0b08; border-radius:3px;
     box-shadow:0 0 0 1px #5d5141 inset;
@@ -320,7 +320,7 @@
     max-height:24vh;overflow-y:auto;}
   #dlgui{position:absolute;left:0;right:0;bottom:14px;display:none;
     justify-content:center;z-index:41;pointer-events:none;}
-  #dlgbox{display:flex;gap:10px;width:min(540px,92vw);background:#cfc0a0;
+  #dlgbox{display:flex;gap:10px;width:min(540px,90%);background:#cfc0a0;
     border:2px solid #4a3a24;border-radius:4px;
     box-shadow:0 4px 14px rgba(0,0,0,.5);padding:10px;pointer-events:auto;}
   #dlgface{width:84px;height:84px;background:#9a8c6e;border:1px solid #4a3a24;
@@ -428,6 +428,15 @@
         <canvas id="view"></canvas>
         <canvas id="overlay"></canvas>
         <div id="hovertext"></div>
+        <div id="dlgui"><div id="dlgbox">
+  <canvas id="dlgface" width="100" height="100"></canvas>
+  <div id="dlgmain">
+    <div id="dlgname"></div>
+    <div id="dlgtext"></div>
+    <div id="dlgopts"></div>
+    <div id="dlgcont">Click here to continue</div>
+  </div>
+</div></div>
       </div>
       <div id="chat"></div>
       <div id="chattabs">
@@ -563,15 +572,6 @@
   <div id="capemsg"></div>
  </div>
 </div>
-<div id="dlgui"><div id="dlgbox">
-  <canvas id="dlgface" width="100" height="100"></canvas>
-  <div id="dlgmain">
-    <div id="dlgname"></div>
-    <div id="dlgtext"></div>
-    <div id="dlgopts"></div>
-    <div id="dlgcont">Click here to continue</div>
-  </div>
-</div></div>
 <div id="bankui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Bank of Milville</span><div class="gex" id="bankclose" title="Close">&#10005;</div></div>
   <div id="bankgrid"></div>
@@ -3027,9 +3027,11 @@ function drawItemIcon(g,id,S){
     }
     g.restore();return;
   }
-  if(id==='bronze_bar'||id==='iron_bar'){
-    const tt=id==='bronze_bar'?'#b07a3e':'#8b8780';
-    const hi=id==='bronze_bar'?'#dba968':'#b8b4ac';
+  const BAR_COL={bronze_bar:['#b07a3e','#dba968'],iron_bar:['#8b8780','#b8b4ac'],
+    steel_bar:['#aab2ba','#e2e8ee'],mithril_bar:['#6b6bb0','#9a9ade'],
+    adamant_bar:['#468852','#7cba8a'],rune_bar:['#5a8ab0','#94c8ea']};
+  if(BAR_COL[id]){
+    const tt=BAR_COL[id][0],hi=BAR_COL[id][1];
     g.fillStyle=tt;
     g.beginPath();g.moveTo(-9,2);g.lineTo(9,2);g.lineTo(6,8);
     g.lineTo(-6,8);g.closePath();g.fill();
