@@ -3481,13 +3481,24 @@ const splashEl=document.getElementById('splash');
 let ow=532,oh=364;
 
 let renderer=null;
-try{
-  renderer=new THREE.WebGLRenderer({canvas:view,antialias:true});
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
-  renderer.shadowMap.enabled=false;
-}catch(e){
-  hoverEl.textContent='WebGL is not available in this browser.';
-}
+(function(){
+  /* try progressively simpler contexts; accept software (SwiftShader) rendering
+     so the game still runs when hardware acceleration is off */
+  const tries=[
+    {canvas:view,antialias:true,failIfMajorPerformanceCaveat:false},
+    {canvas:view,antialias:false,failIfMajorPerformanceCaveat:false,powerPreference:'low-power'},
+    {canvas:view,antialias:false}
+  ];
+  for(const opt of tries){
+    try{ renderer=new THREE.WebGLRenderer(opt); break; }catch(e){ renderer=null; }
+  }
+  if(renderer){
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,1.6));
+    renderer.shadowMap.enabled=false;
+  }else{
+    hoverEl.textContent='WebGL could not start. In Chrome: Settings \u2192 System \u2192 turn on \u201cUse graphics acceleration when available\u201d and relaunch (or check chrome://gpu).';
+  }
+})();
 
 const scene=new THREE.Scene();
 scene.background=new THREE.Color(0x000000);
