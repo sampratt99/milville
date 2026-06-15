@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Milville — Old School Adventure</title>
 <style>
   :root{
@@ -11,7 +11,8 @@
     --osw1:#5a5043; --osw2:#48402f; --osslot:#3e3526; --osslot-hi:#6a5c44;
   }
   *{box-sizing:border-box; -webkit-user-select:none; user-select:none;}
-  html,body{margin:0;padding:0;background:#17130e;}
+  html,body{margin:0;padding:0;background:#17130e;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
+  input,textarea{-webkit-user-select:text;user-select:text;}
   body{
     font:13px/1.35 Verdana, Geneva, sans-serif; color:var(--ink);
     display:flex; justify-content:center; padding:14px 8px 40px;
@@ -584,7 +585,7 @@
   <div class="gebar"><span>Grand Exchange</span><span id="gecoins"></span><div class="gex" id="geclose" title="Close">&#10005;</div></div>
   <div id="gelist"></div>
   <div id="gesellhead">Sell from your pack</div><div id="gesell"></div>
-  <div class="gefoot"><span>Click a row to buy \u00b7 click a row under \u201cSell\u201d to sell</span></div>
+  <div class="gefoot"><span>Click a row to buy &middot; click a row under &ldquo;Sell&rdquo; to sell</span></div>
 </div></div>
 <div id="wmap">
   <div id="wmapframe">
@@ -690,10 +691,10 @@ const GE_STOCK=[];
     const N=n[0].toUpperCase()+n.slice(1);
     if(n!=='bronze')ITEMS[n+'_sword']={name:N+' sword',
       ex:'A well-balanced '+n+' blade.',val:v,
-      equip:{slot:'weapon',atk:atk,model:'sword',verb:'Wield',req:rq,tint:tint,trim:trim}};
+      equip:{slot:'weapon',atk:atk,str:Math.max(0,atk-2),model:'sword',verb:'Wield',req:rq,tint:tint,trim:trim}};
     ITEMS[n+'_scimitar']={name:N+' scimitar',
       ex:'A swift, curved '+n+' blade.',val:Math.round(v*1.45),
-      equip:{slot:'weapon',atk:atk+1,model:'sword',verb:'Wield',req:rq,tint:tint,trim:trim}};
+      equip:{slot:'weapon',atk:atk+1,str:Math.max(0,atk-1),model:'sword',verb:'Wield',req:rq,tint:tint,trim:trim}};
     ITEMS[n+'_kiteshield']={name:N+' kiteshield',
       ex:'A sturdy '+n+' kiteshield.',val:Math.round(v*1.7),
       equip:{slot:'shield',model:'shieldM',verb:'Wear',def:6+ix*2+(ix===5?1:0),
@@ -719,6 +720,10 @@ const GE_STOCK=[];
       n+'_full_helm',n+'_chainbody',n+'_platebody');
   });
 }
+ITEMS.uncut_sapphire={name:'Uncut sapphire',ex:'A rough blue gem. The Exchange will pay for it.',val:300,prim:'Examine'};
+ITEMS.uncut_emerald={name:'Uncut emerald',ex:'A rough green gem, flecked with light.',val:600,prim:'Examine'};
+ITEMS.uncut_ruby={name:'Uncut ruby',ex:'A deep red gem, warm to the touch.',val:1400,prim:'Examine'};
+ITEMS.uncut_diamond={name:'Uncut diamond',ex:'A brilliant rough diamond. A small fortune.',val:3500,prim:'Examine'};
 ITEMS.amulet_attack={name:'Amulet of Attack',
   ex:'A polished pendant. Your blows land truer.',val:120,
   equip:{slot:'neck',atk:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0xc23b2e}};
@@ -1429,7 +1434,7 @@ const MOB_KINDS={
   brat:{name:'Fac Brat',ex:'A faculty child in full goblin mode. Armed, somehow.',
     hp:3,acc:0.35,maxhit:1,resp:25000,bones:0,coinP:.6,coins:[1,8],aggro:0,roam:1,cmb:2},
   priest:{name:'Corrupted Priest',ex:'Something hollow wears the vestments now.',
-    hp:9,acc:0.48,maxhit:1,resp:18000,bones:1,coinP:.5,coins:[4,20],aggro:1,cmb:6},
+    hp:9,acc:0.48,maxhit:1,resp:18000,bones:1,coinP:.5,coins:[4,20],aggro:0,cmb:6},
   dean:{name:'Dean of Students',ex:'The final word in campus discipline. The sword is not ceremonial.',
     hp:22,acc:0.52,maxhit:3,resp:30000,bones:1,coinP:1,coins:[15,60],aggro:0,cmb:13},
   guard:{name:'Discipline Committee',ex:'Sworn to uphold the handbook. All of it.',
@@ -1443,7 +1448,7 @@ const MOB_KINDS={
   hdean:{name:'Hollow Dean',ex:'Robes of office over nothing at all.',
     hp:30,acc:0.56,maxhit:4,resp:40000,bones:1,coinP:.9,coins:[60,160],aggro:1,cmb:15},
   master:{name:'The First Rector',ex:'He never left. He was never allowed to.',
-    hp:85,acc:0.8,maxhit:6,resp:90000,bones:1,coinP:1,coins:[300,700],aggro:1,cmb:22},
+    hp:130,acc:0.82,maxhit:8,resp:90000,bones:1,coinP:1,coins:[300,700],aggro:1,cmb:22},
   sentinel:{name:'Vault Sentinel',ex:'Issued a halberd in 1893. Never signed it back in.',
     hp:34,acc:0.65,maxhit:4,resp:45000,bones:1,coinP:1,coins:[80,200],aggro:1,cmb:17},
   dragon:{name:'Grounds Dragon',ex:'Hand-reared by the grounds crew. It did not take to the leash.',
@@ -1643,6 +1648,22 @@ let inChapel=false;const CHAPEL_RETURN={x:100,y:100};
 function clickFx(tx,ty,col){clicks.push({wx:tx+0.5,wz:ty+0.5,t:performance.now(),col});}
 function clickFxAt(wx,wz,col){clicks.push({wx,wz,t:performance.now(),col});}
 function dropGround(x,y,id,qty){ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc});}
+function rollRareDrop(r){
+  const c=MOB_KINDS[r.kind].cmb;
+  if(Math.random()<Math.min(0.16,0.015+c*0.005)){
+    const roll=Math.random()*Math.max(6,c);
+    let gem='uncut_sapphire';
+    if(roll>17)gem='uncut_diamond'; else if(roll>12)gem='uncut_ruby'; else if(roll>7)gem='uncut_emerald';
+    dropGround(r.x,r.y,gem,1);
+  }
+  if(c>=13&&Math.random()<0.035){
+    let pool;
+    if(c>=22)pool=['rune_scimitar','rune_platebody','rune_kiteshield','rune_full_helm'];
+    else if(c>=19)pool=['adamant_scimitar','rune_chainbody','adamant_platebody','rune_full_helm'];
+    else pool=['mithril_scimitar','adamant_full_helm','mithril_platebody','adamant_kiteshield'];
+    dropGround(r.x,r.y,pool[rndi(0,pool.length-1)],1);
+  }
+}
 
 /* ============================ messages ============================= */
 const chatEl=document.getElementById('chat');
@@ -2047,7 +2068,7 @@ function playerTick(){
     const effA=lvl('attack')*(prayers.halcyon?1.18:1);
     const effS=lvl('strength')*(prayers.gordon?1.18:1);
     const acc=clamp(.55+effA*.008+wb*.004,0,.95);
-    const max=Math.floor(1.5+effS*.15+wb+eqStat('str'));
+    const max=Math.floor(1+effS*0.38*(1+eqStat('str')*0.025));
     let dmg=0;
     if(Math.random()<acc)dmg=rndi(0,max);
     if(r.kind==='priest'&&player.quests.m2.s===1&&!player.quests.m2.relic){
@@ -2082,6 +2103,7 @@ function playerTick(){
       questKill(r);
       if(mk3.bones)dropGround(r.x,r.y,'bones',1);
       if(Math.random()<mk3.coinP)dropGround(r.x,r.y,'coins',rndi(mk3.coins[0],mk3.coins[1]));
+      rollRareDrop(r);
       cancelAction();
     }
   }
@@ -2274,8 +2296,10 @@ function playerTick(){
 
 /* rats */
 let engagedMob=null;
+let isNewGame=false;
+let _swallowClick=false;
 function ratsTick(){
-  if(!ratsTick._i&&typeof dlg!=='undefined'&&!dlg
+  if(isNewGame&&!ratsTick._i&&typeof dlg!=='undefined'&&!dlg
     &&player.quests.m1.s===0&&!player.quests.m1.i){
     ratsTick._i=1;player.quests.m1.i=1;dirty=true;
     const mn=npcs.find(n9=>n9.id==='matthews');
@@ -2330,7 +2354,7 @@ function ratsTick(){
           let dmg=0;
           const sdf=eqStat('def');
           const effD=lvl('defense')*(prayers.love?1.18:1);
-          const ratAcc=Math.max(0.10,MOB_KINDS[r.kind].acc-sdf*0.024-(effD-1)*0.004);
+          const ratAcc=Math.max(0.25,Math.min(0.92,MOB_KINDS[r.kind].acc-sdf*0.008-(effD-1)*0.004));
           if(Math.random()<ratAcc)dmg=rndi(0,mobMaxhit(r));
           player.braceT=performance.now();
           if(!player.action&&player.hp>0)setAction({type:'attack',rat:r},r.x,r.y);
@@ -2738,7 +2762,7 @@ function showMenu(x,y,opts){
   ctxEl.style.left=clamp(x,4,window.innerWidth-r.width-4)+'px';
   ctxEl.style.top=clamp(y,4,window.innerHeight-r.height-4)+'px';
 }
-window.addEventListener('click',hideMenu);
+window.addEventListener('click',()=>{if(_swallowClick){_swallowClick=false;return;}hideMenu();});
 window.addEventListener('keydown',e=>{if(e.key==='Escape')hideMenu();});
 
 /* options at a tile */
@@ -3037,6 +3061,13 @@ function drawItemIcon(g,id,S){
       g.beginPath();g.moveTo(0,6);g.lineTo(3.4,9.4);g.lineTo(0,12.8);
       g.lineTo(-3.4,9.4);g.closePath();g.fill();
     }
+    g.restore();return;
+  }
+  if(id==='uncut_sapphire'||id==='uncut_emerald'||id==='uncut_ruby'||id==='uncut_diamond'){
+    const GC={uncut_sapphire:['#2f6fd0','#9fc4f5'],uncut_emerald:['#2aa84f','#8fe6ac'],uncut_ruby:['#c8243c','#f291a2'],uncut_diamond:['#bfe8f0','#ffffff']}[id];
+    g.fillStyle=GC[0];g.strokeStyle='#1a1206';g.lineWidth=1.4;g.lineJoin='round';
+    g.beginPath();g.moveTo(0,-9);g.lineTo(8,-2);g.lineTo(0,10);g.lineTo(-8,-2);g.closePath();g.fill();g.stroke();
+    g.fillStyle=GC[1];g.beginPath();g.moveTo(0,-9);g.lineTo(4,-2);g.lineTo(0,1);g.lineTo(-4,-2);g.closePath();g.fill();
     g.restore();return;
   }
   const BAR_COL={bronze_bar:['#b07a3e','#dba968'],iron_bar:['#8b8780','#b8b4ac'],
@@ -7014,6 +7045,7 @@ view.addEventListener('touchstart',e=>{
     touchTimer=setTimeout(()=>{
       if(touchA&&!touchA.moved){
         lastTouch=performance.now();
+        _swallowClick=true;setTimeout(()=>{_swallowClick=false;},900);
         const p=castPick({clientX:touchA.x,clientY:touchA.y});
         if(p){
           const opts=optionsAt(p.tx,p.ty).slice();
@@ -7035,7 +7067,12 @@ view.addEventListener('touchmove',e=>{
     const t=e.touches[0];
     if(Math.hypot(t.clientX-touchA.x,t.clientY-touchA.y)>12){
       touchA.moved=true;clearTimeout(touchTimer);
+      if(touchA.lx!==undefined){
+        camYaw+=(t.clientX-touchA.lx)*0.006;
+        camPitch=clamp(camPitch-(t.clientY-touchA.ly)*0.005,0.30,1.50);
+      }
     }
+    touchA.lx=t.clientX;touchA.ly=t.clientY;
   }else if(e.touches.length===2&&pinch){
     const a=e.touches[0],b=e.touches[1];
     const d=Math.hypot(a.clientX-b.clientX,a.clientY-b.clientY);
@@ -7061,6 +7098,25 @@ view.addEventListener('touchend',e=>{
   touchA=null;
   if(e.touches.length<2)pinch=null;
 },{passive:true});
+/* global long-press -> right-click for UI elements (mobile) */
+let _glpTimer=null,_glpXY=null,_glpTgt=null;
+document.addEventListener('touchstart',e=>{
+  if(e.touches.length!==1)return;
+  const tg=e.target;
+  if(tg&&tg.closest&&tg.closest('#viewwrap'))return;
+  const t=e.touches[0];_glpXY={x:t.clientX,y:t.clientY};_glpTgt=tg;
+  clearTimeout(_glpTimer);
+  _glpTimer=setTimeout(()=>{
+    if(_glpTgt){
+      _swallowClick=true;setTimeout(()=>{_swallowClick=false;},900);
+      _glpTgt.dispatchEvent(new MouseEvent('contextmenu',{bubbles:true,cancelable:true,clientX:_glpXY.x,clientY:_glpXY.y}));
+    }
+  },500);
+},{passive:true});
+document.addEventListener('touchmove',e=>{
+  if(_glpXY&&e.touches[0]&&Math.hypot(e.touches[0].clientX-_glpXY.x,e.touches[0].clientY-_glpXY.y)>12)clearTimeout(_glpTimer);
+},{passive:true});
+document.addEventListener('touchend',()=>clearTimeout(_glpTimer),{passive:true});
 
 /* inventory slot actions */
 invGrid.addEventListener('click',e=>{
@@ -7682,7 +7738,9 @@ function questDone(nm){
   const _ci=MAIN_CHAIN.findIndex(c=>c[1]===nm);
   if(_ci>=0&&_ci<MAIN_CHAIN.length-1){
     const _nx=player.quests[MAIN_CHAIN[_ci+1][0]];
-    if(_nx&&_nx.s===0){_nx.s=1;msg('New quest begins: '+MAIN_CHAIN[_ci+1][1],'#103a8c');}
+    if(_nx&&_nx.s===0){_nx.up=1;
+      const _qd=QUESTS.find(q9=>q9[0]===MAIN_CHAIN[_ci+1][0]);
+      msg('New quest: '+MAIN_CHAIN[_ci+1][1]+(_qd?'. Speak to '+_qd[2]+' to begin.':''),'#103a8c');}
   }
   renderQuests();renderInv();dirty=true;
 }
@@ -8621,12 +8679,13 @@ function renderQuests(){
   box.innerHTML='';
   for(const[id,nm,giver,reward,info]of QUESTS){
     const q=player.quests[id];
+    const _cls=(q.s===0&&q.up)?1:q.s;
     const row=document.createElement('div');
-    row.className='qrow q'+q.s;
+    row.className='qrow q'+_cls;
     const t=document.createElement('div');t.className='qnm';
     t.textContent=nm;
     const det=document.createElement('div');det.className='qdet';
-    const d1=document.createElement('div');d1.textContent=info(q);
+    const d1=document.createElement('div');d1.textContent=(q.s===0&&q.up)?('Speak to '+giver+' to begin this quest.'):info(q);
     const d2=document.createElement('div');d2.className='qsub';
     d2.textContent='Start: '+giver;
     const d3=document.createElement('div');d3.className='qsub';
@@ -8844,11 +8903,14 @@ function buyItem(id,n){
 const SELL_BLOCK=['masters_seal','lost_crate','candy','clawed_slate',
   'censer_fragment','cracked_horn'];
 function sellItem(id){
-  const i=findItem(id);if(i<0)return;
-  const price=Math.max(1,Math.floor(ITEMS[id].val*0.6));
-  removeSlot(i);addItem('coins',price);sfx.coins();
-  msg('You sell '+ITEMS[id].name+' for '+fmt(price)+' coins.');
-  renderShopCoins();renderSell();
+  if(!ITEMS[id]||!ITEMS[id].val)return;
+  let qty=0;
+  for(let k=0;k<player.inv.length;k++){const sl=player.inv[k];if(sl&&sl.id===id){qty+=(sl.qty||1);player.inv[k]=null;}}
+  if(qty<=0)return;
+  const total=Math.max(1,Math.floor(ITEMS[id].val*0.6))*qty;
+  addItem('coins',total);sfx.coins();
+  msg('You sell '+(qty>1?qty+' \u00d7 ':'')+ITEMS[id].name+' for '+fmt(total)+' coins.');
+  renderInv();renderShopCoins();renderSell();
 }
 function renderSell(){
   const ls=document.getElementById('gesell');if(!ls)return;
@@ -8863,8 +8925,9 @@ function renderSell(){
     const r=document.createElement('div');r.className='gerow';
     const c=document.createElement('canvas');c.width=26;c.height=26;
     drawItemIcon(c.getContext('2d'),s9.id,26);
-    const nm=document.createElement('span');nm.className='nm';nm.textContent=it.name;
-    const pr=document.createElement('span');pr.className='pr';pr.textContent='+'+fmt(price)+' gp';
+    const qty=player.inv.reduce((a,sl)=>a+((sl&&sl.id===s9.id)?(sl.qty||1):0),0);
+    const nm=document.createElement('span');nm.className='nm';nm.textContent=it.name+(qty>1?' \u00d7'+qty:'');
+    const pr=document.createElement('span');pr.className='pr';pr.textContent='+'+fmt(price*qty)+' gp';
     r.appendChild(c);r.appendChild(nm);r.appendChild(pr);
     r.addEventListener('click',()=>{audio();sellItem(s9.id);});
     ls.appendChild(r);
@@ -9523,6 +9586,7 @@ function startNew(){
   if(!nm){fld.focus();fld.style.borderColor='#c0392b';
     setTimeout(()=>fld.style.borderColor='',1200);return;}
   newSlot(nm);
+  isNewGame=true;
   saveGame(true);
   enterGame();
 }
