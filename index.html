@@ -1448,7 +1448,7 @@ const MOB_KINDS={
   hdean:{name:'Hollow Dean',ex:'Robes of office over nothing at all.',
     hp:30,acc:0.56,maxhit:4,resp:40000,bones:1,coinP:.9,coins:[60,160],aggro:1,cmb:15},
   master:{name:'The First Rector',ex:'He never left. He was never allowed to.',
-    hp:130,acc:0.82,maxhit:8,resp:90000,bones:1,coinP:1,coins:[300,700],aggro:1,cmb:22},
+    hp:110,acc:0.82,maxhit:8,resp:90000,bones:1,coinP:1,coins:[300,700],aggro:1,cmb:22},
   sentinel:{name:'Vault Sentinel',ex:'Issued a halberd in 1893. Never signed it back in.',
     hp:34,acc:0.65,maxhit:4,resp:45000,bones:1,coinP:1,coins:[80,200],aggro:1,cmb:17},
   dragon:{name:'Grounds Dragon',ex:'Hand-reared by the grounds crew. It did not take to the leash.',
@@ -2067,10 +2067,10 @@ function playerTick(){
     const wb=eqStat('atk');
     const effA=lvl('attack')*(prayers.halcyon?1.18:1);
     const effS=lvl('strength')*(prayers.gordon?1.18:1);
-    const acc=clamp(.55+effA*.008+wb*.004,0,.95);
-    const max=Math.floor(1+effS*0.38*(1+eqStat('str')*0.025));
+    const acc=clamp(.60+effA*.011+wb*.005,0,.95);
+    const max=Math.floor(1+effS*0.48*(1+eqStat('str')*0.025));
     let dmg=0;
-    if(Math.random()<acc)dmg=rndi(0,max);
+    if(Math.random()<acc)dmg=rndi(1,max);
     if(r.kind==='priest'&&player.quests.m2.s===1&&!player.quests.m2.relic){
       dmg=0;
       if(!r._warned||performance.now()-r._warned>2500){
@@ -8902,14 +8902,23 @@ function buyItem(id,n){
 }
 const SELL_BLOCK=['masters_seal','lost_crate','candy','clawed_slate',
   'censer_fragment','cracked_horn'];
-function sellItem(id){
+function sellItem(id,n){
   if(!ITEMS[id]||!ITEMS[id].val)return;
-  let qty=0;
-  for(let k=0;k<player.inv.length;k++){const sl=player.inv[k];if(sl&&sl.id===id){qty+=(sl.qty||1);player.inv[k]=null;}}
-  if(qty<=0)return;
-  const total=Math.max(1,Math.floor(ITEMS[id].val*0.6))*qty;
+  n=n||1;
+  const unit=Math.max(1,Math.floor(ITEMS[id].val*0.6));
+  let sold=0;
+  for(let k=0;k<player.inv.length&&sold<n;k++){
+    const sl=player.inv[k];
+    if(sl&&sl.id===id){
+      const have=sl.qty||1, take=Math.min(have,n-sold);
+      sold+=take;
+      if(take>=have)player.inv[k]=null; else sl.qty=have-take;
+    }
+  }
+  if(sold<=0)return;
+  const total=unit*sold;
   addItem('coins',total);sfx.coins();
-  msg('You sell '+(qty>1?qty+' \u00d7 ':'')+ITEMS[id].name+' for '+fmt(total)+' coins.');
+  msg('You sell '+(sold>1?sold+' \u00d7 ':'')+ITEMS[id].name+' for '+fmt(total)+' coins.');
   renderInv();renderShopCoins();renderSell();
 }
 function renderSell(){
@@ -8927,9 +8936,19 @@ function renderSell(){
     drawItemIcon(c.getContext('2d'),s9.id,26);
     const qty=player.inv.reduce((a,sl)=>a+((sl&&sl.id===s9.id)?(sl.qty||1):0),0);
     const nm=document.createElement('span');nm.className='nm';nm.textContent=it.name+(qty>1?' \u00d7'+qty:'');
-    const pr=document.createElement('span');pr.className='pr';pr.textContent='+'+fmt(price*qty)+' gp';
+    const pr=document.createElement('span');pr.className='pr';pr.textContent='+'+fmt(price)+' gp ea';
     r.appendChild(c);r.appendChild(nm);r.appendChild(pr);
-    r.addEventListener('click',()=>{audio();sellItem(s9.id);});
+    const _sid=s9.id;
+    r.addEventListener('click',()=>{audio();sellItem(_sid,1);});
+    r.addEventListener('contextmenu',ev=>{
+      ev.preventDefault();audio();
+      const owned=player.inv.reduce((a,sl)=>a+((sl&&sl.id===_sid)?(sl.qty||1):0),0);
+      const opts=[{label:'Sell 1',fn:()=>sellItem(_sid,1)}];
+      if(owned>=5)opts.push({label:'Sell 5',fn:()=>sellItem(_sid,5)});
+      if(owned>=10)opts.push({label:'Sell 10',fn:()=>sellItem(_sid,10)});
+      if(owned>1)opts.push({label:'Sell all ('+owned+')',fn:()=>sellItem(_sid,owned)});
+      showMenu(ev.clientX,ev.clientY,opts);
+    });
     ls.appendChild(r);
   });
   if(!ls.children.length){
