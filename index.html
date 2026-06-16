@@ -662,6 +662,11 @@ const ITEMS={
   shrimps:{name:'Shrimps',ex:'Some nicely cooked shrimps.',prim:'Eat',val:15},
   burnt_shrimps:{name:'Burnt shrimps',ex:'Oops. Charred beyond rescue.',prim:'Yuck',val:1},
   bones:{name:'Bones',ex:'Bad to the bone.',prim:'Bury',val:8},
+  small_bones:{name:'Small bones',ex:'Tiny, but they still count.',prim:'Bury',val:4},
+  red_bead:{name:'Red bead',ex:'A small glass bead.',val:6,prim:'Examine'},
+  yellow_bead:{name:'Yellow bead',ex:'A small glass bead.',val:6,prim:'Examine'},
+  black_bead:{name:'Black bead',ex:'A small glass bead.',val:6,prim:'Examine'},
+  white_bead:{name:'White bead',ex:'A small glass bead.',val:6,prim:'Examine'},
   bronze_sword:{name:'Bronze sword',ex:'A basic sword of beaten bronze.',val:30,
     equip:{slot:'weapon',atk:2,model:'sword',verb:'Wield',tint:0xb07a3e,trim:0xdba968}},
   bronze_axe:{name:'Bronze axe',ex:'Good for chopping trees... or rats.',val:25,
@@ -720,6 +725,12 @@ const GE_STOCK=[];
       n+'_full_helm',n+'_chainbody',n+'_platebody');
   });
 }
+ITEMS.dragon_scimitar={name:'Dragon scimitar',ex:'A wickedly curved blade of red dragon-metal, chased with gold.',val:130000,equip:{slot:'weapon',atk:22,str:20,model:'sword',verb:'Wield',req:28,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_sword={name:'Dragon sword',ex:'A straight dragon-metal blade, gold-fullered and keen.',val:110000,equip:{slot:'weapon',atk:21,str:18,model:'sword',verb:'Wield',req:28,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_full_helm={name:'Dragon full helm',ex:'A snarling dragon-head helm of red and gold.',val:90000,equip:{slot:'head',def:16,model:'helm',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with gold dragon-work.',val:160000,equip:{slot:'body',def:33,model:'plate',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_platelegs={name:'Dragon platelegs',ex:'Red dragon-plate greaves trimmed in gold.',val:130000,equip:{slot:'legs',def:25,model:'legs',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_kiteshield={name:'Dragon kiteshield',ex:'A red kiteshield bearing a golden wyrm.',val:120000,equip:{slot:'shield',def:20,model:'shieldM',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.uncut_sapphire={name:'Uncut sapphire',ex:'A rough blue gem. The Exchange will pay for it.',val:300,prim:'Examine'};
 ITEMS.uncut_emerald={name:'Uncut emerald',ex:'A rough green gem, flecked with light.',val:600,prim:'Examine'};
 ITEMS.uncut_ruby={name:'Uncut ruby',ex:'A deep red gem, warm to the touch.',val:1400,prim:'Examine'};
@@ -770,9 +781,9 @@ ITEMS.fighting_boots={name:'Fighting boots',
   ex:'Confiscated 1907 for \u201cexcessive stomping.\u201d Still excessive.',val:1500,
   equip:{slot:'feet',str:1,def:1,model:'boots',verb:'Wear',tint:0x7a2b20,trim:0x3a2a1a}};
 ITEMS.dragon_shield={name:'Dragon Slayer shield',
-  ex:'Forged from a scale of the very dragons the grounds crew \u201craised.\u201d The crest is a tiny, embarrassed pelican.',val:6000,
+  ex:'Forged from a scale of the very dragons the grounds crew \u201craised.\u201d Emblazoned with a golden dragon rampant on burning orange.',val:6000,
   equip:{slot:'shield',def:20,str:3,model:'shieldM',verb:'Wear',
-    tint:0x2f6b3a,trim:0xffd23a}};
+    tint:0xd9651f,trim:0xffd23a}};
 ITEMS.pelican_cape={name:'Pelican cape',ex:'Gold and crimson, cut for the school\u2019s guardian. The First Rector\u2019s bane.',val:4000,
     equip:{slot:'cape',atk:2,str:2,def:2,model:'cape',verb:'Wear',tint:0xd9a531}};
 
@@ -797,7 +808,7 @@ const OBJ_DEFS={
     base:.1,fall:1,respawn:[7,11],cap:[2,3],ex:'It hums. Runite \u2014 worth a term\u2019s tuition.',depEx:'Mined clean.',depName:'Rocks'},
   spot:{name:'Fishing spot',action:'Net',skill:'fishing',req:1,xp:10,item:'raw_shrimps',
     base:.42,fall:0,respawn:[12,20],cap:[6,10],ex:'Shrimps dart beneath the surface.',noBlock:true},
-  fire:{name:'Campfire',action:'Cook-at',ex:'Mmm, toasty.'},
+  fire:{name:'Campfire',action:'Cook-at',ex:'Mmm, toasty.',noBlock:1},
   chapeldoor:{name:'Chapel doors',action:'Enter',ex:'The great oak doors of the Chapel of St. Peter & St. Paul.'},
   chapelexit:{name:'Chapel doors',action:'Leave',ex:'The way back out to the lawn.'},
   relic:{name:'Blessed Censer',action:'Take',ex:'A founder-era censer on the altar. Its light still burns against the dark.'},
@@ -2050,10 +2061,7 @@ function playerTick(){
     const r=a.rat;
     if(!r.alive){cancelAction();return;}
     r.target=player;
-    if(!adjacentTo(r.x,r.y)){
-      if(r.target===player&&dist1(r.x,r.y,player.x,player.y)<=2){
-        player.path.length=0;return;
-      }
+    if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>1){
       if(!player.path.length||a.lx!==r.x||a.ly!==r.y){walkTo(r.x,r.y,'adj');a.lx=r.x;a.ly=r.y;}
       return;
     }
@@ -2104,6 +2112,11 @@ function playerTick(){
       if(mk3.bones)dropGround(r.x,r.y,'bones',1);
       if(Math.random()<mk3.coinP)dropGround(r.x,r.y,'coins',rndi(mk3.coins[0],mk3.coins[1]));
       rollRareDrop(r);
+      if(r.kind==='brat'){
+        dropGround(r.x,r.y,'small_bones',1);
+        const _bd=['red_bead','yellow_bead','black_bead','white_bead'];
+        if(Math.random()<0.85)dropGround(r.x,r.y,_bd[rndi(0,_bd.length-1)],1);
+      }
       cancelAction();
     }
   }
@@ -3061,6 +3074,114 @@ function drawItemIcon(g,id,S){
       g.beginPath();g.moveTo(0,6);g.lineTo(3.4,9.4);g.lineTo(0,12.8);
       g.lineTo(-3.4,9.4);g.closePath();g.fill();
     }
+    g.restore();return;
+  }
+  if(id==='dragon_shield'){
+    const OR='#d9651f',ORk='#9a4810',GD='#ffd23a',GDk='#9a7510';
+    g.fillStyle=OR;g.strokeStyle=ORk;g.lineWidth=1.5;g.lineJoin='round';
+    g.beginPath();g.moveTo(-8,-9);g.lineTo(8,-9);g.lineTo(8,2);g.quadraticCurveTo(8,9,0,12.5);
+    g.quadraticCurveTo(-8,9,-8,2);g.closePath();g.fill();g.stroke();
+    g.fillStyle='rgba(0,0,0,.14)';g.beginPath();g.moveTo(1.2,-9);g.lineTo(8,-9);g.lineTo(8,2);g.quadraticCurveTo(8,9,1.2,12);g.closePath();g.fill();
+    g.strokeStyle=GD;g.lineWidth=1.6;
+    g.beginPath();g.moveTo(-6,-7);g.lineTo(6,-7);g.lineTo(6,2);g.quadraticCurveTo(6,7,0,9.8);g.quadraticCurveTo(-6,7,-6,2);g.closePath();g.stroke();
+    /* golden dragon sigil: horned, fanged head */
+    const FL='#fff2c0',DK='#7a3408';
+    g.lineJoin='round';g.fillStyle=GD;
+    [[2.5,-2.6,4.6,-3.4,3.4,-1.2],[3,-0.6,5,-1,3.6,0.8],[2.6,1.2,4.3,2.4,3,3.2]].forEach(p9=>{g.beginPath();g.moveTo(p9[0],p9[1]);g.lineTo(p9[2],p9[3]);g.lineTo(p9[4],p9[5]);g.closePath();g.fill();});
+    g.strokeStyle=GDk;g.lineWidth=0.4;
+    g.beginPath();g.moveTo(1.5,-4);g.quadraticCurveTo(4.5,-7.2,6.8,-6.6);g.quadraticCurveTo(4.5,-6.2,3.3,-4.8);g.quadraticCurveTo(2.4,-4.2,1.5,-4);g.closePath();g.fill();
+    g.beginPath();g.moveTo(3.4,-3);g.quadraticCurveTo(1,-4.8,-2.5,-4.4);g.quadraticCurveTo(-6,-3.9,-8.4,-2.5);g.lineTo(-7,-1.8);g.lineTo(-4,-2.1);g.lineTo(0.5,-1.9);g.lineTo(3.6,-1);g.closePath();g.fill();
+    g.fillStyle=FL;[[-6,-1.85],[-4.4,-2.0],[-2.8,-2.05]].forEach(t9=>{g.beginPath();g.moveTo(t9[0]-0.5,t9[1]);g.lineTo(t9[0]+0.5,t9[1]);g.lineTo(t9[0],t9[1]+1.35);g.closePath();g.fill();});
+    g.fillStyle=GD;g.beginPath();g.moveTo(-6.6,0.5);g.lineTo(-3,-0.1);g.lineTo(1.2,0.8);g.quadraticCurveTo(3.6,1.5,2.5,3.1);g.lineTo(-1.6,2.4);g.lineTo(-5,1.7);g.closePath();g.fill();
+    g.fillStyle=FL;[[-5,0.1],[-3.4,-0.05]].forEach(t9=>{g.beginPath();g.moveTo(t9[0]-0.5,t9[1]);g.lineTo(t9[0]+0.5,t9[1]);g.lineTo(t9[0],t9[1]-1.3);g.closePath();g.fill();});
+    g.fillStyle=DK;g.beginPath();g.moveTo(-1.6,-3.7);g.lineTo(0.5,-3.1);g.lineTo(-0.9,-2.8);g.closePath();g.fill();
+    g.beginPath();g.arc(-7.2,-2.2,0.4,0,7);g.fill();
+    g.restore();return;
+  }
+  if(id&&id.indexOf('dragon_')===0){
+    const RD='#a81e22',RDk='#6c1013',RDh='#d24436',GD='#d8b43e',GDh='#f0d878',GDk='#8a6d1a';
+    if(id==='dragon_full_helm'){
+      g.strokeStyle=GD;g.lineWidth=2.6;g.lineCap='round';
+      g.beginPath();g.moveTo(-3.5,-5.5);g.quadraticCurveTo(-10,-11,-13,-6.5);g.stroke();
+      g.beginPath();g.moveTo(3.5,-5.5);g.quadraticCurveTo(10,-11,13,-6.5);g.stroke();
+      g.fillStyle=RD;g.strokeStyle=RDk;g.lineWidth=1.4;
+      g.beginPath();g.moveTo(-7,-4.5);g.quadraticCurveTo(0,-9,7,-4.5);
+      g.quadraticCurveTo(10.5,1,6,6.5);g.lineTo(2.4,12.5);g.lineTo(-2.4,12.5);
+      g.lineTo(-6,6.5);g.quadraticCurveTo(-10.5,1,-7,-4.5);g.closePath();g.fill();g.stroke();
+      g.fillStyle=RDk;g.beginPath();g.moveTo(-4,6.5);g.lineTo(2.4,12.5);g.lineTo(-2.4,12.5);g.closePath();g.fill();
+      g.fillStyle=RDh;g.beginPath();g.moveTo(-6,-3.5);g.quadraticCurveTo(0,-6.5,6,-3.5);g.quadraticCurveTo(0,-5,-6,-3.5);g.fill();
+      g.fillStyle=GDh;g.beginPath();g.ellipse(-3.6,-1,2.1,1.5,-0.3,0,7);g.fill();
+      g.beginPath();g.ellipse(3.6,-1,2.1,1.5,0.3,0,7);g.fill();
+      g.fillStyle='#1a0606';g.beginPath();g.arc(-3.4,-1,0.85,0,7);g.fill();g.beginPath();g.arc(3.4,-1,0.85,0,7);g.fill();
+      g.fillStyle='#360a0c';g.beginPath();g.arc(-1.4,9.5,0.85,0,7);g.fill();g.beginPath();g.arc(1.4,9.5,0.85,0,7);g.fill();
+      g.strokeStyle=GD;g.lineWidth=1;g.beginPath();g.moveTo(0,2.5);g.lineTo(0,8.5);g.stroke();
+      g.restore();return;
+    }
+    if(id==='dragon_platebody'){
+      g.fillStyle=RD;g.strokeStyle=RDk;g.lineWidth=1.4;
+      g.beginPath();g.moveTo(-9,-7);g.lineTo(-4,-9);g.quadraticCurveTo(0,-6.5,4,-9);g.lineTo(9,-7);
+      g.lineTo(8,9.5);g.lineTo(-8,9.5);g.closePath();g.fill();g.stroke();
+      g.fillStyle='rgba(0,0,0,.18)';g.beginPath();g.moveTo(2,-7.5);g.lineTo(8,-7);g.lineTo(8,9.5);g.lineTo(2,9.5);g.closePath();g.fill();
+      g.fillStyle=GD;g.strokeStyle=GDk;g.lineWidth=1;
+      g.beginPath();g.ellipse(-8,-6,3.3,2.5,0.3,0,7);g.fill();g.stroke();
+      g.beginPath();g.ellipse(8,-6,3.3,2.5,-0.3,0,7);g.fill();g.stroke();
+      g.strokeStyle=GDh;g.lineWidth=1.6;g.beginPath();g.moveTo(-5,-8);g.quadraticCurveTo(0,-5.5,5,-8);g.stroke();
+      g.fillStyle=GD;g.beginPath();g.moveTo(0,-3.5);g.lineTo(2.6,0.5);g.lineTo(0,4.5);g.lineTo(-2.6,0.5);g.closePath();g.fill();
+      g.fillStyle=RDk;g.beginPath();g.arc(0,0.6,1.05,0,7);g.fill();
+      g.restore();return;
+    }
+    if(id==='dragon_platelegs'){
+      g.fillStyle=RD;g.strokeStyle=RDk;g.lineWidth=1.3;
+      g.beginPath();g.moveTo(-9,-6);g.lineTo(-1,-6);g.lineTo(-1.5,11.5);g.lineTo(-8.5,11.5);g.closePath();g.fill();g.stroke();
+      g.beginPath();g.moveTo(1,-6);g.lineTo(9,-6);g.lineTo(8.5,11.5);g.lineTo(1.5,11.5);g.closePath();g.fill();g.stroke();
+      g.strokeStyle=GD;g.lineWidth=1;g.beginPath();g.moveTo(-5,-5);g.lineTo(-5,10.5);g.moveTo(5,-5);g.lineTo(5,10.5);g.stroke();
+      g.fillStyle=GD;g.strokeStyle=GDk;g.lineWidth=1;g.beginPath();g.rect(-9,-9.5,18,3.4);g.fill();g.stroke();
+      g.fillStyle=RDk;g.fillRect(-2.2,-8.7,4.4,2);
+      g.restore();return;
+    }
+    if(id==='dragon_kiteshield'){
+      g.fillStyle=RD;g.strokeStyle=RDk;g.lineWidth=1.5;
+      g.beginPath();g.moveTo(-8,-9);g.lineTo(8,-9);g.lineTo(8,2);g.quadraticCurveTo(8,9,0,12.5);
+      g.quadraticCurveTo(-8,9,-8,2);g.closePath();g.fill();g.stroke();
+      g.strokeStyle=GD;g.lineWidth=1.7;
+      g.beginPath();g.moveTo(-6,-7);g.lineTo(6,-7);g.lineTo(6,2);g.quadraticCurveTo(6,7,0,9.7);g.quadraticCurveTo(-6,7,-6,2);g.closePath();g.stroke();
+      g.fillStyle='rgba(255,255,255,.12)';g.beginPath();g.moveTo(-2.5,-8);g.lineTo(-0.5,-8);g.lineTo(-0.5,10);g.lineTo(-2,9);g.closePath();g.fill();
+      g.fillStyle=GD;g.beginPath();g.arc(0,-1.5,2.7,0,7);g.fill();
+      g.fillStyle=RDk;g.beginPath();g.arc(0,-1.5,1.25,0,7);g.fill();
+      g.restore();return;
+    }
+    if(id==='dragon_scimitar'){
+      g.strokeStyle=RD;g.lineWidth=3.6;g.lineCap='round';
+      g.beginPath();g.moveTo(-6,9);g.quadraticCurveTo(9,3,4,-11);g.stroke();
+      g.strokeStyle=GDh;g.lineWidth=1.1;
+      g.beginPath();g.moveTo(-5,8.4);g.quadraticCurveTo(7.6,3,3.2,-10);g.stroke();
+      g.strokeStyle=GD;g.lineWidth=3.2;g.beginPath();g.moveTo(-8.5,5.5);g.lineTo(-3.5,10.5);g.stroke();
+      g.fillStyle=RDk;g.beginPath();g.arc(-8.5,11.5,2,0,7);g.fill();
+      g.restore();return;
+    }
+    if(id==='dragon_sword'){
+      g.fillStyle=RD;g.strokeStyle=RDk;g.lineWidth=1;
+      g.beginPath();g.moveTo(0,-12);g.lineTo(2.5,-7.5);g.lineTo(2.5,7);g.lineTo(-2.5,7);g.lineTo(-2.5,-7.5);g.closePath();g.fill();g.stroke();
+      g.strokeStyle=GDh;g.lineWidth=1;g.beginPath();g.moveTo(0,-10);g.lineTo(0,6);g.stroke();
+      g.fillStyle=GD;g.strokeStyle=GDk;g.lineWidth=1;g.beginPath();g.rect(-6.5,7,13,2.6);g.fill();g.stroke();
+      g.fillStyle=RDk;g.fillRect(-1.7,9.6,3.4,4);
+      g.fillStyle=GD;g.beginPath();g.arc(0,14.5,2.1,0,7);g.fill();
+      g.restore();return;
+    }
+    g.restore();return;
+  }
+  if(id==='small_bones'){
+    g.strokeStyle='#ece6d3';g.lineWidth=3;g.lineCap='round';
+    g.beginPath();g.moveTo(-5,5);g.lineTo(4,-4);g.stroke();
+    g.fillStyle='#f2eee2';
+    [[-5,5],[4,-4]].forEach(c0=>{g.beginPath();g.arc(c0[0]-1.4,c0[1],1.9,0,7);g.fill();g.beginPath();g.arc(c0[0]+1.4,c0[1],1.9,0,7);g.fill();});
+    g.restore();return;
+  }
+  if(id==='red_bead'||id==='yellow_bead'||id==='black_bead'||id==='white_bead'){
+    g.fillStyle={red_bead:'#c0303a',yellow_bead:'#d8c23a',black_bead:'#2a2a2e',white_bead:'#e8e6e0'}[id];
+    g.strokeStyle='#1a1206';g.lineWidth=1.2;
+    g.beginPath();g.arc(0,2,6,0,7);g.fill();g.stroke();
+    g.fillStyle='rgba(255,255,255,.5)';g.beginPath();g.arc(-2,0,2,0,7);g.fill();
     g.restore();return;
   }
   if(id==='uncut_sapphire'||id==='uncut_emerald'||id==='uncut_ruby'||id==='uncut_diamond'){
@@ -7669,6 +7790,13 @@ function questKill(r){
      else msg('Slayer contract: '+sl.done+' / '+sl.need+' '+slayName(sl.task,sl.need)+'.','#9a6fb0');
      renderQuests&&renderQuests();dirty=true;
    }}
+  if(player.slayer&&player.slayer.task&&kind===player.slayer.task&&inWild(r.sx,r.sy)&&Math.random()<1/150){
+    const _DR=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield'];
+    const _did=_DR[rndi(0,_DR.length-1)];
+    if(invFull())dropGround(r.x,r.y,_did,1); else addItem(_did,1);
+    msg('A rare drop! You receive a '+ITEMS[_did].name+' \u2014 dragon equipment!','#e8b020');
+    sfx.pickup&&sfx.pickup();
+  }
   if(Q.tut.s===1&&kind==='rat'&&Q.tut.k<3){
     Q.tut.k++;
     if(Q.tut.k>=3){
@@ -7828,13 +7956,9 @@ const DIALOGUES={
   slayer:()=>slayerTree(),
   guide:()=>{
     if(!player.kit){
-      const free=player.inv.filter(sl=>!sl).length;
-      if(free<4)return{
-        start:{who:'npc',text:'I have supplies for you, adventurer \u2014 but your pack is full. Make some room and come back!',next:null}};
-      ['bronze_sword','wooden_shield'].forEach(id=>addItem(id));
-      player.kit=true;dirty=true;sfx.pickup();renderInv();
+      player.kit=true;dirty=true;
       return{
-        start:{who:'npc',text:'Welcome to Milville, adventurer! Take these supplies \u2014 a bronze sword and a wooden shield.',next:'g2'},
+        start:{who:'npc',text:'Welcome to Milville, adventurer! Rector Matthews at the Rectory will see you outfitted \u2014 speak with him first.',next:'g2'},
         g2:{who:'npc',text:'Click an item in your pack to wield it; the equipment tab shows what you have on.',next:'g3'},
         g3:{who:'npc',text:'Chop trees and mine rocks to train, and cook your catch at the campfire. Off you go!',next:null}};
     }
