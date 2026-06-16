@@ -4,6 +4,18 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Milville — Old School Adventure</title>
+<meta name="description" content="Milville — an Old School-style browser RPG set at St. Paul's School: mine, smith, fish, cook, and quest through the grounds.">
+<meta property="og:type" content="website">
+<meta property="og:title" content="Milville — Old School Adventure">
+<meta property="og:description" content="An Old School-style browser RPG set at St. Paul's School. Mine, smith, fish, cook, and quest.">
+<meta property="og:image" content="aldervale-og.png">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Milville — Old School Adventure">
+<meta name="twitter:description" content="An Old School-style browser RPG set at St. Paul's School.">
+<meta name="twitter:image" content="aldervale-og.png">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%226%22%20fill%3D%22%232a241c%22%2F%3E%3Cpath%20d%3D%22M9%2025%20Q27%2017%2019%204%22%20fill%3D%22none%22%20stroke%3D%22%23ffb83d%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M7.5%2022%20l5%205%22%20stroke%3D%22%235a4226%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E">
 <style>
   :root{
     --frame:#2a241c; --panel:#4d4338; --panel-hi:#6b5d4b; --panel-lo:#241f18;
@@ -705,7 +717,7 @@ const GE_STOCK=[];
       equip:{slot:'weapon',atk:atk,str:Math.max(0,atk-2),model:'sword',verb:'Wield',req:rq,tint:tint,trim:trim}};
     ITEMS[n+'_scimitar']={name:N+' scimitar',
       ex:'A swift, curved '+n+' blade.',val:Math.round(v*1.45),
-      equip:{slot:'weapon',atk:atk+1,str:Math.max(0,atk-1),model:'sword',verb:'Wield',req:rq,tint:tint,trim:trim}};
+      equip:{slot:'weapon',atk:atk+1,str:Math.max(0,atk-1),model:'scim',verb:'Wield',req:rq,tint:tint,trim:trim}};
     ITEMS[n+'_kiteshield']={name:N+' kiteshield',
       ex:'A sturdy '+n+' kiteshield.',val:Math.round(v*1.7),
       equip:{slot:'shield',model:'shieldM',verb:'Wear',def:6+ix*2+(ix===5?1:0),
@@ -731,7 +743,7 @@ const GE_STOCK=[];
       n+'_full_helm',n+'_chainbody',n+'_platebody');
   });
 }
-ITEMS.dragon_scimitar={name:'Dragon scimitar',ex:'A wickedly curved blade of red dragon-metal, chased with gold.',val:130000,equip:{slot:'weapon',atk:22,str:20,model:'sword',verb:'Wield',req:28,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_scimitar={name:'Dragon scimitar',ex:'A wickedly curved blade of red dragon-metal, chased with gold.',val:130000,equip:{slot:'weapon',atk:22,str:20,model:'scim',verb:'Wield',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_sword={name:'Dragon sword',ex:'A straight dragon-metal blade, gold-fullered and keen.',val:110000,equip:{slot:'weapon',atk:21,str:18,model:'sword',verb:'Wield',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_full_helm={name:'Dragon full helm',ex:'A snarling dragon-head helm of red and gold.',val:90000,equip:{slot:'head',def:16,model:'helm',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with gold dragon-work.',val:160000,equip:{slot:'body',def:33,model:'plate',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
@@ -765,7 +777,7 @@ ITEMS.coarse_salt={name:'Coarse salt',ex:'A good fistful of kitchen salt.',val:3
 ITEMS.bland_dish={name:'Unseasoned platter',ex:'Tonight\u2019s Seated Meal, and desperately bland.',val:0};
 ITEMS.seasoned_dish={name:'Seasoned platter',ex:'Now THAT smells like a Seated Meal.',val:0};
 ITEMS.boar_head={name:'Boar\u2019s head',ex:'The centrepiece of the feast. Heavy, and rather cross.',val:0};
-ITEMS.borrowed_flour={name:'Sack of flour',ex:'Borrowed from the Pratt House larder. Larry will replace it. Probably.',val:0};
+ITEMS.borrowed_flour={name:'Sack of flour',ex:'Borrowed from the 31 Hockey Lane larder. Larry will replace it. Probably.',val:0};
 ITEMS.oven_mitts={name:'Oven mitts',ex:'Quilted and scorch-proof. You burn food far less often while they are in your pack.',val:0};
 ITEMS.boars_head_feast={name:'Boar\u2019s Head feast',ex:'The whole spread, ready for the procession into Coit.',val:0};
 ITEMS.candy={name:'Candy',ex:'Hard-won Halloween loot.',val:2};
@@ -853,7 +865,7 @@ const OBJ_DEFS={
   range:{name:'Kitchen range',action:'Cook-at',ex:'Larry\u2019s cast-iron range, hot enough for a feast.'},
   herbplanter:{name:'Herb planter',action:'Pick-from',ex:'A planter of kitchen herbs on the lawn south of Coit.'},
   bonfire:{name:'Bonfire',action:'Build',ex:'The great school Bonfire, waiting on wood and a spark.'},
-  larder:{name:'Pratt larder',action:'Search',ex:'The Pratt House larder. They have flour to spare.'}
+  larder:{name:'31 Hockey Lane larder',action:'Search',ex:'The 31 Hockey Lane larder. They have flour to spare.'}
 };
 const VERBS={woodcutting:['You swing your axe at the tree.','You get some {item}.'],
   mining:['You swing your pick at the rocks.','You manage to mine some {item}.'],
@@ -1406,7 +1418,7 @@ addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
 addObj('furnace',128,18);addObj('anvil',130,18);
 addObj('fire',150,23);
 addObj('fire',68,44);
-addObj('range',135,48);addObj('herbplanter',138,58);addObj('bonfire',110,123);addObj('larder',30,101);
+addObj('bonfire',110,116);addObj('larder',137,69);
 addObj('statue',96,92);
 addObj('banker',72,48,true);addObj('banker',73,47,true);
 addObj('clerk',74,48,true);addObj('clerk',73,49,true);
@@ -2002,7 +2014,8 @@ function lightFire(i){
 }
 function startCook(f){
   const fire=f||objects.find(o=>o.def==='fire');
-  if(findItem('raw_shrimps')<0){msg('You have nothing to cook.');return;}
+  const _RAWS=['raw_shrimps','raw_sardine','raw_trout','raw_lobster'];
+  if(!_RAWS.some(r=>findItem(r)>=0)){msg('You have no raw food to cook.');return;}
   setAction({type:'cook',fire},fire.x,fire.y);
   clickFx(fire.x,fire.y,'#ff4d3d');
 }
@@ -2089,6 +2102,12 @@ function playerTick(){
       addItem(gid);
       addXp(def.skill,gxp);
       msg(VERBS[def.skill][1].replace('{item}',ITEMS[gid].name.toLowerCase()));
+      if(def.skill==='woodcutting'&&player.quests.chef.s===3&&player.quests.chef.logs<8){
+        player.quests.chef.logs++;
+        msg('You gather wood for the Bonfire. ('+player.quests.chef.logs+' of 8)','#e0a23a');
+        renderQuests&&renderQuests();
+        if(player.quests.chef.logs>=8)msg('You have enough wood — light the Bonfire on the lawn southeast of the chapel.','#e0a23a');
+      }
       let _depl=false;
       if(def.cap){
         if(o.left==null)o.left=rndi(def.cap[0],def.cap[1]);
@@ -2254,7 +2273,7 @@ function playerTick(){
     if(player.quests.chef.s!==5)msg('The larder is well stocked, but you have no need of it.');
     else if(countItem('borrowed_flour')>0)msg('You have already borrowed a sack of flour.');
     else if(invFull())msg('Your pack is full.');
-    else{addItem('borrowed_flour');msg('You borrow a sack of flour from the Pratt larder. Larry will square it later.');renderQuests&&renderQuests();}
+    else{addItem('borrowed_flour');msg('You borrow a sack of flour from the 31 Hockey Lane larder. Larry will square it later.');renderQuests&&renderQuests();}
     cancelAction();
   }
   else if(a.type==='preparemeal'){
@@ -2272,10 +2291,10 @@ function playerTick(){
     player.path.length=0;const ch=player.quests.chef;
     if(ch.s!==5){cancelAction();return;}
     if(countItem('boars_head_feast')>0){msg('The feast is already assembled.');cancelAction();return;}
-    if(countItem('boar_head')<1||countItem('borrowed_flour')<1||countItem('lobster')<1){
-      msg('You still need the boar\u2019s head, a cooked lobster, and a sack of flour.');cancelAction();return;}
+    if(countItem('boar_head')<1||countItem('borrowed_flour')<1||cookedFishCount()<5){
+      msg('You still need the boar\u2019s head, 5 cooked fish (any kind), and a sack of flour.');cancelAction();return;}
     if(invFull()&&countItem('boars_head_feast')<1){}
-    removeSlot(findItem('boar_head'));removeSlot(findItem('borrowed_flour'));removeSlot(findItem('lobster'));
+    removeSlot(findItem('boar_head'));removeSlot(findItem('borrowed_flour'));consumeCookedFish(5);
     addItem('boars_head_feast');addXp('cooking',150);sfx.cook&&sfx.cook();
     msg('You assemble the Boar\u2019s Head feast. Bring it to Larry for the procession into Coit.','#c9a23a');
     renderQuests&&renderQuests();cancelAction();
@@ -2803,7 +2822,6 @@ function examineItem(id){
   if(eq&&(eq.atk||eq.str||eq.def||eq.req)){
     const b=[];if(eq.atk)b.push('Attack +'+eq.atk);if(eq.str)b.push('Strength +'+eq.str);if(eq.def)b.push('Defence +'+eq.def);
     let line=b.join(', ')||'No combat bonuses';
-    if(eq.req)line+=' \u00b7 needs '+(eq.slot==='weapon'?'Attack':'Defence')+' '+eq.req;
     msg(line,'#1a5a8c');
     const cur=player.equip[eq.slot];
     if(cur&&cur.id!==id){
@@ -3078,16 +3096,14 @@ function optionsAt(tx,ty){
         {html:'Examine <span class="t">Herb planter</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='bonfire'){
       const ch=player.quests.chef;
-      if(ch.s===3&&ch.logs<8)
-        opts.push({html:'Stack <span class="t">logs</span>',label:'Stack logs',fn:()=>setAction({type:'depositlog',o},o.x,o.y)});
       if(ch.s===3&&ch.logs>=8)
         opts.push({html:'Light <span class="t">the Bonfire</span>',label:'Light the Bonfire',fn:()=>setAction({type:'lightbonfire',o},o.x,o.y)});
-      opts.push({html:'Examine <span class="t">Bonfire</span>',fn:()=>msg((player.quests.chef.s===3)?('Logs stacked: '+player.quests.chef.logs+' of 8.'):def.ex)});
+      opts.push({html:'Examine <span class="t">Bonfire</span>',fn:()=>msg((player.quests.chef.s===3)?('Wood gathered: '+player.quests.chef.logs+' of 8.'):def.ex)});
     }else if(o.def==='larder'){
       const ch=player.quests.chef;
       if(ch.s===5&&countItem('borrowed_flour')<1)
         opts.push({html:'Borrow <span class="t">a sack of flour</span>',label:'Borrow a sack of flour',fn:()=>setAction({type:'borrowflour',o},o.x,o.y)});
-      opts.push({html:'Search <span class="t">Pratt larder</span>',label:'Search Pratt larder',fn:()=>msg(def.ex)});
+      opts.push({html:'Search <span class="t">larder</span>',label:'Search larder',fn:()=>msg(def.ex)});
     }else if(o.alive){
       opts.push({html:def.action+' <span class="t">'+def.name+'</span>',
         label:def.action+' '+def.name,fn:()=>startGather(o)},
@@ -3457,12 +3473,22 @@ function drawItemIcon(g,id,S){
       g.strokeStyle='#5a4226';g.lineWidth=3;
       g.beginPath();g.moveTo(-9,2);g.lineTo(-2,9);g.stroke();
     }else if(mt[2]==='scimitar'){
-      g.strokeStyle=tn[0];g.lineWidth=5;g.lineCap='round';
-      g.beginPath();g.arc(2,3,10,Math.PI*1.06,Math.PI*1.6);g.stroke();
-      g.strokeStyle=tn[1];g.lineWidth=2;
-      g.beginPath();g.arc(2,3,10,Math.PI*1.06,Math.PI*1.6);g.stroke();
-      g.strokeStyle='#5a4226';g.lineWidth=3;
-      g.beginPath();g.moveTo(-7,4);g.lineTo(-3,9);g.stroke();
+      g.save();
+      g.beginPath();
+      g.moveTo(-5,8);
+      g.quadraticCurveTo(10.5,3,4.5,-11.5);
+      g.quadraticCurveTo(3,-7,-1,0.5);
+      g.quadraticCurveTo(-2.5,5,-5,8);
+      g.closePath();
+      g.fillStyle=tn[0];g.fill();
+      g.lineJoin='round';g.strokeStyle=tn[0];g.lineWidth=1.2;g.stroke();
+      g.strokeStyle=tn[1];g.lineWidth=1.3;g.lineCap='round';
+      g.beginPath();g.moveTo(-4,7);g.quadraticCurveTo(8.8,3,4,-10.5);g.stroke();
+      g.restore();
+      g.save();g.translate(-5.5,7);g.rotate(0.7);g.fillStyle='#8a6a2a';g.fillRect(-3.4,-1.4,6.8,2.8);g.restore();
+      g.strokeStyle='#5a4226';g.lineWidth=3;g.lineCap='round';
+      g.beginPath();g.moveTo(-7.5,5);g.lineTo(-3,10.5);g.stroke();
+      g.fillStyle='#8a6a2a';g.beginPath();g.arc(-2.6,11,1.9,0,7);g.fill();
     }else{
       g.fillStyle=tn[0];
       g.beginPath();g.moveTo(0,-9);g.lineTo(8,-3);g.lineTo(5,6);g.lineTo(0,10);
@@ -6683,18 +6709,37 @@ const pick=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.6,0.05),0x6b4a2e);h.position.y=-0.16;pick.add(h);
  const b=mesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);}
 const sword=new THREE.Group();
-{const b1=TT(gmesh(new THREE.BoxGeometry(0.05,0.28,0.1),0xc7ccd4),'tint');
- b1.position.y=-0.31;sword.add(b1);
- const b2=TT(gmesh(new THREE.BoxGeometry(0.046,0.2,0.085),0xc7ccd4),'tint');
- b2.position.set(0,-0.485,0.035);b2.rotation.x=0.35;sword.add(b2);
- const b3=TT(gmesh(new THREE.BoxGeometry(0.04,0.15,0.065),0xd6dbe2),'tint');
- b3.position.set(0,-0.585,0.088);b3.rotation.x=0.7;sword.add(b3);
- const gd=TT(gmesh(new THREE.BoxGeometry(0.17,0.045,0.07),0x8a6a2a),'trim');
+{/* clean straight double-edged blade */
+ const blade=TT(gmesh(new THREE.BoxGeometry(0.052,0.46,0.018),0xc7ccd4),'tint');
+ blade.position.y=-0.44;sword.add(blade);
+ const fuller=TT(gmesh(new THREE.BoxGeometry(0.013,0.40,0.024),0xdfe4ec),'tint');
+ fuller.position.y=-0.44;sword.add(fuller);
+ const tip=TT(gmesh(new THREE.ConeGeometry(0.028,0.12,4),0xd0d5dd),'tint');
+ tip.position.y=-0.725;tip.rotation.x=Math.PI;tip.rotation.y=Math.PI/4;sword.add(tip);
+ const gd=TT(gmesh(new THREE.BoxGeometry(0.20,0.05,0.06),0x8a6a2a),'trim');
  gd.position.y=-0.17;sword.add(gd);
- const pmH=TT(gmesh(new THREE.SphereGeometry(0.035,6,5),0x8a6a2a),'trim');
- pmH.position.y=-0.1;sword.add(pmH);}
-tool.add(axe);tool.add(pick);tool.add(sword);
-axe.visible=pick.visible=sword.visible=false;
+ const grip=gmesh(new THREE.BoxGeometry(0.04,0.13,0.04),0x5a3d22);
+ grip.position.y=-0.09;sword.add(grip);
+ const pmH=TT(gmesh(new THREE.SphereGeometry(0.034,6,5),0x8a6a2a),'trim');
+ pmH.position.y=-0.02;sword.add(pmH);}
+const scim=new THREE.Group();
+{/* smoothly curved single-edged scimitar blade (6 small segments tracing an arc) */
+ let py=-0.21, pz=0, ang=0; const seg=0.10, d=0.145;
+ const sh=[0xc7ccd4,0xcacfd7,0xccd1d9,0xd0d5dd,0xd4d9e1,0xd9dee6];
+ for(let i=0;i<6;i++){
+   ang+=d; py-=Math.cos(ang)*seg; pz+=Math.sin(ang)*seg;
+   const w=0.05+(i<3?i:5-i)*0.006;
+   const bb=TT(gmesh(new THREE.BoxGeometry(w,seg+0.012,0.07),sh[i]),'tint');
+   bb.position.set(0,py,pz);bb.rotation.x=ang;scim.add(bb);
+ }
+ const sgd=TT(gmesh(new THREE.BoxGeometry(0.19,0.05,0.07),0x8a6a2a),'trim');
+ sgd.position.y=-0.165;scim.add(sgd);
+ const sgrip=gmesh(new THREE.BoxGeometry(0.04,0.13,0.04),0x5a3d22);
+ sgrip.position.y=-0.085;scim.add(sgrip);
+ const spm=TT(gmesh(new THREE.SphereGeometry(0.034,6,5),0x8a6a2a),'trim');
+ spm.position.y=-0.01;scim.add(spm);}
+tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);
+axe.visible=pick.visible=sword.visible=scim.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -7845,21 +7890,21 @@ function drawMini(){
     if(!isQuestTarget(r))continue;
     const mx=(r.alive?r.px:r.sx)*4+2,my=(r.alive?r.py:r.sy)*4+2;
     g.beginPath();g.arc(mx,my,4.4,0,7);
-    g.fillStyle='#e02418';g.fill();
+    g.fillStyle='#2f88ff';g.fill();
     g.lineWidth=1.6;g.strokeStyle='#fff';g.stroke();
   }
   for(const o of objects){
     if(!isQuestObjTarget(o))continue;
     const mx=o.x*4+2,my=o.y*4+2;
     g.beginPath();g.arc(mx,my,4.4,0,7);
-    g.fillStyle='#e02418';g.fill();
+    g.fillStyle='#2f88ff';g.fill();
     g.lineWidth=1.6;g.strokeStyle='#fff';g.stroke();
   }
   for(const n of npcs){
     if(n.gone||!questNpcTarget(n))continue;
     const mx=n.px*4+2,my=n.py*4+2;
     g.beginPath();g.arc(mx,my,4.4,0,7);
-    g.fillStyle='#2a7de0';g.fill();
+    g.fillStyle='#2f88ff';g.fill();
     g.lineWidth=1.6;g.strokeStyle='#fff';g.stroke();
   }
   g.fillStyle='#e8e0c8';
@@ -7933,21 +7978,21 @@ function openWorldMap(){
     if(!isQuestTarget(r))continue;
     const qx=((r.alive?r.px:r.sx)+0.5)*6,qy=((r.alive?r.py:r.sy)+0.5)*6;
     g.beginPath();g.arc(qx,qy,7,0,7);
-    g.fillStyle='#e02418';g.fill();
+    g.fillStyle='#2f88ff';g.fill();
     g.lineWidth=2.2;g.strokeStyle='#fff';g.stroke();
   }
   for(const o of objects){
     if(!isQuestObjTarget(o))continue;
     const qx=(o.x+0.5)*6,qy=(o.y+0.5)*6;
     g.beginPath();g.arc(qx,qy,7,0,7);
-    g.fillStyle='#e02418';g.fill();
+    g.fillStyle='#2f88ff';g.fill();
     g.lineWidth=2;g.strokeStyle='#fff';g.stroke();
   }
   for(const n of npcs){
     if(n.gone||!questNpcTarget(n))continue;
     const qx=(n.px+0.5)*6,qy=(n.py+0.5)*6;
     g.beginPath();g.arc(qx,qy,7,0,7);
-    g.fillStyle='#2a7de0';g.fill();
+    g.fillStyle='#2f88ff';g.fill();
     g.lineWidth=2.2;g.strokeStyle='#fff';g.stroke();
   }
   const px4=(player.px+0.5)*6,py4=(player.py+0.5)*6;
@@ -8134,16 +8179,39 @@ function questNpcTarget(n){
     case 'coach':return(Q.m3.s===1&&!Q.m3.c)||(Q.cq.s===1&&countItem('sardine')>=5);
     case 'martha':return Q.m3.s===1&&Q.m3.c>0&&Q.m3.k>=3;
     case 'wren':return Q.m4.s===1&&(!Q.m4.b||(Q.m4.k>=3&&Q.m4.d>0));
-    case 'larry':return Q.larry.s===1&&countItem('lost_crate')>=1;
+    case 'larry':{
+      if(Q.larry.s===1&&countItem('lost_crate')>=1)return true;
+      const ch=Q.chef;
+      if(ch.s===1&&ch.pouch===0&&countItem('fresh_herbs')>0&&countItem('coarse_salt')>0)return true;
+      if(ch.s===1&&ch.pouch===1&&countItem('seasoned_dish')>0)return true;
+      if(ch.s===2||ch.s===4)return true;
+      if(ch.s===5&&countItem('boars_head_feast')>0)return true;
+      return false;
+    }
+    case 'rick':return Q.dq.s===1&&(!Q.dq.f||Q.dq.k>=3);
     case 'mish':return Q.mish.s===1&&Q.mish.r1>0&&Q.mish.r2>0;
-    case 'bozek':return Q.bozek.s===1&&bozekGot(Q.bozek)>=bozekTotal();
+    case 'lost1':return Q.mish.s===1&&!Q.mish.r1;
+    case 'lost2':return Q.mish.s===1&&!Q.mish.r2;
+    case 'bozek':return(Q.bozek.s===1&&bozekGot(Q.bozek)>=bozekTotal())
+      ||(Q.chef.s===1&&Q.chef.pouch===0&&countItem('coarse_salt')<1);
   }
   return false;
 }
 function isQuestObjTarget(o){
-  const m2=player.quests.m2;
-  if(o.def==='relic'&&m2.s===1&&!m2.relic)return true;
-  if(o.def==='chapeldoor'&&m2.s===1&&!m2.relic)return true;
+  const Q=player.quests, d=o.def;
+  if((d==='relic'||d==='chapeldoor')&&Q.m2.s===1&&!Q.m2.relic)return true;          /* m2 Blessed Censer */
+  if(d==='crate'&&Q.larry.s===1&&countItem('lost_crate')<1)return true;             /* shipment crate */
+  if(d==='herbplanter'&&Q.chef.s===1&&Q.chef.pouch===0&&countItem('fresh_herbs')<1)return true;
+  if(d==='range'&&Q.chef.s===1&&Q.chef.pouch===1&&countItem('seasoned_dish')<1)return true;
+  if(d==='bonfire'&&Q.chef.s===3&&Q.chef.logs>=8)return true;
+  if(Q.chef.s===5){
+    const hH=countItem('boar_head')>0,hFl=countItem('borrowed_flour')>0,hFi=cookedFishCount()>=5;
+    if(d==='spot'&&!hFi)return true;
+    if(d==='larder'&&!hFl)return true;
+    if(d==='range'&&hH&&hFi&&hFl&&countItem('boars_head_feast')<1)return true;
+  }
+  if(d==='spot'&&Q.cq.s===1&&countItem('sardine')<5)return true;                    /* training-table fish */
+  if(d==='chest'&&Q.sos&&Q.sos.s===1&&SOS_PENS.every((pn,i)=>Q.sos['k'+(i+1)]>=pn.need))return true;
   return false;
 }
 function spawnBoar(){
@@ -8161,6 +8229,7 @@ function isQuestTarget(r){
   if(Q.m3.s===1&&Q.m3.c&&Q.m3.k<3&&k==='minotaur')return true;
   if(Q.m4.s===1&&Q.m4.b&&((Q.m4.k<3&&k==='ghost')||(!Q.m4.d&&k==='hdean')))return true;
   if(Q.m5.s===1&&!Q.m5.d&&k==='master')return true;
+  if(Q.dq.s===1&&Q.dq.f&&Q.dq.k<3&&k==='dragon')return true;
   const so=Q.sos;
   if(so&&so.s===1&&r.sx!==undefined)
     for(let pi=0;pi<SOS_PENS.length;pi++){
@@ -8174,7 +8243,7 @@ function questKill(r){
   const kind=r.kind;
   const Q=player.quests;
   if(kind==='boar'&&Q.chef.s===5&&countItem('boar_head')<1){
-    dropGround(r.x,r.y,'boar_head',1);
+    if(!invFull())addItem('boar_head');else dropGround(r.x,r.y,'boar_head',1);
     msg('The boar falls. You take its head for the feast.','#c97a3a');
     renderQuests&&renderQuests();
   }
@@ -8278,8 +8347,18 @@ function removeWorldObj(def){
     }
   }
 }
+function ensureWorldObj(def,x,y,want){
+  const has=objects.some(o=>o.def===def);
+  if(want&&!has){const n0=objects.length;addObj(def,x,y);if(objects.length>n0)buildObjModel(objects[objects.length-1]);}
+  else if(!want&&has)removeWorldObj(def);
+}
+function syncChefObjects(){
+  const cs=player.quests.chef.s;
+  ensureWorldObj('herbplanter',138,58,cs===1);          /* herb garden: only during Part 1 */
+  ensureWorldObj('range',135,48,cs>=1&&cs<6);            /* kitchen range: only during the questline */
+}
 function syncQuestWorld(){
-  if(player.quests.chef.s===6){removeWorldObj('herbplanter');removeWorldObj('range');}
+  syncChefObjects();
   const mq=player.quests.mish;
   for(const[id,fl]of[['lost1','r1'],['lost2','r2']]){
     const n=npcs.find(n2=>n2.id===id);
@@ -8377,10 +8456,6 @@ const DIALOGUES={
   },
   rick:()=>{
     const dq=player.quests.dq;
-    const chf=player.quests.chef;
-    if(chf.s===1&&chf.pouch===0&&countItem('fresh_herbs')<1)return{
-      start:{who:'npc',text:'Larry’s blend, eh? The herb planter’s out on the south lawn, just past the Coit courtyard — rosemary, sage and thyme, all coming on nicely. Pick what you need, just leave some for the next batch.',next:'by'},
-      by:{who:'npc',text:'And tell Larry the basil situation is HIS fault. Long story.',next:null}};
     /* not started via Mish yet, or quest unavailable: idle landscaper banter */
     if(dq.s===0||dq.s===undefined)return{
       start:{who:'npc',text:'Hey. HEY. You did not see us. We are \u2026 surveying. For a project. A tree project.',next:'ask'},
@@ -8566,9 +8641,9 @@ const DIALOGUES={
         meals2:{who:'npc',text:'See me through all three and I’ll teach you the range proper, and pay you well besides. But one at a time — we begin with the Seated Meal, and it is the Seated Meal that troubles me.',next:'need'},
         need:{who:'npc',text:'It is going out BLAND, which shames me to my boots. My secret spice blend ran dry. What I need is simple: restock it. Fresh herbs and coarse salt, ground into this pouch of mine. Fetch me those two and we are in business. Will you?',next:'off'},
         off:{opts:[
-          {label:'I’ll fill your pouch.',next:()=>{ if(invFull()){msg('Make room in your pack first.');return 'full';} addItem('spice_pouch');ch.s=1;ch.pouch=0; msg('Quest started: Take Your Seats','#103a8c'); return 'gave';}},
+          {label:'I’ll fill your pouch.',next:()=>{ if(invFull()){msg('Make room in your pack first.');return 'full';} addItem('spice_pouch');ch.s=1;ch.pouch=0;syncChefObjects(); msg('Quest started: Take Your Seats','#103a8c'); return 'gave';}},
           {label:'Maybe later.',next:'by'}]},
-        gave:{who:'npc',text:'Good soul — take the pouch. No real magic to the blend: fresh herbs and coarse salt, that is all. Rick on the grounds crew tends a herb planter out on the south lawn, just past the courtyard — pick a sprig there. And Bozek, up on Foster hill, hoards a sack of proper coarse salt. Bring me both and we’ll grind it together.',next:null},
+        gave:{who:'npc',text:'Good soul — take the pouch. No real magic to the blend: fresh herbs and coarse salt, that is all. There is a herb planter out on the south lawn, just past the courtyard — pick a sprig there. And Bozek, up on Foster hill, hoards a sack of proper coarse salt. Bring me both and we’ll grind it together.',next:null},
         full:{who:'npc',text:'Come back when your pack is not bursting.',next:null},
         by:{who:'npc',text:'The ovens will keep. Mostly.',next:null}};
       if(ch.s===1){
@@ -8582,7 +8657,7 @@ const DIALOGUES={
         if(ch.pouch===1&&countItem('seasoned_dish')>0)return{
           start:{who:'npc',text:'Is that— yes! THAT is what a Seated Meal should smell like. Give it here.',next:'give'},
           give:{opts:[
-            {label:'Hand over the seasoned platter.',next:()=>{ removeSlot(findItem('seasoned_dish')); {const _sp=findItem('spice_pouch');if(_sp>=0)removeSlot(_sp);} addItem('coins',200);addXp('cooking',250); ch.s=2; msg('Part 1 complete: Take Your Seats.','#7a18c9'); if(sfx.level)sfx.level(); return 'done';}},
+            {label:'Hand over the seasoned platter.',next:()=>{ removeSlot(findItem('seasoned_dish')); {const _sp=findItem('spice_pouch');if(_sp>=0)removeSlot(_sp);} addItem('coins',200);addXp('cooking',250); ch.s=2;syncChefObjects(); msg('Part 1 complete: Take Your Seats.','#7a18c9'); if(sfx.level)sfx.level(); return 'done';}},
             {label:'Let me hold onto it.',next:'by'}]},
           done:{who:'npc',text:'Four hundred happy diners and not one complaint. I’ll take my pouch back — it has seen me through worse terms than this. Come back when you can; there is a Bonfire to build.',next:null},
           by:{who:'npc',text:'It will only get colder.',next:null}};
@@ -8594,9 +8669,9 @@ const DIALOGUES={
         ask:{opts:[
           {label:'I will build the Bonfire.',next:()=>{ch.s=3;ch.logs=0;msg('Quest updated: The Bonfire','#103a8c');return 'go';}},
           {label:'Give me a moment.',next:'by'}]},
-        go:{who:'npc',text:'That is the spirit. Eight good logs ought to do it — the dry timber up at Drury Orchard, far to the north-east, is best. Stack them on the unlit Bonfire on the south lawn, then put a spark to it.',next:null},
+        go:{who:'npc',text:'That is the spirit. Eight good logs ought to do it — chop any trees you like — the dry timber up at Drury Orchard, far to the north-east, is best. Then light the Bonfire on the lawn southeast of the chapel.',next:null},
         by:{who:'npc',text:'No rush. It is not lit yet, after all.',next:null}};
-      if(ch.s===3)return{ start:{who:'npc',text:'Eight logs on the south-lawn Bonfire, then light it. The dry timber at Drury Orchard, far north-east, chops best. ('+ch.logs+' of 8 stacked.)',next:null}};
+      if(ch.s===3)return{ start:{who:'npc',text:'Chop eight logs, then light the Bonfire on the lawn southeast of the chapel. The dry timber at Drury Orchard, far north-east, chops best. ('+ch.logs+' of 8 stacked.)',next:null}};
       if(ch.s===4)return{
         start:{who:'npc',text:'You could see that blaze from the chapel tower! Last table, and the grandest: the Boar’s Head feast. Are you in?',next:'ask'},
         ask:{opts:[{label:'Tell me what you need.',next:'p3'},{label:'Not yet.',next:'by'}]},
@@ -8604,17 +8679,17 @@ const DIALOGUES={
         off:{opts:[
           {label:'I will bring the feast.',next:()=>{ch.s=5;spawnBoar();msg('Quest updated: Boar’s Head','#103a8c');return 'go';}},
           {label:'Let me prepare.',next:'by'}]},
-        go:{who:'npc',text:'Borrow the flour from the Pratt House larder — they will not miss one sack. Land the lobster yourself. And the head… well, that is between you and the boar. Assemble it all at the range.',next:null},
+        go:{who:'npc',text:'Borrow the flour from the 31 Hockey Lane larder — they will not miss one sack. Cook five fish of any kind yourself. And the head… well, that is between you and the boar. Assemble it all at the range.',next:null},
         by:{who:'npc',text:'The feast is the talk of the term. Do not keep them waiting long.',next:null}};
       if(ch.s===5){
         if(countItem('boars_head_feast')>0)return{
           start:{who:'npc',text:'The whole feast, assembled and glorious. Bring it here!',next:'give'},
           give:{opts:[
-            {label:'Present the Boar’s Head feast.',next:()=>{ removeSlot(findItem('boars_head_feast')); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else dropGround(player.x,player.y,'oven_mitts',1); ch.s=6; questDone('The Three Tables of Millville'); removeWorldObj('herbplanter');removeWorldObj('range'); return 'done';}},
+            {label:'Present the Boar’s Head feast.',next:()=>{ removeSlot(findItem('boars_head_feast')); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else dropGround(player.x,player.y,'oven_mitts',1); ch.s=6;syncChefObjects(); questDone('The Three Tables of Millville'); removeWorldObj('herbplanter');removeWorldObj('range'); return 'done';}},
             {label:'One moment.',next:'by'}]},
           done:{who:'npc',text:'PERFECT. The procession will carry it into Coit with the carol and all. Take these oven mitts — quilted, scorch-proof, a chef’s best friend. You will burn far less at the fire now. You are kitchen family, always.',next:null},
           by:{who:'npc',text:'Careful — that head is heavier than it looks.',next:null}};
-        return{ start:{who:'npc',text:'The feast needs three things: the boar’s head (north-west of Crumpacker), a cooked lobster, and a sack of flour from the Pratt larder. Assemble them at the range.',next:null}};
+        return{ start:{who:'npc',text:'The feast needs three things: the boar’s head (north-west of Crumpacker), 5 cooked fish of any kind, and a sack of flour from 31 Hockey Lane. Assemble them at the range.',next:null}};
       }
       return{
         start:{who:'npc',text:'Three tables, three triumphs. The kitchen never forgets a friend — there is always a plate for you here.',next:'ask'},
@@ -9031,11 +9106,11 @@ function grantItem(id){
 /* ---------------- furnace & anvil ---------------- */
 const SMELT_BARS=[
   ['bronze_bar',1,7,[['copper_ore',1],['tin_ore',1]]],
-  ['iron_bar',6,13,[['iron_ore',1]]],
+  ['iron_bar',5,13,[['iron_ore',1]]],
   ['steel_bar',8,17,[['iron_ore',2]]],
-  ['mithril_bar',10,22,[['mithril_ore',1]]],
-  ['adamant_bar',14,30,[['adamant_ore',1]]],
-  ['rune_bar',18,40,[['runite_ore',1]]]];
+  ['mithril_bar',10,22,[['mithril_ore',1],['iron_ore',2]]],
+  ['adamant_bar',14,30,[['adamant_ore',1],['iron_ore',3]]],
+  ['rune_bar',18,40,[['runite_ore',1],['iron_ore',4]]]];
 const SMITH_RECIPES=[
   ['bronze_full_helm',1,'bronze_bar',1],
   ['bronze_sword',1,'bronze_bar',1],
@@ -9064,18 +9139,21 @@ const SMITH_RECIPES=[
   ['mithril_chainbody',12,'mithril_bar',3],
   ['mithril_kiteshield',12,'mithril_bar',3],
   ['mithril_platebody',13,'mithril_bar',5],
-  ['adamant_full_helm',13,'adamant_bar',1],
-  ['adamant_sword',13,'adamant_bar',1],
+  ['adamant_full_helm',14,'adamant_bar',1],
+  ['adamant_sword',14,'adamant_bar',1],
   ['adamant_scimitar',14,'adamant_bar',2],
   ['adamant_chainbody',14,'adamant_bar',3],
   ['adamant_kiteshield',15,'adamant_bar',3],
   ['adamant_platebody',16,'adamant_bar',5],
-  ['rune_full_helm',16,'rune_bar',1],
-  ['rune_sword',16,'rune_bar',1],
-  ['rune_scimitar',17,'rune_bar',2],
-  ['rune_chainbody',17,'rune_bar',3],
-  ['rune_kiteshield',17,'rune_bar',3],
-  ['rune_platebody',18,'rune_bar',5]];
+  ['rune_full_helm',18,'rune_bar',1],
+  ['rune_sword',18,'rune_bar',1],
+  ['rune_scimitar',18,'rune_bar',2],
+  ['rune_chainbody',19,'rune_bar',3],
+  ['rune_kiteshield',19,'rune_bar',3],
+  ['rune_platebody',20,'rune_bar',5]];
+const COOKED_FISH=['shrimps','sardine','trout','lobster'];
+function cookedFishCount(){let n=0;for(const f of COOKED_FISH)n+=countItem(f);return n;}
+function consumeCookedFish(n){for(const f of COOKED_FISH){while(n>0&&countItem(f)>0){removeSlot(findItem(f));n--;}}return n<=0;}
 function countItem(id){
   return player.inv.reduce((a,sl)=>a+(sl&&sl.id===id?(sl.qty||1):0),0);
 }
@@ -9212,7 +9290,7 @@ const QUESTS=[
        ?'Bring the seasoned platter to Larry.'
        :'Plate the Seated Meal at the kitchen range, then Use the Spice pouch to season it, and take it to Larry.'};
      const need=[];
-     if(countItem('fresh_herbs')<1)need.push('fresh herbs (planter on the lawn south of Coit)');
+     if(countItem('fresh_herbs')<1)need.push('fresh herbs (the herb planter on the lawn just south of the Coit kitchen)');
      if(countItem('coarse_salt')<1)need.push('coarse salt (Bozek, Foster hill)');
      if(need.length)return{cls:1,text:'Gather '+need.join(' and ')+', then see Larry to fill the spice pouch.'};
      return{cls:1,text:'Take the herbs and salt to Larry to fill the spice pouch.'};
@@ -9227,7 +9305,7 @@ const QUESTS=[
    if(L.s<2)return{hidden:true};
    if(ch.s<2)return{cls:0,text:'Locked — complete ‘Take Your Seats’ first.'};
    if(ch.s===2)return{cls:1,text:'Part one done. Ask Larry about the school Bonfire to begin part two.'};
-   if(ch.s===3)return{cls:1,text:'Stack 8 logs ('+ch.logs+' of 8) on the south-lawn Bonfire — chop the dry timber at Drury Orchard, far NE — then light it.'};
+   if(ch.s===3)return{cls:1,text:ch.logs>=8?'You have enough wood. Light the Bonfire on the lawn southeast of the chapel to finish.':'Chop 8 logs to build the Bonfire ('+ch.logs+' of 8) — any tree counts; the dry timber at Drury Orchard, far NE, chops fastest. Then light the Bonfire on the lawn southeast of the chapel.'};
    return{cls:2,text:'Complete. The Bonfire roared and the school sang round it.'};
   }],
  ['chef3','The Three Tables III — The Boar’s Head Feast','Larry — Coit kitchen',
@@ -9242,9 +9320,9 @@ const QUESTS=[
      if(countItem('boars_head_feast')>0)return{cls:1,text:'Bring the assembled Boar’s Head feast to Larry.'};
      const have=[];
      if(countItem('boar_head')>0)have.push('head');
-     if(countItem('lobster')>0)have.push('lobster');
+     if(cookedFishCount()>0)have.push(cookedFishCount()+' fish');
      if(countItem('borrowed_flour')>0)have.push('flour');
-     return{cls:1,text:'Get the boar’s head (slay the boar NW of Crumpacker), a cooked lobster, and a sack of flour (Pratt larder), then assemble at the range. Have: '+(have.length?have.join(', '):'nothing yet')+'.'};
+     return{cls:1,text:'Get the boar’s head (slay the boar NW of Crumpacker), 5 cooked fish of any kind, and a sack of flour (31 Hockey Lane), then assemble it at the kitchen range in Coit. Have: '+(have.length?have.join(', '):'nothing yet')+'.'};
    }
    return{cls:2,text:'Three tables, three triumphs. The term is fed.'};
   }],
@@ -9253,7 +9331,7 @@ const QUESTS=[
   q=>q.s===0?'Race week is coming and the crew eats like a fire. Ask Coach at the boathouse.'
    :q.s===1?(countItem('sardine')>=5
      ?'You have the catch. Bring 5 cooked sardines to Coach.'
-     :'Net and cook 5 sardines for the crew (Fishing 5; the spots run south of the boathouse).')
+     :'Net and cook 5 sardines for the crew (Fishing 5; fish the spots by the boathouse, then cook them).')
    :'Complete. The eight rows on a full stomach.'],
  ['dq','Here Be Dragons','Mish \u2014 Fitness Center, then Rick Snow in the SE meadow',
   '5000 coins, the Dragon Slayer shield, 6000 Strength & 4000 Defense XP',
@@ -9261,7 +9339,7 @@ const QUESTS=[
    if(q.s===2)return 'Complete. The grounds crew owes you their jobs, and possibly their lives.';
    if(q.k>=3)return 'The dragons are slain. Return to Rick Snow in the south-east meadow.';
    if(q.f)return 'Slay the three Grounds Dragons rampaging in the south-east meadow ('+q.k+' of 3).';
-   return 'Find the grounds crew in the far south-east meadow, behind the forest.';}],
+   return 'Go to the far south-east meadow, behind the forest, and speak to Rick Snow of the grounds crew.';}],
  ['mish','Lost at Practice','Mish \u2014 Fitness Center',
   '400 coins, an Amulet of Strength, 300 Strength XP',
   q=>{if(q.s===0)return 'Two of Mish\u2019s runners never came back from practice. Ask her at the Fitness Center.';
@@ -9271,7 +9349,7 @@ const QUESTS=[
      (q.r1+q.r2)+' of 2 found) and send them home.';}],
  ['bozek','Trick or Treat','Mr. Bozek \u2014 Foster hill',
   '500 coins and the Pumpkin helmet',
-  q=>{if(q.s===0)return 'Mr. Bozek on Foster hill has a seasonal request.';
+  q=>{if(q.s===0)return 'Speak to Mr. Bozek up on Foster hill — he has a seasonal request.';
    if(q.s===2)return 'Complete. Foster hill\u2019s candy reserves are secure.';
    const got=bozekGot(q),tot=bozekTotal();
    if(got>=tot)return 'All candy collected. Return to Mr. Bozek.';
@@ -9325,7 +9403,7 @@ const QUESTS=[
    return 'Return to Rector Matthews in triumph.';}],
  ['sos','Stronghold of Security','Glen \u2014 the Stronghold car park',
   '2,000 coins, the Fighting boots, 1,000 Attack, Strength & Defense XP',
-  q=>{if(q.s===0)return 'Glen of the Safety Department watches the holding cells beside the Stronghold. He is hiring.';
+  q=>{if(q.s===0)return 'Speak to Glen of the Safety Department at the Stronghold car park — he is hiring to clear the holding cells.';
    if(q.s===2)return 'Complete. Four cells contained, one chest liberated.';
    if(q.k4>=1)return 'All cells contained. Open the old evidence chest.';
    if(q.k3>=2)return 'Three cells contained. Face the Vault Sentinel in cell four.';
@@ -9385,12 +9463,12 @@ renderQuests();
 const SKILL_GUIDE={
   attack:[[1,'Wield bronze and iron weapons'],[3,'Wield steel weapons'],
     [8,'Wield mithril weapons'],[13,'Wield adamant weapons'],
-    [18,'Wield rune weapons']],
+    [18,'Wield rune weapons'],[28,'Wield dragon weapons']],
   strength:[[1,'Each level raises your melee max hit'],
     [1,'An Amulet of Strength adds +3 to your max hit']],
   defense:[[1,'Wear bronze and iron armour'],[3,'Wear steel armour'],
     [8,'Wear mithril armour'],[13,'Wear adamant armour'],
-    [18,'Wear rune armour']],
+    [18,'Wear rune armour'],[28,'Wear dragon armour']],
   hitpoints:[[10,'You begin with 10 Hitpoints'],
     [11,'Each Hitpoints level adds 1 maximum health']],
   woodcutting:[[1,'Chop regular trees'],[6,'Chop oak trees'],
@@ -9943,7 +10021,7 @@ function render(now){
   const swing=Math.sin(now*0.012)*0.7*walkBlend;
   pm.lLeg.rotation.x=swing;pm.rLeg.rotation.x=-swing;
   let armL=-swing*0.5,armR=swing*0.5;
-  axe.visible=pick.visible=sword.visible=false;
+  axe.visible=pick.visible=sword.visible=scim.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
   const act=player.action;
@@ -9966,6 +10044,7 @@ function render(now){
   if(showTool==='axe')axe.visible=true;
   else if(showTool==='pick')pick.visible=true;
   else if(showTool==='sword')sword.visible=true;
+  else if(showTool==='scim')scim.visible=true;
   shieldM.visible=!!player.equip.shield;
   capeM.visible=!!player.equip.cape;
   const tintG=(grp,t9,r9)=>{grp.traverse(o9=>{
@@ -10012,9 +10091,9 @@ function render(now){
     tintG(shieldM,se.tint!==undefined?se.tint:0x7a5a36,
       se.trim!==undefined?se.trim:0x4f3a22);
   }
-  if(showTool==='sword'&&player.equip.weapon){
+  if((showTool==='sword'||showTool==='scim')&&player.equip.weapon){
     const we=ITEMS[player.equip.weapon.id].equip;
-    tintG(sword,we.tint!==undefined?we.tint:0xc7ccd4,
+    tintG(showTool==='scim'?scim:sword,we.tint!==undefined?we.tint:0xc7ccd4,
       we.trim!==undefined?we.trim:0x8a6a2a);
   }
   pm.lArm.rotation.x=armL;pm.rArm.rotation.x=armR;
