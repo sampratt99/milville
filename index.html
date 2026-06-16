@@ -728,11 +728,11 @@ const GE_STOCK=[];
         tint:tint,trim:trim}};
     ITEMS[n+'_chainbody']={name:N+' chainbody',
       ex:'Linked '+n+' rings, light and strong.',val:Math.round(v*2.1),
-      equip:{slot:'body',def:5+ix*3,model:'chain',verb:'Wear',req:rq,
+      equip:{slot:'body',def:6+ix*5,model:'chain',verb:'Wear',req:rq,
         tint:tint,trim:trim}};
     ITEMS[n+'_platebody']={name:N+' platebody',
       ex:'Heavy '+n+' plate. The good stuff.',val:Math.round(v*3.3),
-      equip:{slot:'body',def:8+ix*4,model:'plate',verb:'Wear',req:rq,
+      equip:{slot:'body',def:9+ix*5,model:'plate',verb:'Wear',req:rq,
         tint:tint,trim:trim}};
     ITEMS[n+'_platelegs']={name:n[0].toUpperCase()+n.slice(1)+' platelegs',
       ex:'Sturdy '+n+' legplates.',val:Math.round(v*2.4),
@@ -746,7 +746,7 @@ const GE_STOCK=[];
 ITEMS.dragon_scimitar={name:'Dragon scimitar',ex:'A wickedly curved blade of red dragon-metal, chased with gold.',val:130000,equip:{slot:'weapon',atk:22,str:20,model:'scim',verb:'Wield',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_sword={name:'Dragon sword',ex:'A straight dragon-metal blade, gold-fullered and keen.',val:110000,equip:{slot:'weapon',atk:21,str:18,model:'sword',verb:'Wield',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_full_helm={name:'Dragon full helm',ex:'A snarling dragon-head helm of red and gold.',val:90000,equip:{slot:'head',def:16,model:'helm',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
-ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with gold dragon-work.',val:160000,equip:{slot:'body',def:33,model:'plate',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with gold dragon-work.',val:160000,equip:{slot:'body',def:38,model:'plate',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_platelegs={name:'Dragon platelegs',ex:'Red dragon-plate greaves trimmed in gold.',val:130000,equip:{slot:'legs',def:25,model:'legs',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_kiteshield={name:'Dragon kiteshield',ex:'A red kiteshield bearing a golden wyrm.',val:120000,equip:{slot:'shield',def:20,model:'shieldM',verb:'Wear',req:28,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.uncut_sapphire={name:'Uncut sapphire',ex:'A rough blue gem. The Exchange will pay for it.',val:300,prim:'Examine'};
@@ -818,21 +818,21 @@ const OBJ_DEFS={
   tree:{name:'Tree',action:'Chop down',skill:'woodcutting',req:1,xp:9,item:'logs',
     base:.45,fall:1,respawn:[8,15],ex:'A leafy tree.',depEx:'Somebody beat me to it.',depName:'Tree stump'},
   oak:{name:'Oak tree',action:'Chop down',skill:'woodcutting',req:6,xp:16,item:'oak_logs',
-    base:.32,fall:.13,respawn:[10,16],ex:'A grand old oak.',depEx:'Just a stump now.',depName:'Oak stump'},
+    base:.32,fall:.13,cap:[4,7],respawn:[12,20],ex:'A grand old oak.',depEx:'Just a stump now.',depName:'Oak stump'},
   willow:{name:'Willow tree',action:'Chop down',skill:'woodcutting',req:12,xp:26,item:'willow_logs',
-    base:.26,fall:.13,respawn:[12,18],ex:'A weeping tree by the water.',depEx:'Even stumps weep.',depName:'Willow stump'},
+    base:.26,fall:.13,cap:[5,8],respawn:[16,26],ex:'A weeping tree by the water.',depEx:'Even stumps weep.',depName:'Willow stump'},
   copper:{name:'Copper rocks',action:'Mine',skill:'mining',req:1,xp:13,item:'copper_ore',
-    base:.5,fall:1,respawn:[3,5],cap:[2,3],ex:'It glints orange. Copper, probably.',depEx:'Mined clean.',depName:'Rocks'},
+    base:.5,fall:1,respawn:[3,5],cap:[3,5],ex:'It glints orange. Copper, probably.',depEx:'Mined clean.',depName:'Rocks'},
   tin:{name:'Tin rocks',action:'Mine',skill:'mining',req:1,xp:13,item:'tin_ore',
-    base:.5,fall:1,respawn:[3,5],cap:[2,3],ex:'Flecks of silvery tin.',depEx:'Mined clean.',depName:'Rocks'},
+    base:.5,fall:1,respawn:[3,5],cap:[3,5],ex:'Flecks of silvery tin.',depEx:'Mined clean.',depName:'Rocks'},
   iron:{name:'Iron rocks',action:'Mine',skill:'mining',req:5,xp:24,item:'iron_ore',
-    base:.32,fall:1,respawn:[4,6],cap:[2,3],ex:'A rusty-red seam of iron.',depEx:'Mined clean.',depName:'Rocks'},
+    base:.32,fall:1,respawn:[5,8],cap:[2,4],ex:'A rusty-red seam of iron.',depEx:'Mined clean.',depName:'Rocks'},
   mithril:{name:'Mithril rocks',action:'Mine',skill:'mining',req:10,xp:45,item:'mithril_ore',
-    base:.22,fall:1,respawn:[5,8],cap:[2,3],ex:'A seam shot through with blue mithril.',depEx:'Mined clean.',depName:'Rocks'},
+    base:.22,fall:1,respawn:[7,12],cap:[2,3],ex:'A seam shot through with blue mithril.',depEx:'Mined clean.',depName:'Rocks'},
   adamant:{name:'Adamantite rocks',action:'Mine',skill:'mining',req:14,xp:60,item:'adamant_ore',
-    base:.16,fall:1,respawn:[6,9],cap:[2,3],ex:'Dark green adamantite, hard as the dean.',depEx:'Mined clean.',depName:'Rocks'},
+    base:.16,fall:1,respawn:[10,16],cap:[1,2],ex:'Dark green adamantite, hard as the dean.',depEx:'Mined clean.',depName:'Rocks'},
   rune:{name:'Runite rocks',action:'Mine',skill:'mining',req:18,xp:90,item:'runite_ore',
-    base:.1,fall:1,respawn:[7,11],cap:[2,3],ex:'It hums. Runite \u2014 worth a term\u2019s tuition.',depEx:'Mined clean.',depName:'Rocks'},
+    base:.1,fall:1,respawn:[14,22],cap:[1,2],ex:'It hums. Runite \u2014 worth a term\u2019s tuition.',depEx:'Mined clean.',depName:'Rocks'},
   spot:{name:'Fishing spot',action:'Net',skill:'fishing',req:1,xp:10,item:'raw_shrimps',
     base:.42,fall:0,respawn:[12,20],cap:[6,10],ex:'Shrimps dart beneath the surface.',noBlock:true},
   fire:{name:'Campfire',action:'Cook-at',ex:'Mmm, toasty.',noBlock:1},
@@ -1906,7 +1906,7 @@ function addXp(skill,amt){
   if(after>before){
     msg('Congratulations! Your '+SKILL_META[skill].name+' level is now '+after+'.','#9c1f1f');
     sfx.level();
-    if(before<50&&after>=50)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from Rector Matthews at the Rectory.','#ffd23d');
+    if(before<50&&after>=50)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from Rector Matthews at the Rectory.','#7a4a0a');
     const c9=cmbLvl();
     if(c9>(player.cmb||3)){
       player.cmb=c9;
@@ -2104,9 +2104,9 @@ function playerTick(){
       msg(VERBS[def.skill][1].replace('{item}',ITEMS[gid].name.toLowerCase()));
       if(def.skill==='woodcutting'&&player.quests.chef.s===3&&player.quests.chef.logs<8){
         player.quests.chef.logs++;
-        msg('You gather wood for the Bonfire. ('+player.quests.chef.logs+' of 8)','#e0a23a');
+        msg('You gather wood for the Bonfire. ('+player.quests.chef.logs+' of 8)','#7a4a0a');
         renderQuests&&renderQuests();
-        if(player.quests.chef.logs>=8)msg('You have enough wood — light the Bonfire on the lawn southeast of the chapel.','#e0a23a');
+        if(player.quests.chef.logs>=8)msg('You have enough wood — light the Bonfire on the lawn southeast of the chapel.','#7a4a0a');
       }
       let _depl=false;
       if(def.cap){
@@ -2208,7 +2208,7 @@ function playerTick(){
   }
   else if(a.type==='cook'){
     const f=a.fire;
-    if(!adjacentTo(f.x,f.y)){if(!player.path.length)walkTo(f.x,f.y);return;}
+    if(dist1(player.x,player.y,f.x,f.y)>1){if(!player.path.length)walkTo(f.x,f.y,'adj');return;}
     player.path.length=0;player.face=Math.sign(f.x-player.x)||player.face;
     player.actTick++;
     if(player.actTick%2!==0)return;
@@ -2258,7 +2258,7 @@ function playerTick(){
     if(added===0){msg('You have no logs to stack. Chop some at Drury Orchard, far to the north-east.');cancelAction();return;}
     addXp('firemaking',6*added);sfx.cook&&sfx.cook();
     msg('You stack '+added+(added===1?' log':' logs')+' on the Bonfire. ('+ch.logs+' of 8)');
-    if(ch.logs>=8)msg('The woodpile is ready. Light it!','#e0a23a');
+    if(ch.logs>=8)msg('The woodpile is ready. Light it!','#7a4a0a');
     renderQuests&&renderQuests();cancelAction();
   }
   else if(a.type==='lightbonfire'){
@@ -2283,7 +2283,7 @@ function playerTick(){
     if(countItem('bland_dish')>0||countItem('seasoned_dish')>0){msg('You have already plated tonight\u2019s meal.');cancelAction();return;}
     if(invFull()){msg('Your pack is full.');cancelAction();return;}
     addItem('bland_dish');addXp('cooking',40);sfx.cook&&sfx.cook();
-    msg('You plate up the Seated Meal. Edible, but utterly bland \u2014 Use the Spice pouch to season it.','#c9a23a');
+    msg('You plate up the Seated Meal. Edible, but utterly bland \u2014 Use the Spice pouch to season it.','#7a4a0a');
     cancelAction();
   }
   else if(a.type==='assemblefeast'){
@@ -2296,7 +2296,7 @@ function playerTick(){
     if(invFull()&&countItem('boars_head_feast')<1){}
     removeSlot(findItem('boar_head'));removeSlot(findItem('borrowed_flour'));consumeCookedFish(5);
     addItem('boars_head_feast');addXp('cooking',150);sfx.cook&&sfx.cook();
-    msg('You assemble the Boar\u2019s Head feast. Bring it to Larry for the procession into Coit.','#c9a23a');
+    msg('You assemble the Boar\u2019s Head feast. Bring it to Larry for the procession into Coit.','#7a4a0a');
     renderQuests&&renderQuests();cancelAction();
   }
 
@@ -2758,7 +2758,7 @@ function itemPrimary(i){
     const bi=findItem('bland_dish');
     if(bi<0){msg('You need an unseasoned platter to season. Plate one at the kitchen range.');return;}
     removeSlot(bi);addItem('seasoned_dish');addXp('cooking',20);sfx.cook&&sfx.cook();
-    msg('You season the platter with Larry’s secret blend. It smells incredible.','#c9a23a');
+    msg('You season the platter with Larry’s secret blend. It smells incredible.','#7a4a0a');
   }else if(prim==='CookHint'){
     msg('I should cook these on the campfire.');
   }else if(prim==='Yuck'){
@@ -8259,7 +8259,7 @@ function questKill(r){
     const _DR=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield'];
     const _did=_DR[rndi(0,_DR.length-1)];
     if(invFull())dropGround(r.x,r.y,_did,1); else addItem(_did,1);
-    msg('A rare drop! You receive a '+ITEMS[_did].name+' \u2014 dragon equipment!','#e8b020');
+    msg('A rare drop! You receive a '+ITEMS[_did].name+' \u2014 dragon equipment!','#7a4a0a');
     sfx.pickup&&sfx.pickup();
   }
   if(Q.tut.s===1&&kind==='rat'&&Q.tut.k<3){
