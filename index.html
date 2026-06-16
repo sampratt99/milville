@@ -851,7 +851,7 @@ const OBJ_DEFS={
   clerk:{name:'Grand Exchange clerk',
     ex:'She buys anything and sells fine arms and armour.'},
   range:{name:'Kitchen range',action:'Cook-at',ex:'Larry\u2019s cast-iron range, hot enough for a feast.'},
-  herbplanter:{name:'Herb planter',action:'Pick-from',ex:'A planter of kitchen herbs behind Coit.'},
+  herbplanter:{name:'Herb planter',action:'Pick-from',ex:'A planter of kitchen herbs on the lawn south of Coit.'},
   bonfire:{name:'Bonfire',action:'Build',ex:'The great school Bonfire, waiting on wood and a spark.'},
   larder:{name:'Pratt larder',action:'Search',ex:'The Pratt House larder. They have flour to spare.'}
 };
@@ -1406,7 +1406,7 @@ addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
 addObj('furnace',128,18);addObj('anvil',130,18);
 addObj('fire',150,23);
 addObj('fire',68,44);
-addObj('range',135,48);addObj('herbplanter',136,48);addObj('bonfire',110,123);addObj('larder',30,101);
+addObj('range',135,48);addObj('herbplanter',138,58);addObj('bonfire',110,123);addObj('larder',30,101);
 addObj('statue',96,92);
 addObj('banker',72,48,true);addObj('banker',73,47,true);
 addObj('clerk',74,48,true);addObj('clerk',73,49,true);
@@ -2230,7 +2230,12 @@ function playerTick(){
     if(ch.s!==3){msg('The Bonfire is built and done with.');cancelAction();return;}
     if(ch.logs>=8){msg('The Bonfire has all the wood it needs. Light it!');cancelAction();return;}
     let added=0,li;
-    while(ch.logs<8&&(li=findItem('logs'))>=0){removeSlot(li);ch.logs++;added++;}
+    const LOGTYPES=['logs','oak_logs','willow_logs'];
+    while(ch.logs<8){
+      li=-1;for(const _lt of LOGTYPES){const _f=findItem(_lt);if(_f>=0){li=_f;break;}}
+      if(li<0)break;
+      removeSlot(li);ch.logs++;added++;
+    }
     if(added===0){msg('You have no logs to stack. Chop some at Drury Orchard, far to the north-east.');cancelAction();return;}
     addXp('firemaking',6*added);sfx.cook&&sfx.cook();
     msg('You stack '+added+(added===1?' log':' logs')+' on the Bonfire. ('+ch.logs+' of 8)');
@@ -2799,15 +2804,15 @@ function examineItem(id){
     const b=[];if(eq.atk)b.push('Attack +'+eq.atk);if(eq.str)b.push('Strength +'+eq.str);if(eq.def)b.push('Defence +'+eq.def);
     let line=b.join(', ')||'No combat bonuses';
     if(eq.req)line+=' \u00b7 needs '+(eq.slot==='weapon'?'Attack':'Defence')+' '+eq.req;
-    msg(line,'#9ad0ff');
+    msg(line,'#1a5a8c');
     const cur=player.equip[eq.slot];
     if(cur&&cur.id!==id){
       const ce=ITEMS[cur.id].equip||{};
       const d=(a,b)=>{const v=(a||0)-(b||0);return v>0?'+'+v:''+v;};
-      msg('vs your '+ITEMS[cur.id].name+':  Atk '+d(eq.atk,ce.atk)+'  Str '+d(eq.str,ce.str)+'  Def '+d(eq.def,ce.def),'#d2b48c');
+      msg('vs your '+ITEMS[cur.id].name+':  Atk '+d(eq.atk,ce.atk)+'  Str '+d(eq.str,ce.str)+'  Def '+d(eq.def,ce.def),'#6e4a1f');
     }
   }
-  const gp=gePrice(id);if(gp)msg('GE value: '+fmt(gp)+' gp.','#ffe66d');
+  const gp=gePrice(id);if(gp)msg('GE value: '+fmt(gp)+' gp.','#6b4800');
 }
 function equipFromInv(i){
   const s=player.inv[i];if(!s)return;
@@ -8263,7 +8268,18 @@ function questDone(nm){
   }
   renderQuests();renderInv();dirty=true;
 }
+function removeWorldObj(def){
+  for(let i=objects.length-1;i>=0;i--){
+    const o=objects[i];
+    if(o.def===def){
+      if(action&&action.o===o)cancelAction();
+      if(o._m&&o._m.group)scene.remove(o._m.group);
+      objects.splice(i,1);
+    }
+  }
+}
 function syncQuestWorld(){
+  if(player.quests.chef.s===6){removeWorldObj('herbplanter');removeWorldObj('range');}
   const mq=player.quests.mish;
   for(const[id,fl]of[['lost1','r1'],['lost2','r2']]){
     const n=npcs.find(n2=>n2.id===id);
@@ -8363,7 +8379,7 @@ const DIALOGUES={
     const dq=player.quests.dq;
     const chf=player.quests.chef;
     if(chf.s===1&&chf.pouch===0&&countItem('fresh_herbs')<1)return{
-      start:{who:'npc',text:'Larry’s blend, eh? The herb planter is right behind the Coit kitchen — rosemary, sage and thyme, all coming on nicely. Pick what you need, just leave some for the next batch.',next:'by'},
+      start:{who:'npc',text:'Larry’s blend, eh? The herb planter’s out on the south lawn, just past the Coit courtyard — rosemary, sage and thyme, all coming on nicely. Pick what you need, just leave some for the next batch.',next:'by'},
       by:{who:'npc',text:'And tell Larry the basil situation is HIS fault. Long story.',next:null}};
     /* not started via Mish yet, or quest unavailable: idle landscaper banter */
     if(dq.s===0||dq.s===undefined)return{
@@ -8541,13 +8557,18 @@ const DIALOGUES={
       const ch=player.quests.chef;ch.up=1;
       const hasHerbs=countItem('fresh_herbs')>0,hasSalt=countItem('coarse_salt')>0;
       if(ch.s===0)return{
-        start:{who:'npc',text:'The pantry is safe — now the real cooking starts. Three great meals run this term and I am a pair of hands short. Care to earn your supper?',next:'ask'},
-        ask:{opts:[{label:'Tell me about the meals.',next:'p1'},{label:'Not now, Larry.',next:'by'}]},
-        p1:{who:'npc',text:'First: the Seated Meal. Family-style, four hundred souls, and it is going out BLAND because my spice pouch ran dry. Restock my secret blend and we are in business.',next:'off'},
+        start:{who:'npc',text:'The pantry’s stocked again — bless you for that. But shelving tins is the easy part. Three times a term this kitchen feeds the whole school, and every feast is its own ordeal. I’m a pair of hands short, and the first is nearly upon us.',next:'ask'},
+        ask:{opts:[
+          {label:'What are these three meals?',next:'meals'},
+          {label:'What do you need from me first?',next:'need'},
+          {label:'Not now, Larry.',next:'by'}]},
+        meals:{who:'npc',text:'Tradition, every one. First the Seated Meal — four hundred souls at the long tables, served family-style. Then the Bonfire on the south lawn, the whole school gathered round the flames. And last the Boar’s Head Feast, the grand one that closes the term.',next:'meals2'},
+        meals2:{who:'npc',text:'See me through all three and I’ll teach you the range proper, and pay you well besides. But one at a time — we begin with the Seated Meal, and it is the Seated Meal that troubles me.',next:'need'},
+        need:{who:'npc',text:'It is going out BLAND, which shames me to my boots. My secret spice blend ran dry. What I need is simple: restock it. Fresh herbs and coarse salt, ground into this pouch of mine. Fetch me those two and we are in business. Will you?',next:'off'},
         off:{opts:[
-          {label:'I will fill your pouch.',next:()=>{ if(invFull()){msg('Make room in your pack first.');return 'full';} addItem('spice_pouch');ch.s=1;ch.pouch=0; msg('Quest started: The Three Tables of Millville','#103a8c'); return 'gave';}},
+          {label:'I’ll fill your pouch.',next:()=>{ if(invFull()){msg('Make room in your pack first.');return 'full';} addItem('spice_pouch');ch.s=1;ch.pouch=0; msg('Quest started: Take Your Seats','#103a8c'); return 'gave';}},
           {label:'Maybe later.',next:'by'}]},
-        gave:{who:'npc',text:'Good soul. The blend is fresh herbs and coarse salt. Rick on the grounds crew keeps a herb planter just behind the kitchen — and Bozek up on Foster hill is sitting on a sack of good coarse salt. Bring me both.',next:null},
+        gave:{who:'npc',text:'Good soul — take the pouch. No real magic to the blend: fresh herbs and coarse salt, that is all. Rick on the grounds crew tends a herb planter out on the south lawn, just past the courtyard — pick a sprig there. And Bozek, up on Foster hill, hoards a sack of proper coarse salt. Bring me both and we’ll grind it together.',next:null},
         full:{who:'npc',text:'Come back when your pack is not bursting.',next:null},
         by:{who:'npc',text:'The ovens will keep. Mostly.',next:null}};
       if(ch.s===1){
@@ -8561,9 +8582,9 @@ const DIALOGUES={
         if(ch.pouch===1&&countItem('seasoned_dish')>0)return{
           start:{who:'npc',text:'Is that— yes! THAT is what a Seated Meal should smell like. Give it here.',next:'give'},
           give:{opts:[
-            {label:'Hand over the seasoned platter.',next:()=>{ removeSlot(findItem('seasoned_dish')); addItem('coins',200);addXp('cooking',250); ch.s=2; msg('Part 1 complete: Take Your Seats.','#7a18c9'); if(sfx.level)sfx.level(); return 'done';}},
+            {label:'Hand over the seasoned platter.',next:()=>{ removeSlot(findItem('seasoned_dish')); {const _sp=findItem('spice_pouch');if(_sp>=0)removeSlot(_sp);} addItem('coins',200);addXp('cooking',250); ch.s=2; msg('Part 1 complete: Take Your Seats.','#7a18c9'); if(sfx.level)sfx.level(); return 'done';}},
             {label:'Let me hold onto it.',next:'by'}]},
-          done:{who:'npc',text:'Four hundred happy diners and not one complaint. Keep the pouch — you earned the right to carry it. Come back when you can; there is a Bonfire to build.',next:null},
+          done:{who:'npc',text:'Four hundred happy diners and not one complaint. I’ll take my pouch back — it has seen me through worse terms than this. Come back when you can; there is a Bonfire to build.',next:null},
           by:{who:'npc',text:'It will only get colder.',next:null}};
         if(ch.pouch===1)return{ start:{who:'npc',text:'Pouch is charged. Plate the Seated Meal at the range, season it with the pouch, and bring me the platter.',next:null}};
         return{ start:{who:'npc',text:'I need the blend: fresh herbs from Rick’s planter behind the kitchen, and coarse salt from Bozek on Foster hill. Both, then come see me.',next:null}};
@@ -8589,7 +8610,7 @@ const DIALOGUES={
         if(countItem('boars_head_feast')>0)return{
           start:{who:'npc',text:'The whole feast, assembled and glorious. Bring it here!',next:'give'},
           give:{opts:[
-            {label:'Present the Boar’s Head feast.',next:()=>{ removeSlot(findItem('boars_head_feast')); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else dropGround(player.x,player.y,'oven_mitts',1); ch.s=6; questDone('The Three Tables of Millville'); return 'done';}},
+            {label:'Present the Boar’s Head feast.',next:()=>{ removeSlot(findItem('boars_head_feast')); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else dropGround(player.x,player.y,'oven_mitts',1); ch.s=6; questDone('The Three Tables of Millville'); removeWorldObj('herbplanter');removeWorldObj('range'); return 'done';}},
             {label:'One moment.',next:'by'}]},
           done:{who:'npc',text:'PERFECT. The procession will carry it into Coit with the carol and all. Take these oven mitts — quilted, scorch-proof, a chef’s best friend. You will burn far less at the fire now. You are kitchen family, always.',next:null},
           by:{who:'npc',text:'Careful — that head is heavier than it looks.',next:null}};
@@ -9179,32 +9200,53 @@ const QUESTS=[
      ?'You have the crate. Return it to Larry at Coit.'
      :'Find the supply crate up at White Farm, in the far northeast. Mind the rats.')
    :'Complete. The pantry \u2014 and dinner \u2014 are safe.'],
- ['chef','The Three Tables of Millville','Larry — Coit kitchen',
-  'Cooking & Firemaking XP, coins, and Oven Mitts',
-  q=>{
-   if(q.s===0)return 'Larry needs help with the term’s three great meals. Speak to him at the Coit kitchen now the shipment is safe.';
-   if(q.s===1){
-     if(q.pouch===1)return countItem('seasoned_dish')>0
+ ['chef1','The Three Tables I — Take Your Seats','Larry — Coit kitchen',
+  '250 Cooking XP and 200 coins',
+  null,
+  ()=>{
+   const L=player.quests.larry,ch=player.quests.chef;
+   if(L.s<2)return{hidden:true};
+   if(ch.s===0)return{cls:1,text:'Larry needs a hand with the term’s first great feast, the Seated Meal. Speak to him at the Coit kitchen to begin.'};
+   if(ch.s===1){
+     if(ch.pouch===1)return{cls:1,text:countItem('seasoned_dish')>0
        ?'Bring the seasoned platter to Larry.'
-       :'Plate the Seated Meal at the kitchen range, then Use the Spice pouch to season it, and take it to Larry.';
+       :'Plate the Seated Meal at the kitchen range, then Use the Spice pouch to season it, and take it to Larry.'};
      const need=[];
-     if(countItem('fresh_herbs')<1)need.push('fresh herbs (planter behind Coit)');
+     if(countItem('fresh_herbs')<1)need.push('fresh herbs (planter on the lawn south of Coit)');
      if(countItem('coarse_salt')<1)need.push('coarse salt (Bozek, Foster hill)');
-     if(need.length)return 'Part 1, Take Your Seats: gather '+need.join(' and ')+', then see Larry to fill the spice pouch.';
-     return 'Take the herbs and salt to Larry to fill the spice pouch.';
+     if(need.length)return{cls:1,text:'Gather '+need.join(' and ')+', then see Larry to fill the spice pouch.'};
+     return{cls:1,text:'Take the herbs and salt to Larry to fill the spice pouch.'};
    }
-   if(q.s===2)return 'Part 1 complete. Ask Larry about the Bonfire.';
-   if(q.s===3)return 'Part 2, The Bonfire: stack 8 logs ('+q.logs+' of 8) on the south-lawn Bonfire — chop the dry timber at Drury Orchard, far NE — then light it.';
-   if(q.s===4)return 'Part 2 complete. Ask Larry about the Boar’s Head feast.';
-   if(q.s===5){
-     if(countItem('boars_head_feast')>0)return 'Bring the assembled Boar’s Head feast to Larry.';
+   return{cls:2,text:'Complete. The Seated Meal went out seasoned and proud.'};
+  }],
+ ['chef2','The Three Tables II — The Bonfire','Larry — Coit kitchen',
+  '300 Firemaking & 180 Cooking XP',
+  null,
+  ()=>{
+   const L=player.quests.larry,ch=player.quests.chef;
+   if(L.s<2)return{hidden:true};
+   if(ch.s<2)return{cls:0,text:'Locked — complete ‘Take Your Seats’ first.'};
+   if(ch.s===2)return{cls:1,text:'Part one done. Ask Larry about the school Bonfire to begin part two.'};
+   if(ch.s===3)return{cls:1,text:'Stack 8 logs ('+ch.logs+' of 8) on the south-lawn Bonfire — chop the dry timber at Drury Orchard, far NE — then light it.'};
+   return{cls:2,text:'Complete. The Bonfire roared and the school sang round it.'};
+  }],
+ ['chef3','The Three Tables III — The Boar’s Head Feast','Larry — Coit kitchen',
+  'Oven Mitts, 1200 Cooking XP and 750 coins',
+  null,
+  ()=>{
+   const L=player.quests.larry,ch=player.quests.chef;
+   if(L.s<2)return{hidden:true};
+   if(ch.s<4)return{cls:0,text:'Locked — complete ‘The Bonfire’ first.'};
+   if(ch.s===4)return{cls:1,text:'Part two done. Ask Larry about the Boar’s Head Feast to begin part three.'};
+   if(ch.s===5){
+     if(countItem('boars_head_feast')>0)return{cls:1,text:'Bring the assembled Boar’s Head feast to Larry.'};
      const have=[];
      if(countItem('boar_head')>0)have.push('head');
      if(countItem('lobster')>0)have.push('lobster');
      if(countItem('borrowed_flour')>0)have.push('flour');
-     return 'Part 3, Boar’s Head: get the boar’s head (slay the boar NW of Crumpacker), a cooked lobster, and a sack of flour (Pratt larder), then assemble at the range. Have: '+(have.length?have.join(', '):'nothing yet')+'.';
+     return{cls:1,text:'Get the boar’s head (slay the boar NW of Crumpacker), a cooked lobster, and a sack of flour (Pratt larder), then assemble at the range. Have: '+(have.length?have.join(', '):'nothing yet')+'.'};
    }
-   return 'Complete. Three tables, three triumphs.';
+   return{cls:2,text:'Three tables, three triumphs. The term is fed.'};
   }],
  ['cq','The Training Table','Coach \u2014 Turkey Pond boathouse',
   '500 coins, 700 Fishing & 350 Cooking XP',
@@ -9294,15 +9336,23 @@ function renderQuests(){
   const box=document.getElementById('qlist');
   if(!box)return;
   box.innerHTML='';
-  for(const[id,nm,giver,reward,info]of QUESTS){
-    const q=player.quests[id];
-    const _cls=(q.s===0&&q.up)?1:q.s;
+  for(const[id,nm,giver,reward,info,statusFn]of QUESTS){
+    let _cls,_d1;
+    if(statusFn){
+      const st=statusFn();
+      if(st.hidden)continue;
+      _cls=st.cls;_d1=st.text;
+    }else{
+      const q=player.quests[id];
+      _cls=(q.s===0&&q.up)?1:q.s;
+      _d1=(q.s===0&&q.up)?('Speak to '+giver+' to begin this quest.'):info(q);
+    }
     const row=document.createElement('div');
     row.className='qrow q'+_cls;
     const t=document.createElement('div');t.className='qnm';
     t.textContent=nm;
     const det=document.createElement('div');det.className='qdet';
-    const d1=document.createElement('div');d1.textContent=(q.s===0&&q.up)?('Speak to '+giver+' to begin this quest.'):info(q);
+    const d1=document.createElement('div');d1.textContent=_d1;
     const d2=document.createElement('div');d2.className='qsub';
     d2.textContent='Start: '+giver;
     const d3=document.createElement('div');d3.className='qsub';
@@ -9310,7 +9360,7 @@ function renderQuests(){
     det.appendChild(d1);det.appendChild(d2);det.appendChild(d3);
     row.appendChild(t);row.appendChild(det);
     row.addEventListener('click',()=>{
-      d1.textContent=info(player.quests[id]);
+      d1.textContent=statusFn?statusFn().text:info(player.quests[id]);
       row.classList.toggle('open');});
     box.appendChild(row);
   }
