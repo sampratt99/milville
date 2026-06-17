@@ -806,6 +806,18 @@ ITEMS.raw_lobster={name:'Raw lobster',ex:'Snappy about it.',val:60};
 ITEMS.lobster={name:'Lobster',ex:'A proper feast.',prim:'Eat',heal:12,val:120};
 ITEMS.raw_swordfish={name:'Raw swordfish',ex:'A long-billed terror of the deep.',val:90};
 ITEMS.swordfish={name:'Swordfish',ex:'Grilled bill and all. A champion\u2019s meal.',prim:'Eat',heal:14,val:180};
+ITEMS.proctor_helm={name:'Proctor\u2019s Helm',ex:'A slayer\u2019s helm. Your blows fall harder on the creature of your current contract.',val:2000,equip:{slot:'head',def:11,model:'helm',verb:'Wear',req:0,tint:0x4a4f57,trim:0x9aa3ad}};
+ITEMS.crimson_proctor_helm={name:'Crimson Proctor\u2019s Helm',ex:'Crested and dyed crimson. The hunt burns brighter.',val:4000,equip:{slot:'head',def:14,atk:2,str:1,model:'helm',verb:'Wear',req:0,tint:0x9a2f2a,trim:0xe0c050}};
+ITEMS.gilded_warden_helm={name:'Gilded Warden\u2019s Helm',ex:'Gilt and visored \u2014 the mark of a master hunter.',val:7000,equip:{slot:'head',def:17,atk:4,str:3,model:'helm',verb:'Wear',req:0,tint:0xc99a3a,trim:0xf2e4a0}};
+ITEMS.hunter_signet={name:'Hunter\u2019s Signet',ex:'A slayer\u2019s ring. Right-click to check your contract or slip into the wild.',val:2500,equip:{slot:'ring',atk:2,str:1,model:'ring',verb:'Wear',req:0,tint:0x9a6fb0}};
+ITEMS.scholar_crest={name:'Scholar\u2019s Crest',ex:'A helm fragment torn from a slayer creature. Fuse it to a Proctor\u2019s Helm with a Crimson Dye.',val:1500,prim:'Examine'};
+ITEMS.sentinel_visor={name:'Sentinel Visor',ex:'A rare helm fragment. Fuse it to a Crimson Proctor\u2019s Helm with a Gilt Dye.',val:3000,prim:'Examine'};
+ITEMS.crimson_dye={name:'Crimson Dye',ex:'Slayer dye. Apply it to a Proctor\u2019s Helm together with a Scholar\u2019s Crest.',val:1,prim:'Examine',applyHelm:true};
+ITEMS.gilt_dye={name:'Gilt Dye',ex:'Slayer dye. Apply it to a Crimson Proctor\u2019s Helm together with a Sentinel Visor.',val:1,prim:'Examine',applyHelm:true};
+ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u2019s wail \u2014 or just wear a Proctor\u2019s Helm.',val:1,noDrop:true,equip:{slot:'head',def:1,model:'earmuffs',verb:'Wear',req:0}};
+ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8}};
+ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,prim:'Examine'};
+ITEMS.elemental_shield={name:'Elemental Shield',ex:'Rune-warded against cold. Turns aside a skeletal wyvern\u2019s freezing breath.',val:1,noDrop:true,equip:{slot:'shield',def:7,model:'shieldM',verb:'Wear',req:0,tint:0x6fa8d8,trim:0xc4e6f5}};
 ITEMS.burnt_fish={name:'Burnt fish',ex:'A cautionary tale.',val:1};
 ITEMS.fighting_boots={name:'Fighting boots',
   ex:'Confiscated 1907 for \u201cexcessive stomping.\u201d Still excessive.',val:1500,
@@ -1487,6 +1499,10 @@ const MOB_KINDS={
     hp:14,acc:0.5,maxhit:2,resp:20000,bones:1,coinP:.6,coins:[5,30],aggro:0,cmb:11},
   ghost:{name:'Ghost',ex:'A cold draught with a grudge.',hp:16,acc:0.5,maxhit:3,
     resp:14000,bones:0,coinP:0,coins:[0,0],aggro:1,cmb:13},
+  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:24,acc:0.56,maxhit:4,resp:18000,bones:0,coinP:0.6,coins:[15,55],aggro:1,cmb:16,magic:1},
+  gargoyle:{name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:40,acc:0.62,maxhit:5,resp:22000,bones:0,coinP:0.9,coins:[40,120],aggro:1,cmb:20},
+  basilisk:{name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:36,acc:0.6,maxhit:5,resp:24000,bones:0,coinP:0.8,coins:[45,130],aggro:1,cmb:22,magic:1},
+  wyvern:{name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:64,acc:0.7,maxhit:6,resp:40000,bones:1,coinP:1,coins:[140,360],aggro:1,cmb:26,magic:1},
   lesser:{name:'Lesser demon',ex:'Imported from somewhere much warmer.',hp:26,
     acc:0.55,maxhit:3,resp:25000,bones:0,coinP:.8,coins:[20,80],aggro:1,cmb:15},
   greater:{name:'Greater demon',ex:'The lesser ones speak of it only in whispers.',
@@ -1614,15 +1630,20 @@ const MOB_SPAWNS=[['rat',77,72],['rat',80,70],['rat',82,73],['rat',79,76],['rat'
   ['minotaur',64,21],['minotaur',67,21],['minotaur',65,23],
   ['ghost',179,69],['ghost',184,74],['ghost',180,72],['hdean',182,71],
   ['master',24,50],
+  ['banshee',13,12],['banshee',26,12],
+  ['gargoyle',35,12],['gargoyle',44,7],
+  ['basilisk',19,19],['basilisk',4,12],
+  ['wyvern',49,19],['wyvern',53,10],
   ['dragon',168,124],['dragon',176,122],['dragon',172,128],
   ['minotaur',45,96],['minotaur',45,100],
   ['zombie',41,96],['zombie',41,100],
   ['ghost',37,96],['ghost',37,100],['sentinel',33,96],
    ['lesser',34,18],['lesser',26,73],['lesser',14,44],['lesser',28,58],
    ['greater',23,25],['greater',32,46],['greater',43,18],['boar',142,11]];
+const LOCKED_KINDS=['banshee','gargoyle','basilisk','wyvern'];
 const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   px:p[1],py:p[2],hp:MOB_KINDS[p[0]].hp,maxhp:MOB_KINDS[p[0]].hp,
-  alive:p[0]!=='master'&&p[0]!=='boar',respawnAt:0,lastHit:0,heading:rnd(0,6.2),
+  alive:p[0]!=='master'&&p[0]!=='boar'&&!LOCKED_KINDS.includes(p[0]),locked:LOCKED_KINDS.includes(p[0]),respawnAt:0,lastHit:0,heading:rnd(0,6.2),
   target:null,phase:i%2,name:MOB_KINDS[p[0]].name,ex:MOB_KINDS[p[0]].ex}));
 
 function blocked(x,y){
@@ -1688,7 +1709,7 @@ const player={
   quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
   m4:{s:0,b:0,k:0,d:0},m5:{s:0,d:0},sos:{s:0,k1:0,k2:0,k3:0,k4:0,o:0}},
-  slayer:{task:null,need:0,done:0,streak:0}
+  slayer:{task:null,need:0,done:0,streak:0,points:0,unlocks:{}}
 };
 function masterBoost(s){
   const c=player.equip&&player.equip.cape;
@@ -1882,14 +1903,14 @@ function mobWildScaled(r){return player.quests.m5.s>=2&&inWild(r.sx,r.sy);}
 function mobCmb(r){
   if(r.kind==='boar')return r.lvl||MOB_KINDS.boar.cmb;
   const base=MOB_KINDS[r.kind].cmb;
-  if(!mobWildScaled(r))return base;
-  return Math.max(base,Math.round(cmbLvl()+base*0.1));
+  let v=(!mobWildScaled(r))?base:Math.max(base,Math.round(cmbLvl()+base*0.1));
+  return r.superior?v+7:v;
 }
 function mobMaxHp(r){
   const k=MOB_KINDS[r.kind];
   if(r.kind==='boar')return Math.round(k.hp*Math.pow(mobCmb(r)/k.cmb,0.9));
-  if(!mobWildScaled(r))return k.hp;
-  return Math.max(k.hp,Math.round(k.hp*Math.pow(mobCmb(r)/k.cmb,0.95)*1.5));
+  let v=(!mobWildScaled(r))?k.hp:Math.max(k.hp,Math.round(k.hp*Math.pow(mobCmb(r)/k.cmb,0.95)*1.5));
+  return r.superior?Math.round(v*2.6):v;
 }
 function mobAcc(r){
   const a=MOB_KINDS[r.kind].acc;
@@ -1899,8 +1920,8 @@ function mobAcc(r){
 function mobMaxhit(r){
   const k=MOB_KINDS[r.kind];
   if(r.kind==='boar')return Math.min(9,Math.max(k.maxhit,Math.round(k.maxhit*Math.pow(mobCmb(r)/k.cmb,0.5))));
-  if(!mobWildScaled(r))return k.maxhit;
-  return Math.min(9,Math.max(k.maxhit,Math.round(k.maxhit*Math.pow(mobCmb(r)/k.cmb,0.5))));
+  let v=(!mobWildScaled(r))?k.maxhit:Math.min(9,Math.max(k.maxhit,Math.round(k.maxhit*Math.pow(mobCmb(r)/k.cmb,0.5))));
+  return r.superior?Math.min(12,Math.ceil(v*1.55)):v;
 }
 function cmbColForVal(cmb){
   const d=cmb-cmbLvl();
@@ -2158,8 +2179,9 @@ function playerTick(){
     const wb=eqStat('atk');
     const effA=lvl('attack')*(prayers.halcyon?1.18:1);
     const effS=lvl('strength')*(prayers.gordon?1.18:1);
-    const acc=clamp(.60+effA*.011+wb*.005,0,.95);
-    const max=Math.floor(1+effS*0.48*(1+eqStat('str')*0.025));
+    const _tb=onTaskBonus(r);
+    const acc=clamp((.60+effA*.011+wb*.005)*(1+_tb),0,.97);
+    const max=Math.floor((1+effS*0.48*(1+eqStat('str')*0.025))*(1+_tb));
     let dmg=0;
     if(Math.random()<acc)dmg=rndi(1,max);
     if(r.kind==='priest'&&player.quests.m2.s===1&&!player.quests.m2.relic){
@@ -2185,9 +2207,11 @@ function playerTick(){
       }
       addXp('hitpoints',0.85*dmg);
     }
+    if(player.slayer&&player.slayer.unlocks&&player.slayer.unlocks.bigger&&!r.superiorRolled&&player.slayer.task===r.kind&&player.slayer.done<player.slayer.need&&inWild(r.sx,r.sy)){r.superiorRolled=true;if(Math.random()<0.14){r.superior=true;if(r._m&&r._m.group){if(r._supScale===undefined)r._supScale=r._m.group.scale.x;r._m.group.scale.setScalar(r._supScale*1.4);}msg('A superior '+r.name.toLowerCase()+' rises \u2014 bigger, and badder!','#9a6fb0');}}
     {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
     r.hp-=dmg;
-    if(r.hp<=0){
+    if(r.kind==='gargoyle'&&r.hp<=0&&countItem('rock_hammer')<1){r.hp=1;if(!r._gw||performance.now()-r._gw>4000){r._gw=performance.now();msg('The gargoyle is battered to rubble but will not break \u2014 you need a Rock Hammer to shatter it.','#c9a23a');}}
+    else if(r.hp<=0){
       const mk3=MOB_KINDS[r.kind];
       r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;
       if(engagedMob===r)engagedMob=null;
@@ -2516,8 +2540,10 @@ function ratsTick(){
           let dmg=0;
           const sdf=eqStat('def');
           const effD=lvl('defense')*(prayers.love?1.18:1);
-          const ratAcc=Math.max(0.25,Math.min(0.92,mobAcc(r)-sdf*0.008-(effD-1)*0.004));
-          if(Math.random()<ratAcc)dmg=rndi(0,mobMaxhit(r));
+          const _mag=MOB_KINDS[r.kind].magic&&!protectedFrom(r.kind);
+          const ratAcc=_mag?Math.min(0.97,mobAcc(r)+0.05):Math.max(0.25,Math.min(0.92,mobAcc(r)-sdf*0.008-(effD-1)*0.004));
+          const _mh=_mag?Math.ceil(mobMaxhit(r)*1.6):mobMaxhit(r);
+          if(Math.random()<ratAcc)dmg=rndi(0,_mh);
           player.braceT=performance.now();
           if(!player.action&&player.hp>0)setAction({type:'attack',rat:r},r.x,r.y);
           splats.push({ent:'player',dmg,t:performance.now()});
@@ -2594,7 +2620,9 @@ function worldTick(){
    if(_mr){if(!_mAct&&_mr.alive)_mr.alive=false;
     else if(_mAct&&!_mr.alive&&now>=_mr.respawnAt){_mr.alive=true;_mr.maxhp=mobMaxHp(_mr);_mr.hp=_mr.maxhp;_mr.x=_mr.sx;_mr.y=_mr.sy;_mr.px=_mr.sx;_mr.py=_mr.sy;_mr.target=null;}}}
   for(const r of rats)if(!r.alive&&now>=r.respawnAt){
+    if(r.superior){r.superior=false;if(r._m&&r._m.group&&r._supScale!==undefined)r._m.group.scale.setScalar(r._supScale);}r.superiorRolled=false;
     if(r.kind==='master')continue;
+    if(r.locked)continue;
     if(r.kind==='boar'){if(player.quests.chef.s!==5){r.respawnAt=now+4000;continue;}r.lvl=cmbLvl()+rndi(1,2);}
     if(MOB_KINDS[r.kind].roam){
       for(let t2=0;t2<60;t2++){
@@ -2927,10 +2955,10 @@ equipGrid.addEventListener('contextmenu',e=>{
   const d=e.target.closest('.eslot');if(!d)return;
   const slot=d.dataset.slot,it=player.equip&&player.equip[slot];
   if(!it)return;
-  showMenu(e.clientX,e.clientY,[
-    {html:'Remove <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>unequipSlot(slot)},
-    {html:'Examine <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>examineItem(it.id)}
-  ]);
+  const _eo=[{html:'Remove <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>unequipSlot(slot)}];
+  if(it.id==='hunter_signet'){_eo.push({html:'Check task <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>signetCheckTask()});_eo.push({html:'Teleport <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>signetTeleport()});}
+  _eo.push({html:'Examine <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>examineItem(it.id)});
+  showMenu(e.clientX,e.clientY,_eo);
 });
 
 /* tabs */
@@ -3557,6 +3585,15 @@ function drawItemIcon(g,id,S){
     case 'lobster':fshLobster(_LOc);break;
     case 'raw_swordfish':fshSwordfish(_SWr);break;
     case 'swordfish':fshSwordfish(_SWc);break;
+ case 'hunter_signet':{g.strokeStyle='#caa23a';g.lineWidth=3.6;g.beginPath();g.arc(0,3.5,6,0.15,Math.PI-0.15,true);g.stroke();g.fillStyle='#9a6fb0';g.strokeStyle='#3a2a44';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-8);g.lineTo(4.2,-3.5);g.lineTo(0,1);g.lineTo(-4.2,-3.5);g.closePath();g.fill();g.stroke();g.fillStyle='rgba(255,255,255,0.5)';g.beginPath();g.moveTo(-1.4,-5);g.lineTo(0.4,-5.6);g.lineTo(-0.6,-3.6);g.closePath();g.fill();break;}
+ case 'scholar_crest':{g.fillStyle='#7c4a52';g.strokeStyle='#3a1f24';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-9);g.quadraticCurveTo(7,-2,3,8);g.quadraticCurveTo(0,4,-3,8);g.quadraticCurveTo(-7,-2,0,-9);g.closePath();g.fill();g.stroke();g.strokeStyle='#e0c050';g.lineWidth=1.4;g.beginPath();g.moveTo(0,-7);g.lineTo(0,6);g.stroke();break;}
+ case 'sentinel_visor':{g.fillStyle='#5d6f7e';g.strokeStyle='#2b343c';g.lineWidth=1.2;g.beginPath();g.moveTo(-8,-4);g.lineTo(8,-4);g.lineTo(6,6);g.lineTo(-6,6);g.closePath();g.fill();g.stroke();g.strokeStyle='#1a1f24';g.lineWidth=1.8;g.beginPath();g.moveTo(-5,-0.5);g.lineTo(5,-0.5);g.moveTo(-4,3);g.lineTo(4,3);g.stroke();break;}
+ case 'crimson_dye':{g.fillStyle='#b8b8c0';g.fillRect(-2.5,-9,5,3);g.fillStyle='#9a2f2a';g.strokeStyle='#3a1212';g.lineWidth=1.1;g.beginPath();g.moveTo(-4,-6);g.lineTo(4,-6);g.lineTo(5,7);g.quadraticCurveTo(0,10,-5,7);g.closePath();g.fill();g.stroke();g.fillStyle='rgba(255,255,255,0.3)';g.fillRect(-2.5,-4,1.6,8);break;}
+ case 'gilt_dye':{g.fillStyle='#b8b8c0';g.fillRect(-2.5,-9,5,3);g.fillStyle='#c99a3a';g.strokeStyle='#5a3f12';g.lineWidth=1.1;g.beginPath();g.moveTo(-4,-6);g.lineTo(4,-6);g.lineTo(5,7);g.quadraticCurveTo(0,10,-5,7);g.closePath();g.fill();g.stroke();g.fillStyle='rgba(255,255,255,0.4)';g.fillRect(-2.5,-4,1.6,8);break;}
+ case 'earmuffs':{g.strokeStyle='#3a3f47';g.lineWidth=2.6;g.beginPath();g.arc(0,-1,8,Math.PI,0);g.stroke();g.fillStyle='#2b2f36';g.strokeStyle='#1a1d22';g.lineWidth=1;for(const sx of [-8,8]){g.beginPath();g.ellipse(sx,1,3.2,4.6,0,0,7);g.fill();g.stroke();}g.fillStyle='#5a6068';for(const sx of [-8,8])g.fillRect(sx-1.3,-3,2.6,5);break;}
+ case 'mirror_shield':{g.fillStyle='#c6cdd6';g.strokeStyle='#7e8893';g.lineWidth=1.6;g.beginPath();g.arc(0,0,9,0,7);g.fill();g.stroke();g.fillStyle='#eef3f8';g.beginPath();g.moveTo(-4,-6);g.lineTo(-1,-7);g.lineTo(3,5);g.lineTo(0,6);g.closePath();g.fill();g.strokeStyle='#9aa3ad';g.lineWidth=1;g.beginPath();g.arc(0,0,5.5,0,7);g.stroke();break;}
+ case 'rock_hammer':{g.strokeStyle='#6e4a26';g.lineWidth=2.8;g.beginPath();g.moveTo(-5,9);g.lineTo(3,-5);g.stroke();g.save();g.translate(4,-6);g.rotate(0.5);g.fillStyle='#7a818a';g.strokeStyle='#3a3f47';g.lineWidth=1.2;g.fillRect(-6,-3.5,12,7);g.strokeRect(-6,-3.5,12,7);g.fillStyle='#9aa3ad';g.fillRect(-6,-3.5,12,2);g.restore();break;}
+ case 'elemental_shield':{g.fillStyle='#6fa8d8';g.strokeStyle='#3a6a94';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-9);g.lineTo(8,-5);g.quadraticCurveTo(8,6,0,10);g.quadraticCurveTo(-8,6,-8,-5);g.closePath();g.fill();g.stroke();g.strokeStyle='#dff0fb';g.lineWidth=1.4;g.beginPath();g.moveTo(0,-5);g.lineTo(0,6);g.moveTo(-4,-1);g.lineTo(4,3);g.moveTo(4,-1);g.lineTo(-4,3);g.stroke();break;}
     case 'burnt_fish':fshTrout(_BURN);break;
     case 'bones':
       g.strokeStyle='#efe9d8';g.lineWidth=4;g.lineCap='round';
@@ -7517,6 +7554,78 @@ function makeRat(r){
     r._m={group:g};
     return;
   }
+
+  if(r.kind==='banshee'){
+    const SHROUD=0x8a9a82,DARK=0x566050,PALE=0xd6dccb;
+    const cloak=mesh(new THREE.ConeGeometry(0.52,1.55,9),SHROUD);cloak.position.y=0.82;g.add(cloak);
+    for(let i=0;i<7;i++){const a=i/7*Math.PI*2;const t=mesh(new THREE.ConeGeometry(0.12,0.5,4),DARK);t.position.set(Math.cos(a)*0.38,0.16,Math.sin(a)*0.38);t.rotation.x=Math.PI;g.add(t);}
+    const head=mesh(new THREE.SphereGeometry(0.26,9,8),PALE);head.position.y=1.68;head.scale.set(1,1.18,0.95);g.add(head);
+    const cowl=mesh(new THREE.ConeGeometry(0.33,0.52,9),SHROUD);cowl.position.y=1.84;g.add(cowl);
+    const mouth=mesh(new THREE.SphereGeometry(0.085,6,5),0x1c1712);mouth.position.set(0,1.6,0.22);mouth.scale.set(0.85,1.5,0.5);g.add(mouth);
+    for(const sx of [-0.085,0.085]){const e=mesh(new THREE.SphereGeometry(0.05,5,4),0xeafff2);e.position.set(sx,1.75,0.22);g.add(e);}
+    for(const sx of [-1,1]){const arm=mesh(new THREE.ConeGeometry(0.1,0.78,5),SHROUD);arm.position.set(sx*0.4,1.06,0.04);arm.rotation.z=sx*0.55;arm.rotation.x=-0.2;g.add(arm);}
+    g.traverse(ob=>{if(ob.isMesh){ob.material.transparent=true;ob.material.opacity=0.84;}});
+    addProxy(g,0.55,2.1,0,{kind:'rat',r});
+    scene.add(g);
+    r._m={group:g,banshee:1};
+    return;
+  }
+  if(r.kind==='gargoyle'){
+    const STONE=0x8b9098,STONE2=0x6c727a,HORN=0x4a4f57,EYE=0xe0742a;
+    const torso=mesh(new THREE.SphereGeometry(0.46,8,7),STONE);torso.scale.set(1.05,1.15,0.82);torso.position.y=0.92;g.add(torso);
+    const belly=mesh(new THREE.SphereGeometry(0.34,7,6),STONE2);belly.scale.set(0.9,0.8,0.7);belly.position.set(0,0.72,0.14);g.add(belly);
+    const head=mesh(new THREE.SphereGeometry(0.28,8,7),STONE);head.position.y=1.5;head.scale.set(1,0.95,1);g.add(head);
+    const jaw=mesh(new THREE.BoxGeometry(0.34,0.12,0.3),STONE2);jaw.position.set(0,1.38,0.1);g.add(jaw);
+    for(const sx of [-1,1]){const horn=mesh(new THREE.ConeGeometry(0.07,0.28,5),HORN);horn.position.set(sx*0.16,1.72,-0.02);horn.rotation.z=sx*0.4;g.add(horn);}
+    for(const sx of [-0.1,0.1]){const e=mesh(new THREE.SphereGeometry(0.05,5,4),EYE);e.position.set(sx,1.54,0.24);g.add(e);}
+    for(const sx of [-1,1]){const w=mesh(new THREE.ConeGeometry(0.34,0.95,3),STONE2);w.scale.set(1,1,0.18);w.position.set(sx*0.42,1.1,-0.2);w.rotation.set(0.3,0,sx*0.7);g.add(w);}
+    for(const sx of [-1,1]){const arm=mesh(new THREE.BoxGeometry(0.16,0.5,0.16),STONE);arm.position.set(sx*0.5,0.95,0.05);arm.rotation.z=sx*0.25;g.add(arm);}
+    const club=mesh(new THREE.CylinderGeometry(0.06,0.11,0.6,6),STONE2);club.position.set(0.62,0.62,0.16);club.rotation.z=0.3;g.add(club);
+    for(const sx of [-1,1]){const leg=mesh(new THREE.BoxGeometry(0.2,0.5,0.22),STONE2);leg.position.set(sx*0.2,0.3,0);g.add(leg);}
+    addProxy(g,0.55,2.0,0,{kind:'rat',r});
+    scene.add(g);
+    r._m={group:g};
+    return;
+  }
+  if(r.kind==='basilisk'){
+    const SKIN=0x6f7a3c,SKIN2=0x515c2a,BELLY=0xb9b06a,EYE=0xe8d24a;
+    const body=mesh(new THREE.SphereGeometry(0.4,9,7),SKIN);body.scale.set(0.95,0.72,1.7);body.position.y=0.42;g.add(body);
+    const bel=mesh(new THREE.SphereGeometry(0.3,8,6),BELLY);bel.scale.set(0.85,0.55,1.5);bel.position.set(0,0.26,0.06);g.add(bel);
+    const head=mesh(new THREE.SphereGeometry(0.3,8,7),SKIN);head.scale.set(1,0.9,1.1);head.position.set(0,0.6,0.78);g.add(head);
+    for(let i=0;i<7;i++){const a=(i/6-0.5)*1.7;const f=mesh(new THREE.ConeGeometry(0.05,0.34,4),SKIN2);f.position.set(Math.sin(a)*0.3,0.74,0.6-Math.cos(a)*0.05);f.rotation.set(-0.8,a,0);g.add(f);}
+    const eyeb=mesh(new THREE.SphereGeometry(0.16,10,9),0xf2ecd0);eyeb.position.set(0,0.66,1.02);g.add(eyeb);
+    const iris=mesh(new THREE.SphereGeometry(0.11,8,7),EYE);iris.position.set(0,0.66,1.1);g.add(iris);
+    const pupil=mesh(new THREE.SphereGeometry(0.06,8,7),0x1c1408);pupil.position.set(0,0.66,1.16);g.add(pupil);
+    for(let i=0;i<5;i++){const sp=mesh(new THREE.ConeGeometry(0.06,0.2,4),SKIN2);sp.position.set(0,0.66-i*0.02,0.5-i*0.32);g.add(sp);}
+    for(let i=0;i<4;i++){for(const sx of [-1,1]){const leg=mesh(new THREE.CylinderGeometry(0.04,0.03,0.34,5),SKIN2);leg.position.set(sx*0.42,0.18,0.5-i*0.34);leg.rotation.z=sx*0.7;g.add(leg);}}
+    const tail=mesh(new THREE.ConeGeometry(0.18,0.9,7),SKIN);tail.position.set(0,0.42,-0.95);tail.rotation.x=Math.PI/2;g.add(tail);
+    addProxy(g,0.6,1.1,0,{kind:'rat',r});
+    scene.add(g);
+    r._m={group:g,legs:1};
+    return;
+  }
+  if(r.kind==='wyvern'){
+    const BONE=0xe4e0d2,BONE2=0xc4bfa8,DARK=0x6a665a,ICE=0xbfe6f5;
+    const torso=mesh(new THREE.SphereGeometry(0.46,8,7),BONE);torso.scale.set(0.92,0.86,1.5);torso.position.y=0.95;g.add(torso);
+    for(let i=0;i<4;i++){const rib=mesh(new THREE.TorusGeometry(0.34-i*0.02,0.03,5,10,Math.PI),BONE2);rib.position.set(0,0.92,0.4-i*0.28);rib.rotation.set(Math.PI/2,0,0);g.add(rib);}
+    const neck=mesh(new THREE.CylinderGeometry(0.12,0.2,0.7,7),BONE);neck.position.set(0,1.4,0.6);neck.rotation.x=0.7;g.add(neck);
+    const skull=mesh(new THREE.SphereGeometry(0.2,8,7),BONE);skull.scale.set(0.9,0.85,1.2);skull.position.set(0,1.72,0.92);g.add(skull);
+    const snout=mesh(new THREE.ConeGeometry(0.12,0.3,6),BONE);snout.position.set(0,1.68,1.12);snout.rotation.x=Math.PI/2;g.add(snout);
+    const jaw=mesh(new THREE.BoxGeometry(0.16,0.05,0.26),BONE2);jaw.position.set(0,1.62,1.04);g.add(jaw);
+    for(const sx of [-0.08,0.08]){const soc=mesh(new THREE.SphereGeometry(0.05,5,4),0x14110a);soc.position.set(sx,1.76,1.0);g.add(soc);const gl=mesh(new THREE.SphereGeometry(0.028,5,4),ICE);gl.position.set(sx,1.76,1.04);g.add(gl);}
+    for(const sx of [-1,1]){
+      const wb=mesh(new THREE.CylinderGeometry(0.04,0.06,1.1,5),BONE2);wb.position.set(sx*0.5,1.3,-0.1);wb.rotation.z=sx*0.9;g.add(wb);
+      const memb=mesh(new THREE.ConeGeometry(0.5,1.0,3),DARK);memb.scale.set(1,1,0.12);memb.position.set(sx*0.85,1.05,-0.2);memb.rotation.set(0.2,0,sx*1.0);if(memb.material)memb.material.transparent=true;g.add(memb);
+    }
+    for(let i=0;i<5;i++){const sp=mesh(new THREE.ConeGeometry(0.05,0.2,4),BONE2);sp.position.set(0,1.3-i*0.03,0.5-i*0.3);g.add(sp);}
+    for(const sx of [-1,1]){const leg=mesh(new THREE.CylinderGeometry(0.07,0.05,0.7,6),BONE);leg.position.set(sx*0.26,0.4,-0.1);g.add(leg);const foot=mesh(new THREE.ConeGeometry(0.1,0.2,5),BONE2);foot.position.set(sx*0.26,0.08,0);foot.rotation.x=-Math.PI/2;g.add(foot);}
+    const tail=mesh(new THREE.ConeGeometry(0.2,1.1,7),BONE);tail.position.set(0,0.92,-1.1);tail.rotation.x=Math.PI/2;g.add(tail);
+    const barb=mesh(new THREE.ConeGeometry(0.1,0.3,5),BONE2);barb.position.set(0,0.92,-1.7);barb.rotation.x=Math.PI/2;g.add(barb);
+    addProxy(g,0.7,2.3,0,{kind:'rat',r});
+    scene.add(g);
+    r._m={group:g};
+    return;
+  }
   const body=mesh(new THREE.SphereGeometry(0.32,7,6),0x8a8d92);
   body.scale.set(0.95,0.75,1.35);body.position.y=0.26;
   const head=mesh(new THREE.ConeGeometry(0.16,0.34,6),0x9a9da2);
@@ -7821,7 +7930,9 @@ invGrid.addEventListener('contextmenu',e=>{
     opts.push({html:prim+' <span class="t">'+ITEMS[id].name+'</span>',fn:()=>itemPrimary(i)});
   if(prim==='Light')
     opts.push({html:'Light <span class="t">'+ITEMS[id].name+'</span>',fn:()=>lightFire(i)});
-  opts.push({html:'Drop <span class="t">'+ITEMS[id].name+'</span>',fn:()=>dropItem(i)});
+  if(id==='hunter_signet'){opts.push({html:'Check task <span class="t">'+ITEMS[id].name+'</span>',fn:()=>signetCheckTask()});opts.push({html:'Teleport <span class="t">'+ITEMS[id].name+'</span>',fn:()=>signetTeleport()});}
+  if(ITEMS[id].applyHelm)opts.push({html:'Apply <span class="t">'+ITEMS[id].name+'</span>',fn:()=>applyHelmDye(id)});
+  if(!ITEMS[id].noDrop)opts.push({html:'Drop <span class="t">'+ITEMS[id].name+'</span>',fn:()=>dropItem(i)});
   opts.push({html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)});
   showMenu(e.clientX,e.clientY,opts);
 });
@@ -8369,6 +8480,8 @@ function questKill(r){
      addXp('slayer',Math.max(5,Math.round(mobMaxHp(r)*0.9)));
      if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master.','#9a6fb0');
      else msg('Slayer contract: '+sl.done+' / '+sl.need+' '+slayName(sl.task,sl.need)+'.','#9a6fb0');
+     if(r.superior){sl.points=(sl.points||0)+12;addXp('slayer',Math.round(mobMaxHp(r)*0.5));msg('Superior kill: +12 Slayer points.','#9a6fb0');}
+     {const _pc=neededHelmPiece();if(_pc&&Math.random()<(r.superior?0.34:0.022)){if(invFull())dropGround(r.x,r.y,_pc,1);else addItem(_pc,1);msg('The '+r.name.toLowerCase()+' yields a '+ITEMS[_pc].name+'!','#e8b020');}}
      renderQuests&&renderQuests();dirty=true;
    }}
   if(player.slayer&&player.slayer.task&&kind===player.slayer.task&&inWild(r.sx,r.sy)&&Math.random()<1/150){
@@ -8504,9 +8617,10 @@ const SLAYER_POOL=['ghost','lesser','greater','redspider'];
 function slayName(k,n){const nm=MOB_KINDS[k].name.toLowerCase();return n===1?nm:nm+'s';}
 function assignSlayerTask(){
   const sl=player.slayer;
+  const _pool=assignablePool();
   if(sl.task&&sl.done<sl.need&&sl.streak){sl.streak=0;msg('You set the contract aside \u2014 your Slayer streak resets to 0.','#9a6fb0');}
   let pick,t=0;
-  do{pick=SLAYER_POOL[rndi(0,SLAYER_POOL.length-1)];t++;}while(pick===sl.task&&t<8);
+  do{pick=_pool[rndi(0,_pool.length-1)];t++;}while(pick===sl.task&&t<8);
   const k=MOB_KINDS[pick];
   const need=rndi(5,8);
   sl.task=pick;sl.need=need;sl.done=0;
@@ -8525,11 +8639,29 @@ function claimSlayerReward(){
   if(milestone){gold=Math.round(gold*2);slx=Math.round(slx*1.8);cx=Math.round(cx*1.5);}
   qCoins(gold);addXp('slayer',slx);
   addXp('attack',cx);addXp('strength',cx);addXp('defense',cx);addXp('hitpoints',cx);
+  {let _sp=Math.round((6+sl.need)*Math.min(2.5,1+(sl.streak-1)*0.09));if(milestone)_sp+=50;sl.points=(sl.points||0)+_sp;msg('You earn '+_sp+' Slayer points (you now hold '+sl.points+').','#9a6fb0');}
   sl.task=null;sl.need=0;sl.done=0;
   if(sfx.level)sfx.level();
   msg((milestone?'Streak milestone \u2014 bonus pay! ':'')+'Contract paid: '+gold+' coins \u00b7 '+slx+' Slayer xp \u00b7 '+cx+' to each combat skill. Streak '+sl.streak+'.','#9a6fb0');
   renderQuests&&renderQuests();dirty=true;
 }
+function slayerHelmTier(){const h=player.equip&&player.equip.head;if(!h)return 0;return ({proctor_helm:1,crimson_proctor_helm:2,gilded_warden_helm:3})[h.id]||0;}
+function onTaskBonus(r){const t=slayerHelmTier();if(!t)return 0;const sl=player.slayer;if(!sl||!sl.task||sl.done>=sl.need||r.kind!==sl.task||!inWild(r.sx,r.sy))return 0;return [0,0.10,0.14,0.18][t];}
+function hasEquip(slot,id){return !!(player.equip&&player.equip[slot]&&player.equip[slot].id===id);}
+function protectedFrom(kind){if(kind==='banshee')return hasEquip('head','earmuffs')||slayerHelmTier()>0;if(kind==='basilisk')return hasEquip('shield','mirror_shield');if(kind==='wyvern')return hasEquip('shield','elemental_shield');return true;}
+const EXPAND_KINDS=['banshee','gargoyle','basilisk','wyvern'];
+const UNLOCK_GIFT={banshee:'earmuffs',gargoyle:'rock_hammer',basilisk:'mirror_shield',wyvern:'elemental_shield'};
+function assignablePool(){const u=(player.slayer&&player.slayer.unlocks)||{};return SLAYER_POOL.concat(EXPAND_KINDS.filter(k=>u[k]));}
+function unlockMonster(kind){const sl=player.slayer;sl.unlocks=sl.unlocks||{};sl.unlocks[kind]=true;const gift=UNLOCK_GIFT[kind];if(gift&&countItem(gift)<1){if(!addItem(gift))dropGround(player.x,player.y,gift,1);}for(const r of rats){if(r.kind===kind&&r.locked){r.locked=false;r.alive=true;r.maxhp=mobMaxHp(r);r.hp=r.maxhp;}}msg('Unlocked '+MOB_KINDS[kind].name+' contracts \u2014 you receive a '+(gift?ITEMS[gift].name:'reward')+'.','#9a6fb0');}
+function ownProctorAny(){const ids=['proctor_helm','crimson_proctor_helm','gilded_warden_helm'];for(const id of ids){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;}return false;}
+function neededHelmPiece(){const have=id=>countItem(id)>0||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&countItem('sentinel_visor')<1)return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&countItem('scholar_crest')<1)return 'scholar_crest';return null;}
+const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:220,unlock_gargoyle:320,unlock_basilisk:280,unlock_wyvern:420};
+const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks, with a bonus every tenth task. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, and an Elemental Shield against the wyvern\u2019s frost. Keep that gear equipped or their attacks tear through armour.';
+function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
+function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});E.push({label:'Back.',next:'wares'});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
+function applyHelmDye(dyeId){const m=({crimson_dye:['proctor_helm','scholar_crest','crimson_proctor_helm'],gilt_dye:['crimson_proctor_helm','sentinel_visor','gilded_warden_helm']})[dyeId];if(!m)return;const baseId=m[0],pieceId=m[1],outId=m[2];const inInv=findItem(baseId)>=0;const equipped=player.equip.head&&player.equip.head.id===baseId;if(!inInv&&!equipped){msg('You need a '+ITEMS[baseId].name+' to apply this dye.','#9a6fb0');return;}if(findItem(pieceId)<0){msg('You also need a '+ITEMS[pieceId].name+' \u2014 a rare drop from your task monsters.','#9a6fb0');return;}if(inInv)removeSlot(findItem(baseId));else{player.equip.head=null;renderEquip&&renderEquip();}removeSlot(findItem(pieceId));removeSlot(findItem(dyeId));if(!addItem(outId))dropGround(player.x,player.y,outId,1);sfx.level&&sfx.level();dirty=true;msg('You fuse the '+ITEMS[pieceId].name.toLowerCase()+' onto the helm with '+ITEMS[dyeId].name.toLowerCase()+' \u2014 behold, the '+ITEMS[outId].name+'!','#e8b020');renderInv&&renderInv();}
+function signetCheckTask(){const sl=player.slayer;if(!sl.task)msg('No active contract. Seek the Slayer Master at the wild\u2019s edge.','#9a6fb0');else if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');else msg('Contract: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath. You hold '+(sl.points||0)+' Slayer points.','#9a6fb0');}
+function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}const tx=40,ty=42;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you into the wild.','#9a6fb0');dirty=true;}
 function slayerTree(){
   const sl=player.slayer,Q=player.quests;
   if(Q.m5.s<2)return{
@@ -8540,17 +8672,20 @@ function slayerTree(){
     after:{who:'npc',text:'Coin and craft, as promised. The wild is never short of work.',next:'amenu'},
     amenu:{opts:[
       {label:'Give me another contract.',next:()=>{assignSlayerTask();return null;}},
+      {label:'Show me the rewards.',next:()=>{dlg.tree=slayerStore();return 'shop';}},
       {label:'Not now.',next:null}]}};
   if(sl.task)return{
     start:{who:'npc',text:'Your contract stands: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath out in the wild. Go.',next:'menu'},
     menu:{opts:[
       {label:'Understood.',next:null},
-      {label:'Trade me a different contract.',next:()=>{assignSlayerTask();return null;}}]}};
+      {label:'Trade me a different contract.',next:()=>{assignSlayerTask();return null;}},
+      {label:'Show me the rewards.',next:()=>{dlg.tree=slayerStore();return 'shop';}}]}};
   return{
     start:{who:'npc',text:'So. You hunt for me now. The wild past the ditch is thick with things that should not be, and someone must thin them.',next:'menu'},
     menu:{opts:[
       {label:'Give me a contract.',next:()=>{assignSlayerTask();return null;}},
       {label:'How does this work?',next:'info'},
+      {label:'Show me the rewards.',next:()=>{dlg.tree=slayerStore();return 'shop';}},
       {label:'Not now.',next:null}]},
     info:{who:'npc',text:'I name a creature and a number. You cull them in the wild and return. I pay in coin and in skill \u2014 Slayer, and the strength of arms. The wild grows to meet you: never trivial, never quite hopeless.',next:'start'}};
 }
