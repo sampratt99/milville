@@ -1653,10 +1653,10 @@ const MOB_SPAWNS=[['rat',77,72],['rat',80,70],['rat',82,73],['rat',79,76],['rat'
   ['minotaur',64,21],['minotaur',67,21],['minotaur',65,23],
   ['ghost',179,69],['ghost',184,74],['ghost',180,72],['hdean',182,71],
   ['master',24,50],
-  ['banshee',12,12],['banshee',11,12],['banshee',13,12],['banshee',12,13],
-  ['gargoyle',38,8],['gargoyle',37,7],['gargoyle',38,7],['gargoyle',39,7],
-  ['basilisk',16,20],['basilisk',15,19],['basilisk',16,19],['basilisk',17,19],
-  ['wyvern',49,18],['wyvern',48,17],['wyvern',49,17],['wyvern',50,17],
+  ['banshee',8,11],['banshee',11,12],['banshee',14,13],['banshee',17,13],
+  ['gargoyle',33,3],['gargoyle',36,3],['gargoyle',39,4],['gargoyle',33,6],
+  ['basilisk',13,16],['basilisk',16,16],['basilisk',19,16],['basilisk',15,19],
+  ['wyvern',44,13],['wyvern',47,13],['wyvern',50,13],['wyvern',53,13],
   ['dragon',168,124],['dragon',176,122],['dragon',172,128],
   ['minotaur',45,96],['minotaur',45,100],
   ['zombie',41,96],['zombie',41,100],
@@ -8756,8 +8756,12 @@ function slayerTree(){
     start:{who:'npc',text:'Your contract stands: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath out in the wild. Go.',next:'menu'},
     menu:{opts:[
       {label:'Understood.',next:null},
-      {label:'Trade me a different contract.',next:()=>{assignSlayerTask();return null;}},
-      {label:'Show me the rewards.',next:()=>{closeDialogue();openSlayerShop();return null;}}]}};
+      {label:'Trade me a different contract.',next:'tradeconf'},
+      {label:'Show me the rewards.',next:()=>{closeDialogue();openSlayerShop();return null;}}]},
+    tradeconf:{who:'npc',text:'Set this contract aside for another? Your Slayer streak'+(sl.streak?' of '+sl.streak:'')+' will be broken \u2014 reset to nothing. Streaks pay better the longer they run, so weigh it.',next:'tradeask'},
+    tradeask:{opts:[
+      {label:'Yes \u2014 trade it, and reset my streak.',next:()=>{assignSlayerTask();return null;}},
+      {label:'No \u2014 keep my current contract.',next:'start'}]}};
   return{
     start:{who:'npc',text:'So. You hunt for me now. The wild past the ditch is thick with things that should not be, and someone must thin them.',next:'menu'},
     menu:{opts:[
