@@ -156,6 +156,10 @@
     margin-top:6px; text-align:center; color:#ffe66d; font-weight:bold;
     text-shadow:1px 1px 0 #000; font-size:12.5px;
   }
+  #slayerpts{
+    margin-top:3px; text-align:center; color:#c79be0; font-weight:bold;
+    text-shadow:1px 1px 0 #000; font-size:12px;
+  }
   /* inventory */
   #invgrid{display:grid; grid-template-columns:repeat(4,1fr); gap:3px;}
   .slot{
@@ -325,6 +329,15 @@
     padding:8px; width:392px; max-width:94vw;}
   .gebar{display:flex;justify-content:space-between;align-items:center;
     color:#ffd98c; font:bold 13px Georgia,serif; padding:0 2px 7px; gap:8px;}
+  #slpts{color:#c79be0;font:bold 12px Georgia,serif;}
+  .slrow{display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px solid #3d3528;}
+  .slrow canvas{flex:0 0 auto;background:#1c1813;border:1px solid #0d0b08;border-radius:3px;image-rendering:pixelated;}
+  .sln{color:#ffe0a0;font:bold 12.5px Georgia,serif;}
+  .sld{color:#c9bfa8;font:11px Georgia,serif;margin-top:2px;line-height:1.3;}
+  .slbtn{background:#3a5a32;color:#eafbe2;border:1px solid #0d0b08;border-radius:3px;padding:6px 9px;font:bold 11px Georgia,serif;cursor:pointer;white-space:nowrap;user-select:none;}
+  .slbtn:hover{filter:brightness(1.12);}
+  .slbtn.confirm{background:#9a6a1f;}
+  .slbtn.cant{background:#4a2828;color:#c9a;cursor:default;}
   .gex{width:20px;height:20px;background:#c8402a;border:1px solid #0d0b08;
     border-radius:3px;color:#fff;font:bold 12px Verdana,sans-serif;display:flex;
     align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;
@@ -493,6 +506,7 @@
         <div class="panel" id="panel-skills">
           <div id="skillgrid"></div>
           <div id="totallevel"></div>
+          <div id="slayerpts"></div>
         </div>
         <div class="panel" id="panel-quests"><div id="qhead">Quest Journal</div><div id="qlist"></div></div>
         <div class="panel on" id="panel-inv"><div id="invgrid"></div></div>
@@ -599,6 +613,10 @@
   <div id="bankinv"></div>
   <div class="gefoot"><button class="gebtn" id="depall">Deposit inventory</button>
   <span>Click bank items to withdraw</span></div>
+</div></div>
+<div id="slayerui" class="gemodal"><div class="gepanel" style="width:452px;">
+  <div class="gebar"><span>Slayer Rewards</span><span id="slpts"></span><div class="gex" id="slclose" title="Close">&#10005;</div></div>
+  <div id="sllist" style="max-height:62vh;overflow-y:auto;padding-right:2px;"></div>
 </div></div>
 <div id="geui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Grand Exchange</span><span id="gecoins"></span><div class="gex" id="geclose" title="Close">&#10005;</div></div>
@@ -817,7 +835,12 @@ ITEMS.gilt_dye={name:'Gilt Dye',ex:'Slayer dye. Apply it to a Crimson Proctor\u2
 ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u2019s wail \u2014 or just wear a Proctor\u2019s Helm.',val:1,noDrop:true,equip:{slot:'head',def:1,model:'earmuffs',verb:'Wear',req:0}};
 ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8}};
 ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,prim:'Examine'};
-ITEMS.elemental_shield={name:'Elemental Shield',ex:'Rune-warded against cold. Turns aside a skeletal wyvern\u2019s freezing breath.',val:1,noDrop:true,equip:{slot:'shield',def:7,model:'shieldM',verb:'Wear',req:0,tint:0x6fa8d8,trim:0xc4e6f5}};
+ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:24,str:16,model:'scim',verb:'Wield',req:30,tint:0x1c1118,trim:0x7a2030}};
+ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft. It lands like a rockfall.',val:45000,equip:{slot:'weapon',atk:16,str:28,model:'scim',verb:'Wield',req:28,tint:0x6e6f73,trim:0x9a9ca0}};
+ITEMS.draconic_visage={name:'Draconic visage',ex:'The petrified face of an ancient wyrm. Collectors pay fortunes for it.',val:250000,prim:'Examine'};
+ITEMS.basilisk_jaw={name:'Basilisk jaw',ex:'A heavy, fanged jawbone \u2014 worth a great deal to the right buyer.',val:35000,prim:'Examine'};
+ITEMS.wailing_relic={name:'Wailing relic',ex:'A cold iron charm that still hums with a banshee\u2019s grief. Valuable.',val:18000,prim:'Examine'};
+ITEMS.elemental_shield={name:'Elemental Shield',ex:'Rune-warded against cold. Turns aside a skeletal wyvern\u2019s freezing breath \u2014 just as a Dragon Slayer shield does.',val:1,noDrop:true,equip:{slot:'shield',def:7,model:'shieldM',verb:'Wear',req:0,tint:0x6fa8d8,trim:0xc4e6f5}};
 ITEMS.burnt_fish={name:'Burnt fish',ex:'A cautionary tale.',val:1};
 ITEMS.fighting_boots={name:'Fighting boots',
   ex:'Confiscated 1907 for \u201cexcessive stomping.\u201d Still excessive.',val:1500,
@@ -1499,10 +1522,10 @@ const MOB_KINDS={
     hp:14,acc:0.5,maxhit:2,resp:20000,bones:1,coinP:.6,coins:[5,30],aggro:0,cmb:11},
   ghost:{name:'Ghost',ex:'A cold draught with a grudge.',hp:16,acc:0.5,maxhit:3,
     resp:14000,bones:0,coinP:0,coins:[0,0],aggro:1,cmb:13},
-  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:24,acc:0.56,maxhit:4,resp:18000,bones:0,coinP:0.6,coins:[15,55],aggro:1,cmb:16,magic:1},
-  gargoyle:{name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:40,acc:0.62,maxhit:5,resp:22000,bones:0,coinP:0.9,coins:[40,120],aggro:1,cmb:20},
-  basilisk:{name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:36,acc:0.6,maxhit:5,resp:24000,bones:0,coinP:0.8,coins:[45,130],aggro:1,cmb:22,magic:1},
-  wyvern:{name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:64,acc:0.7,maxhit:6,resp:40000,bones:1,coinP:1,coins:[140,360],aggro:1,cmb:26,magic:1},
+  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:24,acc:0.56,maxhit:4,resp:18000,bones:0,coinP:0.6,coins:[15,55],aggro:1,cmb:16,magic:1,rel:1,hpK:1.9,hitK:0.18},
+  gargoyle:{name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:40,acc:0.62,maxhit:5,resp:22000,bones:0,coinP:0.9,coins:[40,120],aggro:1,cmb:20,rel:2,hpK:2.6,hitK:0.20},
+  basilisk:{name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:36,acc:0.6,maxhit:5,resp:24000,bones:0,coinP:0.8,coins:[45,130],aggro:1,cmb:22,magic:1,rel:3,hpK:2.3,hitK:0.20},
+  wyvern:{name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:64,acc:0.7,maxhit:6,resp:40000,bones:1,coinP:1,coins:[140,360],aggro:1,cmb:26,magic:1,rel:5,hpK:2.9,hitK:0.22},
   lesser:{name:'Lesser demon',ex:'Imported from somewhere much warmer.',hp:26,
     acc:0.55,maxhit:3,resp:25000,bones:0,coinP:.8,coins:[20,80],aggro:1,cmb:15},
   greater:{name:'Greater demon',ex:'The lesser ones speak of it only in whispers.',
@@ -1630,10 +1653,10 @@ const MOB_SPAWNS=[['rat',77,72],['rat',80,70],['rat',82,73],['rat',79,76],['rat'
   ['minotaur',64,21],['minotaur',67,21],['minotaur',65,23],
   ['ghost',179,69],['ghost',184,74],['ghost',180,72],['hdean',182,71],
   ['master',24,50],
-  ['banshee',13,12],['banshee',26,12],
-  ['gargoyle',35,12],['gargoyle',44,7],
-  ['basilisk',19,19],['basilisk',4,12],
-  ['wyvern',49,19],['wyvern',53,10],
+  ['banshee',12,12],['banshee',11,12],['banshee',13,12],['banshee',12,13],
+  ['gargoyle',38,8],['gargoyle',37,7],['gargoyle',38,7],['gargoyle',39,7],
+  ['basilisk',16,20],['basilisk',15,19],['basilisk',16,19],['basilisk',17,19],
+  ['wyvern',49,18],['wyvern',48,17],['wyvern',49,17],['wyvern',50,17],
   ['dragon',168,124],['dragon',176,122],['dragon',172,128],
   ['minotaur',45,96],['minotaur',45,100],
   ['zombie',41,96],['zombie',41,100],
@@ -1709,6 +1732,7 @@ const player={
   quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
   m4:{s:0,b:0,k:0,d:0},m5:{s:0,d:0},sos:{s:0,k1:0,k2:0,k3:0,k4:0,o:0}},
+  lostStash:[],
   slayer:{task:null,need:0,done:0,streak:0,points:0,unlocks:{}}
 };
 function masterBoost(s){
@@ -1731,6 +1755,10 @@ function clickFxAt(wx,wz,col){clicks.push({wx,wz,t:performance.now(),col});}
 function dropGround(x,y,id,qty){ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc});}
 function rollRareDrop(r){
   const c=MOB_KINDS[r.kind].cmb;
+  if(r.kind==='wyvern'){if(Math.random()<1/800){dropGround(r.x,r.y,'draconic_visage',1);msg('The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!','#e0b020');}else if(Math.random()<1/350){dropGround(r.x,r.y,'abyssal_whip',1);msg('The skeletal wyvern drops an Abyssal whip!','#e0b020');}}
+  else if(r.kind==='gargoyle'){if(Math.random()<1/220){dropGround(r.x,r.y,'granite_maul',1);msg('The gargoyle drops a Granite maul!','#e0b020');}}
+  else if(r.kind==='basilisk'){if(Math.random()<1/300){dropGround(r.x,r.y,'abyssal_whip',1);msg('The basilisk drops an Abyssal whip!','#e0b020');}else if(Math.random()<1/110){dropGround(r.x,r.y,'basilisk_jaw',1);msg('The basilisk drops a Basilisk jaw.','#e0b020');}}
+  else if(r.kind==='banshee'){if(Math.random()<1/100){dropGround(r.x,r.y,'wailing_relic',1);msg('The banshee leaves behind a Wailing relic.','#e0b020');}}
   if(Math.random()<Math.min(0.16,0.015+c*0.005)){
     const roll=Math.random()*Math.max(6,c);
     let gem='uncut_sapphire';
@@ -1903,23 +1931,27 @@ function mobWildScaled(r){return player.quests.m5.s>=2&&inWild(r.sx,r.sy);}
 function mobCmb(r){
   if(r.kind==='boar')return r.lvl||MOB_KINDS.boar.cmb;
   const base=MOB_KINDS[r.kind].cmb;
+  if(MOB_KINDS[r.kind].rel!==undefined){let rv=Math.max(8,cmbLvl()+MOB_KINDS[r.kind].rel);return r.superior?rv+7:rv;}
   let v=(!mobWildScaled(r))?base:Math.max(base,Math.round(cmbLvl()+base*0.1));
   return r.superior?v+7:v;
 }
 function mobMaxHp(r){
   const k=MOB_KINDS[r.kind];
   if(r.kind==='boar')return Math.round(k.hp*Math.pow(mobCmb(r)/k.cmb,0.9));
+  if(k.rel!==undefined){const b=Math.max(8,cmbLvl()+k.rel);const hv=Math.round(b*(k.hpK||2.2));return r.superior?Math.round(hv*2.6):hv;}
   let v=(!mobWildScaled(r))?k.hp:Math.max(k.hp,Math.round(k.hp*Math.pow(mobCmb(r)/k.cmb,0.95)*1.5));
   return r.superior?Math.round(v*2.6):v;
 }
 function mobAcc(r){
   const a=MOB_KINDS[r.kind].acc;
+  if(MOB_KINDS[r.kind].rel!==undefined)return Math.min(0.94,a+Math.max(0,cmbLvl()-18)*0.003);
   if(r.kind!=='boar'&&!mobWildScaled(r))return a;
   return Math.min(0.95,a+Math.max(0,mobCmb(r)/MOB_KINDS[r.kind].cmb-1)*0.12);
 }
 function mobMaxhit(r){
   const k=MOB_KINDS[r.kind];
   if(r.kind==='boar')return Math.min(9,Math.max(k.maxhit,Math.round(k.maxhit*Math.pow(mobCmb(r)/k.cmb,0.5))));
+  if(k.rel!==undefined){const b=Math.max(8,cmbLvl()+k.rel);const mv=Math.min(11,Math.max(2,Math.round(b*(k.hitK||0.2))));return r.superior?Math.min(15,Math.ceil(mv*1.55)):mv;}
   let v=(!mobWildScaled(r))?k.maxhit:Math.min(9,Math.max(k.maxhit,Math.round(k.maxhit*Math.pow(mobCmb(r)/k.cmb,0.5))));
   return r.superior?Math.min(12,Math.ceil(v*1.55)):v;
 }
@@ -2540,9 +2572,10 @@ function ratsTick(){
           let dmg=0;
           const sdf=eqStat('def');
           const effD=lvl('defense')*(prayers.love?1.18:1);
+          protWarn(r);
           const _mag=MOB_KINDS[r.kind].magic&&!protectedFrom(r.kind);
           const ratAcc=_mag?Math.min(0.97,mobAcc(r)+0.05):Math.max(0.25,Math.min(0.92,mobAcc(r)-sdf*0.008-(effD-1)*0.004));
-          const _mh=_mag?Math.ceil(mobMaxhit(r)*1.6):mobMaxhit(r);
+          const _mh=_mag?Math.ceil(mobMaxhit(r)*(r.kind==='wyvern'?2.4:1.6)):mobMaxhit(r);
           if(Math.random()<ratAcc)dmg=rndi(0,_mh);
           player.braceT=performance.now();
           if(!player.action&&player.hp>0)setAction({type:'attack',rat:r},r.x,r.y);
@@ -2585,14 +2618,13 @@ function die(){
   sfx.die();
   if(inWild(player.x,player.y)){
     const dx2=player.x,dy2=player.y;
+    player.lostStash=player.lostStash||[];
     for(let i=0;i<28;i++){const sl=player.inv[i];
-      if(sl&&isRecoverable(sl.id)){ground.push({x:dx2,y:dy2,id:sl.id,qty:sl.qty,
-        exp:performance.now()+300000,uid:++uidc});player.inv[i]=null;}}
+      if(sl&&isRecoverable(sl.id)&&!(ITEMS[sl.id]&&ITEMS[sl.id].noDrop)){player.lostStash.push({id:sl.id,qty:sl.qty});player.inv[i]=null;}}
     for(const k of ['weapon','shield']){const eq=player.equip[k];
-      if(eq&&isRecoverable(eq.id)){ground.push({x:dx2,y:dy2,id:eq.id,qty:1,
-        exp:performance.now()+300000,uid:++uidc});player.equip[k]=null;}}
+      if(eq&&isRecoverable(eq.id)&&!(ITEMS[eq.id]&&ITEMS[eq.id].noDrop)){player.lostStash.push({id:eq.id,qty:1});player.equip[k]=null;}}
     renderInv();renderEquip();dirty=true;
-    msg('You died in the Wilderness! Your items lie where you fell...','#9c1f1f');
+    msg('You died in the Wilderness! Your lost items can be reclaimed for a small fee from the Slayer Master or the Rector.','#9c1f1f');
   }else{
     msg('Oh no — you have been defeated! You wake up in the town square.','#9c1f1f');
   }
@@ -2763,6 +2795,7 @@ function renderSkills(){
   }
   const cmb=cmbLvl();
   document.getElementById('totallevel').textContent='Combat level: '+cmb+'  \u00b7  Total level: '+total;
+  {const sp=document.getElementById('slayerpts');if(sp)sp.textContent='Slayer points: '+((player.slayer&&player.slayer.points)||0);}
   updatePrayOrb();
   const xo=document.getElementById('xporb');
   if(xo)xo.textContent=fmt(txp)+' xp';
@@ -3050,6 +3083,7 @@ function optionsAt(tx,ty){
      fn:()=>setAction({type:'talkn',n:np2},np2.x,np2.y)},
     {html:'Examine <span class="t">'+np2.name+'</span>',
      fn:()=>msg(np2.ex||'A St. Paul\'s student, between classes.')});
+  if(np2&&np2.id==='slayer'&&player.quests.m5.s>=2)opts.splice(1,0,{html:'Shop <span class="t">Slayer Master</span>',label:'Shop',fn:openSlayerShop});
   if(np2&&np2.id==='capeseller'){opts.push(
     {html:'Trade <span class="t">'+np2.name+'</span>',label:'Trade '+np2.name,
      fn:()=>setAction({type:'talkn',n:np2,trade:1},np2.x,np2.y)});
@@ -3593,6 +3627,11 @@ function drawItemIcon(g,id,S){
  case 'earmuffs':{g.strokeStyle='#3a3f47';g.lineWidth=2.6;g.beginPath();g.arc(0,-1,8,Math.PI,0);g.stroke();g.fillStyle='#2b2f36';g.strokeStyle='#1a1d22';g.lineWidth=1;for(const sx of [-8,8]){g.beginPath();g.ellipse(sx,1,3.2,4.6,0,0,7);g.fill();g.stroke();}g.fillStyle='#5a6068';for(const sx of [-8,8])g.fillRect(sx-1.3,-3,2.6,5);break;}
  case 'mirror_shield':{g.fillStyle='#c6cdd6';g.strokeStyle='#7e8893';g.lineWidth=1.6;g.beginPath();g.arc(0,0,9,0,7);g.fill();g.stroke();g.fillStyle='#eef3f8';g.beginPath();g.moveTo(-4,-6);g.lineTo(-1,-7);g.lineTo(3,5);g.lineTo(0,6);g.closePath();g.fill();g.strokeStyle='#9aa3ad';g.lineWidth=1;g.beginPath();g.arc(0,0,5.5,0,7);g.stroke();break;}
  case 'rock_hammer':{g.strokeStyle='#6e4a26';g.lineWidth=2.8;g.beginPath();g.moveTo(-5,9);g.lineTo(3,-5);g.stroke();g.save();g.translate(4,-6);g.rotate(0.5);g.fillStyle='#7a818a';g.strokeStyle='#3a3f47';g.lineWidth=1.2;g.fillRect(-6,-3.5,12,7);g.strokeRect(-6,-3.5,12,7);g.fillStyle='#9aa3ad';g.fillRect(-6,-3.5,12,2);g.restore();break;}
+ case 'abyssal_whip':{g.strokeStyle='#1c1118';g.lineWidth=3;g.fillStyle='#3a1820';g.beginPath();g.arc(-4,6,3,0,7);g.fill();g.strokeStyle='#7a2030';g.lineWidth=2;g.beginPath();g.moveTo(-4,6);g.quadraticCurveTo(8,2,4,-4);g.quadraticCurveTo(0,-9,-6,-6);g.stroke();g.strokeStyle='#c0394b';g.lineWidth=1;g.beginPath();g.moveTo(-6,-6);g.lineTo(-9,-9);g.stroke();break;}
+ case 'granite_maul':{g.strokeStyle='#5a4326';g.lineWidth=2.6;g.beginPath();g.moveTo(-4,9);g.lineTo(2,-3);g.stroke();g.fillStyle='#6e6f73';g.strokeStyle='#3a3b3f';g.lineWidth=1.2;g.beginPath();g.moveTo(-6,-9);g.lineTo(8,-7);g.lineTo(7,-1);g.lineTo(-7,-3);g.closePath();g.fill();g.stroke();g.fillStyle='#9a9ca0';g.fillRect(-5,-8,3,3);g.fillRect(2,-6,3,3);break;}
+ case 'draconic_visage':{g.fillStyle='#7a2d22';g.strokeStyle='#3a120c';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-9);g.lineTo(8,-2);g.lineTo(5,8);g.lineTo(-5,8);g.lineTo(-8,-2);g.closePath();g.fill();g.stroke();g.fillStyle='#e0b020';g.beginPath();g.moveTo(-4,-1);g.lineTo(-1,1);g.lineTo(-4,3);g.closePath();g.fill();g.beginPath();g.moveTo(4,-1);g.lineTo(1,1);g.lineTo(4,3);g.closePath();g.fill();g.strokeStyle='#3a120c';g.beginPath();g.moveTo(-2,5);g.lineTo(2,5);g.stroke();break;}
+ case 'basilisk_jaw':{g.fillStyle='#cdbf8a';g.strokeStyle='#6a5e3a';g.lineWidth=1.2;g.beginPath();g.moveTo(-8,-2);g.quadraticCurveTo(0,4,8,-2);g.quadraticCurveTo(8,2,0,7);g.quadraticCurveTo(-8,2,-8,-2);g.closePath();g.fill();g.stroke();g.fillStyle='#f2ecd0';for(const fx of [-5,-2,1,4]){g.beginPath();g.moveTo(fx,2);g.lineTo(fx+1.4,7);g.lineTo(fx+2.8,2);g.closePath();g.fill();}break;}
+ case 'wailing_relic':{g.fillStyle='#7d8794';g.strokeStyle='#3a4049';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-8);g.quadraticCurveTo(6,-6,6,4);g.lineTo(-6,4);g.quadraticCurveTo(-6,-6,0,-8);g.closePath();g.fill();g.stroke();g.fillStyle='#3a4049';g.beginPath();g.arc(0,5,1.6,0,7);g.fill();g.strokeStyle='#bfe6f5';g.lineWidth=0.8;g.beginPath();g.arc(0,-2,9,-0.6,0.6);g.stroke();break;}
  case 'elemental_shield':{g.fillStyle='#6fa8d8';g.strokeStyle='#3a6a94';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-9);g.lineTo(8,-5);g.quadraticCurveTo(8,6,0,10);g.quadraticCurveTo(-8,6,-8,-5);g.closePath();g.fill();g.stroke();g.strokeStyle='#dff0fb';g.lineWidth=1.4;g.beginPath();g.moveTo(0,-5);g.lineTo(0,6);g.moveTo(-4,-1);g.lineTo(4,3);g.moveTo(4,-1);g.lineTo(-4,3);g.stroke();break;}
     case 'burnt_fish':fshTrout(_BURN);break;
     case 'bones':
@@ -8648,20 +8687,59 @@ function claimSlayerReward(){
 function slayerHelmTier(){const h=player.equip&&player.equip.head;if(!h)return 0;return ({proctor_helm:1,crimson_proctor_helm:2,gilded_warden_helm:3})[h.id]||0;}
 function onTaskBonus(r){const t=slayerHelmTier();if(!t)return 0;const sl=player.slayer;if(!sl||!sl.task||sl.done>=sl.need||r.kind!==sl.task||!inWild(r.sx,r.sy))return 0;return [0,0.10,0.14,0.18][t];}
 function hasEquip(slot,id){return !!(player.equip&&player.equip[slot]&&player.equip[slot].id===id);}
-function protectedFrom(kind){if(kind==='banshee')return hasEquip('head','earmuffs')||slayerHelmTier()>0;if(kind==='basilisk')return hasEquip('shield','mirror_shield');if(kind==='wyvern')return hasEquip('shield','elemental_shield');return true;}
+function protectedFrom(kind){if(kind==='banshee')return hasEquip('head','earmuffs')||slayerHelmTier()>0;if(kind==='basilisk')return hasEquip('shield','mirror_shield');if(kind==='wyvern')return hasEquip('shield','dragon_shield')||hasEquip('shield','elemental_shield');return true;}
+function protWarn(r){const k=r.kind,now=performance.now();let m=null;if(k==='banshee'&&!protectedFrom('banshee'))m='Without Earmuffs (or a Proctor\u2019s Helm), the banshee\u2019s wail tears past your armour!';else if(k==='basilisk'&&!protectedFrom('basilisk'))m='Without a Mirror Shield, the basilisk\u2019s gaze tears past your armour!';else if(k==='wyvern'&&!protectedFrom('wyvern'))m='Without a Dragon Slayer shield or Elemental Shield equipped, the wyvern\u2019s frost breath will devastate you!';else if(k==='gargoyle'&&countItem('rock_hammer')<1)m='You need a Rock Hammer in your pack to land the killing blow on a gargoyle.';if(!m)return;if(r._pw&&now-r._pw<5000)return;r._pw=now;msg('Warning: '+m,'#c9601f');}
+function reclaimFee(){const st=player.lostStash||[];let v=0;for(const it of st)v+=(((ITEMS[it.id]&&ITEMS[it.id].val)||1)*(it.qty||1));return Math.min(3000,Math.max(100,Math.round(v*0.03)));}
+function reclaimLost(){const st=player.lostStash||[];if(!st.length){msg('You have no lost items to reclaim.');return;}const fee=reclaimFee();if(coinsCount()<fee){msg('Reclaiming your lost belongings costs '+fee+' gp \u2014 you cannot afford it yet.','#9c1f1f');return;}spendCoins(fee);let over=0;for(const it of st){if(!addItem(it.id,it.qty||1)){dropGround(player.x,player.y,it.id,it.qty||1);over++;}}player.lostStash=[];sfx.pickup&&sfx.pickup();dirty=true;msg('You reclaim your lost belongings for '+fee+' gp.'+(over?' Some spilled to your feet \u2014 your pack was full.':''),'#1a5a8c');renderInv&&renderInv();}
+let slayerConfirmId=null;
+function slayerShopRows(){const sl=player.slayer,u=sl.unlocks||{},rows=[];
+  if(!u.bigger)rows.push({id:'bigger',icon:'_skull',name:'Bigger and Badder',price:SLAYER_PRICES.bigger,desc:'Unlocks superior monsters \u2014 rare, far tougher versions of your contract target that grant bonus points and richer drops.'});
+  if(!ownProctorAny())rows.push({id:'proctor_helm',icon:'proctor_helm',name:'Proctor\u2019s Helm',price:SLAYER_PRICES.proctor_helm,desc:'A slayer helm that strikes harder against your current contract monster, and wards off a banshee\u2019s wail. Upgrade it later with helm pieces and dyes.'});
+  rows.push({id:'hunter_signet',icon:'hunter_signet',name:'Hunter\u2019s Signet',price:SLAYER_PRICES.hunter_signet,desc:'A ring (right-click it) that reports your active contract and teleports you to the chaos temple deep in the wild.'});
+  rows.push({id:'crimson_dye',icon:'crimson_dye',name:'Crimson Dye',price:SLAYER_PRICES.crimson_dye,desc:'Fuse onto a Proctor\u2019s Helm with a Scholar\u2019s Crest (a task drop) to forge the Crimson Proctor\u2019s Helm.'});
+  rows.push({id:'gilt_dye',icon:'gilt_dye',name:'Gilt Dye',price:SLAYER_PRICES.gilt_dye,desc:'Fuse onto a Crimson Proctor\u2019s Helm with a Sentinel Visor (a task drop) to forge the Gilded Warden Helm.'});
+  if(!u.banshee)rows.push({id:'unlock_banshee',icon:'earmuffs',name:'Contract: Banshee',price:SLAYER_PRICES.unlock_banshee,desc:'Adds banshees to your contract pool. Comes with Earmuffs to silence their deadly wail.'});
+  if(!u.basilisk)rows.push({id:'unlock_basilisk',icon:'mirror_shield',name:'Contract: Basilisk',price:SLAYER_PRICES.unlock_basilisk,desc:'Adds basilisks to your pool. Comes with a Mirror Shield to deflect their petrifying gaze.'});
+  if(!u.gargoyle)rows.push({id:'unlock_gargoyle',icon:'rock_hammer',name:'Contract: Gargoyle',price:SLAYER_PRICES.unlock_gargoyle,desc:'Adds gargoyles to your pool. Comes with a Rock Hammer \u2014 needed to shatter them once beaten.'});
+  if(!u.wyvern)rows.push({id:'unlock_wyvern',icon:'elemental_shield',name:'Contract: Skeletal Wyvern',price:SLAYER_PRICES.unlock_wyvern,desc:'Adds skeletal wyverns to your pool. Comes with an Elemental Shield \u2014 it (or a Dragon Slayer shield) turns their frost breath.'});
+  return rows;}
+function slDrawIcon(cv,icon){const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
+  if(icon==='_skull'){g.save();g.translate(16,16);g.fillStyle='#d8d2c0';g.beginPath();g.arc(0,-2,8.5,Math.PI,0);g.fill();g.fillRect(-8.5,-2,17,7);g.fillStyle='#b6291f';g.beginPath();g.arc(-3.8,-1,2.5,0,7);g.arc(3.8,-1,2.5,0,7);g.fill();g.fillStyle='#1c1813';g.fillRect(-1.3,3,2.6,4);g.fillRect(-5,5,3,2);g.fillRect(2,5,3,2);g.restore();return;}
+  if(icon==='_coin'){g.save();g.translate(16,16);g.fillStyle='#e8c84a';g.beginPath();g.arc(0,0,9,0,7);g.fill();g.lineWidth=2;g.strokeStyle='#b9942a';g.stroke();g.fillStyle='#fff3b0';g.font='bold 12px Georgia';g.textAlign='center';g.textBaseline='middle';g.fillText('$',0,1);g.restore();return;}
+  drawItemIcon(g,icon,32);}
+function slMakeRow(r,onBuy,confirmKey,btnLabel,confirmLabel){const row=document.createElement('div');row.className='slrow';
+  const cv=document.createElement('canvas');cv.width=32;cv.height=32;slDrawIcon(cv,r.icon);row.appendChild(cv);
+  const info=document.createElement('div');info.style.flex='1';info.innerHTML='<div class="sln"></div><div class="sld"></div>';
+  info.querySelector('.sln').textContent=r.name;info.querySelector('.sld').textContent=r.desc;row.appendChild(info);
+  const bwrap=document.createElement('div');const btn=document.createElement('div');
+  const afford=r.afford!==false;
+  if(slayerConfirmId===confirmKey){btn.className='slbtn confirm';btn.textContent=confirmLabel;}
+  else if(!afford){btn.className='slbtn cant';btn.textContent=btnLabel;}
+  else{btn.className='slbtn';btn.textContent=btnLabel;}
+  btn.onclick=()=>{if(!afford){slayerConfirmId=null;renderSlayerShop();return;}if(slayerConfirmId!==confirmKey){slayerConfirmId=confirmKey;renderSlayerShop();return;}slayerConfirmId=null;onBuy();};
+  bwrap.appendChild(btn);row.appendChild(bwrap);return row;}
+function renderSlayerShop(){const sl=player.slayer;const pe=document.getElementById('slpts');if(pe)pe.textContent=(sl.points||0)+' pts';
+  const list=document.getElementById('sllist');if(!list)return;list.innerHTML='';
+  for(const r of slayerShopRows()){r.afford=(sl.points||0)>=r.price;
+    list.appendChild(slMakeRow(r,()=>{const res=buySlayer(r.id);renderSlayerShop();renderSkills&&renderSkills();renderInv&&renderInv();renderEquip&&renderEquip();},r.id,'Buy \u00b7 '+r.price+' pts','Confirm? '+r.price+' pts'));}
+  if((player.lostStash||[]).length){const fee=reclaimFee();
+    list.appendChild(slMakeRow({icon:'_coin',name:'Reclaim wilderness losses',desc:'Buy back the '+player.lostStash.length+' stack(s) of items you lost on death in the wild.',afford:true},()=>{reclaimLost();renderSlayerShop();renderInv&&renderInv();},'__reclaim','Reclaim \u00b7 '+fee+' gp','Confirm? '+fee+' gp'));}
+  if(!list.children.length){const e=document.createElement('div');e.className='sld';e.style.cssText='padding:16px;text-align:center;';e.textContent='You hold every reward already. Cull on.';list.appendChild(e);}}
+function openSlayerShop(){if(player.quests.m5.s<2){msg('The Slayer Master has no rewards for an unproven hand.','#9a6fb0');return;}slayerConfirmId=null;renderSlayerShop();const el=document.getElementById('slayerui');if(el)el.classList.add('on');}
+function closeSlayerShop(){const el=document.getElementById('slayerui');if(el)el.classList.remove('on');slayerConfirmId=null;}
 const EXPAND_KINDS=['banshee','gargoyle','basilisk','wyvern'];
 const UNLOCK_GIFT={banshee:'earmuffs',gargoyle:'rock_hammer',basilisk:'mirror_shield',wyvern:'elemental_shield'};
 function assignablePool(){const u=(player.slayer&&player.slayer.unlocks)||{};return SLAYER_POOL.concat(EXPAND_KINDS.filter(k=>u[k]));}
-function unlockMonster(kind){const sl=player.slayer;sl.unlocks=sl.unlocks||{};sl.unlocks[kind]=true;const gift=UNLOCK_GIFT[kind];if(gift&&countItem(gift)<1){if(!addItem(gift))dropGround(player.x,player.y,gift,1);}for(const r of rats){if(r.kind===kind&&r.locked){r.locked=false;r.alive=true;r.maxhp=mobMaxHp(r);r.hp=r.maxhp;}}msg('Unlocked '+MOB_KINDS[kind].name+' contracts \u2014 you receive a '+(gift?ITEMS[gift].name:'reward')+'.','#9a6fb0');}
+function unlockMonster(kind){const sl=player.slayer;sl.unlocks=sl.unlocks||{};sl.unlocks[kind]=true;const gift=UNLOCK_GIFT[kind];if(gift&&countItem(gift)<1){if(!addItem(gift))dropGround(player.x,player.y,gift,1);}for(const r of rats){if(r.kind===kind&&r.locked){r.locked=false;r.alive=true;r.maxhp=mobMaxHp(r);r.hp=r.maxhp;}}msg('Unlocked '+MOB_KINDS[kind].name+' contracts'+(gift?' \u2014 you receive a '+ITEMS[gift].name+'.':' \u2014 equip a Dragon Slayer shield before you face it!'),'#9a6fb0');}
 function ownProctorAny(){const ids=['proctor_helm','crimson_proctor_helm','gilded_warden_helm'];for(const id of ids){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;}return false;}
 function neededHelmPiece(){const have=id=>countItem(id)>0||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&countItem('sentinel_visor')<1)return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&countItem('scholar_crest')<1)return 'scholar_crest';return null;}
-const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:220,unlock_gargoyle:320,unlock_basilisk:280,unlock_wyvern:420};
-const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks, with a bonus every tenth task. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, and an Elemental Shield against the wyvern\u2019s frost. Keep that gear equipped or their attacks tear through armour.';
+const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150};
+const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks, with a bonus every tenth task. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, and a Dragon Slayer shield or an Elemental Shield against the wyvern\u2019s frost \u2014 either turns its freezing breath. Keep the right gear equipped or these creatures tear straight through armour.';
 function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
-function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});E.push({label:'Back.',next:'wares'});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
+function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
 function applyHelmDye(dyeId){const m=({crimson_dye:['proctor_helm','scholar_crest','crimson_proctor_helm'],gilt_dye:['crimson_proctor_helm','sentinel_visor','gilded_warden_helm']})[dyeId];if(!m)return;const baseId=m[0],pieceId=m[1],outId=m[2];const inInv=findItem(baseId)>=0;const equipped=player.equip.head&&player.equip.head.id===baseId;if(!inInv&&!equipped){msg('You need a '+ITEMS[baseId].name+' to apply this dye.','#9a6fb0');return;}if(findItem(pieceId)<0){msg('You also need a '+ITEMS[pieceId].name+' \u2014 a rare drop from your task monsters.','#9a6fb0');return;}if(inInv)removeSlot(findItem(baseId));else{player.equip.head=null;renderEquip&&renderEquip();}removeSlot(findItem(pieceId));removeSlot(findItem(dyeId));if(!addItem(outId))dropGround(player.x,player.y,outId,1);sfx.level&&sfx.level();dirty=true;msg('You fuse the '+ITEMS[pieceId].name.toLowerCase()+' onto the helm with '+ITEMS[dyeId].name.toLowerCase()+' \u2014 behold, the '+ITEMS[outId].name+'!','#e8b020');renderInv&&renderInv();}
 function signetCheckTask(){const sl=player.slayer;if(!sl.task)msg('No active contract. Seek the Slayer Master at the wild\u2019s edge.','#9a6fb0');else if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');else msg('Contract: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath. You hold '+(sl.points||0)+' Slayer points.','#9a6fb0');}
-function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}const tx=40,ty=42;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you into the wild.','#9a6fb0');dirty=true;}
+function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}const tx=26,ty=37;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you to the chaos temple, deep in the wild.','#9a6fb0');dirty=true;}
 function slayerTree(){
   const sl=player.slayer,Q=player.quests;
   if(Q.m5.s<2)return{
@@ -8672,20 +8750,20 @@ function slayerTree(){
     after:{who:'npc',text:'Coin and craft, as promised. The wild is never short of work.',next:'amenu'},
     amenu:{opts:[
       {label:'Give me another contract.',next:()=>{assignSlayerTask();return null;}},
-      {label:'Show me the rewards.',next:()=>{dlg.tree=slayerStore();return 'shop';}},
+      {label:'Show me the rewards.',next:()=>{closeDialogue();openSlayerShop();return null;}},
       {label:'Not now.',next:null}]}};
   if(sl.task)return{
     start:{who:'npc',text:'Your contract stands: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath out in the wild. Go.',next:'menu'},
     menu:{opts:[
       {label:'Understood.',next:null},
       {label:'Trade me a different contract.',next:()=>{assignSlayerTask();return null;}},
-      {label:'Show me the rewards.',next:()=>{dlg.tree=slayerStore();return 'shop';}}]}};
+      {label:'Show me the rewards.',next:()=>{closeDialogue();openSlayerShop();return null;}}]}};
   return{
     start:{who:'npc',text:'So. You hunt for me now. The wild past the ditch is thick with things that should not be, and someone must thin them.',next:'menu'},
     menu:{opts:[
       {label:'Give me a contract.',next:()=>{assignSlayerTask();return null;}},
       {label:'How does this work?',next:'info'},
-      {label:'Show me the rewards.',next:()=>{dlg.tree=slayerStore();return 'shop';}},
+      {label:'Show me the rewards.',next:()=>{closeDialogue();openSlayerShop();return null;}},
       {label:'Not now.',next:null}]},
     info:{who:'npc',text:'I name a creature and a number. You cull them in the wild and return. I pay in coin and in skill \u2014 Slayer, and the strength of arms. The wild grows to meet you: never trivial, never quite hopeless.',next:'start'}};
 }
@@ -8764,6 +8842,7 @@ const DIALOGUES={
     if(q5.s===2)return{
       start:{who:'npc',text:'The bell is silent, the lawns are quiet, and the school owes you more than it knows. Walk these grounds as their guardian.',next:'ask'},
       ask:{opts:[{label:'Who are you, exactly?',next:'who'},
+        {label:'Reclaim my wilderness losses.',next:()=>{reclaimLost();return null;}},
         {label:'Good day, Rector.',next:'bye'}]},
       who:{who:'npc',text:'I keep this school. Though these days, I suspect it is the two of us.',next:'ask'},
       bye:{who:'npc',text:'Mind the paths after dark. Old habit.',next:null}};
@@ -10131,6 +10210,7 @@ document.getElementById('depall').addEventListener('click',()=>{
   audio();for(let i=0;i<28;i++)depositSlot(i,1e9);});
 bankEl.addEventListener('click',e=>{if(e.target===bankEl)closeBank();});
 geEl.addEventListener('click',e=>{if(e.target===geEl)closeShop();});
+{const slEl=document.getElementById('slayerui');if(slEl){slEl.addEventListener('click',e=>{if(e.target===slEl)closeSlayerShop();});}const slc=document.getElementById('slclose');if(slc)slc.addEventListener('click',closeSlayerShop);}
 wmapEl.addEventListener('click',e=>{if(e.target===wmapEl)wmapEl.classList.remove('on');});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){wmapEl.classList.remove('on');closeBank();closeShop();document.getElementById('wildui').classList.remove('on');wildHop=null;}});
 miniC.addEventListener('click',()=>{audio();openWorldMap();});
