@@ -435,6 +435,7 @@
     #layout{flex-wrap:wrap;}
     #side{flex:1 1 100%; width:auto;}
     .panel{min-height:0;}
+  #qlist{max-height:248px;overflow-y:auto;overflow-x:hidden;}
   }
 </style>
 </head>
@@ -803,6 +804,8 @@ ITEMS.raw_trout={name:'Raw trout',ex:'A river prize.',val:22};
 ITEMS.trout={name:'Trout',ex:'Cooked to a turn.',prim:'Eat',heal:7,val:40};
 ITEMS.raw_lobster={name:'Raw lobster',ex:'Snappy about it.',val:60};
 ITEMS.lobster={name:'Lobster',ex:'A proper feast.',prim:'Eat',heal:12,val:120};
+ITEMS.raw_swordfish={name:'Raw swordfish',ex:'A long-billed terror of the deep.',val:90};
+ITEMS.swordfish={name:'Swordfish',ex:'Grilled bill and all. A champion\u2019s meal.',prim:'Eat',heal:14,val:180};
 ITEMS.burnt_fish={name:'Burnt fish',ex:'A cautionary tale.',val:1};
 ITEMS.fighting_boots={name:'Fighting boots',
   ex:'Confiscated 1907 for \u201cexcessive stomping.\u201d Still excessive.',val:1500,
@@ -1572,7 +1575,19 @@ const NPCS=[
  {id:'s9',name:'Student',x:103,y:75,r:5,sex:'m'},
  {id:'s10',name:'Student',x:86,y:60,r:5,sex:'f'},
  {id:'slayer',name:'Slayer Master',x:49,y:30,r:6,sex:'m',heading:Math.PI*1.5,
-  ex:'A cowled figure who keeps a ledger of every thing that needs killing.'}];
+  ex:'A cowled figure who keeps a ledger of every thing that needs killing.'},
+ {id:'sm_attack',name:'Attack Master',x:79,y:48,r:0,sex:'m',ex:'A scarred duelist who has never lost a bout on these grounds.',lines:['Footwork first. Power second.','Keep your guard up.']},
+ {id:'sm_strength',name:'Strength Master',x:78,y:51,r:0,sex:'m',ex:'Arms like cordwood; he bends the rules and, occasionally, the railings.',lines:['Lift with the legs.','Strength is honest work.']},
+ {id:'sm_defense',name:'Defense Master',x:76,y:53,r:0,sex:'f',ex:'Unmoved and unmovable, shield ever at the ready.',lines:['Take the blow. Give none back.','A good shield outlives a good sword.']},
+ {id:'sm_hitpoints',name:'Hitpoints Master',x:73,y:54,r:0,sex:'f',ex:'A field medic with the constitution of an ox.',lines:['Eat something, you look pale.','Stay on your feet.']},
+ {id:'sm_woodcutting',name:'Woodcutting Master',x:70,y:53,r:0,sex:'m',ex:'Sawdust in his beard and a story for every tree on campus.',lines:['Sharp axe, steady arm.','That oak predates the chapel.']},
+ {id:'sm_mining',name:'Mining Master',x:68,y:51,r:0,sex:'m',ex:'Squints in daylight; happiest a hundred feet down.',lines:['The good seams hide deep.','Mind the dust.']},
+ {id:'sm_smithing',name:'Smithing Master',x:67,y:48,r:0,sex:'m',ex:'Soot-streaked and broad as the anvil he favours.',lines:['Smelt, then shape.','Heat, hammer, patience.']},
+ {id:'sm_fishing',name:'Fishing Master',x:68,y:45,r:0,sex:'f',ex:'Calm as a still pond, with a net that never comes up empty.',lines:['Patience lands the big ones.','Lobster weather today.']},
+ {id:'sm_cooking',name:'Cooking Master',x:70,y:43,r:0,sex:'m',ex:'A toque-crowned virtuoso who has never once burnt a shrimp.',lines:['A range is kinder than a flame.','Taste as you go.']},
+ {id:'sm_firemaking',name:'Firemaking Master',x:73,y:42,r:0,sex:'f',ex:'Warm-handed and bright-eyed, never without a spark.',lines:['Every camp needs a good blaze.','Better logs, brighter fire.']},
+ {id:'sm_prayer',name:'Prayer Master',x:76,y:43,r:0,sex:'m',ex:'Serene, robed, and quietly luminous.',lines:['Bury the bones; honour the fallen.','Spend your prayer wisely.']},
+ {id:'sm_slayer',name:'Slayer Master',x:78,y:45,r:0,sex:'f',ex:'Keeps a tally of every beast worth hunting in the wild.',lines:['The wilderness rewards the bold.','Contracts come from the north.']}];
 const npcs=NPCS.map((n,i)=>({...n,i,sx:n.x,sy:n.y,px:n.x,py:n.y,
   heading:rnd(0,6.2)}));
 function npcFaceRoad(n){
@@ -1585,7 +1600,7 @@ function npcFaceRoad(n){
   }
   if(best)n.heading=Math.atan2(best[0]-n.x,best[1]-n.y);
 }
-for(const n9 of npcs)npcFaceRoad(n9);
+for(const n9 of npcs){if(n9.id.slice(0,3)==='sm_')n9.heading=Math.atan2(73.5-n9.x,48.5-n9.y);else npcFaceRoad(n9);}
 const MOB_SPAWNS=[['rat',77,72],['rat',80,70],['rat',82,73],['rat',79,76],['rat',123,21],['rat',125,19],
     ['spider',51,98],['spider',55,93],['spider',59,96],['spider',53,100],['spider',48,95],
     ['redspider',18,40],['redspider',34,40],['redspider',24,54],['redspider',30,68],['redspider',16,74],
@@ -1876,6 +1891,11 @@ function mobMaxHp(r){
   if(!mobWildScaled(r))return k.hp;
   return Math.max(k.hp,Math.round(k.hp*Math.pow(mobCmb(r)/k.cmb,0.95)*1.5));
 }
+function mobAcc(r){
+  const a=MOB_KINDS[r.kind].acc;
+  if(r.kind!=='boar'&&!mobWildScaled(r))return a;
+  return Math.min(0.95,a+Math.max(0,mobCmb(r)/MOB_KINDS[r.kind].cmb-1)*0.12);
+}
 function mobMaxhit(r){
   const k=MOB_KINDS[r.kind];
   if(r.kind==='boar')return Math.min(9,Math.max(k.maxhit,Math.round(k.maxhit*Math.pow(mobCmb(r)/k.cmb,0.5))));
@@ -1906,7 +1926,7 @@ function addXp(skill,amt){
   if(after>before){
     msg('Congratulations! Your '+SKILL_META[skill].name+' level is now '+after+'.','#9c1f1f');
     sfx.level();
-    if(before<50&&after>=50)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from Rector Matthews at the Rectory.','#7a4a0a');
+    if(before<50&&after>=50)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from the '+SKILL_META[skill].name+' Master at the Grand Exchange.','#7a4a0a');
     const c9=cmbLvl();
     if(c9>(player.cmb||3)){
       player.cmb=c9;
@@ -2014,13 +2034,13 @@ function lightFire(i){
 }
 function startCook(f){
   const fire=f||objects.find(o=>o.def==='fire');
-  const _RAWS=['raw_shrimps','raw_sardine','raw_trout','raw_lobster'];
+  const _RAWS=['raw_shrimps','raw_sardine','raw_trout','raw_lobster','raw_swordfish'];
   if(!_RAWS.some(r=>findItem(r)>=0)){msg('You have no raw food to cook.');return;}
   setAction({type:'cook',fire},fire.x,fire.y);
   clickFx(fire.x,fire.y,'#ff4d3d');
 }
 function startRangeCook(o){
-  const raws=['raw_shrimps','raw_sardine','raw_trout','raw_lobster'];
+  const raws=['raw_shrimps','raw_sardine','raw_trout','raw_lobster','raw_swordfish'];
   if(!raws.some(id=>findItem(id)>=0)){msg('You have no raw food to cook on the range.');return;}
   setAction({type:'cook',fire:o},o.x,o.y);
   clickFx(o.x,o.y,'#ff7a2d');
@@ -2092,7 +2112,7 @@ function playerTick(){
     if(Math.random()<chance){
       let gid=def.item,gxp=def.xp;
       if(def.skill==='fishing'){
-        const FT=[['raw_lobster',14,42,2],['raw_trout',8,26,2.6],
+        const FT=[['raw_swordfish',18,58,1.3],['raw_lobster',14,42,2],['raw_trout',8,26,2.6],
           ['raw_sardine',3,15,3.4],['raw_shrimps',1,9,5]];
         const el=FT.filter(f=>lvl('fishing')>=f[1]);
         let tot=0;for(const f of el)tot+=f[3];
@@ -2165,6 +2185,7 @@ function playerTick(){
       }
       addXp('hitpoints',0.85*dmg);
     }
+    {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
     r.hp-=dmg;
     if(r.hp<=0){
       const mk3=MOB_KINDS[r.kind];
@@ -2212,7 +2233,7 @@ function playerTick(){
     player.path.length=0;player.face=Math.sign(f.x-player.x)||player.face;
     player.actTick++;
     if(player.actTick%2!==0)return;
-    const CK=[['raw_lobster','lobster',14,26],['raw_trout','trout',6,16],
+    const CK=[['raw_swordfish','swordfish',18,35],['raw_lobster','lobster',14,26],['raw_trout','trout',6,16],
       ['raw_sardine','sardine',1,13],['raw_shrimps','shrimps',1,10]];
     let pick9=null,need9=null;
     for(const c8 of CK){const ii=findItem(c8[0]);
@@ -2495,7 +2516,7 @@ function ratsTick(){
           let dmg=0;
           const sdf=eqStat('def');
           const effD=lvl('defense')*(prayers.love?1.18:1);
-          const ratAcc=Math.max(0.25,Math.min(0.92,MOB_KINDS[r.kind].acc-sdf*0.008-(effD-1)*0.004));
+          const ratAcc=Math.max(0.25,Math.min(0.92,mobAcc(r)-sdf*0.008-(effD-1)*0.004));
           if(Math.random()<ratAcc)dmg=rndi(0,mobMaxhit(r));
           player.braceT=performance.now();
           if(!player.action&&player.hp>0)setAction({type:'attack',rat:r},r.x,r.y);
@@ -2530,7 +2551,7 @@ function ratsTick(){
 function isRecoverable(id){
   if(!id||id==='coins')return true;
   if(/_ore$|_logs$|^logs$|_bar$|^bones$|^big_bones$|^raw_/.test(id))return true;
-  if(['shrimps','sardine','trout','lobster','burnt_fish','burnt_shrimps'].includes(id))return true;
+  if(['shrimps','sardine','trout','lobster','swordfish','burnt_fish','burnt_shrimps'].includes(id))return true;
   if(/^(bronze|iron|steel|mithril|adamant|rune)_/.test(id))return true;
   return false; /* quest rewards & unique items are kept on death */
 }
@@ -2744,6 +2765,7 @@ function renderInv(){
 function itemPrimary(i){
   const s=player.inv[i];if(!s)return;
   const id=s.id,prim=ITEMS[id].prim;
+  if(id==='logs'||id==='oak_logs'||id==='willow_logs'){lightFire(i);return;}
   if(ITEMS[id].equip){equipFromInv(i);return;}
   if(prim==='Eat'){
     const heal=ITEMS[id].heal||3;
@@ -3426,6 +3448,22 @@ function drawItemIcon(g,id,S){
   const _SAr={body:'#aec0cf',dark:'#6f8294',light:'#e3ecf3'},_SAc={body:'#d8b878',dark:'#a07e3e',light:'#f0dca8'};
   const _TRr={body:'#8fa7b5',dark:'#5b7280',light:'#c6d6df',accent:'#4a5a64'},_TRc={body:'#cb8c54',dark:'#8d5a2e',light:'#ecc290',accent:'#7a4a20'};
   const _LOr={body:'#4f6ea0',dark:'#324b72',light:'#86a0c8'},_LOc={body:'#db4a39',dark:'#a32c22',light:'#f08a7a'};
+  const _SWr={body:'#9fb0bf',dark:'#5d6f7e',bill:'#7e8d9b'};
+  const _SWc={body:'#d8a85a',dark:'#9a6a30',bill:'#b9863c'};
+  const fshSwordfish=(P)=>{g.save();g.scale(0.78,0.78);g.rotate(0.08);
+    g.lineWidth=1;g.lineJoin='round';g.lineCap='round';g.strokeStyle=P.dark;
+    g.fillStyle=P.body;
+    g.beginPath();g.moveTo(-8,0);
+    g.quadraticCurveTo(-2,-4.6,4.5,-2.8);g.quadraticCurveTo(7.2,-1.8,8.4,0);
+    g.quadraticCurveTo(7.2,1.8,4.5,2.8);g.quadraticCurveTo(-2,4.6,-8,0);
+    g.closePath();g.fill();g.stroke();
+    g.fillStyle=P.bill;g.beginPath();g.moveTo(8.4,-0.9);g.lineTo(15,-0.1);g.lineTo(8.4,0.9);g.closePath();g.fill();g.stroke();
+    g.fillStyle=P.body;g.beginPath();g.moveTo(-8,0);g.lineTo(-11.6,-3.2);g.lineTo(-10,0);g.lineTo(-11.6,3.2);g.closePath();g.fill();g.stroke();
+    g.beginPath();g.moveTo(-1.5,-3.8);g.lineTo(1,-7);g.lineTo(3,-3);g.closePath();g.fill();g.stroke();
+    g.beginPath();g.moveTo(2,2.6);g.lineTo(3.5,5.2);g.lineTo(5,2.4);g.closePath();g.fill();g.stroke();
+    g.fillStyle=P.dark;g.beginPath();g.arc(5.6,-0.7,0.85,0,Math.PI*2);g.fill();
+    g.restore();
+  };
   const fshShrimp=(P)=>{g.save();g.scale(0.85,0.85);g.rotate(-0.2);
     g.strokeStyle=P.body;g.lineWidth=5;g.lineCap='round';g.beginPath();g.arc(0,1,6,-1.0,2.5);g.stroke();
     g.strokeStyle=P.dark;g.lineWidth=0.8;for(let a=-0.5;a<2.3;a+=0.5){const x=Math.cos(a)*6,y=1+Math.sin(a)*6;g.beginPath();g.moveTo(x-2*Math.sin(a),y+2*Math.cos(a));g.lineTo(x+2*Math.sin(a),y-2*Math.cos(a));g.stroke();}
@@ -3517,6 +3555,8 @@ function drawItemIcon(g,id,S){
     case 'trout':fshTrout(_TRc);break;
     case 'raw_lobster':fshLobster(_LOr);break;
     case 'lobster':fshLobster(_LOc);break;
+    case 'raw_swordfish':fshSwordfish(_SWr);break;
+    case 'swordfish':fshSwordfish(_SWc);break;
     case 'burnt_fish':fshTrout(_BURN);break;
     case 'bones':
       g.strokeStyle='#efe9d8';g.lineWidth=4;g.lineCap='round';
@@ -6703,8 +6743,8 @@ const tool=new THREE.Group();
 pm.rArm.add(tool);
 tool.position.set(0,-0.58,0.06);
 const axe=new THREE.Group();
-{const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=-0.14;axe.add(h);
- const b=mesh(new THREE.BoxGeometry(0.055,0.16,0.22),0xb9bdc4);b.position.set(0,-0.34,0.10);axe.add(b);}
+{const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=0.14;axe.add(h);
+ const b=mesh(new THREE.BoxGeometry(0.055,0.16,0.22),0xb9bdc4);b.position.set(0,0.34,0.10);axe.add(b);}
 const pick=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.6,0.05),0x6b4a2e);h.position.y=-0.16;pick.add(h);
  const b=mesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);}
@@ -6891,10 +6931,86 @@ const SHIRTS=[0x7a1f2b,0x26365e,0xe8e4da,0x4a6a4a,0x6a6a72,0x8a4a6a,0xb08a3a];
 const PANTS=[0xb8a878,0x2a2f3a,0x4a4a52,0x5a4632,0x23232a];
 const HAIRS=[0x1d1814,0x3a2a1a,0x6b4a26,0xa8742c,0xd9b465,0x8a3a22];
 const PACKS=[0x8a3a2a,0x2a4a6a,0x4a6a3a,0x6a4a7a,0x3a3a40,0xb0822a];
+function darken(hex,f){const r=(hex>>16)&255,g=(hex>>8)&255,b=hex&255;return (Math.round(r*f)<<16)|(Math.round(g*f)<<8)|Math.round(b*f);}
+const MASTER_SK={sm_attack:'attack',sm_strength:'strength',sm_defense:'defense',sm_hitpoints:'hitpoints',sm_woodcutting:'woodcutting',sm_mining:'mining',sm_smithing:'smithing',sm_fishing:'fishing',sm_cooking:'cooking',sm_firemaking:'firemaking',sm_prayer:'prayer',sm_slayer:'slayer'};
+const MASTER_TIPS={
+  attack:'Attack governs how often you land a melee hit. Wield a heavier blade and choose the Accurate stance to train it. Every blow that connects earns Attack experience.',
+  strength:'Strength sets how hard you hit. Train it in the Aggressive stance \u2014 the harder you swing, the faster it grows. Raw power ends fights quickly.',
+  defense:'Defense lets you shrug off blows. Fight in the Defensive stance and wear the heaviest armour you can equip. A solid defense outlasts any attacker.',
+  hitpoints:'Hitpoints climb on their own as you fight \u2014 every combat skill feeds it. The higher it rises, the more punishment you can take. Eat well to stay standing.',
+  woodcutting:'Take an axe to any tree on the grounds. Oaks and willows yield finer logs as your level climbs. A sharp axe and a little patience are all you need.',
+  mining:'Swing a pickaxe at the rock seams. Copper and tin come easily; iron, mithril and beyond reward a practised hand. The richer veins are worth the wait.',
+  smithing:'First smelt ore into bars at a furnace, then hammer those bars into gear at an anvil. Higher bars demand higher Smithing and forge far better equipment.',
+  fishing:'Find a fishing spot by the water and net whatever swims past. Shrimp at first; trout and lobster follow as you improve. Your catch feeds your Cooking, too.',
+  cooking:'Cook raw food on a fire or a range. You will burn a few at first \u2014 a range is far kinder than an open flame. Well-cooked food heals much more.',
+  firemaking:'Light logs on open ground to set a fire. Better logs need a higher Firemaking level but burn all the brighter. A good blaze is the heart of any camp.',
+  prayer:'Bury bones to earn Prayer, and kneel at an altar to recharge it. Prayers can sharpen your blows or guard you in a fight \u2014 spend the points with care.',
+  slayer:'Slayer is the hunting of dangerous beasts. Take a contract from the Slayer Master in the north, then cull what he names out in the wilderness. Rare drops await the persistent.'
+};
+function masterProp(sk,col){
+  const G=new THREE.Group();const WOOD=0x6b4a2e,STEEL=0xb9bdc4,GOLD=0xe0c050;
+  const pole=(h,c)=>mesh(new THREE.BoxGeometry(0.05,h,0.05),c||WOOD);
+  if(sk==='woodcutting'){const ph=pole(0.95);ph.position.set(0.34,0.8,0.12);G.add(ph);const bl=mesh(new THREE.BoxGeometry(0.06,0.18,0.24),STEEL);bl.position.set(0.34,1.16,0.22);G.add(bl);}
+  else if(sk==='mining'){const ph=pole(0.95);ph.position.set(0.34,0.8,0.12);G.add(ph);const hd=mesh(new THREE.BoxGeometry(0.05,0.08,0.46),STEEL);hd.position.set(0.34,1.2,0.12);G.add(hd);}
+  else if(sk==='smithing'){const ph=pole(0.72);ph.position.set(0.34,0.72,0.12);G.add(ph);const hd=mesh(new THREE.BoxGeometry(0.15,0.16,0.22),STEEL);hd.position.set(0.34,1.06,0.12);G.add(hd);}
+  else if(sk==='fishing'){const rd=mesh(new THREE.BoxGeometry(0.03,1.25,0.03),WOOD);rd.position.set(0.36,1.02,0.14);rd.rotation.z=-0.32;G.add(rd);const fish=mesh(new THREE.BoxGeometry(0.1,0.2,0.05),col);fish.position.set(0.08,0.5,0.2);G.add(fish);}
+  else if(sk==='cooking'){const ph=pole(0.62,STEEL);ph.position.set(0.34,0.66,0.12);G.add(ph);const bowl=mesh(new THREE.SphereGeometry(0.1,8,6),STEEL);bowl.position.set(0.34,1.0,0.12);bowl.scale.y=0.55;G.add(bowl);const toq=mesh(new THREE.CylinderGeometry(0.17,0.15,0.24,10),0xf2efe6);toq.position.set(0,1.78,0);G.add(toq);}
+  else if(sk==='firemaking'){const ph=pole(0.82);ph.position.set(0.34,0.74,0.12);G.add(ph);const fl=mesh(new THREE.ConeGeometry(0.11,0.26,8),0xe0863a);fl.position.set(0.34,1.2,0.12);G.add(fl);const fl2=mesh(new THREE.ConeGeometry(0.06,0.16,8),0xf2c84a);fl2.position.set(0.34,1.22,0.12);G.add(fl2);}
+  else if(sk==='attack'){const bl=mesh(new THREE.BoxGeometry(0.07,0.72,0.04),STEEL);bl.position.set(0.34,1.14,0.12);G.add(bl);const gd=mesh(new THREE.BoxGeometry(0.26,0.05,0.07),GOLD);gd.position.set(0.34,0.76,0.12);G.add(gd);const hl=mesh(new THREE.BoxGeometry(0.05,0.16,0.05),WOOD);hl.position.set(0.34,0.64,0.12);G.add(hl);}
+  else if(sk==='strength'){const bar=mesh(new THREE.BoxGeometry(0.42,0.05,0.05),0x4a4a52);bar.position.set(0.34,0.72,0.2);G.add(bar);const w1=mesh(new THREE.BoxGeometry(0.1,0.2,0.2),0x2a2a30);w1.position.set(0.16,0.72,0.2);G.add(w1);const w2=mesh(new THREE.BoxGeometry(0.1,0.2,0.2),0x2a2a30);w2.position.set(0.52,0.72,0.2);G.add(w2);}
+  else if(sk==='defense'){const sh=mesh(new THREE.BoxGeometry(0.04,0.44,0.34),col);sh.position.set(0.37,0.92,0.1);G.add(sh);const bo=mesh(new THREE.SphereGeometry(0.07,8,6),GOLD);bo.position.set(0.34,0.92,0.1);G.add(bo);}
+  else if(sk==='hitpoints'){const ph=pole(1.05,0x9a3a36);ph.position.set(0.34,0.84,0.12);G.add(ph);const a=mesh(new THREE.SphereGeometry(0.085,8,6),0xe0584f);a.position.set(0.3,1.38,0.12);G.add(a);const b2=mesh(new THREE.SphereGeometry(0.085,8,6),0xe0584f);b2.position.set(0.39,1.38,0.12);G.add(b2);const c2=mesh(new THREE.ConeGeometry(0.12,0.17,4),0xe0584f);c2.position.set(0.345,1.26,0.12);c2.rotation.z=Math.PI;G.add(c2);}
+  else if(sk==='prayer'){const ph=pole(1.15,0xd8cfa8);ph.position.set(0.34,0.9,0.12);G.add(ph);const orb=mesh(new THREE.SphereGeometry(0.1,10,8),0xf2ecd0);orb.position.set(0.34,1.52,0.12);G.add(orb);const ring=mesh(new THREE.CylinderGeometry(0.15,0.15,0.025,12),GOLD);ring.position.set(0.34,1.52,0.12);ring.rotation.x=Math.PI/2;G.add(ring);}
+  else if(sk==='slayer'){const ph=pole(1.05);ph.position.set(0.34,0.84,0.12);G.add(ph);const sk1=mesh(new THREE.SphereGeometry(0.12,9,7),0xe8e2d0);sk1.position.set(0.34,1.42,0.12);G.add(sk1);const e1=mesh(new THREE.BoxGeometry(0.045,0.05,0.04),0x16140f);e1.position.set(0.3,1.44,0.22);G.add(e1);const e2=mesh(new THREE.BoxGeometry(0.045,0.05,0.04),0x16140f);e2.position.set(0.39,1.44,0.22);G.add(e2);}
+  return G;
+}
+function capeIconTex(sk){
+  const c=document.createElement('canvas');c.width=64;c.height=64;
+  const g=c.getContext('2d');
+  g.beginPath();g.arc(32,32,27,0,Math.PI*2);g.fillStyle='#efe4c4';g.fill();
+  g.lineWidth=4;g.strokeStyle='#caa23a';g.stroke();
+  g.save();g.translate(10,10);drawUiIcon(g,SKILL_META[sk].ui,44);g.restore();
+  return new THREE.CanvasTexture(c);
+}
+function makeMaster(g,sk){
+  const colN=parseInt(SKILL_META[sk].col.slice(1),16);
+  const hm=makeHumanoid({skin:0xe0b48a,shirt:darken(colN,0.55),pants:0x2a2630,hair:0x35302a,
+    skirt:darken(colN,0.42),amulet:0xe0c050,belt:0xd9b04a,boots:0x1c1a20});
+  g.add(hm.g);
+  const cape=new THREE.Group();
+  const ct=mesh(new THREE.BoxGeometry(0.38,0.5,0.04),colN);ct.position.set(0,1.0,-0.19);ct.rotation.x=0.12;cape.add(ct);
+  const cbm=mesh(new THREE.BoxGeometry(0.34,0.34,0.04),colN);cbm.position.set(0,0.62,-0.22);cbm.rotation.x=0.2;cape.add(cbm);
+  const clasp=mesh(new THREE.BoxGeometry(0.12,0.06,0.05),0xe0c050);clasp.position.set(0,1.33,0.0);cape.add(clasp);
+  const em=new THREE.Mesh(new THREE.PlaneGeometry(0.26,0.26),new THREE.MeshBasicMaterial({map:capeIconTex(sk),transparent:true,side:THREE.DoubleSide}));
+  em.position.set(0,0.96,-0.235);em.rotation.y=Math.PI;em.rotation.x=-0.12;cape.add(em);
+  g.add(cape);
+  const prop=masterProp(sk,colN);if(prop)g.add(prop);
+  g.scale.set(1.06,1.06,1.06);
+  return hm;
+}
+function masterTree(sk){
+  const nm=SKILL_META[sk].name;
+  const lv=levelFor(player.skills[sk]);
+  const claimable=lv>=50&&!hasMasterCape(sk);
+  const tree={
+    start:{who:'npc',text:'I am the '+nm+' Master. '+(claimable?'And you have mastered '+nm+' \u2014 your cape is ready whenever you wish to claim it.':(hasMasterCape(sk)?'You already wear the '+nm+' cape with honour.':'Reach level 50 '+nm+' and the '+nm+' Master Cape is yours.')),next:'menu'},
+    menu:{opts:[]},
+    teach:{who:'npc',text:MASTER_TIPS[sk],next:'menu'},
+    by:{who:'npc',text:'May your '+nm+' never falter.',next:null}
+  };
+  if(claimable){
+    tree.menu.opts.push({label:'Claim my '+nm+' Master Cape.',next:()=>grantMasterCape(sk)?'caped':'menu'});
+    tree.caped={who:'npc',text:'Wear it with pride \u2014 few ever master '+nm+' so fully.',next:null};
+  }
+  tree.menu.opts.push({label:'How do I train '+nm+'?',next:'teach'});
+  tree.menu.opts.push({label:'Farewell, Master.',next:'by'});
+  return tree;
+}
 function makeNpc(n){
   const g=new THREE.Group();
   let hm;
-  if(n.id==='matthews'){
+  if(MASTER_SK[n.id]){hm=makeMaster(g,MASTER_SK[n.id]);}
+  else if(n.id==='matthews'){
     hm=makeHumanoid({skin:0xe2b58c,shirt:0x5a1f2e,pants:0x2a2330,hair:0xeceae4,
       beard:0xe8e6e0,skirt:0x4a1a28,amulet:0xd9b04a,belt:0xd9b04a,boots:0x2a2118});
     g.add(hm.g);
@@ -7890,7 +8006,7 @@ function drawMini(){
     if(!isQuestTarget(r))continue;
     const mx=(r.alive?r.px:r.sx)*4+2,my=(r.alive?r.py:r.sy)*4+2;
     g.beginPath();g.arc(mx,my,4.4,0,7);
-    g.fillStyle='#2f88ff';g.fill();
+    g.fillStyle='#e02418';g.fill();
     g.lineWidth=1.6;g.strokeStyle='#fff';g.stroke();
   }
   for(const o of objects){
@@ -7978,7 +8094,7 @@ function openWorldMap(){
     if(!isQuestTarget(r))continue;
     const qx=((r.alive?r.px:r.sx)+0.5)*6,qy=((r.alive?r.py:r.sy)+0.5)*6;
     g.beginPath();g.arc(qx,qy,7,0,7);
-    g.fillStyle='#2f88ff';g.fill();
+    g.fillStyle='#e02418';g.fill();
     g.lineWidth=2.2;g.strokeStyle='#fff';g.stroke();
   }
   for(const o of objects){
@@ -8439,6 +8555,18 @@ function slayerTree(){
     info:{who:'npc',text:'I name a creature and a number. You cull them in the wild and return. I pay in coin and in skill \u2014 Slayer, and the strength of arms. The wild grows to meet you: never trivial, never quite hopeless.',next:'start'}};
 }
 const DIALOGUES={
+  sm_attack:()=>masterTree('attack'),
+  sm_strength:()=>masterTree('strength'),
+  sm_defense:()=>masterTree('defense'),
+  sm_hitpoints:()=>masterTree('hitpoints'),
+  sm_woodcutting:()=>masterTree('woodcutting'),
+  sm_mining:()=>masterTree('mining'),
+  sm_smithing:()=>masterTree('smithing'),
+  sm_fishing:()=>masterTree('fishing'),
+  sm_cooking:()=>masterTree('cooking'),
+  sm_firemaking:()=>masterTree('firemaking'),
+  sm_prayer:()=>masterTree('prayer'),
+  sm_slayer:()=>masterTree('slayer'),
   slayer:()=>slayerTree(),
   guide:()=>{
     if(!player.kit){
@@ -8685,7 +8813,7 @@ const DIALOGUES={
         if(countItem('boars_head_feast')>0)return{
           start:{who:'npc',text:'The whole feast, assembled and glorious. Bring it here!',next:'give'},
           give:{opts:[
-            {label:'Present the Boar’s Head feast.',next:()=>{ removeSlot(findItem('boars_head_feast')); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else dropGround(player.x,player.y,'oven_mitts',1); ch.s=6;syncChefObjects(); questDone('The Three Tables of Millville'); removeWorldObj('herbplanter');removeWorldObj('range'); return 'done';}},
+            {label:'Present the Boar’s Head feast.',next:()=>{ if(ch.s!==5||countItem('boars_head_feast')<1)return null; removeSlot(findItem('boars_head_feast')); ch.s=6; removeWorldObj('herbplanter');removeWorldObj('range'); for(const _b of rats)if(_b.kind==='boar'){_b.alive=false;_b.respawnAt=Infinity;if(_b._m&&_b._m.group)scene.remove(_b._m.group);} syncChefObjects(); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else dropGround(player.x,player.y,'oven_mitts',1); questDone('The Three Tables of Millville'); return 'done';}},
             {label:'One moment.',next:'by'}]},
           done:{who:'npc',text:'PERFECT. The procession will carry it into Coit with the carol and all. Take these oven mitts — quilted, scorch-proof, a chef’s best friend. You will burn far less at the fire now. You are kitchen family, always.',next:null},
           by:{who:'npc',text:'Careful — that head is heavier than it looks.',next:null}};
@@ -9024,7 +9152,7 @@ function grantMasterCape(sk){
   if(levelFor(player.skills[sk])<50||hasMasterCape(sk))return false;
   if(!addItem(masterCapeId(sk))){msg('Your pack is full \u2014 make room for the cape first.');return false;}
   if(sfx.level)sfx.level();
-  msg('Rector Matthews fastens the '+SKILL_META[sk].name+' Master Cape about your shoulders. Wear it for a great boost to '+SKILL_META[sk].name+'.','#9c1f1f');
+  msg('The Master fastens the '+SKILL_META[sk].name+' Master Cape about your shoulders. Wear it for a great boost to '+SKILL_META[sk].name+'.','#9c1f1f');
   renderInv&&renderInv();dirty=true;return true;
 }
 function injectCapeClaim(tree){
@@ -9041,7 +9169,6 @@ function injectCapeClaim(tree){
 }
 function openDialogue(n,startNode){
   let tree=DIALOGUES[n.id]?DIALOGUES[n.id]():studentTree(n);
-  if(n.id==='matthews')tree=injectCapeClaim(tree);
   dlg={npc:n,tree,node:startNode||'start',talkT:performance.now()};
   dlgUI.style.display='flex';
   dlgRender();
@@ -9121,37 +9248,43 @@ const SMITH_RECIPES=[
   ['amulet_defence',3,'bronze_bar',1],
   ['bronze_kiteshield',4,'bronze_bar',3],
   ['bronze_platebody',5,'bronze_bar',5],
+  ['bronze_platelegs',4,'bronze_bar',3],
   ['iron_full_helm',5,'iron_bar',1],
   ['iron_sword',5,'iron_bar',1],
   ['iron_scimitar',6,'iron_bar',2],
   ['iron_chainbody',6,'iron_bar',3],
   ['iron_kiteshield',7,'iron_bar',3],
   ['iron_platebody',8,'iron_bar',5],
+  ['iron_platelegs',7,'iron_bar',3],
   ['steel_full_helm',8,'steel_bar',1],
   ['steel_sword',8,'steel_bar',1],
   ['steel_scimitar',9,'steel_bar',2],
   ['steel_chainbody',9,'steel_bar',3],
   ['steel_kiteshield',10,'steel_bar',3],
   ['steel_platebody',11,'steel_bar',5],
+  ['steel_platelegs',10,'steel_bar',3],
   ['mithril_full_helm',10,'mithril_bar',1],
   ['mithril_sword',11,'mithril_bar',1],
   ['mithril_scimitar',11,'mithril_bar',2],
   ['mithril_chainbody',12,'mithril_bar',3],
   ['mithril_kiteshield',12,'mithril_bar',3],
   ['mithril_platebody',13,'mithril_bar',5],
+  ['mithril_platelegs',12,'mithril_bar',3],
   ['adamant_full_helm',14,'adamant_bar',1],
   ['adamant_sword',14,'adamant_bar',1],
   ['adamant_scimitar',14,'adamant_bar',2],
   ['adamant_chainbody',14,'adamant_bar',3],
   ['adamant_kiteshield',15,'adamant_bar',3],
   ['adamant_platebody',16,'adamant_bar',5],
+  ['adamant_platelegs',15,'adamant_bar',3],
   ['rune_full_helm',18,'rune_bar',1],
   ['rune_sword',18,'rune_bar',1],
   ['rune_scimitar',18,'rune_bar',2],
   ['rune_chainbody',19,'rune_bar',3],
   ['rune_kiteshield',19,'rune_bar',3],
-  ['rune_platebody',20,'rune_bar',5]];
-const COOKED_FISH=['shrimps','sardine','trout','lobster'];
+  ['rune_platebody',20,'rune_bar',5],
+  ['rune_platelegs',19,'rune_bar',3]];
+const COOKED_FISH=['shrimps','sardine','trout','lobster','swordfish'];
 function cookedFishCount(){let n=0;for(const f of COOKED_FISH)n+=countItem(f);return n;}
 function consumeCookedFish(n){for(const f of COOKED_FISH){while(n>0&&countItem(f)>0){removeSlot(findItem(f));n--;}}return n<=0;}
 function countItem(id){
@@ -9183,6 +9316,7 @@ function openSmeltUI(o9){
   const grid=document.getElementById('smeltlist');
   grid.innerHTML='';
   for(const B of SMELT_BARS){
+    const _lvlOk=lvl('smithing')>=B[1],_matOk=B[3].every(x9=>countItem(x9[0])>=x9[1]),_can=_lvlOk&&_matOk,_why=_lvlOk?('Need '+fmtNeeds(B[3])):('Lvl '+B[1]);
     buildForgeRow(grid,B[0],B[1],fmtNeeds(B[3]),()=>{
       const st=document.getElementById('smeltmsg');
       if(lvl('smithing')<B[1]){
@@ -9193,7 +9327,7 @@ function openSmeltUI(o9){
       }
       ui.classList.remove('on');
       setAction({type:'smelt',o:o9,bar:B[0]},o9.x,o9.y);
-    },'Smelt');
+    },'Smelt',_can,_why);
   }
   document.getElementById('smeltmsg').textContent=
     'The fire roars. Choose a bar to smelt.';
@@ -10114,10 +10248,14 @@ function render(now){
     n._g.position.set(wx,groundH(wx,wz),wz);
     const moving=Math.hypot(n.x-n.px,n.y-n.py)>0.04;
     if(!moving){
-      const pd=Math.hypot(player.px-n.px,player.py-n.py);
-      if(pd<4&&pd>0.3)
-        n.heading=lerpAngle(n.heading,
-          Math.atan2(player.px-n.px,player.py-n.py),Math.min(1,dt*0.006));
+      if(n.id.slice(0,3)==='sm_'){
+        n.heading=(dlg&&dlg.npc===n)?Math.atan2(player.px-n.px,player.py-n.py):Math.atan2(73.5-n.px,48.5-n.py);
+      }else{
+        const pd=Math.hypot(player.px-n.px,player.py-n.py);
+        if(pd<4&&pd>0.3)
+          n.heading=lerpAngle(n.heading,
+            Math.atan2(player.px-n.px,player.py-n.py),Math.min(1,dt*0.006));
+      }
     }
     if(moving){
       n.heading=lerpAngle(n.heading,Math.atan2(n.x-n.px,n.y-n.py),Math.min(1,dt*0.01));
