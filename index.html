@@ -449,6 +449,7 @@
     #side{flex:1 1 100%; width:auto;}
     .panel{min-height:0;}
   #qlist{max-height:248px;overflow-y:auto;overflow-x:hidden;}
+  #panel-quests.on{min-height:0;}
   }
 </style>
 </head>
@@ -1733,7 +1734,7 @@ const player={
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
   m4:{s:0,b:0,k:0,d:0},m5:{s:0,d:0},sos:{s:0,k1:0,k2:0,k3:0,k4:0,o:0}},
   lostStash:[],
-  slayer:{task:null,need:0,done:0,streak:0,points:0,unlocks:{}}
+  slayer:{task:null,need:0,done:0,streak:0,points:0,unlocks:{},blocked:{}}
 };
 function masterBoost(s){
   const c=player.equip&&player.equip.cape;
@@ -1755,10 +1756,10 @@ function clickFxAt(wx,wz,col){clicks.push({wx,wz,t:performance.now(),col});}
 function dropGround(x,y,id,qty){ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc});}
 function rollRareDrop(r){
   const c=MOB_KINDS[r.kind].cmb;
-  if(r.kind==='wyvern'){if(Math.random()<1/800){dropGround(r.x,r.y,'draconic_visage',1);msg('The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!','#e0b020');}else if(Math.random()<1/350){dropGround(r.x,r.y,'abyssal_whip',1);msg('The skeletal wyvern drops an Abyssal whip!','#e0b020');}}
-  else if(r.kind==='gargoyle'){if(Math.random()<1/220){dropGround(r.x,r.y,'granite_maul',1);msg('The gargoyle drops a Granite maul!','#e0b020');}}
-  else if(r.kind==='basilisk'){if(Math.random()<1/300){dropGround(r.x,r.y,'abyssal_whip',1);msg('The basilisk drops an Abyssal whip!','#e0b020');}else if(Math.random()<1/110){dropGround(r.x,r.y,'basilisk_jaw',1);msg('The basilisk drops a Basilisk jaw.','#e0b020');}}
-  else if(r.kind==='banshee'){if(Math.random()<1/100){dropGround(r.x,r.y,'wailing_relic',1);msg('The banshee leaves behind a Wailing relic.','#e0b020');}}
+  if(r.kind==='wyvern'){if(Math.random()<1/800){(addItem('draconic_visage',1)||dropGround(r.x,r.y,'draconic_visage',1));msg('The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!','#e0b020');}else if(Math.random()<1/350){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The skeletal wyvern drops an Abyssal whip!','#e0b020');}}
+  else if(r.kind==='gargoyle'){if(Math.random()<1/220){(addItem('granite_maul',1)||dropGround(r.x,r.y,'granite_maul',1));msg('The gargoyle drops a Granite maul!','#e0b020');}}
+  else if(r.kind==='basilisk'){if(Math.random()<1/300){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The basilisk drops an Abyssal whip!','#e0b020');}else if(Math.random()<1/110){(addItem('basilisk_jaw',1)||dropGround(r.x,r.y,'basilisk_jaw',1));msg('The basilisk drops a Basilisk jaw.','#e0b020');}}
+  else if(r.kind==='banshee'){if(Math.random()<1/100){(addItem('wailing_relic',1)||dropGround(r.x,r.y,'wailing_relic',1));msg('The banshee leaves behind a Wailing relic.','#e0b020');}}
   if(Math.random()<Math.min(0.16,0.015+c*0.005)){
     const roll=Math.random()*Math.max(6,c);
     let gem='uncut_sapphire';
@@ -8654,10 +8655,10 @@ function lostTree(id,flag){
 /* ---------------- Slayer: repeatable wilderness contracts from the Slayer Master ---------------- */
 const SLAYER_POOL=['ghost','lesser','greater','redspider'];
 function slayName(k,n){const nm=MOB_KINDS[k].name.toLowerCase();return n===1?nm:nm+'s';}
-function assignSlayerTask(){
+function assignSlayerTask(paid){
   const sl=player.slayer;
   const _pool=assignablePool();
-  if(sl.task&&sl.done<sl.need&&sl.streak){sl.streak=0;msg('You set the contract aside \u2014 your Slayer streak resets to 0.','#9a6fb0');}
+  if(!paid&&sl.task&&sl.done<sl.need&&sl.streak){sl.streak=0;msg('You set the contract aside \u2014 your Slayer streak resets to 0.','#9a6fb0');}
   let pick,t=0;
   do{pick=_pool[rndi(0,_pool.length-1)];t++;}while(pick===sl.task&&t<8);
   const k=MOB_KINDS[pick];
@@ -8706,6 +8707,7 @@ function slayerShopRows(){const sl=player.slayer,u=sl.unlocks||{},rows=[];
 function slDrawIcon(cv,icon){const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
   if(icon==='_skull'){g.save();g.translate(16,16);g.fillStyle='#d8d2c0';g.beginPath();g.arc(0,-2,8.5,Math.PI,0);g.fill();g.fillRect(-8.5,-2,17,7);g.fillStyle='#b6291f';g.beginPath();g.arc(-3.8,-1,2.5,0,7);g.arc(3.8,-1,2.5,0,7);g.fill();g.fillStyle='#1c1813';g.fillRect(-1.3,3,2.6,4);g.fillRect(-5,5,3,2);g.fillRect(2,5,3,2);g.restore();return;}
   if(icon==='_coin'){g.save();g.translate(16,16);g.fillStyle='#e8c84a';g.beginPath();g.arc(0,0,9,0,7);g.fill();g.lineWidth=2;g.strokeStyle='#b9942a';g.stroke();g.fillStyle='#fff3b0';g.font='bold 12px Georgia';g.textAlign='center';g.textBaseline='middle';g.fillText('$',0,1);g.restore();return;}
+  if(icon==='_block'){g.save();g.translate(16,16);g.strokeStyle='#c0584a';g.lineWidth=2.5;g.beginPath();g.arc(0,0,9,0,7);g.stroke();g.beginPath();g.moveTo(-6.4,-6.4);g.lineTo(6.4,6.4);g.stroke();g.restore();return;}
   drawItemIcon(g,icon,32);}
 function slMakeRow(r,onBuy,confirmKey,btnLabel,confirmLabel){const row=document.createElement('div');row.className='slrow';
   const cv=document.createElement('canvas');cv.width=32;cv.height=32;slDrawIcon(cv,r.icon);row.appendChild(cv);
@@ -8718,10 +8720,33 @@ function slMakeRow(r,onBuy,confirmKey,btnLabel,confirmLabel){const row=document.
   else{btn.className='slbtn';btn.textContent=btnLabel;}
   btn.onclick=()=>{if(!afford){slayerConfirmId=null;renderSlayerShop();return;}if(slayerConfirmId!==confirmKey){slayerConfirmId=confirmKey;renderSlayerShop();return;}slayerConfirmId=null;onBuy();};
   bwrap.appendChild(btn);row.appendChild(bwrap);return row;}
+function slToggleRow(kind){const blocked=!!((player.slayer.blocked||{})[kind]);
+  const row=document.createElement('div');row.className='slrow';
+  const cv=document.createElement('canvas');cv.width=32;cv.height=32;slDrawIcon(cv,'_skull');row.appendChild(cv);
+  const info=document.createElement('div');info.style.flex='1';info.innerHTML='<div class="sln"></div><div class="sld"></div>';
+  info.querySelector('.sln').textContent=(MOB_KINDS[kind]&&MOB_KINDS[kind].name)||kind;
+  info.querySelector('.sld').textContent=blocked?'Blocked \u2014 will not be assigned as a contract.':'Eligible to be assigned.';
+  row.appendChild(info);
+  const bwrap=document.createElement('div');const btn=document.createElement('div');
+  btn.className='slbtn'+(blocked?' confirm':'');btn.textContent=blocked?'Unblock':'Block';
+  btn.onclick=()=>{const b=player.slayer.blocked=player.slayer.blocked||{};b[kind]=!b[kind];dirty=true;renderSlayerShop();};
+  bwrap.appendChild(btn);row.appendChild(bwrap);return row;}
 function renderSlayerShop(){const sl=player.slayer;const pe=document.getElementById('slpts');if(pe)pe.textContent=(sl.points||0)+' pts';
   const list=document.getElementById('sllist');if(!list)return;list.innerHTML='';
   for(const r of slayerShopRows()){r.afford=(sl.points||0)>=r.price;
     list.appendChild(slMakeRow(r,()=>{const res=buySlayer(r.id);renderSlayerShop();renderSkills&&renderSkills();renderInv&&renderInv();renderEquip&&renderEquip();},r.id,'Buy \u00b7 '+r.price+' pts','Confirm? '+r.price+' pts'));}
+  if(sl.task&&sl.done<sl.need){
+    list.appendChild(slMakeRow({icon:'_coin',name:'Trade contract (keep streak)',desc:'Swap your current contract for a fresh one WITHOUT breaking your Slayer streak. (Trading for free at the Slayer Master resets your streak; this does not.)',afford:(sl.points||0)>=SLAYER_PRICES.skip},
+      ()=>{if((sl.points||0)>=SLAYER_PRICES.skip){sl.points-=SLAYER_PRICES.skip;assignSlayerTask(true);renderSlayerShop();renderSkills&&renderSkills();}},
+      '__skip','Trade \u00b7 '+SLAYER_PRICES.skip+' pts','Confirm? '+SLAYER_PRICES.skip+' pts'));}
+  if(!(sl.unlocks&&sl.unlocks.block)){
+    list.appendChild(slMakeRow({icon:'_block',name:'Unlock task blocking',desc:'Permanently unlock the ability to block specific monsters from being assigned. Once owned, toggle blocks per monster here.',afford:(sl.points||0)>=SLAYER_PRICES.block},
+      ()=>{buySlayer('block');renderSlayerShop();renderSkills&&renderSkills();},
+      '__block','Buy \u00b7 '+SLAYER_PRICES.block+' pts','Confirm? '+SLAYER_PRICES.block+' pts'));
+  }else{
+    const hd=document.createElement('div');hd.className='sld';hd.style.cssText='padding:9px 4px 1px;color:#c79be0;font-weight:bold;';hd.textContent='Block contracts (toggle on/off):';list.appendChild(hd);
+    for(const k of blockablePool())list.appendChild(slToggleRow(k));
+  }
   if((player.lostStash||[]).length){const fee=reclaimFee();
     list.appendChild(slMakeRow({icon:'_coin',name:'Reclaim wilderness losses',desc:'Buy back the '+player.lostStash.length+' stack(s) of items you lost on death in the wild.',afford:true},()=>{reclaimLost();renderSlayerShop();renderInv&&renderInv();},'__reclaim','Reclaim \u00b7 '+fee+' gp','Confirm? '+fee+' gp'));}
   if(!list.children.length){const e=document.createElement('div');e.className='sld';e.style.cssText='padding:16px;text-align:center;';e.textContent='You hold every reward already. Cull on.';list.appendChild(e);}}
@@ -8729,13 +8754,14 @@ function openSlayerShop(){if(player.quests.m5.s<2){msg('The Slayer Master has no
 function closeSlayerShop(){const el=document.getElementById('slayerui');if(el)el.classList.remove('on');slayerConfirmId=null;}
 const EXPAND_KINDS=['banshee','gargoyle','basilisk','wyvern'];
 const UNLOCK_GIFT={banshee:'earmuffs',gargoyle:'rock_hammer',basilisk:'mirror_shield',wyvern:'elemental_shield'};
-function assignablePool(){const u=(player.slayer&&player.slayer.unlocks)||{};return SLAYER_POOL.concat(EXPAND_KINDS.filter(k=>u[k]));}
+function blockablePool(){const u=(player.slayer&&player.slayer.unlocks)||{};return SLAYER_POOL.concat(EXPAND_KINDS.filter(k=>u[k]));}
+function assignablePool(){const b=(player.slayer&&player.slayer.blocked)||{};const full=blockablePool();const open=full.filter(k=>!b[k]);return open.length?open:full;}
 function unlockMonster(kind){const sl=player.slayer;sl.unlocks=sl.unlocks||{};sl.unlocks[kind]=true;const gift=UNLOCK_GIFT[kind];if(gift&&countItem(gift)<1){if(!addItem(gift))dropGround(player.x,player.y,gift,1);}for(const r of rats){if(r.kind===kind&&r.locked){r.locked=false;r.alive=true;r.maxhp=mobMaxHp(r);r.hp=r.maxhp;}}msg('Unlocked '+MOB_KINDS[kind].name+' contracts'+(gift?' \u2014 you receive a '+ITEMS[gift].name+'.':' \u2014 equip a Dragon Slayer shield before you face it!'),'#9a6fb0');}
 function ownProctorAny(){const ids=['proctor_helm','crimson_proctor_helm','gilded_warden_helm'];for(const id of ids){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;}return false;}
 function neededHelmPiece(){const have=id=>countItem(id)>0||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&countItem('sentinel_visor')<1)return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&countItem('scholar_crest')<1)return 'scholar_crest';return null;}
-const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150};
+const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150,skip:30,block:100};
 const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks, with a bonus every tenth task. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, and a Dragon Slayer shield or an Elemental Shield against the wyvern\u2019s frost \u2014 either turns its freezing breath. Keep the right gear equipped or these creatures tear straight through armour.';
-function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
+function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else if(id==='block'){sl.unlocks=sl.unlocks||{};sl.unlocks.block=true;msg('Task blocking unlocked \u2014 toggle blocks in the rewards shop.','#9a6fb0');}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
 function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
 function applyHelmDye(dyeId){const m=({crimson_dye:['proctor_helm','scholar_crest','crimson_proctor_helm'],gilt_dye:['crimson_proctor_helm','sentinel_visor','gilded_warden_helm']})[dyeId];if(!m)return;const baseId=m[0],pieceId=m[1],outId=m[2];const inInv=findItem(baseId)>=0;const equipped=player.equip.head&&player.equip.head.id===baseId;if(!inInv&&!equipped){msg('You need a '+ITEMS[baseId].name+' to apply this dye.','#9a6fb0');return;}if(findItem(pieceId)<0){msg('You also need a '+ITEMS[pieceId].name+' \u2014 a rare drop from your task monsters.','#9a6fb0');return;}if(inInv)removeSlot(findItem(baseId));else{player.equip.head=null;renderEquip&&renderEquip();}removeSlot(findItem(pieceId));removeSlot(findItem(dyeId));if(!addItem(outId))dropGround(player.x,player.y,outId,1);sfx.level&&sfx.level();dirty=true;msg('You fuse the '+ITEMS[pieceId].name.toLowerCase()+' onto the helm with '+ITEMS[dyeId].name.toLowerCase()+' \u2014 behold, the '+ITEMS[outId].name+'!','#e8b020');renderInv&&renderInv();}
 function signetCheckTask(){const sl=player.slayer;if(!sl.task)msg('No active contract. Seek the Slayer Master at the wild\u2019s edge.','#9a6fb0');else if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');else msg('Contract: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath. You hold '+(sl.points||0)+' Slayer points.','#9a6fb0');}
@@ -8757,6 +8783,7 @@ function slayerTree(){
     menu:{opts:[
       {label:'Understood.',next:null},
       {label:'Trade me a different contract.',next:'tradeconf'},
+      {label:'Trade for '+SLAYER_PRICES.skip+' points \u2014 keep my streak.',next:()=>{const sl2=player.slayer;if((sl2.points||0)<SLAYER_PRICES.skip){msg('You need '+SLAYER_PRICES.skip+' Slayer points to trade without breaking your streak.','#9a6fb0');return null;}sl2.points-=SLAYER_PRICES.skip;assignSlayerTask(true);return null;}},
       {label:'Show me the rewards.',next:()=>{closeDialogue();openSlayerShop();return null;}}]},
     tradeconf:{who:'npc',text:'Set this contract aside for another? Your Slayer streak'+(sl.streak?' of '+sl.streak:'')+' will be broken \u2014 reset to nothing. Streaks pay better the longer they run, so weigh it.',next:'tradeask'},
     tradeask:{opts:[
@@ -9830,9 +9857,9 @@ const SKILL_GUIDE={
     [18,'Mine runite rocks']],
   smithing:[],
   fishing:[[1,'Net shrimps at fishing spots'],[3,'Fish sardines'],
-    [8,'Fish trout'],[14,'Fish lobsters']],
+    [8,'Fish trout'],[14,'Fish lobsters'],[18,'Fish swordfish']],
   cooking:[[1,'Cook shrimps and sardines on a fire'],[6,'Cook trout'],
-    [14,'Cook lobster'],[18,'You no longer burn shrimps']],
+    [14,'Cook lobster'],[18,'Cook swordfish'],[18,'You no longer burn shrimps']],
   firemaking:[[1,'Light regular logs to make a fire'],[6,'Light oak logs'],
     [12,'Light willow logs']],
   prayer:[[1,'Bury bones to gain Prayer experience'],
@@ -10643,6 +10670,7 @@ function fit(){
   if(renderer)renderer.setSize(w,h,false);
   camera.aspect=w/h;
   camera.updateProjectionMatrix();
+  {const ql=document.getElementById('qlist');if(ql)ql.style.maxHeight=Math.max(80,h-250)+'px';}
 }
 window.addEventListener('resize',fit);
 fit();
