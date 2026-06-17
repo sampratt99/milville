@@ -9835,6 +9835,7 @@ function renderQuests(){
     row.addEventListener('click',()=>row.classList.toggle('open'));
     box.appendChild(row);
   }
+  fitQuestLog();
 }
 renderQuests();
 
@@ -10662,6 +10663,14 @@ document.addEventListener('visibilitychange',()=>{
 });
 
 /* ------------------------- resize + boot --------------------------- */
+function fitQuestLog(){
+  const ql=document.getElementById('qlist');if(!ql)return;
+  const pq=document.getElementById('panel-quests');
+  if(!pq||!pq.classList.contains('on'))return;
+  const vb=viewwrap.getBoundingClientRect().bottom;
+  const qt=ql.getBoundingClientRect().top;
+  ql.style.maxHeight=Math.max(70,Math.floor(vb-qt-6))+'px';
+}
 function fit(){
   const r=viewwrap.getBoundingClientRect();
   const w=Math.max(64,Math.round(r.width)),h=Math.max(64,Math.round(r.height));
@@ -10670,7 +10679,7 @@ function fit(){
   if(renderer)renderer.setSize(w,h,false);
   camera.aspect=w/h;
   camera.updateProjectionMatrix();
-  {const ql=document.getElementById('qlist');if(ql)ql.style.maxHeight=Math.max(80,h-250)+'px';}
+  fitQuestLog();
 }
 window.addEventListener('resize',fit);
 fit();
