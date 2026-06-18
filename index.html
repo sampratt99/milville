@@ -2681,7 +2681,8 @@ function ratsTick(){
   }
 }
 function isRecoverable(id){
-  if(!id||id==='coins')return true;
+  if(id==='coins')return false;   /* coins are kept on death */
+  if(!id)return true;
   if(/_ore$|_logs$|^logs$|_bar$|^bones$|^big_bones$|^raw_/.test(id))return true;
   if(['shrimps','sardine','trout','lobster','swordfish','burnt_fish','burnt_shrimps'].includes(id))return true;
   if(/^(bronze|iron|steel|mithril|adamant|rune)_/.test(id))return true;
