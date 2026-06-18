@@ -802,7 +802,9 @@ ITEMS.santa_hat={name:'Santa hat',ex:'Soft red felt with a snow-white trim and a
   equip:{slot:'head',def:0,model:'santahat',verb:'Wear',req:0,tint:0xc0241f}};
 GE_STOCK.push('santa_hat');
 const RARE_ITEMS=['draconic_visage','abyssal_whip','granite_maul','basilisk_jaw','wailing_relic',
-  'scholar_crest','sentinel_visor','red_bead','yellow_bead','black_bead','white_bead',
+  'scholar_crest','sentinel_visor',
+  'dragon_sword','dragon_scimitar','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield','dragon_shield',
+  'red_bead','yellow_bead','black_bead','white_bead',
   'party_hat_red','party_hat_yellow','party_hat_blue','party_hat_green','party_hat_white','party_hat_purple','santa_hat'];
 const RARE_SET=Object.fromEntries(RARE_ITEMS.map(i=>[i,true]));
 function markCollected(id){if(typeof player!=='undefined'&&player.collected&&RARE_SET[id])player.collected[id]=true;}
@@ -2745,7 +2747,7 @@ async function saveGame(silent){
     await STORE.set(SAVE_KEY,JSON.stringify({
       skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
       playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-      equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,mapv:'sps3'}));
+      equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,lostStash:player.lostStash,mapv:'sps3'}));
     if(activeSlot)await upsertSlot(activeSlot,player.name);
     dirty=false;
     if(!silent)msg('Game saved.','#103a8c');
@@ -2771,6 +2773,7 @@ async function loadSlot(id){
       if(s.quests)for(const k in player.quests)
         if(s.quests[k])Object.assign(player.quests[k],s.quests[k]);
       if(s.slayer)Object.assign(player.slayer,s.slayer);
+      if(Array.isArray(s.lostStash))player.lostStash=s.lostStash;
       if(typeof s.playMs==='number')player.playMs=s.playMs;
       if(typeof s.stamina==='number')player.stamina=clamp(s.stamina,0,100);
       if(typeof s.run==='boolean')player.run=s.run;
@@ -7902,34 +7905,282 @@ function groundIconTex(id){
 }
 function makeGroundItem(id){
   const g=new THREE.Group();
+  const IT=ITEMS[id]||{}, eq=IT.equip||{}, nm=(IT.name||'').toLowerCase();
+  const tint=(eq.tint!==undefined)?eq.tint:0xb9bdc4;
+  const trim=(eq.trim!==undefined)?eq.trim:0xdba968;
+  const add=(geo,c)=>{const m=mesh(geo,c);g.add(m);return m;};
+  const BOX=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  const CYL=(rt,rb,h,s)=>new THREE.CylinderGeometry(rt,rb,h,s||7);
+  const SPH=(r,a,b)=>new THREE.SphereGeometry(r,a||7,b||6);
+  const CON=(r,h,s)=>new THREE.ConeGeometry(r,h,s||6);
+  const DOD=(r)=>new THREE.DodecahedronGeometry(r,0);
+  const OCT=(r)=>new THREE.OctahedronGeometry(r,0);
+  const TOR=(r,t,s)=>new THREE.TorusGeometry(r,t,6,s||12);
+  const METAL={bronze:[0xb07a3e,0xdba968],iron:[0x7a766f,0xa8a49c],steel:[0xaab2ba,0xe2e8ee],
+    mithril:[0x6b6bb0,0x9a9ade],adamant:[0x468852,0x7cba8a],rune:[0x5a8ab0,0x94c8ea],dragon:[0xb0202a,0x7a1018]};
+  const metalOf=s=>{for(const k in METAL)if(s.indexOf(k)===0||s.indexOf('_'+k)>=0||nm.indexOf(k)===0)return METAL[k];return null;};
+
+  /* ---------------- existing resource models ---------------- */
   if(id==='logs'||id==='oak_logs'||id==='willow_logs'){
     const c=id==='logs'?0x6b4a2e:id==='oak_logs'?0x5a3c22:0x7a5a36;
-    const l=mesh(new THREE.CylinderGeometry(0.07,0.07,0.5,6),c);
-    l.rotation.z=Math.PI/2;l.position.y=0.07;g.add(l);
-    const l2=mesh(new THREE.CylinderGeometry(0.06,0.06,0.42,6),c);
-    l2.rotation.z=Math.PI/2;l2.rotation.y=0.5;l2.position.set(0.04,0.16,0.04);g.add(l2);
-  }else if(id==='copper_ore'||id==='tin_ore'||id==='iron_ore'){
+    const l=add(CYL(0.07,0.07,0.5,6),c);l.rotation.z=Math.PI/2;l.position.y=0.07;
+    const l2=add(CYL(0.06,0.06,0.42,6),c);l2.rotation.z=Math.PI/2;l2.rotation.y=0.5;l2.position.set(0.04,0.16,0.04);
+  }
+  else if(id==='copper_ore'||id==='tin_ore'||id==='iron_ore'){
     const c=id==='copper_ore'?0xc97f3e:id==='tin_ore'?0xc4c8ce:0x96503a;
-    const o1=mesh(new THREE.DodecahedronGeometry(0.13,0),c);o1.position.y=0.1;g.add(o1);
-  }else if(id==='raw_shrimps'||id==='shrimps'||id==='burnt_shrimps'){
+    const o=add(DOD(0.13),c);o.position.y=0.1; const o2=add(DOD(0.08),0x6a5a4a);o2.position.set(0.1,0.06,-0.05);
+  }
+  else if(id==='raw_shrimps'||id==='shrimps'||id==='burnt_shrimps'){
     const c=id==='raw_shrimps'?0xe8a7b4:id==='shrimps'?0xe87a4a:0x3c3733;
-    const s=mesh(new THREE.SphereGeometry(0.13,6,5),c);
-    s.scale.set(1.3,0.45,0.9);s.position.y=0.06;g.add(s);
-  }else if(id==='bones'){
-    const bGeo=new THREE.CylinderGeometry(0.025,0.025,0.34,5);
-    const b1=mesh(bGeo,0xefe9d8);b1.rotation.z=Math.PI/2;b1.rotation.y= 0.6;b1.position.y=0.04;
-    const b2=mesh(bGeo,0xe7e0cc);b2.rotation.z=Math.PI/2;b2.rotation.y=-0.7;b2.position.y=0.07;
-    g.add(b1,b2);
-  }else if(id==='coins'){
-    for(let i=0;i<3;i++){
-      const c=mesh(new THREE.CylinderGeometry(0.11,0.11,0.035,8),0xe8c23d);
-      c.position.set((i-1)*0.07,0.02+i*0.04,(i%2)*0.06);g.add(c);
+    const s=add(SPH(0.13),c);s.scale.set(1.3,0.45,0.9);s.position.y=0.06;
+  }
+  else if(id==='bones'){
+    const bGeo=CYL(0.025,0.025,0.34,5);
+    const b1=add(bGeo,0xefe9d8);b1.rotation.z=Math.PI/2;b1.rotation.y=0.6;b1.position.y=0.04;
+    const b2=add(bGeo,0xe7e0cc);b2.rotation.z=Math.PI/2;b2.rotation.y=-0.7;b2.position.y=0.07;
+  }
+  else if(id==='coins'){
+    for(let i=0;i<3;i++){const c=add(CYL(0.11,0.11,0.035,8),0xe8c23d);c.position.set((i-1)*0.07,0.02+i*0.04,(i%2)*0.06);}
+  }
+  /* ---------------- weapons ---------------- */
+  else if(id==='abyssal_whip'){
+    const a=add(TOR(0.15,0.028),0x2a1418);a.rotation.x=Math.PI/2;a.position.y=0.045;
+    const b=add(TOR(0.1,0.024),0x3a1d22);b.rotation.x=Math.PI/2;b.position.set(0.04,0.075,0.03);
+    const h=add(CYL(0.028,0.034,0.16,7),0x1a0e10);h.rotation.z=Math.PI/2;h.position.set(-0.18,0.05,0.02);
+    const t=add(CON(0.02,0.09,5),0xc0242a);t.rotation.z=-Math.PI/2;t.position.set(0.26,0.05,-0.04);
+  }
+  else if(id==='granite_maul'||id==='rock_hammer'){
+    const dark=id==='granite_maul';
+    const head=add(BOX(0.15,0.12,0.2),dark?0x3a3640:0x6a6258);head.position.set(0.12,0.08,0);
+    const head2=add(BOX(0.1,0.1,0.15),dark?0x4a4654:0x7a7268);head2.position.set(0.12,0.08,0);
+    const sh=add(CYL(0.022,0.026,0.4,6),0x4a3322);sh.rotation.z=Math.PI/2;sh.position.set(-0.12,0.05,0);
+    const pom=add(SPH(0.03),0x2a2026);pom.position.set(-0.32,0.05,0);
+  }
+  else if(eq.model==='sword'){
+    const blade=add(BOX(0.04,0.02,0.42),tint);blade.position.set(0,0.05,0.1);
+    const tip=add(CON(0.03,0.1,4),tint);tip.rotation.x=-Math.PI/2;tip.position.set(0,0.05,0.36);
+    add(BOX(0.16,0.03,0.04),trim).position.set(0,0.05,-0.13);
+    add(BOX(0.035,0.03,0.11),0x5a3d22).position.set(0,0.05,-0.2);
+    add(SPH(0.03),trim).position.set(0,0.05,-0.27);
+  }
+  else if(eq.model==='scim'){
+    let pz=-0.13,px=0,ang=0;
+    for(let i=0;i<6;i++){ang+=0.16;px+=Math.sin(ang)*0.075;pz+=Math.cos(ang)*0.075;
+      const w=0.05+(i<3?i:5-i)*0.006;
+      const seg=add(BOX(w,0.018,0.092),tint);seg.position.set(px,0.05,pz);seg.rotation.y=-ang;}
+    add(BOX(0.17,0.03,0.05),trim).position.set(0,0.05,-0.17);
+    add(BOX(0.035,0.03,0.1),0x5a3d22).position.set(0,0.05,-0.24);
+    add(SPH(0.03),trim).position.set(0,0.05,-0.3);
+  }
+  /* ---------------- helmets / head ---------------- */
+  else if(eq.model==='slayerhelm'){
+    const dome=add(SPH(0.16,10,8),tint);dome.scale.set(1,0.9,1.05);dome.position.y=0.12;
+    add(CYL(0.155,0.17,0.07,12),tint).position.y=0.05;
+    add(TOR(0.16,0.02,12),trim).position.y=0.115;
+    add(BOX(0.02,0.06,0.26),trim).position.set(0,0.2,0);
+    for(const sd of[-1,1]){const h=add(CON(0.04,0.16,6),trim);h.position.set(sd*0.15,0.18,-0.02);h.rotation.z=-sd*0.7;h.rotation.x=-0.2;}
+    add(BOX(0.16,0.05,0.02),0x0e1014).position.set(0,0.13,0.16);
+  }
+  else if(eq.model==='helm'||id==='pumpkin_helmet'||id==='dragon_full_helm'){
+    if(id==='pumpkin_helmet'){
+      const p=add(SPH(0.17,10,8),0xd8731f);p.scale.set(1,0.92,1);p.position.y=0.14;
+      add(CYL(0.022,0.022,0.08,5),0x4a7a2a).position.y=0.27;
+      for(const e of[[-0.06,0.16,0.15],[0.06,0.16,0.15]]){const ey=add(CON(0.035,0.05,3),0x2a1a0a);ey.position.set(e[0],e[1],e[2]);ey.rotation.x=Math.PI/2;}
+    }else{
+      const dome=add(SPH(0.16,10,8),tint);dome.scale.set(1,0.95,1.05);dome.position.y=0.12;
+      add(CYL(0.155,0.17,0.08,12),tint).position.y=0.05;
+      add(TOR(0.165,0.018,12),trim).position.y=0.105;
+      add(BOX(0.025,0.05,0.28),trim).position.set(0,0.2,0);
+      add(BOX(0.05,0.05,0.02),0x14161a).position.set(0,0.12,0.165);
     }
-  }else{
-    /* every other item: a camera-facing sprite of its real inventory icon */
-    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:groundIconTex(id),transparent:true,alphaTest:0.45}));
-    sp.scale.set(0.5,0.5,0.5);sp.position.y=0.3;
-    g.add(sp);
+  }
+  else if(eq.model==='earmuffs'||id==='earmuffs'){
+    add(TOR(0.13,0.02,12),0x3a3026).rotation.x=0.4;
+    for(const sd of[-1,1]){const m=add(CYL(0.06,0.06,0.05,8),0x5a4a36);m.rotation.z=Math.PI/2;m.position.set(sd*0.13,0.07,0);}
+  }
+  else if(id==='chefs_hat'){
+    add(CYL(0.08,0.085,0.12,10),0xf4f4f4).position.y=0.08;
+    const p=add(SPH(0.11,9,7),0xf8f8f8);p.scale.set(1,0.7,1);p.position.y=0.18;
+  }
+  /* ---------------- body / legs ---------------- */
+  else if(eq.model==='plate'||eq.model==='chain'){
+    const t=add(BOX(0.3,0.12,0.24),tint);t.position.y=0.09;t.scale.set(1,1,1);
+    add(BOX(0.34,0.07,0.12),tint).position.set(0,0.16,0);
+    for(const sd of[-1,1])add(SPH(0.06,7,6),tint).position.set(sd*0.16,0.15,0);
+    add(BOX(0.3,0.02,0.24),trim).position.y=0.03;
+    if(eq.model==='chain'){const c=add(TOR(0.09,0.015,10),trim);c.rotation.x=Math.PI/2;c.position.y=0.16;}
+  }
+  else if(eq.model==='legs'){
+    for(const sd of[-1,1]){const lg=add(BOX(0.11,0.1,0.3),tint);lg.position.set(sd*0.075,0.07,0.02);}
+    add(BOX(0.28,0.06,0.1),trim).position.set(0,0.1,-0.1);
+  }
+  /* ---------------- shields ---------------- */
+  else if(eq.slot==='shield'||/shield|kiteshield/.test(id)){
+    const mc=metalOf(id);
+    const body=mc?mc[0]:(id==='mirror_shield'?0xcdd6de:id==='elemental_shield'?0x4a78a0:id==='dragon_shield'?0xc9a23a:tint);
+    const edge=mc?mc[1]:(id==='dragon_shield'?0x7a5a1a:trim);
+    const sh=add(BOX(0.26,0.045,0.32),body);sh.position.y=0.05;
+    const bot=add(CON(0.15,0.14,4),body);bot.rotation.x=Math.PI/2;bot.rotation.z=Math.PI/4;bot.position.set(0,0.05,0.2);bot.scale.y=0.3;
+    add(TOR(0.05,0.018,10),edge).rotation.x=Math.PI/2;
+    const boss=add(SPH(0.04,8,6),id==='mirror_shield'?0xeef4fa:edge);boss.position.y=0.08;
+    add(BOX(0.28,0.02,0.34),edge).position.y=0.03;
+  }
+  /* ---------------- capes ---------------- */
+  else if(eq.model==='cape'||/cape/.test(id)){
+    let cc=tint; if(id==='pelican_cape')cc=0xc9a23a; if(/mastercape/.test(id)&&SKILL_META){const sk=id.replace('mastercape_','');if(SKILL_META[sk])cc=parseInt(SKILL_META[sk].col.slice(1),16);}
+    const body=add(BOX(0.26,0.05,0.3),cc);body.position.y=0.05;body.rotation.x=0.12;
+    add(BOX(0.28,0.04,0.1),cc).position.set(0,0.07,-0.13);
+    add(BOX(0.1,0.05,0.06),darken(cc,0.7)).position.set(0,0.09,-0.16);
+    add(BOX(0.24,0.02,0.28),darken(cc,0.75)).position.y=0.02;
+  }
+  /* ---------------- festive hats ---------------- */
+  else if(eq.model==='partyhat'){
+    const c=add(CON(0.1,0.4,12),eq.tint);c.rotation.z=Math.PI/2.1;c.position.set(0.05,0.08,0);
+    add(SPH(0.04,8,6),0xf6f6f6).position.set(-0.16,0.06,0);
+  }
+  else if(eq.model==='santahat'){
+    const c=add(CON(0.11,0.34,10),0xc0241f);c.rotation.z=1.9;c.position.set(0.04,0.1,0);
+    add(TOR(0.11,0.04,12),0xf4f4f4).rotation.x=Math.PI/2; // brim
+    add(SPH(0.05,8,6),0xf6f6f6).position.set(0.22,0.13,0);
+  }
+  /* ---------------- jewellery ---------------- */
+  else if(eq.slot==='ring'||/signet|_ring$/.test(id)){
+    const r=add(TOR(0.075,0.025,12),trim||0xe8c23d);r.rotation.x=Math.PI/2;r.position.y=0.04;
+    add(OCT(0.04),0xc0182f).position.y=0.085;
+  }
+  else if(/amulet/.test(id)){
+    const col=id==='amulet_strength'?0xc0182f:id==='amulet_defence'?0x2a5fd0:0x2fae5a;
+    const ch=add(TOR(0.1,0.012,14),0xe8c23d);ch.rotation.x=1.2;ch.position.y=0.04;
+    const gem=add(OCT(0.05),col);gem.position.set(0,0.05,0.09);gem.scale.y=1.3;
+  }
+  /* ---------------- bars ---------------- */
+  else if(/_bar$/.test(id)){
+    const mc=metalOf(id)||[0xaab2ba,0xe2e8ee];
+    const bar=add(BOX(0.34,0.07,0.16),mc[0]);bar.position.y=0.05;
+    add(BOX(0.36,0.025,0.18),mc[1]).position.y=0.085;
+  }
+  /* ---------------- gems ---------------- */
+  else if(/^uncut_/.test(id)){
+    const col=id==='uncut_diamond'?0xdffaff:id==='uncut_emerald'?0x2fae5a:id==='uncut_ruby'?0xc0182f:0x2a5fd0;
+    const gem=add(OCT(0.13),col);gem.position.y=0.11;gem.rotation.y=0.5;
+    add(OCT(0.07),col).position.set(0.08,0.05,0.05);
+  }
+  /* ---------------- beads ---------------- */
+  else if(/_bead$/.test(id)){
+    const col=id==='red_bead'?0xc0241f:id==='yellow_bead'?0xe8c23d:id==='black_bead'?0x2a2a2e:0xeef0f2;
+    const b=add(SPH(0.1,9,8),col);b.position.y=0.09;
+    add(TOR(0.045,0.02,10),darken(col,0.7)).rotation.x=Math.PI/2;
+  }
+  /* ---------------- fish ---------------- */
+  else if(id==='raw_lobster'||id==='lobster'){
+    const c=id==='lobster'?0xd83a2a:0x9a3a4a;
+    const body=add(CYL(0.06,0.09,0.28,8),c);body.rotation.z=Math.PI/2;body.position.set(0,0.07,0);body.scale.y=0.75;
+    add(SPH(0.07,8,6),c).position.set(-0.16,0.07,0);
+    for(const sd of[-1,1]){const cl=add(BOX(0.09,0.04,0.05),c);cl.position.set(-0.22,0.06,sd*0.07);}
+    const tail=add(CON(0.09,0.1,5),c);tail.rotation.z=-Math.PI/2;tail.position.set(0.18,0.07,0);tail.scale.set(1,1,1.4);
+  }
+  else if(id==='raw_sardine'||id==='sardine'||id==='raw_trout'||id==='trout'||id==='raw_swordfish'||id==='swordfish'||id==='burnt_fish'){
+    const raw=id.indexOf('raw_')===0;
+    const big=/swordfish/.test(id);
+    const col=id==='burnt_fish'?0x342a22:raw?(/trout/.test(id)?0x9aa0a4:/swordfish/.test(id)?0x6a8aa0:0xb0b6bc):0xd8a24a;
+    const body=add(SPH(big?0.13:0.1,9,7),col);body.scale.set(big?2.0:1.7,0.55,0.85);body.position.set(0,0.06,0);
+    const tail=add(CON(big?0.09:0.07,big?0.12:0.09,3),col);tail.rotation.z=Math.PI/2;tail.scale.set(1,1.4,0.3);tail.position.set(big?0.24:0.18,0.06,0);
+    if(big){const bill=add(CON(0.018,0.16,4),col);bill.rotation.z=-Math.PI/2;bill.position.set(-0.28,0.06,0);}
+    const eye=add(SPH(0.018,6,5),0x101010);eye.position.set(big?-0.16:-0.12,0.09,0.05);
+  }
+  /* ---------------- food / dishes ---------------- */
+  else if(id==='bland_dish'||id==='seasoned_dish'||id==='boars_head_feast'){
+    add(CYL(0.16,0.15,0.025,14),0xddd6c8).position.y=0.02; // plate
+    const food=add(SPH(0.1,9,7),id==='boars_head_feast'?0x8a5a36:0xb88a4a);food.scale.set(1.2,0.6,1.1);food.position.y=0.06;
+    if(id==='seasoned_dish'){for(const p of[[-0.05,0.04],[0.05,-0.03],[0.02,0.06]])add(SPH(0.015,5,4),0x4a7a2a).position.set(p[0],0.1,p[1]);}
+    if(id==='boars_head_feast')for(const sd of[-1,1]){const t=add(CON(0.02,0.07,4),0xefe9d8);t.position.set(0.06,0.09,sd*0.05);t.rotation.z=sd*0.5;}
+  }
+  else if(id==='boar_head'){
+    const head=add(SPH(0.13,9,7),0x6a4a32);head.scale.set(1.1,0.95,1.2);head.position.y=0.11;
+    const snout=add(CYL(0.05,0.06,0.08,8),0x5a3c28);snout.rotation.x=Math.PI/2;snout.position.set(0,0.09,0.13);
+    for(const sd of[-1,1]){const tk=add(CON(0.018,0.07,4),0xefe9d8);tk.position.set(sd*0.04,0.07,0.14);tk.rotation.x=0.6;tk.rotation.z=sd*0.3;}
+    for(const sd of[-1,1])add(CON(0.04,0.06,4),0x5a3c28).position.set(sd*0.09,0.2,-0.02);
+  }
+  else if(id==='candy'){
+    const b=add(SPH(0.08,9,7),0xe24a8a);b.position.y=0.07;
+    for(const sd of[-1,1]){const w=add(CON(0.05,0.07,5),0xf2a0c4);w.rotation.z=sd*Math.PI/2;w.position.set(sd*0.12,0.07,0);}
+  }
+  else if(id==='fresh_herbs'||id==='coarse_salt'||id==='spice_pouch'||id==='borrowed_flour'){
+    if(id==='fresh_herbs'){for(const p of[[-0.05,0,0],[0.05,0,0.04],[0,0,-0.05]]){const s=add(BOX(0.02,0.14,0.02),0x3a8a3a);s.position.set(p[0],0.08,p[2]);s.rotation.z=(Math.random()-0.5)*0.4;add(SPH(0.035,6,5),0x4aa04a).position.set(p[0],0.16,p[2]);}}
+    else{const col=id==='coarse_salt'?0xe8e2d2:id==='borrowed_flour'?0xeae0cc:0x8a5a2a;
+      const sack=add(SPH(0.13,9,8),col);sack.scale.set(1,0.95,1);sack.position.y=0.11;
+      add(TOR(0.055,0.02,10),darken(col,0.7)).position.y=0.2;
+      add(CYL(0.04,0.02,0.05,7),col).position.y=0.23;}
+  }
+  /* ---------------- dyes ---------------- */
+  else if(/dye/.test(id)){
+    const col=id==='crimson_dye'?0x9a1f2a:0xc99a3a;
+    add(CYL(0.06,0.07,0.16,9),col).position.y=0.09;
+    add(CYL(0.04,0.05,0.05,8),0x2a2026).position.y=0.19; // neck
+    add(CYL(0.03,0.03,0.04,7),0x6a4a2a).position.y=0.235; // cork
+  }
+  /* ---------------- worn misc ---------------- */
+  else if(id==='fighting_boots'){
+    for(const sd of[-1,1]){const b=add(BOX(0.08,0.07,0.14),0x6a4a2a);b.position.set(sd*0.07,0.05,-0.02);
+      add(BOX(0.08,0.04,0.07),0x5a3c22).position.set(sd*0.07,0.025,0.06);}
+  }
+  else if(id==='oven_mitts'){
+    for(const sd of[-1,1]){const m=add(SPH(0.08,8,7),0xc0392a);m.scale.set(0.8,0.7,1.1);m.position.set(sd*0.09,0.06,0);
+      add(BOX(0.04,0.05,0.05),0xc0392a).position.set(sd*0.13,0.06,-0.03);}
+  }
+  /* ---------------- unique quest / rare items ---------------- */
+  else if(id==='draconic_visage'){
+    const face=add(BOX(0.2,0.16,0.08),0x2a6a4a);face.position.y=0.1;
+    add(BOX(0.16,0.06,0.06),0x1f5238).position.set(0,0.05,0.04);
+    for(const sd of[-1,1]){const h=add(CON(0.035,0.14,5),0x183f2c);h.position.set(sd*0.09,0.2,-0.02);h.rotation.z=-sd*0.5;}
+    for(const sd of[-1,1])add(OCT(0.028),0xe8c23d).position.set(sd*0.06,0.12,0.05);
+  }
+  else if(id==='basilisk_jaw'){
+    const jaw=add(TOR(0.13,0.03,8),0xe7e0cc);jaw.rotation.x=Math.PI/2;jaw.position.y=0.05;jaw.scale.set(1,0.6,1);
+    for(let i=0;i<6;i++){const a=(i/6)*3.2-1.6;const t=add(CON(0.02,0.07,4),0xf4eed8);t.position.set(Math.sin(a)*0.13,0.09,Math.cos(a)*0.13);}
+  }
+  else if(id==='wailing_relic'){
+    add(CYL(0.1,0.12,0.05,10),0x4a4658).position.y=0.04; // base
+    const orb=add(SPH(0.09,10,8),0x7a4aa0);orb.position.y=0.16;
+    add(TOR(0.06,0.02,12),0xc9a23a).position.y=0.16;
+  }
+  else if(id==='scholar_crest'){
+    add(CYL(0.13,0.13,0.03,16),0xc9a23a).position.y=0.04; // medallion
+    add(CYL(0.09,0.09,0.035,16),0xe8d98a).position.y=0.055;
+    const star=add(OCT(0.06),0x9a1f2a);star.position.y=0.075;star.scale.set(1,0.4,1);star.rotation.y=0.8;
+  }
+  else if(id==='sentinel_visor'){
+    const v=add(TOR(0.13,0.035,10,8),0x8a9aa8);v.rotation.x=1.3;v.position.y=0.07;v.scale.set(1,1,0.5);
+    add(BOX(0.22,0.04,0.02),0x14161a).position.set(0,0.08,0.07);
+    add(TOR(0.13,0.015,12),0xcdd6de).rotation.x=1.3;
+  }
+  else if(id==='cracked_horn'){
+    const h=add(CON(0.05,0.34,7),0xe7ddc6);h.rotation.z=1.7;h.position.set(0,0.06,0);
+    add(BOX(0.02,0.04,0.03),0x3a3026).position.set(0.04,0.08,0); // crack
+    add(BOX(0.02,0.04,0.03),0x3a3026).position.set(-0.05,0.05,0.02);
+  }
+  else if(id==='clawed_slate'){
+    add(BOX(0.26,0.04,0.2),0x55585e).position.y=0.04; // slab
+    for(const z of[-0.04,0,0.04]){const sc=add(BOX(0.2,0.012,0.012),0x2a2c30);sc.position.set(0,0.065,z);sc.rotation.y=0.15;}
+  }
+  else if(id==='censer_fragment'){
+    const f=add(DOD(0.11),0xb89a4a);f.position.y=0.1;f.scale.set(1.1,0.8,1);
+    add(BOX(0.04,0.06,0.04),0x8a6a2a).position.set(0.08,0.13,0.02);
+  }
+  else if(id==='masters_seal'){
+    add(CYL(0.12,0.12,0.04,16),0x8a1f1a).position.y=0.04; // wax disc
+    const e=add(OCT(0.06),0x6a1510);e.position.y=0.07;e.scale.set(1,0.4,1);
+    add(TOR(0.1,0.015,16),0x6a1510).position.y=0.045;
+  }
+  else if(id==='lost_crate'){
+    add(BOX(0.3,0.24,0.3),0x7a5a36).position.y=0.13;
+    for(const e of[[-0.15,0],[0.15,0],[0,-0.15],[0,0.15]])add(BOX(e[0]?0.03:0.32,0.26,e[1]?0.03:0.32),0x5a3c22).position.set(e[0],0.13,e[1]);
+    add(BOX(0.34,0.04,0.34),0x4a3322).position.y=0.25;
+  }
+  /* ---------------- fallback: faceted nugget (never a gray cube) ---------------- */
+  else {
+    const c=add(DOD(0.12),0xb89a5a);c.position.y=0.1;c.rotation.set(0.3,0.5,0.2);
+    add(DOD(0.07),0x9a7a3a).position.set(0.07,0.06,-0.04);
   }
   return g;
 }
