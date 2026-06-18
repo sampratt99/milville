@@ -2190,6 +2190,20 @@ function renderEncy(){
   const cnt=document.getElementById('enccount');if(cnt)cnt.textContent=ids.length+(ids.length===1?' item':' items');
 }
 
+function itemEffect(id){
+  const ht={proctor_helm:1,crimson_proctor_helm:2,gilded_warden_helm:3}[id];
+  if(ht){const pct=Math.round([0,0.10,0.14,0.18][ht]*100);
+    return '+'+pct+'% Attack accuracy and damage against the creature of your active Slayer contract while out in the wild. Also wards off the wail of a banshee.';}
+  if(id==='earmuffs')return 'Wards off the deafening wail of a banshee.';
+  if(id==='mirror_shield')return 'Reflects the petrifying gaze of a basilisk.';
+  if(id==='dragon_shield'||id==='elemental_shield')return 'Turns aside the freezing breath of a skeletal wyvern.';
+  if(id==='rock_hammer')return 'The only thing that finishes a gargoyle: batter one to its last sliver of health and the hammer shatters its stone hide. No other weapon lands the killing blow.';
+  if(id==='hunter_signet')return 'Right-click to check your active contract, or to teleport to the chaos temple deep in the wild.';
+  const e=ITEMS[id]&&ITEMS[id].equip;
+  if(e&&e.capeSkill){const nm=SKILL_META[e.capeSkill].name;
+    return 'Worn, it grants +10 effective '+nm+' levels'+(e.capeSkill==='prayer'?', and raises your maximum prayer points by 50':'')+'.';}
+  return null;
+}
 function encDetail(id){
   const grid=document.getElementById('encgrid'),det=document.getElementById('encdetail');
   if(!det)return;
@@ -2219,6 +2233,7 @@ function encDetail(id){
     if(e.tool){row('Gathering','+'+Math.round((e.gb||0)*100)+'% '+SKILL_META[e.tool].name+' success rate');
       row('Tool level',(e.treq&&e.treq>1)?(SKILL_META[e.tool].name+' '+e.treq):'any level');}}
   if(it.heal)row('Heals',it.heal+' hp');
+  const _eff=itemEffect(id);if(_eff)row('Effect',_eff);
   det.appendChild(rows);
   const sh=document.createElement('div');sh.className='encsrch';sh.textContent='How to obtain';det.appendChild(sh);
   const sl=document.createElement('div');sl.className='encsrcs';
@@ -3359,6 +3374,7 @@ function renderInv(){
       slotEls[i].title=itemTip(s.id);
       if(s.qty>1){const fs=fmtStack(s.qty);slotEls[i].lastChild.textContent=fs.t;slotEls[i].lastChild.style.color=fs.c;}}
   }
+  if(shopOpen&&typeof renderSell==='function')renderSell();
 }
 
 /* item primary actions */
@@ -7086,15 +7102,27 @@ function updateObjVisual(o){
       }
     }
   }
-  /* cemetery gravestones in the fenced clearing */
-  for(let i=0;i<9;i++){
-    const gx=177.4+tileHash(i*7+3,i*13+1)*7.2,
-          gy=67.5+tileHash(i*5+2,i*11+4)*5.4;
-    const gh2=0.42+tileHash(i*3+1,i*9+5)*0.22;
-    bake(out,box(0.2,gh2,0.09),i%3?0x9a958c:0x86817a,gx,
-      groundH(gx,gy)+gh2/2,gy,(tileHash(i,i*2)-0.5)*0.5);
-    bake(out,box(0.26,0.07,0.12),0x7e7a72,gx,groundH(gx,gy)+0.035,gy,
-      (tileHash(i,i*2)-0.5)*0.5);
+  /* cemetery gravestones in neat rows flanking the central path */
+  { const _grows=[67.5,69,70.5,72,73.5];
+    const _gcols=[177.6,178.8,182.2,183.4,184.6];
+    let _gi=0;
+    for(const gy of _grows)for(const gx of _gcols){
+      _gi++;
+      const _h=tileHash(_gi*7+3,_gi*13+1);
+      const _ln=(tileHash(_gi,_gi*2)-0.5)*0.16;
+      const _g0=groundH(gx,gy);
+      if(_gi%6===0){ /* stone cross */
+        const _ch=0.6+_h*0.16;
+        bake(out,box(0.08,_ch,0.08),0x8e8a82,gx,_g0+_ch/2,gy,_ln);
+        bake(out,box(0.3,0.08,0.08),0x8e8a82,gx,_g0+_ch-0.16,gy,_ln);
+        bake(out,box(0.34,0.08,0.16),0x726e66,gx,_g0+0.04,gy,_ln);
+      }else{ /* headstone: base + slab + cap */
+        const _sh=0.46+_h*0.2;
+        bake(out,box(0.34,0.09,0.16),0x726e66,gx,_g0+0.045,gy,_ln);
+        bake(out,box(0.24,_sh,0.1),_gi%2?0x9a958c:0x84807a,gx,_g0+0.06+_sh/2,gy,_ln);
+        bake(out,box(0.24,0.1,0.1),_gi%2?0xa39e95:0x8d8982,gx,_g0+0.06+_sh,gy,_ln);
+      }
+    }
   }
   const m=bakeMesh(out,true);
   m.receiveShadow=true;
@@ -9682,7 +9710,7 @@ function slayerHelmTier(){const h=player.equip&&player.equip.head;if(!h)return 0
 function onTaskBonus(r){const t=slayerHelmTier();if(!t)return 0;const sl=player.slayer;if(!sl||!sl.task||sl.done>=sl.need||r.kind!==sl.task||!inWild(r.sx,r.sy))return 0;return [0,0.10,0.14,0.18][t];}
 function hasEquip(slot,id){return !!(player.equip&&player.equip[slot]&&player.equip[slot].id===id);}
 function protectedFrom(kind){if(kind==='banshee')return hasEquip('head','earmuffs')||slayerHelmTier()>0;if(kind==='basilisk')return hasEquip('shield','mirror_shield');if(kind==='wyvern')return hasEquip('shield','dragon_shield')||hasEquip('shield','elemental_shield');return true;}
-function protWarn(r){const k=r.kind,now=performance.now();let m=null;if(k==='banshee'&&!protectedFrom('banshee'))m='Without Earmuffs (or a Proctor\u2019s Helm), the banshee\u2019s wail tears past your armour!';else if(k==='basilisk'&&!protectedFrom('basilisk'))m='Without a Mirror Shield, the basilisk\u2019s gaze tears past your armour!';else if(k==='wyvern'&&!protectedFrom('wyvern'))m='Without a Dragon Slayer shield or Elemental Shield equipped, the wyvern\u2019s frost breath will devastate you!';else if(k==='gargoyle'&&!(player.equip.weapon&&player.equip.weapon.id==='rock_hammer'))m='You must wield a Rock Hammer to land the killing blow on a gargoyle.';if(!m)return;if(r._pw&&now-r._pw<5000)return;r._pw=now;msg('Warning: '+m,'#c9601f');}
+function protWarn(r){const k=r.kind,now=performance.now();let m=null;if(k==='banshee'&&!protectedFrom('banshee'))m='Without Earmuffs (or a Proctor\u2019s Helm), the banshee\u2019s wail tears past your armour!';else if(k==='basilisk'&&!protectedFrom('basilisk'))m='Without a Mirror Shield, the basilisk\u2019s gaze tears past your armour!';else if(k==='wyvern'&&!protectedFrom('wyvern'))m='Without a Dragon Slayer shield or Elemental Shield equipped, the wyvern\u2019s frost breath will devastate you!';if(!m)return;if(r._pw&&now-r._pw<5000)return;r._pw=now;msg('Warning: '+m,'#c9601f');}
 function reclaimFee(){const st=player.lostStash||[];let v=0;for(const it of st)v+=(((ITEMS[it.id]&&ITEMS[it.id].val)||1)*(it.qty||1));return Math.min(3000,Math.max(100,Math.round(v*0.03)));}
 function reclaimLost(){const st=player.lostStash||[];if(!st.length){msg('You have no lost items to reclaim.');return;}const fee=reclaimFee();if(coinsCount()<fee){msg('Reclaiming your lost belongings costs '+fee+' gp \u2014 you cannot afford it yet.','#9c1f1f');return;}spendCoins(fee);let over=0;for(const it of st){if(!addItem(it.id,it.qty||1)){dropGround(player.x,player.y,it.id,it.qty||1);over++;}}player.lostStash=[];sfx.pickup&&sfx.pickup();dirty=true;msg('You reclaim your lost belongings for '+fee+' gp.'+(over?' Some spilled to your feet \u2014 your pack was full.':''),'#1a5a8c');renderInv&&renderInv();}
 let slayerConfirmId=null;
@@ -9690,8 +9718,8 @@ function slayerShopRows(){const sl=player.slayer,u=sl.unlocks||{},rows=[];
   if(!u.bigger)rows.push({id:'bigger',icon:'_skull',name:'Bigger and Badder',price:SLAYER_PRICES.bigger,desc:'Unlocks superior monsters \u2014 rare, far tougher versions of your contract target that grant bonus points and richer drops.'});
   if(!ownProctorAny())rows.push({id:'proctor_helm',icon:'proctor_helm',name:'Proctor\u2019s Helm',price:SLAYER_PRICES.proctor_helm,desc:'A slayer helm that strikes harder against your current contract monster, and wards off a banshee\u2019s wail. Upgrade it later with helm pieces and dyes.'});
   rows.push({id:'hunter_signet',icon:'hunter_signet',name:'Hunter\u2019s Signet',price:SLAYER_PRICES.hunter_signet,desc:'A ring (right-click it) that reports your active contract and teleports you to the chaos temple deep in the wild.'});
-  rows.push({id:'crimson_dye',icon:'crimson_dye',name:'Crimson Dye',price:SLAYER_PRICES.crimson_dye,desc:'Fuse onto a Proctor\u2019s Helm with a Scholar\u2019s Crest (a task drop) to forge the Crimson Proctor\u2019s Helm.'});
-  rows.push({id:'gilt_dye',icon:'gilt_dye',name:'Gilt Dye',price:SLAYER_PRICES.gilt_dye,desc:'Fuse onto a Crimson Proctor\u2019s Helm with a Sentinel Visor (a task drop) to forge the Gilded Warden Helm.'});
+  if(!crimsonDyeSpent())rows.push({id:'crimson_dye',icon:'crimson_dye',name:'Crimson Dye',price:SLAYER_PRICES.crimson_dye,desc:'Fuse onto a Proctor\u2019s Helm with a Scholar\u2019s Crest (a task drop) to forge the Crimson Proctor\u2019s Helm.'});
+  if(!giltDyeSpent())rows.push({id:'gilt_dye',icon:'gilt_dye',name:'Gilt Dye',price:SLAYER_PRICES.gilt_dye,desc:'Fuse onto a Crimson Proctor\u2019s Helm with a Sentinel Visor (a task drop) to forge the Gilded Warden Helm.'});
   if(!u.banshee)rows.push({id:'unlock_banshee',icon:'earmuffs',name:'Contract: Banshee',price:SLAYER_PRICES.unlock_banshee,desc:'Adds banshees to your contract pool. Comes with Earmuffs to silence their deadly wail.'});
   if(!u.basilisk)rows.push({id:'unlock_basilisk',icon:'mirror_shield',name:'Contract: Basilisk',price:SLAYER_PRICES.unlock_basilisk,desc:'Adds basilisks to your pool. Comes with a Mirror Shield to deflect their petrifying gaze.'});
   if(!u.gargoyle)rows.push({id:'unlock_gargoyle',icon:'rock_hammer',name:'Contract: Gargoyle',price:SLAYER_PRICES.unlock_gargoyle,desc:'Adds gargoyles to your pool. Comes with a Rock Hammer \u2014 needed to shatter them once beaten.'});
@@ -9787,11 +9815,14 @@ function syncSlayerUnlocks(){
   }
 }
 function ownProctorAny(){const ids=['proctor_helm','crimson_proctor_helm','gilded_warden_helm'];for(const id of ids){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;}return false;}
+function ownsHelmAnywhere(id){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;return bank.some(b=>b&&b.id===id&&(b.qty||1)>0);}
+function crimsonDyeSpent(){return ownsHelmAnywhere('crimson_proctor_helm')||ownsHelmAnywhere('gilded_warden_helm');}
+function giltDyeSpent(){return ownsHelmAnywhere('gilded_warden_helm');}
 function neededHelmPiece(){const have=id=>countItem(id)>0||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&countItem('sentinel_visor')<1)return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&countItem('scholar_crest')<1)return 'scholar_crest';return null;}
 const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150,skip:30,block:100};
 const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks, with a bonus every tenth task. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, and a Dragon Slayer shield or an Elemental Shield against the wyvern\u2019s frost \u2014 either turns its freezing breath. Keep the right gear equipped or these creatures tear straight through armour.';
 function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else if(id==='block'){sl.unlocks=sl.unlocks||{};sl.unlocks.block=true;msg('Task blocking unlocked \u2014 toggle blocks in the rewards shop.','#9a6fb0');}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
-function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
+function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});if(!crimsonDyeSpent())O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});if(!giltDyeSpent())O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
 function applyHelmDye(dyeId){const m=({crimson_dye:['proctor_helm','scholar_crest','crimson_proctor_helm'],gilt_dye:['crimson_proctor_helm','sentinel_visor','gilded_warden_helm']})[dyeId];if(!m)return;const baseId=m[0],pieceId=m[1],outId=m[2];const inInv=findItem(baseId)>=0;const equipped=player.equip.head&&player.equip.head.id===baseId;if(!inInv&&!equipped){msg('You need a '+ITEMS[baseId].name+' to apply this dye.','#9a6fb0');return;}if(findItem(pieceId)<0){msg('You also need a '+ITEMS[pieceId].name+' \u2014 a rare drop from your task monsters.','#9a6fb0');return;}if(inInv)removeSlot(findItem(baseId));else{player.equip.head=null;renderEquip&&renderEquip();}removeSlot(findItem(pieceId));removeSlot(findItem(dyeId));if(!addItem(outId))dropGround(player.x,player.y,outId,1);sfx.level&&sfx.level();dirty=true;msg('You fuse the '+ITEMS[pieceId].name.toLowerCase()+' onto the helm with '+ITEMS[dyeId].name.toLowerCase()+' \u2014 behold, the '+ITEMS[outId].name+'!','#e8b020');renderInv&&renderInv();}
 function signetCheckTask(){const sl=player.slayer;if(!sl.task)msg('No active contract. Seek the Slayer Master at the wild\u2019s edge.','#9a6fb0');else if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');else msg('Contract: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath. You hold '+(sl.points||0)+' Slayer points.','#9a6fb0');}
 function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}const tx=26,ty=37;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you to the chaos temple, deep in the wild.','#9a6fb0');dirty=true;}
@@ -11186,7 +11217,7 @@ function castTeleport(id){
   if(lvl('prayer')<T.req){msg('You need a Prayer level of '+T.req+' to use '+T.name+'.');return;}
   if(player.pray<T.cost){msg('You need '+T.cost+' prayer points for '+T.name+'. Restore them at an altar.');return;}
   player._tele=true;
-  player.pray-=T.cost;updateOrb();
+  player.pray-=T.cost;updatePrayOrb();
   player.action=null;player.path.length=0;
   sfx.bury();
   teleBurst(T.fx);teleFlash(T.fx);
