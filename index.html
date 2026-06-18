@@ -800,6 +800,10 @@ const GE_STOCK=[];
 });
 ITEMS.santa_hat={name:'Santa hat',ex:'Soft red felt with a snow-white trim and a bobble. Festive and fabulously rare.',val:2000000,
   equip:{slot:'head',def:0,model:'santahat',verb:'Wear',req:0,tint:0xc0241f}};
+ITEMS.clue_easy={name:'Easy clue scroll',ex:'A riddle pointing somewhere on the grounds. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
+ITEMS.clue_medium={name:'Medium clue scroll',ex:'A two-step trail to buried treasure. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
+ITEMS.clue_hard={name:'Hard clue scroll',ex:'A three-step trail across the grounds. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
+ITEMS.clue_elite={name:'Elite clue scroll',ex:'A grand four-step expedition. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
 GE_STOCK.push('santa_hat');
 const RARE_ITEMS=['draconic_visage','abyssal_whip','granite_maul','basilisk_jaw','wailing_relic',
   'scholar_crest','sentinel_visor',
@@ -900,6 +904,7 @@ ITEMS.pelican_cape={name:'Pelican cape',ex:'Gold and crimson, cut for the school
     equip:{slot:'cape',atk:2,str:2,def:2,model:'cape',verb:'Wear',tint:0xd9a531}};
 
 const OBJ_DEFS={
+  treasure_x:{name:'Marked spot',action:'Dig',noBlock:true,ex:'A freshly-marked X in the earth. Something is buried here — dig it up.'},
   tree:{name:'Tree',action:'Chop down',skill:'woodcutting',req:1,xp:9,item:'logs',
     base:.45,fall:1,respawn:[8,15],ex:'A leafy tree.',depEx:'Somebody beat me to it.',depName:'Tree stump'},
   oak:{name:'Oak tree',action:'Chop down',skill:'woodcutting',req:6,xp:16,item:'oak_logs',
@@ -1774,7 +1779,7 @@ const player={
   hp:10,pray:100,style:'stab',regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0},
   inv:new Array(28).fill(null),
-  equip:{weapon:null,shield:null,cape:null},kit:false,cmb:3,playMs:0,kills:0,collected:{},run:false,stamina:100,
+  equip:{weapon:null,shield:null,cape:null},kit:false,cmb:3,playMs:0,kills:0,collected:{},run:false,stamina:100,clueData:{},cluesDone:0,
   mmf:{fish:1,mine:1,smith:1,bank:1,altar:1,quest:1,shop:1},
   quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
@@ -1819,7 +1824,143 @@ function rollRareDrop(r){
     else pool=['mithril_scimitar','adamant_full_helm','mithril_platebody','adamant_kiteshield'];
     dropGround(r.x,r.y,pool[rndi(0,pool.length-1)],1);
   }
+  rollClueDrop(r);
 }
+
+/* ============================ CLUE SCROLL SYSTEM ============================ */
+const CLUE_SPOTS=[
+ {x:92,y:103, clue:'Dig in the long shadow of the tower, where the whole campus comes to worship.'},
+ {x:91,y:83,  clue:'The Rector keeps this house. Search the garden by his door.'},
+ {x:58,y:84,  clue:'At the heart of the grounds, dig by the Schoolhouse steps.'},
+ {x:101,y:70, clue:'Where letters come and go \u2014 dig behind the Post Office.'},
+ {x:60,y:69,  clue:'Where hammer meets anvil and the furnace glows, dig by the smithy.'},
+ {x:103,y:90, clue:'At the Old Chapel with the patterned slate roof and slender spire.'},
+ {x:98,y:105, clue:'Kneel where the faithful pray, in the glade south of the great chapel.'},
+ {x:117,y:95, clue:'Cross the footbridge to the library on the water; dig by its great arched window.'},
+ {x:108,y:44, clue:'The old library\u2019s colonnade stands over the water \u2014 dig at Sheldon.'},
+ {x:41,y:91,  clue:'Where math and science rise on the southern slope, dig by the Lindsay Center.'},
+ {x:76,y:22,  clue:'Three brick gables hold every machine you could want; dig by the fitness center doors.'},
+ {x:129,y:101,clue:'Where the anglers cast their lines on the pond\u2019s quiet bend.'},
+ {x:140,y:57, clue:'The whole school eats beneath these gables \u2014 dig behind the dining hall.'},
+ {x:134,y:28, clue:'Among the orchard rows where the apples grow, north of the dining hall.'},
+ {x:38,y:114, clue:'Mind the Safety Department \u2014 dig by the Stronghold\u2019s parking lot.'},
+ {x:23,y:103, clue:'The red barn stands alone at the western fields; dig by its doors.'},
+ {x:153,y:22, clue:'Where the rowers stack their sculls beside Turkey Pond, dig at the boathouse landing.'},
+ {x:165,y:34, clue:'Beneath the little dome that watches the northern sky.'},
+ {x:151,y:66, clue:'Cold air off the ice, out on its lonely peninsula.'},
+ {x:178,y:64, clue:'Quiet, please. Dig among the resting stones at the far eastern edge.'},
+];
+const CLUE_TIERS={
+  easy:  {steps:1, item:'clue_easy',   pool:[0,1,2,3,4,5,6],             col:'#8a9a55', rate:35,  label:'Easy'},
+  medium:{steps:2, item:'clue_medium', pool:[0,1,2,3,4,5,6,7,8,9,10,11], col:'#3a78b0', rate:55,  label:'Medium'},
+  hard:  {steps:3, item:'clue_hard',   pool:[7,8,9,10,11,12,13,14,15],   col:'#a0408a', rate:85,  label:'Hard'},
+  elite: {steps:4, item:'clue_elite',  pool:[12,13,14,15,16,17,18,19],   col:'#c23a2a', rate:120, label:'Elite'},
+};
+const CLUE_ITEM_TIER={clue_easy:'easy',clue_medium:'medium',clue_hard:'hard',clue_elite:'elite'};
+const CLUE_REVEAL=6;
+function mobClueTier(c){ if(c>=27)return 'elite'; if(c>=19)return 'hard'; if(c>=10)return 'medium'; return 'easy'; }
+const CLUE_ORDER=['easy','medium','hard','elite'];
+/* already hold this tier? checks an unfinished trail, the inventory, AND the bank */
+function clueHeld(tier){
+  const T=CLUE_TIERS[tier];
+  if(player.clueData&&player.clueData[tier])return true;
+  if(countItem(T.item)>0)return true;
+  if(typeof bank!=='undefined'&&bank&&bank.some(b=>b&&b.id===T.item&&(b.qty||1)>0))return true;
+  return false;
+}
+/* a monster can drop any tier up to its own level; at most one scroll per kill,
+   preferring the highest tier that rolled and that the player isn't already holding */
+function rollClueDrop(r){
+  const maxIdx=CLUE_ORDER.indexOf(mobClueTier(MOB_KINDS[r.kind].cmb));
+  for(let i=maxIdx;i>=0;i--){
+    const tier=CLUE_ORDER[i],T=CLUE_TIERS[tier];
+    if(Math.random()>=1/T.rate)continue;   /* this tier didn't roll */
+    if(clueHeld(tier))continue;            /* already have one of this tier -> try a lower tier */
+    if(invFull())dropGround(r.x,r.y,T.item,1); else addItem(T.item,1);
+    msg('A '+T.label+' clue scroll! Read it to begin the trail.','#caa23a');
+    return;                                /* one scroll per kill */
+  }
+}
+function buildClueTrail(tier){
+  const pool=CLUE_TIERS[tier].pool.slice();
+  for(let i=pool.length-1;i>0;i--){const j=rndi(0,i);const t=pool[i];pool[i]=pool[j];pool[j]=t;}
+  return {trail:pool.slice(0,CLUE_TIERS[tier].steps),step:0};
+}
+function readClue(itemId){
+  const tier=CLUE_ITEM_TIER[itemId]; if(!tier)return;
+  player.clueData=player.clueData||{};
+  if(!player.clueData[tier])player.clueData[tier]=buildClueTrail(tier);
+  const cd=player.clueData[tier], T=CLUE_TIERS[tier], spot=CLUE_SPOTS[cd.trail[cd.step]];
+  const si=T.steps>1?(' (step '+(cd.step+1)+' of '+T.steps+')'):'';
+  msg(T.label+' clue'+si+': '+spot.clue,'#caa23a');
+  dirty=true; updateTreasureX();
+}
+function activeClueTargets(){
+  const out=[], cd=player.clueData||{};
+  for(const tier in CLUE_TIERS)if(cd[tier]){const sp=CLUE_SPOTS[cd[tier].trail[cd[tier].step]];out.push({tier,x:sp.x,y:sp.y});}
+  return out;
+}
+let treasureX=null;
+function clearTreasureX(){
+  if(!treasureX)return;
+  for(let i=objects.length-1;i>=0;i--)if(objects[i].def==='treasure_x'){
+    if(objects[i]._m&&objects[i]._m.group&&typeof scene!=='undefined')scene.remove(objects[i]._m.group);
+    objects.splice(i,1);
+  }
+  treasureX=null;
+}
+function updateTreasureX(){
+  let best=null,bd=1e9;
+  for(const t of activeClueTargets()){
+    const d=Math.max(Math.abs(t.x-player.x),Math.abs(t.y-player.y));
+    if(d<=CLUE_REVEAL&&d<bd){bd=d;best=t;}
+  }
+  if(!best){clearTreasureX();return;}
+  if(treasureX&&treasureX.x===best.x&&treasureX.y===best.y&&treasureX.tier===best.tier)return;
+  clearTreasureX();
+  const n0=objects.length; addObj('treasure_x',best.x,best.y,true);
+  if(objects.length>n0){const o=objects[objects.length-1];o.tier=best.tier;buildObjModel(o);
+    treasureX={x:best.x,y:best.y,tier:best.tier,o};}
+}
+function startDig(o){ setAction({type:'dig',o},o.x,o.y); clickFx(o.x,o.y,'#e8c23d'); }
+function digTreasure(o){
+  const tier=o.tier, cd=player.clueData&&player.clueData[tier];
+  if(!cd){clearTreasureX();return;}
+  const T=CLUE_TIERS[tier];
+  sfx.bury&&sfx.bury();
+  if(cd.step+1<T.steps){
+    cd.step++; clearTreasureX();
+    const sp=CLUE_SPOTS[cd.trail[cd.step]];
+    msg('You dig\u2026 and uncover the next clue! Step '+(cd.step+1)+' of '+T.steps+': '+sp.clue,'#caa23a');
+    dirty=true; updateTreasureX();
+  }else{
+    clearTreasureX(); takeItems(T.item,1); player.clueData[tier]=null;
+    player.cluesDone=(player.cluesDone||0)+1; giveClueReward(tier); dirty=true;
+  }
+}
+function giveClueReward(tier){
+  const lines=[];
+  const give=(id,q)=>{q=q||1;markCollected(id);if(!addItem(id,q))dropGround(player.x,player.y,id,q);
+    lines.push((q>1?q+' \u00d7 ':'')+(ITEMS[id]?ITEMS[id].name:id));};
+  const cR={easy:[150,800],medium:[500,2500],hard:[1500,6000],elite:[5000,20000]}[tier];
+  give('coins',rndi(cR[0],cR[1]));
+  const STD={
+    easy:['bronze_full_helm','bronze_platebody','iron_scimitar','copper_ore','iron_bar','raw_shrimps','shrimps','uncut_sapphire','uncut_emerald','red_bead','yellow_bead','black_bead','white_bead'],
+    medium:['steel_platebody','steel_full_helm','mithril_scimitar','mithril_platelegs','uncut_emerald','uncut_ruby','iron_bar','steel_bar','trout','lobster'],
+    hard:['adamant_platebody','adamant_full_helm','rune_scimitar','rune_kiteshield','uncut_ruby','uncut_diamond','mithril_bar','swordfish'],
+    elite:['rune_platebody','rune_full_helm','rune_kiteshield','dragon_scimitar','dragon_full_helm','uncut_diamond','rune_bar','swordfish'],
+  }[tier];
+  const rolls=rndi(1,3);
+  for(let i=0;i<rolls;i++){const id=STD[rndi(0,STD.length-1)];
+    give(id,/_bar$|_ore$|^uncut_|_bead$|shrimps|trout|lobster|swordfish/.test(id)?rndi(2,8):1);}
+  const PHATS=['party_hat_red','party_hat_yellow','party_hat_blue','party_hat_green','party_hat_white','party_hat_purple'];
+  const rare={easy:{phat:500},medium:{phat:256,santa:1024},hard:{phat:128,santa:512,dragon:256},elite:{phat:64,santa:128,dragon:96}}[tier];
+  if(rare.phat&&Math.random()<1/rare.phat)give(PHATS[rndi(0,PHATS.length-1)]);
+  if(rare.santa&&Math.random()<1/rare.santa)give('santa_hat');
+  if(rare.dragon&&Math.random()<1/rare.dragon){const DG=['dragon_sword','dragon_scimitar','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield'];give(DG[rndi(0,DG.length-1)]);}
+  msg('Treasure! You unearth the chest and claim: '+lines.join(', ')+'.','#caa23a');
+}
+
 
 /* ============================ messages ============================= */
 const chatEl=document.getElementById('chat');
@@ -2498,6 +2639,14 @@ function playerTick(){
     sosChestOpen();
     renderInv();
   }
+  else if(a.type==='dig'){
+    const o9=a.o;
+    if(!adjacentTo(o9.x,o9.y)){
+      if(!player.path.length)walkTo(o9.x,o9.y,'adj');return;}
+    player.path.length=0;player.face=Math.sign(o9.x-player.x)||player.face;
+    cancelAction();
+    digTreasure(o9);
+  }
 
   else if(a.type==='talkn'){
     const n2=a.n;
@@ -2748,7 +2897,7 @@ async function saveGame(silent){
     await STORE.set(SAVE_KEY,JSON.stringify({
       skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
       playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-      equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,lostStash:player.lostStash,mapv:'sps3'}));
+      equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,lostStash:player.lostStash,clueData:player.clueData,cluesDone:player.cluesDone,mapv:'sps3'}));
     if(activeSlot)await upsertSlot(activeSlot,player.name);
     dirty=false;
     if(!silent)msg('Game saved.','#103a8c');
@@ -2775,6 +2924,8 @@ async function loadSlot(id){
         if(s.quests[k])Object.assign(player.quests[k],s.quests[k]);
       if(s.slayer)Object.assign(player.slayer,s.slayer);
       if(Array.isArray(s.lostStash))player.lostStash=s.lostStash;
+    if(s.clueData&&typeof s.clueData==='object')player.clueData=s.clueData;
+    if(typeof s.cluesDone==='number')player.cluesDone=s.cluesDone;
       if(typeof s.playMs==='number')player.playMs=s.playMs;
       if(typeof s.stamina==='number')player.stamina=clamp(s.stamina,0,100);
       if(typeof s.run==='boolean')player.run=s.run;
@@ -2954,7 +3105,8 @@ function itemPrimary(i){
     msg('I should cook these on the campfire.');
   }else if(prim==='Yuck'){
     msg('Yuck. Not even a rat would eat that.');
-  }else examineItem(id);
+  }else if(prim==='Read'){readClue(id);}
+  else examineItem(id);
 }
 function dropItem(i){
   const s=player.inv[i];if(!s)return;
@@ -3245,6 +3397,10 @@ function optionsAt(tx,ty){
       opts.push({html:'Open <span class="t">Old evidence chest</span>',
         label:'Open Old evidence chest',fn:()=>startChest(o)},
         {html:'Examine <span class="t">Old evidence chest</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='treasure_x'){
+      opts.push({html:'Dig <span class="t">marked spot</span>',
+        label:'Dig marked spot',fn:()=>startDig(o)},
+        {html:'Examine <span class="t">marked spot</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='statue'){
       opts.push({html:'Examine <span class="t">'+def.name+'</span>',
         label:'Examine '+def.name,fn:()=>msg(def.ex)});
@@ -3337,6 +3493,17 @@ function optionsAt(tx,ty){
 /* =========================== item icons ============================ */
 function drawItemIcon(g,id,S){
   g.save();g.translate(S/2,S/2);g.imageSmoothingEnabled=false;
+  if(/^clue_/.test(id)){
+    const tt=(typeof CLUE_TIERS!=='undefined')&&CLUE_TIERS[CLUE_ITEM_TIER[id]];const col=tt?tt.col:'#caa23a';
+    g.lineJoin='round';g.strokeStyle='#9a865a';g.lineWidth=1.4;g.fillStyle='#e8dcb0';
+    g.beginPath();g.moveTo(-9,-11);g.lineTo(9,-11);g.lineTo(9,11);g.lineTo(-9,11);g.closePath();g.fill();g.stroke();
+    g.fillStyle='#d6c692';g.fillRect(-11,-13,22,4);g.strokeRect(-11,-13,22,4);g.fillRect(-11,9,22,4);g.strokeRect(-11,9,22,4);
+    g.strokeStyle='#8a7a4e';g.lineWidth=1;
+    for(let yy=-6;yy<=6;yy+=3){g.beginPath();g.moveTo(-6,yy);g.lineTo(6,yy);g.stroke();}
+    g.fillStyle=col;g.beginPath();g.arc(0,0,3.6,0,Math.PI*2);g.fill();
+    g.strokeStyle='#3a2e16';g.lineWidth=1;g.stroke();
+    g.restore();return;
+  }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='partyhat'){
     const t='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
     g.fillStyle=t;g.strokeStyle='#15100a';g.lineWidth=1.5;
@@ -4722,6 +4889,16 @@ function buildObjModel(o){
   const hsh=tileHash(o.x*7+3,o.y*5+1);
   o._m={group:g};
 
+  if(def==='treasure_x'){
+    const mound=mesh(new THREE.CylinderGeometry(0.27,0.35,0.1,10),0x6a4a2e);mound.position.y=0.05;g.add(mound);
+    const dirt=mesh(new THREE.CylinderGeometry(0.18,0.28,0.06,10),0x4f3622);dirt.position.y=0.12;g.add(dirt);
+    for(const rot of [Math.PI/4,-Math.PI/4]){
+      const bar=mesh(new THREE.BoxGeometry(0.07,0.045,0.52),0xffd23a);bar.position.y=0.16;bar.rotation.y=rot;
+      if(bar.material){bar.material.emissive=new THREE.Color(0xd89000);}
+      g.add(bar);
+    }
+    addProxy(g,0.5,0.5,0,{kind:'obj',o});
+  }
   if(def==='tree'||def==='oak'||def==='willow'){
     let trunkH=0.95,trunkR=0.15;
     if(def==='oak'){trunkH=1.1;trunkR=0.2;}
@@ -7943,6 +8120,12 @@ function makeGroundItem(id){
   else if(id==='coins'){
     for(let i=0;i<3;i++){const c=add(CYL(0.11,0.11,0.035,8),0xe8c23d);c.position.set((i-1)*0.07,0.02+i*0.04,(i%2)*0.06);}
   }
+  else if(/^clue_/.test(id)){
+    const tt=(typeof CLUE_TIERS!=='undefined')&&CLUE_TIERS[CLUE_ITEM_TIER[id]];
+    const col=tt?parseInt(tt.col.slice(1),16):0xcaa23a;
+    const roll=add(CYL(0.055,0.055,0.34,8),0xe8dcb0);roll.rotation.z=Math.PI/2;roll.position.y=0.06;
+    const band=add(CYL(0.058,0.058,0.05,8),col);band.rotation.z=Math.PI/2;band.position.y=0.06;
+  }
   /* ---------------- weapons ---------------- */
   else if(id==='abyssal_whip'){
     const a=add(TOR(0.15,0.028),0x2a1418);a.rotation.x=Math.PI/2;a.position.y=0.045;
@@ -8434,7 +8617,7 @@ invGrid.addEventListener('contextmenu',e=>{
   if(ITEMS[id].equip)
     opts.push({html:ITEMS[id].equip.verb+' <span class="t">'+ITEMS[id].name+'</span>',
       fn:()=>equipFromInv(i)});
-  if(prim==='Eat'||prim==='Bury')
+  if(prim==='Eat'||prim==='Bury'||prim==='Read')
     opts.push({html:prim+' <span class="t">'+ITEMS[id].name+'</span>',fn:()=>itemPrimary(i)});
   if(prim==='Light')
     opts.push({html:'Light <span class="t">'+ITEMS[id].name+'</span>',fn:()=>lightFire(i)});
@@ -8655,6 +8838,15 @@ function drawMini(){
   if(player.mmf.shop&&capeNpc)
     mmIcon(g,Math.round(capeNpc.px*4)+2,Math.round(capeNpc.py*4)+2,
       'shop','#b04a9e');
+  for(const t of activeClueTargets()){
+    const mx=t.x*4+2,my=t.y*4+2;
+    const near=Math.max(Math.abs(t.x-player.x),Math.abs(t.y-player.y))<=CLUE_REVEAL;
+    g.beginPath();g.arc(mx,my,near?5:6.5,0,7);
+    g.lineWidth=near?2.4:1.8;g.strokeStyle=(CLUE_TIERS[t.tier]&&CLUE_TIERS[t.tier].col)||'#ffd23d';g.stroke();
+    if(near){g.beginPath();g.arc(mx,my,2.4,0,7);g.fillStyle='#ffe14a';g.fill();
+      g.lineWidth=1.4;g.strokeStyle='#7a4a0a';g.beginPath();
+      g.moveTo(mx-2,my-2);g.lineTo(mx+2,my+2);g.moveTo(mx+2,my-2);g.lineTo(mx-2,my+2);g.stroke();}
+  }
   mctx.clearRect(0,0,168,168);
   mctx.save();
   mctx.beginPath();mctx.arc(84,84,82,0,7);mctx.clip();
@@ -9230,6 +9422,7 @@ function renderAdventurerLog(){
   stat('Hours played',played);
   stat('Monsters defeated',fmt(player.kills||0));
   stat('Rare items collected',got+' / '+RARE_ITEMS.length);
+  stat('Clues completed',fmt(player.cluesDone||0));
   const sec=document.createElement('div');sec.className='logsec';sec.textContent='Rare collection';body.appendChild(sec);
   const grid=document.createElement('div');grid.className='logcat';
   for(const id of RARE_ITEMS){
@@ -11181,6 +11374,7 @@ setInterval(()=>{
     player.stamina=Math.min(100,player.stamina+(player.path.length?RUN_REGEN_WALK:RUN_REGEN_IDLE));
     if(beat%4===0)updateRunOrb();
   }
+  if(beat%2===0)updateTreasureX();
   if(beat%4===0){
     tick++;
     playerTick();ratsTick();worldTick();
