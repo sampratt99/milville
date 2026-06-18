@@ -470,8 +470,53 @@
   .logcell .ln{font:10px Verdana;line-height:1.15;word-break:break-word;}
   .logcell.got .ln{color:#9fe0a0;}
   .logcell.miss .ln{color:#9a9082;letter-spacing:1px;}
+  /* encyclopedia */
+  #encui .gepanel{width:560px;}
+  .encsearch{width:100%;box-sizing:border-box;font:12px Georgia,serif;color:#f0e6cf;
+    background:#1c1810;border:1px solid #5d5141;border-radius:4px;padding:6px 9px;margin-bottom:7px;outline:none;}
+  .encsearch:focus{border-color:#caa23a;}
+  .encsearch::placeholder{color:#8a7d63;}
+  .encempty{grid-column:1/-1;text-align:center;color:#9a8b6a;font:italic 12px Georgia,serif;padding:24px 8px;}
+  .encfilters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;}
+  .encchip{font:bold 11px Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);
+    border:1px solid #5d5141;border-radius:11px;padding:3px 10px;cursor:pointer;}
+  .encchip:hover{color:#ffd98c;border-color:#7a6a3e;}
+  .encchip.on{color:#1c1710;background:linear-gradient(#e8c878,#caa23a);border-color:#caa23a;}
+  .enccount{font:11px Georgia,serif;color:#8a7d63;margin-bottom:6px;}
+  .encgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px;
+    max-height:60vh;overflow-y:auto;padding:2px;}
+  .enccell{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px;
+    background:#211c14;border:1px solid #463c2b;border-radius:4px;cursor:pointer;}
+  .enccell:hover{border-color:#caa23a;background:#2c2618;}
+  .encicon{width:46px;height:46px;}
+  .encname{font:10px Georgia,serif;color:#cdbf9a;text-align:center;line-height:1.15;
+    max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
+  .encdetail{max-height:64vh;overflow-y:auto;}
+  .encback{font:bold 11px Georgia,serif;color:#ffd98c;background:none;border:none;cursor:pointer;padding:2px 0 8px;}
+  .encback:hover{text-decoration:underline;}
+  .enchd{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
+  .encbigicon{width:84px;height:84px;background:#211c14;border:1px solid #463c2b;border-radius:5px;flex:none;}
+  .enchtext{display:flex;flex-direction:column;gap:3px;}
+  .enctitle{font:bold 17px Georgia,serif;color:#ffd98c;}
+  .enccat{font:11px Georgia,serif;color:#9a8b6a;text-transform:uppercase;letter-spacing:.5px;}
+  .encex{font:italic 12px Georgia,serif;color:#b8a988;margin-bottom:9px;line-height:1.4;}
+  .encrows{display:flex;flex-direction:column;gap:1px;margin-bottom:10px;}
+  .encrow{display:flex;justify-content:space-between;gap:10px;font:12px Georgia,serif;color:#cdbf9a;
+    padding:4px 6px;background:#211c14;border-radius:3px;}
+  .encrow b{color:#ffd98c;text-align:right;}
+  .encsrch{font:bold 12px Georgia,serif;color:#ffd98c;margin-bottom:5px;
+    border-bottom:1px solid #463c2b;padding-bottom:3px;}
+  .encsrcs{display:flex;flex-direction:column;gap:5px;}
+  .encsrc{display:flex;flex-direction:column;gap:1px;padding:6px 8px;
+    background:#211c14;border-left:3px solid #caa23a;border-radius:0 3px 3px 0;}
+  .encsrc b{font:bold 12px Georgia,serif;color:#e8c878;}
+  .encsrc span{font:11px Georgia,serif;color:#b8a988;line-height:1.35;}
   @media (max-width:580px){
     #layout{flex-wrap:wrap;}
+    .encgrid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));max-height:54vh;}
+    .encicon{width:40px;height:40px;}
+    .encbigicon{width:68px;height:68px;}
+    .enctitle{font-size:15px;}
     #side{flex:1 1 100%; width:auto;}
     .panel{min-height:0;}
   }
@@ -578,6 +623,7 @@
           <label><input type="checkbox" id="muschk" checked> Music</label>
           <div id="savestatus">Checking autosave…</div>
           <button class="sbtn" id="savebtn">Save now</button>
+          <button class="sbtn" id="encybtn">Encyclopedia</button>
           <button class="sbtn danger" id="resetbtn">Reset progress</button>
           <div class="hint">
             <b>How to play:</b> left-click to walk or use things. Right-click for more
@@ -648,6 +694,14 @@
 <div id="logui" class="gemodal"><div class="gepanel" style="width:496px;">
   <div class="gebar"><span>Adventurer’s Log</span><div class="gex" id="logclose" title="Close">&#10005;</div></div>
   <div id="logbody"></div>
+</div></div>
+<div id="encui" class="gemodal"><div class="gepanel" style="width:560px;">
+  <div class="gebar"><span>Encyclopedia</span><div class="gex" id="encclose" title="Close">&#10005;</div></div>
+  <input id="encsearch" class="encsearch" type="text" placeholder="Search items…" autocomplete="off" spellcheck="false">
+  <div id="encfilters" class="encfilters"></div>
+  <div id="enccount" class="enccount"></div>
+  <div id="encgrid" class="encgrid"></div>
+  <div id="encdetail" class="encdetail" style="display:none;"></div>
 </div></div>
 <div id="geui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Grand Exchange</span><span id="gecoins"></span><div class="gex" id="geclose" title="Close">&#10005;</div></div>
@@ -1960,6 +2014,187 @@ function giveClueReward(tier){
   if(rare.dragon&&Math.random()<1/rare.dragon){const DG=['dragon_sword','dragon_scimitar','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield'];give(DG[rndi(0,DG.length-1)]);}
   msg('Treasure! You unearth the chest and claim: '+lines.join(', ')+'.','#caa23a');
 }
+
+
+/* ===== item encyclopedia (compendium) ===== */
+/* ============================ ENCYCLOPEDIA ============================ */
+const ENCY_FILTERS=['All','Weapons','Armour','Tools','Jewellery','Resources','Food','Treasure','Quest','Other'];
+let encFilter='All';
+let encQuery='';
+/* authored sources for rare drops / quests / clues / specials (the rest are derived live) */
+const ENCY_SRC={
+  draconic_visage:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/800'}],
+  abyssal_whip:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/350 · Basilisk — 1/300'}],
+  granite_maul:[{label:'Monster drop',sub:'Gargoyle — 1/220'}],
+  basilisk_jaw:[{label:'Monster drop',sub:'Basilisk — 1/110'}],
+  wailing_relic:[{label:'Monster drop',sub:'Banshee — 1/100'}],
+  scholar_crest:[{label:'Slayer task drop',sub:'A task monster — 2.2% (34% if superior), once you own a Proctor’s Helm'}],
+  sentinel_visor:[{label:'Slayer task drop',sub:'A task monster — 2.2% (34% if superior), once you own a Crimson Proctor’s Helm'}],
+  dragon_shield:[{label:'Quest reward',sub:'Dragon Slayer'}],
+  clue_easy:[{label:'Monster drop',sub:'Combat 1–9 monsters — 1/35'}],
+  clue_medium:[{label:'Monster drop',sub:'Combat 10+ monsters — 1/55'}],
+  clue_hard:[{label:'Monster drop',sub:'Combat 19+ monsters — 1/85'}],
+  clue_elite:[{label:'Monster drop',sub:'Combat 27+ monsters — 1/120'}],
+  santa_hat:[{label:'Clue reward',sub:'Medium 1/1024 → Elite 1/128'}],
+  crimson_proctor_helm:[{label:'Forge',sub:'Proctor’s Helm + Scholar’s Crest + Crimson Dye'}],
+  gilded_warden_helm:[{label:'Forge',sub:'Crimson Proctor’s Helm + Sentinel Visor + Gilt Dye'}],
+  earmuffs:[{label:'Slayer unlock',sub:'Granted free when you unlock Banshee contracts'}],
+  mirror_shield:[{label:'Slayer unlock',sub:'Granted free when you unlock Basilisk contracts'}],
+  rock_hammer:[{label:'Slayer unlock',sub:'Granted free when you unlock Gargoyle contracts'}],
+  elemental_shield:[{label:'Slayer unlock',sub:'Granted free when you unlock Wyvern contracts'}],
+  bronze_axe:[{label:'Starter kit',sub:'Outfitted by Rector Matthews'}],
+  bronze_pickaxe:[{label:'Starter kit',sub:'Outfitted by Rector Matthews'}],
+  wooden_shield:[{label:'Starter kit',sub:'Outfitted by Rector Matthews'}],
+  fighting_boots:[{label:'Quest reward',sub:'A reward for completing a quest'}],
+  pelican_cape:[{label:'Quest reward',sub:'The First Rector'}],
+  candy:[{label:'Seasonal',sub:'Trick-or-treat: knock on a faculty cottage door'}],
+  pumpkin_helmet:[{label:'Seasonal',sub:'A seasonal event reward'}],
+  lost_crate:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  borrowed_flour:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  spice_pouch:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  fresh_herbs:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  coarse_salt:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  bland_dish:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  seasoned_dish:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  boar_head:[{label:'Quest item',sub:'Chef Larry’s quest — a Wild boar'}],
+  oven_mitts:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  boars_head_feast:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  chefs_hat:[{label:'Quest reward',sub:'Chef Larry’s quest'}],
+  clawed_slate:[{label:'Quest item',sub:'The main quest'}],
+  censer_fragment:[{label:'Quest item',sub:'The main quest'}],
+  cracked_horn:[{label:'Quest item',sub:'The main quest'}],
+  masters_seal:[{label:'Quest item',sub:'The main quest'}],
+};
+/* the rune/adamant/mithril gear that also drops from the rollRareDrop combat pool */
+const ENCY_RAREGEAR=['mithril_scimitar','adamant_full_helm','mithril_platebody','adamant_kiteshield',
+  'adamant_scimitar','rune_chainbody','adamant_platebody','rune_full_helm','rune_scimitar','rune_platebody','rune_kiteshield'];
+const ENCY_PHATS=['party_hat_red','party_hat_yellow','party_hat_blue','party_hat_green','party_hat_white','party_hat_purple'];
+const ENCY_DRAGON=['dragon_sword','dragon_scimitar','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield'];
+
+function itemSlotLabel(slot){return ({weapon:'Weapon',shield:'Shield',head:'Head',body:'Body',legs:'Legs',
+  cape:'Cape',neck:'Amulet',ring:'Ring',feet:'Feet'})[slot]||slot;}
+
+function itemCategory(id){
+  const it=ITEMS[id],eq=it.equip;
+  if(/^clue_/.test(id)||/_bead$/.test(id)||ENCY_PHATS.indexOf(id)>=0||id==='santa_hat'
+     ||['draconic_visage','wailing_relic','basilisk_jaw'].indexOf(id)>=0)return 'Treasure';
+  if(/^uncut_/.test(id))return 'Treasure';
+  if(eq){
+    if(eq.model==='axe'||eq.model==='pick'||id==='rock_hammer')return 'Tools';
+    if(eq.slot==='weapon')return 'Weapons';
+    if(eq.slot==='neck'||eq.slot==='ring')return 'Jewellery';
+    return 'Armour';
+  }
+  if(id==='rock_hammer')return 'Tools';
+  if(/_ore$|_bar$|_logs$|^logs$/.test(id))return 'Resources';
+  if(it.prim==='Eat'||it.heal||/^raw_/.test(id)||/burnt/.test(id))return 'Food';
+  if(ENCY_SRC[id]&&ENCY_SRC[id].some(s=>/Quest/.test(s.label)))return 'Quest';
+  return 'Other';
+}
+
+function itemSources(id){
+  const out=[],it=ITEMS[id];
+  for(const k in OBJ_DEFS){const d=OBJ_DEFS[k];
+    if(d.item===id&&(d.skill==='woodcutting'||d.skill==='mining'))
+      out.push({label:d.skill==='woodcutting'?'Woodcutting':'Mining',sub:'Level '+d.req+' · '+d.name.toLowerCase()});}
+  const FISH=[['raw_swordfish',18],['raw_lobster',14],['raw_trout',8],['raw_sardine',3],['raw_shrimps',1]];
+  for(const f of FISH)if(f[0]===id)out.push({label:'Fishing',sub:'Level '+f[1]+'+ at a fishing spot'});
+  const COOK=[['raw_swordfish','swordfish',18],['raw_lobster','lobster',14],['raw_trout','trout',6],['raw_sardine','sardine',1],['raw_shrimps','shrimps',1]];
+  for(const c of COOK)if(c[1]===id)out.push({label:'Cooking',sub:'Level '+c[2]+' · cook '+ITEMS[c[0]].name.toLowerCase()});
+  if(id==='burnt_shrimps'||id==='burnt_fish')out.push({label:'Cooking',sub:'Burned at a low Cooking level'});
+  if(typeof SMELT_BARS!=='undefined')for(const b of SMELT_BARS)if(b[0]===id){
+    const ores=b[3].map(o=>o[1]+'× '+ITEMS[o[0]].name).join(' + ');
+    out.push({label:'Smelting',sub:'Smithing '+b[1]+' · '+ores+' at a furnace'});}
+  if(typeof SMITH_RECIPES!=='undefined')for(const r of SMITH_RECIPES)if(r[0]===id)
+    out.push({label:'Smithing',sub:'Level '+r[1]+' · '+r[3]+'× '+ITEMS[r[2]].name+' at an anvil'});
+  if(typeof GE_STOCK!=='undefined'&&GE_STOCK.indexOf(id)>=0)
+    out.push({label:'Grand Exchange',sub:'Buy for '+fmt(it.val)+' gp'});
+  if(id==='cape_red'||id==='cape_blue'||id==='cape_green')out.push({label:'Cape Seller',sub:'Buy for 25 gp'});
+  if(typeof SLAYER_PRICES!=='undefined'&&SLAYER_PRICES[id]!==undefined)
+    out.push({label:'Slayer rewards',sub:SLAYER_PRICES[id]+' Slayer points'});
+  if(id==='bones'){const ms=[];for(const k in MOB_KINDS)if(MOB_KINDS[k].bones)ms.push(MOB_KINDS[k].name);
+    out.push({label:'Monster drop',sub:'Always dropped by: '+ms.slice(0,5).join(', ')+(ms.length>5?', and more':'')});}
+  if(id==='small_bones')out.push({label:'Monster drop',sub:'Always dropped by the Fac Brat'});
+  if(id==='coins')out.push({label:'Monster drop',sub:'From most monsters; also by selling items at the Exchange'});
+  if(/_bead$/.test(id))out.push({label:'Monster drop',sub:'Fac Brat — ~21% (one of four bead colours)'});
+  if(/^uncut_/.test(id)){const t={uncut_sapphire:'most monsters',uncut_emerald:'combat 8+ monsters',uncut_ruby:'combat 13+ monsters',uncut_diamond:'combat 18+ monsters'}[id];
+    out.push({label:'Monster drop',sub:'Rare gem drop from '+t+'; the chance rises with combat level'});}
+  if(ENCY_RAREGEAR.indexOf(id)>=0)out.push({label:'Monster drop',sub:'Rare drop from combat 13+ monsters — ~3.5%'});
+  if(ENCY_PHATS.indexOf(id)>=0)out.push({label:'Clue reward',sub:'A random party hat — Easy 1/500 → Elite 1/64'});
+  if(ENCY_DRAGON.indexOf(id)>=0){out.push({label:'Slayer task drop',sub:'A task monster in the Wilderness — 1/150 (one of six dragon items)'});
+    out.push({label:'Clue reward',sub:'Hard 1/256 · Elite 1/96 (one of six dragon items)'});}
+  const ex=ENCY_SRC[id];if(ex)for(const e of ex)out.push(e);
+  return out;
+}
+
+function renderEncy(){
+  const grid=document.getElementById('encgrid');if(!grid)return;
+  const fb=document.getElementById('encfilters');
+  if(fb&&!fb._built){fb._built=true;
+    for(const f of ENCY_FILTERS){const b=document.createElement('button');b.className='encchip';b.textContent=f;
+      b.addEventListener('click',()=>{encFilter=f;renderEncy();});fb.appendChild(b);}}
+  if(fb)for(const b of fb.children)b.classList.toggle('on',b.textContent===encFilter);
+  const det=document.getElementById('encdetail');if(det)det.style.display='none';
+  grid.style.display='grid';grid.innerHTML='';
+  const q=(encQuery||'').trim().toLowerCase();
+  const ids=Object.keys(ITEMS).filter(id=>(encFilter==='All'||itemCategory(id)===encFilter)&&(!q||ITEMS[id].name.toLowerCase().indexOf(q)>=0))
+    .sort((a,b)=>ITEMS[a].name.localeCompare(ITEMS[b].name));
+  for(const id of ids){
+    const cell=document.createElement('div');cell.className='enccell';cell.title=ITEMS[id].name;
+    const c=document.createElement('canvas');c.width=46;c.height=46;c.className='encicon';
+    drawItemIcon(c.getContext('2d'),id,46);
+    const nm=document.createElement('div');nm.className='encname';nm.textContent=ITEMS[id].name;
+    cell.appendChild(c);cell.appendChild(nm);
+    cell.addEventListener('click',()=>encDetail(id));
+    grid.appendChild(cell);
+  }
+  if(!ids.length){const e=document.createElement('div');e.className='encempty';e.textContent=q?'No items match “'+encQuery.trim()+'”.':'No items here.';grid.appendChild(e);}
+  const cnt=document.getElementById('enccount');if(cnt)cnt.textContent=ids.length+(ids.length===1?' item':' items');
+}
+
+function encDetail(id){
+  const grid=document.getElementById('encgrid'),det=document.getElementById('encdetail');
+  if(!det)return;
+  grid.style.display='none';det.style.display='block';det.innerHTML='';
+  const it=ITEMS[id];
+  const back=document.createElement('button');back.className='encback';back.innerHTML='&#8592; All items';
+  back.addEventListener('click',renderEncy);det.appendChild(back);
+  const hd=document.createElement('div');hd.className='enchd';
+  const c=document.createElement('canvas');c.width=84;c.height=84;c.className='encbigicon';
+  drawItemIcon(c.getContext('2d'),id,84);
+  const ht=document.createElement('div');ht.className='enchtext';
+  const title=document.createElement('div');title.className='enctitle';title.textContent=it.name;
+  const cat=document.createElement('div');cat.className='enccat';cat.textContent=itemCategory(id);
+  ht.appendChild(title);ht.appendChild(cat);
+  hd.appendChild(c);hd.appendChild(ht);det.appendChild(hd);
+  if(it.ex){const ex=document.createElement('div');ex.className='encex';ex.textContent=it.ex;det.appendChild(ex);}
+  const rows=document.createElement('div');rows.className='encrows';
+  const row=(k,v)=>{const d=document.createElement('div');d.className='encrow';
+    const a=document.createElement('span');a.textContent=k;const b=document.createElement('b');b.textContent=v;
+    d.appendChild(a);d.appendChild(b);rows.appendChild(d);};
+  row('Value',it.val?fmt(it.val)+' gp':'—');
+  if(it.equip){const e=it.equip;
+    row('Equip slot',itemSlotLabel(e.slot));
+    const bon=[];if(e.atk)bon.push('Attack +'+e.atk);if(e.str)bon.push('Strength +'+e.str);if(e.def)bon.push('Defence +'+e.def);
+    row('Combat bonus',bon.length?bon.join(', '):'none');
+    if(e.req)row('Level needed',''+e.req);}
+  if(it.heal)row('Heals',it.heal+' hp');
+  det.appendChild(rows);
+  const sh=document.createElement('div');sh.className='encsrch';sh.textContent='How to obtain';det.appendChild(sh);
+  const sl=document.createElement('div');sl.className='encsrcs';
+  const srcs=itemSources(id);
+  if(!srcs.length){const d=document.createElement('div');d.className='encsrc';
+    const b=document.createElement('b');b.textContent='No in-game source';const sp=document.createElement('span');
+    sp.textContent='This item is defined but cannot currently be obtained.';d.appendChild(b);d.appendChild(sp);sl.appendChild(d);}
+  for(const s of srcs){const d=document.createElement('div');d.className='encsrc';
+    const b=document.createElement('b');b.textContent=s.label;const sp=document.createElement('span');sp.textContent=s.sub;
+    d.appendChild(b);d.appendChild(sp);sl.appendChild(d);}
+  det.appendChild(sl);
+}
+function openEncy(){const el=document.getElementById('encui');if(el){el.classList.add('on');encFilter='All';encQuery='';const _es=document.getElementById('encsearch');if(_es)_es.value='';renderEncy();}}
+function closeEncy(){const el=document.getElementById('encui');if(el)el.classList.remove('on');}
+
+
 
 
 /* ============================ messages ============================= */
@@ -10941,7 +11176,7 @@ geEl.addEventListener('click',e=>{if(e.target===geEl)closeShop();});
 {const slEl=document.getElementById('slayerui');if(slEl){slEl.addEventListener('click',e=>{if(e.target===slEl)closeSlayerShop();});}const slc=document.getElementById('slclose');if(slc)slc.addEventListener('click',closeSlayerShop);}
 {const logEl=document.getElementById('logui');if(logEl)logEl.addEventListener('click',e=>{if(e.target===logEl)closeLog();});
  const logC=document.getElementById('logclose');if(logC)logC.addEventListener('click',closeLog);
- const logB=document.getElementById('logbtn');if(logB)logB.addEventListener('click',openLog);}
+ const logB=document.getElementById('logbtn');if(logB)logB.addEventListener('click',openLog);const encB=document.getElementById('encybtn');if(encB)encB.addEventListener('click',openEncy);const encC=document.getElementById('encclose');if(encC)encC.addEventListener('click',closeEncy);const encX=document.getElementById('encui');if(encX)encX.addEventListener('click',e=>{if(e.target===encX)closeEncy();});const encS=document.getElementById('encsearch');if(encS)encS.addEventListener('input',()=>{encQuery=encS.value;renderEncy();});}
 wmapEl.addEventListener('click',e=>{if(e.target===wmapEl)wmapEl.classList.remove('on');});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){wmapEl.classList.remove('on');closeBank();closeShop();document.getElementById('wildui').classList.remove('on');wildHop=null;}});
 miniC.addEventListener('click',()=>{audio();openWorldMap();});
