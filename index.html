@@ -745,14 +745,21 @@ const rnd=(a,b)=>a+Math.random()*(b-a);
 const rndi=(a,b)=>Math.floor(rnd(a,b+1));
 const dist1=(ax,ay,bx,by)=>Math.abs(ax-bx)+Math.abs(ay-by);
 const fmt=n=>Math.floor(n).toLocaleString('en-US');
+const fmtStack=(n)=>{
+  if(n<100000)return{t:''+n,c:'#ffe66d'};
+  if(n<500000)return{t:Math.floor(n/1000)+'k',c:'#5fe06a'};
+  if(n<1000000)return{t:Math.floor(n/1000)+'k',c:'#36d6c4'};
+  if(n<10000000)return{t:(Math.floor(n/100000)/10)+'M',c:'#ffffff'};
+  return{t:Math.floor(n/1000000)+'M',c:'#ff9d3d'};
+};
 const lerpAngle=(a,b,t)=>{let d=(b-a)%(Math.PI*2);
   if(d>Math.PI)d-=Math.PI*2; if(d<-Math.PI)d+=Math.PI*2; return a+d*t;};
 
 /* ============================ xp tables ============================ */
 const XP_TABLE=(()=>{const t=[0,0];
-  for(let L=2;L<=50;L++)t.push(Math.round(24*Math.pow(L-1,1.78)));
+  for(let L=2;L<=99;L++)t.push(Math.round(24*Math.pow(L-1,1.78)+(L>50?2*Math.pow(L-50,3):0)));
   return t;})();
-function levelFor(xp){let l=1;while(l<50&&xp>=XP_TABLE[l+1])l++;return l;}
+function levelFor(xp){let l=1;while(l<99&&xp>=XP_TABLE[l+1])l++;return l;}
 
 /* ============================== defs =============================== */
 const SKILLS=['attack','strength','defense','hitpoints','woodcutting','mining','smithing','fishing','cooking','firemaking','prayer','slayer'];
@@ -785,6 +792,7 @@ const ITEMS={
   shrimps:{name:'Shrimps',ex:'Some nicely cooked shrimps.',prim:'Eat',val:15},
   burnt_shrimps:{name:'Burnt shrimps',ex:'Oops. Charred beyond rescue.',prim:'Yuck',val:1},
   bones:{name:'Bones',ex:'Bad to the bone.',prim:'Bury',val:8},
+  big_bones:{name:'Big bones',ex:'Hefty bones from something large. A hearty offering for the gods.',prim:'Bury',val:15},
   small_bones:{name:'Small bones',ex:'Tiny, but they still count.',prim:'Bury',val:4},
   red_bead:{name:'Red bead',ex:'A small glass bead.',val:6,prim:'Examine'},
   yellow_bead:{name:'Yellow bead',ex:'A small glass bead.',val:6,prim:'Examine'},
@@ -961,7 +969,7 @@ ITEMS.crimson_dye={name:'Crimson Dye',ex:'Slayer dye. Apply it to a Proctor\u201
 ITEMS.gilt_dye={name:'Gilt Dye',ex:'Slayer dye. Apply it to a Crimson Proctor\u2019s Helm together with a Sentinel Visor.',val:1,prim:'Examine',applyHelm:true};
 ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u2019s wail \u2014 or just wear a Proctor\u2019s Helm.',val:1,noDrop:true,equip:{slot:'head',def:1,model:'earmuffs',verb:'Wear',req:0}};
 ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8}};
-ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,prim:'Examine'};
+ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,equip:{slot:'weapon',atk:0,str:0,model:'maul',verb:'Wield',req:0}};
 ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:24,str:16,model:'scim',verb:'Wield',req:30,tint:0x1c1118,trim:0x7a2030}};
 ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft. It lands like a rockfall.',val:45000,equip:{slot:'weapon',atk:16,str:28,model:'scim',verb:'Wield',req:28,tint:0x6e6f73,trim:0x9a9ca0}};
 ITEMS.draconic_visage={name:'Draconic visage',ex:'The petrified face of an ancient wyrm. Collectors pay fortunes for it.',val:250000,prim:'Examine'};
@@ -1644,7 +1652,7 @@ const MOB_KINDS={
   minotaur:{name:'Minotaur',ex:'Half man, half bull, entirely furious.',hp:14,acc:0.5,
     maxhit:2,resp:20000,bones:1,coinP:.75,coins:[8,40],aggro:1,cmb:8},
   brat:{name:'Fac Brat',ex:'A faculty child in full goblin mode. Armed, somehow.',
-    hp:3,acc:0.35,maxhit:1,resp:25000,bones:0,coinP:.6,coins:[1,8],aggro:0,roam:1,cmb:2},
+    hp:3,acc:0.35,maxhit:1,resp:25000,bones:1,coinP:.6,coins:[1,8],aggro:0,roam:1,cmb:2},
   priest:{name:'Corrupted Priest',ex:'Something hollow wears the vestments now.',
     hp:9,acc:0.48,maxhit:1,resp:18000,bones:1,coinP:.5,coins:[4,20],aggro:0,cmb:6},
   dean:{name:'Dean of Students',ex:'The final word in campus discipline. The sword is not ceremonial.',
@@ -1652,15 +1660,15 @@ const MOB_KINDS={
   guard:{name:'Discipline Committee',ex:'Sworn to uphold the handbook. All of it.',
     hp:14,acc:0.5,maxhit:2,resp:20000,bones:1,coinP:.6,coins:[5,30],aggro:0,cmb:11},
   ghost:{name:'Ghost',ex:'A cold draught with a grudge.',hp:16,acc:0.5,maxhit:3,
-    resp:14000,bones:0,coinP:0,coins:[0,0],aggro:1,cmb:13},
-  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:24,acc:0.56,maxhit:4,resp:18000,bones:0,coinP:0.6,coins:[15,55],aggro:1,cmb:16,magic:1,rel:1,hpK:1.9,hitK:0.18},
-  gargoyle:{name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:40,acc:0.62,maxhit:5,resp:22000,bones:0,coinP:0.9,coins:[40,120],aggro:1,cmb:20,rel:2,hpK:2.6,hitK:0.20},
-  basilisk:{name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:36,acc:0.6,maxhit:5,resp:24000,bones:0,coinP:0.8,coins:[45,130],aggro:1,cmb:22,magic:1,rel:3,hpK:2.3,hitK:0.20},
-  wyvern:{name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:64,acc:0.7,maxhit:6,resp:40000,bones:1,coinP:1,coins:[140,360],aggro:1,cmb:26,magic:1,rel:5,hpK:2.9,hitK:0.22},
+    resp:14000,bones:1,coinP:0,coins:[0,0],aggro:1,cmb:13},
+  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:24,acc:0.56,maxhit:4,resp:18000,bones:1,coinP:0.6,coins:[15,55],aggro:1,cmb:16,magic:1,rel:1,hpK:1.9,hitK:0.18},
+  gargoyle:{name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:40,acc:0.62,maxhit:5,resp:22000,bones:1,coinP:0.9,coins:[40,120],aggro:1,cmb:20,rel:2,hpK:2.6,hitK:0.20},
+  basilisk:{name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:36,acc:0.6,maxhit:5,resp:24000,bones:1,coinP:0.8,coins:[45,130],aggro:1,cmb:22,magic:1,rel:3,hpK:2.3,hitK:0.20},
+  wyvern:{name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:64,acc:0.7,maxhit:6,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:1,cmb:26,magic:1,rel:5,hpK:2.9,hitK:0.22},
   lesser:{name:'Lesser demon',ex:'Imported from somewhere much warmer.',hp:26,
-    acc:0.55,maxhit:3,resp:25000,bones:0,coinP:.8,coins:[20,80],aggro:1,cmb:15},
+    acc:0.55,maxhit:3,resp:25000,bigbones:1,coinP:.8,coins:[20,80],aggro:1,cmb:15},
   greater:{name:'Greater demon',ex:'The lesser ones speak of it only in whispers.',
-    hp:40,acc:0.6,maxhit:4,resp:35000,bones:0,coinP:.9,coins:[40,150],aggro:1,cmb:19},
+    hp:40,acc:0.6,maxhit:4,resp:35000,bigbones:1,coinP:.9,coins:[40,150],aggro:1,cmb:19},
   hdean:{name:'Hollow Dean',ex:'Robes of office over nothing at all.',
     hp:30,acc:0.56,maxhit:4,resp:40000,bones:1,coinP:.9,coins:[60,160],aggro:1,cmb:15},
   master:{name:'The First Rector',ex:'He never left. He was never allowed to.',
@@ -1873,6 +1881,7 @@ function masterBoost(s){
 const lvl=s=>levelFor(player.skills[s])+masterBoost(s);
 const maxHp=()=>lvl('hitpoints');
 const maxPray=()=>100+masterBoost('prayer')*5;
+function prayerDrainMult(){return Math.max(0.4,1-0.05*Math.floor(lvl('prayer')/10));}
 let uidc=0;
 const ground=[];   /* {x,y,id,qty,exp,uid} */
 const splats=[];   /* {ent,dmg,t} */
@@ -1961,7 +1970,7 @@ function rollClueDrop(r){
   }
 }
 function buildClueTrail(tier){
-  const pool=CLUE_TIERS[tier].pool.slice();
+  const pool=CLUE_SPOTS.map((_,i)=>i);  /* all scrolls draw from the full set of hint spots */
   for(let i=pool.length-1;i>0;i--){const j=rndi(0,i);const t=pool[i];pool[i]=pool[j];pool[j]=t;}
   return {trail:pool.slice(0,CLUE_TIERS[tier].steps),step:0};
 }
@@ -2019,7 +2028,9 @@ function digTreasure(o){
 }
 function giveClueReward(tier){
   const lines=[];
-  const give=(id,q)=>{q=q||1;markCollected(id);if(!addItem(id,q))dropGround(player.x,player.y,id,q);
+  const give=(id,q)=>{q=q||1;markCollected(id);
+    if(ITEMS[id]&&ITEMS[id].stack){if(!addItem(id,q))dropGround(player.x,player.y,id,q);}
+    else{for(let k=0;k<q;k++){if(!addItem(id,1))dropGround(player.x,player.y,id,1);}}
     lines.push((q>1?q+' \u00d7 ':'')+(ITEMS[id]?ITEMS[id].name:id));};
   const cR={easy:[150,800],medium:[500,2500],hard:[1500,6000],elite:[5000,20000]}[tier];
   give('coins',rndi(cR[0],cR[1]));
@@ -2139,6 +2150,8 @@ function itemSources(id){
     out.push({label:'Slayer rewards',sub:SLAYER_PRICES[id]+' Slayer points'});
   if(id==='bones'){const ms=[];for(const k in MOB_KINDS)if(MOB_KINDS[k].bones)ms.push(MOB_KINDS[k].name);
     out.push({label:'Monster drop',sub:'Always dropped by: '+ms.slice(0,5).join(', ')+(ms.length>5?', and more':'')});}
+  if(id==='big_bones'){const ms=[];for(const k in MOB_KINDS)if(MOB_KINDS[k].bigbones)ms.push(MOB_KINDS[k].name);
+    out.push({label:'Monster drop',sub:'Dropped by larger foes: '+ms.join(', ')});}
   if(id==='small_bones')out.push({label:'Monster drop',sub:'Always dropped by the Fac Brat'});
   if(id==='coins')out.push({label:'Monster drop',sub:'From most monsters; also by selling items at the Exchange'});
   if(/_bead$/.test(id))out.push({label:'Monster drop',sub:'Fac Brat — ~21% (one of four bead colours)'});
@@ -2430,6 +2443,7 @@ function addXp(skill,amt){
   if(after>before){
     msg('Congratulations! Your '+SKILL_META[skill].name+' level is now '+after+'.','#9c1f1f');
     sfx.level();
+    if(skill==='prayer'&&Math.floor(after/10)>Math.floor(before/10))msg('Your faith deepens \u2014 your prayers now drain more slowly.','#7a4a0a');
     if(before<50&&after>=50)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from the '+SKILL_META[skill].name+' Master at the Grand Exchange.','#7a4a0a');
     const c9=cmbLvl();
     if(c9>(player.cmb||3)){
@@ -2496,7 +2510,7 @@ function setAction(a,tx,ty){
   if(dlg)closeDialogue();
   player.action=a;player.actTick=0;
   if(tx!==undefined){
-    const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray')?'adj':undefined);
+    const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray'||a.type==='cook')?'adj':undefined);
     if(!walkTo(tx,ty,mode)){player.action=null;}
   }
 }
@@ -2667,6 +2681,7 @@ function playerTick(){
     const max=Math.floor((1+effS*0.48*(1+eqStat('str')*0.025))*(1+_tb));
     let dmg=0;
     if(Math.random()<acc)dmg=rndi(1,max);
+    if(player.equip.weapon&&player.equip.weapon.id==='rock_hammer')dmg=(r.kind==='gargoyle'&&r.hp<=1)?5:0;
     if(r.kind==='priest'&&player.quests.m2.s===1&&!player.quests.m2.relic){
       dmg=0;
       if(!r._warned||performance.now()-r._warned>2500){
@@ -2692,15 +2707,18 @@ function playerTick(){
     }
     if(player.slayer&&player.slayer.unlocks&&player.slayer.unlocks.bigger&&!r.superiorRolled&&player.slayer.task===r.kind&&player.slayer.done<player.slayer.need&&inWild(r.sx,r.sy)){r.superiorRolled=true;if(Math.random()<0.14){r.superior=true;if(r._m&&r._m.group){if(r._supScale===undefined)r._supScale=r._m.group.scale.x;r._m.group.scale.setScalar(r._supScale*1.4);}msg('A superior '+r.name.toLowerCase()+' rises \u2014 bigger, and badder!','#9a6fb0');}}
     {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
-    r.hp-=dmg;
-    if(r.kind==='gargoyle'&&r.hp<=0&&countItem('rock_hammer')<1){r.hp=1;if(!r._gw||performance.now()-r._gw>4000){r._gw=performance.now();msg('The gargoyle is battered to rubble but will not break \u2014 you need a Rock Hammer to shatter it.','#c9a23a');}}
-    else if(r.hp<=0){
+    const _rh=player.equip.weapon&&player.equip.weapon.id==='rock_hammer';
+    if(r.kind==='gargoyle'&&!_rh){
+      r.hp-=dmg;
+      if(r.hp<1){r.hp=1;if(!r._gw||performance.now()-r._gw>4000){r._gw=performance.now();msg('The gargoyle is battered to a sliver but its stone hide holds \u2014 wield a Rock Hammer to shatter it.','#c9a23a');}}
+    }else{r.hp-=dmg;}
+    if(r.hp<=0){
       const mk3=MOB_KINDS[r.kind];
       r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;
       if(engagedMob===r)engagedMob=null;
       msg('You have defeated the '+r.name.toLowerCase()+'.');
       questKill(r);
-      if(mk3.bones)dropGround(r.x,r.y,'bones',1);
+      if(mk3.bigbones)dropGround(r.x,r.y,'big_bones',1);else if(mk3.bones)dropGround(r.x,r.y,'bones',1);
       if(Math.random()<mk3.coinP)dropGround(r.x,r.y,'coins',rndi(mk3.coins[0],mk3.coins[1]));
       rollRareDrop(r);
       if(r.kind==='brat'){
@@ -3281,9 +3299,9 @@ let _skTip=null;
 function showSkillTip(skill){
   if(!_skTip){_skTip=document.createElement('div');_skTip.id='skilltip';document.body.appendChild(_skTip);}
   const xp=Math.floor(player.skills[skill]),l=levelFor(xp),nm=SKILL_META[skill].name;
-  if(l>=50){_skTip.innerHTML='<b>'+nm+'</b> &mdash; Level 50<br>'+fmt(xp)+' xp &middot; <span style="color:#c9a23a">Max level</span>';}
+  if(l>=99){_skTip.innerHTML='<b>'+nm+'</b> &mdash; Level 99<br>'+fmt(xp)+' xp &middot; <span style="color:#c9a23a">Max level</span>';}
   else{const base=XP_TABLE[l],nx=XP_TABLE[l+1],pct=Math.max(0,Math.min(100,Math.round((xp-base)/(nx-base)*100)));
-    _skTip.innerHTML='<b>'+nm+'</b> &mdash; Level '+l+'<br>'+fmt(xp)+' xp<br><span style="color:#e8c93f">'+fmt(nx-xp)+' xp to level '+(l+1)+'</span><div class="stipbar"><div class="stipfill" style="width:'+pct+'%"></div></div>';}
+    _skTip.innerHTML='<b>'+nm+'</b> &mdash; Level '+l+(l>=50?' <span style="color:#c9a23a">(Mastered)</span>':'')+'<br>'+fmt(xp)+' xp<br><span style="color:#e8c93f">'+fmt(nx-xp)+' xp to level '+(l+1)+'</span><div class="stipbar"><div class="stipfill" style="width:'+pct+'%"></div></div>';}
   _skTip.style.display='block';
 }
 function moveSkillTip(e){if(!_skTip)return;const r=_skTip.getBoundingClientRect();let x=e.clientX+14,y=e.clientY+14;if(x+r.width>innerWidth-6)x=e.clientX-r.width-14;if(y+r.height>innerHeight-6)y=e.clientY-r.height-14;_skTip.style.left=x+'px';_skTip.style.top=y+'px';}
@@ -3335,11 +3353,11 @@ function renderInv(){
   for(let i=0;i<28;i++){
     const s=player.inv[i],c=slotEls[i].firstChild,g=c.getContext('2d');
     g.clearRect(0,0,30,30);
-    slotEls[i].lastChild.textContent='';
+    slotEls[i].lastChild.textContent='';slotEls[i].lastChild.style.color='';
     slotEls[i].title='';
     if(s){drawItemIcon(g,s.id,30);
       slotEls[i].title=itemTip(s.id);
-      if(s.qty>1)slotEls[i].lastChild.textContent=s.qty;}
+      if(s.qty>1){const fs=fmtStack(s.qty);slotEls[i].lastChild.textContent=fs.t;slotEls[i].lastChild.style.color=fs.c;}}
   }
 }
 
@@ -3354,7 +3372,7 @@ function itemPrimary(i){
     removeSlot(i);player.hp=clamp(player.hp+heal,0,maxHp());updateOrb();sfx.eat();
     msg('You eat the '+ITEMS[id].name.toLowerCase()+'. It heals some health.');
   }else if(prim==='Bury'){
-    removeSlot(i);addXp('prayer',12);sfx.bury();
+    removeSlot(i);addXp('prayer',{big_bones:35}[id]||12);sfx.bury();
     msg('You bury the bones.');
   }else if(prim==='Season'){
     const ch=player.quests.chef;
@@ -4102,7 +4120,7 @@ function drawItemIcon(g,id,S){
   const _TRr={body:'#8fa7b5',dark:'#5b7280',light:'#c6d6df',accent:'#4a5a64'},_TRc={body:'#cb8c54',dark:'#8d5a2e',light:'#ecc290',accent:'#7a4a20'};
   const _LOr={body:'#4f6ea0',dark:'#324b72',light:'#86a0c8'},_LOc={body:'#db4a39',dark:'#a32c22',light:'#f08a7a'};
   const _SWr={body:'#9fb0bf',dark:'#5d6f7e',bill:'#7e8d9b'};
-  const _SWc={body:'#d8a85a',dark:'#9a6a30',bill:'#b9863c'};
+  const _SWc={body:'#aa6fc0',dark:'#6b4385',bill:'#8f5aa6'};
   const fshSwordfish=(P)=>{g.save();g.scale(0.78,0.78);g.rotate(0.08);
     g.lineWidth=1;g.lineJoin='round';g.lineCap='round';g.strokeStyle=P.dark;
     g.fillStyle=P.body;
@@ -4252,6 +4270,12 @@ function drawItemIcon(g,id,S){
       g.beginPath();g.moveTo(-6,6);g.lineTo(6,-6);g.stroke();
       g.fillStyle='#efe9d8';
       [[-7,4],[-4,7],[7,-4],[4,-7]].forEach(p=>{g.beginPath();g.arc(p[0],p[1],3,0,7);g.fill();});
+      break;
+    case 'big_bones':
+      g.strokeStyle='#f2ecd6';g.lineWidth=5;g.lineCap='round';
+      g.beginPath();g.moveTo(-8,8);g.lineTo(8,-8);g.stroke();
+      g.fillStyle='#f2ecd6';
+      [[-9,5],[-5,9],[9,-5],[5,-9]].forEach(p=>{g.beginPath();g.arc(p[0],p[1],4,0,7);g.fill();});
       break;
     case 'coins':
       g.fillStyle='#e8c23d';
@@ -9658,7 +9682,7 @@ function slayerHelmTier(){const h=player.equip&&player.equip.head;if(!h)return 0
 function onTaskBonus(r){const t=slayerHelmTier();if(!t)return 0;const sl=player.slayer;if(!sl||!sl.task||sl.done>=sl.need||r.kind!==sl.task||!inWild(r.sx,r.sy))return 0;return [0,0.10,0.14,0.18][t];}
 function hasEquip(slot,id){return !!(player.equip&&player.equip[slot]&&player.equip[slot].id===id);}
 function protectedFrom(kind){if(kind==='banshee')return hasEquip('head','earmuffs')||slayerHelmTier()>0;if(kind==='basilisk')return hasEquip('shield','mirror_shield');if(kind==='wyvern')return hasEquip('shield','dragon_shield')||hasEquip('shield','elemental_shield');return true;}
-function protWarn(r){const k=r.kind,now=performance.now();let m=null;if(k==='banshee'&&!protectedFrom('banshee'))m='Without Earmuffs (or a Proctor\u2019s Helm), the banshee\u2019s wail tears past your armour!';else if(k==='basilisk'&&!protectedFrom('basilisk'))m='Without a Mirror Shield, the basilisk\u2019s gaze tears past your armour!';else if(k==='wyvern'&&!protectedFrom('wyvern'))m='Without a Dragon Slayer shield or Elemental Shield equipped, the wyvern\u2019s frost breath will devastate you!';else if(k==='gargoyle'&&countItem('rock_hammer')<1)m='You need a Rock Hammer in your pack to land the killing blow on a gargoyle.';if(!m)return;if(r._pw&&now-r._pw<5000)return;r._pw=now;msg('Warning: '+m,'#c9601f');}
+function protWarn(r){const k=r.kind,now=performance.now();let m=null;if(k==='banshee'&&!protectedFrom('banshee'))m='Without Earmuffs (or a Proctor\u2019s Helm), the banshee\u2019s wail tears past your armour!';else if(k==='basilisk'&&!protectedFrom('basilisk'))m='Without a Mirror Shield, the basilisk\u2019s gaze tears past your armour!';else if(k==='wyvern'&&!protectedFrom('wyvern'))m='Without a Dragon Slayer shield or Elemental Shield equipped, the wyvern\u2019s frost breath will devastate you!';else if(k==='gargoyle'&&!(player.equip.weapon&&player.equip.weapon.id==='rock_hammer'))m='You must wield a Rock Hammer to land the killing blow on a gargoyle.';if(!m)return;if(r._pw&&now-r._pw<5000)return;r._pw=now;msg('Warning: '+m,'#c9601f');}
 function reclaimFee(){const st=player.lostStash||[];let v=0;for(const it of st)v+=(((ITEMS[it.id]&&ITEMS[it.id].val)||1)*(it.qty||1));return Math.min(3000,Math.max(100,Math.round(v*0.03)));}
 function reclaimLost(){const st=player.lostStash||[];if(!st.length){msg('You have no lost items to reclaim.');return;}const fee=reclaimFee();if(coinsCount()<fee){msg('Reclaiming your lost belongings costs '+fee+' gp \u2014 you cannot afford it yet.','#9c1f1f');return;}spendCoins(fee);let over=0;for(const it of st){if(!addItem(it.id,it.qty||1)){dropGround(player.x,player.y,it.id,it.qty||1);over++;}}player.lostStash=[];sfx.pickup&&sfx.pickup();dirty=true;msg('You reclaim your lost belongings for '+fee+' gp.'+(over?' Some spilled to your feet \u2014 your pack was full.':''),'#1a5a8c');renderInv&&renderInv();}
 let slayerConfirmId=null;
@@ -10395,7 +10419,8 @@ function masterCapeId(sk){return 'mastercape_'+sk;}
 function hasMasterCape(sk){
   const id=masterCapeId(sk);
   if(player.equip.cape&&player.equip.cape.id===id)return true;
-  return player.inv.some(sl=>sl&&sl.id===id);
+  if(player.inv.some(sl=>sl&&sl.id===id))return true;
+  return bank.some(b=>b&&b.id===id&&(b.qty||1)>0);
 }
 function claimableCapes(){return SKILLS.filter(sk=>levelFor(player.skills[sk])>=50&&!hasMasterCape(sk));}
 function grantMasterCape(sk){
@@ -10875,7 +10900,16 @@ const SKILL_GUIDE={
   firemaking:[[1,'Light regular logs to make a fire'],[6,'Light oak logs'],
     [12,'Light willow logs'],[18,'Light white birch logs (40 xp)']],
   prayer:[[1,'Bury bones to gain Prayer experience'],
-    [1,'Pray at an altar to restore prayer points']]};
+    [1,'Pray at an altar to restore prayer points'],
+    [10,'Prayer points drain 5% slower'],
+    [20,'Prayer points drain 10% slower'],
+    [30,'Prayer points drain 15% slower'],
+    [40,'Prayer points drain 20% slower'],
+    [50,'Prayer points drain 25% slower'],
+    [60,'Prayer points drain 30% slower'],
+    [70,'Prayer points drain 35% slower'],
+    [80,'Prayer points drain 40% slower'],
+    [90,'Prayer points drain 45% slower']]};
 {
   const rows=[];
   for(const B of SMELT_BARS)
@@ -10963,7 +10997,7 @@ function renderBankInv(){
       const c2=document.createElement('canvas');c2.width=30;c2.height=30;
       drawItemIcon(c2.getContext('2d'),sl2.id,30);
       const q2=document.createElement('span');q2.className='qty';
-      if(sl2.qty>1)q2.textContent=sl2.qty>9999?Math.floor(sl2.qty/1000)+'k':sl2.qty;
+      if(sl2.qty>1){const fs=fmtStack(sl2.qty);q2.textContent=fs.t;q2.style.color=fs.c;}
       d2.appendChild(c2);d2.appendChild(q2);
       const ii=i2,iid=sl2.id;
       d2.addEventListener('click',()=>{audio();depositSlot(ii,1);});
@@ -10984,7 +11018,7 @@ function renderBank(){
     const c=document.createElement('canvas');c.width=30;c.height=30;
     drawItemIcon(c.getContext('2d'),b.id,30);
     const q=document.createElement('span');q.className='qty';
-    if(b.qty>1)q.textContent=b.qty>9999?Math.floor(b.qty/1000)+'k':b.qty;
+    if(b.qty>1){const fs=fmtStack(b.qty);q.textContent=fs.t;q.style.color=fs.c;}
     d.appendChild(c);d.appendChild(q);
     d.addEventListener('click',()=>{audio();withdrawId(b.id,1);});
     d.addEventListener('contextmenu',ev=>{ev.preventDefault();ev.stopPropagation();audio();
@@ -11660,12 +11694,12 @@ function render(now){
 
 /* --------------------------- game beat ----------------------------- */
 let beat=0;
-const RUN_DRAIN=0.5,RUN_REGEN_WALK=0.26,RUN_REGEN_IDLE=0.42;
+const RUN_DRAIN=0.5,RUN_REGEN_WALK=0.17,RUN_REGEN_IDLE=0.28;
 setInterval(()=>{
   beat++;
   const apc=activePrayerCount();
   if(apc&&player.pray>0){
-    player.pray=Math.max(0,player.pray-apc*0.4*(100/(100+2*lvl('prayer'))));
+    player.pray=Math.max(0,player.pray-apc*0.4*prayerDrainMult());
     if(player.pray<=0){
       deactivateAllPrayers();
       msg('You have run out of prayer points!','#9c1f1f');
@@ -11685,7 +11719,7 @@ setInterval(()=>{
     }else player.path.length=0;
     if(inChapel&&player.x===139&&player.y===8)exitChapel();
   }
-  if(!_ranThisBeat&&player.stamina<100){
+  if(!_ranThisBeat&&player.stamina<100&&performance.now()-(player.combatT||0)>=3000){
     player.stamina=Math.min(100,player.stamina+(player.path.length?RUN_REGEN_WALK:RUN_REGEN_IDLE));
     if(beat%4===0)updateRunOrb();
   }
