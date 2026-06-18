@@ -294,6 +294,16 @@
   #praybarwrap{width:34px; height:7px; background:#241f17; border:1px solid #0d0b08;
     border-radius:3px; overflow:hidden;}
   #praybarfill{height:100%; width:100%; background:linear-gradient(#7ab8e8,#2d6a9e);}
+  #runorbwrap{position:relative; cursor:pointer;}
+  #runboot{position:absolute; left:-6px; top:-6px; z-index:2; pointer-events:none;}
+  #runorb{
+    width:26px; height:26px; border-radius:50%;
+    border:2px solid #0d0b08; box-shadow:0 0 0 2px #6b5d4b inset;
+    display:flex; align-items:center; justify-content:center;
+    font:bold 10px Verdana,sans-serif; color:#1a1308;
+    background:radial-gradient(circle at 35% 30%, #9a9082, #4f483c 70%);
+  }
+  #runorbwrap.on #runorb{background:radial-gradient(circle at 35% 30%, #ffe14a, #b8901a 70%);}
   #activeprayers{position:absolute; left:4px; bottom:4px; display:flex;
     flex-direction:column; gap:3px; z-index:3;}
   #activeprayers canvas{background:rgba(20,16,10,.78); border:1px solid #ffe66d;
@@ -383,6 +393,8 @@
   .wmlrow{gap:10px;padding:6px 9px;font:12px Verdana;}
   .wmlrow canvas{flex:0 0 auto;}
   #qhead{font:bold 13px Georgia,serif;color:#ffd98c;padding:2px 0 6px;flex:0 0 auto;}
+  #panel-quests.on{display:flex;flex-direction:column;min-height:0;}
+  #qlist{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;}
   .qrow{background:#3a3328;border:1px solid #15110c;border-radius:3px;
     padding:5px 8px;margin-bottom:4px;cursor:pointer;}
   .qrow:hover{background:#453d2f;}
@@ -444,13 +456,7 @@
   .gerow .nm{flex:1;color:#e8dcc0;font-size:11px;}
   .gerow .pr{color:#ffe66d;font:bold 11px Verdana,sans-serif;}
   #gecoins{color:#ffe66d;font:bold 11px Verdana,sans-serif;}
-  @media (max-width:580px){
-    #layout{flex-wrap:wrap;}
-    #side{flex:1 1 100%; width:auto;}
-    .panel{min-height:0;}
-  #qlist{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;}
-  #panel-quests.on{display:flex;flex-direction:column;min-height:0;}
-  #logbtn{margin-top:7px;text-align:center;font:bold 11px Georgia,serif;color:#ffd98c;
+#logbtn{margin-top:7px;text-align:center;font:bold 11px Georgia,serif;color:#ffd98c;
     cursor:pointer;padding:4px 0;border:1px solid #6b5a2e;border-radius:3px;
     background:linear-gradient(#3a3322,#2a2418);text-shadow:1px 1px 0 #000;}
   #logbtn:hover{background:linear-gradient(#4a4230,#332c1d);color:#fff;}
@@ -463,7 +469,11 @@
   .logcell canvas{display:block;margin:0 auto 3px;}
   .logcell .ln{font:10px Verdana;line-height:1.15;word-break:break-word;}
   .logcell.got .ln{color:#9fe0a0;}
-  .logcell.miss .ln{color:#6a6258;letter-spacing:1px;}
+  .logcell.miss .ln{color:#9a9082;letter-spacing:1px;}
+  @media (max-width:580px){
+    #layout{flex-wrap:wrap;}
+    #side{flex:1 1 100%; width:auto;}
+    .panel{min-height:0;}
   }
 </style>
 </head>
@@ -506,6 +516,7 @@
           <div id="hporbwrap" title="Hitpoints"><canvas id="hpheart" width="14" height="14"></canvas><div id="hporb">10</div></div>
           <div id="prorbwrap" title="Prayer points"><div id="prorb">100</div></div>
           <div id="praybarwrap" title="Prayer points"><div id="praybarfill"></div></div>
+          <div id="runorbwrap" title="Toggle Run (click)"><canvas id="runboot" width="16" height="16"></canvas><div id="runorb">100</div></div>
           <div id="xporb" title="Total experience">0 xp</div>
         </div>
       </div>
@@ -858,9 +869,9 @@ ITEMS.raw_lobster={name:'Raw lobster',ex:'Snappy about it.',val:60};
 ITEMS.lobster={name:'Lobster',ex:'A proper feast.',prim:'Eat',heal:12,val:120};
 ITEMS.raw_swordfish={name:'Raw swordfish',ex:'A long-billed terror of the deep.',val:90};
 ITEMS.swordfish={name:'Swordfish',ex:'Grilled bill and all. A champion\u2019s meal.',prim:'Eat',heal:14,val:180};
-ITEMS.proctor_helm={name:'Proctor\u2019s Helm',ex:'A slayer\u2019s helm. Your blows fall harder on the creature of your current contract.',val:2000,equip:{slot:'head',def:11,model:'helm',verb:'Wear',req:0,tint:0x4a4f57,trim:0x9aa3ad}};
-ITEMS.crimson_proctor_helm={name:'Crimson Proctor\u2019s Helm',ex:'Crested and dyed crimson. The hunt burns brighter.',val:4000,equip:{slot:'head',def:14,atk:2,str:1,model:'helm',verb:'Wear',req:0,tint:0x9a2f2a,trim:0xe0c050}};
-ITEMS.gilded_warden_helm={name:'Gilded Warden\u2019s Helm',ex:'Gilt and visored \u2014 the mark of a master hunter.',val:7000,equip:{slot:'head',def:17,atk:4,str:3,model:'helm',verb:'Wear',req:0,tint:0xc99a3a,trim:0xf2e4a0}};
+ITEMS.proctor_helm={name:'Proctor\u2019s Helm',ex:'A slayer\u2019s helm. Your blows fall harder on the creature of your current contract.',val:2000,equip:{slot:'head',def:11,model:'slayerhelm',verb:'Wear',req:0,tint:0x4a4f57,trim:0x9aa3ad}};
+ITEMS.crimson_proctor_helm={name:'Crimson Proctor\u2019s Helm',ex:'Crested and dyed crimson. The hunt burns brighter.',val:4000,equip:{slot:'head',def:14,atk:2,str:1,model:'slayerhelm',verb:'Wear',req:0,tint:0x9a2f2a,trim:0xe0c050}};
+ITEMS.gilded_warden_helm={name:'Gilded Warden\u2019s Helm',ex:'Gilt and visored \u2014 the mark of a master hunter.',val:7000,equip:{slot:'head',def:17,atk:4,str:3,model:'slayerhelm',verb:'Wear',req:0,tint:0xc99a3a,trim:0xf2e4a0}};
 ITEMS.hunter_signet={name:'Hunter\u2019s Signet',ex:'A slayer\u2019s ring. Right-click to check your contract or slip into the wild.',val:2500,equip:{slot:'ring',atk:2,str:1,model:'ring',verb:'Wear',req:0,tint:0x9a6fb0}};
 ITEMS.scholar_crest={name:'Scholar\u2019s Crest',ex:'A helm fragment torn from a slayer creature. Fuse it to a Proctor\u2019s Helm with a Crimson Dye.',val:1500,prim:'Examine'};
 ITEMS.sentinel_visor={name:'Sentinel Visor',ex:'A rare helm fragment. Fuse it to a Crimson Proctor\u2019s Helm with a Gilt Dye.',val:3000,prim:'Examine'};
@@ -1761,7 +1772,7 @@ const player={
   hp:10,pray:100,style:'stab',regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0},
   inv:new Array(28).fill(null),
-  equip:{weapon:null,shield:null,cape:null},kit:false,cmb:3,playMs:0,kills:0,collected:{},
+  equip:{weapon:null,shield:null,cape:null},kit:false,cmb:3,playMs:0,kills:0,collected:{},run:false,stamina:100,
   mmf:{fish:1,mine:1,smith:1,bank:1,altar:1,quest:1,shop:1},
   quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
@@ -2587,6 +2598,18 @@ function ratsTick(){
       if(player.hp<=0||(dist1(r.x,r.y,r.sx,r.sy)>8&&!(player.action&&player.action.type==='attack'&&player.action.rat===r))){
         if(engagedMob===r)engagedMob=null;
         r.target=null;r.hp=r.maxhp;continue;}
+      {const _cheb=Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y));
+       if(_cheb<=1){r._chaseStart=undefined;}
+       else if(player.action&&player.action.type==='attack'&&player.action.rat===r){
+         if(r._chaseStart===undefined)r._chaseStart=performance.now();
+         else if(performance.now()-r._chaseStart>3000){
+           for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
+             const nx=player.x+dx,ny=player.y+dy;
+             if(!blockedStrict(nx,ny)&&!(nx===player.x&&ny===player.y)){r.x=nx;r.y=ny;break;}
+           }
+           r._chaseStart=undefined;
+         }
+       } else {r._chaseStart=undefined;}}
       if(r.x===player.x&&r.y===player.y){
         for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
           if(!blockedStrict(r.x+dx,r.y+dy)){r.x+=dx;r.y+=dy;break;}
@@ -2625,13 +2648,18 @@ function ratsTick(){
         const dx=Math.sign(player.x-r.x),dy=Math.sign(player.y-r.y);
         const pr9=sosPenRect(r);
         const tryMove=(mx,my)=>{
+          if(mx===0&&my===0)return false;
           if(r.x+mx===player.x&&r.y+my===player.y)return false;
           if(pr9&&(r.x+mx<pr9[0]||r.x+mx>pr9[1]
             ||r.y+my<96||r.y+my>100))return false;
           if(!blockedStrict(r.x+mx,r.y+my)){r.x+=mx;r.y+=my;return true;}
           return false;};
-        if(Math.abs(player.x-r.x)>=Math.abs(player.y-r.y)){if(!tryMove(dx,0))tryMove(0,dy);}
-        else{if(!tryMove(0,dy))tryMove(dx,0);}
+        /* prefer the axis with the larger gap, then the other axis toward the player,
+           then a perpendicular detour so the mob routes around obstacles instead of freezing */
+        const cand=(Math.abs(player.x-r.x)>=Math.abs(player.y-r.y))
+          ?[[dx,0],[0,dy],[0,1],[0,-1]]
+          :[[0,dy],[dx,0],[1,0],[-1,0]];
+        for(const [mx,my] of cand){ if(tryMove(mx,my))break; }
       }
     }else if(tick%3===r.phase&&Math.random()<.5){
       const pr8=sosPenRect(r);
@@ -2716,7 +2744,7 @@ async function saveGame(silent){
   try{
     await STORE.set(SAVE_KEY,JSON.stringify({
       skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
-      playMs:player.playMs,kills:player.kills,collected:player.collected,
+      playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
       equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,mapv:'sps3'}));
     if(activeSlot)await upsertSlot(activeSlot,player.name);
     dirty=false;
@@ -2744,6 +2772,8 @@ async function loadSlot(id){
         if(s.quests[k])Object.assign(player.quests[k],s.quests[k]);
       if(s.slayer)Object.assign(player.slayer,s.slayer);
       if(typeof s.playMs==='number')player.playMs=s.playMs;
+      if(typeof s.stamina==='number')player.stamina=clamp(s.stamina,0,100);
+      if(typeof s.run==='boolean')player.run=s.run;
       if(typeof s.kills==='number')player.kills=s.kills;
       if(s.collected)player.collected=s.collected;
       backfillCollected();
@@ -2804,6 +2834,31 @@ function updateOrb(){
     'radial-gradient(circle at 35% 30%, #e87a6f, #8c2a1d 70%)';
   orbEl.style.background=hue;
 }
+function drawRunBoot(){
+  const c=document.getElementById('runboot'); if(!c)return;
+  const g=c.getContext('2d'); g.clearRect(0,0,16,16);
+  const on=player.run&&player.stamina>0;
+  g.lineJoin='round'; g.lineWidth=1; g.strokeStyle='#15100a';
+  /* side-profile boot, facing right (original art) */
+  g.beginPath();
+  g.moveTo(5,2.5); g.lineTo(9,2.5); g.lineTo(9,9);
+  g.lineTo(13.5,9); g.quadraticCurveTo(15,9,15,11); g.lineTo(15,12.5);
+  g.lineTo(3.5,12.5); g.lineTo(3.5,11); g.lineTo(5,11); g.closePath();
+  g.fillStyle=on?'#7a4a1c':'#3c362b'; g.fill(); g.stroke();
+  g.fillStyle='#15100a'; g.fillRect(3,12.4,12.4,2.1);            /* sole */
+  g.fillStyle=on?'#ffe89a':'#7a7264';
+  g.fillRect(6.3,4,1.2,1.2); g.fillRect(6.3,6.2,1.2,1.2);        /* eyelets */
+  if(on){ g.fillStyle='rgba(255,232,120,0.5)'; g.fillRect(0,13.5,3,0.9); g.fillRect(0,11,2.4,0.8);} /* speed lines */
+}
+function updateRunOrb(){
+  const e=document.getElementById('runorb'); if(!e)return;
+  e.textContent=Math.ceil(player.stamina);
+  const w=document.getElementById('runorbwrap');
+  if(w)w.classList.toggle('on',!!(player.run&&player.stamina>0));
+  drawRunBoot();
+}
+{const _rw=document.getElementById('runorbwrap');
+ if(_rw)_rw.addEventListener('click',()=>{ player.run=!player.run; updateRunOrb(); });}
 const skillGrid=document.getElementById('skillgrid');
 let _skTip=null;
 function showSkillTip(skill){
@@ -3287,6 +3342,39 @@ function drawItemIcon(g,id,S){
     g.beginPath();g.arc(2.5,1,1.4,0,7);g.fill();
     g.beginPath();g.arc(-3.5,4,1.4,0,7);g.fill();
     g.fillStyle='#f6f6f6';g.beginPath();g.arc(0,-13,2.1,0,7);g.fill();g.stroke();
+    g.restore();return;
+  }
+  if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='slayerhelm'){
+    const tint='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
+    const trim='#'+ITEMS[id].equip.trim.toString(16).padStart(6,'0');
+    g.lineJoin='round';g.lineWidth=1.4;g.strokeStyle='#15100a';
+    /* horns behind the dome (trim) */
+    g.fillStyle=trim;
+    for(const sx of [-1,1]){
+      g.beginPath();
+      g.moveTo(sx*6,-3);
+      g.quadraticCurveTo(sx*13,-7,sx*14.5,-14.5);
+      g.quadraticCurveTo(sx*10,-8,sx*7.5,-6);
+      g.closePath();g.fill();g.stroke();
+    }
+    /* dome + faceguard (tint) */
+    g.fillStyle=tint;
+    g.beginPath();
+    g.moveTo(-10,-2);
+    g.quadraticCurveTo(-11,-13,0,-13);
+    g.quadraticCurveTo(11,-13,10,-2);
+    g.lineTo(9,8.5);
+    g.quadraticCurveTo(0,14,-9,8.5);
+    g.closePath();g.fill();g.stroke();
+    /* brow band (trim) */
+    g.fillStyle=trim;g.fillRect(-10,-3.4,20,2.6);
+    /* T-visor (dark) */
+    g.fillStyle='#0e1014';
+    g.fillRect(-1.7,0,3.4,9);
+    g.fillRect(-8,0.6,16,2.5);
+    /* crest spike (trim) */
+    g.fillStyle=trim;
+    g.beginPath();g.moveTo(0,-13);g.lineTo(-2.2,-18);g.lineTo(2.2,-18);g.closePath();g.fill();g.stroke();
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='santahat'){
@@ -6981,6 +7069,34 @@ const helmM=new THREE.Group();
  const slitH=gmesh(new THREE.BoxGeometry(0.18,0.045,0.03),0x14161a);
  slitH.position.set(0,1.565,0.245);helmM.add(slitH);}
 pm.g.add(helmM);helmM.visible=false;
+const slayerHelmM=new THREE.Group();
+{const dome=TT(gmesh(new THREE.SphereGeometry(0.223,12,9,0,Math.PI*2,0,Math.PI*0.6),0xb9bdc4),'tint');
+ dome.position.y=1.565;dome.scale.set(1.02,1.1,1.15);slayerHelmM.add(dome);
+ const jaw=TT(gmesh(new THREE.CylinderGeometry(0.213,0.236,0.21,12),0xb9bdc4),'tint');
+ jaw.position.y=1.472;slayerHelmM.add(jaw);
+ const face=TT(gmesh(new THREE.BoxGeometry(0.275,0.25,0.08),0xb9bdc4),'tint');
+ face.position.set(0,1.49,0.175);slayerHelmM.add(face);
+ const cheekL=TT(gmesh(new THREE.BoxGeometry(0.06,0.2,0.16),0xb9bdc4),'tint');cheekL.position.set(-0.13,1.46,0.13);cheekL.rotation.y=0.3;slayerHelmM.add(cheekL);
+ const cheekR=cheekL.clone();cheekR.position.x=0.13;cheekR.rotation.y=-0.3;slayerHelmM.add(cheekR);
+ /* T-visor (dark, fixed) */
+ const sV=gmesh(new THREE.BoxGeometry(0.05,0.17,0.05),0x0e1014);sV.position.set(0,1.5,0.235);slayerHelmM.add(sV);
+ const sH=gmesh(new THREE.BoxGeometry(0.21,0.045,0.05),0x0e1014);sH.position.set(0,1.575,0.235);slayerHelmM.add(sH);
+ /* brow band + rivets (trim) */
+ const brow=TT(gmesh(new THREE.CylinderGeometry(0.241,0.241,0.045,12),0xdba968),'trim');brow.position.y=1.612;slayerHelmM.add(brow);
+ /* crest fin + forward spike (trim) */
+ const crest=TT(gmesh(new THREE.BoxGeometry(0.032,0.1,0.36),0xdba968),'trim');crest.position.y=1.8;slayerHelmM.add(crest);
+ const spike=TT(gmesh(new THREE.ConeGeometry(0.034,0.14,5),0xdba968),'trim');spike.position.set(0,1.83,0.16);spike.rotation.x=0.55;slayerHelmM.add(spike);
+ /* horns: base + tip, swept out and up (trim) */
+ for(const side of [-1,1]){
+   const hb=TT(gmesh(new THREE.ConeGeometry(0.058,0.23,6),0xdba968),'trim');
+   hb.position.set(side*0.188,1.66,0.0);hb.rotation.z=-side*0.72;hb.rotation.x=-0.12;slayerHelmM.add(hb);
+   const ht=TT(gmesh(new THREE.ConeGeometry(0.034,0.18,6),0xdba968),'trim');
+   ht.position.set(side*0.285,1.79,-0.04);ht.rotation.z=-side*1.2;ht.rotation.x=-0.28;slayerHelmM.add(ht);
+   const riv=TT(gmesh(new THREE.SphereGeometry(0.024,6,5),0xdba968),'trim');
+   riv.position.set(side*0.205,1.55,0.135);slayerHelmM.add(riv);
+ }
+}
+pm.g.add(slayerHelmM);slayerHelmM.visible=false;
 const bodyM=new THREE.Group();
 {const chest=TT(gmesh(new THREE.CylinderGeometry(0.26,0.24,0.5,12),0xb9bdc4),'tint');
  chest.scale.z=0.66;chest.position.y=1.05;bodyM.add(chest);
@@ -7774,6 +7890,16 @@ rats.forEach(makeRat);
 
 /* ------------------------ ground item meshes ---------------------- */
 const itemMeshes=new Map();
+const _groundIconTexCache={};
+function groundIconTex(id){
+  if(_groundIconTexCache[id])return _groundIconTexCache[id];
+  const c=document.createElement('canvas');c.width=64;c.height=64;
+  const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+  drawItemIcon(g,id,64);
+  const t=new THREE.CanvasTexture(c);
+  t.magFilter=THREE.NearestFilter;t.minFilter=THREE.NearestFilter;
+  return _groundIconTexCache[id]=t;
+}
 function makeGroundItem(id){
   const g=new THREE.Group();
   if(id==='logs'||id==='oak_logs'||id==='willow_logs'){
@@ -7800,7 +7926,10 @@ function makeGroundItem(id){
       c.position.set((i-1)*0.07,0.02+i*0.04,(i%2)*0.06);g.add(c);
     }
   }else{
-    const q=mesh(new THREE.BoxGeometry(0.2,0.2,0.2),0x888888);q.position.y=0.1;g.add(q);
+    /* every other item: a camera-facing sprite of its real inventory icon */
+    const sp=new THREE.Sprite(new THREE.SpriteMaterial({map:groundIconTex(id),transparent:true,alphaTest:0.45}));
+    sp.scale.set(0.5,0.5,0.5);sp.position.y=0.3;
+    g.add(sp);
   }
   return g;
 }
@@ -10509,7 +10638,7 @@ function render(now){
   if(keys.has('U'))camPitch=clamp(camPitch+1.2*dts,0.30,1.50);
   if(keys.has('D'))camPitch=clamp(camPitch-1.2*dts,0.30,1.50);
 
-  const pMoving=lerpEnt(player,300,dt);
+  const pMoving=lerpEnt(player,(player.run&&player.stamina>0)?150:300,dt);
   for(const r of rats)lerpEnt(r,600,dt);
 
   /* player transform + heading */
@@ -10565,10 +10694,15 @@ function render(now){
   pumpkinM.visible=hmod==='pumpkin';
   partyHatM.visible=hmod==='partyhat';
   santaHatM.visible=hmod==='santahat';
+  slayerHelmM.visible=hmod==='slayerhelm';
   if(hmod==='partyhat'&&partyHatM.userData.cone){partyHatM.userData.cone.material.color.setHex(ITEMS[player.equip.head.id].equip.tint);}
   if(hmod==='helm'){
     const he=ITEMS[player.equip.head.id].equip;
     tintG(helmM,he.tint,he.trim);
+  }
+  if(hmod==='slayerhelm'){
+    const he=ITEMS[player.equip.head.id].equip;
+    tintG(slayerHelmM,he.tint,he.trim);
   }
   bodyM.visible=!!player.equip.body;
   armPL.visible=armPR.visible=!!player.equip.body;
@@ -10766,6 +10900,7 @@ function render(now){
 
 /* --------------------------- game beat ----------------------------- */
 let beat=0;
+const RUN_DRAIN=0.5,RUN_REGEN_WALK=0.26,RUN_REGEN_IDLE=0.42;
 setInterval(()=>{
   beat++;
   const apc=activePrayerCount();
@@ -10778,13 +10913,21 @@ setInterval(()=>{
     updatePrayOrb();
   }
   if(beat%8===0)updateMusic();
-  if(beat%2===0&&player.path.length){
+  let _ranThisBeat=false;
+  const _canRun=player.run&&player.stamina>0;
+  if((beat%2===0||_canRun)&&player.path.length){
     const nxt=player.path.shift();
     if(!blocked(nxt[0],nxt[1])){
       player.face=Math.sign(nxt[0]-player.x)||player.face;
       player.x=nxt[0];player.y=nxt[1];
+      if(_canRun){player.stamina=Math.max(0,player.stamina-RUN_DRAIN);_ranThisBeat=true;
+        if(player.stamina<=0)player.run=false; updateRunOrb();}
     }else player.path.length=0;
     if(inChapel&&player.x===139&&player.y===8)exitChapel();
+  }
+  if(!_ranThisBeat&&player.stamina<100){
+    player.stamina=Math.min(100,player.stamina+(player.path.length?RUN_REGEN_WALK:RUN_REGEN_IDLE));
+    if(beat%4===0)updateRunOrb();
   }
   if(beat%4===0){
     tick++;
@@ -10824,7 +10967,7 @@ function enterGame(){
   splashEl.style.display='none';
   audio();
   syncStyleUI();
-  renderSkills();renderInv();renderEquip();updateOrb();
+  renderSkills();renderInv();renderEquip();updateOrb();updateRunOrb();
   player.px=player.x;player.py=player.y;
   statusEl.textContent=storageOK?
     ('Autosave: on \u2014 '+player.name+' (this device).'):
