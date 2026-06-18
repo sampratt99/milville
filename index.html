@@ -774,6 +774,7 @@ const ITEMS={
   logs:{name:'Logs',ex:'Some wood, freshly cut from a tree.',prim:'Light',val:10},
   oak_logs:{name:'Oak logs',ex:'Sturdy logs from a grand old oak.',prim:'Light',val:30},
   willow_logs:{name:'Willow logs',ex:'Bendy logs from a weeping willow.',prim:'Light',val:60},
+  birch_logs:{name:'White birch logs',ex:'Pale, papery bark still clings to them. They take a flame in a heartbeat.',prim:'Light',val:90},
   copper_ore:{name:'Copper ore',ex:'It glints faintly orange.',val:12},
   tin_ore:{name:'Tin ore',ex:'Flecked with silvery tin.',val:12},
   iron_ore:{name:'Iron ore',ex:'A rusty-red lump of iron.',val:35},
@@ -792,9 +793,29 @@ const ITEMS={
   bronze_sword:{name:'Bronze sword',ex:'A basic sword of beaten bronze.',val:30,
     equip:{slot:'weapon',atk:2,model:'sword',verb:'Wield',tint:0xb07a3e,trim:0xdba968}},
   bronze_axe:{name:'Bronze axe',ex:'Good for chopping trees... or rats.',val:25,
-    equip:{slot:'weapon',atk:1,model:'axe',verb:'Wield'}},
+    equip:{slot:'weapon',atk:1,model:'axe',verb:'Wield',tint:0xb07a3e,trim:0xdba968,tool:'woodcutting',treq:1,gb:0.03}},
   bronze_pickaxe:{name:'Bronze pickaxe',ex:'For hacking away at rocks.',val:25,
-    equip:{slot:'weapon',atk:1,model:'pick',verb:'Wield'}},
+    equip:{slot:'weapon',atk:1,model:'pick',verb:'Wield',tint:0xb07a3e,trim:0xdba968,tool:'mining',treq:1,gb:0.03}},
+  iron_axe:{name:'Iron axe',ex:'Heavier than bronze, and it bites deeper.',val:80,
+    equip:{slot:'weapon',atk:2,model:'axe',verb:'Wield',tint:0x7a766f,trim:0xa8a49c,tool:'woodcutting',treq:5,gb:0.06}},
+  iron_pickaxe:{name:'Iron pickaxe',ex:'A solid iron head for tougher rock.',val:80,
+    equip:{slot:'weapon',atk:2,model:'pick',verb:'Wield',tint:0x7a766f,trim:0xa8a49c,tool:'mining',treq:5,gb:0.06}},
+  steel_axe:{name:'Steel axe',ex:'Keen steel that shrugs off knots and bark.',val:200,
+    equip:{slot:'weapon',atk:3,model:'axe',verb:'Wield',tint:0xaab2ba,trim:0xe2e8ee,tool:'woodcutting',treq:10,gb:0.09}},
+  steel_pickaxe:{name:'Steel pickaxe',ex:'Tempered steel for serious mining.',val:200,
+    equip:{slot:'weapon',atk:3,model:'pick',verb:'Wield',tint:0xaab2ba,trim:0xe2e8ee,tool:'mining',treq:10,gb:0.09}},
+  mithril_axe:{name:'Mithril axe',ex:'Light, blue-sheened, and frighteningly sharp.',val:600,
+    equip:{slot:'weapon',atk:4,model:'axe',verb:'Wield',tint:0x6b6bb0,trim:0x9a9ade,tool:'woodcutting',treq:20,gb:0.13}},
+  mithril_pickaxe:{name:'Mithril pickaxe',ex:'Bites into ore the bronze ones only dream of.',val:600,
+    equip:{slot:'weapon',atk:4,model:'pick',verb:'Wield',tint:0x6b6bb0,trim:0x9a9ade,tool:'mining',treq:20,gb:0.13}},
+  adamant_axe:{name:'Adamant axe',ex:'Dark green and unreasonably effective.',val:1500,
+    equip:{slot:'weapon',atk:5,model:'axe',verb:'Wield',tint:0x468852,trim:0x7cba8a,tool:'woodcutting',treq:30,gb:0.17}},
+  adamant_pickaxe:{name:'Adamant pickaxe',ex:'Cleaves stone like soft cheese.',val:1500,
+    equip:{slot:'weapon',atk:5,model:'pick',verb:'Wield',tint:0x468852,trim:0x7cba8a,tool:'mining',treq:30,gb:0.17}},
+  rune_axe:{name:'Rune axe',ex:'It hums faintly. Trees do not stand a chance.',val:4000,
+    equip:{slot:'weapon',atk:6,model:'axe',verb:'Wield',tint:0x5a8ab0,trim:0x94c8ea,tool:'woodcutting',treq:40,gb:0.22}},
+  rune_pickaxe:{name:'Rune pickaxe',ex:'The finest pick on campus. Runite parts before it.',val:4000,
+    equip:{slot:'weapon',atk:6,model:'pick',verb:'Wield',tint:0x5a8ab0,trim:0x94c8ea,tool:'mining',treq:40,gb:0.22}},
   wooden_shield:{name:'Wooden shield',ex:'A solid plank of protection.',val:20,
     equip:{slot:'shield',model:'shieldM',verb:'Wear',def:5}},
   cape_red:{name:'Halcyon cape',ex:'Bold Halcyon red, wilderness-tested.',val:25,
@@ -859,6 +880,7 @@ ITEMS.clue_medium={name:'Medium clue scroll',ex:'A two-step trail to buried trea
 ITEMS.clue_hard={name:'Hard clue scroll',ex:'A three-step trail across the grounds. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
 ITEMS.clue_elite={name:'Elite clue scroll',ex:'A grand four-step expedition. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
 GE_STOCK.push('santa_hat');
+GE_STOCK.push('bronze_axe','bronze_pickaxe','iron_axe','iron_pickaxe','steel_axe','steel_pickaxe','mithril_axe','mithril_pickaxe','adamant_axe','adamant_pickaxe','rune_axe','rune_pickaxe');
 const RARE_ITEMS=['draconic_visage','abyssal_whip','granite_maul','basilisk_jaw','wailing_relic',
   'scholar_crest','sentinel_visor',
   'dragon_sword','dragon_scimitar','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield','dragon_shield',
@@ -965,6 +987,8 @@ const OBJ_DEFS={
     base:.32,fall:.13,cap:[4,7],respawn:[12,20],ex:'A grand old oak.',depEx:'Just a stump now.',depName:'Oak stump'},
   willow:{name:'Willow tree',action:'Chop down',skill:'woodcutting',req:12,xp:26,item:'willow_logs',
     base:.26,fall:.13,cap:[5,8],respawn:[16,26],ex:'A weeping tree by the water.',depEx:'Even stumps weep.',depName:'Willow stump'},
+  birch:{name:'White birch',action:'Chop down',skill:'woodcutting',req:18,xp:38,item:'birch_logs',
+    base:.24,cap:[10,14],respawn:[14,22],ex:'A slender white birch, its bark scored with dark seams.',depEx:'A pale stump, its bark peeling in papery curls.',depName:'Birch stump'},
   copper:{name:'Copper rocks',action:'Mine',skill:'mining',req:1,xp:13,item:'copper_ore',
     base:.5,fall:1,respawn:[3,5],cap:[3,5],ex:'It glints orange. Copper, probably.',depEx:'Mined clean.',depName:'Rocks'},
   tin:{name:'Tin rocks',action:'Mine',skill:'mining',req:1,xp:13,item:'tin_ore',
@@ -1541,6 +1565,7 @@ function addObj(def,x,y,force){
   .forEach(p=>addObj('tree',p[0],p[1]));
 [[78,44],[83,52],[85,68],[97,87],[52,58]].forEach(p=>addObj('oak',p[0],p[1]));
 [[109,47],[127,62],[121,86],[120,75],[150,14],[114,60]].forEach(p=>addObj('willow',p[0],p[1]));
+[[82,6],[84,6],[134,6],[136,6],[110,14],[112,14],[184,16],[186,16],[88,20],[90,20],[50,33],[52,33],[50,35],[135,37],[137,37],[170,39],[172,39],[170,41],[83,51],[85,51]].forEach(p=>addObj('birch',p[0],p[1]));
 [[48,46],[50,45]].forEach(p=>addObj('copper',p[0],p[1]));
 [[52,45],[51,43]].forEach(p=>addObj('tin',p[0],p[1]));
 [[49,43],[47,45]].forEach(p=>addObj('iron',p[0],p[1]));
@@ -1585,7 +1610,7 @@ const SIGNS=[
 SIGNS.forEach(sp=>addObj('sign',sp[0],sp[1]));
 /* the wasteland claims its trees */
 objects.forEach(o=>{
-  if((o.def==='tree'||o.def==='oak'||o.def==='willow')&&inWild(o.x,o.y))o.def='deadtree';
+  if((o.def==='tree'||o.def==='oak'||o.def==='willow'||o.def==='birch')&&inWild(o.x,o.y))o.def='deadtree';
 });
 addObj('altar',26,38,true);
 addObj('paltar',98,104,true);
@@ -2177,7 +2202,9 @@ function encDetail(id){
     row('Equip slot',itemSlotLabel(e.slot));
     const bon=[];if(e.atk)bon.push('Attack +'+e.atk);if(e.str)bon.push('Strength +'+e.str);if(e.def)bon.push('Defence +'+e.def);
     row('Combat bonus',bon.length?bon.join(', '):'none');
-    if(e.req)row('Level needed',''+e.req);}
+    if(e.req)row('Level needed',''+e.req);
+    if(e.tool){row('Gathering','+'+Math.round((e.gb||0)*100)+'% '+SKILL_META[e.tool].name+' success rate');
+      row('Tool level',(e.treq&&e.treq>1)?(SKILL_META[e.tool].name+' '+e.treq):'any level');}}
   if(it.heal)row('Heals',it.heal+' hp');
   det.appendChild(rows);
   const sh=document.createElement('div');sh.className='encsrch';sh.textContent='How to obtain';det.appendChild(sh);
@@ -2489,7 +2516,7 @@ function startAttack(rat){
 }
 function lightFire(i){
   const _logId=player.inv[i]&&player.inv[i].id;
-  const _fmReq={logs:1,oak_logs:6,willow_logs:12}[_logId]||1;
+  const _fmReq={logs:1,oak_logs:6,willow_logs:12,birch_logs:18}[_logId]||1;
   if(lvl('firemaking')<_fmReq){msg('You need a Firemaking level of '+_fmReq+' to light those logs.');return;}
   const pt=tiles[player.y][player.x];
   if(pt!==T_GRASS&&pt!==T_PATH){msg('You need open ground to light a fire.');return;}
@@ -2502,7 +2529,7 @@ function lightFire(i){
   }
   if(fx<0){msg('There is no room to light a fire here.');return;}
   removeSlot(i);
-  addXp('firemaking',{logs:12,oak_logs:20,willow_logs:30}[_logId]||12);
+  addXp('firemaking',{logs:12,oak_logs:20,willow_logs:30,birch_logs:40}[_logId]||12);
   const fo={def:'fire',x:fx,y:fy,alive:true,tmp:true,burnAt:performance.now()+60000};
   objects.push(fo);
   buildObjModel(fo);
@@ -2585,7 +2612,7 @@ function playerTick(){
     player.actTick++;
     if(player.actTick%2!==0)return;
     (def.skill==='woodcutting'?sfx.chop:def.skill==='mining'?sfx.mine:sfx.splash)();
-    const chance=clamp(def.base+(lvl(def.skill)-def.req)*.012,.05,.93);
+    const _tw=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;const _tb=(_tw&&_tw.tool===def.skill&&lvl(def.skill)>=(_tw.treq||0))?(_tw.gb||0):0;const chance=clamp(def.base+(lvl(def.skill)-def.req)*.012+_tb,.05,.93);
     if(Math.random()<chance){
       let gid=def.item,gxp=def.xp;
       if(def.skill==='fishing'){
@@ -4162,10 +4189,32 @@ function drawItemIcon(g,id,S){
     }
     g.restore();return;
   }
+  if(ITEMS[id]&&ITEMS[id].equip&&(ITEMS[id].equip.model==='axe'||ITEMS[id].equip.model==='pick')){
+    const _e=ITEMS[id].equip;
+    const tint='#'+(_e.tint||0xb07a3e).toString(16).padStart(6,'0');
+    const trim='#'+(_e.trim||0xdba968).toString(16).padStart(6,'0');
+    g.strokeStyle='#6b4a2e';g.lineWidth=4;g.lineCap='round';
+    if(_e.model==='axe'){
+      g.beginPath();g.moveTo(-5,10);g.lineTo(4,-7);g.stroke();
+      g.fillStyle=tint;
+      g.beginPath();g.moveTo(2,-9);g.lineTo(11,-5);g.lineTo(9,2);g.lineTo(1,-2);g.closePath();g.fill();
+      g.strokeStyle='#14110b';g.lineWidth=1.2;g.stroke();
+      g.fillStyle=trim;g.fillRect(8,-5,3,6);
+    }else{
+      g.beginPath();g.moveTo(-4,10);g.lineTo(3,-6);g.stroke();
+      g.strokeStyle=tint;g.lineWidth=4.5;
+      g.beginPath();g.moveTo(-8,-4);g.quadraticCurveTo(3,-12,11,-2);g.stroke();
+      g.strokeStyle=trim;g.lineWidth=1.6;
+      g.beginPath();g.moveTo(-8,-4);g.quadraticCurveTo(3,-12,11,-2);g.stroke();
+    }
+    g.restore();return;
+  }
   switch(id){
     case 'logs':log('#9a6a3a','#7a5128');break;
     case 'oak_logs':log('#7d5226','#5e3d1c');break;
     case 'willow_logs':log('#8a7a44','#6b5e33');break;
+    case 'birch_logs':log('#efe9dc','#cfc8b6');
+      g.fillStyle='#2b2620';g.fillRect(-7,-6,3,1.6);g.fillRect(4,0,3,1.6);g.fillRect(-3,6,3,1.6);break;
     case 'copper_ore':ore('#d8843c');break;
     case 'tin_ore':ore('#cfd2d8');break;
     case 'iron_ore':ore('#9c4a32');break;
@@ -5134,15 +5183,21 @@ function buildObjModel(o){
     }
     addProxy(g,0.5,0.5,0,{kind:'obj',o});
   }
-  if(def==='tree'||def==='oak'||def==='willow'){
+  if(def==='tree'||def==='oak'||def==='willow'||def==='birch'){
     let trunkH=0.95,trunkR=0.15;
     if(def==='oak'){trunkH=1.1;trunkR=0.2;}
     if(def==='willow'){trunkH=0.95;trunkR=0.17;}
-    const trunkCol=def==='willow'?0x57452c:0x4f3a22;
+    if(def==='birch'){trunkH=1.5;trunkR=0.115;}
+    const trunkCol=def==='willow'?0x57452c:def==='birch'?0xe9e5db:0x4f3a22;
     const trunk=mesh(new THREE.CylinderGeometry(trunkR*0.55,trunkR,trunkH,6),trunkCol);
     trunk.position.y=trunkH/2;
     trunk.rotation.z=(hsh-0.5)*0.16;
     g.add(trunk);
+    if(def==='birch'){
+      for(let bi=0;bi<5;bi++){const by=0.22+bi*0.27;const rr=trunkR*(1-0.45*(by/trunkH))+0.013;
+        const band=mesh(new THREE.CylinderGeometry(rr,rr,0.04,6),0x2b2620);
+        band.position.y=by;band.rotation.z=trunk.rotation.z;g.add(band);}
+    }
     const fol=new THREE.Group();
     const br1=mesh(new THREE.CylinderGeometry(0.035,0.06,0.5,4),trunkCol);
     br1.position.set(0.16,trunkH-0.05,0.05);br1.rotation.z=-0.7;fol.add(br1);
@@ -5166,6 +5221,14 @@ function buildObjModel(o){
         dr.rotation.x=Math.PI;
         fol.add(dr);
       }
+    }else if(def==='birch'){
+      const bcols=[0x9fc46a,0x86b257,0xb8d488];
+      for(let i=0;i<6;i++){const a=i/6*Math.PI*2+hsh*6;
+        const rad=0.33*(0.85+tileHash(o.x+i,o.y+i*3)*0.4);
+        const b=mesh(new THREE.IcosahedronGeometry(rad,0),bcols[i%3]);
+        b.position.set(Math.cos(a)*0.26,trunkH+0.1+(i%3)*0.22,Math.sin(a)*0.26);fol.add(b);}
+      const crown=mesh(new THREE.IcosahedronGeometry(0.34,0),bcols[0]);
+      crown.position.y=trunkH+0.6;fol.add(crown);
     }else{
       const n=def==='oak'?7:6;
       const baseR=def==='oak'?0.66:0.56;
@@ -8391,6 +8454,17 @@ function makeGroundItem(id){
     add(BOX(0.035,0.03,0.1),0x5a3d22).position.set(0,0.05,-0.24);
     add(SPH(0.03),trim).position.set(0,0.05,-0.3);
   }
+  else if(eq.model==='axe'){
+    const sh=add(CYL(0.02,0.024,0.42,6),0x6b4a2e);sh.rotation.x=Math.PI/2;sh.position.set(0,0.05,0.04);
+    const bl=add(BOX(0.03,0.055,0.14),tint);bl.position.set(0.05,0.05,-0.17);bl.rotation.y=0.22;
+    add(BOX(0.018,0.06,0.05),trim).position.set(0.095,0.05,-0.2);
+  }
+  else if(eq.model==='pick'){
+    const sh=add(CYL(0.02,0.024,0.42,6),0x6b4a2e);sh.rotation.x=Math.PI/2;sh.position.set(0,0.05,0.04);
+    const hd=add(BOX(0.28,0.035,0.04),tint);hd.position.set(0,0.06,-0.18);hd.rotation.y=0.12;
+    const t1=add(CON(0.028,0.08,5),trim);t1.rotation.z=-Math.PI/2;t1.position.set(0.15,0.06,-0.2);
+    const t2=add(CON(0.028,0.08,5),trim);t2.rotation.z=Math.PI/2;t2.position.set(-0.15,0.06,-0.16);
+  }
   /* ---------------- helmets / head ---------------- */
   else if(eq.model==='slayerhelm'){
     const dome=add(SPH(0.16,10,8),tint);dome.scale.set(1,0.9,1.05);dome.position.y=0.12;
@@ -10782,18 +10856,24 @@ const SKILL_GUIDE={
     [18,'Wear rune armour'],[28,'Wear dragon armour']],
   hitpoints:[[10,'You begin with 10 Hitpoints'],
     [11,'Each Hitpoints level adds 1 maximum health']],
-  woodcutting:[[1,'Chop regular trees'],[6,'Chop oak trees'],
-    [12,'Chop willow trees']],
-  mining:[[1,'Mine copper and tin rocks'],[5,'Mine iron rocks'],
-    [10,'Mine mithril rocks'],[14,'Mine adamantite rocks'],
-    [18,'Mine runite rocks']],
+  woodcutting:[[1,'Chop regular trees'],[1,'A bronze axe chops a little faster'],
+    [5,'Use an iron axe for faster chopping'],[6,'Chop oak trees'],
+    [10,'Use a steel axe for faster chopping'],[12,'Chop willow trees'],
+    [18,'Chop White Birch trees (38 xp, long-lasting)'],[20,'Use a mithril axe for faster chopping'],
+    [30,'Use an adamant axe for faster chopping'],[40,'Use a rune axe for faster chopping']],
+  mining:[[1,'Mine copper and tin rocks'],[1,'A bronze pickaxe mines a little faster'],
+    [5,'Mine iron rocks'],[5,'Use an iron pickaxe for faster mining'],
+    [10,'Mine mithril rocks'],[10,'Use a steel pickaxe for faster mining'],
+    [14,'Mine adamantite rocks'],[18,'Mine runite rocks'],
+    [20,'Use a mithril pickaxe for faster mining'],[30,'Use an adamant pickaxe for faster mining'],
+    [40,'Use a rune pickaxe for faster mining']],
   smithing:[],
   fishing:[[1,'Net shrimps at fishing spots'],[3,'Fish sardines'],
     [8,'Fish trout'],[14,'Fish lobsters'],[18,'Fish swordfish']],
   cooking:[[1,'Cook shrimps and sardines on a fire'],[6,'Cook trout'],
     [14,'Cook lobster'],[18,'Cook swordfish'],[18,'You no longer burn shrimps']],
   firemaking:[[1,'Light regular logs to make a fire'],[6,'Light oak logs'],
-    [12,'Light willow logs']],
+    [12,'Light willow logs'],[18,'Light white birch logs (40 xp)']],
   prayer:[[1,'Bury bones to gain Prayer experience'],
     [1,'Pray at an altar to restore prayer points']]};
 {
