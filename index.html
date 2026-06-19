@@ -58,6 +58,13 @@
     text-shadow:1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
     max-width:75%;
   }
+  #partytimer{
+    position:absolute; top:8px; right:10px; z-index:3; pointer-events:none; display:none;
+    font:bold 20px 'Courier New',monospace; color:#ffd24a; letter-spacing:1px;
+    background:rgba(28,10,30,0.66); border:2px solid #b04a9e; border-radius:8px;
+    padding:3px 12px; text-shadow:1px 1px 0 #000; box-shadow:0 2px 8px rgba(0,0,0,0.4);
+  }
+  #partytimer.low{ color:#ff5252; border-color:#ff5252; }
   #hovertext .act{color:#fff;} #hovertext .tgt{color:#ffe66d;}
   #orbs{
     position:absolute; left:0; top:42px; z-index:3;
@@ -538,6 +545,7 @@
         <canvas id="view"></canvas>
         <canvas id="overlay"></canvas>
         <div id="hovertext"></div>
+        <div id="partytimer"></div>
         <div id="dlgui"><div id="dlgbox">
   <canvas id="dlgface" width="100" height="100"></canvas>
   <div id="dlgmain">
@@ -2481,7 +2489,13 @@ const TRACKS={
   wild:{tempo:0.5,lead:'sawtooth',bw:'sine',mvol:0.2,bvol:0.22,bassLen:5.0,
     melody:[440,0,622.25,0, 0,0,587.33,0, 349.23,0,0,0, 329.63,0,0,0,
             440,0,415.30,0, 0,0,349.23,0, 0,0,329.63,0, 0,0,0,0],
-    bass:[110,0,0,0, 0,0,0,0, 87.31,0,0,0, 0,0,0,0, 110,0,0,0, 0,0,0,0, 82.41,0,0,0, 0,0,0,0]}
+    bass:[110,0,0,0, 0,0,0,0, 87.31,0,0,0, 0,0,0,0, 110,0,0,0, 0,0,0,0, 82.41,0,0,0, 0,0,0,0]},
+  /* fast, bouncy, celebratory jig for the Party Room */
+  party:{tempo:0.16,lead:'square',bw:'triangle',mvol:0.19,bvol:0.18,bassLen:1.0,
+    melody:[659.25,783.99,659.25,523.25, 587.33,659.25,587.33,0, 698.46,659.25,587.33,523.25, 587.33,0,523.25,0,
+            783.99,880,783.99,659.25, 698.46,783.99,698.46,0, 880,783.99,659.25,587.33, 523.25,0,0,0],
+    bass:[130.81,0,98,0, 110,0,82.41,0, 87.31,0,65.41,0, 98,0,98,0,
+          130.81,0,98,0, 110,0,82.41,0, 87.31,0,98,0, 130.81,0,0,0]}
 };
 function startMusic(mode){
   if(musicMode===mode)return;
@@ -2522,6 +2536,7 @@ function stopMusic(){
 }
 function updateMusic(){
   if(musicOff||inChapel){ if(musicMode)stopMusic(); return; }
+  if(inParty){ startMusic('party'); return; }
   startMusic(inWild(player.x,player.y)?'wild':'map');
 }
 const sfx={
@@ -2700,7 +2715,7 @@ function setAction(a,tx,ty){
   if(dlg)closeDialogue();
   player.action=a;player.actTick=0;
   if(tx!==undefined){
-    const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray'||a.type==='cook')?'adj':undefined);
+    const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray'||a.type==='cook'||a.type==='partylever'||a.type==='partydrops'||a.type==='popballoon')?'adj':undefined);
     if(!walkTo(tx,ty,mode)){player.action=null;}
   }
 }
@@ -3009,6 +3024,36 @@ function playerTick(){
   else if(a.type==='leavechapel'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     exitChapel();cancelAction();
+  }
+  else if(a.type==='enterparty'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    partyReturn={x:a.o.x,y:a.o.y};enterPartyRoom(a.east);cancelAction();
+  }
+  else if(a.type==='leaveparty'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    partyReturn={x:(a.east?100:94),y:60};exitPartyRoom();cancelAction();
+  }
+  else if(a.type==='talkparty'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;cancelAction();
+    openDialogue({id:'mr_callahan',name:'Mr Callahan',i:0});
+  }
+  else if(a.type==='partylever'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;cancelAction();
+    pullPartyLever();
+  }
+  else if(a.type==='partydrops'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;cancelAction();
+    openPartyDrops();
+  }
+  else if(a.type==='popballoon'){
+    const b=a.b;
+    if(!b||b.pop||!b.grounded||balloons.indexOf(b)<0){cancelAction();return;}
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;cancelAction();
+    if(!b.pop&&b.grounded&&balloons.indexOf(b)>=0)popBalloon(b,true);
   }
   else if(a.type==='cook'){
     const f=a.fire;
@@ -3537,7 +3582,7 @@ function updateOrb(){
 function drawRunBoot(){
   const c=document.getElementById('runboot'); if(!c)return;
   const g=c.getContext('2d'); g.clearRect(0,0,16,16);
-  const on=player.run&&player.stamina>0;
+  const on=player.run&&player.stamina>0&&!inParty;
   g.lineJoin='round'; g.lineWidth=1; g.strokeStyle='#15100a';
   /* side-profile boot, facing right (original art) */
   g.beginPath();
@@ -3554,7 +3599,7 @@ function updateRunOrb(){
   const e=document.getElementById('runorb'); if(!e)return;
   e.textContent=Math.ceil(player.stamina);
   const w=document.getElementById('runorbwrap');
-  if(w)w.classList.toggle('on',!!(player.run&&player.stamina>0));
+  if(w)w.classList.toggle('on',!!(player.run&&player.stamina>0&&!inParty));
   drawRunBoot();
 }
 {const _rw=document.getElementById('runorbwrap');
@@ -3891,8 +3936,34 @@ function chapelEntrance(tx,ty){
   if(tx>=100&&tx<=102&&ty>=98&&ty<=102)return true;  /* east tower door + courtyard */
   return false;
 }
+function partyEntrance(tx,ty){
+  if(tx>=95&&tx<=99&&ty>=57&&ty<=64)return true;     /* Hargate body */
+  if(tx>=100&&tx<=101&&ty>=58&&ty<=62)return true;   /* east door approach */
+  if(tx>=92&&tx<=94&&ty>=58&&ty<=62)return true;     /* west firepit door */
+  return false;
+}
+function partyOptionsAt(tx,ty){
+  const opts=[];
+  const iE={x:140,y:8},iW={x:100,y:8};
+  if(dist1(iE.x,iE.y,tx,ty)<=1||dist1(iW.x,iW.y,tx,ty)<=1){
+    const east=dist1(iE.x,iE.y,tx,ty)<=dist1(iW.x,iW.y,tx,ty);const dr=east?iE:iW;
+    opts.push({html:'Leave <span class="t">Party Room</span>',label:'Leave',fn:()=>setAction({type:'leaveparty',o:dr,east:east},dr.x,dr.y)});
+  }
+  /* lever + drop-scroll are wall fixtures: clickable only via their meshes (partyFixtureHit), not floor tiles */
+  for(const a of partyAgents){
+    if(a.kind!=='host')continue;                 /* students are ambiance only — chat text over heads, no click options */
+    if(dist1(Math.floor(a.g.position.x),Math.floor(a.g.position.z),tx,ty)<=1){
+      const hx=Math.floor(a.g.position.x),hy=Math.floor(a.g.position.z);
+      opts.push({html:'Talk-to <span class="t">Mr Callahan</span>',label:'Talk-to',fn:()=>setAction({type:'talkparty',o:{x:hx,y:hy}},hx,hy)});
+      opts.push({html:'Examine <span class="t">Mr Callahan</span>',fn:()=>msg('The party host, jingling a purse of tokens.')});
+      break;
+    }
+  }
+  return opts;
+}
 function optionsAt(tx,ty){
   const opts=[];
+  if(inParty)return partyOptionsAt(tx,ty);
   /* clicking the great chapel body, either door, or the east courtyard offers Enter */
   if(chapelEntrance(tx,ty)){
     const doors=[{x:89,y:96},{x:100,y:101}];
@@ -3900,6 +3971,12 @@ function optionsAt(tx,ty){
     for(const o of doors)if(dist1(o.x,o.y,tx,ty)<dist1(dr.x,dr.y,tx,ty))dr=o;
     opts.push({html:'Enter <span class="t">Chapel</span>',
       label:'Enter Chapel',fn:()=>setAction({type:'enterchapel',o:dr},dr.x,dr.y)});
+  }
+  if(!inParty&&partyEntrance(tx,ty)){
+    const dE={x:100,y:60},dW={x:94,y:60};
+    const east=dist1(dE.x,dE.y,tx,ty)<=dist1(dW.x,dW.y,tx,ty);const dr=east?dE:dW;
+    opts.push({html:'Enter <span class="t">Party Room</span>',
+      label:'Enter Party Room',fn:()=>setAction({type:'enterparty',o:dr,east:east},dr.x,dr.y)});
   }
   const rat=rats.find(r=>r.alive&&r.x===tx&&r.y===ty);
   if(rat)opts.push({html:'Attack <span class="t">'+rat.name+'</span>'+
@@ -6026,6 +6103,7 @@ function buildObjModel(o){
 
   const gy=groundH(o.x+0.5,o.y+0.5);
   g.position.set(o.x+0.5,def==='spot'?0:gy,o.y+0.5);
+  g.userData.o=o;
   scene.add(g);
 }
 objects.forEach(buildObjModel);
@@ -9263,7 +9341,7 @@ function castPick(ev){
   _ndc.x=((ev.clientX-r.left)/r.width)*2-1;
   _ndc.y=-((ev.clientY-r.top)/r.height)*2+1;
   _rc.setFromCamera(_ndc,camera);
-  const hits=_rc.intersectObjects(inChapel?chapelProxies:proxies,false).filter(h=>{
+  const hits=_rc.intersectObjects(inParty?[]:(inChapel?chapelProxies:proxies),false).filter(h=>{
     const d=h.object.userData;
     if(d.kind==='rat')return d.r.alive;
     if(d.kind==='item')return ground.some(gi=>gi.uid===d.uid);
@@ -9340,6 +9418,10 @@ function hoverHTML(opts){
   return '<span class="act">Walk here</span>';
 }
 view.addEventListener('mousemove',ev=>{
+  if(inParty){const _fx=partyFixtureHit(ev.clientX,ev.clientY);
+    if(_fx){hoverEl.innerHTML=hoverHTML([{html:_fx.html,label:_fx.label}]);view.style.cursor='pointer';return;}
+    const _b=balloonAt(ev.clientX,ev.clientY);
+    if(_b){hoverEl.innerHTML=hoverHTML([{html:'Pop <span class="t">balloon</span>',label:'Pop balloon'}]);view.style.cursor='pointer';return;}}
   const p=castPick(ev);
   if(!p){hoverEl.innerHTML='';return;}
   const opts=optionsAt(p.tx,p.ty);
@@ -9354,6 +9436,11 @@ function walkHere(p){
 view.addEventListener('click',ev=>{
   if(performance.now()-lastTouch<700)return;
   audio();
+  if(inParty){
+    if(clickBalloon(ev.clientX,ev.clientY))return;
+    const _fx=partyFixtureHit(ev.clientX,ev.clientY);
+    if(_fx){_fx.fn();return;}
+  }
   const p=castPick(ev);if(!p)return;
   const opts=optionsAt(p.tx,p.ty);
   if(opts.length&&opts[0].fn)opts[0].fn();
@@ -9361,6 +9448,8 @@ view.addEventListener('click',ev=>{
 });
 view.addEventListener('contextmenu',ev=>{
   ev.preventDefault();audio();
+  if(inParty){const _fx=partyFixtureHit(ev.clientX,ev.clientY);
+    if(_fx){showMenu(ev.clientX,ev.clientY,[{html:_fx.html,label:_fx.label,fn:_fx.fn}]);return;}}
   const p=castPick(ev);if(!p)return;
   const opts=optionsAt(p.tx,p.ty).slice();
   opts.push({label:'Walk here',fn:()=>walkHere(p)});
@@ -9379,11 +9468,13 @@ view.addEventListener('touchstart',e=>{
         lastTouch=performance.now();
         _swallowClick=true;setTimeout(()=>{_swallowClick=false;},900);
         const p=castPick({clientX:touchA.x,clientY:touchA.y});
+        let _fxo=[];
+        if(inParty){const _fx=partyFixtureHit(touchA.x,touchA.y);if(_fx)_fxo.push({html:_fx.html,label:_fx.label,fn:_fx.fn});}
         if(p){
-          const opts=optionsAt(p.tx,p.ty).slice();
+          const opts=_fxo.concat(optionsAt(p.tx,p.ty).slice());
           opts.push({label:'Walk here',fn:()=>walkHere(p)});
           showMenu(touchA.x,touchA.y,opts);
-        }
+        }else if(_fxo.length){showMenu(touchA.x,touchA.y,_fxo);}
         touchA=null;
       }
     },550);
@@ -9419,6 +9510,8 @@ view.addEventListener('touchend',e=>{
   clearTimeout(touchTimer);
   if(touchA&&!touchA.moved){
     lastTouch=performance.now();
+    if(inParty&&clickBalloon(touchA.x,touchA.y))return;
+    if(inParty){const _fx=partyFixtureHit(touchA.x,touchA.y);if(_fx){audio();_fx.fn();return;}}
     const p=castPick({clientX:touchA.x,clientY:touchA.y});
     if(p){
       audio();
@@ -9588,8 +9681,571 @@ miniBaseChapel.width=W*4;miniBaseChapel.height=H*4;
   }
   g.fillStyle='#9a4636';
   for(let x=103;x<=139;x++)for(let y=7;y<=9;y++)g.fillRect(x*4,y*4,4,4);
-  g.fillStyle='#c9a23a';g.fillRect(103*4,8*4,8,8);
+    g.fillStyle='#c9a23a';g.fillRect(103*4,8*4,8,8);
 })();
+/* ===================== Hargate Party Room (interior) ===================== */
+/* reuses the already-flattened deep-north dead zone (x100-140 / y1-15); its own black minimap */
+let inParty=false; let partyReturn={x:96,y:60};
+const PARTY_DOOR_E={x:140,y:8}, PARTY_DOOR_W={x:100,y:8};
+const partyTiles=TILES_MAIN.map(r=>r.slice());
+(function(){
+  for(let y=1;y<=15;y++)for(let x=100;x<=140;x++)
+    partyTiles[y][x]=(x===100||x===140||y===1||y===15)?T_WALL:T_FLOOR;
+  partyTiles[8][100]=T_FLOOR; partyTiles[8][140]=T_FLOOR;   /* west + east doorways */
+  for(let y=7;y<=8;y++)for(let x=113;x<=128;x++)partyTiles[y][x]=T_WALL;   /* banquet table collision */
+})();
+const partyGroup=new THREE.Group();partyGroup.visible=false;scene.add(partyGroup);
+const partyKnights=[]; let partyFireT=0; let partyCrackle=0; let partyFixtures=[];
+(function buildPartyRoom(){
+  const FY=groundH(120,8);
+  /* checkered white/blue floor */
+  for(let gy=2;gy<=14;gy++)for(let gx=101;gx<=139;gx++){
+    const t=mesh(new THREE.BoxGeometry(1,0.05,1),((gx+gy)&1)?0xe6e8f0:0x33518f,false);
+    t.position.set(gx+0.5,FY+0.03,gy+0.5);partyGroup.add(t);
+  }
+  const WH=3.4,WC=0x6f665a,TRIM=0x4a4036;
+  const wall=(x,z,w,d,h,c)=>{const m=gmesh(new THREE.BoxGeometry(w,h||WH,d),c||WC);m.position.set(x,FY+(h||WH)/2,z);partyGroup.add(m);return m;};
+  /* perimeter walls with door gaps east & west at z=8 */
+  wall(120.5,1.5,41,0.6);                         /* north */
+  wall(120.5,15.5,41,0.6);                        /* south */
+  wall(100.5,5,0.6,7);wall(100.5,12,0.6,7);     /* west (gap at z8) */
+  wall(140.5,5,0.6,7);wall(140.5,12,0.6,7);     /* east (gap at z8) */
+  /* dark wainscot band */
+  wall(120.5,1.75,41,0.4,1.1,TRIM);wall(120.5,15.25,41,0.4,1.1,TRIM);
+  /* ---- grand fireplace on the north wall ---- */
+  const hx=120.5;
+  wall(hx,1.9,7,0.8,3.0,0x5b5249);                /* stone surround */
+  const hearth=mesh(new THREE.BoxGeometry(5.2,2.0,0.7),0x2a2622,false);hearth.position.set(hx,FY+1.0,2.0);partyGroup.add(hearth); /* dark firebox */
+  const mantel=gmesh(new THREE.BoxGeometry(7.6,0.4,1.1),0x7c6a4c);mantel.position.set(hx,FY+2.5,2.1);partyGroup.add(mantel);
+  for(const lx of[-0.7,0,0.7]){const log=mesh(new THREE.CylinderGeometry(0.16,0.18,1.4,6),0x3a2414,false);log.rotation.z=Math.PI/2;log.position.set(hx+lx,FY+0.35,2.05);partyGroup.add(log);}
+  const flames=[],flameBaseY=[];
+  for(let i=0;i<5;i++){const f=mesh(new THREE.ConeGeometry(0.12-i*0.012,0.32+(i%2)*0.16,5),i&1?0xff7b1e:0xffd23a,false);
+    f.position.set(hx-0.5+i*0.25,FY+0.5,2.05);partyGroup.add(f);flames.push(f);flameBaseY.push(FY+0.5);}
+  partyGroup.userData.flames=flames;partyGroup.userData.flameBaseY=flameBaseY;
+  const fglow=new THREE.Mesh(new THREE.PlaneGeometry(1.6,0.95),new THREE.MeshBasicMaterial({color:0xff7b1e,transparent:true,opacity:0.16,depthWrite:false,blending:THREE.AdditiveBlending}));
+  fglow.position.set(hx,FY+0.7,2.32);partyGroup.userData.fireGlow=fglow;partyGroup.add(fglow);
+  const embers=[];
+  for(let i=0;i<3;i++){const e=mesh(new THREE.SphereGeometry(0.045,5,4),0xffb347,false);e.position.set(hx-0.4+i*0.4,FY+0.42,2.05);partyGroup.add(e);embers.push(e);}
+  partyGroup.userData.fireEmbers=embers;
+  /* ---- ornate banquet table down the centre with dancing knights ---- */
+  const tcx=120.5,tcz=8,TY=FY+0.78;
+  const top=gmesh(new THREE.BoxGeometry(16,0.18,2.0),0x6e4a26);top.position.set(tcx,TY,tcz);partyGroup.add(top);
+  const cloth=mesh(new THREE.BoxGeometry(16.4,0.34,2.3),0xb13a3a,false);cloth.position.set(tcx,TY-0.18,tcz);partyGroup.add(cloth);
+  for(const lx of[-7,7])for(const lz of[-1,1]){const leg=gmesh(new THREE.BoxGeometry(0.28,0.78,0.28),0x4a3018);leg.position.set(tcx+lx,FY+0.39,tcz+lz*0.8);partyGroup.add(leg);}
+  /* candelabra */
+  for(const cxo of[-5,0,5]){const st=gmesh(new THREE.CylinderGeometry(0.05,0.07,0.42,6),0xd8b24a);st.position.set(tcx+cxo,TY+0.34,tcz);partyGroup.add(st);
+    const fl=mesh(new THREE.ConeGeometry(0.06,0.18,5),0xffd23a,false);fl.position.set(tcx+cxo,TY+0.66,tcz);partyGroup.add(fl);}
+  /* dancing knights on the table */
+  function knight(x){
+    const g=new THREE.Group();
+    const STEEL=0xb8bcc4,ARMC=0x9aa0a8,DARK=0x6c7178;
+    const legL=new THREE.Group();{const l=gmesh(new THREE.CylinderGeometry(0.075,0.06,0.4,6),DARK);l.position.y=-0.2;legL.add(l);const bt=gmesh(new THREE.BoxGeometry(0.13,0.07,0.2),0x36383d);bt.position.set(0,-0.37,0.03);legL.add(bt);}legL.position.set(-0.1,0.4,0);g.add(legL);
+    const legR=new THREE.Group();{const l=gmesh(new THREE.CylinderGeometry(0.075,0.06,0.4,6),DARK);l.position.y=-0.2;legR.add(l);const bt=gmesh(new THREE.BoxGeometry(0.13,0.07,0.2),0x36383d);bt.position.set(0,-0.37,0.03);legR.add(bt);}legR.position.set(0.1,0.4,0);g.add(legR);
+    const torso=new THREE.Group();
+    {const chest=gmesh(new THREE.CylinderGeometry(0.19,0.23,0.46,8),STEEL);torso.add(chest);
+     const tab=mesh(new THREE.BoxGeometry(0.26,0.34,0.04),0xb01f2c,false);tab.position.set(0,-0.02,0.2);torso.add(tab);
+     const belt=mesh(new THREE.CylinderGeometry(0.235,0.235,0.07,8),0x5a3c1e,false);belt.position.y=-0.22;torso.add(belt);}
+    torso.position.y=0.64;g.add(torso);
+    for(const sd of[-1,1]){const pa=gmesh(new THREE.SphereGeometry(0.1,8,7),ARMC);pa.position.set(sd*0.23,0.86,0);g.add(pa);}
+    const armL=new THREE.Group();{const a=gmesh(new THREE.CylinderGeometry(0.055,0.05,0.46,6),STEEL);a.position.y=-0.23;armL.add(a);const gl=gmesh(new THREE.SphereGeometry(0.065,6,5),ARMC);gl.position.y=-0.47;armL.add(gl);}armL.position.set(-0.23,0.86,0);g.add(armL);
+    const armR=new THREE.Group();{const a=gmesh(new THREE.CylinderGeometry(0.055,0.05,0.46,6),STEEL);a.position.y=-0.23;armR.add(a);const gl=gmesh(new THREE.SphereGeometry(0.065,6,5),ARMC);gl.position.y=-0.47;armR.add(gl);}armR.position.set(0.23,0.86,0);g.add(armR);
+    const head=gmesh(new THREE.SphereGeometry(0.13,8,7),0xd8d2c2);head.position.y=1.0;g.add(head);
+    const helm=gmesh(new THREE.CylinderGeometry(0.155,0.155,0.15,8),STEEL);helm.position.y=1.06;g.add(helm);
+    const visor=mesh(new THREE.BoxGeometry(0.28,0.045,0.05),0x26282c,false);visor.position.set(0,1.02,0.14);g.add(visor);
+    const plume=mesh(new THREE.ConeGeometry(0.055,0.26,5),0xcf2f2f,false);plume.position.y=1.28;g.add(plume);
+    g.position.set(x,TY+0.09,tcz);g.scale.set(0.82,0.82,0.82);partyGroup.add(g);
+    partyKnights.push({g,torso,armL,armR,legL,legR,ph:Math.random()*6.28,dance:rndi(0,3),x,baseY:TY+0.09});
+  }
+  knight(tcx-6);knight(tcx-3.5);knight(tcx-1.2);knight(tcx+1.2);knight(tcx+3.5);knight(tcx+6);
+  /* banners flanking the fireplace */
+  /* St Paul's crest banners are hung by buildPartyBanners() */
+  /* the lever on the south wall */
+  const base=gmesh(new THREE.BoxGeometry(0.5,0.8,0.3),0x3a3a40);base.position.set(112.5,FY+1.0,14.7);partyGroup.add(base);
+  const handle=mesh(new THREE.CylinderGeometry(0.05,0.05,0.8,6),0xcf2f2f,false);handle.position.set(112.5,FY+1.5,14.5);handle.rotation.x=-0.5;partyGroup.add(handle);
+  const knob=mesh(new THREE.SphereGeometry(0.12,8,6),0xd8b24a,false);knob.position.set(112.5,FY+1.85,14.32);partyGroup.add(knob);
+  partyGroup.userData.leverHandle=handle;
+  const leverHit=new THREE.Mesh(new THREE.BoxGeometry(0.9,1.9,0.6),new THREE.MeshBasicMaterial({visible:false}));leverHit.position.set(112.5,FY+1.35,14.5);partyGroup.add(leverHit);
+  partyFixtures.push({meshes:[base,handle,knob,leverHit],html:'Pull <span class="t">Party lever</span>',label:'Pull lever',fn:()=>setAction({type:'partylever',o:{x:112,y:14}},112,14)});
+  /* drop-table scroll on the south wall, right beside the lever */
+  (function(){
+    const c=document.createElement('canvas');c.width=128;c.height=168;const g=c.getContext('2d');
+    g.fillStyle='#e9dcae';g.fillRect(0,0,128,168);
+    g.fillStyle='#5a3c1e';g.textAlign='center';g.font='bold 15px Georgia';g.fillText('BALLOON',64,22);g.fillText('DROPS',64,40);
+    g.strokeStyle='#b9a877';g.lineWidth=2;for(let i=0;i<7;i++){g.beginPath();g.moveTo(16,58+i*14);g.lineTo(112,58+i*14);g.stroke();}
+    const tex=new THREE.CanvasTexture(c);
+    const scr=new THREE.Group();
+    const sheet=new THREE.Mesh(new THREE.PlaneGeometry(0.78,1.02),new THREE.MeshBasicMaterial({map:tex,side:THREE.DoubleSide}));scr.add(sheet);
+    const hit=new THREE.Mesh(new THREE.BoxGeometry(1.45,1.75,0.4),new THREE.MeshBasicMaterial({visible:false}));hit.position.z=0.1;scr.add(hit);
+    for(const ry of[0.52,-0.52]){const rl=mesh(new THREE.CylinderGeometry(0.045,0.045,0.9,8),0x7a5a2e,false);rl.rotation.z=Math.PI/2;rl.position.y=ry;scr.add(rl);}
+    scr.position.set(110,FY+2.3,15.13);scr.rotation.y=Math.PI;partyGroup.add(scr);
+    partyFixtures.push({meshes:[sheet,hit],html:'Read <span class="t">drop scroll</span>',label:'Read drop scroll',fn:()=>setAction({type:'partydrops',o:{x:110,y:14}},110,14)});
+  })();
+  /* bank chest beside Mr Callahan */
+  (function(){
+    const ccx=117.5, ccz=13.5;
+    const chest=new THREE.Group();
+    const cbase=gmesh(new THREE.BoxGeometry(1.05,0.6,0.7),0x5b3a1c);cbase.position.y=0.3;chest.add(cbase);
+    const clid=gmesh(new THREE.BoxGeometry(1.1,0.26,0.74),0x6e4a24);clid.position.y=0.74;chest.add(clid);
+    for(const bx of[-0.36,0.36]){const band=gmesh(new THREE.BoxGeometry(0.08,0.95,0.78),0xd8b24a);band.position.set(bx,0.46,0);chest.add(band);}
+    const lock=gmesh(new THREE.BoxGeometry(0.18,0.22,0.06),0xe9c44a);lock.position.set(0,0.56,0.39);chest.add(lock);
+    chest.position.set(ccx,FY,ccz);chest.rotation.y=Math.PI;partyGroup.add(chest);
+    const chestHit=new THREE.Mesh(new THREE.BoxGeometry(1.35,1.4,1.05),new THREE.MeshBasicMaterial({visible:false}));chestHit.position.set(ccx,FY+0.6,ccz);partyGroup.add(chestHit);
+    const bo={x:117,y:13};
+    partyFixtures.push({meshes:[chest,chestHit],html:'Use <span class="t">Bank chest</span>',label:'Bank',fn:()=>setAction({type:'bank',o:bo},bo.x,bo.y)});
+  })();
+  /* clickable doors at the east & west wall gaps */
+  for(const dz of[PARTY_DOOR_W,PARTY_DOOR_E]){const fx=dz.x===100?100.5:140.5;const east=dz.x!==100;
+    const face=east?fx-0.3:fx+0.3;                 /* inner (room-facing) wall surface */
+    const leaf=gmesh(new THREE.BoxGeometry(0.1,2.46,1.96),0x6a4622);leaf.position.set(face,FY+1.25,dz.y);partyGroup.add(leaf);
+    const plank=gmesh(new THREE.BoxGeometry(0.12,2.46,0.08),0x593a1c);plank.position.set(face+(east?-0.02:0.02),FY+1.25,dz.y);partyGroup.add(plank);
+    const lintel=gmesh(new THREE.BoxGeometry(0.16,0.18,2.3),0x4a3018);lintel.position.set(face,FY+2.55,dz.y);partyGroup.add(lintel);
+    for(const zz of[-1.08,1.08]){const jamb=gmesh(new THREE.BoxGeometry(0.16,2.74,0.18),0x4a3018);jamb.position.set(face,FY+1.37,dz.y+zz);partyGroup.add(jamb);}
+    const doorHit=new THREE.Mesh(new THREE.BoxGeometry(0.5,2.7,2.25),new THREE.MeshBasicMaterial({visible:false}));doorHit.position.set(face+(east?-0.2:0.2),FY+1.3,dz.y);partyGroup.add(doorHit);
+    const ring=mesh(new THREE.TorusGeometry(0.085,0.025,6,10),0xd8b24a,false);ring.position.set(face+(east?-0.07:0.07),FY+1.2,dz.y+0.5);ring.rotation.y=Math.PI/2;partyGroup.add(ring);
+    const dr={x:east?140:100,y:8};
+    partyFixtures.push({meshes:[leaf,lintel,doorHit],html:'Leave <span class="t">Party Room</span>',label:'Leave',fn:()=>setAction({type:'leaveparty',o:dr,east:east},dr.x,dr.y)});}
+})();
+/* dedicated all-black minimap showing only the room */
+const miniBaseParty=document.createElement('canvas');miniBaseParty.width=W*4;miniBaseParty.height=H*4;
+(function(){const g=miniBaseParty.getContext('2d');g.fillStyle='#000';g.fillRect(0,0,W*4,H*4);
+  for(let y=1;y<=15;y++)for(let x=100;x<=140;x++){const t=partyTiles[y][x];
+    let c=t===T_FLOOR?(((x+y)&1)?'#cdd2e0':'#33518f'):t===T_WALL?'#6f665a':null;
+    if(c){g.fillStyle=c;g.fillRect(x*4,y*4,4,4);}}
+  g.fillStyle='#cf2f2f';g.fillRect(112*4,14*4,4,4);          /* lever */
+  g.fillStyle='#ff8a1e';for(let x=118;x<=123;x++)g.fillRect(x*4,1*4,4,4); /* fire */
+})();
+function enterPartyRoom(fromEast){
+  inParty=true;tiles=partyTiles;worldGroup.visible=false;partyGroup.visible=true;
+  const sx=fromEast?138:102; player.x=sx;player.y=8;player.px=sx;player.py=8;
+  player.path.length=0;cancelAction();
+  scene.fog.near=44;scene.fog.far=120;
+  msg('You slip into the party room. Balloons, banners and the warmth of a great fire.','#b04a9e');
+  updateMusic();updateRunOrb();
+}
+function exitPartyRoom(){
+  inParty=false;tiles=TILES_MAIN;worldGroup.visible=true;partyGroup.visible=false;
+  updateRunOrb();
+  if(partyActive){partyActive=false;partyGameMs=0;const _lv=partyGroup.userData.leverHandle;if(_lv)_lv.rotation.x=-0.5;}
+  if(partyTimerEl)partyTimerEl.style.display='none';
+  for(const _b of balloons)partyGroup.remove(_b.g);balloons=[];
+  player.x=partyReturn.x;player.y=partyReturn.y;player.px=partyReturn.x;player.py=partyReturn.y;
+  player.path.length=0;cancelAction();
+  scene.fog.near=30;scene.fog.far=52;updateMusic();
+  msg('You step back out of Hargate.');
+}
+/* ===================== Party Room mechanics (Phase 2) ===================== */
+ITEMS.party_token={name:'Party token',ex:'Admits you to one round in the Party Room \u2014 heave the lever to begin the rain of balloons.',val:30000,cat:'Misc',noSell:true,stack:true,model:'token'};
+function partyTakeOne(id){for(let i=0;i<player.inv.length;i++){const sl=player.inv[i];if(sl&&sl.id===id){if((sl.qty||1)>1)sl.qty--;else player.inv[i]=null;renderInv();return true;}}return false;}
+function partyHas(id){return player.inv.some(sl=>sl&&sl.id===id);}
+const ppick=a=>a[rndi(0,a.length-1)];
+
+const partyAgents=[]; let partyAgentsBuilt=false;
+function mkPartyAgent(name,kind,col,hat){
+  const g=new THREE.Group();
+  const SKIN=0xe7b98e, HIP=0.82;
+  const mkLeg=(sx)=>{const lg=new THREE.Group();
+    const sh=gmesh(new THREE.CylinderGeometry(0.085,0.07,0.78,6),0x33405c);sh.position.y=-0.39;lg.add(sh);
+    const ft=gmesh(new THREE.BoxGeometry(0.16,0.09,0.26),0x2b2b30);ft.position.set(0,-0.79,0.06);lg.add(ft);
+    lg.position.set(sx,HIP,0);g.add(lg);return lg;};
+  const legL=mkLeg(-0.12), legR=mkLeg(0.12);
+  const torso=gmesh(new THREE.CylinderGeometry(0.2,0.27,0.6,8),col);torso.position.y=HIP+0.3;g.add(torso);
+  const head=gmesh(new THREE.SphereGeometry(0.19,9,8),SKIN);head.position.y=HIP+0.74;g.add(head);
+  const hair=gmesh(new THREE.SphereGeometry(0.2,9,7),0x3a2a1a);hair.scale.y=0.6;hair.position.y=HIP+0.84;g.add(hair);
+  const arms=[];
+  for(const sd of[-1,1]){const arm=new THREE.Group();
+    const up=gmesh(new THREE.CylinderGeometry(0.06,0.052,0.5,6),col);up.position.y=-0.25;arm.add(up);
+    const hand=gmesh(new THREE.SphereGeometry(0.058,6,5),SKIN);hand.position.y=-0.52;arm.add(hand);
+    arm.position.set(sd*0.27,HIP+0.5,0);g.add(arm);arms.push(arm);}
+  if(hat){const h=gmesh(new THREE.CylinderGeometry(0.2,0.22,0.14,12),hat);h.position.y=HIP+0.92;g.add(h);
+    const br=gmesh(new THREE.CylinderGeometry(0.29,0.29,0.04,12),hat);br.position.y=HIP+0.85;g.add(br);}
+  partyGroup.add(g);
+  return {g,name,kind,arms,legL,legR,armT:rnd(0,6.28),popAnim:0,walk:0,bestD:999,noProgT:0};
+}
+function buildPartyAgents(){
+  if(partyAgentsBuilt)return;partyAgentsBuilt=true;
+  const FY=groundH(120,8);
+  const host=mkPartyAgent('Mr Callahan','host',0x26345e,0x14203c);
+  host.x=115;host.y=13;host.g.position.set(115.5,FY,13.5);host.g.rotation.y=Math.PI;partyAgents.push(host);
+  partyFixtures.push({meshes:[host.g],html:'Talk-to <span class="t">Mr Callahan</span>',label:'Talk-to',fn:()=>setAction({type:'talkparty',o:{x:115,y:13}},115,13)});
+  const sc=[0x9a4040,0x3f6f93,0x4f8f4f,0x927d3a,0x6f3f93,0x3f938a];
+  const names=['Aldous','Briar','Cleo','Dax','Elspeth','Fitch'];
+  for(let i=0;i<6;i++){const a=mkPartyAgent(names[i],'student',sc[i%sc.length],0);
+    let x,y,_n=0;do{x=104+rndi(0,32);y=4+rndi(0,8);}while(partyBlocked(x+0.5,y+0.5)&&++_n<12);
+    a.x=x;a.y=y;a.tx=x;a.ty=y;a.spd=rnd(1.4,2.2);a.popCd=rnd(0.4,2.2);
+    a.g.position.set(x+0.5,FY,y+0.5);partyAgents.push(a);}
+}
+
+let balloons=[]; let partyActive=false; let partyGameMs=0; let partyPops=0;
+const PARTY_CAP=24, PARTY_LEN=75000, REAL_TARGET=22, FAKE_TARGET=14;
+let PARTY_FREE=false;  /* party rounds cost one Party token (bought from Mr Callahan) */
+const partyTimerEl=document.getElementById('partytimer');
+const BCOL=[0xd0312d,0xf2c40e,0x2f5fd0,0x2f9e44,0xeef0f2,0x9c36b5,0xff7ab0,0xff9a3a];
+const FCOL=[0xb9aec6,0xaebfc9,0xb9c9b0,0xc9c2ae,0xc9aeb9,0xaec3c9];
+function fireFx(){
+  const hx=120.5, FY=groundH(120,8), hz=2.05, T=performance.now();
+  const cols=['#ff4d14','#ff6a1e','#ff8a26','#ffb33a'];
+  if(Math.random()<0.85){const fx=hx-0.5+rnd(0,1.0);
+    parts.push({wx:fx,wy:FY+0.46+rnd(0,0.12),wz:hz,vx:rnd(-0.09,0.09),vy:-rnd(0.9,1.6),t:T,
+      life:260+rnd(0,170),smoke:true,r0:2.4+rnd(0,1.8),grow:-3,a0:0.6,col:cols[rndi(0,cols.length-1)]});}
+  if(Math.random()<0.5){const fx=hx-0.4+rnd(0,0.8);
+    parts.push({wx:fx,wy:FY+0.44,wz:hz,vx:rnd(-0.05,0.05),vy:-rnd(1.2,1.9),t:T,
+      life:230+rnd(0,130),smoke:true,r0:1.5+rnd(0,1.3),grow:-2,a0:0.55,col:'#ffd23a'});}
+  if(Math.random()<0.1){const fx=hx-0.35+rnd(0,0.7);
+    parts.push({wx:fx,wy:FY+0.6,wz:hz,vx:rnd(-0.25,0.25),vy:-rnd(1.7,2.6),t:T,life:360+rnd(0,180),col:'#ffe79a'});}
+  if(Math.random()<0.07){
+    parts.push({wx:hx-0.2+rnd(0,0.4),wy:FY+1.1,wz:hz,vx:rnd(-0.1,0.1),vy:-rnd(0.6,1.0),t:T,
+      life:1300,smoke:true,r0:5,grow:14,a0:0.1,col:'#5a544c'});}
+}
+function partyBlocked(x,z){return x>111.6&&x<129.4&&z>6.5&&z<9.5;}  /* banquet table footprint */
+function segClear(ax,az,bx,bz){for(let t=0.04;t<1;t+=0.04){if(partyBlocked(ax+(bx-ax)*t,az+(bz-az)*t))return false;}return true;}
+function routeTo(ax,az,bx,bz){
+  if(segClear(ax,az,bx,bz))return [[bx,bz]];
+  const C=[[110.9,5.8],[130.1,5.8],[130.1,10.2],[110.9,10.2]];          /* table corners w/ margin */
+  const D=(px,pz,qx,qz)=>Math.hypot(px-qx,pz-qz);
+  let best=null,bl=1e9;
+  for(const c of C)if(segClear(ax,az,c[0],c[1])&&segClear(c[0],c[1],bx,bz)){
+    const L=D(ax,az,c[0],c[1])+D(c[0],c[1],bx,bz);if(L<bl){bl=L;best=[c,[bx,bz]];}}
+  for(let i=0;i<4;i++)for(const pr of [[i,(i+1)%4],[(i+1)%4,i]]){const c1=C[pr[0]],c2=C[pr[1]];
+    if(segClear(ax,az,c1[0],c1[1])&&segClear(c2[0],c2[1],bx,bz)){
+      const L=D(ax,az,c1[0],c1[1])+D(c1[0],c1[1],c2[0],c2[1])+D(c2[0],c2[1],bx,bz);
+      if(L<bl){bl=L;best=[c1,c2,[bx,bz]];}}}
+  return best||[[bx,bz]];
+}
+function spawnBalloon(){
+  const FY=groundH(120,8);
+  let x=103+rnd(0,34), z=3+rnd(0,9.5);
+  for(let _t=0;_t<6&&partyBlocked(x,z);_t++){x=103+rnd(0,34);z=3+rnd(0,9.5);}
+  const col=BCOL[rndi(0,BCOL.length-1)];
+  const g=new THREE.Group();
+  const ball=mesh(new THREE.SphereGeometry(0.34,10,9),col,false);ball.scale.y=1.22;g.add(ball);
+  const knot=mesh(new THREE.ConeGeometry(0.09,0.14,6),col,false);knot.position.y=-0.42;knot.rotation.x=Math.PI;g.add(knot);
+  g.position.set(x,FY+6.0+rnd(0,2.4),z);partyGroup.add(g);
+  balloons.push({g,ball,x,z,restY:FY+0.46,vy:-(1.0+rnd(0,0.7)),col,pop:false,bob:rnd(0,6.28),grounded:false});
+}
+function partyFakeFind(){
+  const picks=['a Dragon scimitar','a Rune platebody','a purple party hat','an Adamant kiteshield','a Santa hat','a Rune full helm','a Dragon kiteshield','a pile of coins'];
+  return picks[rndi(0,picks.length-1)];
+}
+const PARTY_LOOT=[
+ {p:0.0003, big:1, special:'cos', label:'Party hat / Santa hat', icon:'party_hat_purple'},
+ {p:0.0020, big:1, pool:['dragon_platebody','dragon_platelegs','dragon_full_helm','dragon_scimitar','dragon_kiteshield'], label:'Dragon armour & weapons', icon:'dragon_scimitar'},
+ {p:0.0060, pool:['rune_platebody','rune_kiteshield','rune_scimitar','rune_full_helm'], label:'Rune gear', icon:'rune_platebody'},
+ {p:0.0300, pool:['adamant_platebody','adamant_full_helm','mithril_platelegs','mithril_scimitar','steel_full_helm'], label:'Adamant & mithril gear', icon:'adamant_platebody'},
+ {p:0.0500, pool:['uncut_sapphire','uncut_emerald','uncut_ruby','uncut_diamond'], label:'Uncut gems', icon:'uncut_ruby'},
+ {p:0.0500, coins:[900,2600], label:'Coins (900\u20132,600)', icon:'coins'},
+ {p:0.1700, coins:[160,650], label:'Coins (160\u2013650)', icon:'coins'},
+ {p:0.2500, coins:[15,140], label:'Coins (15\u2013140)', icon:'coins'},
+ {p:0.0500, empty:1, label:'Nothing', icon:''},
+ {p:0.1300, pool:['shrimps','trout','sardine','lobster'], qty:[1,3], label:'Food', icon:'lobster'},
+ {p:0.1200, pool:['copper_ore','tin_ore','iron_ore','oak_logs','willow_logs','birch_logs'], qty:[1,4], label:'Ores & logs', icon:'iron_ore'},
+ {p:0.1417, pool:['air_rune','earth_rune','fire_rune','water_rune','iron_bar','steel_bar'], qty:[3,12], label:'Runes & bars', icon:'fire_rune'},
+];
+function rollBalloonLoot(){
+  let r=Math.random();
+  for(const t of PARTY_LOOT){
+    if(r<t.p){
+      if(t.special==='cos'){if(Math.random()<0.10)return{id:'santa_hat',qty:1,big:1};
+        return{id:'party_hat_'+ppick(['red','yellow','blue','green','white','purple']),qty:1,big:1};}
+      if(t.empty)return{id:'',qty:0};
+      if(t.coins)return{id:'coins',qty:rndi(t.coins[0],t.coins[1])};
+      return{id:ppick(t.pool),qty:t.qty?rndi(t.qty[0],t.qty[1]):1,big:t.big};
+    }
+    r-=t.p;
+  }
+  return{id:'coins',qty:rndi(15,140)};
+}
+function balloonPop(wx,wy,wz,col){
+  const T=performance.now();
+  parts.push({wx,wy,wz,vx:0,vy:0,t:T,life:200,smoke:true,r0:7,grow:95,a0:0.55,col:'#ffffff'}); /* pop flash */
+  parts.push({wx,wy,wz,vx:0,vy:0,t:T,life:300,smoke:true,r0:6,grow:72,a0:0.5,col});            /* colour halo */
+  for(let k=0;k<16;k++){const a=(k/16)*Math.PI*2+rnd(-0.2,0.2),sp=rnd(2.2,4.8);                 /* rubber shards */
+    parts.push({wx,wy,wz,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp*0.5-rnd(0.4,1.8),t:T,life:520+rnd(0,260),col});}
+  const conf=['#ff4d6d','#ffd23a','#3a9bff','#52d273','#b06bff','#ff9a3a'];
+  for(let k=0;k<7;k++){const a=rnd(0,6.28);                                                      /* confetti */
+    parts.push({wx,wy:wy+0.1,wz,vx:Math.cos(a)*rnd(1.0,2.6),vy:-rnd(1.6,3.6),t:T,life:950+rnd(0,500),col:conf[rndi(0,conf.length-1)]});}
+}
+function popBalloon(b,byPlayer,agent){
+  if(b.pop)return;b.pop=true;
+  balloonPop(b.g.position.x,b.g.position.y,b.g.position.z,'#'+(b.col>>>0).toString(16).padStart(6,'0'));
+  partyGroup.remove(b.g);
+  tone(1200+rnd(0,300),300,0.06,'square',0.05); tone(150,70,0.05,'sine',0.045);
+  if(!byPlayer){ if(agent)partySay(agent,'Ooh, '+partyFakeFind()+'!',2200); return; }
+  partyPops++;
+  const lt=rollBalloonLoot();
+  if(!lt.id){msg('You pop a balloon \u2014 empty.');return;}
+  if(lt.id==='coins'){addItem('coins',lt.qty);msg('You pop a balloon: '+fmt(lt.qty)+' coins.');return;}
+  if(lt.qty>1&&!ITEMS[lt.id].stack){
+    if(!addNote(lt.id,lt.qty)){msg('Your inventory is full!','#d0312d');return;}
+    msg('\ud83c\udf88 You pop a balloon: '+lt.qty+' \u00d7 '+ITEMS[lt.id].name+' (banknote)!','#ff5bbf');return;
+  }
+  if(!addItem(lt.id,lt.qty)){msg('Your inventory is full!','#d0312d');return;}
+  if(lt.big){msg('\ud83c\udf88 A '+ITEMS[lt.id].name+' drifts out of the balloon!','#ff5bbf');sfx.coins&&sfx.coins();}
+  else msg('You pop a balloon: '+(lt.qty>1?lt.qty+' \u00d7 ':'')+ITEMS[lt.id].name+'.');
+}
+function partyFixtureHit(cx,cy){
+  if(!inParty||!partyFixtures.length)return null;
+  const r=view.getBoundingClientRect();if(r.width<2)return null;
+  _ndc.x=((cx-r.left)/r.width)*2-1;_ndc.y=-((cy-r.top)/r.height)*2+1;
+  _rc.setFromCamera(_ndc,camera);
+  let best=null,bestD=1e9;
+  for(const f of partyFixtures){const h=_rc.intersectObjects(f.meshes,true)[0];
+    if(h&&h.distance<bestD){bestD=h.distance;best=f;}}
+  return best;
+}
+function balloonAt(cx,cy){
+  if(!balloons.length)return null;
+  const r=view.getBoundingClientRect();if(r.width<2)return null;
+  _ndc.x=((cx-r.left)/r.width)*2-1;_ndc.y=-((cy-r.top)/r.height)*2+1;
+  _rc.setFromCamera(_ndc,camera);
+  const live=balloons.filter(b=>!b.pop&&b.grounded);
+  const hit=_rc.intersectObjects(live.map(b=>b.ball),false)[0];
+  if(hit)return live.find(b=>b.ball===hit.object)||null;
+  return null;
+}
+function clickBalloon(cx,cy){
+  const b=balloonAt(cx,cy);if(!b)return false;
+  const bx=Math.floor(b.g.position.x),by=Math.floor(b.g.position.z);
+  setAction({type:'popballoon',b:b,o:{x:bx,y:by}},bx,by);
+  return true;
+}
+let partyDropsEl=null;
+function openPartyDrops(){
+  if(!partyDropsEl){
+    partyDropsEl=document.createElement('div');partyDropsEl.id='partydrops';
+    partyDropsEl.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;width:330px;max-height:80vh;overflow:auto;background:linear-gradient(#efe3bf,#e2d29c);border:6px solid #7a5a2e;border-radius:10px;padding:14px 16px;box-shadow:0 12px 44px rgba(0,0,0,.55);font-family:Georgia,serif;color:#3a2a14;display:none;';
+    document.body.appendChild(partyDropsEl);
+  }
+  let h='<div style="text-align:center;font-weight:bold;font-size:18px;">Balloon Drop Table</div>';
+  h+='<div style="text-align:center;font-size:11px;margin:2px 0 10px;opacity:.7;">Chance per balloon you pop \u00b7 24 pops a round</div><div id="pdrows"></div>';
+  h+='<div style="text-align:center;font-size:10px;margin-top:8px;opacity:.6;">A round costs one 30,000-coin Party token.</div>';
+  h+='<div style="text-align:center;margin-top:10px;"><button id="pdclose" style="font-family:Georgia,serif;font-size:13px;padding:5px 18px;background:#7a5a2e;color:#f3e9c8;border:none;border-radius:6px;cursor:pointer;">Close</button></div>';
+  partyDropsEl.innerHTML=h;
+  const rows=partyDropsEl.querySelector('#pdrows');
+  for(const t of PARTY_LOOT){
+    const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;padding:5px 2px;border-bottom:1px solid rgba(122,90,46,.22);';
+    const cv=document.createElement('canvas');cv.width=30;cv.height=30;cv.style.cssText='width:30px;height:30px;flex:0 0 30px;image-rendering:pixelated;';
+    if(t.icon){try{drawItemIcon(cv.getContext('2d'),t.icon,30);}catch(e){}}else{const x=cv.getContext('2d');x.fillStyle='#b9a877';x.font='20px Georgia';x.textAlign='center';x.fillText('\u2014',15,22);}
+    row.appendChild(cv);
+    const lab=document.createElement('div');lab.style.cssText='flex:1;font-size:13px;line-height:1.15;';
+    lab.innerHTML=t.label+(t.special==='cos'?'<div style="font-size:10px;opacity:.65;">~10% Santa hat, else a party hat</div>':'');
+    row.appendChild(lab);
+    const pc=t.p*100,txt=pc<0.1?pc.toFixed(2):pc<1?pc.toFixed(1):pc.toFixed(0);
+    const pct=document.createElement('div');pct.style.cssText='font-weight:bold;font-size:13px;flex:0 0 52px;text-align:right;'+(t.big?'color:#9c2bb0;':'');
+    pct.textContent=txt+'%';row.appendChild(pct);
+    rows.appendChild(row);
+  }
+  partyDropsEl.querySelector('#pdclose').onclick=()=>{partyDropsEl.style.display='none';};
+  partyDropsEl.style.display='block';
+}
+function pullPartyLever(){
+  if(partyActive){msg('A round is already underway \u2014 get popping!');return;}
+  if(!PARTY_FREE){
+    if(!partyHas('party_token')){msg('You need a Party token. Mr Callahan is selling them by the table.','#d0312d');return;}
+    partyTakeOne('party_token');
+  }
+  partyActive=true;partyGameMs=PARTY_LEN;partyPops=0;
+  const lv=partyGroup.userData.leverHandle;if(lv)lv.rotation.x=0.7;
+  tone(300,1200,0.25,'sawtooth',0.05);
+  msg('You heave the lever \u2014 balloons rain down across the hall!','#ff5bbf');
+}
+function endPartyGame(){
+  partyActive=false;
+  for(const b of balloons)if(!b.pop){b.pop=true;partyGroup.remove(b.g);}
+  balloons=[];
+  const lv=partyGroup.userData.leverHandle;if(lv)lv.rotation.x=-0.5;
+  if(partyTimerEl)partyTimerEl.style.display='none';
+  msg('The party winds down. You popped '+partyPops+' balloon'+(partyPops===1?'':'s')+' this round.','#b04a9e');
+}
+function buyPartyToken(){
+  if(coinCount()<30000){msg('Mr Callahan: \u201cThat\u2019ll be 30,000 coins for a token, friend.\u201d','#26345e');return;}
+  spendCoins(30000);addItem('party_token',1);sfx.coins&&sfx.coins();
+  msg('You buy a Party token for 30,000 coins. Pull the lever when you\u2019re ready!','#2f7d32');
+}
+const PARTY_STUDENT_LINES=['Best party ever!','Pop pop pop!','So many balloons!','Did you see that drop?!','Save some for me!','I want a purple phat!','Mr Callahan rules!','I’m gonna be rich!','Free stuff!'];
+const PARTY_KNIGHT_LINES=['Dance with me!','Clang clang clang!','Hup, two, three, four!','My armour’s too heavy to dance!','To the rhythm, lads!','En garde... I mean, conga!','Shake that breastplate!'];
+const PARTY_HOST_LINES=['Tokens! Get yer tokens!','Step right up!','Mind the dancing knights!','One token a round, friend!'];
+let partyChatT=2500;
+function partySay(a,text,dur){a.chat=text;a.chatT=performance.now()+(dur||3000);}
+function drawPartyChats(){
+  const now=performance.now();
+  octx.save();octx.textAlign='center';octx.font='bold 13px Georgia';
+  const draw=(g,yoff,a)=>{
+    if(!a.chat||!(a.chatT>now))return;
+    const pp=proj(g.position.x,g.position.y+yoff,g.position.z);if(!pp)return;
+    octx.lineWidth=3;octx.strokeStyle='rgba(0,0,0,0.85)';octx.strokeText(a.chat,pp.x,pp.y);
+    octx.fillStyle='#ffff2a';octx.fillText(a.chat,pp.x,pp.y);
+  };
+  for(const a of partyAgents)if(a.kind==='student')draw(a.g,2.0,a);
+  for(const k of partyKnights)draw(k.g,1.7,k);
+  octx.restore();
+}
+function updateParty(dt){
+  buildPartyAgents();
+  const ds=dt/1000;
+  const _FYp=groundH(120,8);
+  partyFireT+=ds;
+  const _flm=partyGroup.userData.flames,_fby=partyGroup.userData.flameBaseY;
+  if(_flm)for(let i=0;i<_flm.length;i++){const f=_flm[i];
+    const fl=0.9+Math.sin(partyFireT*5+i*1.7)*0.12+Math.sin(partyFireT*9.3+i)*0.05;
+    f.scale.set(0.94+Math.sin(partyFireT*6+i*2.1)*0.06,fl,1);
+    f.position.y=_fby[i]+(fl-1)*0.45;}
+  const _fgl=partyGroup.userData.fireGlow;
+  if(_fgl)_fgl.material.opacity=0.13+Math.sin(partyFireT*4)*0.035;
+  fireFx();
+  partyCrackle-=dt;
+  if(partyCrackle<=0){partyCrackle=rnd(240,680);tone(55+rnd(0,80),55+rnd(0,70),0.018,'square',0.028);}
+  partyChatT-=dt;
+  if(partyChatT<=0){partyChatT=rnd(1600,3200);
+    if(Math.random()<0.42&&partyKnights.length){
+      const k=partyKnights[rndi(0,partyKnights.length-1)];
+      if(!(k.chatT>performance.now()))partySay(k,ppick(PARTY_KNIGHT_LINES),2800);
+    }else{
+      const cand=partyAgents.filter(e=>e.kind==='student'&&!(e.chatT>performance.now()));
+      if(cand.length)partySay(cand[rndi(0,cand.length-1)],ppick(PARTY_STUDENT_LINES),3000);
+    }
+  }
+  if(partyActive){
+    partyGameMs-=dt;
+    if(partyGameMs<=0)endPartyGame();
+    else{
+      if(partyTimerEl){const _sc=Math.max(0,Math.ceil(partyGameMs/1000));
+        partyTimerEl.textContent='\u23f1\ufe0f '+Math.floor(_sc/60)+':'+String(_sc%60).padStart(2,'0');
+        partyTimerEl.style.display='block';partyTimerEl.classList.toggle('low',_sc<=10);}
+      if(partyGameMs>8000){const live=balloons.filter(b=>!b.pop).length;
+        if(live<REAL_TARGET&&Math.random()<0.7)spawnBalloon();}
+    }
+  }
+  if(balloons.some(b=>b.pop))balloons=balloons.filter(b=>!b.pop);
+  for(const b of balloons){if(b.pop)continue;
+    b.bob+=ds*(b.grounded?2.4:1.5);
+    if(b.g.position.y>b.restY){
+      b.g.position.y+=b.vy*ds;
+      b.g.position.x=b.x+Math.sin(b.bob*0.9)*0.18;          /* gentle drift as it falls */
+      b.g.rotation.z=Math.sin(b.bob*0.9)*0.13;
+      if(b.g.position.y<=b.restY){b.g.position.y=b.restY;b.grounded=true;b.bob=0;}
+    }else{
+      const j=Math.abs(Math.sin(b.bob));
+      b.g.position.y=b.restY+j*0.05;                        /* tiny rest bounce */
+      if(b.ball)b.ball.scale.set(1.0+j*0.07,1.22-j*0.09,1.0+j*0.07);  /* soft squash-stretch */
+      b.g.rotation.z=Math.sin(b.bob*0.6)*0.05;
+    }
+    b.g.rotation.y+=ds*0.5;
+  }
+  for(const a of partyAgents){
+    if(a.popAnim>0)a.popAnim=Math.max(0,a.popAnim-ds*3.0);
+    if(a.kind!=='student'){
+      a.armT+=ds*2.0;const sway=Math.sin(a.armT)*0.12;
+      if(a.arms[0])a.arms[0].rotation.x=sway;if(a.arms[1])a.arms[1].rotation.x=-sway;
+      continue;
+    }
+    const cx=a.g.position.x,cz=a.g.position.z;
+    if(partyBlocked(cx,cz)){                                  /* shoved inside the table: walk straight out */
+      const dW=cx-111.6,dE=129.4-cx,dN=cz-6.5,dS=9.5-cz,m=Math.min(dW,dE,dN,dS);
+      let ex=cx,ez=cz;
+      if(m===dW)ex=cx-a.spd*ds*1.6;else if(m===dE)ex=cx+a.spd*ds*1.6;
+      else if(m===dN)ez=cz-a.spd*ds*1.6;else ez=cz+a.spd*ds*1.6;
+      a.g.position.x=ex;a.g.position.z=ez;a.g.rotation.y=Math.atan2((ex-cx)||0.01,(ez-cz)||0.01);
+      a.path=null;a.walk+=ds*a.spd*3.2;const _le=Math.sin(a.walk)*0.5;
+      if(a.legL)a.legL.rotation.x=_le;if(a.legR)a.legR.rotation.x=-_le;
+      continue;
+    }
+    if(!a.path||!a.path.length){                              /* pick a destination + a route around the table */
+      let bx,bz2;
+      const live=partyActive?balloons.filter(b=>!b.pop&&b.grounded&&!partyBlocked(b.g.position.x,b.g.position.z)):[];
+      if(live.length&&Math.random()<0.7){const b=live[rndi(0,live.length-1)];bx=b.g.position.x;bz2=b.g.position.z;}
+      else{let _n=0;do{bx=104+rndi(0,32)+0.5;bz2=4+rndi(0,8)+0.5;}while(partyBlocked(bx,bz2)&&++_n<10);}
+      a.path=routeTo(cx,cz,bx,bz2);a.noProgT=0;a.bestD=999;
+    }
+    const tgt=a.path[0],dx=tgt[0]-cx,dz=tgt[1]-cz,d=Math.hypot(dx,dz);
+    const moving=d>=0.35;
+    if(!moving){a.path.shift();}
+    else{
+      let nx=cx+(dx/d)*a.spd*ds, nz=cz+(dz/d)*a.spd*ds;
+      if(partyBlocked(nx,nz)){if(!partyBlocked(nx,cz))nz=cz;else if(!partyBlocked(cx,nz))nx=cx;else{nx=cx;nz=cz;a.path=null;}}
+      a.g.position.x=nx;a.g.position.z=nz;a.g.rotation.y=Math.atan2(dx,dz);
+      if(d<(a.bestD||999)-0.05){a.bestD=d;a.noProgT=0;}else a.noProgT=(a.noProgT||0)+ds;
+      if(a.noProgT>1.0){a.path=null;a.noProgT=0;a.bestD=999;}
+    }
+    a.walk+=moving?ds*a.spd*3.2:0;
+    const ls=moving?Math.sin(a.walk)*0.5:0;
+    if(a.legL)a.legL.rotation.x=ls;if(a.legR)a.legR.rotation.x=-ls;
+    let armX=0;
+    if(a.popAnim>0)armX=-1.9*Math.sin(a.popAnim*Math.PI);
+    else if(moving)armX=-ls*0.55;
+    if(a.arms[0])a.arms[0].rotation.x=armX;
+    if(a.arms[1])a.arms[1].rotation.x=(a.popAnim>0?armX:-armX);
+    a.g.position.y=_FYp+(a.popAnim>0?Math.sin(a.popAnim*Math.PI)*0.11:0);
+    a.popCd-=ds;
+    if(a.popCd<=0){a.popCd=rnd(0.6,1.8);
+      if(partyActive){
+        const near=balloons.find(b=>!b.pop&&b.grounded&&Math.hypot(b.g.position.x-cx,b.g.position.z-cz)<0.95);
+        if(near){a.popAnim=1;popBalloon(near,false,a);}
+      }
+    }
+  }
+}
+function _spsBannerTex(){
+  const sc=shieldTexture().image;                                /* the real St Paul's crest used on signposts */
+  const c=document.createElement('canvas');c.width=160;c.height=240;const g=c.getContext('2d');
+  g.fillStyle='#c01722';g.fillRect(0,0,160,240);                 /* red border */
+  g.fillStyle='#f6f5f1';g.fillRect(8,8,144,224);                 /* white field */
+  g.drawImage(sc,46,18,68,86);                                   /* pelican over crossed swords */
+  g.fillStyle='#161616';g.textAlign='center';
+  g.font='bold 26px Georgia';g.fillText('ST PAUL\u2019S',80,170);
+  g.font='bold 20px Georgia';g.fillText('PARTY ROOM',80,198);
+  return new THREE.CanvasTexture(c);
+}
+(function buildPartyBanners(){
+  const FY=groundH(120,8);
+  const mat=new THREE.MeshBasicMaterial({map:_spsBannerTex(),side:THREE.DoubleSide});
+  const spots=[{x:108,z:1.86,ry:0},{x:133,z:1.86,ry:0},
+    {x:105,z:15.14,ry:Math.PI},{x:132,z:15.14,ry:Math.PI},
+    {x:100.86,z:5,ry:Math.PI/2},{x:100.86,z:11,ry:Math.PI/2},
+    {x:140.14,z:5,ry:-Math.PI/2},{x:140.14,z:11,ry:-Math.PI/2}];
+  for(const sp of spots){const ban=new THREE.Mesh(new THREE.PlaneGeometry(1.95,2.2),mat);
+    ban.position.set(sp.x,FY+2.25,sp.z);ban.rotation.y=sp.ry;partyGroup.add(ban);}
+})();
+(function buildRectorPortraits(){
+  const FY=groundH(120,8);
+  const rectors=[
+    {name:'Rev. A. Hadley',skin:0xe8c19a,hair:0x6b4a2e,robe:0x3a2f55,years:'1887\u20131902',ex:'The first Rector to keep the great hall. Remembered for booming sermons and a markedly weaker singing voice.'},
+    {name:'Dr. M. Crane',skin:0xd9a877,hair:0xc9c9c9,robe:0x5a2030,years:'1902\u20131921',ex:'A reforming Rector who doubled the library. It is quietly claimed he invented the very lever you keep pulling.'},
+    {name:'Rev. P. Ellsworth',skin:0xeac6a0,hair:0x2a2a2a,robe:0x24463a,years:'1921\u20131949',ex:'Steered the school through lean years. Never once seen without his black gown, not even, they say, at the lake.'},
+    {name:'Dame E. Voss',skin:0xe0b48c,hair:0x8a6a3a,robe:0x402a5a,years:'1949\u20131968',ex:'The first woman to hold the rectorship \u2014 and, by every account, the first to dance atop the banquet table.'}];
+  const hx6=(n)=>'#'+(n&0xffffff).toString(16).padStart(6,'0');
+  const mkPortrait=(r)=>{
+    const c=document.createElement('canvas');c.width=120;c.height=160;const g=c.getContext('2d');
+    const bk=g.createLinearGradient(0,0,0,160);bk.addColorStop(0,'#6b5836');bk.addColorStop(1,'#473a23');
+    g.fillStyle=bk;g.fillRect(0,0,120,160);
+    const vg=g.createRadialGradient(60,52,8,60,64,82);vg.addColorStop(0,'#aab0a8');vg.addColorStop(1,'#374038');
+    g.fillStyle=vg;g.fillRect(9,9,102,116);
+    g.fillStyle=hx6(r.robe);g.beginPath();g.moveTo(20,125);g.quadraticCurveTo(60,82,100,125);g.closePath();g.fill();
+    g.fillStyle='rgba(0,0,0,0.18)';g.beginPath();g.moveTo(60,96);g.quadraticCurveTo(80,104,100,125);g.lineTo(60,125);g.closePath();g.fill();
+    g.fillStyle='#efe9da';g.beginPath();g.moveTo(50,96);g.lineTo(60,118);g.lineTo(70,96);g.closePath();g.fill();
+    g.fillStyle=hx6(r.skin);g.fillRect(53,80,14,17);
+    g.beginPath();g.ellipse(60,60,18,22,0,0,Math.PI*2);g.fill();
+    g.fillStyle='rgba(0,0,0,0.12)';g.beginPath();g.ellipse(68,62,8,18,0,0,Math.PI*2);g.fill();
+    g.fillStyle=hx6(r.hair);g.beginPath();g.ellipse(60,47,20,15,0,Math.PI,Math.PI*2);g.fill();g.fillRect(40,45,40,7);
+    g.fillStyle='#3a2c20';g.fillRect(50,58,8,2);g.fillRect(62,58,8,2);
+    g.fillStyle='#241c14';g.beginPath();g.arc(54,62,1.7,0,7);g.arc(66,62,1.7,0,7);g.fill();
+    g.strokeStyle='rgba(60,40,20,0.5)';g.lineWidth=2;g.beginPath();g.moveTo(60,66);g.lineTo(58,72);g.lineTo(61,73);g.stroke();
+    g.strokeStyle='#caa64a';g.lineWidth=3;g.strokeRect(10,10,100,114);
+    g.fillStyle='#241a10';g.fillRect(9,128,102,26);
+    g.strokeStyle='#caa64a';g.lineWidth=1.5;g.strokeRect(11,130,98,22);
+    g.fillStyle='#e8d9a8';g.textAlign='center';
+    g.font='bold 11px Georgia';g.fillText(r.name,60,141);
+    g.font='9px Georgia';g.fillText('Rector '+r.years,60,150);
+    return new THREE.CanvasTexture(c);
+  };
+  const xs=[116,120,124,128];
+  for(let i=0;i<4;i++){const r=rectors[i];
+    const frame=gmesh(new THREE.BoxGeometry(1.04,1.46,0.09),0x3a2614);frame.position.set(xs[i],FY+2.12,15.22);partyGroup.add(frame);
+    const gold=gmesh(new THREE.BoxGeometry(0.94,1.34,0.06),0xb98f3e);gold.position.set(xs[i],FY+2.12,15.18);partyGroup.add(gold);
+    const pic=new THREE.Mesh(new THREE.PlaneGeometry(0.82,1.2),new THREE.MeshBasicMaterial({map:mkPortrait(r)}));
+    pic.position.set(xs[i],FY+2.12,15.14);pic.rotation.y=Math.PI;partyGroup.add(pic);
+    partyFixtures.push({meshes:[pic,gold,frame],html:'Examine <span class="t">'+r.name+'</span>',label:'Examine',fn:()=>msg(r.ex)});}
+})();
+
 const miniDyn=document.createElement('canvas');
 miniDyn.width=W*4;miniDyn.height=H*4;
 const mctx=miniC.getContext('2d');
@@ -9670,7 +10326,8 @@ buildWmLegend();
 function drawMini(){
   const g=miniDyn.getContext('2d');
   g.clearRect(0,0,miniDyn.width,miniDyn.height);
-  g.drawImage(inChapel?miniBaseChapel:miniBase,0,0);
+  g.drawImage(inParty?miniBaseParty:(inChapel?miniBaseChapel:miniBase),0,0);
+  if(!inChapel&&!inParty){
   g.fillStyle='#ff3b30';
   for(const it of ground)g.fillRect(it.x*4,it.y*4,4,4);
   g.fillStyle='#ffd23d';
@@ -9717,6 +10374,7 @@ function drawMini(){
     if(near){g.beginPath();g.arc(mx,my,2.4,0,7);g.fillStyle='#ffe14a';g.fill();
       g.lineWidth=1.4;g.strokeStyle='#7a4a0a';g.beginPath();
       g.moveTo(mx-2,my-2);g.lineTo(mx+2,my+2);g.moveTo(mx+2,my-2);g.lineTo(mx-2,my+2);g.stroke();}
+  }
   }
   mctx.clearRect(0,0,168,168);
   mctx.save();
@@ -9859,6 +10517,7 @@ const dlgOptsEl=document.getElementById('dlgopts');
 const dlgContEl=document.getElementById('dlgcont');
 let dlg=null;
 const FACES={
+  mr_callahan:{skin:0xe0b48c,hair:0x6b4a2e,mustache:1,robe:0x26345e,hairstyle:'short'},
   matthews:{skin:0xe2b58c,hair:0xeceae4,beard:0xe8e6e0,robe:0x5a1f2e,
     hairstyle:'full'},
   martha:{skin:0xe6bb92,hair:0xd8d2c8,robe:0x6b3a52,hairstyle:'long'},
@@ -10403,6 +11062,16 @@ function slayerTree(){
     info:{who:'npc',text:'I name a creature and a number. You cull them in the wild and return. I pay in coin and in skill \u2014 Slayer, and the strength of arms. The wild grows to meet you: never trivial, never quite hopeless.',next:'start'}};
 }
 const DIALOGUES={
+  mr_callahan:()=>({
+    start:{who:'npc',text:'Welcome to the Party Room! Pull the lever and balloons rain down across the hall — but a round will cost you a Party token.',next:'ask'},
+    ask:{opts:[
+      {label:'Buy a Party token (30,000 coins).',next:()=>{if(coinCount()<30000)return 'poor';spendCoins(30000);addItem('party_token',1);if(sfx.coins)sfx.coins();return 'bought';}},
+      {label:'How does this work?',next:'how'},
+      {label:'Just looking, thanks.',next:'bye'}]},
+    how:{who:'npc',text:'Buy a token, then pull the lever on the wall — balloons rain down across the hall for a good while. Pop as many as you can: most hold a prize, from coins and ore to the odd rare trinket, though a few are only air. You’ll pocket the loot from up to two dozen of them before the round ends. The scroll beside the lever lists what’s on offer. The students join in for the fun of it — pay them no mind.',next:'ask'},
+    bought:{who:'npc',text:'A fine choice! Pull that lever whenever you’re ready.',next:null},
+    poor:{who:'npc',text:'Come back when you’ve thirty thousand coins to spare, friend.',next:null},
+    bye:{who:'npc',text:'Suit yourself — the balloons aren’t going anywhere.',next:null}}),
   sm_attack:()=>masterTree('attack'),
   sm_strength:()=>masterTree('strength'),
   sm_defense:()=>masterTree('defense'),
@@ -11658,7 +12327,7 @@ function buyItem(id,n){
 const SELL_BLOCK=['masters_seal','lost_crate','candy','clawed_slate',
   'censer_fragment','cracked_horn'];
 function sellItem(id,n){
-  if(!ITEMS[id]||!ITEMS[id].val)return;
+  if(!ITEMS[id]||!ITEMS[id].val||ITEMS[id].noSell||/^party_hat_/.test(id)||id==='santa_hat')return;
   n=n||1;
   const unit=Math.max(1,Math.floor(ITEMS[id].val*0.6));
   let sold=0;
@@ -11683,7 +12352,7 @@ function renderSell(){
   player.inv.forEach(s9=>{
     if(!s9||s9.id==='coins'||seen[s9.id])return;
     const it=ITEMS[s9.id];
-    if(!it||!it.val||SELL_BLOCK.includes(s9.id))return;
+    if(!it||!it.val||it.noSell||/^party_hat_/.test(s9.id)||s9.id==='santa_hat'||SELL_BLOCK.includes(s9.id))return;
     seen[s9.id]=1;
     const price=Math.max(1,Math.floor(it.val*0.6));
     const r=document.createElement('div');r.className='gerow';
@@ -12016,6 +12685,7 @@ function drawBar(wx,wz,h,ratio){
 }
 function drawOverlay(now){
   octx.clearRect(0,0,ow,oh);
+  if(inParty)drawPartyChats();
   if(inWild(player.x,player.y)){
     octx.save();octx.textAlign='center';
     octx.font='bold 14px Georgia,serif';
@@ -12152,11 +12822,13 @@ let prevT=performance.now(),walkBlend=0;
 const worldGroup=new THREE.Group();scene.add(worldGroup);
 let chapelProxies=[];
 (function partitionScene(){
-  const inInt=(x,z)=>x>=100&&x<=141&&z>=0.5&&z<=15.5;
+  /* interiors are self-contained groups; everything else is the outdoor world.
+     partition by IDENTITY (not map position) so stray forest props never leak inside. */
   for(const c of scene.children.slice()){
-    if(c===chapelGroup||c===worldGroup||c===pm.g)continue;
+    if(c===chapelGroup||c===worldGroup||c===partyGroup||c===pm.g)continue;
     if(!(c.isMesh||c.isGroup))continue;
-    if(inInt(c.position.x,c.position.z))chapelGroup.add(c);
+    const od=c.userData&&c.userData.o&&c.userData.o.def;
+    if(od==='relic'||od==='chapelexit'||od==='chapeldoor')chapelGroup.add(c);
     else worldGroup.add(c);
   }
   chapelProxies=proxies.filter(px=>px.userData&&px.userData.o&&
@@ -12167,13 +12839,25 @@ function render(now){
   const dt=Math.min(50,now-prevT);prevT=now;
   const dts=dt/1000;
   if(player)player.playMs=(player.playMs||0)+dt;
+  if(inParty){const t9=now*0.001;
+    updateParty(dt);
+    for(const k of partyKnights){
+      const t=t9*2.4+k.ph,d=k.dance;
+      k.armL.rotation.set(0,0,0);k.armR.rotation.set(0,0,0);k.legL.rotation.x=0;k.legR.rotation.x=0;k.g.rotation.set(0,0,0);
+      if(d===0){k.g.position.y=k.baseY+Math.abs(Math.sin(t*1.5))*0.05;k.g.rotation.z=Math.sin(t)*0.13;const up=-2.5+Math.sin(t*2)*0.5;k.armL.rotation.x=up;k.armR.rotation.x=up;}
+      else if(d===1){k.g.position.y=k.baseY+Math.abs(Math.sin(t*2))*0.14;k.g.rotation.y=t*1.6;k.armL.rotation.x=Math.sin(t*2)*1.0;k.armR.rotation.x=-Math.sin(t*2)*1.0;k.legL.rotation.x=Math.sin(t*2)*0.4;k.legR.rotation.x=-Math.sin(t*2)*0.4;}
+      else if(d===2){k.g.position.y=k.baseY;k.g.rotation.y=Math.sin(t)*0.6;k.legL.rotation.x=Math.sin(t*3)*0.7;k.legR.rotation.x=-Math.sin(t*3)*0.7;k.armL.rotation.z=0.5+Math.sin(t*3)*0.2;k.armR.rotation.z=-0.5-Math.sin(t*3)*0.2;}
+      else{k.g.position.y=k.baseY+Math.sin(t*2)*0.05;k.g.rotation.z=Math.sin(t*0.7)*0.1;k.armL.rotation.x=-1.9+Math.sin(t*3)*0.7;k.armR.rotation.x=-1.9+Math.sin(t*3+1.2)*0.7;}
+    }
+    const fl=partyGroup.userData.flames;if(fl)for(let i=0;i<fl.length;i++)fl[i].scale.y=0.85+0.3*Math.abs(Math.sin(t9*6+i*1.4));
+  }
 
   if(keys.has('L'))camYaw-=1.9*dts;
   if(keys.has('R'))camYaw+=1.9*dts;
   if(keys.has('U'))camPitch=clamp(camPitch+1.2*dts,0.30,1.50);
   if(keys.has('D'))camPitch=clamp(camPitch-1.2*dts,0.30,1.50);
 
-  const pMoving=lerpEnt(player,(player.run&&player.stamina>0)?150:300,dt);
+  const pMoving=lerpEnt(player,(player.run&&player.stamina>0&&!inParty)?150:300,dt);
   for(const r of rats)lerpEnt(r,600,dt);
 
   /* player transform + heading */
@@ -12488,7 +13172,7 @@ setInterval(()=>{
   }
   if(beat%8===0)updateMusic();
   let _ranThisBeat=false;
-  const _canRun=player.run&&player.stamina>0;
+  const _canRun=player.run&&player.stamina>0&&!inParty;
   if((beat%2===0||_canRun)&&player.path.length){
     const nxt=player.path.shift();
     if(!blocked(nxt[0],nxt[1])){
