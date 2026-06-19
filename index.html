@@ -614,6 +614,14 @@
               <canvas width="34" height="34"></canvas>
               <div class="prinfo"><b>Love Divine</b><span>Steels your defense</span></div>
             </div>
+            <div class="prayrow" data-pr="pelicans_eye" title="Pelican&rsquo;s Eye &mdash; +18% Ranged accuracy while active">
+              <canvas width="34" height="34"></canvas>
+              <div class="prinfo"><b>Pelican&rsquo;s Eye</b><span>Sharpens your aim</span></div>
+            </div>
+            <div class="prayrow" data-pr="sheldons_insight" title="Sheldon&rsquo;s Insight &mdash; +18% Magic accuracy while active">
+              <canvas width="34" height="34"></canvas>
+              <div class="prinfo"><b>Sheldon&rsquo;s Insight</b><span>Focuses your casting</span></div>
+            </div>
             <div class="prayrow" data-pr="rectory_tele" title="Rectory Teleport &mdash; teleport home to the Rectory (needs Prayer 3, costs 50 points)">
               <canvas width="34" height="34"></canvas>
               <div class="prinfo"><b>Rectory Teleport</b><span>Home, to the Rectory &middot; 50 pts</span></div>
@@ -714,6 +722,8 @@
 </div></div>
 <div id="geui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Grand Exchange</span><span id="gecoins"></span><div class="gex" id="geclose" title="Close">&#10005;</div></div>
+  <input id="gesearch" class="encsearch" type="text" placeholder="Search the exchange&hellip;" autocomplete="off" spellcheck="false">
+  <div id="gefilters" class="encfilters"></div>
   <div id="gelist"></div>
   <div id="gesellhead">Sell from your pack</div><div id="gesell"></div>
   <div class="gefoot"><span>Click a row to buy &middot; click a row under &ldquo;Sell&rdquo; to sell</span></div>
@@ -2188,7 +2198,7 @@ function giveClueReward(tier){
 
 /* ===== item encyclopedia (compendium) ===== */
 /* ============================ ENCYCLOPEDIA ============================ */
-const ENCY_FILTERS=['All','Weapons','Armour','Tools','Jewellery','Resources','Food','Treasure','Quest','Other'];
+const ENCY_FILTERS=['All','Weapons','Armour','Tools','Jewellery','Resources','Runes','Food','Treasure','Quest','Other'];
 let encFilter='All';
 let encQuery='';
 /* authored sources for rare drops / quests / clues / specials (the rest are derived live) */
@@ -2249,6 +2259,7 @@ function itemCategory(id){
   if(/^clue_/.test(id)||/_bead$/.test(id)||ENCY_PHATS.indexOf(id)>=0||id==='santa_hat'
      ||['draconic_visage','wailing_relic','basilisk_jaw'].indexOf(id)>=0)return 'Treasure';
   if(/^uncut_/.test(id))return 'Treasure';
+  if(/_rune$/.test(id))return 'Runes';
   if(eq){
     if(eq.model==='axe'||eq.model==='pick'||id==='rock_hammer')return 'Tools';
     if(eq.slot==='weapon')return 'Weapons';
@@ -3726,9 +3737,15 @@ function equipFromInv(i){
     sfx.pickup();msg('You ready the '+ITEMS[s.id].name.toLowerCase()+'.');
     renderInv();renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;return;
   }
+  if(eq.slot==='shield'&&player.equip.weapon){const wm=ITEMS[player.equip.weapon.id].equip.model;if(wm==='bow'||wm==='staff'){msg('You cannot use a shield with a two-handed weapon.');return;}}
+  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff')&&player.equip.shield){
+    const _prevW=player.equip.weapon,_free=player.inv.filter(x9=>!x9).length;
+    if(_free+(_prevW?0:1)<1){msg('You need a free inventory slot for your shield before wielding a two-handed weapon.');return;}
+  }
   const prev=player.equip[eq.slot]||null;
   player.equip[eq.slot]={id:s.id};
   player.inv[i]=prev?{id:prev.id,qty:1}:null;
+  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff')&&player.equip.shield){const sh=player.equip.shield;player.equip.shield=null;const free=player.inv.findIndex(x=>!x);player.inv[free]={id:sh.id,qty:1};msg('You sling your shield off to wield two-handed.');}
   sfx.pickup();
   msg('You '+eq.verb.toLowerCase()+' the '+ITEMS[s.id].name.toLowerCase()+'.');
   renderInv();renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;
@@ -4759,6 +4776,19 @@ function drawPrayerIcon(g,id,S){
       g.lineTo(Math.cos(a)*5.5,4+Math.sin(a)*5.5);
       g.lineTo(Math.cos(a2)*2.3,4+Math.sin(a2)*2.3);}
     g.closePath();g.fill();
+  }else if(id==='pelicans_eye'){
+    g.strokeStyle='#5a7a2a';g.lineWidth=2.4;
+    g.beginPath();g.moveTo(-11,0);g.quadraticCurveTo(0,-9,11,0);g.quadraticCurveTo(0,9,-11,0);g.closePath();g.stroke();
+    g.fillStyle='#7fae3f';g.beginPath();g.arc(0,0,5.2,0,7);g.fill();
+    g.fillStyle='#14210a';g.beginPath();g.arc(0,0,2.4,0,7);g.fill();
+    g.fillStyle='#eaf4d2';g.beginPath();g.arc(-1.4,-1.5,1.1,0,7);g.fill();
+  }else if(id==='sheldons_insight'){
+    g.strokeStyle='#2f4f8a';g.lineWidth=2.4;
+    g.beginPath();g.moveTo(-11,0);g.quadraticCurveTo(0,-9,11,0);g.quadraticCurveTo(0,9,-11,0);g.closePath();g.stroke();
+    g.fillStyle='#5a8fe0';g.beginPath();g.arc(0,0,5.2,0,7);g.fill();
+    g.fillStyle='#10183a';g.beginPath();g.arc(0,0,2.6,0,7);g.fill();
+    g.strokeStyle='#bfe0ff';g.lineWidth=1.4;
+    g.beginPath();g.moveTo(0,-4.6);g.lineTo(0,4.6);g.moveTo(-4.6,0);g.lineTo(4.6,0);g.stroke();
   }else{
     g.strokeStyle='#efe9dd';g.lineWidth=3;
     for(let i=0;i<3;i++){
@@ -7873,7 +7903,21 @@ const scim=new THREE.Group();
  const spm=TT(gmesh(new THREE.SphereGeometry(0.034,6,5),0x8a6a2a),'trim');
  spm.position.y=-0.01;scim.add(spm);}
 tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);
-axe.visible=pick.visible=sword.visible=scim.visible=false;
+const bowM=new THREE.Group();
+{const grip=TT(gmesh(new THREE.CylinderGeometry(0.017,0.017,0.18,6),0x5a3d22),'tint');grip.position.y=-0.40;bowM.add(grip);
+ const ul=TT(gmesh(new THREE.CylinderGeometry(0.011,0.016,0.34,6),0x6b4a2e),'tint');ul.position.set(0,-0.18,-0.07);ul.rotation.x=0.46;bowM.add(ul);
+ const ut=TT(gmesh(new THREE.CylinderGeometry(0.009,0.011,0.18,6),0x6b4a2e),'tint');ut.position.set(0,0.04,-0.20);ut.rotation.x=0.95;bowM.add(ut);
+ const ll=TT(gmesh(new THREE.CylinderGeometry(0.016,0.011,0.34,6),0x6b4a2e),'tint');ll.position.set(0,-0.62,-0.07);ll.rotation.x=-0.46;bowM.add(ll);
+ const lt=TT(gmesh(new THREE.CylinderGeometry(0.011,0.009,0.18,6),0x6b4a2e),'tint');lt.position.set(0,-0.84,-0.20);lt.rotation.x=-0.95;bowM.add(lt);
+ const str=gmesh(new THREE.CylinderGeometry(0.004,0.004,0.92,4),0xe8e0cc);str.position.set(0,-0.40,-0.24);bowM.add(str);}
+tool.add(bowM);
+const staffM=new THREE.Group();
+{const shaft=TT(gmesh(new THREE.CylinderGeometry(0.018,0.024,1.18,6),0x6b4a2e),'tint');shaft.position.y=-0.40;staffM.add(shaft);
+ const setting=TT(gmesh(new THREE.CylinderGeometry(0.052,0.03,0.09,6),0x4a3420),'trim');setting.position.y=0.15;staffM.add(setting);
+ const orb=TT(gmesh(new THREE.OctahedronGeometry(0.062,0),0x9a6fb0),'trim');orb.position.y=0.26;orb.scale.y=1.25;staffM.add(orb);
+ const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-1.0;staffM.add(cap);}
+tool.add(staffM);
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -8001,6 +8045,50 @@ const mkBootA=()=>{const bt=new THREE.Group();
  bt.visible=false;return bt;};
 const bootL=mkBootA(),bootR=mkBootA();
 pm.lLeg.add(bootL);pm.rLeg.add(bootR);
+/* ranged: leather coif */
+const coifM=new THREE.Group();
+{const cap=TT(gmesh(new THREE.SphereGeometry(0.176,10,7,0,Math.PI*2,0,Math.PI*0.56),0x5a3f28),'tint');cap.position.y=1.515;cap.scale.set(1.04,1.10,1.06);coifM.add(cap);
+ const fl=TT(gmesh(new THREE.BoxGeometry(0.05,0.17,0.11),0x5a3f28),'tint');fl.position.set(-0.155,1.43,0.02);coifM.add(fl);
+ const fr=TT(gmesh(new THREE.BoxGeometry(0.05,0.17,0.11),0x5a3f28),'tint');fr.position.set(0.155,1.43,0.02);coifM.add(fr);
+ const bk=TT(gmesh(new THREE.BoxGeometry(0.22,0.14,0.05),0x4a3220),'trim');bk.position.set(0,1.41,-0.13);coifM.add(bk);}
+pm.g.add(coifM);coifM.visible=false;
+/* magic: pointed wizard hat */
+const wizHatM=new THREE.Group();
+{const brim=TT(gmesh(new THREE.CylinderGeometry(0.30,0.32,0.035,14),0x2a2050),'tint');brim.position.y=1.61;wizHatM.add(brim);
+ const cone=TT(gmesh(new THREE.ConeGeometry(0.17,0.52,12),0x2a2050),'tint');cone.position.y=1.88;wizHatM.add(cone);
+ const tip=TT(gmesh(new THREE.ConeGeometry(0.05,0.18,8),0x2a2050),'tint');tip.position.set(0.05,2.12,0.02);tip.rotation.z=-0.6;wizHatM.add(tip);
+ const star=TT(gmesh(new THREE.OctahedronGeometry(0.03,0),0xf2d65a),'trim');star.position.set(0,1.95,0.155);wizHatM.add(star);
+ const band=TT(gmesh(new THREE.CylinderGeometry(0.178,0.205,0.05,12),0xc8a84a),'trim');band.position.y=1.665;wizHatM.add(band);}
+pm.g.add(wizHatM);wizHatM.visible=false;
+/* ranged: sleeveless hide jerkin */
+const hideBodyM=new THREE.Group();
+{const vest=TT(gmesh(new THREE.CylinderGeometry(0.247,0.17,0.56,8),0x6e4a2a),'tint');vest.scale.z=0.64;vest.position.y=1.08;hideBodyM.add(vest);
+ const neck=TT(gmesh(new THREE.CylinderGeometry(0.13,0.18,0.07,8),0x4a3018),'trim');neck.scale.z=0.64;neck.position.y=1.34;hideBodyM.add(neck);
+ const belt=TT(gmesh(new THREE.CylinderGeometry(0.205,0.215,0.06,8),0x3a2614),'trim');belt.scale.z=0.64;belt.position.y=0.86;hideBodyM.add(belt);
+ const sl=TT(gmesh(new THREE.BoxGeometry(0.07,0.20,0.11),0x6e4a2a),'tint');sl.position.set(-0.175,1.27,0);hideBodyM.add(sl);
+ const sr=TT(gmesh(new THREE.BoxGeometry(0.07,0.20,0.11),0x6e4a2a),'tint');sr.position.set(0.175,1.27,0);hideBodyM.add(sr);}
+pm.g.add(hideBodyM);hideBodyM.visible=false;
+/* magic: elegant flowing robe + back cloak */
+const robeBodyM=new THREE.Group();
+{const robe=TT(gmesh(new THREE.CylinderGeometry(0.245,0.31,0.64,10),0x2a2050),'tint');robe.scale.z=0.7;robe.position.y=1.03;robeBodyM.add(robe);
+ const collar=TT(gmesh(new THREE.CylinderGeometry(0.135,0.18,0.12,10),0xc8a84a),'trim');collar.scale.z=0.7;collar.position.y=1.36;robeBodyM.add(collar);
+ const dl=TT(gmesh(new THREE.SphereGeometry(0.115,8,6),0x2a2050),'tint');dl.scale.set(1,1.35,1);dl.position.set(-0.27,1.26,0);robeBodyM.add(dl);
+ const dr=TT(gmesh(new THREE.SphereGeometry(0.115,8,6),0x2a2050),'tint');dr.scale.set(1,1.35,1);dr.position.set(0.27,1.26,0);robeBodyM.add(dr);
+ const plk=TT(gmesh(new THREE.BoxGeometry(0.045,0.52,0.02),0xc8a84a),'trim');plk.position.set(0,1.03,0.205);robeBodyM.add(plk);
+ const drape=TT(gmesh(new THREE.BoxGeometry(0.42,0.66,0.03),0x241a44),'tint');drape.position.set(0,0.98,-0.205);drape.rotation.x=0.09;robeBodyM.add(drape);}
+pm.g.add(robeBodyM);robeBodyM.visible=false;
+/* ranged: leather chaps (per-leg) */
+const mkHideLeg=()=>{const lg=new THREE.Group();
+ const th=TT(gmesh(new THREE.CylinderGeometry(0.10,0.078,0.42,8),0x6e4a2a),'tint');th.position.y=-0.18;lg.add(th);
+ const cuff=TT(gmesh(new THREE.CylinderGeometry(0.08,0.085,0.07,8),0x3a2614),'trim');cuff.position.y=-0.40;lg.add(cuff);
+ lg.visible=false;return lg;};
+const hideLegL=mkHideLeg(),hideLegR=mkHideLeg();
+pm.lLeg.add(hideLegL);pm.rLeg.add(hideLegR);
+/* magic: flared robe skirt (single, on body) */
+const robeSkirtM=new THREE.Group();
+{const sk=TT(gmesh(new THREE.CylinderGeometry(0.19,0.35,0.68,12),0x2a2050),'tint');sk.scale.z=0.85;sk.position.y=0.49;robeSkirtM.add(sk);
+ const hem=TT(gmesh(new THREE.CylinderGeometry(0.35,0.365,0.05,12),0xc8a84a),'trim');hem.scale.z=0.85;hem.position.y=0.18;robeSkirtM.add(hem);}
+pm.g.add(robeSkirtM);robeSkirtM.visible=false;
 const chefHatM=new THREE.Group();
 {const band=mesh(new THREE.CylinderGeometry(0.135,0.14,0.18,8),0xf6f4ec);
  band.position.y=1.64;chefHatM.add(band);
@@ -8048,6 +8136,8 @@ function applyGearTint(){
     const we=player.equip.weapon?ITEMS[player.equip.weapon.id].equip:null;
     tg(sword,we&&we.tint!==undefined?we.tint:0xc7ccd4,
       we&&we.trim!==undefined?we.trim:0x8a6a2a);
+    tg(bowM,we&&we.tint!==undefined?we.tint:0x6b4a2e,we&&we.trim!==undefined?we.trim:0x4a3420);
+    tg(staffM,we&&we.tint!==undefined?we.tint:0x6b4a2e,we&&we.trim!==undefined?we.trim:0x9a6fb0);
     const se=player.equip.shield?ITEMS[player.equip.shield.id].equip:null;
     tg(shieldM,se&&se.tint!==undefined?se.tint:0x7a5a36,
       se&&se.trim!==undefined?se.trim:0x4f3a22);
@@ -10252,6 +10342,8 @@ const DIALOGUES={
   sm_firemaking:()=>masterTree('firemaking'),
   sm_prayer:()=>masterTree('prayer'),
   sm_slayer:()=>masterTree('slayer'),
+  sm_ranged:()=>masterTree('ranged'),
+  sm_magic:()=>masterTree('magic'),
   slayer:()=>slayerTree(),
   guide:()=>{
     if(!player.kit){
@@ -11551,10 +11643,23 @@ function renderSell(){
 function renderShopCoins(){
   document.getElementById('gecoins').textContent=fmt(coinsCount())+' gp';
 }
+let geFilter='All',geQuery='';
 function renderShop(){
   renderSell();
+  const se=document.getElementById('gesearch');
+  if(se&&!se._wired){se._wired=true;se.addEventListener('input',()=>{geQuery=se.value;renderShop();});}
+  const fb=document.getElementById('gefilters');
+  if(fb&&!fb._built){fb._built=true;
+    const cats=['All'];
+    for(const f of ENCY_FILTERS){if(f!=='All'&&GE_STOCK.some(gid=>itemCategory(gid)===f))cats.push(f);}
+    for(const f of cats){const b=document.createElement('button');b.className='encchip';b.textContent=f;
+      b.addEventListener('click',()=>{geFilter=f;renderShop();});fb.appendChild(b);}}
+  if(fb)for(const b of fb.children)b.classList.toggle('on',b.textContent===geFilter);
   const ls=document.getElementById('gelist');ls.innerHTML='';
-  for(const id of GE_STOCK){
+  const q=(geQuery||'').trim().toLowerCase();
+  const stock=GE_STOCK.filter(id=>(geFilter==='All'||itemCategory(id)===geFilter)&&(!q||ITEMS[id].name.toLowerCase().indexOf(q)>=0));
+  if(!stock.length){const e=document.createElement('div');e.className='gerow';e.style.cssText='justify-content:center;color:#9a8c6e;cursor:default;';e.textContent=q?'No wares match \u201c'+geQuery.trim()+'\u201d.':'No wares in this category.';ls.appendChild(e);}
+  for(const id of stock){
     const r=document.createElement('div');r.className='gerow';
     const c=document.createElement('canvas');c.width=26;c.height=26;
     drawItemIcon(c.getContext('2d'),id,26);
@@ -11566,20 +11671,22 @@ function renderShop(){
       showMenu(ev.clientX,ev.clientY,[
         {html:'Buy-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>buyItem(id,1)},
         {html:'Buy-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>buyItem(id,5)},
+        {html:'Buy-50 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>buyItem(id,50)},
+        {html:'Buy-100 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>buyItem(id,100)},
         {html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)}]);});
     ls.appendChild(r);
   }
 }
-function openShop(){shopOpen=true;renderShop();renderShopCoins();geEl.classList.add('on');
+function openShop(){shopOpen=true;geFilter='All';geQuery='';const _gs=document.getElementById('gesearch');if(_gs)_gs.value='';renderShop();renderShopCoins();geEl.classList.add('on');
   msg('Clerk: Welcome to the Grand Exchange. Buying and selling!','#103a8c');}
 function closeShop(){shopOpen=false;geEl.classList.remove('on');}
 const prayers={halcyon:false,gordon:false,love:false,pelicans_eye:false,sheldons_insight:false};
 const PRAYER_META={halcyon:{name:'Halcyon Strike'},gordon:{name:'Gordon Medal'},love:{name:'Love Divine'},pelicans_eye:{name:'Pelican\u2019s Eye'},sheldons_insight:{name:'Sheldon\u2019s Insight'},rectory_tele:{name:'Rectory Teleport'},wild_tele:{name:'Wilderness Teleport'}};
 function activePrayerCount(){
-  return (prayers.halcyon?1:0)+(prayers.gordon?1:0)+(prayers.love?1:0);
+  return (prayers.halcyon?1:0)+(prayers.gordon?1:0)+(prayers.love?1:0)+(prayers.pelicans_eye?1:0)+(prayers.sheldons_insight?1:0);
 }
 function deactivateAllPrayers(){
-  prayers.halcyon=prayers.gordon=prayers.love=false;renderPrayers();
+  prayers.halcyon=prayers.gordon=prayers.love=prayers.pelicans_eye=prayers.sheldons_insight=false;renderPrayers();
 }
 const TELEPORTS={
   rectory_tele:{name:'Rectory Teleport',req:3,cost:50,x:88,y:86,fx:'#ffd23d',
@@ -11733,7 +11840,7 @@ function renderPrayers(){
   const ap=document.getElementById('activeprayers');
   if(!ap)return;
   ap.innerHTML='';
-  for(const id of ['halcyon','gordon','love'])if(prayers[id]){
+  for(const id of ['halcyon','gordon','love','pelicans_eye','sheldons_insight'])if(prayers[id]){
     const c=document.createElement('canvas');c.width=22;c.height=22;
     c.title=PRAYER_META[id].name+' is active';
     drawPrayerIcon(c.getContext('2d'),id,22);ap.appendChild(c);
@@ -12015,10 +12122,25 @@ function render(now){
       else{showTool=null;armR=-0.5+Math.sin(now*0.008)*0.25;}
     }else if(act.type==='attack'){
       showTool=wEq;
-      const swA=now-(player.swingT||-1e9),brA=now-(player.braceT||-1e9);
-      armR=-0.45;
-      if(swA<480){const k2=Math.sin(Math.PI*(swA/480));armR=-0.35-2.0*k2;}
-      if(brA<480){const k2=Math.sin(Math.PI*(brA/480));armL=-1.5*k2;}
+      const _ws=currentWeaponStyle();
+      const swA=now-(player.swingT||-1e9);
+      if(_ws==='ranged'){
+        /* archery: bow arm holds the aim forward; off-hand draws the string and snaps on release */
+        armR=-1.28;
+        if(swA<480){const t=swA/480,snap=Math.exp(-t*7.5);
+          armL=-1.02+0.9*snap;
+          if(swA<110)armR=-1.28-0.20*Math.sin(Math.PI*(swA/110));}
+        else armL=-1.02;
+      }else if(_ws==='magic'){
+        /* casting: raise the staff and thrust it forward toward the target */
+        armR=-0.72;armL=-0.34;
+        if(swA<460){const push=Math.sin(Math.PI*(swA/460));
+          armR=-0.72-1.15*push;armL=-0.34-0.66*push;}
+      }else{
+        /* melee: overhead chop */
+        armR=-0.45;
+        if(swA<480){const k2=Math.sin(Math.PI*(swA/480));armR=-0.35-2.0*k2;}
+      }
     }else if(act.type==='cook'){
       showTool=null;armR=-0.6+Math.sin(now*0.01)*0.2;
     }
@@ -12027,6 +12149,8 @@ function render(now){
   else if(showTool==='pick')pick.visible=true;
   else if(showTool==='sword')sword.visible=true;
   else if(showTool==='scim')scim.visible=true;
+  else if(showTool==='bow')bowM.visible=true;
+  else if(showTool==='staff')staffM.visible=true;
   shieldM.visible=!!player.equip.shield;
   capeM.visible=!!player.equip.cape;
   const tintG=(grp,t9,r9)=>{grp.traverse(o9=>{
@@ -12041,6 +12165,8 @@ function render(now){
   partyHatM.visible=hmod==='partyhat';
   santaHatM.visible=hmod==='santahat';
   slayerHelmM.visible=hmod==='slayerhelm';
+  wizHatM.visible=hmod==='robe';if(hmod==='robe'){const _he=ITEMS[player.equip.head.id].equip;tintG(wizHatM,_he.tint,_he.trim);}
+  coifM.visible=hmod==='hide';if(hmod==='hide'){const _he=ITEMS[player.equip.head.id].equip;tintG(coifM,_he.tint,_he.trim);}
   if(hmod==='partyhat'&&partyHatM.userData.cone){partyHatM.userData.cone.material.color.setHex(ITEMS[player.equip.head.id].equip.tint);}
   if(hmod==='helm'){
     const he=ITEMS[player.equip.head.id].equip;
@@ -12050,18 +12176,22 @@ function render(now){
     const he=ITEMS[player.equip.head.id].equip;
     tintG(slayerHelmM,he.tint,he.trim);
   }
-  bodyM.visible=!!player.equip.body;
-  armPL.visible=armPR.visible=!!player.equip.body;
-  if(player.equip.body){
-    const be=ITEMS[player.equip.body.id].equip;
-    tintG(bodyM,be.tint,be.trim);
-    tintG(armPL,be.tint);tintG(armPR,be.tint);
-  }
-  legL.visible=legR.visible=!!player.equip.legs;
-  if(player.equip.legs){
-    const le=ITEMS[player.equip.legs.id].equip;
-    tintG(legL,le.tint,le.trim);tintG(legR,le.tint,le.trim);
-  }
+  {const bmod=player.equip.body?ITEMS[player.equip.body.id].equip.model:null;
+   const _plate=!!player.equip.body&&bmod!=='hide'&&bmod!=='robe';
+   bodyM.visible=_plate;armPL.visible=armPR.visible=_plate;
+   hideBodyM.visible=bmod==='hide';robeBodyM.visible=bmod==='robe';
+   if(player.equip.body){const be=ITEMS[player.equip.body.id].equip;
+     if(bmod==='hide')tintG(hideBodyM,be.tint,be.trim);
+     else if(bmod==='robe')tintG(robeBodyM,be.tint,be.trim);
+     else{tintG(bodyM,be.tint,be.trim);tintG(armPL,be.tint);tintG(armPR,be.tint);}}}
+  {const lmod=player.equip.legs?ITEMS[player.equip.legs.id].equip.model:null;
+   const _pl=!!player.equip.legs&&lmod!=='hide'&&lmod!=='robe';
+   legL.visible=legR.visible=_pl;
+   hideLegL.visible=hideLegR.visible=lmod==='hide';robeSkirtM.visible=lmod==='robe';
+   if(player.equip.legs){const le=ITEMS[player.equip.legs.id].equip;
+     if(lmod==='hide'){tintG(hideLegL,le.tint,le.trim);tintG(hideLegR,le.tint,le.trim);}
+     else if(lmod==='robe')tintG(robeSkirtM,le.tint,le.trim);
+     else{tintG(legL,le.tint,le.trim);tintG(legR,le.tint,le.trim);}}}
   bootL.visible=bootR.visible=!!player.equip.feet;
   if(player.equip.feet){
     const fe=ITEMS[player.equip.feet.id].equip;
@@ -12091,9 +12221,14 @@ function render(now){
     tintG(showTool==='scim'?scim:sword,we.tint!==undefined?we.tint:0xc7ccd4,
       we.trim!==undefined?we.trim:0x8a6a2a);
   }
-  pm.lArm.rotation.x=armL;pm.rArm.rotation.x=armR;
   {const brA=now-(player.braceT||-1e9);
-   pm.g.rotation.x=brA<480?0.13*Math.sin(Math.PI*(brA/480)):0;}
+   if(brA<480){const k2=Math.sin(Math.PI*(brA/480)),_ds=currentWeaponStyle();
+     if(_ds==='ranged'){armR-=0.26*k2;armL-=0.42*k2;}      /* bow drawn in to guard */
+     else if(_ds==='magic'){armR-=0.5*k2;}                  /* staff raised across */
+     else{armL=-1.5*k2;}                                    /* shield up (shield rides the left arm) */
+     pm.g.rotation.x=0.13*Math.sin(Math.PI*(brA/480));
+   }else pm.g.rotation.x=0;}
+  pm.lArm.rotation.x=armL;pm.rArm.rotation.x=armR;
 
   /* guide idle */
   gm.rArm.rotation.x=Math.sin(now*0.002)*0.06;
