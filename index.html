@@ -2278,7 +2278,7 @@ function itemCategory(id){
   if(/_rune$/.test(id))return 'Runes';
   if(eq){
     if(eq.model==='axe'||eq.model==='pick'||id==='rock_hammer')return 'Tools';
-    if(eq.slot==='weapon')return 'Weapons';
+    if(eq.slot==='weapon'||eq.slot==='ammo')return 'Weapons';
     if(eq.slot==='neck'||eq.slot==='ring')return 'Jewellery';
     return 'Armour';
   }
@@ -7945,12 +7945,20 @@ const scim=new THREE.Group();
  spm.position.y=-0.01;scim.add(spm);}
 tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);
 const bowM=new THREE.Group();
-{const grip=TT(gmesh(new THREE.CylinderGeometry(0.017,0.017,0.18,6),0x5a3d22),'tint');grip.position.y=0.0;bowM.add(grip);
- const ul=TT(gmesh(new THREE.CylinderGeometry(0.011,0.016,0.34,6),0x6b4a2e),'tint');ul.position.set(0,0.22,-0.07);ul.rotation.x=0.46;bowM.add(ul);
- const ut=TT(gmesh(new THREE.CylinderGeometry(0.009,0.011,0.18,6),0x6b4a2e),'tint');ut.position.set(0,0.44,-0.20);ut.rotation.x=0.95;bowM.add(ut);
- const ll=TT(gmesh(new THREE.CylinderGeometry(0.016,0.011,0.34,6),0x6b4a2e),'tint');ll.position.set(0,-0.22,-0.07);ll.rotation.x=-0.46;bowM.add(ll);
- const lt=TT(gmesh(new THREE.CylinderGeometry(0.011,0.009,0.18,6),0x6b4a2e),'tint');lt.position.set(0,-0.44,-0.20);lt.rotation.x=-0.95;bowM.add(lt);
- const str=gmesh(new THREE.CylinderGeometry(0.004,0.004,0.92,4),0xe8e0cc);str.position.set(0,0.0,-0.24);bowM.add(str);}
+{/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
+ const R=0.5,A=1.9,t2=A/2;
+ const ty=R*Math.sin(t2),tz=R*Math.cos(t2)-R;          /* tip y / tip z, grip at origin */
+ const bowArc=new THREE.Group();
+ const arcMesh=TT(gmesh(new THREE.TorusGeometry(R,0.0145,6,22,A),0x6b4a2e),'tint');
+ arcMesh.rotation.z=-t2;bowArc.add(arcMesh);
+ bowArc.rotation.y=-Math.PI/2;bowArc.position.z=-R;bowM.add(bowArc);
+ /* leather grip wrap at the belly (the hand grips here) */
+ const grip=TT(gmesh(new THREE.CylinderGeometry(0.023,0.023,0.17,8),0x4a3420),'trim');grip.position.set(0,0,0.004);bowM.add(grip);
+ const grip2=gmesh(new THREE.CylinderGeometry(0.0245,0.0245,0.045,8),0x2e2014);grip2.position.set(0,0,0.004);bowM.add(grip2);
+ /* bowstring: straight chord joining the two tips */
+ const str=gmesh(new THREE.CylinderGeometry(0.0035,0.0035,ty*2,4),0xe8e0cc);str.position.set(0,0,tz);bowM.add(str);
+ /* horn nocks where the string seats */
+ for(const sd of[-1,1]){const nk=TT(gmesh(new THREE.SphereGeometry(0.019,6,5),0x4a3420),'trim');nk.position.set(0,sd*ty,tz+0.004);bowM.add(nk);}}
 tool.add(bowM);
 const staffM=new THREE.Group();
 {const shaft=TT(gmesh(new THREE.CylinderGeometry(0.018,0.024,1.18,6),0x6b4a2e),'tint');shaft.position.y=0.30;staffM.add(shaft);
