@@ -2015,6 +2015,22 @@ function clickFx(tx,ty,col){clicks.push({wx:tx+0.5,wz:ty+0.5,t:performance.now()
 function clickFxAt(wx,wz,col){clicks.push({wx,wz,t:performance.now(),col});}
 function burstFx(wx,wy,wz,col,n){n=n||12;for(let k=0;k<n;k++){const a=(k/n)*Math.PI*2;
   parts.push({wx,wy,wz,vx:Math.cos(a)*rnd(1.4,3.4),vy:rnd(-4.2,-1.0),t:performance.now(),col});}}
+function slayerSmoke(cx,cy){
+  const gx=cx+0.5,gz=cy+0.5,gy=groundH(gx,gz),T=performance.now();
+  const smk=['#2b2b30','#3a3640','#46414e','#211f26','#544a60'];
+  const emb=['#9a6fb0','#b98fd6','#7a4f96'];
+  /* billowing charcoal smoke that rises and swells */
+  for(let k=0;k<26;k++){const a=Math.random()*Math.PI*2,rad=Math.random()*0.5;
+    parts.push({wx:gx+Math.cos(a)*rad,wy:gy+0.15+Math.random()*0.5,wz:gz+Math.sin(a)*rad,
+      vx:Math.cos(a)*rnd(0.3,1.1),vy:-rnd(1.0,2.4),
+      t:T+k*16,life:1150,smoke:true,r0:rnd(7,13),grow:rnd(26,42),a0:rnd(0.34,0.56),
+      col:smk[k%smk.length]});}
+  /* slayer-purple embers spat upward through the smoke */
+  for(let k=0;k<10;k++){const a=(k/10)*Math.PI*2;
+    parts.push({wx:gx+Math.cos(a)*0.4,wy:gy+0.3,wz:gz+Math.sin(a)*0.4,
+      vx:Math.cos(a)*rnd(0.6,1.5),vy:-rnd(1.7,3.1),
+      t:T+k*12,life:900,col:emb[k%emb.length]});}
+}
 function frostBreath(r){
   const dir=Math.sign(player.px-r.px)||1;
   const mx=r.px+0.5,my=groundH(r.px,r.py)+1.3,mz=r.py+0.5;
@@ -4140,13 +4156,38 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='bow'){
-    g.strokeStyle='#8a5a2a';g.lineWidth=2.6;g.lineCap='round';
-    g.beginPath();g.arc(3,0,10,-2.0,2.0);g.stroke();
-    g.strokeStyle='#d8d2c0';g.lineWidth=1;
-    g.beginPath();g.moveTo(-5.4,-8.4);g.lineTo(-5.4,8.4);g.stroke();
-    g.strokeStyle='#caa15a';g.lineWidth=1.6;
-    g.beginPath();g.moveTo(-5.4,0);g.lineTo(8,0);g.stroke();
-    g.fillStyle='#9aa3ad';g.beginPath();g.moveTo(9.5,0);g.lineTo(5.5,-2.2);g.lineTo(5.5,2.2);g.closePath();g.fill();
+    const _eq=ITEMS[id].equip;
+    const _BW={shortbow:['#b5823f','#7a4f24'],oak_shortbow:['#8a5a28','#553414'],
+      willow_shortbow:['#84985e','#566638'],birch_longbow:['#cdbf94','#9a8a5a'],
+      yew_shortbow:['#6b3d2a','#43221a'],composite_bow:['#9a6a2e','#5e3c16']}[id]||['#8a5a2a','#5e3c18'];
+    const wood=_BW[0],edge=_BW[1];
+    const _long=_eq.slow===true,_rec=(id==='composite_bow');
+    const r=_long?12:(_rec?10:9.6), a0=_long?1.62:(_rec?1.85:2.02), cx=_long?3:2.6;
+    g.lineCap='round';g.lineJoin='round';
+    /* bow stave */
+    g.strokeStyle=wood;g.lineWidth=2.8;
+    g.beginPath();g.arc(cx,0,r,-a0,a0);g.stroke();
+    /* inner shadow edge for depth */
+    g.strokeStyle=edge;g.lineWidth=1.0;
+    g.beginPath();g.arc(cx+1.1,0,r-1.3,-a0+0.12,a0-0.12);g.stroke();
+    const tx=cx+r*Math.cos(a0), ty=r*Math.sin(a0);
+    let sx=tx,sy=ty;
+    if(_rec){/* recurved tips */
+      g.strokeStyle=wood;g.lineWidth=2.4;
+      g.beginPath();g.moveTo(tx,-ty);g.quadraticCurveTo(tx-3.4,-ty-2.4,tx-1.2,-ty-4.4);g.stroke();
+      g.beginPath();g.moveTo(tx,ty);g.quadraticCurveTo(tx-3.4,ty+2.4,tx-1.2,ty+4.4);g.stroke();
+      sx=tx-1.2;sy=ty+4.4;
+    }
+    /* string */
+    g.strokeStyle='#efe9d2';g.lineWidth=0.9;
+    g.beginPath();g.moveTo(sx,-sy);g.lineTo(sx,sy);g.stroke();
+    /* tip nocks */
+    g.fillStyle=edge;
+    g.beginPath();g.arc(tx,-ty,1.15,0,7);g.fill();
+    g.beginPath();g.arc(tx,ty,1.15,0,7);g.fill();
+    /* grip wrap at the belly (gold binding for composite, leather otherwise) */
+    g.strokeStyle=_rec?'#d8b24a':'#3a2614';g.lineWidth=_rec?2.8:2.2;
+    g.beginPath();g.moveTo(cx+r-0.6,-2.2);g.lineTo(cx+r-0.6,2.2);g.stroke();
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='hide'){
@@ -7904,18 +7945,18 @@ const scim=new THREE.Group();
  spm.position.y=-0.01;scim.add(spm);}
 tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);
 const bowM=new THREE.Group();
-{const grip=TT(gmesh(new THREE.CylinderGeometry(0.017,0.017,0.18,6),0x5a3d22),'tint');grip.position.y=-0.40;bowM.add(grip);
- const ul=TT(gmesh(new THREE.CylinderGeometry(0.011,0.016,0.34,6),0x6b4a2e),'tint');ul.position.set(0,-0.18,-0.07);ul.rotation.x=0.46;bowM.add(ul);
- const ut=TT(gmesh(new THREE.CylinderGeometry(0.009,0.011,0.18,6),0x6b4a2e),'tint');ut.position.set(0,0.04,-0.20);ut.rotation.x=0.95;bowM.add(ut);
- const ll=TT(gmesh(new THREE.CylinderGeometry(0.016,0.011,0.34,6),0x6b4a2e),'tint');ll.position.set(0,-0.62,-0.07);ll.rotation.x=-0.46;bowM.add(ll);
- const lt=TT(gmesh(new THREE.CylinderGeometry(0.011,0.009,0.18,6),0x6b4a2e),'tint');lt.position.set(0,-0.84,-0.20);lt.rotation.x=-0.95;bowM.add(lt);
- const str=gmesh(new THREE.CylinderGeometry(0.004,0.004,0.92,4),0xe8e0cc);str.position.set(0,-0.40,-0.24);bowM.add(str);}
+{const grip=TT(gmesh(new THREE.CylinderGeometry(0.017,0.017,0.18,6),0x5a3d22),'tint');grip.position.y=0.0;bowM.add(grip);
+ const ul=TT(gmesh(new THREE.CylinderGeometry(0.011,0.016,0.34,6),0x6b4a2e),'tint');ul.position.set(0,0.22,-0.07);ul.rotation.x=0.46;bowM.add(ul);
+ const ut=TT(gmesh(new THREE.CylinderGeometry(0.009,0.011,0.18,6),0x6b4a2e),'tint');ut.position.set(0,0.44,-0.20);ut.rotation.x=0.95;bowM.add(ut);
+ const ll=TT(gmesh(new THREE.CylinderGeometry(0.016,0.011,0.34,6),0x6b4a2e),'tint');ll.position.set(0,-0.22,-0.07);ll.rotation.x=-0.46;bowM.add(ll);
+ const lt=TT(gmesh(new THREE.CylinderGeometry(0.011,0.009,0.18,6),0x6b4a2e),'tint');lt.position.set(0,-0.44,-0.20);lt.rotation.x=-0.95;bowM.add(lt);
+ const str=gmesh(new THREE.CylinderGeometry(0.004,0.004,0.92,4),0xe8e0cc);str.position.set(0,0.0,-0.24);bowM.add(str);}
 tool.add(bowM);
 const staffM=new THREE.Group();
-{const shaft=TT(gmesh(new THREE.CylinderGeometry(0.018,0.024,1.18,6),0x6b4a2e),'tint');shaft.position.y=-0.40;staffM.add(shaft);
- const setting=TT(gmesh(new THREE.CylinderGeometry(0.052,0.03,0.09,6),0x4a3420),'trim');setting.position.y=0.15;staffM.add(setting);
- const orb=TT(gmesh(new THREE.OctahedronGeometry(0.062,0),0x9a6fb0),'trim');orb.position.y=0.26;orb.scale.y=1.25;staffM.add(orb);
- const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-1.0;staffM.add(cap);}
+{const shaft=TT(gmesh(new THREE.CylinderGeometry(0.018,0.024,1.18,6),0x6b4a2e),'tint');shaft.position.y=0.30;staffM.add(shaft);
+ const setting=TT(gmesh(new THREE.CylinderGeometry(0.052,0.03,0.09,6),0x4a3420),'trim');setting.position.y=0.85;staffM.add(setting);
+ const orb=TT(gmesh(new THREE.OctahedronGeometry(0.062,0),0x9a6fb0),'trim');orb.position.y=0.97;orb.scale.y=1.25;staffM.add(orb);
+ const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
 axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
 const capeM=new THREE.Group();
@@ -8948,6 +8989,19 @@ function makeGroundItem(id){
     add(CYL(0.016,0.016,0.62,6),0x6e4a2a).position.set(0,0.06,0);
     const _oc=eq.infRune==='fire_rune'?0xe0632a:eq.infRune==='water_rune'?0x4f86d6:eq.infRune==='earth_rune'?0x7d9a46:eq.infRune==='air_rune'?0xbcd8ee:(eq.mdmg?0xb58be0:0xcfd6da);
     const _orb=add(SPH(0.05),_oc);_orb.position.set(0,0.4,0);
+  }
+  else if(eq.slot==='ammo'||/_arrow$/.test(id)){
+    /* a small fan of arrows lying on the ground: shaft + metal head + fletching */
+    const mc=metalOf(id)||[0x8a8a8a,0xc8c8c8];
+    const headC=mc[0],shaftC=0x6e4a2a,fletchC=0xd8d2c0;
+    for(let i=0;i<4;i++){
+      const ar=new THREE.Group();
+      const sh=mesh(CYL(0.0075,0.0075,0.46,6),shaftC);sh.rotation.x=Math.PI/2;ar.add(sh);
+      const hd=mesh(CON(0.022,0.075,5),headC);hd.rotation.x=Math.PI/2;hd.position.z=0.27;ar.add(hd);
+      for(const sd of[-1,1]){const fl=mesh(BOX(0.002,0.045,0.08),fletchC);fl.position.set(sd*0.013,0,-0.18);fl.rotation.z=sd*0.32;ar.add(fl);}
+      ar.rotation.y=(i-1.5)*0.17;ar.position.set((i-1.5)*0.022,0.028+i*0.007,0);
+      g.add(ar);
+    }
   }
   /* ---------------- helmets / head ---------------- */
   else if(eq.model==='slayerhelm'){
@@ -10288,7 +10342,18 @@ function ownsItemAnywhere(id){if(countItem(id)>0)return true;
   if(typeof bank!=='undefined'&&bank)for(const b of bank){if(b&&b.id===id)return true;}
   return false;}
 function signetGo(tx,ty,text){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}
-  const t=teleNear(tx,ty);player.x=t[0];player.y=t[1];player.px=t[0];player.py=t[1];player.path.length=0;cancelAction&&cancelAction();msg(text,'#9a6fb0');dirty=true;}
+  if(player._tele)return;
+  const t=teleNear(tx,ty);
+  player._tele=true;cancelAction&&cancelAction();player.action=null;player.path.length=0;
+  sfx.bury();slayerSmoke(player.x,player.y);teleFlash('#6a4a7a');
+  msg('The signet wreathes you in slayer\u2019s smoke\u2026','#9a6fb0');
+  setTimeout(()=>{
+    player.x=t[0];player.y=t[1];player.px=t[0];player.py=t[1];
+    player.path.length=0;player.action=null;
+    slayerSmoke(player.x,player.y);teleFlash('#6a4a7a');
+    msg(text,'#9a6fb0');player._tele=false;dirty=true;
+  },560);
+  dirty=true;}
 function signetTeleMaster(){signetGo(49,31,'The signet carries you to the Slayer Master at the wild\u2019s edge.');}
 const SIGNET_TASK_TELE={basilisk:[15,19],banshee:[11,12],gargoyle:[33,6],wyvern:[47,13]};
 function signetTeleTask(){const sl=player.slayer;
@@ -12036,15 +12101,24 @@ function drawOverlay(now){
     octx.globalAlpha=1;
   }
   for(let i=parts.length-1;i>=0;i--){
-    const q=parts[i],age=now-q.t;
-    if(age>900){parts.splice(i,1);continue;}
+    const q=parts[i],age=now-q.t,life=q.life||900;
+    if(age>life){parts.splice(i,1);continue;}
+    if(age<0)continue;
     const p=proj(q.wx,q.wy,q.wz);
     if(!p)continue;
     const ag=age/1000;
-    octx.globalAlpha=1-age/900;
-    octx.fillStyle=q.col;
-    octx.fillRect(p.x+q.vx*ag*55-2,p.y+(q.vy*ag+5.4*ag*ag)*55-2,4,4);
-    octx.globalAlpha=1;
+    if(q.smoke){
+      const sz=(q.r0||10)+ag*(q.grow||30);
+      octx.globalAlpha=Math.max(0,(1-age/life)*(q.a0||0.5));
+      octx.fillStyle=q.col;
+      octx.beginPath();octx.arc(p.x+q.vx*ag*55,p.y+(q.vy*ag+0.9*ag*ag)*55,sz,0,7);octx.fill();
+      octx.globalAlpha=1;
+    }else{
+      octx.globalAlpha=1-age/life;
+      octx.fillStyle=q.col;
+      octx.fillRect(p.x+q.vx*ag*55-2,p.y+(q.vy*ag+5.4*ag*ag)*55-2,4,4);
+      octx.globalAlpha=1;
+    }
   }
 }
 
@@ -12110,7 +12184,7 @@ function render(now){
   const swing=Math.sin(now*0.012)*0.7*walkBlend;
   pm.lLeg.rotation.x=swing;pm.rLeg.rotation.x=-swing;
   let armL=-swing*0.5,armR=swing*0.5;
-  axe.visible=pick.visible=sword.visible=scim.visible=false;
+  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
   const act=player.action;
@@ -12132,10 +12206,10 @@ function render(now){
           if(swA<110)armR=-1.28-0.20*Math.sin(Math.PI*(swA/110));}
         else armL=-1.02;
       }else if(_ws==='magic'){
-        /* casting: raise the staff and thrust it forward toward the target */
-        armR=-0.72;armL=-0.34;
-        if(swA<460){const push=Math.sin(Math.PI*(swA/460));
-          armR=-0.72-1.15*push;armL=-0.34-0.66*push;}
+        /* casting: sweep the staff overhead to the sky (OSRS-style raise) */
+        armR=-0.55;armL=-0.22;
+        if(swA<480){const lift=Math.sin(Math.PI*(swA/480));
+          armR=-0.55-1.95*lift;armL=-0.22-0.30*lift;}
       }else{
         /* melee: overhead chop */
         armR=-0.45;
@@ -12229,6 +12303,7 @@ function render(now){
      pm.g.rotation.x=0.13*Math.sin(Math.PI*(brA/480));
    }else pm.g.rotation.x=0;}
   pm.lArm.rotation.x=armL;pm.rArm.rotation.x=armR;
+  bowM.rotation.x=-armR;staffM.rotation.x=-armR;
 
   /* guide idle */
   gm.rArm.rotation.x=Math.sin(now*0.002)*0.06;
