@@ -906,11 +906,11 @@ const GE_STOCK=[];
   });
 }
 [['red',0xd0312d],['yellow',0xf2c40e],['blue',0x2f5fd0],['green',0x2f9e44],['white',0xeef0f2],['purple',0x9c36b5]].forEach(([c,tint])=>{
-  ITEMS['party_hat_'+c]={name:c[0].toUpperCase()+c.slice(1)+' party hat',ex:'A crisp folded party hat. Impossibly rare \u2014 a collector\u2019s prize.',val:1000000,
+  ITEMS['party_hat_'+c]={name:c[0].toUpperCase()+c.slice(1)+' party hat',ex:'A crisp folded party hat. Impossibly rare \u2014 a collector\u2019s prize.',val:1000000,noSell:true,
     equip:{slot:'head',def:0,model:'partyhat',verb:'Wear',req:0,tint:tint}};
   GE_STOCK.push('party_hat_'+c);
 });
-ITEMS.santa_hat={name:'Santa hat',ex:'Soft red felt with a snow-white trim and a bobble. Festive and fabulously rare.',val:2000000,
+ITEMS.santa_hat={name:'Santa hat',ex:'Soft red felt with a snow-white trim and a bobble. Festive and fabulously rare.',val:2000000,noSell:true,
   equip:{slot:'head',def:0,model:'santahat',verb:'Wear',req:0,tint:0xc0241f}};
 ITEMS.clue_easy={name:'Easy clue scroll',ex:'A riddle pointing somewhere on the grounds. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
 ITEMS.clue_medium={name:'Medium clue scroll',ex:'A two-step trail to buried treasure. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
@@ -3728,7 +3728,7 @@ function eqStat(k){
   }
   return t;
 }
-function gePrice(id){const it=ITEMS[id];if(!it||!it.val||SELL_BLOCK.includes(id))return 0;return Math.max(1,Math.floor(it.val*0.6));}
+function gePrice(id){const it=ITEMS[id];if(!it||!it.val||it.noSell||SELL_BLOCK.includes(id))return 0;return Math.max(1,Math.floor(it.val*0.6));}
 function statBits(eq,sep){
   const b=[];if(eq.atk)b.push('Atk +'+eq.atk);if(eq.str)b.push('Str +'+eq.str);if(eq.def)b.push('Def +'+eq.def);
   return b.join(sep||'  ');
@@ -4846,6 +4846,14 @@ function drawItemIcon(g,id,S){
       g.fillStyle='#eae2c8';g.beginPath();g.moveTo(5,5);g.quadraticCurveTo(9,5,9,1);g.lineTo(7,2);g.quadraticCurveTo(7,4,4,5);g.closePath();g.fill();
       g.fillStyle='#c0392b';g.beginPath();g.arc(9,5,2,0,7);g.fill();
       break;}
+    case 'party_token':
+      g.fillStyle='#a8842c';g.beginPath();g.arc(0,0,9.5,0,7);g.fill();
+      g.fillStyle='#e8c23d';g.beginPath();g.arc(0,0,8,0,7);g.fill();
+      g.fillStyle='#f6df8a';g.beginPath();g.arc(-2.2,-2.2,3.8,0,7);g.fill();
+      g.fillStyle='#d23b6e';g.beginPath();g.arc(0,-1.6,3,0,7);g.fill();
+      g.fillStyle='#ff7fae';g.beginPath();g.arc(-1,-2.6,1,0,7);g.fill();
+      g.strokeStyle='#8a5a2e';g.lineWidth=1;g.beginPath();g.moveTo(0,1.3);g.lineTo(0,4.6);g.stroke();
+      break;
     default:
       g.fillStyle='#888';g.font='bold 16px Verdana';g.textAlign='center';g.fillText('?',0,6);
   }
@@ -9878,6 +9886,7 @@ function buildPartyAgents(){
 let balloons=[]; let partyActive=false; let partyGameMs=0; let partyPops=0;
 const PARTY_CAP=24, PARTY_LEN=75000, REAL_TARGET=22, FAKE_TARGET=14;
 let PARTY_FREE=false;  /* party rounds cost one Party token (bought from Mr Callahan) */
+const PARTY_PINK_VAL=5000;  /* drops worth >= this many gp (or jackpot 'big' drops) show pink+balloon in chat; rest are plain */
 const partyTimerEl=document.getElementById('partytimer');
 const BCOL=[0xd0312d,0xf2c40e,0x2f5fd0,0x2f9e44,0xeef0f2,0x9c36b5,0xff7ab0,0xff9a3a];
 const FCOL=[0xb9aec6,0xaebfc9,0xb9c9b0,0xc9c2ae,0xc9aeb9,0xaec3c9];
@@ -9927,15 +9936,15 @@ function partyFakeFind(){
   return picks[rndi(0,picks.length-1)];
 }
 const PARTY_LOOT=[
- {p:0.0003, big:1, special:'cos', label:'Party hat / Santa hat', icon:'party_hat_purple'},
+ {p:0.0013, big:1, special:'cos', label:'Party hat / Santa hat', icon:'party_hat_purple'},
  {p:0.0020, big:1, pool:['dragon_platebody','dragon_platelegs','dragon_full_helm','dragon_scimitar','dragon_kiteshield'], label:'Dragon armour & weapons', icon:'dragon_scimitar'},
  {p:0.0060, pool:['rune_platebody','rune_kiteshield','rune_scimitar','rune_full_helm'], label:'Rune gear', icon:'rune_platebody'},
  {p:0.0300, pool:['adamant_platebody','adamant_full_helm','mithril_platelegs','mithril_scimitar','steel_full_helm'], label:'Adamant & mithril gear', icon:'adamant_platebody'},
  {p:0.0500, pool:['uncut_sapphire','uncut_emerald','uncut_ruby','uncut_diamond'], label:'Uncut gems', icon:'uncut_ruby'},
- {p:0.0500, coins:[900,2600], label:'Coins (900\u20132,600)', icon:'coins'},
- {p:0.1700, coins:[160,650], label:'Coins (160\u2013650)', icon:'coins'},
- {p:0.2500, coins:[15,140], label:'Coins (15\u2013140)', icon:'coins'},
- {p:0.0500, empty:1, label:'Nothing', icon:''},
+ {p:0.0500, coins:[1200,4000], label:'Coins (1,200\u20134,000)', icon:'coins'},
+ {p:0.1700, coins:[350,1300], label:'Coins (350\u20131,300)', icon:'coins'},
+ {p:0.2500, coins:[50,300], label:'Coins (50\u2013300)', icon:'coins'},
+ {p:0.0490, empty:1, label:'Nothing', icon:''},
  {p:0.1300, pool:['shrimps','trout','sardine','lobster'], qty:[1,3], label:'Food', icon:'lobster'},
  {p:0.1200, pool:['copper_ore','tin_ore','iron_ore','oak_logs','willow_logs','birch_logs'], qty:[1,4], label:'Ores & logs', icon:'iron_ore'},
  {p:0.1417, pool:['air_rune','earth_rune','fire_rune','water_rune','iron_bar','steel_bar'], qty:[3,12], label:'Runes & bars', icon:'fire_rune'},
@@ -9952,7 +9961,7 @@ function rollBalloonLoot(){
     }
     r-=t.p;
   }
-  return{id:'coins',qty:rndi(15,140)};
+  return{id:'coins',qty:rndi(50,300)};
 }
 function balloonPop(wx,wy,wz,col){
   const T=performance.now();
@@ -9973,14 +9982,17 @@ function popBalloon(b,byPlayer,agent){
   partyPops++;
   const lt=rollBalloonLoot();
   if(!lt.id){msg('You pop a balloon \u2014 empty.');return;}
-  if(lt.id==='coins'){addItem('coins',lt.qty);msg('You pop a balloon: '+fmt(lt.qty)+' coins.');return;}
+  const dropVal=lt.id==='coins'?lt.qty:(ITEMS[lt.id].val||0)*lt.qty;   /* rare/valuable -> pink+balloon, else plain */
+  const PINK=!!(lt.big||dropVal>=PARTY_PINK_VAL);
+  const tag=PINK?'\ud83c\udf88 ':'';const col=PINK?'#ff5bbf':undefined;
+  if(lt.id==='coins'){addItem('coins',lt.qty);msg(tag+'You pop a balloon: '+fmt(lt.qty)+' coins.',col);return;}
   if(lt.qty>1&&!ITEMS[lt.id].stack){
     if(!addNote(lt.id,lt.qty)){msg('Your inventory is full!','#d0312d');return;}
-    msg('\ud83c\udf88 You pop a balloon: '+lt.qty+' \u00d7 '+ITEMS[lt.id].name+' (banknote)!','#ff5bbf');return;
+    msg(tag+'You pop a balloon: '+lt.qty+' \u00d7 '+ITEMS[lt.id].name+' (banknote)!',col);return;
   }
   if(!addItem(lt.id,lt.qty)){msg('Your inventory is full!','#d0312d');return;}
-  if(lt.big){msg('\ud83c\udf88 A '+ITEMS[lt.id].name+' drifts out of the balloon!','#ff5bbf');sfx.coins&&sfx.coins();}
-  else msg('You pop a balloon: '+(lt.qty>1?lt.qty+' \u00d7 ':'')+ITEMS[lt.id].name+'.');
+  if(lt.big){msg(tag+'A '+ITEMS[lt.id].name+' drifts out of the balloon!',col);sfx.coins&&sfx.coins();}
+  else msg(tag+'You pop a balloon: '+(lt.qty>1?lt.qty+' \u00d7 ':'')+ITEMS[lt.id].name+'.',col);
 }
 function partyFixtureHit(cx,cy){
   if(!inParty||!partyFixtures.length)return null;
@@ -10016,7 +10028,7 @@ function openPartyDrops(){
     document.body.appendChild(partyDropsEl);
   }
   let h='<div style="text-align:center;font-weight:bold;font-size:18px;">Balloon Drop Table</div>';
-  h+='<div style="text-align:center;font-size:11px;margin:2px 0 10px;opacity:.7;">Chance per balloon you pop \u00b7 24 pops a round</div><div id="pdrows"></div>';
+  h+='<div style="text-align:center;font-size:11px;margin:2px 0 10px;opacity:.7;">Chance per balloon you pop</div><div id="pdrows"></div>';
   h+='<div style="text-align:center;font-size:10px;margin-top:8px;opacity:.6;">A round costs one 30,000-coin Party token.</div>';
   h+='<div style="text-align:center;margin-top:10px;"><button id="pdclose" style="font-family:Georgia,serif;font-size:13px;padding:5px 18px;background:#7a5a2e;color:#f3e9c8;border:none;border-radius:6px;cursor:pointer;">Close</button></div>';
   partyDropsEl.innerHTML=h;
@@ -11068,7 +11080,7 @@ const DIALOGUES={
       {label:'Buy a Party token (30,000 coins).',next:()=>{if(coinCount()<30000)return 'poor';spendCoins(30000);addItem('party_token',1);if(sfx.coins)sfx.coins();return 'bought';}},
       {label:'How does this work?',next:'how'},
       {label:'Just looking, thanks.',next:'bye'}]},
-    how:{who:'npc',text:'Buy a token, then pull the lever on the wall — balloons rain down across the hall for a good while. Pop as many as you can: most hold a prize, from coins and ore to the odd rare trinket, though a few are only air. You’ll pocket the loot from up to two dozen of them before the round ends. The scroll beside the lever lists what’s on offer. The students join in for the fun of it — pay them no mind.',next:'ask'},
+    how:{who:'npc',text:'Buy a token, then pull the lever on the wall — balloons rain down across the hall for a good while. Pop as many as you can: most hold a prize, from coins and ore to the odd rare trinket, though a few are only air. You’ll pocket the loot from every balloon you pop before the round ends. The scroll beside the lever lists what’s on offer. The students join in for the fun of it — pay them no mind.',next:'ask'},
     bought:{who:'npc',text:'A fine choice! Pull that lever whenever you’re ready.',next:null},
     poor:{who:'npc',text:'Come back when you’ve thirty thousand coins to spare, friend.',next:null},
     bye:{who:'npc',text:'Suit yourself — the balloons aren’t going anywhere.',next:null}}),
@@ -12292,6 +12304,7 @@ function sellSlot(i,n){
   const sl=player.inv[i];if(!sl)return;
   const id=sl.id;
   if(id==='coins'){msg('Clerk: I cannot buy coins with coins, friend.');return;}
+  if(ITEMS[id].noSell){msg('Clerk: That is a keepsake \u2014 not something I can buy.');return;}
   if(!ITEMS[id].val){msg('Clerk: I have no interest in that.');return;}
   let q;
   if(ITEMS[id].stack){q=Math.min(n,sl.qty);sl.qty-=q;if(sl.qty<=0)player.inv[i]=null;}
