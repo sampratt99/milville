@@ -5430,6 +5430,7 @@ function updateRetalUI(){
   b.classList.toggle('on',on);
   const lab=b.querySelector('span');if(lab)lab.textContent='Auto-retaliate: '+(on?'On':'Off');
 }
+
 function renderFriends(){
   const el=document.getElementById('friendslist');if(!el)return;
   el.innerHTML='';
@@ -5441,16 +5442,32 @@ function renderFriends(){
     d.textContent=mpOn?'No friends yet. Right-click another player \u2014 or use Online now below \u2014 to add them.':'No friends yet. Friends and their online status will appear here once multiplayer is connected.';
     el.appendChild(d);
   } else {
-    const hd=document.createElement('div');hd.className='friendsempty';hd.textContent='Friends';el.appendChild(hd);
     for(const f of fr){
       const nm=(f&&f.name)?f.name:String(f);
       const on=mpOn&&MP.isOnline(nm);
+      const cmb=(f&&typeof f.cmb==='number')?f.cmb:null;
       const d=document.createElement('div');d.className='friendrow';
       d.appendChild(dot(on));
-      const t=document.createElement('span');t.textContent=nm+(on?'':'  (offline)');t.style.verticalAlign='middle';d.appendChild(t);
+      const t=document.createElement('span');t.style.verticalAlign='middle';
+      const meta=[];
+      if(cmb!=null)meta.push('Combat '+cmb);
+      if(on)meta.push('online');
+      else if(f&&f.lastSeen)meta.push('last seen '+fmtAgo(f.lastSeen));
+      else meta.push('offline');
+      t.innerHTML=nm+' <span style="color:#9a9486;font-size:11px">\u00b7 '+meta.join(' \u00b7 ')+'</span>';
+      d.appendChild(t);
       const x=document.createElement('span');x.textContent='\u00d7';x.title='Remove '+nm;
-      x.style.cssText='float:right;cursor:pointer;color:#c0796f;padding:0 4px;';
-      x.addEventListener('click',(e)=>{e.stopPropagation();if(typeof MP!=='undefined'&&MP.removeFriend){MP.removeFriend(nm);}else{player.friends=(player.friends||[]).filter(z=>((z&&z.name)||z)!==nm);renderFriends();}});
+      x.style.cssText='float:right;cursor:pointer;color:#c0796f;padding:0 4px;font-weight:bold;';
+      x.addEventListener('click',(e)=>{
+        e.stopPropagation();
+        if(x.dataset.armed){
+          if(typeof MP!=='undefined'&&MP.removeFriend){MP.removeFriend(nm);}
+          else{player.friends=(player.friends||[]).filter(z=>((z&&z.name)||z)!==nm);renderFriends();}
+        }else{
+          x.dataset.armed='1';x.textContent='Remove?';x.style.color='#e0533f';
+          setTimeout(()=>{x.dataset.armed='';x.textContent='\u00d7';x.style.color='#c0796f';},2600);
+        }
+      });
       d.appendChild(x);
       el.appendChild(d);
     }
@@ -5472,6 +5489,7 @@ function renderFriends(){
     }
   }
 }
+
 function drawEmoteIcon(g,id,S){
   g.clearRect(0,0,S,S);
   if(drawSpecialEmoteIcon(g,id,S))return;
@@ -5545,14 +5563,13 @@ function drawUiIcon(g,name,S){
   }
   if(name==='quest'){
     g.save();g.translate(S/2,S/2);
+    g.fillStyle='#c9a24a';g.beginPath();g.arc(0,0,S*0.40,0,7);g.fill();
+    g.fillStyle='#2a2620';g.beginPath();g.arc(0,0,S*0.33,0,7);g.fill();
     g.fillStyle='#d8c89a';
-    g.fillRect(-S*0.26,-S*0.34,S*0.52,S*0.68);
-    g.fillStyle='#b09a64';
-    g.fillRect(-S*0.32,-S*0.42,S*0.64,S*0.12);
-    g.fillRect(-S*0.32,S*0.3,S*0.64,S*0.12);
-    g.fillStyle='#2a4fd0';
-    g.fillRect(-S*0.06,-S*0.24,S*0.12,S*0.3);
-    g.beginPath();g.arc(0,S*0.17,S*0.07,0,7);g.fill();
+    for(let k=0;k<4;k++){const a=k*Math.PI/2;g.beginPath();g.arc(Math.sin(a)*S*0.33,-Math.cos(a)*S*0.33,S*0.045,0,7);g.fill();}
+    g.fillStyle='#c0392b';g.beginPath();g.moveTo(0,-S*0.27);g.lineTo(S*0.11,0);g.lineTo(-S*0.11,0);g.closePath();g.fill();
+    g.fillStyle='#e8e2d0';g.beginPath();g.moveTo(0,S*0.27);g.lineTo(S*0.11,0);g.lineTo(-S*0.11,0);g.closePath();g.fill();
+    g.fillStyle='#e8c84a';g.beginPath();g.arc(0,0,S*0.055,0,7);g.fill();
     g.restore();return;
   }
   if(name==='anvil'){
@@ -14213,7 +14230,7 @@ const MP = (function () {
   function selfGear() {
     const e = player.equip || {};
     const id = s => (e[s] && e[s].id) || null;
-    return { weapon: id('weapon'), shield: id('shield'), cape: id('cape'), head: id('head'), body: id('body'), legs: id('legs'), feet: id('feet'), neck: id('neck'), hands: id('hands'), ammo: id('ammo') };
+    return { weapon: id('weapon'), shield: id('shield'), cape: id('cape'), head: id('head'), body: id('body'), legs: id('legs'), feet: id('feet'), neck: id('neck'), hands: id('hands'), ammo: id('ammo'), cmb: (typeof player.cmb === 'number' ? player.cmb : 0) };
   }
   function selfAct() {
     const a = player.action;
@@ -14276,14 +14293,22 @@ const MP = (function () {
     for (const [m, c] of claims) if (c.uid === uid) claims.delete(m);
   }
   function clearRemotes() { for (const uid of Array.from(RP.keys())) despawn(uid); }
+  function logSystem(text) {
+    if (typeof chatEl === 'undefined' || !chatEl) return;
+    const d = document.createElement('div'); d.className = 'saychat';
+    d.textContent = text; d.style.color = '#8a7d5a'; d.style.fontStyle = 'italic';
+    chatEl.appendChild(d);
+    while (chatEl.children.length > 70) chatEl.removeChild(chatEl.firstChild);
+    chatEl.scrollTop = chatEl.scrollHeight;
+  }
 
   /* ---------------- inbound ---------------- */
   function handle(m) {
     if (!m || typeof m !== 'object') return;
     switch (m.t) {
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
-      case 'join': spawn(m.p); break;
-      case 'leave': despawn(m.uid); break;
+      case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
+      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); despawn(m.uid); break; }
       case 'pos': { const r = RP.get(m.uid); if (r) { r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'chat': { const r = RP.get(m.uid); if (r) { r.chat = m.text; r.chatT = now() + 4500; } if (typeof logSay === 'function') logSay(m.name || (r && r.name) || '?', m.text, false); break; }
@@ -14299,6 +14324,19 @@ const MP = (function () {
     if (!active() || !conn) return;
     pushOutbound(t);
     manageClaims();
+    if (player.friends && player.friends.length) {
+      for (const f of player.friends) {
+        if (!f || !f.name) continue;
+        const fn = f.name.toLowerCase();
+        for (const r of RP.values()) {
+          if ((r.name || '').toLowerCase() !== fn) continue;
+          if (r.gear && typeof r.gear.cmb === 'number') f.cmb = r.gear.cmb;
+          f.uid = r.uid;
+          if (!f.lastSeen || Date.now() - f.lastSeen > 60000) { if (typeof dirty !== 'undefined') dirty = true; }
+          f.lastSeen = Date.now();
+        }
+      }
+    }
     const tnow = Date.now();
     for (const [uid, r] of RP) { if (tnow - r.last > CFG.staleMs) { despawn(uid); } }
     for (const [mi, c] of claims) { if (tnow - c.t > CFG.claimMs) claims.delete(mi); }
@@ -14319,37 +14357,52 @@ const MP = (function () {
     rig.lArm.rotation.set(0, 0, 0); rig.rArm.rotation.set(0, 0, 0);
     rig.lLeg.rotation.x = 0; rig.rLeg.rotation.x = 0;
     if (rig.upper) rig.upper.rotation.x = 0;
-    rig.g.position.y = groundH(r.px + 0.5, r.py + 0.5);
-    /* emote pose (props deferred to a later layer) */
-    if (r.emote && typeof EMOTES_BY_ID !== 'undefined') {
-      const E = EMOTES_BY_ID[r.emote], dur = (E && E.dur) || 2200, tt = (t - r.emoteT) / 1000;
-      if (E && E.fn && tt < dur / 1000) {
-        const pose = { armLx: 0, armRx: 0, armLz: 0, armRz: 0, legL: 0, legR: 0, bodyRx: 0, jump: 0, spin: 0 };
-        try { E.fn(pose, tt / (dur / 1000), E); } catch (e) {}
-        rig.lArm.rotation.x = pose.armLx || 0; rig.rArm.rotation.x = pose.armRx || 0;
-        rig.lArm.rotation.z = pose.armLz || 0; rig.rArm.rotation.z = pose.armRz || 0;
-        rig.lLeg.rotation.x = pose.legL || 0; rig.rLeg.rotation.x = pose.legR || 0;
-        if (rig.upper) rig.upper.rotation.x = pose.bodyRx || 0;
-        rig.g.position.y += (pose.jump || 0);
-        rig.g.rotation.y = r.h + (pose.spin || 0);
-        return;
-      } else { r.emote = null; }
-    }
-    /* combat: simple attack bob until per-weapon parity lands in a later layer */
-    if (r.act && r.act.k === 'attack') {
-      const sw = -0.6 + Math.sin(t * 0.013) * -0.8;
-      rig.rArm.rotation.x = sw; rig.lArm.rotation.x = sw * 0.35;
-      return;
-    }
+    const gy = groundH(r.px + 0.5, r.py + 0.5);
+    rig.g.position.y = gy;
+    rig.g.rotation.y = r.h;
+    let armL = 0, armR = 0;
     /* walk cycle */
     if (r.moving) {
-      const w = t * 0.012;
-      rig.lLeg.rotation.x = Math.sin(w) * 0.5; rig.rLeg.rotation.x = -Math.sin(w) * 0.5;
-      rig.lArm.rotation.x = -Math.sin(w) * 0.4; rig.rArm.rotation.x = Math.sin(w) * 0.4;
+      const sw = Math.sin(t * 0.012) * 0.7;
+      rig.lLeg.rotation.x = sw; rig.rLeg.rotation.x = -sw;
+      armL = -sw * 0.5; armR = sw * 0.5;
     }
+    /* combat swing — mirrors the local melee / ranged / magic arm motion */
+    if (r.act && r.act.k === 'attack') {
+      const we = r.gear && r.gear.weapon && typeof ITEMS !== 'undefined' && ITEMS[r.gear.weapon] && ITEMS[r.gear.weapon].equip;
+      const style = (typeof weaponStyle === 'function') ? weaponStyle(we) : 'melee';
+      const swA = t % 900; /* synthesized repeating swing (remote sends no per-hit timestamp) */
+      if (style === 'ranged') {
+        armR = -1.28;
+        if (swA < 480) { const tt = swA / 480, snap = Math.exp(-tt * 7.5); armL = -1.02 + 0.9 * snap; if (swA < 110) armR = -1.28 - 0.20 * Math.sin(Math.PI * (swA / 110)); }
+        else armL = -1.02;
+      } else if (style === 'magic') {
+        armR = -0.55; armL = -0.22;
+        if (swA < 480) { const lift = Math.sin(Math.PI * (swA / 480)); armR = -0.55 - 1.95 * lift; armL = -0.22 - 0.30 * lift; }
+      } else {
+        armR = -0.45;
+        if (swA < 480) { const k2 = Math.sin(Math.PI * (swA / 480)); armR = -0.35 - 2.0 * k2; }
+      }
+    }
+    /* emote — mirrors the LOCAL application exactly: seeded pose + 4-arg fn(pose, tNorm, eMs, now). Overrides walk/combat like the local player. (themed props deferred to a later layer) */
+    if (r.emote && r.moving) r.emote = null;
+    if (r.emote && typeof EMOTES_BY_ID !== 'undefined') {
+      const _E = EMOTES_BY_ID[r.emote], _e = t - (r.emoteT || 0);
+      if (_E && _E.fn && _e < _E.dur) {
+        const pz = { armLx: armL, armRx: armR, armLz: 0, armRz: 0, legL: rig.lLeg.rotation.x, legR: rig.rLeg.rotation.x, bodyRx: 0, jump: 0, spin: 0 };
+        try { _E.fn(pz, _e / _E.dur, _e, t); } catch (e) {}
+        armL = pz.armLx; armR = pz.armRx;
+        rig.lArm.rotation.z = pz.armLz; rig.rArm.rotation.z = pz.armRz;
+        rig.lLeg.rotation.x = pz.legL; rig.rLeg.rotation.x = pz.legR;
+        if (rig.upper) rig.upper.rotation.x = pz.bodyRx;
+        rig.g.position.y = gy + (pz.jump || 0);
+        rig.g.rotation.y = r.h + (pz.spin || 0);
+      } else { r.emote = null; }
+    }
+    rig.lArm.rotation.x = armL; rig.rArm.rotation.x = armR;
   }
 
-  /* ---------------- 2D overlays (shares drawOverlay's cleared canvas) ---------------- */
+    /* ---------------- 2D overlays (shares drawOverlay's cleared canvas) ---------------- */
   function drawOverlays() {
     if (!active() || !conn) return;
     if (typeof octx === 'undefined' || typeof proj !== 'function') return;
