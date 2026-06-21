@@ -2839,6 +2839,7 @@ function startGather(obj){
   clickFx(obj.x,obj.y,'#ff4d3d');
 }
 function startAttack(rat){
+  if(typeof MP!=='undefined'&&MP.isClaimedByOther(rat)){msg('Someone else is already fighting that.','#103a8c');return;}
   setAction({type:'attack',rat},rat.x,rat.y);
   clickFx(rat.x,rat.y,'#ff4d3d');
 }
@@ -4377,6 +4378,11 @@ function optionsAt(tx,ty){
   if(tiles[ty]&&tiles[ty][tx]===T_FOREST)
     opts.push({html:'Examine <span class="t">Dense forest</span>',
       fn:()=>msg('The woods are too thick to pass.')});
+  const _rp=(typeof MP!=='undefined'&&MP.active())?MP.remoteAt(tx,ty):null;
+  if(_rp){
+    opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+' \u2014 a fellow adventurer of Milville.','#103a8c')},
+      {html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
+  }
   return opts;
 }
 
@@ -5390,6 +5396,7 @@ function playEmote(id){
   if(E.build){try{player.emoteFx=E.build()||null;}catch(err){player.emoteFx=null;}}
   if(typeof audio==='function')audio();
   if(typeof tone==='function')tone(540,660,0.10,'sine',0.045);
+  if(typeof MP!=='undefined')MP.onLocalEmote(id);
   /* MULTIPLAYER HOOK: broadcast {uid:player.uid,emote:id,t:Date.now()}; nearby avatars run EMOTES_BY_ID[id].fn pose + build()/fx() props. */
 }
 let _emotesBuilt=false;
@@ -5426,13 +5433,44 @@ function updateRetalUI(){
 function renderFriends(){
   const el=document.getElementById('friendslist');if(!el)return;
   el.innerHTML='';
-  const f=(player.friends&&player.friends.length)?player.friends:null;
-  if(!f){
+  const mpOn=(typeof MP!=='undefined'&&MP.active());
+  const dot=(on)=>{const sp=document.createElement('span');sp.style.cssText='display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle;background:'+(on?'#3fbf52':'#9a3b32')+';box-shadow:0 0 0 1px #0d0b08';return sp;};
+  const fr=(player.friends||[]);
+  if(!fr.length){
     const d=document.createElement('div');d.className='friendsempty';
-    d.textContent='No friends yet. Friends you add, and who is online, will appear here once multiplayer is live.';
-    el.appendChild(d);return;
+    d.textContent=mpOn?'No friends yet. Right-click another player \u2014 or use Online now below \u2014 to add them.':'No friends yet. Friends and their online status will appear here once multiplayer is connected.';
+    el.appendChild(d);
+  } else {
+    const hd=document.createElement('div');hd.className='friendsempty';hd.textContent='Friends';el.appendChild(hd);
+    for(const f of fr){
+      const nm=(f&&f.name)?f.name:String(f);
+      const on=mpOn&&MP.isOnline(nm);
+      const d=document.createElement('div');d.className='friendrow';
+      d.appendChild(dot(on));
+      const t=document.createElement('span');t.textContent=nm+(on?'':'  (offline)');t.style.verticalAlign='middle';d.appendChild(t);
+      const x=document.createElement('span');x.textContent='\u00d7';x.title='Remove '+nm;
+      x.style.cssText='float:right;cursor:pointer;color:#c0796f;padding:0 4px;';
+      x.addEventListener('click',(e)=>{e.stopPropagation();if(typeof MP!=='undefined'&&MP.removeFriend){MP.removeFriend(nm);}else{player.friends=(player.friends||[]).filter(z=>((z&&z.name)||z)!==nm);renderFriends();}});
+      d.appendChild(x);
+      el.appendChild(d);
+    }
   }
-  for(const fr of f){const d=document.createElement('div');d.className='friendrow';d.textContent=(fr&&fr.name)?fr.name:String(fr);el.appendChild(d);}
+  if(mpOn){
+    const others=MP.onlineList().filter(o=>!fr.some(f=>((f&&f.name)||f)===o.name));
+    const hd=document.createElement('div');hd.className='friendsempty';hd.style.marginTop='8px';
+    hd.textContent=others.length?'Online now':(MP.connected?'No other players online.':'Connecting\u2026');
+    el.appendChild(hd);
+    for(const o of others){
+      const d=document.createElement('div');d.className='friendrow';
+      d.appendChild(dot(true));
+      const t=document.createElement('span');t.textContent=o.name;t.style.verticalAlign='middle';d.appendChild(t);
+      const add=document.createElement('span');add.textContent='+ Add';add.title='Add '+o.name;
+      add.style.cssText='float:right;cursor:pointer;color:#9fcf7a;padding:0 4px;';
+      add.addEventListener('click',(e)=>{e.stopPropagation();MP.addFriendByName(o.name);});
+      d.appendChild(add);
+      el.appendChild(d);
+    }
+  }
 }
 function drawEmoteIcon(g,id,S){
   g.clearRect(0,0,S,S);
@@ -10013,7 +10051,7 @@ function logSay(name,text,mine){
 function sayOverhead(text){
   text=(text||'').slice(0,80);
   if(!text)return;
-  player.chat=text;player.chatT=performance.now()+4500;
+  player.chat=text;player.chatT=performance.now()+4500;if(typeof MP!=='undefined')MP.onLocalChat(text);
   /* MULTIPLAYER HOOK: broadcast {uid:player.uid,name:player.name,text} here. On receiving a nearby player's line, call logSay(name,text,false) AND drawSayText above their avatar. */
 }
 function openChat(){ if(chatEntryEl)chatEntryEl.focus(); }
@@ -13372,6 +13410,7 @@ function drawOverlay(now){
   octx.clearRect(0,0,ow,oh);
   if(inParty)drawPartyChats();
   if(player.chat&&player.chatT>performance.now())drawSayText(player.px+0.5,player.py+0.5,2.35,player.chat);
+  if(typeof MP!=='undefined')MP.drawOverlays();
   if(inWild(player.x,player.y)){
     octx.save();octx.textAlign='center';
     octx.font='bold 14px Georgia,serif';
@@ -13545,6 +13584,7 @@ function render(now){
 
   const pMoving=lerpEnt(player,(player.run&&player.stamina>0&&!inParty)?150:300,dt);
   for(const r of rats)lerpEnt(r,600,dt);
+  if(typeof MP!=='undefined')MP.frame(now,dt);
 
   /* player transform + heading */
   const pwx=player.px+0.5,pwz=player.py+0.5,pwy=groundH(pwx,pwz);
@@ -13942,6 +13982,7 @@ function enterGame(){
     'Autosave: unavailable here \u2014 progress lasts this session.';
   msg('Welcome to Milville \u2014 the grounds of St. Paul\'s School, '+player.name+'.','#103a8c');
   msg('Arrow keys or WASD orbit the camera, scroll zooms, middle-drag looks around. Right-click anything for options.','#103a8c');
+  if(typeof MP!=='undefined')MP.connect();
 }
 function fmtAgo(t){
   const d=Date.now()-t,m=60000,h=3600000,dy=86400000;
@@ -14101,6 +14142,274 @@ function drawLogo(){
   g.restore();
 }
 drawLogo();
+/* >>> MULTIPLAYER MODULE (injected) >>> */
+/* ============================================================================
+   MULTIPLAYER (relay client)  —  scaffolded foundation, Layer 1
+   Inert until MP.CFG.url is set. With an empty url the single-player game is
+   byte-for-byte unchanged: connect() returns early, isClaimedByOther() is
+   always false, and frame()/drawOverlays() no-op.
+   Handles: connection + reconnect, presence/roster, position, gear+action
+   state, chat, emotes, enemy claim/lock, remote avatars (humanoid + nameplate
+   + overhead chat + hp bar + walk/emote/combat pose).
+   Deferred to later layers (need the live deploy to verify): exact per-slot
+   gear MODELS on remote avatars, full swing/cast/shoot animation parity, and
+   the two-party trade escrow + window.
+   ========================================================================== */
+const MP = (function () {
+  const CFG = {
+    url: 'https://milville-mp.sampratt99.workers.dev',  /* relay deployed (Sam). Set back to '' to turn multiplayer off. */
+    world: 'milville',
+    posMs: 180,         /* min ms between position broadcasts */
+    viewR: 26,          /* render remotes within this many tiles */
+    staleMs: 15000,     /* drop a remote unheard-from this long */
+    claimMs: 20000      /* a claim auto-expires after this long */
+  };
+
+  let ws = null, conn = false, want = false, backoff = 1000;
+  let lastPos = 0, lastPing = 0, lastGear = '', lastAct = '';
+  const RP = new Map();      /* uid -> remote record */
+  const claims = new Map();  /* mobIndex -> {uid, t} */
+  const _sent = [];          /* debug/test ring of outbound msgs */
+
+  const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
+  const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
+  const HAIRS  = [0x6b4423, 0x2c2620, 0x8a6a3a, 0x4a3a2a, 0xb08040, 0x5a3a26];
+
+  function active() { return !!CFG.url; }
+  function now() { return (typeof performance !== 'undefined') ? performance.now() : Date.now(); }
+  function huid(s) { s = String(s || ''); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
+
+  function send(o) {
+    _sent.push(o); if (_sent.length > 240) _sent.shift();
+    if (ws && conn) { try { ws.send(JSON.stringify(o)); } catch (e) {} }
+  }
+
+  function wsURL() {
+    let u = CFG.url.replace(/\/+$/, '');
+    if (/^https:/i.test(u)) u = 'wss:' + u.slice(6);
+    else if (/^http:/i.test(u)) u = 'ws:' + u.slice(5);
+    else if (!/^wss?:/i.test(u)) u = 'wss://' + u;
+    return u + '/room/' + encodeURIComponent(CFG.world);
+  }
+
+  /* ---------------- connection ---------------- */
+  function connect() { if (!active() || want) return; want = true; open(); }
+  function disconnect() { want = false; try { ws && ws.close(); } catch (e) {} }
+  function open() {
+    if (!active() || !want) return;
+    try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
+    ws.onopen = function () {
+      conn = true; backoff = 1000;
+      send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: BASE_APP, gear: selfGear(), hp: player.hp, mhp: maxHp() });
+      lastGear = ''; lastAct = ''; /* force a state push next frame */
+    };
+    ws.onmessage = function (ev) { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
+    ws.onclose = function () { conn = false; clearRemotes(); if (want) reconnect(); };
+    ws.onerror = function () { try { ws.close(); } catch (e) {} };
+  }
+  function reconnect() { setTimeout(function () { if (want) open(); }, backoff); backoff = Math.min(Math.round(backoff * 1.8), 15000); }
+
+  /* ---------------- self snapshots ---------------- */
+  function selfGear() {
+    const e = player.equip || {};
+    const id = s => (e[s] && e[s].id) || null;
+    return { weapon: id('weapon'), shield: id('shield'), cape: id('cape'), head: id('head'), body: id('body'), legs: id('legs'), feet: id('feet'), neck: id('neck'), hands: id('hands'), ammo: id('ammo') };
+  }
+  function selfAct() {
+    const a = player.action;
+    if (a && a.type === 'attack' && a.rat) return { k: 'attack', m: a.rat.i };
+    if (player.emote) return { k: 'emote', e: player.emote };
+    return null;
+  }
+
+  /* ---------------- outbound (called from frame) ---------------- */
+  function pushOutbound(t) {
+    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run }); }
+    const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
+    if (g !== lastGear || a !== lastAct) { lastGear = g; lastAct = a; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
+    if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
+  }
+  function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120) }); }
+  function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
+
+  /* ---------------- claim / lock ---------------- */
+  function manageClaims() {
+    const a = player.action;
+    const mine = (a && a.type === 'attack' && a.rat) ? a.rat.i : null;
+    if (mine != null) {
+      const c = claims.get(mine);
+      if (!c || c.uid !== player.uid) { claims.set(mine, { uid: player.uid, t: Date.now() }); send({ t: 'claim', m: mine }); }
+      else c.t = Date.now();
+    }
+    for (const [mi, c] of claims) { if (c.uid === player.uid && mi !== mine) { claims.delete(mi); send({ t: 'release', m: mi }); } }
+  }
+  function isClaimedByOther(rat) {
+    if (!active() || !conn || !rat) return false;
+    if (rat.target === player) return false;           /* it's fighting me -> I may retaliate */
+    const c = claims.get(rat.i);
+    return !!(c && c.uid !== player.uid && (Date.now() - c.t) < CFG.claimMs);
+  }
+
+  /* ---------------- remote players ---------------- */
+  function spawn(p) {
+    if (!p || !p.uid || p.uid === player.uid) return;
+    if (RP.has(p.uid)) { absorb(p.uid, p); return; }
+    const i = huid(p.uid);
+    const app = Object.assign({}, p.app || BASE_APP, { shirt: SHIRTS[i % SHIRTS.length], hair: HAIRS[(i >> 3) % HAIRS.length] });
+    const rig = makeHumanoid(app);
+    rig.g.visible = false; scene.add(rig.g);
+    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, moving: false, last: Date.now() });
+  }
+  function absorb(uid, p) {
+    const r = RP.get(uid); if (!r) return;
+    if (p.name) r.name = p.name;
+    if (p.gear !== undefined) r.gear = p.gear;
+    if (p.act !== undefined) r.act = p.act;
+    if (p.hp !== undefined) r.hp = p.hp;
+    if (p.mhp !== undefined) r.mhp = p.mhp;
+    r.last = Date.now();
+  }
+  function despawn(uid) {
+    const r = RP.get(uid); if (!r) return;
+    try { scene.remove(r.rig.g); } catch (e) {}
+    RP.delete(uid);
+    for (const [m, c] of claims) if (c.uid === uid) claims.delete(m);
+  }
+  function clearRemotes() { for (const uid of Array.from(RP.keys())) despawn(uid); }
+
+  /* ---------------- inbound ---------------- */
+  function handle(m) {
+    if (!m || typeof m !== 'object') return;
+    switch (m.t) {
+      case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
+      case 'join': spawn(m.p); break;
+      case 'leave': despawn(m.uid); break;
+      case 'pos': { const r = RP.get(m.uid); if (r) { r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
+      case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
+      case 'chat': { const r = RP.get(m.uid); if (r) { r.chat = m.text; r.chatT = now() + 4500; } if (typeof logSay === 'function') logSay(m.name || (r && r.name) || '?', m.text, false); break; }
+      case 'emote': { const r = RP.get(m.uid); if (r) { r.emote = m.e; r.emoteT = now(); } break; }
+      case 'claim': claims.set(m.m | 0, { uid: m.uid, t: Date.now() }); break;
+      case 'release': { const c = claims.get(m.m | 0); if (c && c.uid === m.uid) claims.delete(m.m | 0); break; }
+      case 'pong': break;
+    }
+  }
+
+  /* ---------------- per-frame update ---------------- */
+  function frame(t, dt) {
+    if (!active() || !conn) return;
+    pushOutbound(t);
+    manageClaims();
+    const tnow = Date.now();
+    for (const [uid, r] of RP) { if (tnow - r.last > CFG.staleMs) { despawn(uid); } }
+    for (const [mi, c] of claims) { if (tnow - c.t > CFG.claimMs) claims.delete(mi); }
+    for (const r of RP.values()) {
+      r.moving = lerpEnt(r, r.run ? 150 : 300, dt);
+      const inView = dist1(player.px, player.py, r.px, r.py) <= CFG.viewR;
+      r.rig.g.visible = inView;
+      if (!inView) continue;
+      const wx = r.px + 0.5, wz = r.py + 0.5, wy = groundH(wx, wz);
+      r.rig.g.position.set(wx, wy, wz);
+      r.rig.g.rotation.y = r.h;
+      poseRemote(r, t);
+    }
+  }
+
+  function poseRemote(r, t) {
+    const rig = r.rig;
+    rig.lArm.rotation.set(0, 0, 0); rig.rArm.rotation.set(0, 0, 0);
+    rig.lLeg.rotation.x = 0; rig.rLeg.rotation.x = 0;
+    if (rig.upper) rig.upper.rotation.x = 0;
+    rig.g.position.y = groundH(r.px + 0.5, r.py + 0.5);
+    /* emote pose (props deferred to a later layer) */
+    if (r.emote && typeof EMOTES_BY_ID !== 'undefined') {
+      const E = EMOTES_BY_ID[r.emote], dur = (E && E.dur) || 2200, tt = (t - r.emoteT) / 1000;
+      if (E && E.fn && tt < dur / 1000) {
+        const pose = { armLx: 0, armRx: 0, armLz: 0, armRz: 0, legL: 0, legR: 0, bodyRx: 0, jump: 0, spin: 0 };
+        try { E.fn(pose, tt / (dur / 1000), E); } catch (e) {}
+        rig.lArm.rotation.x = pose.armLx || 0; rig.rArm.rotation.x = pose.armRx || 0;
+        rig.lArm.rotation.z = pose.armLz || 0; rig.rArm.rotation.z = pose.armRz || 0;
+        rig.lLeg.rotation.x = pose.legL || 0; rig.rLeg.rotation.x = pose.legR || 0;
+        if (rig.upper) rig.upper.rotation.x = pose.bodyRx || 0;
+        rig.g.position.y += (pose.jump || 0);
+        rig.g.rotation.y = r.h + (pose.spin || 0);
+        return;
+      } else { r.emote = null; }
+    }
+    /* combat: simple attack bob until per-weapon parity lands in a later layer */
+    if (r.act && r.act.k === 'attack') {
+      const sw = -0.6 + Math.sin(t * 0.013) * -0.8;
+      rig.rArm.rotation.x = sw; rig.lArm.rotation.x = sw * 0.35;
+      return;
+    }
+    /* walk cycle */
+    if (r.moving) {
+      const w = t * 0.012;
+      rig.lLeg.rotation.x = Math.sin(w) * 0.5; rig.rLeg.rotation.x = -Math.sin(w) * 0.5;
+      rig.lArm.rotation.x = -Math.sin(w) * 0.4; rig.rArm.rotation.x = Math.sin(w) * 0.4;
+    }
+  }
+
+  /* ---------------- 2D overlays (shares drawOverlay's cleared canvas) ---------------- */
+  function drawOverlays() {
+    if (!active() || !conn) return;
+    if (typeof octx === 'undefined' || typeof proj !== 'function') return;
+    for (const r of RP.values()) {
+      if (!r.rig.g.visible) continue;
+      const wx = r.px + 0.5, wz = r.py + 0.5, gh = groundH(wx, wz);
+      const np = proj(wx, gh + 2.05, wz);
+      if (np) {
+        octx.save(); octx.textAlign = 'center'; octx.font = 'bold 12px Georgia';
+        octx.lineWidth = 3; octx.strokeStyle = 'rgba(0,0,0,0.85)'; octx.strokeText(r.name, np.x, np.y);
+        octx.fillStyle = '#bfe3ff'; octx.fillText(r.name, np.x, np.y); octx.restore();
+      }
+      if (r.act && r.act.k === 'attack' && r.mhp > 0) {
+        const hp = proj(wx, gh + 2.35, wz);
+        if (hp) {
+          const w = 34, h = 4, frac = Math.max(0, Math.min(1, r.hp / r.mhp));
+          octx.save();
+          octx.fillStyle = 'rgba(0,0,0,0.6)'; octx.fillRect(hp.x - w / 2 - 1, hp.y - 1, w + 2, h + 2);
+          octx.fillStyle = '#7a1d1d'; octx.fillRect(hp.x - w / 2, hp.y, w, h);
+          octx.fillStyle = '#3fb53f'; octx.fillRect(hp.x - w / 2, hp.y, w * frac, h);
+          octx.restore();
+        }
+      }
+      if (r.chat && r.chatT > now() && typeof drawSayText === 'function') drawSayText(wx, wz, 2.45, r.chat);
+    }
+  }
+
+  /* ---------------- friends / presence ---------------- */
+  function isOnline(name) { name = String(name || '').toLowerCase(); for (const r of RP.values()) if ((r.name || '').toLowerCase() === name) return true; return false; }
+  function onlineList() { const out = []; for (const r of RP.values()) out.push({ uid: r.uid, name: r.name }); return out; }
+  function remoteAt(tx, ty) { for (const r of RP.values()) if (Math.round(r.px) === tx && Math.round(r.py) === ty) return r; return null; }
+  function addFriendByName(name) {
+    name = String(name || '').trim(); if (!name) return false;
+    player.friends = player.friends || [];
+    if (player.friends.some(f => ((f && f.name) || f) === name)) return false;
+    player.friends.push({ name: name, uid: null });
+    if (typeof dirty !== 'undefined') dirty = true;
+    if (typeof renderFriends === 'function') renderFriends();
+    return true;
+  }
+  function removeFriend(name) {
+    name = String(name || ''); if (!player.friends) return;
+    player.friends = player.friends.filter(f => ((f && f.name) || f) !== name);
+    if (typeof dirty !== 'undefined') dirty = true;
+    if (typeof renderFriends === 'function') renderFriends();
+  }
+
+  return {
+    CFG, connect, disconnect, frame, drawOverlays,
+    onLocalChat, onLocalEmote,
+    isClaimedByOther, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
+    active, get connected() { return conn; },
+    /* test/debug seams */
+    _RP: RP, _claims: claims, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
+    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; } }
+  };
+})();
+
+/* <<< MULTIPLAYER MODULE <<< */
+
 requestAnimationFrame(render);
 </script>
 </body>
