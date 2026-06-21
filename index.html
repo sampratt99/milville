@@ -14194,7 +14194,8 @@ const MP = (function () {
   const _sent = [];          /* debug/test ring of outbound msgs */
   const remoteMobs = new Map();   /* mobIndex -> {x,y,hp,mhp,owner,fighting,dead,t} — owner-authoritative mob state */
   let lastMobSend = 0, _lastMobI = null;
-  let helloT = 0, lastSelfHp = null;
+  const MP_VERSION = 'mp-3';
+  let helloT = 0, lastSelfHp = null, keepAlive = null, _announced = false;
   const _mobHpSeen = {};
   const dmgFx = [];  /* floating remote damage numbers: {ent,m|uid,d,t} */
 
@@ -14221,7 +14222,7 @@ const MP = (function () {
 
   /* ---------------- connection ---------------- */
   function connect() { if (!active() || want) return; want = true; open(); }
-  function disconnect() { want = false; try { ws && ws.close(); } catch (e) {} }
+  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} }
   function open() {
     if (!active() || !want) return;
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
@@ -14229,9 +14230,17 @@ const MP = (function () {
       conn = true; backoff = 1000;
       send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: BASE_APP, gear: selfGear(), hp: player.hp, mhp: maxHp() });
       lastGear = ''; lastAct = ''; /* force a state push next frame */
+      if (keepAlive) clearInterval(keepAlive);
+      keepAlive = setInterval(function () {
+        if (!conn) return;
+        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run });
+        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp() });
+      }, 2000);
+      if (typeof console !== 'undefined') console.log('[Milville MP]', MP_VERSION, 'connected to', wsURL());
+      if (!_announced) { _announced = true; if (typeof logSystem === 'function') logSystem('Multiplayer connected (' + MP_VERSION + ').'); }
     };
     ws.onmessage = function (ev) { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
-    ws.onclose = function () { conn = false; clearRemotes(); if (want) reconnect(); };
+    ws.onclose = function () { conn = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } if (want) reconnect(); };
     ws.onerror = function () { try { ws.close(); } catch (e) {} };
   }
   function reconnect() { setTimeout(function () { if (want) open(); }, backoff); backoff = Math.min(Math.round(backoff * 1.8), 15000); }
@@ -14345,7 +14354,7 @@ const MP = (function () {
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
       case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); despawn(m.uid); break; }
-      case 'pos': { const r = RP.get(m.uid); if (r) { r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
+      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
         if (!m.uid || m.uid === player.uid) break;
