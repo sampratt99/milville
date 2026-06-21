@@ -185,8 +185,22 @@
   .emotebtn canvas{display:block;}
   .emotebtn span{font:9px Verdana,sans-serif; color:#d8c89a; text-align:center; line-height:1.05;}
   #friendslist{padding:4px;}
-  .friendsempty{color:#b8a87a; font:12px Verdana,sans-serif; line-height:1.55; text-align:center; padding:22px 10px;}
-  .friendrow{color:#e8dcc0; font:12px Verdana,sans-serif; padding:5px 6px; border-bottom:1px solid rgba(0,0,0,.2);}
+  #panel-friends h4{margin:2px 2px 7px; text-align:center; color:var(--gold); font:bold 13px Georgia,serif; font-variant:small-caps; letter-spacing:2px; text-shadow:0 1px 0 #14110b; border-bottom:1px solid #14110b; padding-bottom:6px;}
+  #friendslist{background:#211b14; border:1px solid #0d0b08; border-radius:3px; padding:3px; min-height:120px; max-height:300px; overflow-y:auto;}
+  .friendsempty{color:#b8a87a; font:12px Verdana,sans-serif; line-height:1.55; text-align:center; padding:18px 10px;}
+  .friendsub{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1.5px; text-align:center; margin:9px 0 3px; opacity:.9;}
+  .friendrow{display:flex; align-items:center; gap:7px; font:12px Verdana,sans-serif; padding:5px 8px; border-radius:2px;}
+  .friendrow:nth-child(odd){background:rgba(0,0,0,.16);}
+  .friendrow:hover{background:rgba(202,168,60,.13);}
+  .friendrow .fname{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:bold;}
+  .friendrow.on .fname{color:#7fe07f;}
+  .friendrow.off .fname{color:#9f988a;}
+  .friendrow .fstatus{font-size:10.5px; color:#8a8472; white-space:nowrap;}
+  .friendrow.on .fstatus{color:#79c079;}
+  .friendrow .frx{cursor:pointer; color:#c0796f; padding:0 2px 0 4px; font-weight:bold;}
+  .friendrow .frx:hover{color:#e0533f;}
+  .friendrow .fradd{cursor:pointer; color:#9fcf7a; font-size:11px; padding:0 2px;}
+  .friendrow .fradd:hover{color:#c0ef9a;}
   /* skills */
   #skillgrid{display:grid; grid-template-columns:1fr 1fr; gap:4px;}
   .skill{
@@ -447,6 +461,11 @@
     border-radius:3px;color:#fff;font:bold 12px Verdana,sans-serif;display:flex;
     align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;
     box-shadow:0 0 0 1px #e8765f inset;}
+  #banksearch{width:100%;box-sizing:border-box;margin:0 0 6px;padding:6px 9px;
+    background:#1c1812;border:1px solid #0d0b08;border-radius:3px;color:#e8dcc0;
+    font-family:inherit;font-size:12px;outline:none;}
+  #banksearch::placeholder{color:#7a6f5c;}
+  #banksearch:focus{border-color:#caa83c;}
   #bankgrid{display:grid;grid-template-columns:repeat(8,1fr);gap:4px;
     background:#1d1812;border:1px solid #0d0b08;padding:6px;min-height:88px;
     max-height:34vh;overflow-y:auto;}
@@ -795,6 +814,7 @@
 </div>
 <div id="bankui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Bank of Milville</span><div class="gex" id="bankclose" title="Close">&#10005;</div></div>
+  <input id="banksearch" type="text" placeholder="Search your bank…" autocomplete="off" spellcheck="false">
   <div id="bankgrid"></div>
   <div class="gefoot" style="border-top:1px solid #2a241a;">Your pack &mdash; click to deposit, right-click to deposit all</div>
   <div id="bankinv"></div>
@@ -1056,15 +1076,15 @@ ITEMS.bland_dish={name:'Unseasoned platter',ex:'Tonight\u2019s Seated Meal, and 
 ITEMS.seasoned_dish={name:'Seasoned platter',ex:'Now THAT smells like a Seated Meal.',val:0};
 ITEMS.boar_head={name:'Boar\u2019s head',ex:'The centrepiece of the feast. Heavy, and rather cross.',val:0};
 ITEMS.borrowed_flour={name:'Sack of flour',ex:'Borrowed from the 31 Hockey Lane larder. Larry will replace it. Probably.',val:0};
-ITEMS.oven_mitts={name:'Oven mitts',ex:'Quilted and scorch-proof. You burn food far less often while they are in your pack.',val:0};
+ITEMS.oven_mitts={name:'Oven mitts',ex:'Quilted and scorch-proof. You burn food far less often while they are in your pack.',val:0,noSell:true};
 ITEMS.boars_head_feast={name:'Boar\u2019s Head feast',ex:'The whole spread, ready for the procession into Coit.',val:0};
 ITEMS.candy={name:'Candy',ex:'Hard-won Halloween loot.',val:2};
 ITEMS.chefs_hat={name:"Chef's hat",
-  ex:'Tall, white, and faintly floury. A gift from Larry.',val:80,
+  ex:'Tall, white, and faintly floury. A gift from Larry.',val:80,noSell:true,
   equip:{slot:'head',def:1,model:'chefhat',verb:'Wear',
     tint:0xf2efe6,trim:0xd8d2c4}};
 ITEMS.pumpkin_helmet={name:'Pumpkin helmet',
-  ex:'Carved, grinning, and surprisingly roomy. Bozek\u2019s finest work.',val:120,
+  ex:'Carved, grinning, and surprisingly roomy. Bozek\u2019s finest work.',val:120,noSell:true,
   equip:{slot:'head',def:1,model:'pumpkin',verb:'Wear',
     tint:0xd8731f,trim:0x3a5a24}};
 ITEMS.clawed_slate={name:'Clawed slate',
@@ -1690,12 +1710,12 @@ function addObj(def,x,y,force){
  [88,58],[68,66],[78,68],[86,64],[60,66],[44,54],[44,64],[58,58],[36,57],
  [28,60],[14,64],[30,90],[24,92],[40,94],[50,96],[64,94],[80,90],
  ,[64,104],[82,107],[94,106],[103,92],[107,105],
- [134,104],[125,29],[130,36],[145,25],[115,39],[97,79],[82,76]]
+ [134,104],[125,29],[130,36],[145,25],[115,39],[82,76]]
   .forEach(p=>addObj('tree',p[0],p[1]));
 /* Drury Orchard */
 [[134,29],[137,29],[140,29],[134,32],[137,32],[140,32],[134,35],[137,35],[140,35]]
   .forEach(p=>addObj('tree',p[0],p[1]));
-[[78,44],[83,52],[85,68],[97,87],[52,58]].forEach(p=>addObj('oak',p[0],p[1]));
+[[78,44],[83,52],[85,68],[52,58]].forEach(p=>addObj('oak',p[0],p[1]));
 [[109,47],[127,62],[121,86],[120,75],[150,14],[114,60]].forEach(p=>addObj('willow',p[0],p[1]));
 [[82,6],[84,6],[134,6],[136,6],[110,14],[112,14],[184,16],[186,16],[88,20],[90,20],[50,33],[52,33],[50,35],[135,37],[137,37],[170,39],[172,39],[170,41],[83,51],[85,51]].forEach(p=>addObj('birch',p[0],p[1]));
 [[48,46],[50,45]].forEach(p=>addObj('copper',p[0],p[1]));
@@ -2008,6 +2028,7 @@ function npcFaceRoad(n){
   if(best)n.heading=Math.atan2(best[0]-n.x,best[1]-n.y);
 }
 for(const n9 of npcs){if(n9.id.slice(0,3)==='sm_')n9.heading=Math.atan2(73.5-n9.x,48.5-n9.y);else npcFaceRoad(n9);}
+{const _bassi=npcs.find(n9=>n9.id==='bassi');if(_bassi){_bassi.heading=0;_bassi.homeHeading=0;}}  /* face south, away from Clark House */
 const MOB_SPAWNS=[['rat',77,72],['rat',80,70],['rat',82,73],['rat',79,76],['rat',123,21],['rat',125,19],
     ['spider',51,98],['spider',55,93],['spider',59,96],['spider',53,100],['spider',48,95],
     ['redspider',18,40],['redspider',34,40],['redspider',24,54],['redspider',30,68],['redspider',16,74],
@@ -2160,7 +2181,15 @@ function spawnProjectile(x0,z0,ent,kind,col,dur){
   projectiles.push({x0,z0,y0:groundH(x0,z0)+1.0,ent,
     ex:(ent&&ent.px!==undefined)?ent.px+0.5:x0,ez:(ent&&ent.py!==undefined)?ent.py+0.5:z0,
     kind,col:col||'#cfd6da',t0:performance.now(),dur:dur||300});}
-function dropGround(x,y,id,qty){ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc});}
+function dropGround(x,y,id,qty){
+  /* stackable drops (arrows, coins, runes) merge onto an existing pile on the same tile so
+     they can be picked up as one stack instead of one-by-one */
+  if(ITEMS[id]&&ITEMS[id].stack){
+    const ex=ground.find(g=>g.x===x&&g.y===y&&g.id===id);
+    if(ex){ex.qty+=qty;ex.exp=performance.now()+90000;return;}
+  }
+  ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc});
+}
 function rollRareDrop(r){
   const c=MOB_KINDS[r.kind].cmb;
   {const NB={wyvern:['rune_bar','mithril_bar','uncut_diamond'],basilisk:['mithril_bar','steel_bar'],gargoyle:['steel_bar','iron_bar'],banshee:['iron_bar','copper_ore'],dragon:['rune_bar','uncut_diamond','uncut_ruby']}[r.kind];
@@ -2364,7 +2393,7 @@ const ENCY_SRC={
   bland_dish:[{label:'Quest item',sub:'Chef Larry’s quest'}],
   seasoned_dish:[{label:'Quest item',sub:'Chef Larry’s quest'}],
   boar_head:[{label:'Quest item',sub:'Chef Larry’s quest — a Wild boar'}],
-  oven_mitts:[{label:'Quest item',sub:'Chef Larry’s quest'}],
+  oven_mitts:[{label:'Quest reward',sub:'Chef Larry’s feast questline'}],
   boars_head_feast:[{label:'Quest item',sub:'Chef Larry’s quest'}],
   chefs_hat:[{label:'Quest reward',sub:'Chef Larry’s quest'}],
   clawed_slate:[{label:'Quest item',sub:'The main quest'}],
@@ -2878,6 +2907,7 @@ function startRangeCook(o){
   setAction({type:'cook',fire:o},o.x,o.y);
   clickFx(o.x,o.y,'#ff7a2d');
 }
+function countLogs(){return countItem('logs')+countItem('oak_logs')+countItem('willow_logs')+countItem('birch_logs');}
 function lightBonfire(o){
   const ch=player.quests.chef;
   o.lit=true;o.litUntil=performance.now()+240000;
@@ -2955,11 +2985,10 @@ function playerTick(){
       addItem(gid);
       addXp(def.skill,gxp);
       msg(VERBS[def.skill][1].replace('{item}',ITEMS[gid].name.toLowerCase()));
-      if(def.skill==='woodcutting'&&player.quests.chef.s===3&&player.quests.chef.logs<8){
-        player.quests.chef.logs++;
-        msg('You gather wood for the Bonfire. ('+player.quests.chef.logs+' of 8)','#7a4a0a');
+      if(def.skill==='woodcutting'&&player.quests.chef.s===3){
+        const _lh=countLogs();
+        msg(_lh>=8?'You have enough logs for the Bonfire — light it on the lawn southeast of the chapel.':('You gather a log for the Bonfire. ('+_lh+' of 8 in your pack)'),'#7a4a0a');
         renderQuests&&renderQuests();
-        if(player.quests.chef.logs>=8)msg('You have enough wood — light the Bonfire on the lawn southeast of the chapel.','#7a4a0a');
       }
       let _depl=false;
       if(def.cap){
@@ -2967,7 +2996,9 @@ function playerTick(){
         if(--o.left<=0)_depl=true;
       }else if(def.fall>0&&Math.random()<def.fall)_depl=true;
       if(_depl){
-        o.alive=false;o.respawnAt=performance.now()+rnd(def.respawn[0],def.respawn[1])*1000;o.left=null;
+        const _rs=rnd(def.respawn[0],def.respawn[1])*1000;
+        o.alive=false;o.respawnAt=performance.now()+_rs;o.left=null;
+        if(typeof MP!=='undefined')MP.onNodeDepleted(o,_rs);
         cancelAction();
       }
     }
@@ -3099,6 +3130,7 @@ function playerTick(){
       const mk3=MOB_KINDS[r.kind];
       r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;
       if(engagedMob===r)engagedMob=null;
+      if(typeof MP!=='undefined')MP.onMobKilled(r);
       msg('You have defeated the '+r.name.toLowerCase()+'.');
       questKill(r);
       if(mk3.bigbones)dropGround(r.x,r.y,'big_bones',1);else if(mk3.bones)dropGround(r.x,r.y,'bones',1);
@@ -3223,7 +3255,9 @@ function playerTick(){
   else if(a.type==='lightbonfire'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     player.path.length=0;const ch=player.quests.chef;
-    if(ch.s!==3||ch.logs<8){cancelAction();return;}
+    if(ch.s!==3){cancelAction();return;}
+    if(countLogs()<8){msg('You need 8 logs in your pack to light the Bonfire. Chop some \u2014 any tree counts.');cancelAction();return;}
+    {let _need=8;const _T=['logs','oak_logs','willow_logs','birch_logs'];while(_need>0){let _li=-1;for(const _t of _T){const _f=findItem(_t);if(_f>=0){_li=_f;break;}}if(_li<0)break;removeSlot(_li);_need--;}}
     lightBonfire(a.o);cancelAction();
   }
   else if(a.type==='borrowflour'){
@@ -3982,6 +4016,7 @@ function itemTip(id){
     }
   }
   const gp=gePrice(id);if(gp)t+='\nGE: '+fmt(gp)+' gp';
+  else if(ITEMS[id].noSell)t+='\nNot for sale';
   return t;
 }
 /* examine: prints lore, then stats + comparison + GE price to the message log */
@@ -4081,6 +4116,10 @@ function renderEquip(){applyGearTint();
     if(it){
       drawItemIcon(g,it.id,34);
       d.title=itemTip(it.id)+'\n(click to remove)';
+      if(it.qty&&it.qty>1){const fs=fmtStack(it.qty);
+        g.font='bold 11px Verdana';g.textAlign='left';g.textBaseline='top';
+        g.fillStyle='#000';g.fillText(fs.t,2,2);
+        g.fillStyle=fs.c;g.fillText(fs.t,1,1);}
     }else{
       g.globalAlpha=EQUIP_ACTIVE[slot]?0.38:0.28;
       drawUiIcon(g,EQUIP_GLYPH[slot],34);
@@ -4336,9 +4375,9 @@ function optionsAt(tx,ty){
         {html:'Examine <span class="t">Herb planter</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='bonfire'){
       const ch=player.quests.chef;
-      if(ch.s===3&&ch.logs>=8)
+      if(ch.s===3)
         opts.push({html:'Light <span class="t">the Bonfire</span>',label:'Light the Bonfire',fn:()=>setAction({type:'lightbonfire',o},o.x,o.y)});
-      opts.push({html:'Examine <span class="t">Bonfire</span>',fn:()=>msg((player.quests.chef.s===3)?('Wood gathered: '+player.quests.chef.logs+' of 8.'):def.ex)});
+      opts.push({html:'Examine <span class="t">Bonfire</span>',fn:()=>msg((player.quests.chef.s===3)?('Logs in your pack: '+Math.min(countLogs(),8)+' of 8.'):def.ex)});
     }else if(o.def==='larder'){
       const ch=player.quests.chef;
       if(ch.s===5&&countItem('borrowed_flour')<1)
@@ -5447,18 +5486,12 @@ function renderFriends(){
       const nm=(f&&f.name)?f.name:String(f);
       const on=mpOn&&MP.isOnline(nm);
       const cmb=(f&&typeof f.cmb==='number')?f.cmb:null;
-      const d=document.createElement('div');d.className='friendrow';
-      d.appendChild(dot(on));
-      const t=document.createElement('span');t.style.verticalAlign='middle';
-      const meta=[];
-      if(cmb!=null)meta.push('Combat '+cmb);
-      if(on)meta.push('online');
-      else if(f&&f.lastSeen)meta.push('last seen '+fmtAgo(f.lastSeen));
-      else meta.push('offline');
-      t.innerHTML=nm+' <span style="color:#9a9486;font-size:11px">\u00b7 '+meta.join(' \u00b7 ')+'</span>';
-      d.appendChild(t);
-      const x=document.createElement('span');x.textContent='\u00d7';x.title='Remove '+nm;
-      x.style.cssText='float:right;cursor:pointer;color:#c0796f;padding:0 4px;font-weight:bold;';
+      const d=document.createElement('div');d.className='friendrow '+(on?'on':'off');
+      const t=document.createElement('span');t.className='fname';t.textContent=nm;d.appendChild(t);
+      const st=document.createElement('span');st.className='fstatus';
+      st.textContent=on?('Online'+(cmb!=null?' \u00b7 lvl '+cmb:'')):((f&&f.lastSeen)?('seen '+fmtAgo(f.lastSeen)):'Offline');
+      d.appendChild(st);
+      const x=document.createElement('span');x.className='frx';x.textContent='\u00d7';x.title='Remove '+nm;
       x.addEventListener('click',(e)=>{
         e.stopPropagation();
         if(x.dataset.armed){
@@ -5466,7 +5499,7 @@ function renderFriends(){
           else{player.friends=(player.friends||[]).filter(z=>((z&&z.name)||z)!==nm);renderFriends();}
         }else{
           x.dataset.armed='1';x.textContent='Remove?';x.style.color='#e0533f';
-          setTimeout(()=>{x.dataset.armed='';x.textContent='\u00d7';x.style.color='#c0796f';},2600);
+          setTimeout(()=>{x.dataset.armed='';x.textContent='\u00d7';x.style.color='';},2600);
         }
       });
       d.appendChild(x);
@@ -5475,15 +5508,13 @@ function renderFriends(){
   }
   if(mpOn){
     const others=MP.onlineList().filter(o=>!fr.some(f=>((f&&f.name)||f)===o.name));
-    const hd=document.createElement('div');hd.className='friendsempty';hd.style.marginTop='8px';
+    const hd=document.createElement('div');hd.className=others.length?'friendsub':'friendsempty';hd.style.marginTop='8px';
     hd.textContent=others.length?'Online now':(MP.connected?'No other players online.':'Connecting\u2026');
     el.appendChild(hd);
     for(const o of others){
-      const d=document.createElement('div');d.className='friendrow';
-      d.appendChild(dot(true));
-      const t=document.createElement('span');t.textContent=o.name;t.style.verticalAlign='middle';d.appendChild(t);
-      const add=document.createElement('span');add.textContent='+ Add';add.title='Add '+o.name;
-      add.style.cssText='float:right;cursor:pointer;color:#9fcf7a;padding:0 4px;';
+      const d=document.createElement('div');d.className='friendrow on';
+      const t=document.createElement('span');t.className='fname';t.textContent=o.name;d.appendChild(t);
+      const add=document.createElement('span');add.className='fradd';add.textContent='+ Add';add.title='Add '+o.name;
       add.addEventListener('click',(e)=>{e.stopPropagation();MP.addFriendByName(o.name);});
       d.appendChild(add);
       el.appendChild(d);
@@ -8959,6 +8990,25 @@ function masterProp(sk,col){
   else if(sk==='hitpoints'){const ph=pole(1.05,0x9a3a36);ph.position.set(0.34,0.84,0.12);G.add(ph);const a=mesh(new THREE.SphereGeometry(0.085,8,6),0xe0584f);a.position.set(0.3,1.38,0.12);G.add(a);const b2=mesh(new THREE.SphereGeometry(0.085,8,6),0xe0584f);b2.position.set(0.39,1.38,0.12);G.add(b2);const c2=mesh(new THREE.ConeGeometry(0.12,0.17,4),0xe0584f);c2.position.set(0.345,1.26,0.12);c2.rotation.z=Math.PI;G.add(c2);}
   else if(sk==='prayer'){const ph=pole(1.15,0xd8cfa8);ph.position.set(0.34,0.9,0.12);G.add(ph);const orb=mesh(new THREE.SphereGeometry(0.1,10,8),0xf2ecd0);orb.position.set(0.34,1.52,0.12);G.add(orb);const ring=mesh(new THREE.CylinderGeometry(0.15,0.15,0.025,12),GOLD);ring.position.set(0.34,1.52,0.12);ring.rotation.x=Math.PI/2;G.add(ring);}
   else if(sk==='slayer'){const ph=pole(1.05);ph.position.set(0.34,0.84,0.12);G.add(ph);const sk1=mesh(new THREE.SphereGeometry(0.12,9,7),0xe8e2d0);sk1.position.set(0.34,1.42,0.12);G.add(sk1);const e1=mesh(new THREE.BoxGeometry(0.045,0.05,0.04),0x16140f);e1.position.set(0.3,1.44,0.22);G.add(e1);const e2=mesh(new THREE.BoxGeometry(0.045,0.05,0.04),0x16140f);e2.position.set(0.39,1.44,0.22);G.add(e2);}
+  else if(sk==='ranged'){
+    /* a held bow: two angled limbs + grip + string */
+    const upper=mesh(new THREE.BoxGeometry(0.035,0.5,0.035),WOOD);upper.position.set(0.36,1.28,0.12);upper.rotation.z=0.34;G.add(upper);
+    const lower=mesh(new THREE.BoxGeometry(0.035,0.5,0.035),WOOD);lower.position.set(0.36,0.82,0.12);lower.rotation.z=-0.34;G.add(lower);
+    const grip=mesh(new THREE.BoxGeometry(0.05,0.18,0.05),0x4a3420);grip.position.set(0.4,1.05,0.12);G.add(grip);
+    const str=mesh(new THREE.BoxGeometry(0.012,0.92,0.012),0xe8e2d0);str.position.set(0.295,1.05,0.12);G.add(str);
+    const tipU=mesh(new THREE.BoxGeometry(0.03,0.06,0.03),STEEL);tipU.position.set(0.28,1.5,0.12);G.add(tipU);
+    const tipL=mesh(new THREE.BoxGeometry(0.03,0.06,0.03),STEEL);tipL.position.set(0.28,0.6,0.12);G.add(tipL);
+  }
+  else if(sk==='magic'){
+    /* a held staff with a glowing orb */
+    const shaft=pole(1.34,WOOD);shaft.position.set(0.36,0.96,0.12);G.add(shaft);
+    const orb=mesh(new THREE.SphereGeometry(0.095,10,8),col);orb.position.set(0.36,1.7,0.12);G.add(orb);
+    const ring=mesh(new THREE.TorusGeometry(0.12,0.02,6,12),GOLD);ring.position.set(0.36,1.7,0.12);ring.rotation.x=Math.PI/2;G.add(ring);
+    /* a wizard's hat in the skill colour */
+    const brim=mesh(new THREE.CylinderGeometry(0.27,0.27,0.045,16),darken(col,0.5));brim.position.set(0,1.74,0);G.add(brim);
+    const cone=mesh(new THREE.ConeGeometry(0.2,0.52,16),darken(col,0.62));cone.position.set(0,2.0,0);cone.rotation.z=0.08;G.add(cone);
+    const star=mesh(new THREE.OctahedronGeometry(0.045,0),GOLD);star.position.set(0.02,2.27,0);G.add(star);
+  }
   return G;
 }
 function capeIconTex(sk){
@@ -12040,14 +12090,14 @@ const DIALOGUES={
         if(ch.pouch===0&&hasHerbs&&hasSalt)return{
           start:{who:'npc',text:'Herbs AND salt — look at you. Hand them here and I will charge the pouch.',next:'fill'},
           fill:{opts:[
-            {label:'Fill the pouch.',next:()=>{ removeSlot(findItem('fresh_herbs'));removeSlot(findItem('coarse_salt')); ch.pouch=1;addXp('cooking',30); return 'done';}},
+            {label:'Fill the pouch.',next:()=>{ if(ch.s!==1||ch.pouch!==0||countItem('fresh_herbs')<1||countItem('coarse_salt')<1)return null; removeSlot(findItem('fresh_herbs'));removeSlot(findItem('coarse_salt')); ch.pouch=1;addXp('cooking',30); return 'done';}},
             {label:'One moment.',next:'by'}]},
           done:{who:'npc',text:'There — the pouch is charged with the school blend. Now plate up tonight’s Seated Meal at the range behind me, then USE the pouch on it to season. Bring me the seasoned platter.',next:null},
           by:{who:'npc',text:'Do not dawdle, the meal is at seven.',next:null}};
         if(ch.pouch===1&&countItem('seasoned_dish')>0)return{
           start:{who:'npc',text:'Is that— yes! THAT is what a Seated Meal should smell like. Give it here.',next:'give'},
           give:{opts:[
-            {label:'Hand over the seasoned platter.',next:()=>{ removeSlot(findItem('seasoned_dish')); {const _sp=findItem('spice_pouch');if(_sp>=0)removeSlot(_sp);} addItem('coins',200);addXp('cooking',250); ch.s=2;syncChefObjects(); msg('Part 1 complete: Take Your Seats.','#7a18c9'); if(sfx.level)sfx.level(); return 'done';}},
+            {label:'Hand over the seasoned platter.',next:()=>{ if(ch.s!==1||ch.pouch!==1||countItem('seasoned_dish')<1)return null; removeSlot(findItem('seasoned_dish')); {const _sp=findItem('spice_pouch');if(_sp>=0)removeSlot(_sp);} addItem('coins',200);addXp('cooking',250); ch.s=2;syncChefObjects(); msg('Part 1 complete: Take Your Seats.','#7a18c9'); if(sfx.level)sfx.level(); return 'done';}},
             {label:'Let me hold onto it.',next:'by'}]},
           done:{who:'npc',text:'Four hundred happy diners and not one complaint. I’ll take my pouch back — it has seen me through worse terms than this. Come back when you can; there is a Bonfire to build.',next:null},
           by:{who:'npc',text:'It will only get colder.',next:null}};
@@ -12075,7 +12125,7 @@ const DIALOGUES={
         if(countItem('boars_head_feast')>0)return{
           start:{who:'npc',text:'The whole feast, assembled and glorious. Bring it here!',next:'give'},
           give:{opts:[
-            {label:'Present the Boar’s Head feast.',next:()=>{ if(ch.s!==5||countItem('boars_head_feast')<1)return null; removeSlot(findItem('boars_head_feast')); ch.s=6; removeWorldObj('herbplanter');removeWorldObj('range'); for(const _b of rats)if(_b.kind==='boar'){_b.alive=false;_b.respawnAt=Infinity;if(_b._m&&_b._m.group)scene.remove(_b._m.group);} syncChefObjects(); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else dropGround(player.x,player.y,'oven_mitts',1); questDone('The Three Tables of Millville'); return 'done';}},
+            {label:'Present the Boar’s Head feast.',next:()=>{ if(ch.s!==5||countItem('boars_head_feast')<1)return null; removeSlot(findItem('boars_head_feast')); ch.s=6; removeWorldObj('herbplanter');removeWorldObj('range'); for(const _b of rats)if(_b.kind==='boar'){_b.alive=false;_b.respawnAt=Infinity;if(_b._m&&_b._m.group)scene.remove(_b._m.group);} syncChefObjects(); addItem('coins',750);addXp('cooking',1200); if(!invFull())addItem('oven_mitts');else{bankAdd('oven_mitts',1);msg('Your pack was full \u2014 the oven mitts are waiting in your bank.','#7a4a0a');} questDone('The Three Tables of Millville'); return 'done';}},
             {label:'One moment.',next:'by'}]},
           done:{who:'npc',text:'PERFECT. The procession will carry it into Coit with the carol and all. Take these oven mitts — quilted, scorch-proof, a chef’s best friend. You will burn far less at the fire now. You are kitchen family, always.',next:null},
           by:{who:'npc',text:'Careful — that head is heavier than it looks.',next:null}};
@@ -12090,6 +12140,7 @@ const DIALOGUES={
     if(q.s===1&&countItem('lost_crate')>0)return{
       start:{who:'npc',text:'THE CRATE! You actually found it! Hand it here \u2014 careful, the butter bruises.',next:'give'},
       give:{opts:[{label:'Hand over the crate.',next:()=>{
+          if(q.s!==1||countItem('lost_crate')<1)return null;
           removeSlot(findItem('lost_crate'));
           addItem('coins',350);addItem('chefs_hat');
           addXp('cooking',100);
@@ -12702,7 +12753,7 @@ const QUESTS=[
    if(L.s<2)return{hidden:true};
    if(ch.s<2)return{cls:0,text:'Locked — complete ‘Take Your Seats’ first.'};
    if(ch.s===2)return{cls:1,text:'Part one done. Ask Larry about the school Bonfire to begin part two.'};
-   if(ch.s===3)return{cls:1,text:ch.logs>=8?'You have enough wood. Light the Bonfire on the lawn southeast of the chapel to finish.':'Chop 8 logs to build the Bonfire ('+ch.logs+' of 8) — any tree counts; the dry timber at Drury Orchard, far NE, chops fastest. Then light the Bonfire on the lawn southeast of the chapel.'};
+   if(ch.s===3)return{cls:1,text:countLogs()>=8?'You have 8 logs in your pack. Light the Bonfire on the lawn southeast of the chapel to finish.':'Carry 8 logs in your pack to build the Bonfire ('+Math.min(countLogs(),8)+' of 8) — any tree counts; the dry timber at Drury Orchard, far NE, chops fastest. Then light the Bonfire on the lawn southeast of the chapel.'};
    return{cls:2,text:'Complete. The Bonfire roared and the school sang round it.'};
   }],
  ['chef3','The Three Tables III — The Boar’s Head Feast','Larry — Coit kitchen',
@@ -13009,7 +13060,12 @@ function renderBank(){
   if(!bank.length){const d=document.createElement('div');
     d.style.cssText='grid-column:1/-1;color:#7a6f5c;font-size:11px;padding:14px;text-align:center;';
     d.textContent='Your vault is empty.';gr.appendChild(d);return;}
-  for(const b of bank){
+  const _bq=((document.getElementById('banksearch')||{}).value||'').trim().toLowerCase();
+  const _blist=_bq?bank.filter(b=>ITEMS[b.id].name.toLowerCase().includes(_bq)):bank;
+  if(!_blist.length){const d=document.createElement('div');
+    d.style.cssText='grid-column:1/-1;color:#7a6f5c;font-size:11px;padding:14px;text-align:center;';
+    d.textContent='No items match \u201c'+_bq+'\u201d.';gr.appendChild(d);return;}
+  for(const b of _blist){
     const d=document.createElement('div');d.className='bslot';d.title=ITEMS[b.id].name;
     const c=document.createElement('canvas');c.width=30;c.height=30;
     drawItemIcon(c.getContext('2d'),b.id,30);
@@ -13026,7 +13082,7 @@ function renderBank(){
     gr.appendChild(d);
   }
 }
-function openBank(){bankOpen=true;renderBank();bankEl.classList.add('on');
+function openBank(){bankOpen=true;{const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}renderBank();bankEl.classList.add('on');
   msg('Banker: Welcome to the Bank of Milville.','#103a8c');}
 function closeBank(){bankOpen=false;bankEl.classList.remove('on');}
 function sellPrice(id){return Math.max(1,Math.floor((ITEMS[id].val||0)*0.4));}
@@ -13397,6 +13453,7 @@ document.getElementById('wildgo').addEventListener('click',()=>{
 document.getElementById('wildstay').addEventListener('click',()=>{
   document.getElementById('wildui').classList.remove('on');wildHop=null;});
 document.getElementById('bankclose').addEventListener('click',closeBank);
+document.getElementById('banksearch').addEventListener('input',()=>{if(bankOpen)renderBank();});
 document.getElementById('geclose').addEventListener('click',closeShop);
 document.getElementById('depall').addEventListener('click',()=>{
   audio();for(let i=0;i<28;i++)depositSlot(i,1e9);});
@@ -13578,6 +13635,11 @@ let chapelProxies=[];
   }
   chapelProxies=proxies.filter(px=>px.userData&&px.userData.o&&
     (px.userData.o.def==='relic'||px.userData.o.def==='chapelexit'));
+  /* interior proxies must NOT be clickable from the outdoor world (their models live hidden
+     inside chapelGroup, in the dead north-forest footprint) — pull them out of the main proxy
+     list so only chapelProxies (used while inChapel) can hit them. */
+  for(let i=proxies.length-1;i>=0;i--){const _po=proxies[i].userData&&proxies[i].userData.o;
+    if(_po&&(_po.def==='relic'||_po.def==='chapelexit'||_po.def==='chapeldoor'))proxies.splice(i,1);}
 })();
 function render(now){
   requestAnimationFrame(render);
@@ -13787,6 +13849,8 @@ function render(now){
         if(pd<4&&pd>0.3)
           n.heading=lerpAngle(n.heading,
             Math.atan2(player.px-n.px,player.py-n.py),Math.min(1,dt*0.006));
+        else if(n.homeHeading!==undefined)
+          n.heading=lerpAngle(n.heading,n.homeHeading,Math.min(1,dt*0.006));
       }
     }
     if(moving){
@@ -14193,8 +14257,8 @@ const MP = (function () {
   const claims = new Map();  /* mobIndex -> {uid, t} */
   const _sent = [];          /* debug/test ring of outbound msgs */
   const remoteMobs = new Map();   /* mobIndex -> {x,y,hp,mhp,owner,fighting,dead,t} — owner-authoritative mob state */
-  let lastMobSend = 0, _lastMobI = null;
-  const MP_VERSION = 'mp-3';
+  let lastMobSend = 0, _lastMobI = null, _streamMob = null, _streamMobT = 0;
+  const MP_VERSION = 'mp-4';
   let helloT = 0, lastSelfHp = null, keepAlive = null, _announced = false;
   const _mobHpSeen = {};
   const dmgFx = [];  /* floating remote damage numbers: {ent,m|uid,d,t} */
@@ -14217,7 +14281,7 @@ const MP = (function () {
     if (/^https:/i.test(u)) u = 'wss:' + u.slice(6);
     else if (/^http:/i.test(u)) u = 'ws:' + u.slice(5);
     else if (!/^wss?:/i.test(u)) u = 'wss://' + u;
-    return u + '/room/' + encodeURIComponent(CFG.world);
+    return u + '/room/' + encodeURIComponent(CFG.world + '-' + MP_VERSION);
   }
 
   /* ---------------- connection ---------------- */
@@ -14228,7 +14292,7 @@ const MP = (function () {
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
     ws.onopen = function () {
       conn = true; backoff = 1000;
-      send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: BASE_APP, gear: selfGear(), hp: player.hp, mhp: maxHp() });
+      send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: BASE_APP, gear: selfGear(), hp: player.hp, mhp: maxHp(), snap: 1 });
       lastGear = ''; lastAct = ''; /* force a state push next frame */
       if (keepAlive) clearInterval(keepAlive);
       keepAlive = setInterval(function () {
@@ -14254,6 +14318,8 @@ const MP = (function () {
   function selfAct() {
     const a = player.action;
     if (a && a.type === 'attack' && a.rat) return { k: 'attack', m: a.rat.i };
+    if (a && a.type === 'gather' && a.obj && typeof OBJ_DEFS !== 'undefined' && OBJ_DEFS[a.obj.def]) return { k: 'gather', sk: OBJ_DEFS[a.obj.def].skill };
+    if (a && a.type === 'cook') return { k: 'cook' };
     if (player.emote) return { k: 'emote', e: player.emote };
     return null;
   }
@@ -14268,6 +14334,32 @@ const MP = (function () {
   }
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120) }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
+  function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
+
+  /* ---- shared-world reconciliation (Phase 1): dead mobs + depleted nodes ---- */
+  const MAX_RS = 3600000;
+  function _applyDeadMob(mi, rs) {
+    if (typeof rats === 'undefined' || !rats[mi]) return;
+    const r = rats[mi];
+    if (r.kind === 'master' || r.kind === 'boar' || r.locked) return; /* never share special/quest mobs */
+    r.alive = false;
+    r.respawnAt = now() + Math.max(0, Math.min(rs | 0, MAX_RS));
+    r.target = null;
+    remoteMobs.delete(mi);
+  }
+  function _applyDepletedNode(x, y, rs) {
+    if (typeof objects === 'undefined' || typeof OBJ_DEFS === 'undefined') return;
+    const o = objects.find(o9 => o9 && o9.alive && o9.x === (x | 0) && o9.y === (y | 0)
+      && OBJ_DEFS[o9.def] && OBJ_DEFS[o9.def].skill);
+    if (o) { o.alive = false; o.left = null; o.respawnAt = now() + Math.max(0, Math.min(rs | 0, MAX_RS)); }
+  }
+  /* report a mob I just killed so the server persists its respawn (for joiners) and peers align */
+  function onMobKilled(r) {
+    if (!active() || !conn || !r) return;
+    if (r.kind === 'master' || r.kind === 'boar' || r.locked) return;
+    const rs = (typeof MOB_KINDS !== 'undefined' && MOB_KINDS[r.kind] && MOB_KINDS[r.kind].resp) || 4000;
+    send({ t: 'mobdead', m: r.i, rs: rs | 0 });
+  }
 
   /* ---------------- claim / lock ---------------- */
   function manageClaims() {
@@ -14307,6 +14399,8 @@ const MP = (function () {
     r.target = null;
     const op = RP.get(e.owner);
     if (op) r.heading = Math.atan2(op.px - r.x, op.py - r.y);
+    /* visible combat: lunge toward the owner on a cadence while they're fighting it */
+    if (e.fighting && (!r._mpLungeT || now() - r._mpLungeT > 1100)) { r._mpLungeT = now(); r.swingT = now(); r.braceT = now(); }
     return true;
   }
 
@@ -14734,7 +14828,26 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         } else {
           remoteMobs.set(mi, { x: m.x, y: m.y, hp: m.hp, mhp: m.mhp, fighting: !!m.a, owner: m.uid, t: Date.now() });
           claims.set(mi, { uid: m.uid, t: Date.now() });
+          /* owner is authoritative for a mob they're fighting: if my local copy is dead /
+             respawning, revive it so ratsTick's mobOverride can sync it (ratsTick skips !alive). */
+          if (typeof rats !== 'undefined' && rats[mi] && !rats[mi].alive) { rats[mi].alive = true; rats[mi].respawnAt = 0; }
         }
+        break;
+      }
+      case 'node': {
+        if (typeof objects === 'undefined' || typeof OBJ_DEFS === 'undefined') break;
+        const o = objects.find(o9 => o9 && o9.alive && o9.x === m.x && o9.y === m.y && o9.def === m.df && OBJ_DEFS[o9.def] && OBJ_DEFS[o9.def].skill);
+        if (o) { o.alive = false; o.left = null; o.respawnAt = now() + (m.rs || 8000); }
+        break;
+      }
+      case 'snapshot': {
+        if (Array.isArray(m.mobs)) for (const e of m.mobs) _applyDeadMob(e.m | 0, e.rs | 0);
+        if (Array.isArray(m.nodes)) for (const e of m.nodes) _applyDepletedNode(e.x | 0, e.y | 0, e.rs | 0);
+        break;
+      }
+      case 'mobdead': {
+        if (m.uid === player.uid) break;
+        _applyDeadMob(m.m | 0, m.rs | 0);
         break;
       }
       case 'pong': break;
@@ -14748,14 +14861,24 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     manageClaims();
     {
       const a = player.action;
-      const myMob = (a && a.type === 'attack' && a.rat) ? a.rat : null;
-      if (myMob && myMob.alive) {
-        if (t - lastMobSend >= 150) { lastMobSend = t; send({ t: 'mob', m: myMob.i, x: myMob.x, y: myMob.y, hp: myMob.hp, mhp: myMob.maxhp, a: (myMob.target === player ? 1 : 0) }); }
-        _lastMobI = myMob.i;
+      let myMob = (a && a.type === 'attack' && a.rat && a.rat.alive) ? a.rat : null;
+      /* sustained melee: keep owning the mob locked in combat with me even when player.action
+         momentarily isn't 'attack' (between swings / re-pathing / brief auto-retaliate gaps) */
+      if (!myMob && typeof engagedMob !== 'undefined' && engagedMob && engagedMob.alive
+          && engagedMob.target === player && (now() - (player.combatT || 0)) < 3000) myMob = engagedMob;
+      const _sendMob = (r) => { if (t - lastMobSend >= 150) { lastMobSend = t; send({ t: 'mob', m: r.i, x: r.x, y: r.y, hp: r.hp, mhp: r.maxhp, a: (r.target === player ? 1 : 0) }); } };
+      if (myMob) {
+        _streamMob = myMob; _streamMobT = t;
+        _sendMob(myMob); _lastMobI = myMob.i;
+      } else if (_streamMob && (t - _streamMobT) < 1400) {
+        /* GRACE: a brief target/action gap must NOT desync the mob on peers' screens.
+           Keep streaming the real state of the mob I was just fighting until the grace expires. */
+        if (_streamMob.alive) { _sendMob(_streamMob); _lastMobI = _streamMob.i; }
+        else { send({ t: 'mob', m: _streamMob.i, gone: 1, dead: 1 }); _streamMob = null; _lastMobI = null; }
       } else if (_lastMobI != null) {
         const prev = (typeof rats !== 'undefined') ? rats[_lastMobI] : null;
         send({ t: 'mob', m: _lastMobI, gone: 1, dead: (prev && !prev.alive) ? 1 : 0 });
-        _lastMobI = null;
+        _streamMob = null; _lastMobI = null;
       }
       /* mirror EVERY local combat hitsplat (incl. 0-damage misses, rendered blue) to peers */
       if (typeof splats !== 'undefined') {
@@ -14829,6 +14952,24 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         armR = -0.45;
         if (swA < 480) { const k2 = Math.sin(Math.PI * (swA / 480)); armR = -0.35 - 2.0 * k2; }
       }
+    }
+    /* gather — woodcutting/mining chop swing; fishing/cook gentle motion (mirrors local) */
+    else if (r.act && r.act.k === 'gather') {
+      if (r.act.sk === 'woodcutting' || r.act.sk === 'mining') armR = -1.05 + Math.sin(t * 0.013) * 0.8;
+      else armR = -0.5 + Math.sin(t * 0.008) * 0.25;
+    } else if (r.act && r.act.k === 'cook') {
+      armR = -0.6 + Math.sin(t * 0.01) * 0.2;
+    }
+    /* held item, action-aware: woodcutting->axe, mining->pick, fishing/cook->none, else equipped weapon */
+    if (r.gearRig && r.gear) {
+      const _G = r.gearRig;
+      const _we = r.gear.weapon && typeof ITEMS !== 'undefined' && ITEMS[r.gear.weapon] && ITEMS[r.gear.weapon].equip;
+      let _wm = _we ? _we.model : null;
+      if (r.act && r.act.k === 'gather') _wm = r.act.sk === 'woodcutting' ? 'axe' : (r.act.sk === 'mining' ? 'pick' : null);
+      else if (r.act && r.act.k === 'cook') _wm = null;
+      _G.axe.visible = _wm === 'axe'; _G.pick.visible = _wm === 'pick';
+      _G.sword.visible = _wm === 'sword'; _G.scim.visible = _wm === 'scim';
+      _G.bowM.visible = _wm === 'bow'; _G.staffM.visible = _wm === 'staff';
     }
     /* emote — mirrors the LOCAL application exactly: seeded pose + 4-arg fn(pose, tNorm, eMs, now). Overrides walk/combat like the local player. (themed props deferred to a later layer) */
     if (r.emote && r.moving) r.emote = null;
@@ -14966,12 +15107,12 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 
   return {
     CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo,
-    onLocalChat, onLocalEmote,
+    onLocalChat, onLocalEmote, onNodeDepleted, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
-    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear }
+    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear, poseRemote: poseRemote }
   };
 })();
 
