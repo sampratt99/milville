@@ -201,6 +201,18 @@
   .friendrow .frx:hover{color:#e0533f;}
   .friendrow .fradd{cursor:pointer; color:#9fcf7a; font-size:11px; padding:0 2px;}
   .friendrow .fradd:hover{color:#c0ef9a;}
+  .friendrow .ginv{color:#cbb35a;} .friendrow .ginv:hover{color:#ecd06a;}
+  .ginviterow{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font:12px Verdana,sans-serif; padding:6px 8px; margin:3px 0; background:rgba(202,168,60,.14); border:1px solid var(--gold); border-radius:3px;}
+  .ginviterow .ginvtxt{flex:1; min-width:90px; color:#e8dcb0;}
+  .gbtn{cursor:pointer; font:bold 10.5px Verdana,sans-serif; padding:3px 9px; border-radius:3px; border:1px solid #0d0b08; color:#10100c;}
+  .gbtn.gacc{background:#6cae5a;} .gbtn.gacc:hover{background:#82c66f;}
+  .gbtn.gdec{background:#c07a6f;} .gbtn.gdec:hover{background:#d28a7f;}
+  .ghead{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1.5px; margin:9px 0 2px; padding:0 2px;}
+  .grow{display:flex; align-items:center; gap:7px; font:12px Verdana,sans-serif; padding:4px 8px; border-radius:2px;}
+  .grow:nth-child(odd){background:rgba(0,0,0,.12);}
+  .grow .gname{flex:1; color:#d8cba0; font-weight:bold;}
+  .gbtn.gleave{display:block; width:100%; margin:6px 0 2px; background:#8a4a40; color:#f0e0d8;}
+  .gbtn.gleave:hover{background:#a45a4e;}
   /* skills */
   #skillgrid{display:grid; grid-template-columns:1fr 1fr; gap:4px;}
   .skill{
@@ -4422,6 +4434,15 @@ function optionsAt(tx,ty){
   if(_rp){
     opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=(typeof MP!=='undefined'&&MP.examineInfo)?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' \u2014 a fellow adventurer of Milville.','#103a8c');return;}let s=info.name;if(info.cmb!=null)s+=' \u2014 Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}},
       {html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
+    if(typeof MP!=='undefined'&&MP.groupCanInvite&&MP.groupCanInvite(_rp.uid)){
+      opts.push({html:'Invite <span class="t">'+_rp.name+'</span> to group',label:'Invite '+_rp.name+' to group',fn:()=>{
+        const _gr=MP.groupInviteByUid(_rp.uid,_rp.name);
+        if(_gr==='sent')msg('You invite '+_rp.name+' to your group.','#103a8c');
+        else if(_gr==='full')msg('Your group is already full (max 4).','#9c1f1f');
+        else if(_gr==='already')msg(_rp.name+' is already in your group.','#103a8c');
+        else msg('Could not invite '+_rp.name+' right now.','#9c1f1f');
+      }});
+    }
   }
   return opts;
 }
@@ -5476,6 +5497,32 @@ function renderFriends(){
   el.innerHTML='';
   const mpOn=(typeof MP!=='undefined'&&MP.active());
   const dot=(on)=>{const sp=document.createElement('span');sp.style.cssText='display:inline-block;width:9px;height:9px;border-radius:50%;margin-right:7px;vertical-align:middle;background:'+(on?'#3fbf52':'#9a3b32')+';box-shadow:0 0 0 1px #0d0b08';return sp;};
+  const gs=(mpOn&&MP.groupSnapshot)?MP.groupSnapshot():null;
+  if(gs){
+    for(const inv of gs.invitesIn){
+      const row=document.createElement('div');row.className='ginviterow';
+      const t=document.createElement('span');t.className='ginvtxt';t.textContent=inv.name+' invites you to a group';row.appendChild(t);
+      const acc=document.createElement('button');acc.className='gbtn gacc';acc.textContent='Accept';
+      acc.addEventListener('click',(e)=>{e.stopPropagation();MP.groupAccept(inv.uid);});
+      const dec=document.createElement('button');dec.className='gbtn gdec';dec.textContent='Decline';
+      dec.addEventListener('click',(e)=>{e.stopPropagation();MP.groupDecline(inv.uid);});
+      row.appendChild(acc);row.appendChild(dec);el.appendChild(row);
+    }
+    if(gs.inGroup){
+      const hd=document.createElement('div');hd.className='ghead';hd.textContent='Your group \u00b7 '+gs.roster.length+'/4';el.appendChild(hd);
+      for(const mb of gs.roster){
+        const me=(mb.name===player.name);
+        const row=document.createElement('div');row.className='grow';
+        const on2=me||(MP.isOnline&&MP.isOnline(mb.name));
+        row.appendChild(dot(on2));
+        const t=document.createElement('span');t.className='gname';t.textContent=mb.name+(me?' (you)':'');row.appendChild(t);
+        el.appendChild(row);
+      }
+      const lv=document.createElement('button');lv.className='gbtn gleave';lv.textContent='Leave group';
+      lv.addEventListener('click',(e)=>{e.stopPropagation();MP.groupLeave();});
+      el.appendChild(lv);
+    }
+  }
   const fr=(player.friends||[]);
   if(!fr.length){
     const d=document.createElement('div');d.className='friendsempty';
@@ -5491,6 +5538,11 @@ function renderFriends(){
       const st=document.createElement('span');st.className='fstatus';
       st.textContent=on?('Online'+(cmb!=null?' \u00b7 lvl '+cmb:'')):((f&&f.lastSeen)?('seen '+fmtAgo(f.lastSeen)):'Offline');
       d.appendChild(st);
+      if(on&&gs&&!gs.full&&MP.isGroupmateName&&!MP.isGroupmateName(nm)){
+        const iv=document.createElement('span');iv.className='fradd ginv';iv.textContent='Invite';iv.title='Invite '+nm+' to group';
+        iv.addEventListener('click',(e)=>{e.stopPropagation();const _r=MP.groupInviteByName(nm);if(_r==='sent'&&typeof msg==='function')msg('You invite '+nm+' to your group.','#103a8c');});
+        d.appendChild(iv);
+      }
       const x=document.createElement('span');x.className='frx';x.textContent='\u00d7';x.title='Remove '+nm;
       x.addEventListener('click',(e)=>{
         e.stopPropagation();
@@ -5517,6 +5569,11 @@ function renderFriends(){
       const add=document.createElement('span');add.className='fradd';add.textContent='+ Add';add.title='Add '+o.name;
       add.addEventListener('click',(e)=>{e.stopPropagation();MP.addFriendByName(o.name);});
       d.appendChild(add);
+      if(gs&&MP.groupCanInvite&&MP.groupCanInvite(o.uid)){
+        const iv=document.createElement('span');iv.className='fradd ginv';iv.textContent='Invite';iv.title='Invite '+o.name+' to group';
+        iv.addEventListener('click',(e)=>{e.stopPropagation();const _r=MP.groupInviteByUid(o.uid,o.name);if(_r==='sent'&&typeof msg==='function')msg('You invite '+o.name+' to your group.','#103a8c');});
+        d.appendChild(iv);
+      }
       el.appendChild(d);
     }
   }
@@ -14262,6 +14319,11 @@ const MP = (function () {
   let helloT = 0, lastSelfHp = null, keepAlive = null, _announced = false;
   const _mobHpSeen = {};
   const dmgFx = [];  /* floating remote damage numbers: {ent,m|uid,d,t} */
+  /* ---- group membership (Phase 2): roster + pending invites. Any member may invite;
+     whoever's invite is accepted broadcasts the authoritative roster as a complete gsync
+     snapshot, so all clients converge (last-write-wins). ---- */
+  const GROUP_MAX = 4;
+  const group = { roster: [], invitesIn: new Map(), invitesOut: new Map() };
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -14286,7 +14348,7 @@ const MP = (function () {
 
   /* ---------------- connection ---------------- */
   function connect() { if (!active() || want) return; want = true; open(); }
-  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} }
+  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); if (typeof renderFriends === 'function') renderFriends(); }
   function open() {
     if (!active() || !want) return;
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
@@ -14799,7 +14861,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     switch (m.t) {
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
-      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); despawn(m.uid); break; }
+      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); despawn(m.uid); break; }
       case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
@@ -14848,6 +14910,40 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'mobdead': {
         if (m.uid === player.uid) break;
         _applyDeadMob(m.m | 0, m.rs | 0);
+        break;
+      }
+      case 'ginvite': {
+        if (m.to !== player.uid || !m.uid || m.uid === player.uid) break;
+        if (isGroupmate(m.uid)) break;
+        const r = RP.get(m.uid); const nm = (r && r.name) || '?';
+        group.invitesIn.set(m.uid, { name: nm, t: now() });
+        logSystem(nm + ' has invited you to a group \u2014 open the Friends tab to accept or decline.');
+        if (typeof renderFriends === 'function') renderFriends();
+        break;
+      }
+      case 'gaccept': {
+        if (m.to !== player.uid) break;
+        const r = RP.get(m.uid); const nm = (r && r.name) || '?';
+        if (groupOnAccept(m.uid, nm) === 'added') { logSystem(nm + ' joined your group.'); if (typeof renderFriends === 'function') renderFriends(); }
+        break;
+      }
+      case 'gdecline': {
+        if (m.to !== player.uid) break;
+        const r = RP.get(m.uid); const nm = (r && r.name) || '?';
+        if (group.invitesOut.delete(m.uid)) { logSystem(nm + ' declined your group invite.'); if (typeof renderFriends === 'function') renderFriends(); }
+        break;
+      }
+      case 'gsync': {
+        if (!Array.isArray(m.roster)) break;
+        groupOnSync(m.roster);
+        if (typeof renderFriends === 'function') renderFriends();
+        break;
+      }
+      case 'gleave': {
+        if (groupOnPeerLeft(m.uid)) {
+          const r = RP.get(m.uid); logSystem(((r && r.name) || 'A player') + ' left the group.');
+          if (typeof renderFriends === 'function') renderFriends();
+        }
         break;
       }
       case 'pong': break;
@@ -15082,6 +15178,79 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (typeof renderFriends === 'function') renderFriends();
   }
 
+  function groupInGroup() { return group.roster.length > 0; }
+  function isGroupmate(uid) { return !!uid && group.roster.some(m => m.uid === uid); }
+  function isGroupmateName(name) { const ln = String(name || '').toLowerCase(); return group.roster.some(m => (m.name || '').toLowerCase() === ln); }
+  function groupCanInvite(uid) {
+    return active() && conn && !!uid && uid !== player.uid && !isGroupmate(uid) && !(groupInGroup() && group.roster.length >= GROUP_MAX);
+  }
+  function groupInviteByUid(uid, name) {
+    if (!active() || !conn) return 'offline';
+    if (uid === player.uid) return 'self';
+    if (isGroupmate(uid)) return 'already';
+    if (groupInGroup() && group.roster.length >= GROUP_MAX) return 'full';
+    group.invitesOut.set(uid, { name: name || (RP.get(uid) || {}).name || '?', t: now() });
+    send({ t: 'ginvite', to: uid });
+    return 'sent';
+  }
+  function groupInviteByName(name) {
+    const ln = String(name || '').toLowerCase(); let uid = null, nm = name;
+    for (const r of RP.values()) if ((r.name || '').toLowerCase() === ln) { uid = r.uid; nm = r.name; break; }
+    if (!uid) return 'offline';
+    return groupInviteByUid(uid, nm);
+  }
+  function groupAccept(fromUid) {
+    const inv = group.invitesIn.get(fromUid); if (!inv) return 'noinvite';
+    group.invitesIn.delete(fromUid);
+    const set = new Map(); for (const m of group.roster) set.set(m.uid, m);
+    set.set(player.uid, { uid: player.uid, name: player.name });
+    set.set(fromUid, { uid: fromUid, name: inv.name });
+    group.roster = [...set.values()];
+    send({ t: 'gaccept', to: fromUid });
+    if (typeof renderFriends === 'function') renderFriends();
+    return 'joined';
+  }
+  function groupDecline(fromUid) {
+    if (!group.invitesIn.has(fromUid)) return 'noinvite';
+    group.invitesIn.delete(fromUid);
+    send({ t: 'gdecline', to: fromUid });
+    if (typeof renderFriends === 'function') renderFriends();
+    return 'declined';
+  }
+  function groupOnAccept(uid, name) {            /* inviter side: peer accepted -> add + broadcast roster */
+    if (!group.invitesOut.has(uid)) return 'noinvite';
+    group.invitesOut.delete(uid);
+    const set = new Map(); for (const m of group.roster) set.set(m.uid, m);
+    if (!groupInGroup()) set.set(player.uid, { uid: player.uid, name: player.name });
+    set.set(uid, { uid, name });
+    group.roster = [...set.values()];
+    send({ t: 'gsync', roster: group.roster.map(m => ({ uid: m.uid, name: m.name })) });
+    return 'added';
+  }
+  function groupOnSync(roster) {                  /* adopt authoritative roster if I'm in it, else I was removed */
+    if (roster.some(m => m.uid === player.uid)) group.roster = roster.map(m => ({ uid: m.uid, name: m.name }));
+    else group.roster = [];
+  }
+  function groupLeave() {
+    if (!groupInGroup()) return;
+    send({ t: 'gleave' });
+    group.roster = []; group.invitesOut.clear();
+    if (typeof renderFriends === 'function') renderFriends();
+  }
+  function groupOnPeerLeft(uid) {
+    if (!isGroupmate(uid)) return false;
+    group.roster = group.roster.filter(m => m.uid !== uid);
+    if (group.roster.length <= 1) group.roster = [];
+    return true;
+  }
+  function groupSnapshot() {
+    return {
+      inGroup: groupInGroup(), full: groupInGroup() && group.roster.length >= GROUP_MAX,
+      roster: group.roster.map(m => ({ uid: m.uid, name: m.name })),
+      invitesIn: [...group.invitesIn.entries()].map(([uid, v]) => ({ uid, name: v.name }))
+    };
+  }
+
   function colHex(t) { return '#' + ('000000' + ((t || 0x3fd0e0) >>> 0).toString(16)).slice(-6); }
   function drawMiniMarkers(g) {
     if (!active() || !conn) return;
@@ -15117,10 +15286,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo,
     onLocalChat, onLocalEmote, onNodeDepleted, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
+    groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
-    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear, poseRemote: poseRemote }
+    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear, poseRemote: poseRemote, resetGroup: () => { group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); }, groupState: () => group }
   };
 })();
 
