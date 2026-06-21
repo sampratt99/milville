@@ -3429,6 +3429,7 @@ function ratsTick(){
   }
   for(const r of rats){
     if(!r.alive)continue;
+    if(typeof MP!=='undefined'&&MP.mobOverride(r))continue;
     if(!r.target&&MOB_KINDS[r.kind].aggro
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
       &&MOB_KINDS[r.kind].cmb>=cmbLvl()&&player.hp>0
@@ -14187,6 +14188,8 @@ const MP = (function () {
   const RP = new Map();      /* uid -> remote record */
   const claims = new Map();  /* mobIndex -> {uid, t} */
   const _sent = [];          /* debug/test ring of outbound msgs */
+  const remoteMobs = new Map();   /* mobIndex -> {x,y,hp,mhp,owner,fighting,dead,t} — owner-authoritative mob state */
+  let lastMobSend = 0, _lastMobI = null;
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -14267,6 +14270,29 @@ const MP = (function () {
     return !!(c && c.uid !== player.uid && (Date.now() - c.t) < CFG.claimMs);
   }
 
+  /* a mob being fought by another player: write the owner's synced state into the
+     local rat and skip local AI (so it can't wander/heal/attack me on my screen). */
+  function mobOverride(r) {
+    if (!active() || !conn || !r) return false;
+    const e = remoteMobs.get(r.i);
+    if (!e) return false;
+    if (e.owner === player.uid) { remoteMobs.delete(r.i); return false; }
+    if (Date.now() - e.t > 3000) { remoteMobs.delete(r.i); claims.delete(r.i); return false; }
+    if (e.dead) {
+      r.alive = false;
+      r.respawnAt = now() + ((typeof MOB_KINDS !== 'undefined' && MOB_KINDS[r.kind] && MOB_KINDS[r.kind].resp) || 4000);
+      remoteMobs.delete(r.i); claims.delete(r.i);
+      return true;
+    }
+    r.x = e.x; r.y = e.y;
+    r.hp = Math.max(0, (typeof e.hp === 'number') ? e.hp : r.hp);
+    if (e.mhp) r.maxhp = e.mhp;
+    r.target = null;
+    const op = RP.get(e.owner);
+    if (op) r.heading = Math.atan2(op.px - r.x, op.py - r.y);
+    return true;
+  }
+
   /* ---------------- remote players ---------------- */
   function spawn(p) {
     if (!p || !p.uid || p.uid === player.uid) return;
@@ -14291,6 +14317,7 @@ const MP = (function () {
     try { scene.remove(r.rig.g); } catch (e) {}
     RP.delete(uid);
     for (const [m, c] of claims) if (c.uid === uid) claims.delete(m);
+    for (const [mi, e] of remoteMobs) if (e.owner === uid) remoteMobs.delete(mi);
   }
   function clearRemotes() { for (const uid of Array.from(RP.keys())) despawn(uid); }
   function logSystem(text) {
@@ -14315,6 +14342,17 @@ const MP = (function () {
       case 'emote': { const r = RP.get(m.uid); if (r) { r.emote = m.e; r.emoteT = now(); } break; }
       case 'claim': claims.set(m.m | 0, { uid: m.uid, t: Date.now() }); break;
       case 'release': { const c = claims.get(m.m | 0); if (c && c.uid === m.uid) claims.delete(m.m | 0); break; }
+      case 'mob': {
+        const mi = m.m | 0;
+        if (m.gone) {
+          if (m.dead) remoteMobs.set(mi, { dead: true, owner: m.uid, t: Date.now() });
+          else { remoteMobs.delete(mi); const c = claims.get(mi); if (c && c.uid === m.uid) claims.delete(mi); }
+        } else {
+          remoteMobs.set(mi, { x: m.x, y: m.y, hp: m.hp, mhp: m.mhp, fighting: !!m.a, owner: m.uid, t: Date.now() });
+          claims.set(mi, { uid: m.uid, t: Date.now() });
+        }
+        break;
+      }
       case 'pong': break;
     }
   }
@@ -14324,6 +14362,18 @@ const MP = (function () {
     if (!active() || !conn) return;
     pushOutbound(t);
     manageClaims();
+    {
+      const a = player.action;
+      const myMob = (a && a.type === 'attack' && a.rat) ? a.rat : null;
+      if (myMob && myMob.alive) {
+        if (t - lastMobSend >= 150) { lastMobSend = t; send({ t: 'mob', m: myMob.i, x: myMob.x, y: myMob.y, hp: myMob.hp, mhp: myMob.maxhp, a: (myMob.target === player ? 1 : 0) }); }
+        _lastMobI = myMob.i;
+      } else if (_lastMobI != null) {
+        const prev = (typeof rats !== 'undefined') ? rats[_lastMobI] : null;
+        send({ t: 'mob', m: _lastMobI, gone: 1, dead: (prev && !prev.alive) ? 1 : 0 });
+        _lastMobI = null;
+      }
+    }
     if (player.friends && player.friends.length) {
       for (const f of player.friends) {
         if (!f || !f.name) continue;
@@ -14428,6 +14478,23 @@ const MP = (function () {
       }
       if (r.chat && r.chatT > now() && typeof drawSayText === 'function') drawSayText(wx, wz, 2.45, r.chat);
     }
+    if (typeof rats !== 'undefined') {
+      for (const [mi, e] of remoteMobs) {
+        if (e.dead || e.owner === player.uid) continue;
+        const r = rats[mi];
+        if (!r || !r.alive) continue;
+        if (dist1(player.px, player.py, r.px, r.py) > CFG.viewR) continue;
+        const mwx = r.px + 0.5, mwz = r.py + 0.5, mhp = proj(mwx, groundH(mwx, mwz) + 1.7, mwz);
+        if (mhp && e.mhp > 0) {
+          const w = 30, h = 4, frac = Math.max(0, Math.min(1, e.hp / e.mhp));
+          octx.save();
+          octx.fillStyle = 'rgba(0,0,0,0.6)'; octx.fillRect(mhp.x - w / 2 - 1, mhp.y - 1, w + 2, h + 2);
+          octx.fillStyle = '#5a1414'; octx.fillRect(mhp.x - w / 2, mhp.y, w, h);
+          octx.fillStyle = '#d83a2a'; octx.fillRect(mhp.x - w / 2, mhp.y, w * frac, h);
+          octx.restore();
+        }
+      }
+    }
   }
 
   /* ---------------- friends / presence ---------------- */
@@ -14453,10 +14520,10 @@ const MP = (function () {
   return {
     CFG, connect, disconnect, frame, drawOverlays,
     onLocalChat, onLocalEmote,
-    isClaimedByOther, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
+    isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
     active, get connected() { return conn; },
     /* test/debug seams */
-    _RP: RP, _claims: claims, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
+    _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
     _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; } }
   };
 })();
