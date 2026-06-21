@@ -14311,6 +14311,357 @@ const MP = (function () {
   }
 
   /* ---------------- remote players ---------------- */
+  /* ---- remote gear: a private copy of the worn-mesh construction, attached to a
+     remote rig. The LOCAL player's inline construction is left untouched. ---- */
+  function buildGearRig(rig) {
+const tool=new THREE.Group();
+rig.rArm.add(tool);
+tool.position.set(0,-0.58,0.06);
+const axe=new THREE.Group();
+{const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=-0.18;axe.add(h);
+ const b=mesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,-0.34,0.10);axe.add(b);}
+const pick=new THREE.Group();
+{const h=mesh(new THREE.BoxGeometry(0.05,0.6,0.05),0x6b4a2e);h.position.y=-0.16;pick.add(h);
+ const b=mesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);}
+const sword=new THREE.Group();
+{/* clean straight double-edged blade */
+ const blade=TT(gmesh(new THREE.BoxGeometry(0.052,0.46,0.018),0xc7ccd4),'tint');
+ blade.position.y=-0.44;sword.add(blade);
+ const fuller=TT(gmesh(new THREE.BoxGeometry(0.013,0.40,0.024),0xdfe4ec),'tint');
+ fuller.position.y=-0.44;sword.add(fuller);
+ const tip=TT(gmesh(new THREE.ConeGeometry(0.028,0.12,4),0xd0d5dd),'tint');
+ tip.position.y=-0.725;tip.rotation.x=Math.PI;tip.rotation.y=Math.PI/4;sword.add(tip);
+ const gd=TT(gmesh(new THREE.BoxGeometry(0.20,0.05,0.06),0x8a6a2a),'trim');
+ gd.position.y=-0.17;sword.add(gd);
+ const grip=gmesh(new THREE.BoxGeometry(0.04,0.13,0.04),0x5a3d22);
+ grip.position.y=-0.09;sword.add(grip);
+ const pmH=TT(gmesh(new THREE.SphereGeometry(0.034,6,5),0x8a6a2a),'trim');
+ pmH.position.y=-0.02;sword.add(pmH);}
+const scim=new THREE.Group();
+{/* smoothly curved single-edged scimitar blade (6 small segments tracing an arc) */
+ let py=-0.21, pz=0, ang=0; const seg=0.10, d=0.145;
+ const sh=[0xc7ccd4,0xcacfd7,0xccd1d9,0xd0d5dd,0xd4d9e1,0xd9dee6];
+ for(let i=0;i<6;i++){
+   ang+=d; py-=Math.cos(ang)*seg; pz+=Math.sin(ang)*seg;
+   const w=0.05+(i<3?i:5-i)*0.006;
+   const bb=TT(gmesh(new THREE.BoxGeometry(w,seg+0.012,0.07),sh[i]),'tint');
+   bb.position.set(0,py,pz);bb.rotation.x=ang;scim.add(bb);
+ }
+ const sgd=TT(gmesh(new THREE.BoxGeometry(0.19,0.05,0.07),0x8a6a2a),'trim');
+ sgd.position.y=-0.165;scim.add(sgd);
+ const sgrip=gmesh(new THREE.BoxGeometry(0.04,0.13,0.04),0x5a3d22);
+ sgrip.position.y=-0.085;scim.add(sgrip);
+ const spm=TT(gmesh(new THREE.SphereGeometry(0.034,6,5),0x8a6a2a),'trim');
+ spm.position.y=-0.01;scim.add(spm);}
+tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);
+const bowM=new THREE.Group();
+{/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
+ const R=0.5,A=1.9,t2=A/2;
+ const ty=R*Math.sin(t2),tz=R*Math.cos(t2)-R;          /* tip y / tip z, grip at origin */
+ const bowArc=new THREE.Group();
+ const arcMesh=TT(gmesh(new THREE.TorusGeometry(R,0.0145,6,22,A),0x6b4a2e),'tint');
+ arcMesh.rotation.z=-t2;bowArc.add(arcMesh);
+ bowArc.rotation.y=-Math.PI/2;bowArc.position.z=-R;bowM.add(bowArc);
+ /* leather grip wrap at the belly (the hand grips here) */
+ const grip=TT(gmesh(new THREE.CylinderGeometry(0.023,0.023,0.17,8),0x4a3420),'trim');grip.position.set(0,0,0.004);bowM.add(grip);
+ const grip2=gmesh(new THREE.CylinderGeometry(0.0245,0.0245,0.045,8),0x2e2014);grip2.position.set(0,0,0.004);bowM.add(grip2);
+ /* bowstring: straight chord joining the two tips */
+ const str=gmesh(new THREE.CylinderGeometry(0.0035,0.0035,ty*2,4),0xe8e0cc);str.position.set(0,0,tz);bowM.add(str);
+ /* horn nocks where the string seats */
+ for(const sd of[-1,1]){const nk=TT(gmesh(new THREE.SphereGeometry(0.019,6,5),0x4a3420),'trim');nk.position.set(0,sd*ty,tz+0.004);bowM.add(nk);}}
+tool.add(bowM);
+const staffM=new THREE.Group();
+{const shaft=TT(gmesh(new THREE.CylinderGeometry(0.018,0.024,1.18,6),0x6b4a2e),'tint');shaft.position.y=0.30;staffM.add(shaft);
+ const setting=TT(gmesh(new THREE.CylinderGeometry(0.052,0.03,0.09,6),0x4a3420),'trim');setting.position.y=0.85;staffM.add(setting);
+ const orb=gmesh(new THREE.SphereGeometry(0.11,12,10),0xffffff);orb.position.y=1.0;orb.material.emissive=new THREE.Color(0xffffff);orb.material.emissiveIntensity=0.9;staffM.add(orb);staffM.userData.orb=orb;
+ const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
+ const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
+tool.add(staffM);
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
+const capeM=new THREE.Group();
+{const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
+ cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
+ const cb4=TT(gmesh(new THREE.BoxGeometry(0.3,0.18,0.03),0xb3241f),'tint');
+ cb4.position.set(0,0.72,-0.205);cb4.rotation.x=0.16;capeM.add(cb4);
+ const cb3=gmesh(new THREE.BoxGeometry(0.38,0.07,0.05),0xd8cdb8);
+ cb3.position.set(0,1.33,-0.175);capeM.add(cb3);}
+const capeEmblem=new THREE.Mesh(new THREE.PlaneGeometry(0.26,0.26),new THREE.MeshBasicMaterial({transparent:true,side:THREE.DoubleSide,depthWrite:false}));
+capeEmblem.position.set(0,0.96,-0.225);capeEmblem.rotation.y=Math.PI;capeEmblem.rotation.x=-0.1;capeEmblem.visible=false;capeM.add(capeEmblem);
+capeM.position.y-=0.78;rig.upper.add(capeM);capeM.visible=false;
+const shieldM=new THREE.Group();
+{const ks=new THREE.Shape();
+ ks.moveTo(0,0.21);ks.quadraticCurveTo(0.15,0.21,0.16,0.12);
+ ks.quadraticCurveTo(0.17,-0.02,0.02,-0.24);
+ ks.lineTo(0,-0.26);ks.lineTo(-0.02,-0.24);
+ ks.quadraticCurveTo(-0.17,-0.02,-0.16,0.12);
+ ks.quadraticCurveTo(-0.15,0.21,0,0.21);
+ const face=TT(new THREE.Mesh(new THREE.ExtrudeGeometry(ks,
+   {depth:0.035,bevelEnabled:false}),
+   new THREE.MeshLambertMaterial({color:0x8f949c})),'tint');
+ face.position.z=-0.017;shieldM.add(face);
+ const ks2=new THREE.Shape();
+ ks2.moveTo(0,0.235);ks2.quadraticCurveTo(0.17,0.235,0.182,0.13);
+ ks2.quadraticCurveTo(0.19,-0.02,0.025,-0.27);
+ ks2.lineTo(0,-0.295);ks2.lineTo(-0.025,-0.27);
+ ks2.quadraticCurveTo(-0.19,-0.02,-0.182,0.13);
+ ks2.quadraticCurveTo(-0.17,0.235,0,0.235);
+ const rim=TT(new THREE.Mesh(new THREE.ExtrudeGeometry(ks2,
+   {depth:0.022,bevelEnabled:false}),
+   new THREE.MeshLambertMaterial({color:0x4f3a22})),'trim');
+ rim.position.z=-0.028;shieldM.add(rim);
+ const cr1=TT(gmesh(new THREE.BoxGeometry(0.022,0.4,0.012),0x4f3a22),'trim');
+ cr1.position.z=0.02;shieldM.add(cr1);
+ const cr2=TT(gmesh(new THREE.BoxGeometry(0.3,0.022,0.012),0x4f3a22),'trim');
+ cr2.position.set(0,0.06,0.02);shieldM.add(cr2);
+ const sboss=TT(gmesh(new THREE.SphereGeometry(0.045,7,6),0x8f949c),'trim');
+ sboss.position.set(0,0.04,0.024);shieldM.add(sboss);
+ shieldM.rotation.y=-Math.PI/2;}
+rig.lArm.add(shieldM);
+shieldM.position.set(-0.075,-0.34,0.03);
+shieldM.visible=false;
+const helmM=new THREE.Group();
+{const dome=TT(gmesh(new THREE.SphereGeometry(0.215,12,9,0,Math.PI*2,0,Math.PI*0.62),0xb9bdc4),'tint');
+ dome.position.y=1.555;dome.scale.set(1,1.12,1.2);helmM.add(dome);
+ const skirt=TT(gmesh(new THREE.CylinderGeometry(0.21,0.227,0.18,12),0xb9bdc4),'tint');
+ skirt.position.y=1.49;helmM.add(skirt);
+ const crest=TT(gmesh(new THREE.BoxGeometry(0.035,0.07,0.33),0xdba968),'trim');
+ crest.position.y=1.78;helmM.add(crest);
+ const brow=TT(gmesh(new THREE.CylinderGeometry(0.232,0.232,0.035,12),0xdba968),'trim');
+ brow.position.y=1.625;helmM.add(brow);
+ const slitV=gmesh(new THREE.BoxGeometry(0.05,0.14,0.03),0x14161a);
+ slitV.position.set(0,1.525,0.245);helmM.add(slitV);
+ const slitH=gmesh(new THREE.BoxGeometry(0.18,0.045,0.03),0x14161a);
+ slitH.position.set(0,1.565,0.245);helmM.add(slitH);}
+helmM.position.y-=0.78;rig.upper.add(helmM);helmM.visible=false;
+const slayerHelmM=new THREE.Group();
+{const dome=TT(gmesh(new THREE.SphereGeometry(0.223,12,9,0,Math.PI*2,0,Math.PI*0.6),0xb9bdc4),'tint');
+ dome.position.y=1.565;dome.scale.set(1.02,1.1,1.15);slayerHelmM.add(dome);
+ const jaw=TT(gmesh(new THREE.CylinderGeometry(0.213,0.236,0.21,12),0xb9bdc4),'tint');
+ jaw.position.y=1.472;slayerHelmM.add(jaw);
+ const face=TT(gmesh(new THREE.BoxGeometry(0.275,0.25,0.08),0xb9bdc4),'tint');
+ face.position.set(0,1.49,0.175);slayerHelmM.add(face);
+ const cheekL=TT(gmesh(new THREE.BoxGeometry(0.06,0.2,0.16),0xb9bdc4),'tint');cheekL.position.set(-0.13,1.46,0.13);cheekL.rotation.y=0.3;slayerHelmM.add(cheekL);
+ const cheekR=cheekL.clone();cheekR.position.x=0.13;cheekR.rotation.y=-0.3;slayerHelmM.add(cheekR);
+ /* T-visor (dark, fixed) */
+ const sV=gmesh(new THREE.BoxGeometry(0.05,0.17,0.05),0x0e1014);sV.position.set(0,1.5,0.235);slayerHelmM.add(sV);
+ const sH=gmesh(new THREE.BoxGeometry(0.21,0.045,0.05),0x0e1014);sH.position.set(0,1.575,0.235);slayerHelmM.add(sH);
+ /* brow band + rivets (trim) */
+ const brow=TT(gmesh(new THREE.CylinderGeometry(0.241,0.241,0.045,12),0xdba968),'trim');brow.position.y=1.612;slayerHelmM.add(brow);
+ /* crest fin + forward spike (trim) */
+ const crest=TT(gmesh(new THREE.BoxGeometry(0.032,0.1,0.36),0xdba968),'trim');crest.position.y=1.8;slayerHelmM.add(crest);
+ const spike=TT(gmesh(new THREE.ConeGeometry(0.034,0.14,5),0xdba968),'trim');spike.position.set(0,1.83,0.16);spike.rotation.x=0.55;slayerHelmM.add(spike);
+ /* horns: base + tip, swept out and up (trim) */
+ for(const side of [-1,1]){
+   const hb=TT(gmesh(new THREE.ConeGeometry(0.058,0.23,6),0xdba968),'trim');
+   hb.position.set(side*0.188,1.66,0.0);hb.rotation.z=-side*0.72;hb.rotation.x=-0.12;slayerHelmM.add(hb);
+   const ht=TT(gmesh(new THREE.ConeGeometry(0.034,0.18,6),0xdba968),'trim');
+   ht.position.set(side*0.285,1.79,-0.04);ht.rotation.z=-side*1.2;ht.rotation.x=-0.28;slayerHelmM.add(ht);
+   const riv=TT(gmesh(new THREE.SphereGeometry(0.024,6,5),0xdba968),'trim');
+   riv.position.set(side*0.205,1.55,0.135);slayerHelmM.add(riv);
+ }
+}
+slayerHelmM.position.y-=0.78;rig.upper.add(slayerHelmM);slayerHelmM.visible=false;
+const bodyM=new THREE.Group();
+{const chest=TT(gmesh(new THREE.CylinderGeometry(0.26,0.24,0.5,12),0xb9bdc4),'tint');
+ chest.scale.z=0.66;chest.position.y=1.05;bodyM.add(chest);
+ const plal=TT(gmesh(new THREE.SphereGeometry(0.132,9,7),0xb9bdc4),'tint');
+ plal.scale.y=0.85;plal.position.set(-0.27,1.3,0);bodyM.add(plal);
+ const plar=TT(gmesh(new THREE.SphereGeometry(0.132,9,7),0xb9bdc4),'tint');
+ plar.scale.y=0.85;plar.position.set(0.27,1.3,0);bodyM.add(plar);
+ const collar=TT(gmesh(new THREE.CylinderGeometry(0.15,0.17,0.07,10),0xdba968),'trim');
+ collar.position.y=1.31;bodyM.add(collar);
+ const belt=TT(gmesh(new THREE.CylinderGeometry(0.245,0.255,0.07,12),0xdba968),'trim');
+ belt.scale.z=0.66;belt.position.y=0.82;bodyM.add(belt);
+ const fauld=TT(gmesh(new THREE.CylinderGeometry(0.255,0.28,0.12,12),0xb9bdc4),'tint');
+ fauld.scale.z=0.66;fauld.position.y=0.73;bodyM.add(fauld);}
+bodyM.position.y-=0.78;rig.upper.add(bodyM);bodyM.visible=false;
+const mkArmA=()=>{const ap=TT(gmesh(new THREE.CylinderGeometry(0.072,0.06,0.3,8),0xb9bdc4),'tint');
+ ap.position.y=-0.16;ap.visible=false;return ap;};
+const armPL=mkArmA(),armPR=mkArmA();
+rig.lArm.add(armPL);rig.rArm.add(armPR);
+const neckM=new THREE.Group();
+{const ch=gmesh(new THREE.BoxGeometry(0.16,0.05,0.03),0xd9a531);
+ ch.position.set(0,1.36,0.165);neckM.add(ch);
+ const gem=gmesh(new THREE.OctahedronGeometry(0.05,0),0xc23b2e);
+ gem.position.set(0,1.28,0.18);neckM.add(gem);}
+neckM.position.y-=0.78;rig.upper.add(neckM);neckM.visible=false;
+const mkLegA=()=>{const lg=new THREE.Group();
+ const th=TT(gmesh(new THREE.CylinderGeometry(0.096,0.088,0.32,9),0xb9bdc4),'tint');
+ th.position.y=-0.12;lg.add(th);
+ const kn=TT(gmesh(new THREE.SphereGeometry(0.084,8,6),0xdba968),'trim');
+ kn.position.y=-0.28;lg.add(kn);
+ const sh=TT(gmesh(new THREE.CylinderGeometry(0.082,0.074,0.27,9),0xb9bdc4),'tint');
+ sh.position.y=-0.43;lg.add(sh);
+ lg.visible=false;return lg;};
+const legL=mkLegA(),legR=mkLegA();
+rig.lLeg.add(legL);rig.rLeg.add(legR);
+const mkBootA=()=>{const bt=new THREE.Group();
+ const shaft=TT(gmesh(new THREE.BoxGeometry(0.16,0.15,0.19),0x7a2b20),'tint');
+ shaft.position.set(0,-0.6,0);bt.add(shaft);
+ const toe=TT(gmesh(new THREE.BoxGeometry(0.155,0.1,0.28),0x7a2b20),'tint');
+ toe.position.set(0,-0.65,0.05);bt.add(toe);
+ const cuff=TT(gmesh(new THREE.BoxGeometry(0.16,0.045,0.18),0x3a2a1a),'trim');
+ cuff.position.set(0,-0.525,0);bt.add(cuff);
+ bt.visible=false;return bt;};
+const bootL=mkBootA(),bootR=mkBootA();
+rig.lLeg.add(bootL);rig.rLeg.add(bootR);
+/* ranged: leather coif */
+const coifM=new THREE.Group();
+{const cap=TT(gmesh(new THREE.SphereGeometry(0.176,10,7,0,Math.PI*2,0,Math.PI*0.56),0x5a3f28),'tint');cap.position.y=1.515;cap.scale.set(1.04,1.10,1.06);coifM.add(cap);
+ const fl=TT(gmesh(new THREE.BoxGeometry(0.05,0.17,0.11),0x5a3f28),'tint');fl.position.set(-0.155,1.43,0.02);coifM.add(fl);
+ const fr=TT(gmesh(new THREE.BoxGeometry(0.05,0.17,0.11),0x5a3f28),'tint');fr.position.set(0.155,1.43,0.02);coifM.add(fr);
+ const bk=TT(gmesh(new THREE.BoxGeometry(0.22,0.14,0.05),0x4a3220),'trim');bk.position.set(0,1.41,-0.13);coifM.add(bk);}
+coifM.position.y-=0.78;rig.upper.add(coifM);coifM.visible=false;
+/* magic: pointed wizard hat */
+const wizHatM=new THREE.Group();
+{const brim=TT(gmesh(new THREE.CylinderGeometry(0.30,0.32,0.035,14),0x2a2050),'tint');brim.position.y=1.61;wizHatM.add(brim);
+ const cone=TT(gmesh(new THREE.ConeGeometry(0.17,0.52,12),0x2a2050),'tint');cone.position.y=1.88;wizHatM.add(cone);
+ const tip=TT(gmesh(new THREE.ConeGeometry(0.05,0.18,8),0x2a2050),'tint');tip.position.set(0.05,2.12,0.02);tip.rotation.z=-0.6;wizHatM.add(tip);
+ const star=TT(gmesh(new THREE.OctahedronGeometry(0.03,0),0xf2d65a),'trim');star.position.set(0,1.95,0.155);wizHatM.add(star);
+ const band=TT(gmesh(new THREE.CylinderGeometry(0.178,0.205,0.05,12),0xc8a84a),'trim');band.position.y=1.665;wizHatM.add(band);}
+wizHatM.position.y-=0.78;rig.upper.add(wizHatM);wizHatM.visible=false;
+/* ranged: sleeveless hide jerkin */
+const hideBodyM=new THREE.Group();
+{const vest=TT(gmesh(new THREE.CylinderGeometry(0.247,0.17,0.56,8),0x6e4a2a),'tint');vest.scale.z=0.64;vest.position.y=1.08;hideBodyM.add(vest);
+ const neck=TT(gmesh(new THREE.CylinderGeometry(0.13,0.18,0.07,8),0x4a3018),'trim');neck.scale.z=0.64;neck.position.y=1.34;hideBodyM.add(neck);
+ const belt=TT(gmesh(new THREE.CylinderGeometry(0.205,0.215,0.06,8),0x3a2614),'trim');belt.scale.z=0.64;belt.position.y=0.86;hideBodyM.add(belt);
+ const sl=TT(gmesh(new THREE.BoxGeometry(0.07,0.20,0.11),0x6e4a2a),'tint');sl.position.set(-0.175,1.27,0);hideBodyM.add(sl);
+ const sr=TT(gmesh(new THREE.BoxGeometry(0.07,0.20,0.11),0x6e4a2a),'tint');sr.position.set(0.175,1.27,0);hideBodyM.add(sr);}
+hideBodyM.position.y-=0.78;rig.upper.add(hideBodyM);hideBodyM.visible=false;
+/* magic: elegant flowing robe + back cloak */
+const robeBodyM=new THREE.Group();
+{const robe=TT(gmesh(new THREE.CylinderGeometry(0.245,0.31,0.64,10),0x2a2050),'tint');robe.scale.z=0.7;robe.position.y=1.03;robeBodyM.add(robe);
+ const collar=TT(gmesh(new THREE.CylinderGeometry(0.135,0.18,0.12,10),0xc8a84a),'trim');collar.scale.z=0.7;collar.position.y=1.36;robeBodyM.add(collar);
+ const dl=TT(gmesh(new THREE.SphereGeometry(0.115,8,6),0x2a2050),'tint');dl.scale.set(1,1.35,1);dl.position.set(-0.27,1.26,0);robeBodyM.add(dl);
+ const dr=TT(gmesh(new THREE.SphereGeometry(0.115,8,6),0x2a2050),'tint');dr.scale.set(1,1.35,1);dr.position.set(0.27,1.26,0);robeBodyM.add(dr);
+ const plk=TT(gmesh(new THREE.BoxGeometry(0.045,0.52,0.02),0xc8a84a),'trim');plk.position.set(0,1.03,0.205);robeBodyM.add(plk);
+ const drape=TT(gmesh(new THREE.BoxGeometry(0.42,0.66,0.03),0x241a44),'tint');drape.position.set(0,0.98,-0.205);drape.rotation.x=0.09;robeBodyM.add(drape);}
+robeBodyM.position.y-=0.78;rig.upper.add(robeBodyM);robeBodyM.visible=false;
+/* ranged: leather chaps (per-leg) */
+const mkHideLeg=()=>{const lg=new THREE.Group();
+ const th=TT(gmesh(new THREE.CylinderGeometry(0.10,0.078,0.42,8),0x6e4a2a),'tint');th.position.y=-0.18;lg.add(th);
+ const cuff=TT(gmesh(new THREE.CylinderGeometry(0.08,0.085,0.07,8),0x3a2614),'trim');cuff.position.y=-0.40;lg.add(cuff);
+ lg.visible=false;return lg;};
+const hideLegL=mkHideLeg(),hideLegR=mkHideLeg();
+rig.lLeg.add(hideLegL);rig.rLeg.add(hideLegR);
+/* magic: flared robe skirt (single, on body) */
+const robeSkirtM=new THREE.Group();
+{const sk=TT(gmesh(new THREE.CylinderGeometry(0.19,0.35,0.68,12),0x2a2050),'tint');sk.scale.z=0.85;sk.position.y=0.49;robeSkirtM.add(sk);
+ const hem=TT(gmesh(new THREE.CylinderGeometry(0.35,0.365,0.05,12),0xc8a84a),'trim');hem.scale.z=0.85;hem.position.y=0.18;robeSkirtM.add(hem);}
+rig.g.add(robeSkirtM);robeSkirtM.visible=false;
+const chefHatM=new THREE.Group();
+{const band=mesh(new THREE.CylinderGeometry(0.135,0.14,0.18,8),0xf6f4ec);
+ band.position.y=1.64;chefHatM.add(band);
+ const puff=mesh(new THREE.SphereGeometry(0.155,7,6),0xf8f6ee);
+ puff.scale.y=0.55;puff.position.y=1.78;chefHatM.add(puff);}
+chefHatM.position.y-=0.78;rig.upper.add(chefHatM);chefHatM.visible=false;
+const pumpkinM=new THREE.Group();
+{const pk=mesh(new THREE.SphereGeometry(0.265,10,8),0xd8731f);
+ pk.position.y=1.60;pk.scale.y=0.86;pumpkinM.add(pk);
+ const rib1=mesh(new THREE.SphereGeometry(0.262,10,8),0xc4640f);
+ rib1.position.y=1.60;rib1.scale.set(0.34,0.87,1.0);pumpkinM.add(rib1);
+ const rib2=rib1.clone();rib2.scale.set(1.0,0.87,0.34);pumpkinM.add(rib2);
+ const stem=mesh(new THREE.CylinderGeometry(0.035,0.05,0.1,5),0x3a5a24);
+ stem.position.y=1.83;stem.rotation.z=0.18;pumpkinM.add(stem);
+ const eyeL=mesh(new THREE.CylinderGeometry(0.052,0.052,0.03,3),0x1d0e04);
+ eyeL.rotation.x=Math.PI/2;eyeL.position.set(-0.095,1.63,0.235);pumpkinM.add(eyeL);
+ const eyeR=eyeL.clone();eyeR.position.x=0.095;pumpkinM.add(eyeR);
+ const mouth=mesh(new THREE.BoxGeometry(0.17,0.045,0.03),0x1d0e04);
+ mouth.position.set(0,1.515,0.245);pumpkinM.add(mouth);
+ const t1=mesh(new THREE.BoxGeometry(0.03,0.025,0.032),0xd8731f);
+ t1.position.set(-0.045,1.528,0.246);pumpkinM.add(t1);
+ const t2=t1.clone();t2.position.set(0.05,1.503,0.246);pumpkinM.add(t2);}
+pumpkinM.position.y-=0.78;rig.upper.add(pumpkinM);pumpkinM.visible=false;
+const partyHatM=new THREE.Group();
+{const cone=mesh(new THREE.ConeGeometry(0.17,0.44,12),0xd0312d);
+ cone.position.y=1.82;partyHatM.add(cone);partyHatM.userData.cone=cone;
+ const pom=mesh(new THREE.SphereGeometry(0.05,7,6),0xf6f6f6);
+ pom.position.y=2.05;partyHatM.add(pom);}
+partyHatM.position.y-=0.78;rig.upper.add(partyHatM);partyHatM.visible=false;
+const santaHatM=new THREE.Group();
+{const trim=mesh(new THREE.CylinderGeometry(0.2,0.205,0.09,14),0xf4f4f4);
+ trim.position.y=1.61;santaHatM.add(trim);
+ const body=mesh(new THREE.ConeGeometry(0.175,0.46,12),0xc0241f);
+ body.position.set(0.05,1.86,0);body.rotation.z=-0.45;santaHatM.add(body);
+ const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
+ pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
+santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
+    return {tool,axe,pick,sword,scim,bowM,staffM,capeM,capeEmblem,shieldM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM};
+  }
+  function applyRemoteGear(G, rig, gear, act, shirtHex) {
+    if (!G || !gear) return;
+    const tintG = (grp, t9, r9) => { grp.traverse(o9 => {
+      if (!o9.isMesh) return;
+      if (o9.userData.t === 'tint' && t9 !== undefined) o9.material.color.setHex(t9);
+      else if (o9.userData.t === 'trim' && r9 !== undefined) o9.material.color.setHex(r9);
+    }); };
+    const EQ = id => (id && ITEMS[id] && ITEMS[id].equip) ? ITEMS[id].equip : null;
+    G.axe.visible = G.pick.visible = G.sword.visible = G.scim.visible = G.bowM.visible = G.staffM.visible = false;
+    const we = EQ(gear.weapon), wmod = we ? we.model : null;
+    if (wmod === 'axe') G.axe.visible = true;
+    else if (wmod === 'pick') G.pick.visible = true;
+    else if (wmod === 'sword') G.sword.visible = true;
+    else if (wmod === 'scim') G.scim.visible = true;
+    else if (wmod === 'bow') G.bowM.visible = true;
+    else if (wmod === 'staff') G.staffM.visible = true;
+    if ((wmod === 'sword' || wmod === 'scim') && we) tintG(wmod === 'scim' ? G.scim : G.sword, we.tint !== undefined ? we.tint : 0xc7ccd4, we.trim !== undefined ? we.trim : 0x8a6a2a);
+    G.shieldM.visible = !!gear.shield;
+    if (gear.shield) { const se = EQ(gear.shield); tintG(G.shieldM, se && se.tint !== undefined ? se.tint : 0x7a5a36, se && se.trim !== undefined ? se.trim : 0x4f3a22); }
+    G.capeM.visible = !!gear.cape;
+    const he = EQ(gear.head), hmod = he ? he.model : null;
+    G.helmM.visible = hmod === 'helm';
+    G.chefHatM.visible = hmod === 'chefhat';
+    G.pumpkinM.visible = hmod === 'pumpkin';
+    G.partyHatM.visible = hmod === 'partyhat';
+    G.santaHatM.visible = hmod === 'santahat';
+    G.slayerHelmM.visible = hmod === 'slayerhelm';
+    G.wizHatM.visible = hmod === 'robe'; if (hmod === 'robe' && he) tintG(G.wizHatM, he.tint, he.trim);
+    G.coifM.visible = hmod === 'hide'; if (hmod === 'hide' && he) tintG(G.coifM, he.tint, he.trim);
+    if (hmod === 'partyhat' && G.partyHatM.userData.cone && he) G.partyHatM.userData.cone.material.color.setHex(he.tint);
+    if (hmod === 'helm' && he) tintG(G.helmM, he.tint, he.trim);
+    if (hmod === 'slayerhelm' && he) tintG(G.slayerHelmM, he.tint, he.trim);
+    { const be = EQ(gear.body), bmod = be ? be.model : null;
+      const _plate = !!gear.body && bmod !== 'hide' && bmod !== 'robe';
+      G.bodyM.visible = _plate; G.armPL.visible = G.armPR.visible = _plate;
+      G.hideBodyM.visible = bmod === 'hide'; G.robeBodyM.visible = bmod === 'robe';
+      const _bare = bmod === 'hide';
+      const _shirt = (shirtHex !== undefined) ? shirtHex : 0x8a8148;
+      if (rig.lArm.userData.sleeve) rig.lArm.userData.sleeve.material.color.setHex(_bare ? 0xd9a066 : _shirt);
+      if (rig.rArm.userData.sleeve) rig.rArm.userData.sleeve.material.color.setHex(_bare ? 0xd9a066 : _shirt);
+      G.capeM.position.z = (bmod === 'robe') ? -0.07 : 0;
+      if (be) {
+        if (bmod === 'hide') tintG(G.hideBodyM, be.tint, be.trim);
+        else if (bmod === 'robe') tintG(G.robeBodyM, be.tint, be.trim);
+        else { tintG(G.bodyM, be.tint, be.trim); tintG(G.armPL, be.tint); tintG(G.armPR, be.tint); }
+      }
+    }
+    { const le = EQ(gear.legs), lmod = le ? le.model : null;
+      const _pl = !!gear.legs && lmod !== 'hide' && lmod !== 'robe';
+      G.legL.visible = G.legR.visible = _pl;
+      G.hideLegL.visible = G.hideLegR.visible = lmod === 'hide'; G.robeSkirtM.visible = lmod === 'robe';
+      if (le) {
+        if (lmod === 'hide') { tintG(G.hideLegL, le.tint, le.trim); tintG(G.hideLegR, le.tint, le.trim); }
+        else if (lmod === 'robe') tintG(G.robeSkirtM, le.tint, le.trim);
+        else { tintG(G.legL, le.tint, le.trim); tintG(G.legR, le.tint, le.trim); }
+      }
+    }
+    G.bootL.visible = G.bootR.visible = !!gear.feet;
+    if (gear.feet) { const fe = EQ(gear.feet); if (fe) { tintG(G.bootL, fe.tint, fe.trim); tintG(G.bootR, fe.tint, fe.trim); } }
+    G.neckM.visible = !!gear.neck;
+    if (gear.neck) { const ne = EQ(gear.neck); if (ne && G.neckM.children[1]) G.neckM.children[1].material.color.setHex(ne.trim); }
+    if (gear.cape) {
+      const ce = EQ(gear.cape);
+      if (ce) {
+        tintG(G.capeM, ce.tint);
+        if (ce.capeSkill) {
+          const _tx = capeIconTexFor(ce.capeSkill);
+          if (G.capeEmblem.material.map !== _tx) { G.capeEmblem.material.map = _tx; G.capeEmblem.material.needsUpdate = true; }
+          G.capeEmblem.material.color.setHex(0xffffff); G.capeEmblem.visible = true;
+        } else G.capeEmblem.visible = false;
+      }
+    } else G.capeEmblem.visible = false;
+  }
+
   function spawn(p) {
     if (!p || !p.uid || p.uid === player.uid) return;
     if (RP.has(p.uid)) { absorb(p.uid, p); return; }
@@ -14319,7 +14670,8 @@ const MP = (function () {
     const app = Object.assign({}, p.app || BASE_APP, { shirt: tint, hair: HAIRS[(i >> 3) % HAIRS.length] });
     const rig = makeHumanoid(app);
     rig.g.visible = false; scene.add(rig.g);
-    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, moving: false, tint: tint, last: Date.now() });
+    const gearRig = buildGearRig(rig);
+    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, gearRig, _gearKey: '', x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, moving: false, tint: tint, last: Date.now() });
   }
   function absorb(uid, p) {
     const r = RP.get(uid); if (!r) return;
@@ -14398,19 +14750,23 @@ const MP = (function () {
       const a = player.action;
       const myMob = (a && a.type === 'attack' && a.rat) ? a.rat : null;
       if (myMob && myMob.alive) {
-        const seen = _mobHpSeen[myMob.i];
-        if (seen !== undefined && myMob.hp < seen) send({ t: 'dmg', k: 'mob', m: myMob.i, d: seen - myMob.hp });
-        _mobHpSeen[myMob.i] = myMob.hp;
         if (t - lastMobSend >= 150) { lastMobSend = t; send({ t: 'mob', m: myMob.i, x: myMob.x, y: myMob.y, hp: myMob.hp, mhp: myMob.maxhp, a: (myMob.target === player ? 1 : 0) }); }
         _lastMobI = myMob.i;
       } else if (_lastMobI != null) {
         const prev = (typeof rats !== 'undefined') ? rats[_lastMobI] : null;
         send({ t: 'mob', m: _lastMobI, gone: 1, dead: (prev && !prev.alive) ? 1 : 0 });
-        delete _mobHpSeen[_lastMobI];
         _lastMobI = null;
       }
-      if (lastSelfHp === null) lastSelfHp = player.hp;
-      else { if (player.hp < lastSelfHp) send({ t: 'dmg', k: 'self', d: lastSelfHp - player.hp }); lastSelfHp = player.hp; }
+      /* mirror EVERY local combat hitsplat (incl. 0-damage misses, rendered blue) to peers */
+      if (typeof splats !== 'undefined') {
+        for (let i = 0; i < splats.length; i++) {
+          const sp = splats[i];
+          if (sp._mpSent) continue;
+          sp._mpSent = true;
+          if (sp.ent === 'player') send({ t: 'dmg', k: 'self', d: sp.dmg | 0 });
+          else if (sp.ent && typeof sp.ent.i === 'number') send({ t: 'dmg', k: 'mob', m: sp.ent.i, d: sp.dmg | 0 });
+        }
+      }
     }
     if (player.friends && player.friends.length) {
       for (const f of player.friends) {
@@ -14437,6 +14793,7 @@ const MP = (function () {
       const wx = r.px + 0.5, wz = r.py + 0.5, wy = groundH(wx, wz);
       r.rig.g.position.set(wx, wy, wz);
       r.rig.g.rotation.y = r.h;
+      if (r.gearRig && r.gear) { const _gk = r.gear.weapon+'|'+r.gear.shield+'|'+r.gear.cape+'|'+r.gear.head+'|'+r.gear.body+'|'+r.gear.legs+'|'+r.gear.feet+'|'+r.gear.neck; if (_gk !== r._gearKey) { r._gearKey = _gk; applyRemoteGear(r.gearRig, r.rig, r.gear, r.act, r.tint); } }
       poseRemote(r, t);
     }
   }
@@ -14614,7 +14971,7 @@ const MP = (function () {
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
-    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; } }
+    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear }
   };
 })();
 
