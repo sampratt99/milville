@@ -2202,6 +2202,52 @@ function dropGround(x,y,id,qty){
   }
   ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc});
 }
+function dropMobLoot(r){
+  const mk=MOB_KINDS[r.kind];
+  if(mk.bigbones)dropGround(r.x,r.y,'big_bones',1);else if(mk.bones)dropGround(r.x,r.y,'bones',1);
+  if(Math.random()<mk.coinP)dropGround(r.x,r.y,'coins',rndi(mk.coins[0],mk.coins[1]));
+  rollRareDrop(r);
+  if(r.kind==='brat'){
+    dropGround(r.x,r.y,'small_bones',1);
+    const _bd=['red_bead','yellow_bead','black_bead','white_bead'];
+    if(Math.random()<0.85)dropGround(r.x,r.y,_bd[rndi(0,_bd.length-1)],1);
+  }
+}
+function mobDie(r,groupKill){
+  const mk3=MOB_KINDS[r.kind];
+  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;
+  if(engagedMob===r)engagedMob=null;
+  if(typeof MP!=='undefined')MP.onMobKilled(r);
+  msg((groupKill?'Your group has defeated the ':'You have defeated the ')+r.name.toLowerCase()+'.');
+  questKill(r);
+  dropMobLoot(r);
+  if(typeof MP!=='undefined'&&MP.clearMobAggro)MP.clearMobAggro(r.i);
+}
+/* a co-attacker rolls their OWN instanced loot when a group mob they helped kill dies */
+function groupCoLoot(r){ dropMobLoot(r); }
+/* a remotely-owned (groupmate's) mob is swinging at me: roll it against MY defence */
+function incomingMobHit(mi){
+  const r=(typeof rats!=='undefined'&&rats[mi])?rats[mi]:null; if(!r)return;
+  if(player.hp<=0)return;
+  const _ak=MOB_KINDS[r.kind]; if(!_ak)return;
+  const _astyle=_ak.atkStyle||'melee';
+  const sdf=_astyle==='magic'?eqStat('mdef'):_astyle==='ranged'?eqStat('rdef'):eqStat('def');
+  const effD=lvl('defense')*(prayers.love?1.18:1);
+  protWarn(r);
+  const _mag=_ak.magic&&!protectedFrom(r.kind);
+  const ratAcc=_mag?Math.max(0.1,Math.min(0.97,mobAcc(r)+0.05-sdf*0.006)):Math.max(0.22,Math.min(0.92,mobAcc(r)-sdf*0.008-(effD-1)*0.004));
+  const _mh=_mag?Math.ceil(mobMaxhit(r)*(r.kind==='wyvern'?2.4:1.6)):mobMaxhit(r);
+  let dmg=0; if(Math.random()<ratAcc)dmg=rndi(0,_mh);
+  if((_astyle==='magic'||_astyle==='ranged')&&typeof spawnProjectile==='function')
+    spawnProjectile(r.px+0.5,r.py+0.5,player,_astyle==='ranged'?'arrow':'magic',_ak.projCol||(_astyle==='ranged'?'#cfd6da':'#b06fe0'),320);
+  player.braceT=performance.now();
+  splats.push({ent:'player',dmg,t:performance.now()+((_astyle==='magic'||_astyle==='ranged')?320:0)});
+  playerLastHit=performance.now();
+  (dmg>0?sfx.hit:sfx.miss)();
+  if(dmg>0){player.hp-=dmg;player.combatT=performance.now();updateOrb();
+    if(player.autoRetaliate!==false&&!player.action&&rats[mi].alive)startAttack(rats[mi]);
+    if(player.hp<=0)die();}
+}
 function rollRareDrop(r){
   const c=MOB_KINDS[r.kind].cmb;
   {const NB={wyvern:['rune_bar','mithril_bar','uncut_diamond'],basilisk:['mithril_bar','steel_bar'],gargoyle:['steel_bar','iron_bar'],banshee:['iron_bar','copper_ore'],dragon:['rune_bar','uncut_diamond','uncut_ruby']}[r.kind];
@@ -3131,6 +3177,7 @@ function playerTick(){
       }
       addXp('hitpoints',0.85*dmg);
     }
+    if(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dmg))return;
     if(player.slayer&&player.slayer.unlocks&&player.slayer.unlocks.bigger&&!r.superiorRolled&&player.slayer.task===r.kind&&player.slayer.done<player.slayer.need&&inWild(r.sx,r.sy)){r.superiorRolled=true;if(Math.random()<0.14){r.superior=true;if(r._m&&r._m.group){if(r._supScale===undefined)r._supScale=r._m.group.scale.x;r._m.group.scale.setScalar(r._supScale*1.4);}msg('A superior '+r.name.toLowerCase()+' rises \u2014 bigger, and badder!','#9a6fb0');}}
     {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
     const _rh=player.equip.weapon&&player.equip.weapon.id==='rock_hammer';
@@ -3138,23 +3185,8 @@ function playerTick(){
       r.hp-=dmg;
       if(r.hp<1){r.hp=1;if(!r._gw||performance.now()-r._gw>4000){r._gw=performance.now();msg('The gargoyle is battered to a sliver but its stone hide holds \u2014 wield a Rock Hammer to shatter it.','#c9a23a');}}
     }else{r.hp-=dmg;}
-    if(r.hp<=0){
-      const mk3=MOB_KINDS[r.kind];
-      r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;
-      if(engagedMob===r)engagedMob=null;
-      if(typeof MP!=='undefined')MP.onMobKilled(r);
-      msg('You have defeated the '+r.name.toLowerCase()+'.');
-      questKill(r);
-      if(mk3.bigbones)dropGround(r.x,r.y,'big_bones',1);else if(mk3.bones)dropGround(r.x,r.y,'bones',1);
-      if(Math.random()<mk3.coinP)dropGround(r.x,r.y,'coins',rndi(mk3.coins[0],mk3.coins[1]));
-      rollRareDrop(r);
-      if(r.kind==='brat'){
-        dropGround(r.x,r.y,'small_bones',1);
-        const _bd=['red_bead','yellow_bead','black_bead','white_bead'];
-        if(Math.random()<0.85)dropGround(r.x,r.y,_bd[rndi(0,_bd.length-1)],1);
-      }
-      cancelAction();
-    }
+    if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dmg);
+    if(r.hp<=0){ mobDie(r,false); cancelAction(); }
   }
 
   else if(a.type==='takerelic'){
@@ -3518,6 +3550,9 @@ function ratsTick(){
           engagedMob=r;
           r.nextAtk=nowM+2400;
           r.swingT=nowM;
+          const _gsw=(typeof MP!=='undefined'&&MP.groupMobSwingTarget)?MP.groupMobSwingTarget(r.i):null;
+          if(_gsw){MP.sendMobAtk(r.i,_gsw);}
+          else{
           let dmg=0;
           const _ak=MOB_KINDS[r.kind];
           const _astyle=_ak.atkStyle||'melee';
@@ -3539,6 +3574,7 @@ function ratsTick(){
           if(dmg>0){player.hp-=dmg;player.combatT=performance.now();updateOrb();
             if(player.autoRetaliate!==false&&!player.action)startAttack(r);
             if(player.hp<=0)die();}
+          }
         }
       }else{
         const dx=Math.sign(player.x-r.x),dy=Math.sign(player.y-r.y);
@@ -14324,6 +14360,11 @@ const MP = (function () {
      snapshot, so all clients converge (last-write-wins). ---- */
   const GROUP_MAX = 4;
   const group = { roster: [], invitesIn: new Map(), invitesOut: new Map() };
+  /* ---- group combat (Phase 3): owner-side aggro + damage forwarding. mobAggro lives only on
+     the mob's current owner; _coAttacked tracks mobs I've forwarded hits to (for instanced loot). ---- */
+  const GROUP_HALF_LIFE = 8000, GROUP_SWITCH_MARGIN = 1.20;
+  const mobAggro = new Map();   /* mi -> { acc:Map(uid->dmg), target:uid|null, t:lastDecayMs } */
+  const _coAttacked = new Map();/* mi -> lastForwardMs (mobs a groupmate owns that I'm co-fighting) */
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -14348,7 +14389,7 @@ const MP = (function () {
 
   /* ---------------- connection ---------------- */
   function connect() { if (!active() || want) return; want = true; open(); }
-  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); if (typeof renderFriends === 'function') renderFriends(); }
+  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); if (typeof renderFriends === 'function') renderFriends(); }
   function open() {
     if (!active() || !want) return;
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
@@ -14429,7 +14470,11 @@ const MP = (function () {
     const mine = (a && a.type === 'attack' && a.rat) ? a.rat.i : null;
     if (mine != null) {
       const c = claims.get(mine);
-      if (!c || c.uid !== player.uid) { claims.set(mine, { uid: player.uid, t: Date.now() }); send({ t: 'claim', m: mine }); }
+      /* in a group, the member with the smallest uid owns a shared mob; larger-uid members yield
+         and become co-attackers (forwarding hits) instead of seizing the claim -> no two owners. */
+      const mateOwns = c && c.uid !== player.uid && isGroupmate(c.uid) && c.uid < player.uid && (Date.now() - c.t) < CFG.claimMs;
+      if (mateOwns) { /* yield: a smaller-uid groupmate is the owner */ }
+      else if (!c || c.uid !== player.uid) { claims.set(mine, { uid: player.uid, t: Date.now() }); send({ t: 'claim', m: mine }); }
       else c.t = Date.now();
     }
     for (const [mi, c] of claims) { if (c.uid === player.uid && mi !== mine) { claims.delete(mi); send({ t: 'release', m: mi }); } }
@@ -14438,7 +14483,9 @@ const MP = (function () {
     if (!active() || !conn || !rat) return false;
     if (rat.target === player) return false;           /* it's fighting me -> I may retaliate */
     const c = claims.get(rat.i);
-    return !!(c && c.uid !== player.uid && (Date.now() - c.t) < CFG.claimMs);
+    if (!c || c.uid === player.uid || (Date.now() - c.t) >= CFG.claimMs) return false;
+    if (isGroupmate(c.uid)) return false;              /* PHASE 3: a groupmate owns it -> I may co-fight */
+    return true;
   }
 
   /* a mob being fought by another player: write the owner's synced state into the
@@ -14880,12 +14927,18 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'friended': { if (m.to === player.uid) logSystem(((m.by) || 'Someone') + ' added you as a friend.'); break; }
       case 'chat': { const r = RP.get(m.uid); if (r) { r.chat = m.text; r.chatT = now() + 4500; } if (typeof logSay === 'function') logSay(m.name || (r && r.name) || '?', m.text, false); break; }
       case 'emote': { const r = RP.get(m.uid); if (r) { r.emote = m.e; r.emoteT = now(); } break; }
-      case 'claim': claims.set(m.m | 0, { uid: m.uid, t: Date.now() }); break;
+      case 'claim': {
+        const mi = m.m | 0, c = claims.get(mi);
+        /* if I currently own this mob and a larger-uid groupmate claims it, mine has priority -> re-assert */
+        if (c && c.uid === player.uid && isGroupmate(m.uid) && player.uid < m.uid && (Date.now() - c.t) < CFG.claimMs) { send({ t: 'claim', m: mi }); }
+        else claims.set(mi, { uid: m.uid, t: Date.now() });
+        break;
+      }
       case 'release': { const c = claims.get(m.m | 0); if (c && c.uid === m.uid) claims.delete(m.m | 0); break; }
       case 'mob': {
         const mi = m.m | 0;
         if (m.gone) {
-          if (m.dead) remoteMobs.set(mi, { dead: true, owner: m.uid, t: Date.now() });
+          if (m.dead) { remoteMobs.set(mi, { dead: true, owner: m.uid, t: Date.now() }); _maybeGroupDrop(mi); }
           else { remoteMobs.delete(mi); const c = claims.get(mi); if (c && c.uid === m.uid) claims.delete(mi); }
         } else {
           remoteMobs.set(mi, { x: m.x, y: m.y, hp: m.hp, mhp: m.mhp, fighting: !!m.a, owner: m.uid, t: Date.now() });
@@ -14909,6 +14962,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       }
       case 'mobdead': {
         if (m.uid === player.uid) break;
+        _maybeGroupDrop(m.m | 0);
         _applyDeadMob(m.m | 0, m.rs | 0);
         break;
       }
@@ -14946,6 +15000,21 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         }
         break;
       }
+      case 'ghit': {
+        const mi = m.m | 0, r = (typeof rats !== 'undefined') ? rats[mi] : null;
+        if (!r || !r.alive) break;
+        const c = claims.get(mi); if (!(c && c.uid === player.uid)) break;   /* only the owner applies */
+        const d = Math.max(0, m.d | 0);
+        groupAggroHit(mi, m.uid, d);
+        r.hp -= d;
+        if (r.hp <= 0 && typeof mobDie === 'function') mobDie(r, true);
+        break;
+      }
+      case 'mobatk': {
+        if (m.to !== player.uid) break;                  /* the owner's mob is swinging at me */
+        if (typeof incomingMobHit === 'function') incomingMobHit(m.m | 0);
+        break;
+      }
       case 'pong': break;
     }
   }
@@ -14955,6 +15024,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (!active() || !conn) return;
     pushOutbound(t);
     manageClaims();
+    if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
     {
       /* 1) Mirror new hitsplats to peers AND record which mob I'm actually damaging.
             This damage signal — not player.action — is the robust "what am I fighting"
@@ -14981,6 +15051,13 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       if (!myMob && _combatMob && _combatMob.alive && (now() - _combatMobT) < 4000) myMob = _combatMob;
       if (!myMob && typeof engagedMob !== 'undefined' && engagedMob && engagedMob.alive
           && engagedMob.target === player && (now() - (player.combatT || 0)) < 3000) myMob = engagedMob;
+      if (myMob && groupInGroup()) {
+        const _co = claims.get(myMob.i);
+        if (_co && _co.uid !== player.uid && isGroupmate(_co.uid)) {
+          if (_lastMobI === myMob.i) { _streamMob = null; _lastMobI = null; }
+          myMob = null;   /* a groupmate owns this mob -> they stream it; I only forward hits */
+        }
+      }
       const _sendMob = (r) => { if (t - lastMobSend >= 150) { lastMobSend = t; send({ t: 'mob', m: r.i, x: r.x, y: r.y, hp: r.hp, mhp: r.maxhp, a: (r.target === player ? 1 : 0) }); } };
       if (myMob) {
         _streamMob = myMob; _streamMobT = t;
@@ -15251,6 +15328,56 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     };
   }
 
+  /* ---- aggro engine (owner-authoritative; pure logic mirrors grouptest.mjs) ---- */
+  function _aggroFor(mi) { let ag = mobAggro.get(mi); if (!ag) { ag = { acc: new Map(), target: null, t: now() }; mobAggro.set(mi, ag); } return ag; }
+  function groupAggroHit(mi, uid, dmg) { if (!(dmg > 0)) return; const ag = _aggroFor(mi); ag.acc.set(uid, (ag.acc.get(uid) || 0) + dmg); }
+  function _aggroDecay(ag, dt) { const k = Math.pow(0.5, dt / GROUP_HALF_LIFE); for (const [u, v] of ag.acc) { const nv = v * k; if (nv < 0.5) ag.acc.delete(u); else ag.acc.set(u, nv); } }
+  function _aggroPick(ag) {
+    let lead = null, leadV = 0; for (const [u, v] of ag.acc) { if (v > leadV) { leadV = v; lead = u; } }
+    if (lead == null) { ag.target = null; return null; }
+    if (ag.target == null || !ag.acc.has(ag.target)) { ag.target = lead; return lead; }
+    const curV = ag.acc.get(ag.target) || 0;
+    if (leadV > curV * GROUP_SWITCH_MARGIN) ag.target = lead;   /* hysteresis: no thrash on near-ties */
+    return ag.target;
+  }
+  function clearMobAggro(mi) { mobAggro.delete(mi); }
+  function groupParticipants(mi) { const ag = mobAggro.get(mi); return ag ? [...ag.acc.keys()] : []; }
+
+  /* owner records their OWN damage into the mob's aggro (only meaningful while grouped) */
+  function groupAggroSelf(mi, dmg) { if (active() && conn && groupInGroup()) groupAggroHit(mi, player.uid, dmg); }
+
+  /* a hit I just landed: if a groupmate owns this mob, forward the damage to them (shared hp,
+     owner-authoritative) and return true so the caller skips the local hp/death path. */
+  function groupForwardHit(r, dmg) {
+    if (!active() || !conn || !r || !groupInGroup()) return false;
+    const c = claims.get(r.i); const owner = c && c.uid;
+    if (!owner || owner === player.uid) return false;   /* I own it (or it's unclaimed) -> apply locally */
+    if (!isGroupmate(owner)) return false;              /* a non-groupmate owns it -> not my path */
+    send({ t: 'ghit', m: r.i, d: dmg | 0 });
+    _coAttacked.set(r.i, now());
+    return true;
+  }
+
+  /* owner-side: which player should my mob swing at this tick? null => me (owner) / solo path. */
+  function groupMobSwingTarget(mi) {
+    if (!active() || !conn || !groupInGroup()) return null;
+    const ag = mobAggro.get(mi); if (!ag) return null;
+    const tgt = _aggroPick(ag);
+    if (!tgt || tgt === player.uid) return null;
+    if (!isGroupmate(tgt)) return null;
+    return tgt;
+  }
+  function sendMobAtk(mi, toUid) { if (active() && conn) send({ t: 'mobatk', m: mi, to: toUid }); }
+
+  /* co-attacker side: when a mob I was co-fighting dies, roll MY OWN instanced loot once. */
+  function _maybeGroupDrop(mi) {
+    if (!_coAttacked.has(mi)) return;
+    const tStamp = _coAttacked.get(mi); _coAttacked.delete(mi);
+    if (now() - tStamp > 12000) return;                /* stale: I stopped fighting it long ago */
+    const r = (typeof rats !== 'undefined') ? rats[mi] : null;
+    if (r && typeof groupCoLoot === 'function') groupCoLoot(r);
+  }
+
   function colHex(t) { return '#' + ('000000' + ((t || 0x3fd0e0) >>> 0).toString(16)).slice(-6); }
   function drawMiniMarkers(g) {
     if (!active() || !conn) return;
@@ -15287,10 +15414,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     onLocalChat, onLocalEmote, onNodeDepleted, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
+    groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
-    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear, poseRemote: poseRemote, resetGroup: () => { group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); }, groupState: () => group }
+    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear, poseRemote: poseRemote, resetGroup: () => { group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); }, groupState: () => group, aggroState: () => mobAggro, coAttacked: () => _coAttacked, aggroHit: groupAggroHit, aggroPick: _aggroPick }
   };
 })();
 
