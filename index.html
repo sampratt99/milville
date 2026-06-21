@@ -14257,7 +14257,7 @@ const MP = (function () {
   const claims = new Map();  /* mobIndex -> {uid, t} */
   const _sent = [];          /* debug/test ring of outbound msgs */
   const remoteMobs = new Map();   /* mobIndex -> {x,y,hp,mhp,owner,fighting,dead,t} — owner-authoritative mob state */
-  let lastMobSend = 0, _lastMobI = null, _streamMob = null, _streamMobT = 0;
+  let lastMobSend = 0, _lastMobI = null, _streamMob = null, _streamMobT = 0, _combatMob = null, _combatMobT = 0;
   const MP_VERSION = 'mp-4';
   let helloT = 0, lastSelfHp = null, keepAlive = null, _announced = false;
   const _mobHpSeen = {};
@@ -14860,10 +14860,29 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     pushOutbound(t);
     manageClaims();
     {
+      /* 1) Mirror new hitsplats to peers AND record which mob I'm actually damaging.
+            This damage signal — not player.action — is the robust "what am I fighting"
+            source: it survives between-swing gaps, re-pathing, and auto-retaliate blips,
+            so a mob never reverts to local wandering on a peer's screen mid-fight. */
+      if (typeof splats !== 'undefined') {
+        for (let i = 0; i < splats.length; i++) {
+          const sp = splats[i];
+          if (sp._mpSent) continue;
+          sp._mpSent = true;
+          if (sp.ent === 'player') send({ t: 'dmg', k: 'self', d: sp.dmg | 0 });
+          else if (sp.ent && typeof sp.ent.i === 'number') {
+            send({ t: 'dmg', k: 'mob', m: sp.ent.i, d: sp.dmg | 0 });
+            if (sp.ent.alive) { _combatMob = sp.ent; _combatMobT = now(); }
+          }
+        }
+      }
+      /* 2) Decide which mob is "mine" to stream. */
       const a = player.action;
       let myMob = (a && a.type === 'attack' && a.rat && a.rat.alive) ? a.rat : null;
-      /* sustained melee: keep owning the mob locked in combat with me even when player.action
-         momentarily isn't 'attack' (between swings / re-pathing / brief auto-retaliate gaps) */
+      /* primary sustain: any mob I've damaged within the last 4s is mine, independent of
+         action/engagedMob state. Swings are ~2.4s apart, so this never lapses mid-fight —
+         which is what stops the mob from wandering off on a watching peer's screen. */
+      if (!myMob && _combatMob && _combatMob.alive && (now() - _combatMobT) < 4000) myMob = _combatMob;
       if (!myMob && typeof engagedMob !== 'undefined' && engagedMob && engagedMob.alive
           && engagedMob.target === player && (now() - (player.combatT || 0)) < 3000) myMob = engagedMob;
       const _sendMob = (r) => { if (t - lastMobSend >= 150) { lastMobSend = t; send({ t: 'mob', m: r.i, x: r.x, y: r.y, hp: r.hp, mhp: r.maxhp, a: (r.target === player ? 1 : 0) }); } };
@@ -14871,24 +14890,13 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         _streamMob = myMob; _streamMobT = t;
         _sendMob(myMob); _lastMobI = myMob.i;
       } else if (_streamMob && (t - _streamMobT) < 1400) {
-        /* GRACE: a brief target/action gap must NOT desync the mob on peers' screens.
-           Keep streaming the real state of the mob I was just fighting until the grace expires. */
+        /* GRACE: a brief gap must NOT desync the mob on peers' screens. */
         if (_streamMob.alive) { _sendMob(_streamMob); _lastMobI = _streamMob.i; }
         else { send({ t: 'mob', m: _streamMob.i, gone: 1, dead: 1 }); _streamMob = null; _lastMobI = null; }
       } else if (_lastMobI != null) {
         const prev = (typeof rats !== 'undefined') ? rats[_lastMobI] : null;
         send({ t: 'mob', m: _lastMobI, gone: 1, dead: (prev && !prev.alive) ? 1 : 0 });
         _streamMob = null; _lastMobI = null;
-      }
-      /* mirror EVERY local combat hitsplat (incl. 0-damage misses, rendered blue) to peers */
-      if (typeof splats !== 'undefined') {
-        for (let i = 0; i < splats.length; i++) {
-          const sp = splats[i];
-          if (sp._mpSent) continue;
-          sp._mpSent = true;
-          if (sp.ent === 'player') send({ t: 'dmg', k: 'self', d: sp.dmg | 0 });
-          else if (sp.ent && typeof sp.ent.i === 'number') send({ t: 'dmg', k: 'mob', m: sp.ent.i, d: sp.dmg | 0 });
-        }
       }
     }
     if (player.friends && player.friends.length) {
