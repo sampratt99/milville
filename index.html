@@ -4381,7 +4381,7 @@ function optionsAt(tx,ty){
       fn:()=>msg('The woods are too thick to pass.')});
   const _rp=(typeof MP!=='undefined'&&MP.active())?MP.remoteAt(tx,ty):null;
   if(_rp){
-    opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+' \u2014 a fellow adventurer of Milville.','#103a8c')},
+    opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=(typeof MP!=='undefined'&&MP.examineInfo)?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' \u2014 a fellow adventurer of Milville.','#103a8c');return;}let s=info.name;if(info.cmb!=null)s+=' \u2014 Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}},
       {html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
   }
   return opts;
@@ -11051,6 +11051,7 @@ function drawMini(){
   for(const it of ground)g.fillRect(it.x*4,it.y*4,4,4);
   g.fillStyle='#ffd23d';
   for(const r of rats)if(r.alive)g.fillRect(Math.round(r.px*4),Math.round(r.py*4),4,4);
+  if(typeof MP!=='undefined')MP.drawMiniMarkers(g);
   for(const r of rats){
     if(!isQuestTarget(r))continue;
     const mx=(r.alive?r.px:r.sx)*4+2,my=(r.alive?r.py:r.sy)*4+2;
@@ -11179,6 +11180,7 @@ function openWorldMap(){
   g.beginPath();g.moveTo(px4-14,py4-14);g.lineTo(px4+14,py4+14);
   g.moveTo(px4+14,py4-14);g.lineTo(px4-14,py4+14);g.stroke();
   g.lineCap='butt';
+  if(typeof MP!=='undefined')MP.drawWorldMapMarkers(g);
   wmapEl.classList.add('on');
 }
 document.getElementById('wmapclose').addEventListener('click',()=>wmapEl.classList.remove('on'));
@@ -14179,7 +14181,9 @@ const MP = (function () {
     world: 'milville',
     posMs: 180,         /* min ms between position broadcasts */
     viewR: 26,          /* render remotes within this many tiles */
-    staleMs: 15000,     /* drop a remote unheard-from this long */
+    hideMs: 9000,       /* hide a remote unheard-from this long (record KEPT, not destroyed) */
+    destroyMs: 45000,   /* only fully drop a remote after this long of silence */
+    helloMs: 3000,      /* re-announce presence this often -> self-healing visibility */
     claimMs: 20000      /* a claim auto-expires after this long */
   };
 
@@ -14190,6 +14194,9 @@ const MP = (function () {
   const _sent = [];          /* debug/test ring of outbound msgs */
   const remoteMobs = new Map();   /* mobIndex -> {x,y,hp,mhp,owner,fighting,dead,t} — owner-authoritative mob state */
   let lastMobSend = 0, _lastMobI = null;
+  let helloT = 0, lastSelfHp = null;
+  const _mobHpSeen = {};
+  const dmgFx = [];  /* floating remote damage numbers: {ent,m|uid,d,t} */
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -14248,6 +14255,7 @@ const MP = (function () {
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct) { lastGear = g; lastAct = a; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
+    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp() }); }
   }
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120) }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
@@ -14298,10 +14306,11 @@ const MP = (function () {
     if (!p || !p.uid || p.uid === player.uid) return;
     if (RP.has(p.uid)) { absorb(p.uid, p); return; }
     const i = huid(p.uid);
-    const app = Object.assign({}, p.app || BASE_APP, { shirt: SHIRTS[i % SHIRTS.length], hair: HAIRS[(i >> 3) % HAIRS.length] });
+    const tint = SHIRTS[i % SHIRTS.length];
+    const app = Object.assign({}, p.app || BASE_APP, { shirt: tint, hair: HAIRS[(i >> 3) % HAIRS.length] });
     const rig = makeHumanoid(app);
     rig.g.visible = false; scene.add(rig.g);
-    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, moving: false, last: Date.now() });
+    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, moving: false, tint: tint, last: Date.now() });
   }
   function absorb(uid, p) {
     const r = RP.get(uid); if (!r) return;
@@ -14338,6 +14347,20 @@ const MP = (function () {
       case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); despawn(m.uid); break; }
       case 'pos': { const r = RP.get(m.uid); if (r) { r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
+      case 'hello': {
+        if (!m.uid || m.uid === player.uid) break;
+        if (RP.has(m.uid)) { const r = RP.get(m.uid); absorb(m.uid, { name: m.name, gear: m.gear, hp: m.hp, mhp: m.mhp }); if (typeof m.x === 'number') { r.x = m.x; r.y = m.y; r.h = m.h; } r.last = Date.now(); }
+        else spawn({ uid: m.uid, name: m.name, x: m.x, y: m.y, h: m.h, gear: m.gear, hp: m.hp, mhp: m.mhp });
+        break;
+      }
+      case 'dmg': {
+        if (m.uid === player.uid) break;
+        if (m.k === 'mob') dmgFx.push({ ent: 'mob', m: m.m | 0, d: m.d | 0, t: now() });
+        else dmgFx.push({ ent: 'rp', uid: m.uid, d: m.d | 0, t: now() });
+        if (dmgFx.length > 60) dmgFx.shift();
+        break;
+      }
+      case 'friended': { if (m.to === player.uid) logSystem(((m.by) || 'Someone') + ' added you as a friend.'); break; }
       case 'chat': { const r = RP.get(m.uid); if (r) { r.chat = m.text; r.chatT = now() + 4500; } if (typeof logSay === 'function') logSay(m.name || (r && r.name) || '?', m.text, false); break; }
       case 'emote': { const r = RP.get(m.uid); if (r) { r.emote = m.e; r.emoteT = now(); } break; }
       case 'claim': claims.set(m.m | 0, { uid: m.uid, t: Date.now() }); break;
@@ -14366,13 +14389,19 @@ const MP = (function () {
       const a = player.action;
       const myMob = (a && a.type === 'attack' && a.rat) ? a.rat : null;
       if (myMob && myMob.alive) {
+        const seen = _mobHpSeen[myMob.i];
+        if (seen !== undefined && myMob.hp < seen) send({ t: 'dmg', k: 'mob', m: myMob.i, d: seen - myMob.hp });
+        _mobHpSeen[myMob.i] = myMob.hp;
         if (t - lastMobSend >= 150) { lastMobSend = t; send({ t: 'mob', m: myMob.i, x: myMob.x, y: myMob.y, hp: myMob.hp, mhp: myMob.maxhp, a: (myMob.target === player ? 1 : 0) }); }
         _lastMobI = myMob.i;
       } else if (_lastMobI != null) {
         const prev = (typeof rats !== 'undefined') ? rats[_lastMobI] : null;
         send({ t: 'mob', m: _lastMobI, gone: 1, dead: (prev && !prev.alive) ? 1 : 0 });
+        delete _mobHpSeen[_lastMobI];
         _lastMobI = null;
       }
+      if (lastSelfHp === null) lastSelfHp = player.hp;
+      else { if (player.hp < lastSelfHp) send({ t: 'dmg', k: 'self', d: lastSelfHp - player.hp }); lastSelfHp = player.hp; }
     }
     if (player.friends && player.friends.length) {
       for (const f of player.friends) {
@@ -14388,13 +14417,14 @@ const MP = (function () {
       }
     }
     const tnow = Date.now();
-    for (const [uid, r] of RP) { if (tnow - r.last > CFG.staleMs) { despawn(uid); } }
+    for (const [uid, r] of RP) { if (tnow - r.last > CFG.destroyMs) despawn(uid); }
     for (const [mi, c] of claims) { if (tnow - c.t > CFG.claimMs) claims.delete(mi); }
     for (const r of RP.values()) {
       r.moving = lerpEnt(r, r.run ? 150 : 300, dt);
+      const fresh = (Date.now() - r.last) < CFG.hideMs;
       const inView = dist1(player.px, player.py, r.px, r.py) <= CFG.viewR;
-      r.rig.g.visible = inView;
-      if (!inView) continue;
+      r.rig.g.visible = inView && fresh;
+      if (!inView || !fresh) continue;
       const wx = r.px + 0.5, wz = r.py + 0.5, wy = groundH(wx, wz);
       r.rig.g.position.set(wx, wy, wz);
       r.rig.g.rotation.y = r.h;
@@ -14495,6 +14525,23 @@ const MP = (function () {
         }
       }
     }
+    for (let i = dmgFx.length - 1; i >= 0; i--) {
+      const s = dmgFx[i], age = now() - s.t;
+      if (age > 800) { dmgFx.splice(i, 1); continue; }
+      let ax, az, ah;
+      if (s.ent === 'mob') { const r = (typeof rats !== 'undefined') ? rats[s.m] : null; if (!r) { dmgFx.splice(i, 1); continue; } ax = r.px + 0.5; az = r.py + 0.5; ah = 0.5; }
+      else { const r = RP.get(s.uid); if (!r) { dmgFx.splice(i, 1); continue; } ax = r.px + 0.5; az = r.py + 0.5; ah = 1.55; }
+      const pp = proj(ax, groundH(ax, az) + ah + age / 800 * 0.4, az);
+      if (!pp) continue;
+      octx.save();
+      octx.globalAlpha = age > 600 ? 1 - (age - 600) / 200 : 1;
+      octx.fillStyle = s.d > 0 ? '#b3241f' : '#2f5bbf';
+      octx.beginPath(); octx.arc(pp.x, pp.y, 10, 0, 7); octx.fill();
+      octx.strokeStyle = 'rgba(0,0,0,.45)'; octx.lineWidth = 1.5; octx.stroke();
+      octx.fillStyle = '#fff'; octx.font = 'bold 12px Verdana'; octx.textAlign = 'center';
+      octx.fillText(s.d, pp.x, pp.y + 4);
+      octx.restore();
+    }
   }
 
   /* ---------------- friends / presence ---------------- */
@@ -14505,8 +14552,11 @@ const MP = (function () {
     name = String(name || '').trim(); if (!name) return false;
     player.friends = player.friends || [];
     if (player.friends.some(f => ((f && f.name) || f) === name)) return false;
-    player.friends.push({ name: name, uid: null });
+    let fuid = null; const ln = name.toLowerCase();
+    for (const r of RP.values()) if ((r.name || '').toLowerCase() === ln) { fuid = r.uid; break; }
+    player.friends.push({ name: name, uid: fuid });
     if (typeof dirty !== 'undefined') dirty = true;
+    if (fuid && conn) send({ t: 'friended', to: fuid, by: player.name });
     if (typeof renderFriends === 'function') renderFriends();
     return true;
   }
@@ -14517,13 +14567,44 @@ const MP = (function () {
     if (typeof renderFriends === 'function') renderFriends();
   }
 
+  function colHex(t) { return '#' + ('000000' + ((t || 0x3fd0e0) >>> 0).toString(16)).slice(-6); }
+  function drawMiniMarkers(g) {
+    if (!active() || !conn) return;
+    for (const r of RP.values()) {
+      if (Date.now() - r.last > CFG.hideMs) continue;
+      const mx = Math.round(r.px * 4), my = Math.round(r.py * 4);
+      g.fillStyle = '#0d0b08'; g.fillRect(mx - 1, my - 1, 6, 6);
+      g.fillStyle = colHex(r.tint); g.fillRect(mx, my, 4, 4);
+    }
+  }
+  function drawWorldMapMarkers(g) {
+    if (!active() || !conn) return;
+    g.textAlign = 'center'; g.font = 'bold 9px Verdana,sans-serif';
+    for (const r of RP.values()) {
+      if (Date.now() - r.last > CFG.hideMs) continue;
+      const mx = (r.px + 0.5) * 6, my = (r.py + 0.5) * 6;
+      g.beginPath(); g.arc(mx, my, 5, 0, 7); g.fillStyle = colHex(r.tint); g.fill();
+      g.lineWidth = 1.8; g.strokeStyle = '#fff'; g.stroke();
+      g.lineWidth = 3; g.strokeStyle = 'rgba(0,0,0,0.85)'; g.strokeText(r.name, mx, my - 8);
+      g.fillStyle = '#cfe8ff'; g.fillText(r.name, mx, my - 8);
+    }
+  }
+  function examineInfo(rec) {
+    if (!rec) return null;
+    const gg = rec.gear || {}, worn = [];
+    for (const sl of ['head', 'cape', 'neck', 'body', 'legs', 'weapon', 'shield', 'feet', 'hands']) {
+      const id = gg[sl]; if (id && typeof ITEMS !== 'undefined' && ITEMS[id]) worn.push(ITEMS[id].name);
+    }
+    return { name: rec.name, cmb: (typeof gg.cmb === 'number' ? gg.cmb : null), hp: rec.hp, mhp: rec.mhp, worn };
+  }
+
   return {
-    CFG, connect, disconnect, frame, drawOverlays,
+    CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo,
     onLocalChat, onLocalEmote,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
     active, get connected() { return conn; },
     /* test/debug seams */
-    _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
+    _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
     _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; } }
   };
 })();
