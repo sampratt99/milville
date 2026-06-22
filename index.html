@@ -598,6 +598,19 @@
   .logcell.miss .ln{color:#9a9082;letter-spacing:1px;}
   /* encyclopedia */
   #encui .gepanel{width:560px;}
+  #tradeoffers{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0;}
+  .tradecol{display:flex; flex-direction:column;}
+  .tradehd{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin:2px 0 4px;}
+  .tradegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:3px; background:#1c1812; border:1px solid #15110c; border-radius:3px; padding:4px; min-height:124px; align-content:start;}
+  .tradegrid.wide{grid-template-columns:repeat(8,1fr); min-height:84px;}
+  .tradeempty{color:#6f6552; font-size:11px; padding:10px 6px; text-align:center; align-self:start;}
+  .tradestatus{min-height:18px; text-align:center; font:12px Verdana,sans-serif; color:#7fe07f; margin:2px 0 4px;}
+  .tradestatus.warn{color:#e0c24a; font-weight:bold;}
+  .gebtn.tradeacc{background:#3f7a36; color:#eafbe6; flex:1;}
+  .gebtn.tradeacc:hover{background:#4f9444;}
+  .gebtn.tradeacc.on{background:#2a5a24; color:#bfe6b6; box-shadow:inset 0 0 0 2px #1a3d16;}
+  .gebtn.tradedec{background:#8a4a40; color:#f0e0d8; flex:1;}
+  .gebtn.tradedec:hover{background:#a45a4e;}
   .encsearch{width:100%;box-sizing:border-box;font:12px Georgia,serif;color:#f0e6cf;
     background:#1c1810;border:1px solid #5d5141;border-radius:4px;padding:6px 9px;margin-bottom:7px;outline:none;}
   .encsearch:focus{border-color:#caa23a;}
@@ -832,6 +845,19 @@
   <div id="bankinv"></div>
   <div class="gefoot"><button class="gebtn" id="depall">Deposit inventory</button>
   <span>Click bank items to withdraw</span></div>
+</div></div>
+<div id="tradeui" class="gemodal"><div class="gepanel" style="width:524px;">
+  <div class="gebar"><span id="tradetitle">Trading With: …</span><div class="gex" id="tradeclose" title="Close">&#10005;</div></div>
+  <div id="tradeoffers">
+    <div class="tradecol"><div class="tradehd" id="myofferhd">Your offer</div><div id="myoffergrid" class="tradegrid"></div></div>
+    <div class="tradecol"><div class="tradehd" id="theirofferhd">Their offer</div><div id="theiroffergrid" class="tradegrid"></div></div>
+  </div>
+  <div id="tradestatus" class="tradestatus"></div>
+  <div id="tradeinvwrap"><div class="tradehd">Your inventory &mdash; click to offer, right-click for more</div><div id="tradeinvgrid" class="tradegrid wide"></div></div>
+  <div class="gefoot" style="gap:6px;">
+    <button class="gebtn tradeacc" id="tradeaccept">Accept</button>
+    <button class="gebtn tradedec" id="tradedecline">Decline</button>
+  </div>
 </div></div>
 <div id="slayerui" class="gemodal"><div class="gepanel" style="width:452px;">
   <div class="gebar"><span>Slayer Rewards</span><span id="slpts"></span><div class="gex" id="slclose" title="Close">&#10005;</div></div>
@@ -4477,6 +4503,14 @@ function optionsAt(tx,ty){
         else if(_gr==='full')msg('Your group is already full (max 4).','#9c1f1f');
         else if(_gr==='already')msg(_rp.name+' is already in your group.','#103a8c');
         else msg('Could not invite '+_rp.name+' right now.','#9c1f1f');
+      }});
+    }
+    if(typeof MP!=='undefined'&&MP.tradeSnapshot&&!MP.tradeSnapshot().active){
+      opts.push({html:'Trade with <span class="t">'+_rp.name+'</span>',label:'Trade with '+_rp.name,fn:()=>{
+        const _tr=MP.tradeRequest(_rp.uid,_rp.name);
+        if(_tr==='sent')msg('Sending a trade request to '+_rp.name+'\u2026','#103a8c');
+        else if(_tr==='busy')msg('You are already in a trade.','#9c1f1f');
+        else if(_tr==='offline')msg(_rp.name+' is not available to trade.','#9c1f1f');
       }});
     }
   }
@@ -13178,6 +13212,119 @@ function renderBank(){
 function openBank(){bankOpen=true;{const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}renderBank();bankEl.classList.add('on');
   msg('Banker: Welcome to the Bank of Milville.','#103a8c');}
 function closeBank(){bankOpen=false;bankEl.classList.remove('on');}
+
+/* ===================== TRADING (Phase 4) ===================== */
+function isTradeable(id){
+  const it=ITEMS[id]; if(!it) return false;
+  if(it.noTrade||it.noSell) return false;     /* keepsakes / bound items */
+  if(it.prim==='Read') return false;          /* clue scrolls */
+  if(id==='hunter_signet') return false;
+  return true;
+}
+function countTradeable(id){ let n=0; for(const sl of player.inv){ if(sl&&!sl.noted&&sl.id===id) n+=(sl.qty||1); } return n; }
+function tradeInvAgg(myOffer){
+  const offered=new Map((myOffer||[]).map(o=>[o.id,o.qty]));
+  const agg=new Map();
+  for(const sl of player.inv){ if(!sl||sl.noted||!isTradeable(sl.id)) continue; agg.set(sl.id,(agg.get(sl.id)||0)+(sl.qty||1)); }
+  for(const [id,q] of offered){ const rem=(agg.get(id)||0)-q; if(rem<=0)agg.delete(id); else agg.set(id,rem); }
+  return agg;
+}
+function tradeOffer(id,n){
+  if(typeof MP==='undefined'||!MP.tradeSnapshot) return;
+  const T=MP.tradeSnapshot(); if(!T.active||T.stage!==1) return;
+  if(!isTradeable(id)){ msg('That item cannot be traded.','#9c1f1f'); return; }
+  const m=new Map(T.myOffer.map(o=>[o.id,o.qty]));
+  const have=countTradeable(id), cur=m.get(id)||0, add=Math.min(n,have-cur);
+  if(add<=0) return;
+  m.set(id,cur+add);
+  MP.tradeSetOffer([...m.entries()].map(([id,qty])=>({id,qty})));
+}
+function tradeUnoffer(id,n){
+  if(typeof MP==='undefined'||!MP.tradeSnapshot) return;
+  const T=MP.tradeSnapshot(); if(!T.active||T.stage!==1) return;
+  const m=new Map(T.myOffer.map(o=>[o.id,o.qty]));
+  const nv=Math.max(0,(m.get(id)||0)-n); if(nv<=0)m.delete(id); else m.set(id,nv);
+  MP.tradeSetOffer([...m.entries()].map(([id,qty])=>({id,qty})));
+}
+function takeTradeItems(id,n){
+  let need=n;
+  for(let i=0;i<player.inv.length&&need>0;i++){ const sl=player.inv[i]; if(!sl||sl.noted||sl.id!==id)continue;
+    const q=(sl.qty||1); if(q>need){sl.qty=q-need;need=0;}else{need-=q;player.inv[i]=null;} }
+  return need<=0;
+}
+/* called by the MP module on BOTH clients once both sides confirm (offers are synced) */
+function tradeExecute(give,receive){
+  for(const it of (give||[])) takeTradeItems(it.id,it.qty);
+  for(const it of (receive||[])){ if(!addItem(it.id,it.qty)) dropGround(player.x,player.y,it.id,it.qty); }
+  renderInv(); dirty=true;
+  msg('Trade completed.','#103a8c');
+}
+/* simulate the swap on an inventory clone to verify I can hold what I'll receive */
+function tradeCanReceive(receive,give){
+  const inv=player.inv.map(sl=>sl?{id:sl.id,qty:sl.qty,noted:sl.noted}:null);
+  for(const it of (give||[])){ let need=it.qty; for(let i=0;i<inv.length&&need>0;i++){ const sl=inv[i]; if(!sl||sl.noted||sl.id!==it.id)continue; const q=(sl.qty||1); if(q>need){sl.qty=q-need;need=0;}else{need-=q;inv[i]=null;} } }
+  for(const it of (receive||[])){
+    if(ITEMS[it.id]&&ITEMS[it.id].stack){ const ex=inv.find(sl=>sl&&sl.id===it.id&&!sl.noted); if(ex){ex.qty+=it.qty; continue;} const i=inv.findIndex(sl=>!sl); if(i<0)return false; inv[i]={id:it.id,qty:it.qty}; }
+    else { for(let k=0;k<it.qty;k++){ const i=inv.findIndex(sl=>!sl); if(i<0)return false; inv[i]={id:it.id,qty:1}; } }
+  }
+  return true;
+}
+function _tradeCell(o,onClick,onMenu){
+  const d=document.createElement('div'); d.className='bslot'; d.title=ITEMS[o.id]?itemTip(o.id):o.id;
+  const c=document.createElement('canvas'); c.width=30;c.height=30; drawItemIcon(c.getContext('2d'),o.id,30);
+  const q=document.createElement('span'); q.className='qty'; if(o.qty>1){const fs=fmtStack(o.qty);q.textContent=fs.t;q.style.color=fs.c;}
+  d.appendChild(c); d.appendChild(q);
+  if(onClick)d.addEventListener('click',()=>{audio();onClick();});
+  if(onMenu)d.addEventListener('contextmenu',e=>{e.preventDefault();e.stopPropagation();audio();onMenu(e);});
+  return d;
+}
+function renderTradeGrid(gridId,list,removable){
+  const gr=document.getElementById(gridId); if(!gr) return; gr.innerHTML='';
+  if(!list.length){ const d=document.createElement('div'); d.className='tradeempty'; d.textContent='Empty'; gr.appendChild(d); return; }
+  for(const o of list){
+    const id=o.id;
+    gr.appendChild(_tradeCell(o, removable?()=>tradeUnoffer(id,1):null, removable?(e)=>showMenu(e.clientX,e.clientY,[
+      {html:'Remove-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeUnoffer(id,1)},
+      {html:'Remove-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeUnoffer(id,5)},
+      {html:'Remove-All <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeUnoffer(id,1e9)}]):null));
+  }
+}
+function renderTradeInv(myOffer){
+  const gr=document.getElementById('tradeinvgrid'); if(!gr) return; gr.innerHTML='';
+  const agg=tradeInvAgg(myOffer);
+  if(!agg.size){ const d=document.createElement('div'); d.className='tradeempty'; d.style.gridColumn='1/-1'; d.textContent='No tradeable items.'; gr.appendChild(d); return; }
+  for(const [id,rem] of agg){
+    gr.appendChild(_tradeCell({id,qty:rem}, ()=>tradeOffer(id,1), (e)=>{
+      const opts=[{html:'Offer-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,1)}];
+      if(rem>=5)opts.push({html:'Offer-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,5)});
+      if(rem>=10)opts.push({html:'Offer-10 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,10)});
+      opts.push({html:'Offer-All <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,1e9)});
+      opts.push({html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)});
+      showMenu(e.clientX,e.clientY,opts);
+    }));
+  }
+}
+function renderTrade(){
+  const ui=document.getElementById('tradeui'); if(!ui) return;
+  const T=(typeof MP!=='undefined'&&MP.tradeSnapshot)?MP.tradeSnapshot():null;
+  if(!T||!T.active){ ui.classList.remove('on'); return; }
+  ui.classList.add('on');
+  const s2=(T.stage===2);
+  document.getElementById('tradetitle').textContent = s2?'Confirm Trade':('Trading With: '+T.withName);
+  document.getElementById('myofferhd').textContent = s2?'You are giving:':'Your offer';
+  document.getElementById('theirofferhd').textContent = s2?'You will receive:':(T.withName+'\u2019s offer');
+  renderTradeGrid('myoffergrid',T.myOffer,!s2);
+  renderTradeGrid('theiroffergrid',T.theirOffer,false);
+  document.getElementById('tradeinvwrap').style.display = s2?'none':'';
+  if(!s2) renderTradeInv(T.myOffer);
+  const st=document.getElementById('tradestatus');
+  st.className='tradestatus'+(s2?' warn':'');
+  st.textContent = s2 ? '\u26a0 When you both accept, the items are exchanged. Make sure the trade is fair.'
+                      : (T.theirAccept?(T.withName+' has accepted.'):'');
+  const acc=document.getElementById('tradeaccept');
+  acc.classList.toggle('on',T.myAccept);
+  acc.textContent = T.myAccept ? 'Waiting for other player\u2026' : (s2?'Accept & confirm':'Accept');
+}
 function sellPrice(id){return Math.max(1,Math.floor((ITEMS[id].val||0)*0.4));}
 function sellSlot(i,n){
   const sl=player.inv[i];if(!sl)return;
@@ -13546,6 +13693,9 @@ document.getElementById('wildgo').addEventListener('click',()=>{
 document.getElementById('wildstay').addEventListener('click',()=>{
   document.getElementById('wildui').classList.remove('on');wildHop=null;});
 document.getElementById('bankclose').addEventListener('click',closeBank);
+{const _ta=document.getElementById('tradeaccept'); if(_ta)_ta.addEventListener('click',()=>{audio(); if(typeof MP==='undefined'||!MP.tradeAccept)return; const r=MP.tradeAccept(); if(r==='nospace')msg('You do not have enough inventory space to receive this trade.','#9c1f1f');});}
+{const _td=document.getElementById('tradedecline'); if(_td)_td.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.tradeDecline)MP.tradeDecline();});}
+{const _tx=document.getElementById('tradeclose'); if(_tx)_tx.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.tradeDecline)MP.tradeDecline();});}
 document.getElementById('banksearch').addEventListener('input',()=>{if(bankOpen)renderBank();});
 document.getElementById('geclose').addEventListener('click',closeShop);
 document.getElementById('depall').addEventListener('click',()=>{
@@ -14365,6 +14515,12 @@ const MP = (function () {
   const GROUP_HALF_LIFE = 8000, GROUP_SWITCH_MARGIN = 1.20;
   const mobAggro = new Map();   /* mi -> { acc:Map(uid->dmg), target:uid|null, t:lastDecayMs } */
   const _coAttacked = new Map();/* mi -> lastForwardMs (mobs a groupmate owns that I'm co-fighting) */
+  /* ---- trading (Phase 4): OSRS-style two-stage commit. Mutual request opens it; stage 1 = offer
+     (edit + both Accept; ANY change resets both accepts), stage 2 = confirm (read-only, both Accept),
+     then the inventory swap runs on both clients off the synced offers. ---- */
+  const trade = { active: false, withUid: null, withName: null, stage: 1, myOffer: [], theirOffer: [], myAccept: false, theirAccept: false };
+  const tradeReqIn = new Map();   /* uid -> {name,t} */
+  const tradeReqOut = new Map();  /* uid -> t */
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -14389,7 +14545,7 @@ const MP = (function () {
 
   /* ---------------- connection ---------------- */
   function connect() { if (!active() || want) return; want = true; open(); }
-  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); if (typeof renderFriends === 'function') renderFriends(); }
+  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); _tradeReset(); tradeReqIn.clear(); tradeReqOut.clear(); if (typeof renderFriends === 'function') renderFriends(); if (typeof renderTrade === 'function') renderTrade(); }
   function open() {
     if (!active() || !want) return;
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
@@ -14908,7 +15064,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     switch (m.t) {
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
-      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); despawn(m.uid); break; }
+      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); despawn(m.uid); break; }
       case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
@@ -15013,6 +15169,33 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'mobatk': {
         if (m.to !== player.uid) break;                  /* the owner's mob is swinging at me */
         if (typeof incomingMobHit === 'function') incomingMobHit(m.m | 0);
+        break;
+      }
+      case 'treq': {
+        if (m.to !== player.uid) break;
+        const from = m.uid; if (!from || from === player.uid) break;
+        const r = RP.get(from); const nm = (r && r.name) || '?';
+        if (trade.active) { if (trade.withUid !== from) send({ t: 'tdecline', to: from }); break; }
+        if (tradeReqOut.has(from)) { _tradeOpen(from, nm); send({ t: 'treq', to: from }); }
+        else { tradeReqIn.set(from, { name: nm, t: now() }); logSystem(nm + ' wishes to trade with you.'); if (typeof renderTrade === 'function') renderTrade(); }
+        break;
+      }
+      case 'toffer': {
+        if (m.to !== player.uid || !trade.active || trade.withUid !== m.uid || trade.stage !== 1) break;
+        trade.theirOffer = Array.isArray(m.items) ? m.items.map(it => ({ id: it.id, qty: it.qty | 0 })).filter(it => it.qty > 0) : [];
+        trade.myAccept = false; trade.theirAccept = false;
+        if (typeof renderTrade === 'function') renderTrade();
+        break;
+      }
+      case 'taccept': {
+        if (m.to !== player.uid || !trade.active || trade.withUid !== m.uid) break;
+        if ((m.stage | 0) === trade.stage) { trade.theirAccept = true; _tradeAdvance(); }
+        break;
+      }
+      case 'tdecline': {
+        if (m.to !== player.uid) break;
+        tradeReqOut.delete(m.uid); tradeReqIn.delete(m.uid);
+        if (trade.active && trade.withUid === m.uid) { const nm = trade.withName; _tradeClose(); logSystem((nm || 'The other player') + ' declined the trade.'); }
         break;
       }
       case 'pong': break;
@@ -15378,6 +15561,58 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (r && typeof groupCoLoot === 'function') groupCoLoot(r);
   }
 
+  function _tradeReset() { trade.active = false; trade.withUid = null; trade.withName = null; trade.stage = 1; trade.myOffer = []; trade.theirOffer = []; trade.myAccept = false; trade.theirAccept = false; }
+  function _tradeOpen(uid, name) { tradeReqIn.delete(uid); tradeReqOut.delete(uid); _tradeReset(); trade.active = true; trade.withUid = uid; trade.withName = name; if (typeof renderTrade === 'function') renderTrade(); }
+  function _tradeClose() { _tradeReset(); if (typeof renderTrade === 'function') renderTrade(); }
+  function tradeRequest(uid, name) {
+    if (!active() || !conn) return 'offline';
+    if (!uid || uid === player.uid) return 'self';
+    if (trade.active) return 'busy';
+    const nm = name || (RP.get(uid) || {}).name || '?';
+    if (tradeReqIn.has(uid)) { _tradeOpen(uid, nm); send({ t: 'treq', to: uid }); return 'opened'; }
+    tradeReqOut.set(uid, now()); send({ t: 'treq', to: uid }); return 'sent';
+  }
+  function tradeSetOffer(items) {            /* UI calls this on any offer change (stage 1 only) */
+    if (!trade.active || trade.stage !== 1) return;
+    trade.myOffer = (items || []).map(it => ({ id: it.id, qty: it.qty | 0 })).filter(it => it.qty > 0);
+    trade.myAccept = false; trade.theirAccept = false;          /* ANY change resets both accepts */
+    send({ t: 'toffer', to: trade.withUid, items: trade.myOffer });
+    if (typeof renderTrade === 'function') renderTrade();
+  }
+  function tradeAccept() {
+    if (!trade.active) return 'none';
+    if (trade.stage === 2 && typeof tradeCanReceive === 'function' && !tradeCanReceive(trade.theirOffer, trade.myOffer)) return 'nospace';
+    trade.myAccept = true;
+    send({ t: 'taccept', to: trade.withUid, stage: trade.stage });
+    _tradeAdvance();
+    return 'ok';
+  }
+  function tradeDecline() {
+    if (!trade.active) return;
+    send({ t: 'tdecline', to: trade.withUid });
+    _tradeClose();
+    if (typeof logSystem === 'function') logSystem('You decline the trade.');
+  }
+  function _tradeAdvance() {
+    if (!(trade.myAccept && trade.theirAccept)) { if (typeof renderTrade === 'function') renderTrade(); return; }
+    if (trade.stage === 1) { trade.stage = 2; trade.myAccept = false; trade.theirAccept = false; if (typeof renderTrade === 'function') renderTrade(); }
+    else { _tradeExecute(); }
+  }
+  function _tradeExecute() {
+    const give = trade.myOffer.slice(), receive = trade.theirOffer.slice();
+    if (typeof tradeExecute === 'function') tradeExecute(give, receive);
+    _tradeClose();
+    if (typeof logSystem === 'function') logSystem('Trade completed.');
+  }
+  function tradeSnapshot() {
+    return {
+      active: trade.active, withUid: trade.withUid, withName: trade.withName, stage: trade.stage,
+      myOffer: trade.myOffer.map(o => ({ id: o.id, qty: o.qty })), theirOffer: trade.theirOffer.map(o => ({ id: o.id, qty: o.qty })),
+      myAccept: trade.myAccept, theirAccept: trade.theirAccept,
+      reqIn: [...tradeReqIn.entries()].map(([uid, v]) => ({ uid, name: v.name }))
+    };
+  }
+
   function colHex(t) { return '#' + ('000000' + ((t || 0x3fd0e0) >>> 0).toString(16)).slice(-6); }
   function drawMiniMarkers(g) {
     if (!active() || !conn) return;
@@ -15415,10 +15650,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
+    tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
-    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear, poseRemote: poseRemote, resetGroup: () => { group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); }, groupState: () => group, aggroState: () => mobAggro, coAttacked: () => _coAttacked, aggroHit: groupAggroHit, aggroPick: _aggroPick }
+    _test: { setConn: v => { conn = !!v; }, setUrl: u => { CFG.url = u; }, manageClaims: manageClaims, pushOutbound: pushOutbound, clearSent: () => { _sent.length = 0; }, buildGearRig: buildGearRig, applyRemoteGear: applyRemoteGear, poseRemote: poseRemote, resetGroup: () => { group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); }, groupState: () => group, aggroState: () => mobAggro, coAttacked: () => _coAttacked, aggroHit: groupAggroHit, aggroPick: _aggroPick, tradeState: () => trade, resetTrade: () => { _tradeReset(); tradeReqIn.clear(); tradeReqOut.clear(); }, tradeReqIn: () => tradeReqIn, tradeReqOut: () => tradeReqOut }
   };
 })();
 
