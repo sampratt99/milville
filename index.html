@@ -1197,6 +1197,13 @@ const OBJ_DEFS={
   chapeldoor:{name:'Chapel doors',action:'Enter',ex:'The great oak doors of the Chapel of St. Peter & St. Paul.'},
   chapelexit:{name:'Chapel doors',action:'Leave',ex:'The way back out to the lawn.'},
   relic:{name:'Blessed Censer',action:'Take',ex:'A founder-era censer on the altar. Its light still burns against the dark.'},
+  mathesdoor:{name:'Matthes Cage',action:'Enter',ex:'The Matthes Cage field house. Within, a sunken pit waits beneath an indoor track.'},
+  mathesexit:{name:'Cage doors',action:'Leave',ex:'The way back out to the athletic grounds.'},
+  rector:{name:'the Rector',action:'Talk-to',ex:'He presides over the Cage from the east balcony, passing judgment on those who contest the pit.'},
+  dig_pratt:{name:'Mr. Pratt',action:'Examine',noBlock:true,ex:'Mr. Pratt, Dean of College Advising and, by remarkable coincidence, resident of Pratt House. He has already pencilled your recommendation; the adjectives depend on how you fight.'},
+  dig_hebra:{name:'Mr. Hebra',action:'Examine',noBlock:true,ex:'Mr. Hebra. Nobody is entirely sure what he teaches. He out-lifts the whole wrestling team and answers most questions with a slow, knowing nod.'},
+  dig_bassi:{name:'Dr. Bassi',action:'Examine',noBlock:true,ex:'Dr. Bassi, the school doctor, here to mend whatever the pit breaks. Has filed several strongly-worded memos to the Discipline Committee and is drafting the next one now.'},
+  dig_chase:{name:'Mr. Chase',action:'Examine',noBlock:true,ex:'Mr. Chase, who teaches maths and coaches baseball. He watches the duels as one long word problem, quietly solving for the optimal swing.'},
   furnace:{name:'Furnace',action:'Smelt-at',
     ex:'Coal-fired and hungry for ore.'},
   anvil:{name:'Anvil',action:'Smith-at',
@@ -1774,6 +1781,7 @@ addObj('chest',32,98);
 addObj('bankchest',122,19,true);addObj('bankchest',164,116,true);
 addObj('fire',93,60);
 addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
+addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',130,19,true);addObj('dig_hebra',130,20,true);addObj('dig_bassi',130,22,true);addObj('dig_chase',130,23,true);
 addObj('furnace',128,18);addObj('anvil',130,18);
 addObj('fire',150,23);
 addObj('fire',68,44);
@@ -2181,6 +2189,8 @@ const parts=[];    /* {wx,wy,wz,vx,vy,t,col} */
 const projectiles=[]; /* {x0,z0,y0,ent,ex,ez,kind,col,t0,dur} */
 let tick=0,dirty=false,muted=false,musicOff=false,storageOK=false,playerLastHit=0;
 let inChapel=false;const CHAPEL_RETURN={x:100,y:100};
+let inMathes=false;const MATHES_RETURN={x:65,y:21};
+function curInterior(){return inMathes?'mathes':(inChapel?'chapel':(inParty?'party':null));}
 function clickFx(tx,ty,col){clicks.push({wx:tx+0.5,wz:ty+0.5,t:performance.now(),col});}
 function clickFxAt(wx,wz,col){clicks.push({wx,wz,t:performance.now(),col});}
 function burstFx(wx,wy,wz,col,n){n=n||12;for(let k=0;k<n;k++){const a=(k/n)*Math.PI*2;
@@ -3237,6 +3247,19 @@ function playerTick(){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     exitChapel();cancelAction();
   }
+  else if(a.type==='entermathes'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    enterMathes();cancelAction();
+  }
+  else if(a.type==='leavemathes'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    exitMathes();cancelAction();
+  }
+  else if(a.type==='talkrector'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    msg('The Rector studies you from the balcony. \'So. Another who would test themselves in the pit. The Cage remembers every contest fought on this sand - but today it is quiet. Return when there is a contest to judge.\'','#103a8c');
+    cancelAction();
+  }
   else if(a.type==='enterparty'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     partyReturn={x:a.o.x,y:a.o.y};enterPartyRoom(a.east);cancelAction();
@@ -3534,6 +3557,7 @@ function ratsTick(){
   for(const r of rats){
     if(!r.alive)continue;
     if(typeof MP!=='undefined'&&MP.mobOverride(r))continue;
+    if(curInterior()){if(r.target===player)r.target=null;continue;}
     if(!r.target&&MOB_KINDS[r.kind].aggro
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
       &&MOB_KINDS[r.kind].cmb>=cmbLvl()&&player.hp>0
@@ -4318,6 +4342,28 @@ function partyOptionsAt(tx,ty){
 function optionsAt(tx,ty){
   const opts=[];
   if(inParty)return partyOptionsAt(tx,ty);
+  if(inMathes){
+    /* inside the Cage: only interior objects are interactive - never the outdoor world beneath */
+    const io=objects.find(b=>b.x===tx&&b.y===ty&&(b.def==='mathesexit'||(b.def&&b.def.slice(0,4)==='dig_')));
+    if(io&&io.def==='mathesexit')opts.push(
+      {html:'Leave <span class="t">Matthes Cage</span>',label:'Leave Matthes Cage',fn:()=>setAction({type:'leavemathes',o:io},io.x,io.y)},
+      {html:'Examine <span class="t">Cage doors</span>',fn:()=>msg(OBJ_DEFS['mathesexit'].ex)});
+    else if(io)opts.push(
+      {html:'Examine <span class="t">'+OBJ_DEFS[io.def].name+'</span>',label:'Examine '+OBJ_DEFS[io.def].name,fn:()=>msg(OBJ_DEFS[io.def].ex)});
+    const _rp=(typeof MP!=='undefined'&&MP.active())?MP.remoteAt(tx,ty):null;
+    if(_rp&&duel.state==='none'){
+      const _acc=(typeof MP!=='undefined'&&MP.duelReqFrom&&MP.duelReqFrom(_rp.uid));
+      opts.push({html:(_acc?'Accept duel: ':'Challenge ')+'<span class="t">'+_rp.name+'</span>',label:(_acc?'Accept duel ':'Challenge ')+_rp.name,fn:()=>{
+        const r=MP.duelChallenge(_rp.uid,_rp.name);
+        if(r==='sent')msg('You throw down the gauntlet to '+_rp.name+'. They must accept.','#7a3b12');
+        else if(r==='start')msg('The duel is set!','#7a3b12');
+        else if(r==='busy')msg('You are already in a duel.','#9c1f1f');
+        else if(r==='offline')msg(_rp.name+' is not available to duel.','#9c1f1f');
+      }});
+      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+' - a fellow contender in the Cage.','#103a8c')});
+    }
+    return opts;
+  }
   /* clicking the great chapel body, either door, or the east courtyard offers Enter */
   if(chapelEntrance(tx,ty)){
     const doors=[{x:89,y:96},{x:100,y:101}];
@@ -4378,6 +4424,18 @@ function optionsAt(tx,ty){
       opts.push({html:'Leave <span class="t">Chapel</span>',
         label:'Leave Chapel',fn:()=>setAction({type:'leavechapel',o},o.x,o.y)},
         {html:'Examine <span class="t">Chapel doors</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='mathesdoor'){
+      opts.push({html:'Enter <span class="t">Matthes Cage</span>',
+        label:'Enter Matthes Cage',fn:()=>setAction({type:'entermathes',o},o.x,o.y)},
+        {html:'Examine <span class="t">Matthes Cage</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='mathesexit'){
+      opts.push({html:'Leave <span class="t">Matthes Cage</span>',
+        label:'Leave Matthes Cage',fn:()=>setAction({type:'leavemathes',o},o.x,o.y)},
+        {html:'Examine <span class="t">Cage doors</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='rector'){
+      opts.push({html:'Talk-to <span class="t">the Rector</span>',
+        label:'Talk-to the Rector',fn:()=>setAction({type:'talkrector',o},o.x,o.y)},
+        {html:'Examine <span class="t">the Rector</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='fire'){
       opts.push({html:'Cook-at <span class="t">Campfire</span>',
         label:'Cook-at Campfire',fn:()=>startCook(o)},
@@ -6723,6 +6781,38 @@ function buildObjModel(o){
     const ring=mesh(new THREE.TorusGeometry(0.09,0.025,6,10),0xc9a23a);
     ring.position.set(-0.02,1.0,0.18);ring.rotation.y=Math.PI/2;g.add(ring);
     addProxy(g,1.05,3.0,0,{kind:'obj',o});
+  }else if(def==='mathesexit'){
+    /* exit door set FLUSH in the south (east-west) wall, opening toward the interior (north / -z) */
+    const JAMB=0x8a8278, LINT=0x6b6f76;
+    const lp=mesh(new THREE.BoxGeometry(0.32,2.6,0.44),JAMB); lp.position.set(-0.95,1.3,0); g.add(lp);
+    const rp=mesh(new THREE.BoxGeometry(0.32,2.6,0.44),JAMB); rp.position.set(0.95,1.3,0); g.add(rp);
+    const lint=mesh(new THREE.BoxGeometry(2.45,0.42,0.52),LINT); lint.position.set(0,2.5,0); g.add(lint);
+    const op=mesh(new THREE.BoxGeometry(1.7,2.15,0.1),0x141009); op.position.set(0,1.08,0.02); g.add(op);
+    const d1=mesh(new THREE.BoxGeometry(0.82,2.1,0.14),0x3a2517); d1.position.set(-0.45,1.05,-0.16); d1.rotation.y=0.14; g.add(d1);
+    const d2=mesh(new THREE.BoxGeometry(0.82,2.1,0.14),0x4a3120); d2.position.set(0.45,1.05,-0.16); d2.rotation.y=-0.14; g.add(d2);
+    addProxy(g,1.2,3.0,0,{kind:'obj',o});
+  }else if(def==='mathesdoor'){
+    /* A real, clickable double-door set into the Matthes Cage's SOUTH wall.
+       The building itself only has slit windows here, so this IS the entrance.
+       Object sits at tile (65,20); the south wall face is ~0.5 to the south (+z),
+       so the door is pushed onto that face and opens toward the player. */
+    const ZF=0.52;
+    const JAMB=0x82868c, FRAME=0x6b7480, LEAF1=0x3a2c1e, LEAF2=0x4a3a28, DARK=0x141009, SIGN=0xcfc4ae, BOLT=0x8a6a30;
+    const lp=mesh(new THREE.BoxGeometry(0.26,2.35,0.5),JAMB); lp.position.set(-0.74,1.18,ZF); g.add(lp);
+    const rp=mesh(new THREE.BoxGeometry(0.26,2.35,0.5),JAMB); rp.position.set(0.74,1.18,ZF); g.add(rp);
+    const li=mesh(new THREE.BoxGeometry(2.0,0.4,0.56),FRAME); li.position.set(0,2.42,ZF); g.add(li);
+    const op=mesh(new THREE.BoxGeometry(1.22,2.1,0.14),DARK); op.position.set(0,1.05,ZF+0.03); g.add(op);
+    const dl=mesh(new THREE.BoxGeometry(0.58,2.0,0.12),LEAF1); dl.position.set(-0.30,1.0,ZF+0.12); dl.rotation.y=0.16; g.add(dl);
+    const dr=mesh(new THREE.BoxGeometry(0.58,2.0,0.12),LEAF2); dr.position.set(0.30,1.0,ZF+0.12); dr.rotation.y=-0.16; g.add(dr);
+    const b1=mesh(new THREE.BoxGeometry(0.1,0.1,0.05),BOLT); b1.position.set(-0.12,1.0,ZF+0.2); g.add(b1);
+    const b2=mesh(new THREE.BoxGeometry(0.1,0.1,0.05),BOLT); b2.position.set(0.12,1.0,ZF+0.2); g.add(b2);
+    const sg=mesh(new THREE.BoxGeometry(1.75,0.32,0.12),SIGN); sg.position.set(0,2.74,ZF); g.add(sg);
+    addProxy(g,1.3,3.0,0,{kind:'obj',o});
+  }else if(def.slice(0,4)==='dig_'){
+    /* podium dignitaries: both their model and click proxy are built in buildMathesCage */
+  }else if(def==='rector'){
+    /* (rector is no longer a clickable object; this branch is dead but harmless) */
+    addProxy(g,0.9,2.4,0,{kind:'obj',o});
   }else if(def==='fire'){
     for(let i=0;i<3;i++){
       const log=mesh(new THREE.BoxGeometry(0.5,0.09,0.09),0x4a3220);
@@ -10174,7 +10264,7 @@ function castPick(ev){
   _ndc.x=((ev.clientX-r.left)/r.width)*2-1;
   _ndc.y=-((ev.clientY-r.top)/r.height)*2+1;
   _rc.setFromCamera(_ndc,camera);
-  const hits=_rc.intersectObjects(inParty?[]:(inChapel?chapelProxies:proxies),false).filter(h=>{
+  const hits=_rc.intersectObjects(inMathes?mathesProxies:(inParty?[]:(inChapel?chapelProxies:proxies)),false).filter(h=>{
     const d=h.object.userData;
     if(d.kind==='rat')return d.r.alive;
     if(d.kind==='item')return ground.some(gi=>gi.uid===d.uid);
@@ -11222,8 +11312,8 @@ buildWmLegend();
 function drawMini(){
   const g=miniDyn.getContext('2d');
   g.clearRect(0,0,miniDyn.width,miniDyn.height);
-  g.drawImage(inParty?miniBaseParty:(inChapel?miniBaseChapel:miniBase),0,0);
-  if(!inChapel&&!inParty){
+  g.drawImage(inMathes?miniBaseMathes:(inParty?miniBaseParty:(inChapel?miniBaseChapel:miniBase)),0,0);
+  if(!inChapel&&!inParty&&!inMathes){
   g.fillStyle='#ff3b30';
   for(const it of ground)g.fillRect(it.x*4,it.y*4,4,4);
   g.fillStyle='#ffd23d';
@@ -11297,7 +11387,7 @@ document.getElementById('compass').addEventListener('click',()=>{camYaw=0;});
 /* ------------------------- world map popup ------------------------ */
 const wmapEl=document.getElementById('wmap');
 function openWorldMap(){
-  if(inChapel)return;   /* the chapel interior is its own map */
+  if(inChapel||inMathes)return;   /* interiors are their own space, not the outdoor map */
   const c=document.getElementById('wmapc'),g=c.getContext('2d');
   g.imageSmoothingEnabled=false;
   g.clearRect(0,0,c.width,c.height);
@@ -13681,6 +13771,381 @@ function exitChapel(){
   stopOrgan();updateMusic();
   msg('You step back out onto the chapel lawn.');
 }
+
+/* ===================== Matthes Cage (PvP coliseum interior) ===================== */
+/* The Matthes Cage field house: a red indoor running track ringing a deep, sunken
+   turf ditch at the centre - the duelling arena. You walk the track and concourse
+   freely; the ditch itself is SEALED (impassable) and is only entered when a duel
+   teleports the two combatants down onto the turf. The Rector (Rector Matthews)
+   presides from the head of the arena and calls out over the sand.
+   The room is self-contained: tiles are a private clone, geometry is a hidden
+   group, and the interior heightmap is flattened on enter / restored on exit so
+   the outdoor world is never disturbed. With interior-id presence tagging, several
+   players occupy it cleanly at once. */
+const MCAGE={x0:99,x1:141,y0:1,y1:43};
+const MPIT ={x0:111,x1:129,y0:11,y1:32};      /* the sunken turf ditch (sealed until a duel) */
+const MDEPTH=3.2;
+const MATHES_RECTOR_LINES=[
+  'The pit remembers every contest fought on its sand.',
+  'Step down only when you are challenged - not before.',
+  'Honour in victory. Grace in defeat.',
+  'Two enter the sand. The Cage decides the rest.',
+  'I have judged a thousand bouts beneath this roof.',
+  'Fight well, and the Cage will keep your name.',
+  'The track is for walking. The pit is for proving.',
+  'No malice on my sand - only the contest.'
+];
+const mathesTiles=TILES_MAIN.map(r=>r.slice());
+(function carveMathes(){
+  for(let y=MCAGE.y0;y<=MCAGE.y1;y++)for(let x=MCAGE.x0;x<=MCAGE.x1;x++)
+    mathesTiles[y][x]=(x===MCAGE.x0||x===MCAGE.x1||y===MCAGE.y0||y===MCAGE.y1)?T_WALL:T_FLOOR;
+  for(let x=119;x<=121;x++)mathesTiles[MCAGE.y1][x]=T_FLOOR;                 /* south doorway */
+  for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++)
+    mathesTiles[y][x]=T_WALL;                                                /* sealed ditch */
+  for(let y=18;y<=24;y++)for(let x=130;x<=133;x++)mathesTiles[y][x]=T_WALL;  /* rector's podium (front rim blocked) */
+})();
+const mathesGroup=new THREE.Group();mathesGroup.visible=false;scene.add(mathesGroup);
+let mathesRector=null, mathesChatT=0;
+/* transient heightmap: flatten the whole room to one level on enter, restore on exit */
+const _mFY=groundH(120,8);
+const MPITY=_mFY-MDEPTH;
+const _mSnap=[];
+for(let y=MCAGE.y0;y<=MCAGE.y1;y++)for(let x=MCAGE.x0;x<=MCAGE.x1;x++)_mSnap.push([x,y,hts[y][x]]);
+function _mathesFlatten(){for(const s of _mSnap)hts[s[1]][s[0]]=_mFY;}
+function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
+/* (Phase 1 will additionally lower the ditch tiles to MPITY at duel start so the combatants stand on the turf.) */
+
+(function buildMathesCage(){
+  const out={pos:[],nor:[],col:[]}, outS={pos:[],nor:[],col:[]};
+  const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  const cyl=(rt,rb,h,s)=>new THREE.CylinderGeometry(rt,rb,h,s||12);
+  const sph=(r)=>new THREE.SphereGeometry(r,8,6);
+  const B=(g2,hex,x,y,z,ry,sc,rx,rz)=>bake(out ,g2,hex,x,y,z,ry||0,sc===undefined?1:sc,rx||0,rz||0);
+  const S=(g2,hex,x,y,z,ry,sc,rx,rz)=>bake(outS,g2,hex,x,y,z,ry||0,sc===undefined?1:sc,rx||0,rz||0);
+  const FY=_mFY, PY=MPITY, P=MPIT;
+  const RED=0x9a4636,RED2=0xb35a48,TURF=0x3f7a3a,TURF2=0x4a8a48,SAND2=0x86643f,
+        STONE=0xb9ac92,STONE2=0xa1937a,CONC=0x8f9298,WOOD=0x6e4a2c,RIM=0x6b6f76;
+  const cxp=(P.x0+P.x1+1)/2, czp=(P.y0+P.y1+1)/2, pw=P.x1-P.x0+1, pd=P.y1-P.y0+1;
+  const midx=(MCAGE.x0+MCAGE.x1+1)/2, midz=(MCAGE.y0+MCAGE.y1+1)/2;
+  const cw=MCAGE.x1-MCAGE.x0+1, cd=MCAGE.y1-MCAGE.y0+1;
+  /* ---------- floor: grey concrete apron on the outside, a RED track RING hugging the turf ---------- */
+  const slab=(x0,x1,z0,z1,hex,yy,th)=>{const w=x1-x0+1,d=z1-z0+1;B(box(w,th||0.10,d),hex,(x0+x1+1)/2,FY+(yy||0.02),(z0+z1+1)/2,0);};
+  const CONCF=0x9a9a93, TW=6;
+  const tX0=P.x0-TW, tX1=P.x1+TW, tZ0=P.y0-TW, tZ1=P.y1+TW;   /* outer bound of the track ring */
+  slab(MCAGE.x0+1,MCAGE.x1-1, MCAGE.y0+1, tZ0-1, CONCF);      /* north apron */
+  slab(MCAGE.x0+1,MCAGE.x1-1, tZ1+1, MCAGE.y1-1, CONCF);      /* south apron */
+  slab(MCAGE.x0+1,tX0-1, tZ0,tZ1, CONCF);                     /* west apron */
+  slab(tX1+1,MCAGE.x1-1, tZ0,tZ1, CONCF);                     /* east apron */
+  slab(tX0,tX1, tZ0, P.y0-1, RED);                            /* RED ring - north straight */
+  slab(tX0,tX1, P.y1+1, tZ1, RED);                            /* RED ring - south straight */
+  slab(tX0,P.x0-1, P.y0,P.y1, RED);                           /* RED ring - west straight */
+  slab(P.x1+1,tX1, P.y0,P.y1, RED);                           /* RED ring - east straight */
+  for(const mz of [ (tZ0+P.y0-1)/2, (tZ1+P.y1+1)/2 ])
+    for(let li=0;li<2;li++)B(box(P.x1-P.x0+1,0.02,0.1),RED2,cxp,FY+0.085,mz-0.4+li*0.8,0);
+  /* ---------- the sunken turf ditch ---------- */
+  B(box(pw,0.10,pd),TURF,cxp,PY+0.02,czp,0);
+  for(let x=P.x0;x<=P.x1;x+=2)for(let z=P.y0;z<=P.y1;z+=2)if(((x+z)&3)===0)B(box(1.7,0.02,1.7),TURF2,x+1,PY+0.07,z+1,0);
+  B(cyl(2.4,2.4,0.03,30),0xe8e2d0,cxp,PY+0.06,czp,0);
+  B(cyl(2.0,2.0,0.04,30),TURF,cxp,PY+0.075,czp,0);
+  /* ditch retaining walls (concrete), FY down to PY, on all four inner faces */
+  const wh=FY-PY;
+  S(box(pw+0.5,wh,0.45),CONC,cxp,(FY+PY)/2,P.y0-0.27,0);
+  S(box(pw+0.5,wh,0.45),CONC,cxp,(FY+PY)/2,P.y1+1.27,0);
+  S(box(0.45,wh,pd+0.5),CONC,P.x0-0.27,(FY+PY)/2,czp,0);
+  S(box(0.45,wh,pd+0.5),CONC,P.x1+1.27,(FY+PY)/2,czp,0);
+  /* a stone rim curb framing the top edge */
+  S(box(pw+1.0,0.32,0.55),RIM,cxp,FY+0.16,P.y0-0.4,0);
+  S(box(pw+1.0,0.32,0.55),RIM,cxp,FY+0.16,P.y1+1.4,0);
+  S(box(0.55,0.32,pd+1.0),RIM,P.x0-0.4,FY+0.16,czp,0);
+  S(box(0.55,0.32,pd+1.0),RIM,P.x1+1.4,FY+0.16,czp,0);
+  /* safety railing: posts + a thin top rail all the way round */
+  for(let x=P.x0-1;x<=P.x1+1;x+=2){
+    S(box(0.08,0.72,0.08),0x2a2e34,x+0.5,FY+0.52,P.y0-0.45,0);
+    S(box(0.08,0.72,0.08),0x2a2e34,x+0.5,FY+0.52,P.y1+1.45,0);
+  }
+  for(let z=P.y0-1;z<=P.y1+1;z+=2){
+    S(box(0.08,0.72,0.08),0x2a2e34,P.x0-0.45,FY+0.52,z+0.5,0);
+    S(box(0.08,0.72,0.08),0x2a2e34,P.x1+1.45,FY+0.52,z+0.5,0);
+  }
+  S(box(pw+1.6,0.05,0.05),0x3a3e44,cxp,FY+0.84,P.y0-0.45,0);
+  S(box(pw+1.6,0.05,0.05),0x3a3e44,cxp,FY+0.84,P.y1+1.45,0);
+  S(box(0.05,0.05,pd+1.6),0x3a3e44,P.x0-0.45,FY+0.84,czp,0);
+  S(box(0.05,0.05,pd+1.6),0x3a3e44,P.x1+1.45,FY+0.84,czp,0);
+  /* ---------- perimeter field-house walls (roofless so the camera is open) ---------- */
+  const WH=5.2;
+  S(box(cw,WH,0.6),STONE,midx,FY+WH/2,MCAGE.y0+0.3,0);
+  S(box(119-MCAGE.x0,WH,0.6),STONE,(MCAGE.x0+119)/2,FY+WH/2,MCAGE.y1+0.7,0);
+  S(box(MCAGE.x1-121,WH,0.6),STONE,(122+MCAGE.x1)/2,FY+WH/2,MCAGE.y1+0.7,0);
+  S(box(0.6,WH,cd),STONE,MCAGE.x0+0.3,FY+WH/2,midz,0);
+  S(box(0.6,WH,cd),STONE,MCAGE.x1+0.7,FY+WH/2,midz,0);
+  S(box(cw,0.5,0.8),STONE2,midx,FY+0.25,MCAGE.y0+0.3,0);
+  /* south doorway frame */
+  S(box(0.5,3.4,0.7),WOOD,118.6,FY+1.7,MCAGE.y1+0.5,0);
+  S(box(0.5,3.4,0.7),WOOD,121.4,FY+1.7,MCAGE.y1+0.5,0);
+  S(box(3.4,0.5,0.7),WOOD,120,FY+3.4,MCAGE.y1+0.5,0);
+  /* ---------- climbing walls (NE & SE corners): a solid panel flush to the EAST wall, holds sitting ON its face ---------- */
+  function climbWall(zc){
+    const wf=MCAGE.x1+0.4;                  /* inner face of the east wall */
+    const px=wf-0.15, front=px-0.15;        /* solid backing panel, flush against the wall */
+    const zspan=8, ybot=FY+0.1;
+    const PANEL=0x47525e, PANEL2=0x3c4651;
+    for(let i=0;i<7;i++) S(box(0.3,0.72,zspan),(i%2?PANEL2:PANEL),px,ybot+0.36+i*0.72,zc,0);
+    S(box(0.34,0.16,zspan+0.3),0x241f1a,px,ybot+0.04,zc,0);
+    S(box(0.34,0.16,zspan+0.3),0x241f1a,px,ybot+5.08,zc,0);
+    S(box(0.34,5.1,0.22),0x241f1a,px,ybot+2.56,zc-zspan/2,0);
+    S(box(0.34,5.1,0.22),0x241f1a,px,ybot+2.56,zc+zspan/2,0);
+    const HOLD=[0xd23b2f,0xe07f24,0xe6c12a,0x3fae54,0x2f7fd2,0x8a3fd0,0xe8e8e8,0xd86fa8];
+    let seed=(zc*977+13)>>>0;
+    const rr=()=>{seed=(seed*1103515245+12345)>>>0;return (seed>>>8)/16777216;};
+    for(let k=0;k<32;k++){
+      const yy=ybot+0.4+rr()*4.2;
+      const zz=zc-zspan/2+0.5+rr()*(zspan-1.0);
+      const col=HOLD[k%HOLD.length];
+      const t=rr();
+      if(t<0.4) S(box(0.16,0.13,0.18),col,front-0.08,yy,zz,0,1,0,rr()*0.6-0.3);
+      else if(t<0.72) S(sph(0.1+rr()*0.04),col,front-0.1,yy,zz,0);
+      else S(box(0.16,0.1,0.24),col,front-0.08,yy,zz,0,1,rr()*0.5-0.25,0);
+    }
+    S(box(0.7,0.85,zspan+0.5),0x2f3a4a,wf-0.85,FY+0.18,zc,0);      /* crash pad on the floor */
+  }
+  climbWall(6.5);    /* NE corner - east-wall section */
+  climbWall(37.5);   /* SE corner */
+  function climbWallN(xc){          /* a section on the NORTH wall, facing +z into the room */
+    const nf=MCAGE.y0+0.6, pz=nf+0.15, front=pz+0.15, xspan=6, ybot=FY+0.1;
+    const PANEL=0x47525e, PANEL2=0x3c4651;
+    for(let i=0;i<7;i++) S(box(xspan,0.72,0.3),(i%2?PANEL2:PANEL),xc,ybot+0.36+i*0.72,pz,0);
+    S(box(xspan+0.3,0.16,0.34),0x241f1a,xc,ybot+0.04,pz,0);
+    S(box(xspan+0.3,0.16,0.34),0x241f1a,xc,ybot+5.08,pz,0);
+    S(box(0.22,5.1,0.34),0x241f1a,xc-xspan/2,ybot+2.56,pz,0);
+    S(box(0.22,5.1,0.34),0x241f1a,xc+xspan/2,ybot+2.56,pz,0);
+    const HOLD=[0xd23b2f,0xe07f24,0xe6c12a,0x3fae54,0x2f7fd2,0x8a3fd0,0xe8e8e8,0xd86fa8];
+    let seed=(xc*613+29)>>>0;
+    const rr=()=>{seed=(seed*1103515245+12345)>>>0;return (seed>>>8)/16777216;};
+    for(let k=0;k<24;k++){
+      const yy=ybot+0.4+rr()*4.2;
+      const xx=xc-xspan/2+0.5+rr()*(xspan-1.0);
+      const col=HOLD[k%HOLD.length];
+      const t=rr();
+      if(t<0.4) S(box(0.18,0.13,0.16),col,xx,yy,front+0.08,0,1,rr()*0.6-0.3,0);
+      else if(t<0.72) S(sph(0.1+rr()*0.04),col,xx,yy,front+0.1,0);
+      else S(box(0.24,0.1,0.16),col,xx,yy,front+0.08,0,1,0,rr()*0.5-0.25);
+    }
+    S(box(xspan+0.5,0.85,0.7),0x2f3a4a,xc,FY+0.18,nf+0.85,0);
+  }
+  climbWallN(137);   /* NE corner - north-wall section */
+  /* ---------- the Rector's open podium on the EAST edge of the ditch (widened for his retinue) ---------- */
+  const podX=131.5, podZ=21, podDeck=FY+1.5, podD=7.4;
+  S(box(3.6,1.5,podD),STONE,podX,FY+0.75,podZ,0);                   /* raised stone base */
+  S(box(3.8,0.24,podD+0.2),STONE2,podX,podDeck,podZ,0);            /* viewing deck */
+  S(box(1.0,1.0,podD-0.8),STONE2,podX+1.7,FY+0.5,podZ,0);          /* steps up from the concourse (back) */
+  S(box(1.0,0.55,podD-0.8),STONE,podX+2.3,FY+0.28,podZ,0);
+  S(box(3.6,0.95,0.26),0x9a8f76,podX,podDeck+0.5,podZ-podD/2+0.13,0);
+  S(box(3.6,0.95,0.26),0x9a8f76,podX,podDeck+0.5,podZ+podD/2-0.13,0);
+  S(box(0.26,0.95,podD),0x9a8f76,podX+1.7,podDeck+0.5,podZ,0);
+  for(let z=podZ-3;z<=podZ+3;z++)S(box(0.1,0.5,0.1),0x6b5a3a,podX-1.7,podDeck+0.27,z,0);
+  S(box(0.12,0.1,podD-0.4),0x4a3a24,podX-1.7,podDeck+0.52,podZ,0);
+  S(box(0.14,1.5,2.6),0x8a2230,podX+1.65,podDeck+1.05,podZ,0);     /* heraldic banner on the back parapet */
+  S(box(0.16,0.95,1.9),0xd9b04a,podX+1.6,podDeck+1.05,podZ,0);
+  /* the Rector (centre) + four robed dignitaries, all facing WEST over the arena; only the Rector speaks */
+  const PODFIG=[
+    {z:19.5,def:'dig_pratt',c:{skin:0xe0b48c,shirt:0x27306e,pants:0x1f2858,hair:0x3a2e20,beard:0x4a3a28,skirt:0x1f2858,amulet:0xd9b04a,belt:0xd9b04a,boots:0x1c1c24}},
+    {z:20.5,def:'dig_hebra',c:{skin:0xd9a877,shirt:0x1f5a3a,pants:0x174a30,hair:0x1a1410,skirt:0x174a30,amulet:0xd9b04a,belt:0xd9b04a,boots:0x141810}},
+    {z:21.5,rector:true,c:{skin:0xe2b58c,shirt:0x5a1f2e,pants:0x2a2330,hair:0xeceae4,beard:0xe8e6e0,skirt:0x4a1a28,amulet:0xd9b04a,belt:0xd9b04a,boots:0x2a2118}},
+    {z:22.5,def:'dig_bassi',c:{skin:0xc89a6a,shirt:0x4a2068,pants:0x3a1856,hair:0x2a2218,skirt:0x3a1856,amulet:0xd9b04a,belt:0xd9b04a,boots:0x201828}},
+    {z:23.5,def:'dig_chase',c:{skin:0xe8c19a,shirt:0x1d4a5a,pants:0x163a48,hair:0x6b4a2e,skirt:0x163a48,amulet:0xc0c0c8,belt:0xc0c0c8,boots:0x14222a}}
+  ];
+  for(const f of PODFIG){
+    const hm=makeHumanoid(f.c);
+    hm.g.position.set(130.5,podDeck,f.z);
+    hm.g.rotation.y=-Math.PI/2;
+    mathesGroup.add(hm.g);
+    if(f.rector)mathesRector={x:130,y:21,g:hm.g,chat:'',chatUntil:0};
+    else if(f.def){const _do=objects.find(o=>o.def===f.def);if(_do)addProxy(hm.g,0.85,2.5,0,{kind:'obj',o:_do});}
+  }
+  /* wall banners along the long walls */
+  for(const z of [16,22,28]){
+    S(box(0.1,1.8,1.1),0x7a2230,MCAGE.x0+0.9,FY+3.1,z,0);
+    S(box(0.1,1.8,1.1),0x223a7a,MCAGE.x1+0.1,FY+3.1,z,0);
+  }
+  const m1=bakeMesh(out ,false);mathesGroup.add(m1);
+  const m2=bakeMesh(outS,true );m2.receiveShadow=true;mathesGroup.add(m2);
+})();
+
+/* ---------- St Paul's PVP Arena banners on all four walls (mirrors the Hargate party banners) ---------- */
+function _cageBannerTex(){
+  const sc=shieldTexture().image;
+  const c=document.createElement('canvas');c.width=160;c.height=240;const g=c.getContext('2d');
+  g.fillStyle='#c01722';g.fillRect(0,0,160,240);
+  g.fillStyle='#f6f5f1';g.fillRect(8,8,144,224);
+  g.drawImage(sc,46,18,68,86);
+  g.fillStyle='#161616';g.textAlign='center';
+  g.font='bold 25px Georgia';g.fillText("ST PAUL'S",80,168);
+  g.font='bold 20px Georgia';g.fillText('PVP ARENA',80,196);
+  return new THREE.CanvasTexture(c);
+}
+(function buildCageBanners(){
+  const FY=groundH(120,8);
+  const mat=new THREE.MeshBasicMaterial({map:_cageBannerTex(),side:THREE.DoubleSide});
+  const spots=[
+    {x:108,z:MCAGE.y0+1.0,ry:0},{x:120,z:MCAGE.y0+1.0,ry:0},{x:132,z:MCAGE.y0+1.0,ry:0},
+    {x:108,z:MCAGE.y1-1.0,ry:Math.PI},{x:132,z:MCAGE.y1-1.0,ry:Math.PI},
+    {x:MCAGE.x0+1.0,z:11,ry:Math.PI/2},{x:MCAGE.x0+1.0,z:22,ry:Math.PI/2},{x:MCAGE.x0+1.0,z:33,ry:Math.PI/2},
+    {x:MCAGE.x1-1.0,z:16,ry:-Math.PI/2},{x:MCAGE.x1-1.0,z:28,ry:-Math.PI/2}
+  ];
+  for(const sp of spots){
+    const ban=new THREE.Mesh(new THREE.PlaneGeometry(1.9,2.3),mat);
+    ban.position.set(sp.x,FY+2.8,sp.z);ban.rotation.y=sp.ry;mathesGroup.add(ban);
+  }
+})();
+/* enter / exit */
+function enterMathes(){
+  inMathes=true;
+  tiles=mathesTiles;
+  _mathesFlatten();
+  worldGroup.visible=false;mathesGroup.visible=true;
+  player.x=120;player.y=40;player.px=120;player.py=40;
+  player.path.length=0;cancelAction();
+  scene.fog.near=46;scene.fog.far=130;
+  stopMusic();
+  mathesChatT=performance.now()+1400;if(mathesRector)mathesRector.chat='';
+  msg('You step inside the Matthes Cage. The red track rings a deep turf pit, sunk into the floor.','#7a3b12');
+}
+function exitMathes(){
+  inMathes=false;
+  tiles=TILES_MAIN;
+  _mathesRestore();
+  worldGroup.visible=true;mathesGroup.visible=false;
+  player.x=MATHES_RETURN.x;player.y=MATHES_RETURN.y;player.px=MATHES_RETURN.x;player.py=MATHES_RETURN.y;
+  player.path.length=0;cancelAction();
+  scene.fog.near=30;scene.fog.far=52;
+  updateMusic();
+  msg('You step back out onto the athletic grounds.');
+}
+
+/* ============================ Matthes Cage duels (Phase 1) ============================ */
+let duel={state:'none',oppUid:null,oppName:'',side:0,startAt:0,nextSwing:0,flash:0};
+const DUEL_SWING=2400, DUEL_COUNT=3600;          /* ms per swing; countdown length */
+let _duelRingSnap=null;
+function _duelPitOpen(){   /* drop the sealed pit floor so combatants stand on the sunken turf */
+  for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++){mathesTiles[y][x]=T_GRASS;hts[y][x]=MPITY;}
+  /* wall a one-tile perimeter ring so a fighter cannot climb out of the deep pit mid-duel
+     (the pit is fully contained; OSRS-style forfeit trap doors come in a later phase) */
+  _duelRingSnap=[];
+  for(let y=MPIT.y0-1;y<=MPIT.y1+1;y++)for(let x=MPIT.x0-1;x<=MPIT.x1+1;x++){
+    if(y>=MPIT.y0&&y<=MPIT.y1&&x>=MPIT.x0&&x<=MPIT.x1)continue;          /* pit interior, skip */
+    if(y<0||x<0||y>=mathesTiles.length||x>=mathesTiles[0].length)continue;
+    _duelRingSnap.push([x,y,mathesTiles[y][x]]);
+    mathesTiles[y][x]=T_WALL;
+  }
+}
+function _duelPitSeal(){   /* re-seal the pit (tiles always; heights only while we are inside) */
+  for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++){mathesTiles[y][x]=T_WALL;if(inMathes)hts[y][x]=_mFY;}
+  if(_duelRingSnap){for(const t of _duelRingSnap)mathesTiles[t[1]][t[0]]=t[2];_duelRingSnap=null;}   /* restore the ring */
+}
+function _duelMaxhit(){
+  const w=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+  return Math.max(1,Math.floor((lvl('strength')+((w&&w.atk)||0)*2)/7)+1);
+}
+function _duelAcc(){
+  const w=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+  return clamp(0.5+(lvl('attack')+((w&&w.atk)||0)*1.5)*0.01,0.35,0.92);
+}
+function startDuel(uid,name){
+  if(!inMathes||duel.state!=='none')return;
+  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';
+  duel.side=((player.uid||'')<(uid||''))?0:1;            /* deterministic ends on both clients */
+  duel.startAt=performance.now()+DUEL_COUNT;duel.nextSwing=0;duel.flash=0;
+  _duelPitOpen();
+  const cx=Math.round((MPIT.x0+MPIT.x1)/2);
+  player.x=cx;player.y=duel.side===0?(MPIT.y0+2):(MPIT.y1-2);
+  player.px=player.x;player.py=player.y;player.path.length=0;cancelAction();
+  player.hp=maxHp();updateOrb();
+  msg('The pit floor drops away. Steel yourself - '+duel.oppName+' stands across the sand!','#7a3b12');
+}
+function duelTick(){
+  if(duel.state==='none')return;
+  if(!inMathes){endDuel('left');return;}
+  const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
+  if(!opp||((opp.in||null)!=='mathes')){endDuel('forfeit-win');return;}   /* opponent bailed */
+  const now=performance.now();
+  if(duel.state==='count'){
+    if(now>=duel.startAt){duel.state='fight';duel.nextSwing=now+400;duel.flash=now+800;}
+    return;
+  }
+  if(duel.state==='fight'){
+    const dist=Math.abs(Math.round(player.px)-Math.round(opp.px))+Math.abs(Math.round(player.py)-Math.round(opp.py));
+    if(dist<=1&&now>=duel.nextSwing){
+      duel.nextSwing=now+DUEL_SWING;
+      let dmg=0;if(Math.random()<_duelAcc())dmg=rndi(0,_duelMaxhit());
+      player.combatT=now;(dmg>0?sfx.hit:sfx.miss)();
+      if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dmg);
+    }
+  }
+}
+function applyDuelHit(dmg){     /* a blow landed on ME by my opponent */
+  if(duel.state!=='fight')return;
+  dmg=Math.max(0,dmg|0);
+  player.braceT=performance.now();
+  splats.push({ent:'player',dmg,t:performance.now()});
+  (dmg>0?sfx.hit:sfx.miss)();
+  if(dmg>0){player.hp-=dmg;player.combatT=performance.now();updateOrb();
+    if(player.hp<=0){player.hp=0;updateOrb();
+      if(typeof MP!=='undefined'&&MP.duelConcede)MP.duelConcede();
+      endDuel('lose');}}
+}
+function endDuel(reason){
+  if(duel.state==='none')return;
+  const oppName=duel.oppName||'your opponent';
+  duel.state='none';duel.flash=0;
+  _duelPitSeal();
+  player.hp=maxHp();updateOrb();
+  if(inMathes){player.x=120;player.y=MPIT.y1+4;player.px=120;player.py=player.y;player.path.length=0;cancelAction();}
+  if(reason==='win'||reason==='forfeit-win')msg('Victory! You have bested '+oppName+' in the Matthes Cage.','#1f7a2e');
+  else if(reason==='lose')msg('Defeated by '+oppName+'. You are hauled from the pit and patched up.','#9c1f1f');
+  else msg('The duel is called off.','#7a3b12');
+  duel.oppUid=null;duel.oppName='';
+  if(typeof MP!=='undefined'&&MP.duelClear)MP.duelClear();
+}
+function drawDuelOverlay(){
+  if(duel.state==='none')return;
+  const now=performance.now();let txt=null;
+  if(duel.state==='count'){const left=Math.ceil((duel.startAt-now)/1000);if(left>0)txt=String(left);}
+  if(duel.flash&&now<duel.flash)txt='FIGHT!';
+  if(!txt)return;
+  octx.save();octx.textAlign='center';octx.font='bold 52px Georgia,serif';
+  octx.fillStyle='rgba(0,0,0,0.55)';octx.fillText(txt,ow/2+2,oh*0.42+2);
+  octx.fillStyle=txt==='FIGHT!'?'#ff5a48':'#ffe14a';octx.fillText(txt,ow/2,oh*0.42);
+  octx.restore();
+}
+/* the Rector's occasional overhead call (yellow text, like the party room) */
+function drawMathesChats(){
+  if(!mathesRector)return;
+  const nowp=performance.now();
+  if(nowp>=mathesChatT){
+    mathesChatT=nowp+rnd(4500,8500);
+    mathesRector.chat=MATHES_RECTOR_LINES[Math.floor(Math.random()*MATHES_RECTOR_LINES.length)];
+    mathesRector.chatUntil=nowp+3800;
+  }
+  if(mathesRector.chat&&mathesRector.chatUntil>nowp)
+    drawSayText(mathesRector.x+0.5,mathesRector.y+0.5,3.6,mathesRector.chat);
+}
+/* interior minimap: black void + track ring + turf ditch + rector marker */
+const miniBaseMathes=document.createElement('canvas');
+miniBaseMathes.width=W*4;miniBaseMathes.height=H*4;
+(function(){
+  const g=miniBaseMathes.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,W*4,H*4);
+  for(let y=MCAGE.y0;y<=MCAGE.y1;y++)for(let x=MCAGE.x0;x<=MCAGE.x1;x++){
+    const t=mathesTiles[y][x];let c=null;
+    if(t===T_FLOOR)c='#9a4636';else if(t===T_WALL)c='#8a8278';
+    if(c){g.fillStyle=c;g.fillRect(x*4,y*4,4,4);}
+  }
+  g.fillStyle='#3f7a3a';
+  for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++)g.fillRect(x*4,y*4,4,4);
+  g.fillStyle='#d9b04a';g.fillRect(131*4,21*4,8,8);
+})();
+/* ===================== end Matthes Cage ===================== */
+
 function doDitchHop(hx,hy){
   player.x=hx;player.y=hy;player.px=hx;player.py=hy;
   player.path.length=0;clickFx(hx,hy,'#ffe600');sfx.bury();
@@ -13729,6 +14194,8 @@ function drawBar(wx,wz,h,ratio){
 function drawOverlay(now){
   octx.clearRect(0,0,ow,oh);
   if(inParty)drawPartyChats();
+  if(inMathes)drawMathesChats();
+  if(duel.state!=='none'){duelTick();drawDuelOverlay();}
   if(player.chat&&player.chatT>performance.now())drawSayText(player.px+0.5,player.py+0.5,2.35,player.chat);
   if(typeof MP!=='undefined')MP.drawOverlays();
   if(inWild(player.x,player.y)){
@@ -13865,15 +14332,16 @@ function lerpEnt(e,msPerTile,dt){
 let prevT=performance.now(),walkBlend=0;
 /* ---- split the scene: a main world group + the chapel-interior group ---- */
 const worldGroup=new THREE.Group();scene.add(worldGroup);
-let chapelProxies=[];
+let chapelProxies=[];let mathesProxies=[];
 (function partitionScene(){
   /* interiors are self-contained groups; everything else is the outdoor world.
      partition by IDENTITY (not map position) so stray forest props never leak inside. */
   for(const c of scene.children.slice()){
-    if(c===chapelGroup||c===worldGroup||c===partyGroup||c===pm.g)continue;
+    if(c===chapelGroup||c===worldGroup||c===partyGroup||c===pm.g||c===mathesGroup)continue;
     if(!(c.isMesh||c.isGroup))continue;
     const od=c.userData&&c.userData.o&&c.userData.o.def;
     if(od==='relic'||od==='chapelexit'||od==='chapeldoor')chapelGroup.add(c);
+    else if(od==='mathesexit'||(od&&od.slice(0,4)==='dig_'))mathesGroup.add(c);
     else worldGroup.add(c);
   }
   chapelProxies=proxies.filter(px=>px.userData&&px.userData.o&&
@@ -13883,6 +14351,10 @@ let chapelProxies=[];
      list so only chapelProxies (used while inChapel) can hit them. */
   for(let i=proxies.length-1;i>=0;i--){const _po=proxies[i].userData&&proxies[i].userData.o;
     if(_po&&(_po.def==='relic'||_po.def==='chapelexit'||_po.def==='chapeldoor'))proxies.splice(i,1);}
+  mathesProxies=proxies.filter(px=>px.userData&&px.userData.o&&
+    (px.userData.o.def==='mathesexit'||(px.userData.o.def&&px.userData.o.def.slice(0,4)==='dig_')));
+  for(let i=proxies.length-1;i>=0;i--){const _mo=proxies[i].userData&&proxies[i].userData.o;
+    if(_mo&&(_mo.def==='mathesexit'||(_mo.def&&_mo.def.slice(0,4)==='dig_')))proxies.splice(i,1);}
 })();
 function render(now){
   requestAnimationFrame(render);
@@ -14258,6 +14730,7 @@ setInterval(()=>{
         if(player.stamina<=0)player.run=false; updateRunOrb();}
     }else player.path.length=0;
     if(inChapel&&player.x===139&&player.y===8)exitChapel();
+    if(inMathes&&player.x===120&&player.y===43)exitMathes();
   }
   if(!_ranThisBeat&&player.stamina<100&&performance.now()-(player.combatT||0)>=3000){
     player.stamina=Math.min(100,player.stamina+(player.path.length?RUN_REGEN_WALK:RUN_REGEN_IDLE));
@@ -14521,6 +14994,19 @@ const MP = (function () {
   const trade = { active: false, withUid: null, withName: null, stage: 1, myOffer: [], theirOffer: [], myAccept: false, theirAccept: false };
   const tradeReqIn = new Map();   /* uid -> {name,t} */
   const tradeReqOut = new Map();  /* uid -> t */
+  const duelReqIn = new Map();    /* uid -> {name,t}  duel challenges received */
+  const duelReqOut = new Map();   /* uid -> t         duel challenges sent */
+  function duelChallenge(uid, name) {
+    if (!active() || !conn) return 'offline';
+    if (duel.state !== 'none') return 'busy';
+    const nm = name || ((RP.get(uid) || {}).name) || 'a challenger';
+    if (duelReqIn.has(uid)) { duelReqIn.delete(uid); duelReqOut.delete(uid); send({ t: 'dreq', to: uid }); if (typeof startDuel === 'function') startDuel(uid, nm); return 'start'; }
+    duelReqOut.set(uid, now()); send({ t: 'dreq', to: uid }); return 'sent';
+  }
+  function duelReqFrom(uid) { return duelReqIn.has(uid); }
+  function duelSwing(dmg) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0 }); }
+  function duelConcede() { if (duel.oppUid && conn) send({ t: 'dend', to: duel.oppUid }); }
+  function duelClear() { duelReqIn.clear(); duelReqOut.clear(); }
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -14545,7 +15031,7 @@ const MP = (function () {
 
   /* ---------------- connection ---------------- */
   function connect() { if (!active() || want) return; want = true; open(); }
-  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); _tradeReset(); tradeReqIn.clear(); tradeReqOut.clear(); if (typeof renderFriends === 'function') renderFriends(); if (typeof renderTrade === 'function') renderTrade(); }
+  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); _tradeReset(); tradeReqIn.clear(); tradeReqOut.clear(); duelReqIn.clear(); duelReqOut.clear(); if (typeof renderFriends === 'function') renderFriends(); if (typeof renderTrade === 'function') renderTrade(); }
   function open() {
     if (!active() || !want) return;
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
@@ -14556,7 +15042,7 @@ const MP = (function () {
       if (keepAlive) clearInterval(keepAlive);
       keepAlive = setInterval(function () {
         if (!conn) return;
-        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run });
+        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() });
         send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp() });
       }, 2000);
       if (typeof console !== 'undefined') console.log('[Milville MP]', MP_VERSION, 'connected to', wsURL());
@@ -14585,7 +15071,7 @@ const MP = (function () {
 
   /* ---------------- outbound (called from frame) ---------------- */
   function pushOutbound(t) {
-    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run }); }
+    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() }); }
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct) { lastGear = g; lastAct = a; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
@@ -15064,8 +15550,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     switch (m.t) {
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
-      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); despawn(m.uid); break; }
-      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.last = Date.now(); } break; }
+      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); duelReqIn.delete(m.uid); duelReqOut.delete(m.uid); if (duel.state !== 'none' && duel.oppUid === m.uid && typeof endDuel === 'function') endDuel('forfeit-win'); despawn(m.uid); break; }
+      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
         if (!m.uid || m.uid === player.uid) break;
@@ -15198,6 +15684,31 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (trade.active && trade.withUid === m.uid) { const nm = trade.withName; _tradeClose(); logSystem((nm || 'The other player') + ' declined the trade.'); }
         break;
       }
+      case 'dreq': {
+        if (m.to !== player.uid) break;
+        const from = m.uid; if (!from || from === player.uid) break;
+        const r = RP.get(from); const nm = (r && r.name) || 'a challenger';
+        if (duel.state !== 'none') { if (duel.oppUid !== from) send({ t: 'ddecline', to: from }); break; }
+        if (duelReqOut.has(from)) { duelReqOut.delete(from); duelReqIn.delete(from); send({ t: 'dreq', to: from }); if (typeof startDuel === 'function') startDuel(from, nm); }
+        else { duelReqIn.set(from, { name: nm, t: now() }); logSystem(nm + ' challenges you to a duel! Click them in the Cage to accept.'); }
+        break;
+      }
+      case 'ddecline': {
+        if (m.to !== player.uid) break;
+        duelReqOut.delete(m.uid); duelReqIn.delete(m.uid);
+        logSystem(((RP.get(m.uid) || {}).name || 'The challenger') + ' declined the duel.');
+        break;
+      }
+      case 'phit': {
+        if (m.to !== player.uid) break;
+        if (duel.state === 'fight' && m.uid === duel.oppUid && typeof applyDuelHit === 'function') applyDuelHit(m.dmg | 0);
+        break;
+      }
+      case 'dend': {
+        if (m.to !== player.uid) break;
+        if (duel.state !== 'none' && m.uid === duel.oppUid && typeof endDuel === 'function') endDuel('win');
+        break;
+      }
       case 'pong': break;
     }
   }
@@ -15274,7 +15785,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     for (const r of RP.values()) {
       r.moving = lerpEnt(r, r.run ? 150 : 300, dt);
       const fresh = (Date.now() - r.last) < CFG.hideMs;
-      const inView = dist1(player.px, player.py, r.px, r.py) <= CFG.viewR;
+      const inView = ((r.in||null) === curInterior()) && dist1(player.px, player.py, r.px, r.py) <= CFG.viewR;
       r.rig.g.visible = inView && fresh;
       if (!inView || !fresh) continue;
       const wx = r.px + 0.5, wz = r.py + 0.5, wy = groundH(wx, wz);
@@ -15418,7 +15929,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   /* ---------------- friends / presence ---------------- */
   function isOnline(name) { name = String(name || '').toLowerCase(); for (const r of RP.values()) if ((r.name || '').toLowerCase() === name) return true; return false; }
   function onlineList() { const out = []; for (const r of RP.values()) out.push({ uid: r.uid, name: r.name }); return out; }
-  function remoteAt(tx, ty) { for (const r of RP.values()) if (Math.round(r.px) === tx && Math.round(r.py) === ty) return r; return null; }
+  function remoteAt(tx, ty) { for (const r of RP.values()) if ((r.in||null) === curInterior() && Math.round(r.px) === tx && Math.round(r.py) === ty) return r; return null; }
   function addFriendByName(name) {
     name = String(name || '').trim(); if (!name) return false;
     player.friends = player.friends || [];
@@ -15618,6 +16129,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (!active() || !conn) return;
     for (const r of RP.values()) {
       if (Date.now() - r.last > CFG.hideMs) continue;
+      if ((r.in || null) !== curInterior()) continue;
       const mx = Math.round(r.px * 4), my = Math.round(r.py * 4);
       g.fillStyle = '#0d0b08'; g.fillRect(mx - 1, my - 1, 6, 6);
       g.fillStyle = colHex(r.tint); g.fillRect(mx, my, 4, 4);
@@ -15628,6 +16140,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     g.textAlign = 'center'; g.font = 'bold 9px Verdana,sans-serif';
     for (const r of RP.values()) {
       if (Date.now() - r.last > CFG.hideMs) continue;
+      if ((r.in || null) !== curInterior()) continue;
       const mx = (r.px + 0.5) * 6, my = (r.py + 0.5) * 6;
       g.beginPath(); g.arc(mx, my, 5, 0, 7); g.fillStyle = colHex(r.tint); g.fill();
       g.lineWidth = 1.8; g.strokeStyle = '#fff'; g.stroke();
@@ -15651,6 +16164,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
+    duelChallenge, duelReqFrom, duelSwing, duelConcede, duelClear,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
