@@ -605,6 +605,13 @@
   .tradegrid.wide{grid-template-columns:repeat(8,1fr); min-height:84px;}
   .tradeempty{color:#6f6552; font-size:11px; padding:10px 6px; text-align:center; align-self:start;}
   .tradestatus{min-height:18px; text-align:center; font:12px Verdana,sans-serif; color:#7fe07f; margin:2px 0 4px;}
+  .duelsub{font-size:12px; color:#b9b0a0; text-align:center; padding:6px 6px 9px;}
+  .duelrules{display:flex; flex-direction:column; gap:6px; margin:0 4px 8px;}
+  .duelrule{display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid #4a4334; border-radius:5px; background:#211d16; cursor:pointer; font:14px Verdana,sans-serif; color:#d8cfbf; user-select:none;}
+  .duelrule:hover{border-color:#7a6c4f; background:#272118;}
+  .duelrule .rbox{width:18px; height:18px; border:2px solid #6a5f48; border-radius:3px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:13px; line-height:1; color:#15110a;}
+  .duelrule.on{border-color:#caa23a; background:#2e2716;}
+  .duelrule.on .rbox{background:#caa23a; border-color:#caa23a;}
   .tradestatus.warn{color:#e0c24a; font-weight:bold;}
   .gebtn.tradeacc{background:#3f7a36; color:#eafbe6; flex:1;}
   .gebtn.tradeacc:hover{background:#4f9444;}
@@ -859,9 +866,23 @@
     <button class="gebtn tradedec" id="tradedecline">Decline</button>
   </div>
 </div></div>
+<div id="duelui" class="gemodal"><div class="gepanel" style="width:404px;">
+  <div class="gebar"><span id="dueltitle">Duel</span><div class="gex" id="duelclose" title="Close">&#10005;</div></div>
+  <div class="duelsub">Agree on the rules of combat, then both players Accept to begin.</div>
+  <div id="duelrules" class="duelrules"></div>
+  <div id="duelstatus" class="tradestatus"></div>
+  <div class="gefoot" style="gap:6px;">
+    <button class="gebtn tradeacc" id="duelaccept">Accept</button>
+    <button class="gebtn tradedec" id="dueldecline">Decline</button>
+  </div>
+</div></div>
 <div id="slayerui" class="gemodal"><div class="gepanel" style="width:452px;">
   <div class="gebar"><span>Slayer Rewards</span><span id="slpts"></span><div class="gex" id="slclose" title="Close">&#10005;</div></div>
   <div id="sllist" style="max-height:62vh;overflow-y:auto;padding-right:2px;"></div>
+</div></div>
+<div id="cageshopui" class="gemodal"><div class="gepanel" style="width:452px;">
+  <div class="gebar"><span>Quartermaster &mdash; Cage Rewards</span><span id="cagepts"></span><div class="gex" id="cageshopclose" title="Close">&#10005;</div></div>
+  <div id="cageshoplist" style="max-height:62vh;overflow-y:auto;padding-right:2px;"></div>
 </div></div>
 <div id="logui" class="gemodal"><div class="gepanel" style="width:496px;">
   <div class="gebar"><span>Adventurer’s Log</span><div class="gex" id="logclose" title="Close">&#10005;</div></div>
@@ -1204,6 +1225,7 @@ const OBJ_DEFS={
   dig_hebra:{name:'Mr. Hebra',action:'Examine',noBlock:true,ex:'Mr. Hebra. Nobody is entirely sure what he teaches. He out-lifts the whole wrestling team and answers most questions with a slow, knowing nod.'},
   dig_bassi:{name:'Dr. Bassi',action:'Examine',noBlock:true,ex:'Dr. Bassi, the school doctor, here to mend whatever the pit breaks. Has filed several strongly-worded memos to the Discipline Committee and is drafting the next one now.'},
   dig_chase:{name:'Mr. Chase',action:'Examine',noBlock:true,ex:'Mr. Chase, who teaches maths and coaches baseball. He watches the duels as one long word problem, quietly solving for the optimal swing.'},
+  quartermaster:{name:'Quartermaster',action:'Talk-to',noBlock:true,ex:'The Cage quartermaster \u2014 keeper of the tokens and the rewards, and the only soul down here who seems to turn a profit on all this bloodshed.'},
   furnace:{name:'Furnace',action:'Smelt-at',
     ex:'Coal-fired and hungry for ore.'},
   anvil:{name:'Anvil',action:'Smith-at',
@@ -1781,7 +1803,7 @@ addObj('chest',32,98);
 addObj('bankchest',122,19,true);addObj('bankchest',164,116,true);
 addObj('fire',93,60);
 addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
-addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',130,19,true);addObj('dig_hebra',130,20,true);addObj('dig_bassi',130,22,true);addObj('dig_chase',130,23,true);
+addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',130,19,true);addObj('dig_hebra',130,20,true);addObj('dig_bassi',130,22,true);addObj('dig_chase',130,23,true);addObj('quartermaster',114,38,true);
 addObj('furnace',128,18);addObj('anvil',130,18);
 addObj('fire',150,23);
 addObj('fire',68,44);
@@ -2947,7 +2969,7 @@ function setAction(a,tx,ty){
   if(dlg)closeDialogue();
   player.action=a;player.actTick=0;
   if(tx!==undefined){
-    const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray'||a.type==='cook'||a.type==='partylever'||a.type==='partydrops'||a.type==='popballoon')?'adj':undefined);
+    const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='datk'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray'||a.type==='cook'||a.type==='partylever'||a.type==='partydrops'||a.type==='popballoon')?'adj':undefined);
     if(!walkTo(tx,ty,mode)){player.action=null;}
   }
 }
@@ -3223,6 +3245,28 @@ function playerTick(){
     }else{r.hp-=dmg;}
     if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dmg);
     if(r.hp<=0){ mobDie(r,false); cancelAction(); }
+  }
+
+  else if(a.type==='datk'){
+    /* duel attack: identical feel to fighting a mob - walk to the opponent (the pathfinder
+       routes around any map obstacles), swing on the weapon cadence, send the hit over the wire. */
+    const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
+    if(duel.state!=='fight'||!opp||((opp.in||null)!=='mathes')){cancelAction();return;}
+    const ox=Math.round(opp.px),oy=Math.round(opp.py);
+    if(Math.max(Math.abs(ox-player.x),Math.abs(oy-player.y))>1){
+      if(!player.path.length||a.lx!==ox||a.ly!==oy){walkTo(ox,oy,'adj');a.lx=ox;a.ly=oy;}
+      return;
+    }
+    player.path.length=0;player.face=Math.sign(ox-player.x)||player.face;
+    const nowC=performance.now();
+    if(!player.nextAtk||nowC>=player.nextAtk+4000)player.nextAtk=nowC;
+    if(nowC<player.nextAtk)return;
+    player.nextAtk=nowC+2400;player.swingT=nowC;
+    let dmg=0;if(Math.random()<_duelAcc())dmg=rndi(0,_duelMaxhit());
+    splats.push({ent:opp,dmg,t:performance.now()});
+    player.combatT=performance.now();
+    (dmg>0?sfx.hit:sfx.miss)();
+    if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dmg);
   }
 
   else if(a.type==='takerelic'){
@@ -4047,6 +4091,7 @@ function itemPrimary(i){
   if(id==='logs'||id==='oak_logs'||id==='willow_logs'){lightFire(i);return;}
   if(ITEMS[id].equip){equipFromInv(i);return;}
   if(prim==='Eat'){
+    if(typeof duel!=='undefined'&&duel.state!=='none'&&duel.rules&&duel.rules.noFood){msg('No food is allowed in this duel!','#9c1f1f');return;}
     const heal=ITEMS[id].heal||3;
     removeSlot(i);player.hp=clamp(player.hp+heal,0,maxHp());updateOrb();sfx.eat();
     msg('You eat the '+ITEMS[id].name.toLowerCase()+'. It heals some health.');
@@ -4344,14 +4389,18 @@ function optionsAt(tx,ty){
   if(inParty)return partyOptionsAt(tx,ty);
   if(inMathes){
     /* inside the Cage: only interior objects are interactive - never the outdoor world beneath */
-    const io=objects.find(b=>b.x===tx&&b.y===ty&&(b.def==='mathesexit'||(b.def&&b.def.slice(0,4)==='dig_')));
+    const io=objects.find(b=>b.x===tx&&b.y===ty&&(b.def==='mathesexit'||b.def==='quartermaster'||(b.def&&b.def.slice(0,4)==='dig_')));
     if(io&&io.def==='mathesexit')opts.push(
       {html:'Leave <span class="t">Matthes Cage</span>',label:'Leave Matthes Cage',fn:()=>setAction({type:'leavemathes',o:io},io.x,io.y)},
       {html:'Examine <span class="t">Cage doors</span>',fn:()=>msg(OBJ_DEFS['mathesexit'].ex)});
+    else if(io&&io.def==='quartermaster')opts.push(
+      {html:'Talk-to <span class="t">Quartermaster</span>',label:'Talk-to Quartermaster',fn:()=>openDialogue({id:'quartermaster',name:'Quartermaster',i:0})},
+      {html:'View <span class="t">Cage rewards</span>',label:'View Cage rewards',fn:()=>openCageShop()},
+      {html:'Examine <span class="t">Quartermaster</span>',label:'Examine Quartermaster',fn:()=>msg(OBJ_DEFS['quartermaster'].ex)});
     else if(io)opts.push(
       {html:'Examine <span class="t">'+OBJ_DEFS[io.def].name+'</span>',label:'Examine '+OBJ_DEFS[io.def].name,fn:()=>msg(OBJ_DEFS[io.def].ex)});
     const _rp=(typeof MP!=='undefined'&&MP.active())?MP.remoteAt(tx,ty):null;
-    if(_rp&&duel.state==='none'){
+    if(_rp&&duel.state==='none'&&!(typeof MP!=='undefined'&&MP.duelSetupSnapshot&&MP.duelSetupSnapshot().active)){
       const _acc=(typeof MP!=='undefined'&&MP.duelReqFrom&&MP.duelReqFrom(_rp.uid));
       opts.push({html:(_acc?'Accept duel: ':'Challenge ')+'<span class="t">'+_rp.name+'</span>',label:(_acc?'Accept duel ':'Challenge ')+_rp.name,fn:()=>{
         const r=MP.duelChallenge(_rp.uid,_rp.name);
@@ -4361,6 +4410,10 @@ function optionsAt(tx,ty){
         else if(r==='offline')msg(_rp.name+' is not available to duel.','#9c1f1f');
       }});
       opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+' - a fellow contender in the Cage.','#103a8c')});
+    }
+    else if(_rp&&duel.state==='fight'&&_rp.uid===duel.oppUid){
+      opts.push({html:'Attack <span class="t">'+_rp.name+'</span>',label:'Attack '+_rp.name,fn:()=>{setAction({type:'datk'},Math.round(_rp.px),Math.round(_rp.py));if(typeof clickFx==='function')clickFx(Math.round(_rp.px),Math.round(_rp.py),'#ff4d3d');}});
+      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+' - your opponent in the pit.','#103a8c')});
     }
     return opts;
   }
@@ -6808,6 +6861,8 @@ function buildObjModel(o){
     const b2=mesh(new THREE.BoxGeometry(0.1,0.1,0.05),BOLT); b2.position.set(0.12,1.0,ZF+0.2); g.add(b2);
     const sg=mesh(new THREE.BoxGeometry(1.75,0.32,0.12),SIGN); sg.position.set(0,2.74,ZF); g.add(sg);
     addProxy(g,1.3,3.0,0,{kind:'obj',o});
+  }else if(def==='quartermaster'){
+    /* the quartermaster model + click proxy are built in buildMathesCage */
   }else if(def.slice(0,4)==='dig_'){
     /* podium dignitaries: both their model and click proxy are built in buildMathesCage */
   }else if(def==='rector'){
@@ -10808,6 +10863,9 @@ function exitPartyRoom(){
 }
 /* ===================== Party Room mechanics (Phase 2) ===================== */
 ITEMS.party_token={name:'Party token',ex:'Admits you to one round in the Party Room \u2014 heave the lever to begin the rain of balloons.',val:30000,cat:'Misc',noSell:true,stack:true,model:'token'};
+ITEMS.cage_token={name:'Cage token',ex:'A brass token stamped with crossed fists, won by victory in the Matthes Cage. The Quartermaster trades them for rewards.',cat:'Misc',noSell:true,stack:true,model:'token'};
+ITEMS.brawlers_cape={name:"Brawler's cape",ex:"A coarse crimson cape, claimed in the Matthes Cage. Purely for show \u2014 but it tells the school you have fought and won.",cat:'Misc',noSell:true,equip:{slot:'cape',def:0,model:'cape',verb:'Wear',tint:0x8a2230}};
+ITEMS.champions_cape={name:"Champion's cape",ex:"Cloth-of-gold, awarded only to those who have ruled the pit. The whole school knows what it means.",cat:'Misc',noSell:true,equip:{slot:'cape',def:0,model:'cape',verb:'Wear',tint:0xc9a23a}};
 function partyTakeOne(id){for(let i=0;i<player.inv.length;i++){const sl=player.inv[i];if(sl&&sl.id===id){if((sl.qty||1)>1)sl.qty--;else player.inv[i]=null;renderInv();return true;}}return false;}
 function partyHas(id){return player.inv.some(sl=>sl&&sl.id===id);}
 const ppick=a=>a[rndi(0,a.length-1)];
@@ -11937,6 +11995,43 @@ function renderSlayerShop(){const sl=player.slayer;const pe=document.getElementB
   if(!list.children.length){const e=document.createElement('div');e.className='sld';e.style.cssText='padding:16px;text-align:center;';e.textContent='You hold every reward already. Cull on.';list.appendChild(e);}}
 function openSlayerShop(){if(player.quests.m5.s<2){msg('The Slayer Master has no rewards for an unproven hand.','#9a6fb0');return;}slayerConfirmId=null;renderSlayerShop();const el=document.getElementById('slayerui');if(el)el.classList.add('on');}
 function closeSlayerShop(){const el=document.getElementById('slayerui');if(el)el.classList.remove('on');slayerConfirmId=null;}
+/* ---------------- Quartermaster reward shop (spends Cage tokens) ---------------- */
+const CAGE_SHOP=[
+  {id:'brawlers_cape',price:10,desc:"A coarse crimson cape that marks you out as a Cage fighter. Cosmetic \u2014 worn on the back."},
+  {id:'champions_cape',price:30,desc:"Cloth-of-gold, earned only by those who have ruled the pit. Cosmetic \u2014 the whole school knows what it means."}
+];
+let cageConfirmId=null;
+function cageMakeRow(r,onBuy,confirmKey,btnLabel,confirmLabel){
+  const row=document.createElement('div');row.className='slrow';
+  const cv=document.createElement('canvas');cv.width=32;cv.height=32;slDrawIcon(cv,r.icon);row.appendChild(cv);
+  const info=document.createElement('div');info.style.flex='1';info.innerHTML='<div class="sln"></div><div class="sld"></div>';
+  info.querySelector('.sln').textContent=r.name;info.querySelector('.sld').textContent=r.desc;row.appendChild(info);
+  const bwrap=document.createElement('div');const btn=document.createElement('div');
+  const afford=r.afford!==false;
+  if(cageConfirmId===confirmKey){btn.className='slbtn confirm';btn.textContent=confirmLabel;}
+  else if(!afford){btn.className='slbtn cant';btn.textContent=btnLabel;}
+  else{btn.className='slbtn';btn.textContent=btnLabel;}
+  btn.onclick=()=>{if(!afford){cageConfirmId=null;renderCageShop();return;}if(cageConfirmId!==confirmKey){cageConfirmId=confirmKey;renderCageShop();return;}cageConfirmId=null;onBuy();};
+  bwrap.appendChild(btn);row.appendChild(bwrap);return row;
+}
+function renderCageShop(){
+  const have=countItem('cage_token');
+  const pe=document.getElementById('cagepts');if(pe)pe.textContent=have+' token'+(have===1?'':'s');
+  const list=document.getElementById('cageshoplist');if(!list)return;list.innerHTML='';
+  for(const r of CAGE_SHOP){
+    const owned=findItem(r.id)>=0||(player.equip.cape&&player.equip.cape.id===r.id);
+    const rr={icon:r.id,name:ITEMS[r.id].name,desc:r.desc,afford:!owned&&have>=r.price};
+    list.appendChild(cageMakeRow(rr,()=>{
+        const res=buyCageReward(r.id,r.price);
+        if(res==='bought')msg('You redeem the '+ITEMS[r.id].name+' from the Quartermaster.','#caa23a');
+        else if(res==='poor')msg('You need more Cage tokens for that.','#9c1f1f');
+        else if(res==='full')msg('Your pack is full \u2014 make some room.','#9c1f1f');
+        renderCageShop();if(typeof renderInv==='function')renderInv();
+      }, r.id, owned?'Owned':('Redeem \u00b7 '+r.price+' tk'), 'Confirm? \u00b7 '+r.price+' tk'));
+  }
+}
+function openCageShop(){cageConfirmId=null;renderCageShop();const el=document.getElementById('cageshopui');if(el)el.classList.add('on');}
+function closeCageShop(){const el=document.getElementById('cageshopui');if(el)el.classList.remove('on');cageConfirmId=null;}
 function renderAdventurerLog(){
   const body=document.getElementById('logbody');if(!body)return;
   const ms=player.playMs||0;const hrs=ms/3600000;
@@ -12053,6 +12148,19 @@ function slayerTree(){
     info:{who:'npc',text:'I name a creature and a number. You cull them in the wild and return. I pay in coin and in skill \u2014 Slayer, and the strength of arms. The wild grows to meet you: never trivial, never quite hopeless.',next:'start'}};
 }
 const DIALOGUES={
+  quartermaster:()=>({
+    start:{who:'npc',text:"Welcome to the Matthes Cage, {name}. I keep the tokens, the rewards, and what passes for order down here. Looking to learn the ropes, or to spend?",opts:[
+      {label:"What is this place?",next:'about'},
+      {label:"How do duels work?",next:'how'},
+      {label:"How do I earn Cage tokens?",next:'earn'},
+      {label:"Show me the rewards.",next:()=>{closeDialogue();openCageShop();return null;}},
+      {label:"Nothing for now.",next:'bye'}
+    ]},
+    about:{who:'npc',text:"The old field house, gutted and sunk into a pit. Sixth-formers settle their scores down on the turf while the whole school looks on. The Rector calls it character-building. I call it steady work.",next:'start'},
+    how:{who:'npc',text:"Find another contender on the floor and challenge them. You agree on the rules - food, prayer, weapons, whatever's barred - and once you both accept, the floor drops open. Last one standing takes the bout. Nobody truly dies here; we patch you up and haul you out.",next:'start'},
+    earn:{who:'npc',text:"Win a bout and you earn three Cage tokens, paid the moment your opponent falls. Bring them to me and I'll see you decked out in something the rest of the school will envy.",next:'start'},
+    bye:{who:'npc',text:"The pit's always open. Mind the drop.",next:null}
+  }),
   mr_callahan:()=>(totalLevel()<PARTY_MIN_TOTAL?({start:{who:'npc',text:"Welcome, {name}! The Party Room is grand fun — but I can't turn a raw newcomer loose in here; you'd be carried off in the crush before you learned the ropes. Come back when you're a touch more seasoned: a total level of "+PARTY_MIN_TOTAL+" will see you right — you're at "+totalLevel()+" just now.",next:null}}):player.partyQuiz?({
     start:{who:'npc',text:'Welcome to the Party Room! Pull the lever and balloons rain down across the hall — but a round will cost you a Party token.',next:'ask'},
     ask:{opts:[
@@ -12821,6 +12929,13 @@ function consumeCookedFish(n){for(const f of COOKED_FISH){while(n>0&&countItem(f
 function countItem(id){
   return player.inv.reduce((a,sl)=>a+(sl&&sl.id===id?(sl.qty||1):0),0);
 }
+function buyCageReward(id,cost){
+  if(countItem('cage_token')<cost)return 'poor';
+  takeItems('cage_token',cost);
+  if(!addItem(id,1)){addItem('cage_token',cost);return 'full';}   /* refund if the pack is full */
+  if(sfx.coins)sfx.coins(); dirty=true;
+  return 'bought';
+}
 function fmtNeeds(needs){
   return needs.map(n9=>n9[1]+' '+ITEMS[n9[0]].name.toLowerCase()).join(' + ');
 }
@@ -13415,6 +13530,29 @@ function renderTrade(){
   acc.classList.toggle('on',T.myAccept);
   acc.textContent = T.myAccept ? 'Waiting for other player\u2026' : (s2?'Accept & confirm':'Accept');
 }
+const DUEL_RULES=[{key:'noFood',label:'No food'},{key:'noPrayer',label:'No prayer'},{key:'noWeapons',label:'No weapons'}];
+function renderDuelSetup(){
+  const ui=document.getElementById('duelui'); if(!ui) return;
+  const S=(typeof MP!=='undefined'&&MP.duelSetupSnapshot)?MP.duelSetupSnapshot():null;
+  if(!S||!S.active){ ui.classList.remove('on'); return; }
+  ui.classList.add('on');
+  document.getElementById('dueltitle').textContent='Duel: '+S.withName;
+  const wrap=document.getElementById('duelrules'); wrap.innerHTML='';
+  for(const r of DUEL_RULES){
+    const on=!!S.rules[r.key];
+    const row=document.createElement('div');
+    row.className='duelrule'+(on?' on':'');
+    row.innerHTML='<span class="rbox">'+(on?'\u2713':'')+'</span>'+r.label;
+    row.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.duelSetToggle)MP.duelSetToggle(r.key);});
+    wrap.appendChild(row);
+  }
+  const st=document.getElementById('duelstatus');
+  st.className='tradestatus';
+  st.textContent=S.theirAccept?(S.withName+' has accepted \u2014 Accept to begin.'):'';
+  const acc=document.getElementById('duelaccept');
+  acc.classList.toggle('on',S.myAccept);
+  acc.textContent=S.myAccept?'Waiting for opponent\u2026':'Accept';
+}
 function sellPrice(id){return Math.max(1,Math.floor((ITEMS[id].val||0)*0.4));}
 function sellSlot(i,n){
   const sl=player.inv[i];if(!sl)return;
@@ -13606,6 +13744,7 @@ function castTeleport(id){
 }
 function togglePrayer(id){
   if(TELEPORTS[id]){castTeleport(id);return;}
+  if(!prayers[id]&&typeof duel!=='undefined'&&duel.state!=='none'&&duel.rules&&duel.rules.noPrayer){msg('No prayer is allowed in this duel!','#9c1f1f');return;}
   if(!prayers[id]&&player.pray<=0){
     msg('You have no prayer points left. Pray at an altar to restore them.');return;}
   prayers[id]=!prayers[id];
@@ -13962,6 +14101,12 @@ function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
     if(f.rector)mathesRector={x:130,y:21,g:hm.g,chat:'',chatUntil:0};
     else if(f.def){const _do=objects.find(o=>o.def===f.def);if(_do)addProxy(hm.g,0.85,2.5,0,{kind:'obj',o:_do});}
   }
+  /* Quartermaster: rewards desk on the south concourse near the doors (faces +z toward the entrance) */
+  {const _qm=objects.find(o=>o.def==='quartermaster');
+   const qh=makeHumanoid({skin:0xc98a5a,shirt:0x2f4a38,pants:0x232a20,hair:0x2a2018,beard:0x35291c,skirt:0x232a20,amulet:0xb08d3a,belt:0x6a4a28,boots:0x1a1812});
+   qh.g.position.set(114.5,FY,38.5); qh.g.rotation.y=0;
+   mathesGroup.add(qh.g);
+   if(_qm)addProxy(qh.g,0.85,2.5,0,{kind:'obj',o:_qm});}
   /* wall banners along the long walls */
   for(const z of [16,22,28]){
     S(box(0.1,1.8,1.1),0x7a2230,MCAGE.x0+0.9,FY+3.1,z,0);
@@ -13986,11 +14131,12 @@ function _cageBannerTex(){
 (function buildCageBanners(){
   const FY=groundH(120,8);
   const mat=new THREE.MeshBasicMaterial({map:_cageBannerTex(),side:THREE.DoubleSide});
+  /* seat each banner flush against its wall's inner face (walls: N z=y0+0.6, S z=y1+0.4, W x=x0+0.6, E x=x1+0.4) */
   const spots=[
-    {x:108,z:MCAGE.y0+1.0,ry:0},{x:120,z:MCAGE.y0+1.0,ry:0},{x:132,z:MCAGE.y0+1.0,ry:0},
-    {x:108,z:MCAGE.y1-1.0,ry:Math.PI},{x:132,z:MCAGE.y1-1.0,ry:Math.PI},
-    {x:MCAGE.x0+1.0,z:11,ry:Math.PI/2},{x:MCAGE.x0+1.0,z:22,ry:Math.PI/2},{x:MCAGE.x0+1.0,z:33,ry:Math.PI/2},
-    {x:MCAGE.x1-1.0,z:16,ry:-Math.PI/2},{x:MCAGE.x1-1.0,z:28,ry:-Math.PI/2}
+    {x:108,z:MCAGE.y0+0.66,ry:0},{x:120,z:MCAGE.y0+0.66,ry:0},{x:132,z:MCAGE.y0+0.66,ry:0},
+    {x:108,z:MCAGE.y1+0.34,ry:Math.PI},{x:132,z:MCAGE.y1+0.34,ry:Math.PI},
+    {x:MCAGE.x0+0.66,z:11,ry:Math.PI/2},{x:MCAGE.x0+0.66,z:22,ry:Math.PI/2},{x:MCAGE.x0+0.66,z:33,ry:Math.PI/2},
+    {x:MCAGE.x1+0.34,z:16,ry:-Math.PI/2},{x:MCAGE.x1+0.34,z:28,ry:-Math.PI/2}
   ];
   for(const sp of spots){
     const ban=new THREE.Mesh(new THREE.PlaneGeometry(1.9,2.3),mat);
@@ -14023,7 +14169,7 @@ function exitMathes(){
 }
 
 /* ============================ Matthes Cage duels (Phase 1) ============================ */
-let duel={state:'none',oppUid:null,oppName:'',side:0,startAt:0,nextSwing:0,flash:0};
+let duel={state:'none',oppUid:null,oppName:'',side:0,startAt:0,nextSwing:0,flash:0,rules:{}};
 const DUEL_SWING=2400, DUEL_COUNT=3600;          /* ms per swing; countdown length */
 let _duelRingSnap=null;
 function _duelPitOpen(){   /* drop the sealed pit floor so combatants stand on the sunken turf */
@@ -14043,16 +14189,18 @@ function _duelPitSeal(){   /* re-seal the pit (tiles always; heights only while 
   if(_duelRingSnap){for(const t of _duelRingSnap)mathesTiles[t[1]][t[0]]=t[2];_duelRingSnap=null;}   /* restore the ring */
 }
 function _duelMaxhit(){
-  const w=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+  const noW=duel.rules&&duel.rules.noWeapons;
+  const w=(!noW)&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
   return Math.max(1,Math.floor((lvl('strength')+((w&&w.atk)||0)*2)/7)+1);
 }
 function _duelAcc(){
-  const w=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+  const noW=duel.rules&&duel.rules.noWeapons;
+  const w=(!noW)&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
   return clamp(0.5+(lvl('attack')+((w&&w.atk)||0)*1.5)*0.01,0.35,0.92);
 }
-function startDuel(uid,name){
+function startDuel(uid,name,rules){
   if(!inMathes||duel.state!=='none')return;
-  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';
+  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};
   duel.side=((player.uid||'')<(uid||''))?0:1;            /* deterministic ends on both clients */
   duel.startAt=performance.now()+DUEL_COUNT;duel.nextSwing=0;duel.flash=0;
   _duelPitOpen();
@@ -14069,18 +14217,10 @@ function duelTick(){
   if(!opp||((opp.in||null)!=='mathes')){endDuel('forfeit-win');return;}   /* opponent bailed */
   const now=performance.now();
   if(duel.state==='count'){
-    if(now>=duel.startAt){duel.state='fight';duel.nextSwing=now+400;duel.flash=now+800;}
+    if(now>=duel.startAt){duel.state='fight';duel.flash=now+800;msg('FIGHT! Click your opponent to attack.','#7a3b12');}
     return;
   }
-  if(duel.state==='fight'){
-    const dist=Math.abs(Math.round(player.px)-Math.round(opp.px))+Math.abs(Math.round(player.py)-Math.round(opp.py));
-    if(dist<=1&&now>=duel.nextSwing){
-      duel.nextSwing=now+DUEL_SWING;
-      let dmg=0;if(Math.random()<_duelAcc())dmg=rndi(0,_duelMaxhit());
-      player.combatT=now;(dmg>0?sfx.hit:sfx.miss)();
-      if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dmg);
-    }
-  }
+  /* Combat is now click-to-attack (the 'datk' action) with auto-retaliate - no proximity auto-swing. */
 }
 function applyDuelHit(dmg){     /* a blow landed on ME by my opponent */
   if(duel.state!=='fight')return;
@@ -14091,19 +14231,27 @@ function applyDuelHit(dmg){     /* a blow landed on ME by my opponent */
   if(dmg>0){player.hp-=dmg;player.combatT=performance.now();updateOrb();
     if(player.hp<=0){player.hp=0;updateOrb();
       if(typeof MP!=='undefined'&&MP.duelConcede)MP.duelConcede();
-      endDuel('lose');}}
+      endDuel('lose');return;}}
+  if(player.autoRetaliate!==false&&duel.state==='fight'&&!(player.action&&player.action.type==='datk')){
+    const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
+    if(opp)setAction({type:'datk'},Math.round(opp.px),Math.round(opp.py));
+  }
 }
 function endDuel(reason){
   if(duel.state==='none')return;
   const oppName=duel.oppName||'your opponent';
   duel.state='none';duel.flash=0;
+  if(player.action&&player.action.type==='datk')cancelAction();
   _duelPitSeal();
   player.hp=maxHp();updateOrb();
   if(inMathes){player.x=120;player.y=MPIT.y1+4;player.px=120;player.py=player.y;player.path.length=0;cancelAction();}
-  if(reason==='win'||reason==='forfeit-win')msg('Victory! You have bested '+oppName+' in the Matthes Cage.','#1f7a2e');
+  if(reason==='win'||reason==='forfeit-win'){
+    msg('Victory! You have bested '+oppName+' in the Matthes Cage.','#1f7a2e');
+    if(reason==='win'&&typeof addItem==='function'){addItem('cage_token',3);msg('The Quartermaster credits you 3 Cage tokens.','#caa23a');}
+  }
   else if(reason==='lose')msg('Defeated by '+oppName+'. You are hauled from the pit and patched up.','#9c1f1f');
   else msg('The duel is called off.','#7a3b12');
-  duel.oppUid=null;duel.oppName='';
+  duel.oppUid=null;duel.oppName='';duel.rules={};
   if(typeof MP!=='undefined'&&MP.duelClear)MP.duelClear();
 }
 function drawDuelOverlay(){
@@ -14161,6 +14309,9 @@ document.getElementById('bankclose').addEventListener('click',closeBank);
 {const _ta=document.getElementById('tradeaccept'); if(_ta)_ta.addEventListener('click',()=>{audio(); if(typeof MP==='undefined'||!MP.tradeAccept)return; const r=MP.tradeAccept(); if(r==='nospace')msg('You do not have enough inventory space to receive this trade.','#9c1f1f');});}
 {const _td=document.getElementById('tradedecline'); if(_td)_td.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.tradeDecline)MP.tradeDecline();});}
 {const _tx=document.getElementById('tradeclose'); if(_tx)_tx.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.tradeDecline)MP.tradeDecline();});}
+{const _da=document.getElementById('duelaccept'); if(_da)_da.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.duelSetAccept)MP.duelSetAccept();});}
+{const _dd=document.getElementById('dueldecline'); if(_dd)_dd.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.duelSetDecline)MP.duelSetDecline();});}
+{const _dx2=document.getElementById('duelclose'); if(_dx2)_dx2.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.duelSetDecline)MP.duelSetDecline();});}
 document.getElementById('banksearch').addEventListener('input',()=>{if(bankOpen)renderBank();});
 document.getElementById('geclose').addEventListener('click',closeShop);
 document.getElementById('depall').addEventListener('click',()=>{
@@ -14168,6 +14319,7 @@ document.getElementById('depall').addEventListener('click',()=>{
 bankEl.addEventListener('click',e=>{if(e.target===bankEl)closeBank();});
 geEl.addEventListener('click',e=>{if(e.target===geEl)closeShop();});
 {const slEl=document.getElementById('slayerui');if(slEl){slEl.addEventListener('click',e=>{if(e.target===slEl)closeSlayerShop();});}const slc=document.getElementById('slclose');if(slc)slc.addEventListener('click',closeSlayerShop);}
+{const csEl=document.getElementById('cageshopui');if(csEl){csEl.addEventListener('click',e=>{if(e.target===csEl)closeCageShop();});}const csc=document.getElementById('cageshopclose');if(csc)csc.addEventListener('click',closeCageShop);}
 {const logEl=document.getElementById('logui');if(logEl)logEl.addEventListener('click',e=>{if(e.target===logEl)closeLog();});
  const logC=document.getElementById('logclose');if(logC)logC.addEventListener('click',closeLog);
  const logB=document.getElementById('logbtn');if(logB)logB.addEventListener('click',openLog);const encB=document.getElementById('encybtn');if(encB)encB.addEventListener('click',openEncy);const encC=document.getElementById('encclose');if(encC)encC.addEventListener('click',closeEncy);const encX=document.getElementById('encui');if(encX)encX.addEventListener('click',e=>{if(e.target===encX)closeEncy();});const encS=document.getElementById('encsearch');if(encS)encS.addEventListener('input',()=>{encQuery=encS.value;renderEncy();});}
@@ -14317,6 +14469,7 @@ function actionTarget(){
   const a=player.action;if(!a)return null;
   if(a.type==='gather')return [a.obj.x,a.obj.y];
   if(a.type==='attack')return [a.rat.x,a.rat.y];
+  if(a.type==='datk'){const o=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;return o?[Math.round(o.px),Math.round(o.py)]:null;}
   if(a.type==='cook')return [a.fire.x,a.fire.y];
   if(a.type==='talk')return [guide.x,guide.y];
   return null;
@@ -14341,7 +14494,7 @@ let chapelProxies=[];let mathesProxies=[];
     if(!(c.isMesh||c.isGroup))continue;
     const od=c.userData&&c.userData.o&&c.userData.o.def;
     if(od==='relic'||od==='chapelexit'||od==='chapeldoor')chapelGroup.add(c);
-    else if(od==='mathesexit'||(od&&od.slice(0,4)==='dig_'))mathesGroup.add(c);
+    else if(od==='mathesexit'||od==='quartermaster'||(od&&od.slice(0,4)==='dig_'))mathesGroup.add(c);
     else worldGroup.add(c);
   }
   chapelProxies=proxies.filter(px=>px.userData&&px.userData.o&&
@@ -14352,9 +14505,9 @@ let chapelProxies=[];let mathesProxies=[];
   for(let i=proxies.length-1;i>=0;i--){const _po=proxies[i].userData&&proxies[i].userData.o;
     if(_po&&(_po.def==='relic'||_po.def==='chapelexit'||_po.def==='chapeldoor'))proxies.splice(i,1);}
   mathesProxies=proxies.filter(px=>px.userData&&px.userData.o&&
-    (px.userData.o.def==='mathesexit'||(px.userData.o.def&&px.userData.o.def.slice(0,4)==='dig_')));
+    (px.userData.o.def==='mathesexit'||px.userData.o.def==='quartermaster'||(px.userData.o.def&&px.userData.o.def.slice(0,4)==='dig_')));
   for(let i=proxies.length-1;i>=0;i--){const _mo=proxies[i].userData&&proxies[i].userData.o;
-    if(_mo&&(_mo.def==='mathesexit'||(_mo.def&&_mo.def.slice(0,4)==='dig_')))proxies.splice(i,1);}
+    if(_mo&&(_mo.def==='mathesexit'||_mo.def==='quartermaster'||(_mo.def&&_mo.def.slice(0,4)==='dig_')))proxies.splice(i,1);}
 })();
 function render(now){
   requestAnimationFrame(render);
@@ -14409,7 +14562,7 @@ function render(now){
       if(sk==='woodcutting'){showTool='axe';armR=-1.05+Math.sin(now*0.013)*0.8;}
       else if(sk==='mining'){showTool='pick';armR=-1.05+Math.sin(now*0.013)*0.8;}
       else{showTool=null;armR=-0.5+Math.sin(now*0.008)*0.25;}
-    }else if(act.type==='attack'){
+    }else if(act.type==='attack'||act.type==='datk'){
       showTool=wEq;
       const _ws=currentWeaponStyle();
       const swA=now-(player.swingT||-1e9);
@@ -14996,17 +15149,27 @@ const MP = (function () {
   const tradeReqOut = new Map();  /* uid -> t */
   const duelReqIn = new Map();    /* uid -> {name,t}  duel challenges received */
   const duelReqOut = new Map();   /* uid -> t         duel challenges sent */
+  const duelSetup = { active:false, withUid:null, withName:null, rules:{ noFood:false, noPrayer:false, noWeapons:false }, myAccept:false, theirAccept:false };
+  function _duelRulesBlank() { return { noFood:false, noPrayer:false, noWeapons:false }; }
+  function _duelSetupReset() { duelSetup.active=false; duelSetup.withUid=null; duelSetup.withName=null; duelSetup.rules=_duelRulesBlank(); duelSetup.myAccept=false; duelSetup.theirAccept=false; }
+  function _duelSetupOpen(uid, name) { duelReqIn.delete(uid); duelReqOut.delete(uid); _duelSetupReset(); duelSetup.active=true; duelSetup.withUid=uid; duelSetup.withName=name; if (typeof renderDuelSetup==='function') renderDuelSetup(); }
+  function _duelSetupClose() { _duelSetupReset(); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
+  function _duelSetupStart() { const uid=duelSetup.withUid, nm=duelSetup.withName, rules=Object.assign({},duelSetup.rules); _duelSetupClose(); if (typeof startDuel==='function') startDuel(uid, nm, rules); }
   function duelChallenge(uid, name) {
     if (!active() || !conn) return 'offline';
-    if (duel.state !== 'none') return 'busy';
+    if (duel.state !== 'none' || duelSetup.active) return 'busy';
     const nm = name || ((RP.get(uid) || {}).name) || 'a challenger';
-    if (duelReqIn.has(uid)) { duelReqIn.delete(uid); duelReqOut.delete(uid); send({ t: 'dreq', to: uid }); if (typeof startDuel === 'function') startDuel(uid, nm); return 'start'; }
+    if (duelReqIn.has(uid)) { duelReqIn.delete(uid); duelReqOut.delete(uid); send({ t: 'dreq', to: uid }); _duelSetupOpen(uid, nm); return 'start'; }
     duelReqOut.set(uid, now()); send({ t: 'dreq', to: uid }); return 'sent';
   }
   function duelReqFrom(uid) { return duelReqIn.has(uid); }
+  function duelSetToggle(key) { if (!duelSetup.active || !(key in duelSetup.rules)) return; duelSetup.rules[key] = !duelSetup.rules[key]; duelSetup.myAccept=false; duelSetup.theirAccept=false; if (conn) send({ t:'drules', to:duelSetup.withUid, rules:duelSetup.rules }); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
+  function duelSetAccept() { if (!duelSetup.active) return; duelSetup.myAccept=true; if (conn) send({ t:'dsaccept', to:duelSetup.withUid, rules:duelSetup.rules }); if (duelSetup.theirAccept) _duelSetupStart(); else if (typeof renderDuelSetup==='function') renderDuelSetup(); }
+  function duelSetDecline() { if (!duelSetup.active) return; if (conn) send({ t:'dsdecline', to:duelSetup.withUid }); _duelSetupClose(); }
+  function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
   function duelSwing(dmg) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0 }); }
   function duelConcede() { if (duel.oppUid && conn) send({ t: 'dend', to: duel.oppUid }); }
-  function duelClear() { duelReqIn.clear(); duelReqOut.clear(); }
+  function duelClear() { duelReqIn.clear(); duelReqOut.clear(); _duelSetupClose(); }
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -15031,7 +15194,7 @@ const MP = (function () {
 
   /* ---------------- connection ---------------- */
   function connect() { if (!active() || want) return; want = true; open(); }
-  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); _tradeReset(); tradeReqIn.clear(); tradeReqOut.clear(); duelReqIn.clear(); duelReqOut.clear(); if (typeof renderFriends === 'function') renderFriends(); if (typeof renderTrade === 'function') renderTrade(); }
+  function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); _tradeReset(); tradeReqIn.clear(); tradeReqOut.clear(); duelReqIn.clear(); duelReqOut.clear(); _duelSetupReset(); if (typeof renderFriends === 'function') renderFriends(); if (typeof renderTrade === 'function') renderTrade(); }
   function open() {
     if (!active() || !want) return;
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
@@ -15550,7 +15713,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     switch (m.t) {
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
-      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); duelReqIn.delete(m.uid); duelReqOut.delete(m.uid); if (duel.state !== 'none' && duel.oppUid === m.uid && typeof endDuel === 'function') endDuel('forfeit-win'); despawn(m.uid); break; }
+      case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); duelReqIn.delete(m.uid); duelReqOut.delete(m.uid); if (duel.state !== 'none' && duel.oppUid === m.uid && typeof endDuel === 'function') endDuel('forfeit-win'); if (duelSetup.active && duelSetup.withUid === m.uid) { logSystem((duelSetup.withName || 'The other player') + ' left before the duel began.'); _duelSetupClose(); } despawn(m.uid); break; }
       case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
@@ -15688,8 +15851,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (m.to !== player.uid) break;
         const from = m.uid; if (!from || from === player.uid) break;
         const r = RP.get(from); const nm = (r && r.name) || 'a challenger';
-        if (duel.state !== 'none') { if (duel.oppUid !== from) send({ t: 'ddecline', to: from }); break; }
-        if (duelReqOut.has(from)) { duelReqOut.delete(from); duelReqIn.delete(from); send({ t: 'dreq', to: from }); if (typeof startDuel === 'function') startDuel(from, nm); }
+        if (duel.state !== 'none' || duelSetup.active) { const partner = duelSetup.active ? duelSetup.withUid : duel.oppUid; if (partner !== from) send({ t: 'ddecline', to: from }); break; }
+        if (duelReqOut.has(from)) { duelReqOut.delete(from); duelReqIn.delete(from); send({ t: 'dreq', to: from }); _duelSetupOpen(from, nm); }
         else { duelReqIn.set(from, { name: nm, t: now() }); logSystem(nm + ' challenges you to a duel! Click them in the Cage to accept.'); }
         break;
       }
@@ -15697,6 +15860,27 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (m.to !== player.uid) break;
         duelReqOut.delete(m.uid); duelReqIn.delete(m.uid);
         logSystem(((RP.get(m.uid) || {}).name || 'The challenger') + ' declined the duel.');
+        break;
+      }
+      case 'drules': {
+        if (m.to !== player.uid) break;
+        if (!duelSetup.active || duelSetup.withUid !== m.uid) break;
+        if (m.rules && typeof m.rules === 'object') { for (const k in duelSetup.rules) duelSetup.rules[k] = !!m.rules[k]; }
+        duelSetup.myAccept = false; duelSetup.theirAccept = false;
+        if (typeof renderDuelSetup === 'function') renderDuelSetup();
+        break;
+      }
+      case 'dsaccept': {
+        if (m.to !== player.uid) break;
+        if (!duelSetup.active || duelSetup.withUid !== m.uid) break;
+        duelSetup.theirAccept = true;
+        if (duelSetup.myAccept) _duelSetupStart();
+        else if (typeof renderDuelSetup === 'function') renderDuelSetup();
+        break;
+      }
+      case 'dsdecline': {
+        if (m.to !== player.uid) break;
+        if (duelSetup.active && duelSetup.withUid === m.uid) { logSystem((duelSetup.withName || 'The other player') + ' called off the duel.'); _duelSetupClose(); }
         break;
       }
       case 'phit': {
@@ -16164,7 +16348,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
-    duelChallenge, duelReqFrom, duelSwing, duelConcede, duelClear,
+    duelChallenge, duelReqFrom, duelSetToggle, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelConcede, duelClear,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
