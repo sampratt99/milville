@@ -2182,7 +2182,7 @@ async function upsertSlot(id,name){
 const player={
   name:'Adventurer',partyQuiz:false,
   x:89,y:88,px:89,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
-  hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},regen:0,combatT:0,
+  hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0},
   inv:new Array(28).fill(null),
   equip:{weapon:null,shield:null,cape:null,ammo:null},kit:false,cmb:3,playMs:0,kills:0,collected:{},run:false,stamina:100,clueData:{},cluesDone:0,
@@ -3778,7 +3778,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,mapv:'sps3'};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -3936,6 +3936,7 @@ async function loadSlot(id){
       if(typeof s.run==='boolean')player.run=s.run;
       if(typeof s.kills==='number')player.kills=s.kills;
       if(s.collected)player.collected=s.collected;
+      if(s.cageMaps&&typeof s.cageMaps==='object')player.cageMaps=s.cageMaps;
       backfillCollected();
       syncSlayerUnlocks();
       syncQuestWorld();
@@ -12073,6 +12074,32 @@ function renderCageShop(){
         renderCageShop();if(typeof renderInv==='function')renderInv();
       }, r.id, owned?'Owned':('Redeem \u00b7 '+r.price+' tk'), 'Confirm? \u00b7 '+r.price+' tk'));
   }
+  /* arena map unlocks (persistent flags on player.cageMaps, not inventory items) */
+  for(const mid of DUEL_MAP_ORDER){
+    const m=DUEL_MAPS[mid];if(m.free)continue;
+    const owned=duelMapUnlocked(mid);
+    const row=document.createElement('div');row.className='slrow';
+    const cv=document.createElement('canvas');cv.width=32;cv.height=32;cageDrawMapIcon(cv,mid);row.appendChild(cv);
+    const info=document.createElement('div');info.style.flex='1';info.innerHTML='<div class="sln"></div><div class="sld"></div>';
+    info.querySelector('.sln').textContent=m.name+' arena';info.querySelector('.sld').textContent=m.blurb;row.appendChild(info);
+    const bwrap=document.createElement('div');const btn=document.createElement('div');const ck='map_'+mid;
+    const afford=!owned&&have>=m.cost;
+    if(owned){btn.className='slbtn cant';btn.textContent='Unlocked';}
+    else if(cageConfirmId===ck){btn.className='slbtn confirm';btn.textContent='Confirm? '+m.cost+' tk';}
+    else if(!afford){btn.className='slbtn cant';btn.textContent='Unlock - '+m.cost+' tk';}
+    else{btn.className='slbtn';btn.textContent='Unlock - '+m.cost+' tk';}
+    btn.onclick=()=>{
+      if(owned)return;
+      if(!afford){cageConfirmId=null;renderCageShop();return;}
+      if(cageConfirmId!==ck){cageConfirmId=ck;renderCageShop();return;}
+      cageConfirmId=null;
+      const res=buyCageMap(mid);
+      if(res==='bought')msg('You unlock the '+m.name+' arena. Choose it in the duel setup screen.','#caa23a');
+      else if(res==='poor')msg('You need more Cage tokens for that.','#9c1f1f');
+      renderCageShop();
+    };
+    bwrap.appendChild(btn);row.appendChild(bwrap);list.appendChild(row);
+  }
 }
 function openCageShop(){cageConfirmId=null;renderCageShop();const el=document.getElementById('cageshopui');if(el)el.classList.add('on');}
 function closeCageShop(){const el=document.getElementById('cageshopui');if(el)el.classList.remove('on');cageConfirmId=null;}
@@ -12974,6 +13001,35 @@ function consumeCookedFish(n){for(const f of COOKED_FISH){while(n>0&&countItem(f
 function countItem(id){
   return player.inv.reduce((a,sl)=>a+(sl&&sl.id===id?(sl.qty||1):0),0);
 }
+function cageDrawMapIcon(cv,mid){   /* a little top-down minimap of the arena: floor colour + obstacles + hazards + spawns */
+  const g=cv.getContext('2d'),cw=cv.width,ch=cv.height;
+  g.clearRect(0,0,cw,ch);
+  g.fillStyle='#1c1a17';g.fillRect(0,0,cw,ch);                                  /* dark frame */
+  const pad=2,iw=cw-pad*2,ih=ch-pad*2;
+  g.fillStyle=(mid==='snow'?'#dde7f1':mid==='lava'?'#2a2622':'#4a7a3a');g.fillRect(pad,pad,iw,ih);   /* floor */
+  const PW=MPIT.x1-MPIT.x0+1,PH=MPIT.y1-MPIT.y0+1,sx=iw/PW,sy=ih/PH;
+  const cell=(tx,ty,col)=>{g.fillStyle=col;g.fillRect(pad+(tx-MPIT.x0)*sx,pad+(ty-MPIT.y0)*sy,Math.ceil(sx),Math.ceil(sy));};
+  if(mid!=='turf'&&typeof _duelMapLayout==='function'){
+    const lay=_duelMapLayout(mid);
+    for(const h of lay.hazards)cell(h[0],h[1],'#ff5a18');                       /* lava cracks */
+    const wcol=(mid==='snow'?'#b6cee6':'#0e0b09');                              /* ice boulders/stumps vs obsidian */
+    for(const w of lay.walls)cell(w[0],w[1],wcol);
+  }
+  for(const sp of [[120,11],[120,32]]){                                          /* the two spawns */
+    g.fillStyle='#e8d27a';g.beginPath();
+    g.arc(pad+(sp[0]-MPIT.x0)*sx+sx/2,pad+(sp[1]-MPIT.y0)*sy+sy/2,Math.max(1.4,sx*0.7),0,6.2832);g.fill();
+  }
+}
+function buyCageMap(mapId){
+  const m=DUEL_MAPS[mapId];if(!m||m.free)return 'no';
+  player.cageMaps=player.cageMaps||{};
+  if(player.cageMaps[mapId])return 'owned';
+  if(countItem('cage_token')<m.cost)return 'poor';
+  takeItems('cage_token',m.cost);
+  player.cageMaps[mapId]=true;dirty=true;
+  if(sfx.coins)sfx.coins();
+  return 'bought';
+}
 function buyCageReward(id,cost){
   if(countItem('cage_token')<cost)return 'poor';
   takeItems('cage_token',cost);
@@ -13590,6 +13646,27 @@ function renderDuelSetup(){
     row.innerHTML='<span class="rbox">'+(on?'\u2713':'')+'</span>'+r.label;
     row.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.duelSetToggle)MP.duelSetToggle(r.key);});
     wrap.appendChild(row);
+  }
+  {
+    const mid=(S.rules.mapId&&DUEL_MAPS[S.rules.mapId])?S.rules.mapId:'turf';
+    const md=DUEL_MAPS[mid];
+    const ar=document.createElement('div');
+    ar.style.cssText='margin:6px 0 2px;padding:7px 8px;border:1px solid #5a4a32;border-radius:6px;background:rgba(40,32,20,0.5);';
+    const btnCss='width:30px;height:34px;border:1px solid #6b5836;border-radius:5px;background:#3a2f1d;color:#f0e6d2;font-size:13px;cursor:pointer;flex:none;';
+    const top=document.createElement('div');top.style.cssText='display:flex;align-items:center;gap:8px;';
+    const pv=document.createElement('button');pv.innerHTML='&#9664;';pv.style.cssText=btnCss;
+    const nx=document.createElement('button');nx.innerHTML='&#9654;';nx.style.cssText=btnCss;
+    const ctr=document.createElement('div');ctr.style.cssText='flex:1;display:flex;align-items:center;justify-content:center;gap:8px;';
+    const ic=document.createElement('canvas');ic.width=32;ic.height=36;ic.style.cssText='flex:none;border-radius:3px;';
+    if(typeof cageDrawMapIcon==='function')cageDrawMapIcon(ic,mid);
+    const nm=document.createElement('div');nm.textContent=md.name;nm.style.cssText='font-weight:bold;color:#f3ead4;font-size:14px;';
+    ctr.appendChild(ic);ctr.appendChild(nm);
+    top.appendChild(pv);top.appendChild(ctr);top.appendChild(nx);
+    const bl=document.createElement('div');bl.textContent=md.blurb;bl.style.cssText='font-size:11px;color:#b9ad95;text-align:center;margin-top:5px;line-height:1.3;';
+    ar.appendChild(top);ar.appendChild(bl);
+    wrap.appendChild(ar);
+    pv.addEventListener('click',()=>{audio();if(typeof MP!=='undefined'&&MP.duelSetCycleMap)MP.duelSetCycleMap(-1);});
+    nx.addEventListener('click',()=>{audio();if(typeof MP!=='undefined'&&MP.duelSetCycleMap)MP.duelSetCycleMap(1);});
   }
   const st=document.getElementById('duelstatus');
   st.className='tradestatus';
@@ -14224,6 +14301,121 @@ function exitMathes(){
 /* ============================ Matthes Cage duels (Phase 1) ============================ */
 let duel={state:'none',oppUid:null,oppName:'',side:0,startAt:0,nextSwing:0,flash:0,rules:{}};
 const DUEL_SWING=2400, DUEL_COUNT=3600;          /* ms per swing; countdown length */
+/* ===================== Matthes Cage - PvP arena maps =====================
+   A duel may be fought on one of several arena maps. The map is one more agreed duel
+   condition: it rides in duel.rules.mapId and syncs over the same drules packet as the
+   other rules. On FIGHT the pit transforms - obstacle tiles become T_WALL, walkable
+   hazard tiles are tracked in _duelHazardSet, and a fresh mesh group (mathesDuelGroup,
+   parented to mathesGroup and seated on the pit floor) holds the floor/decor/obstacle
+   meshes. On end it all restores and the group is disposed: the same snapshot-and-
+   teardown discipline the pit ring already uses, widened from a ring to the whole pit.
+   Turf is the free default (no overrides, no meshes). Snow + Lava are unlocked from
+   Todd for Cage tokens (player.cageMaps) and chosen on the duel setup screen. */
+const DUEL_MAPS={
+  turf:{id:'turf',name:'Turf',cost:0,free:true,blurb:'The classic sunken turf: bare ground, no cover, no tricks.'},
+  snow:{id:'snow',name:'Snowfield',cost:25,blurb:'White drifts with ice boulders and pine stumps for cover, plus frozen ponds underfoot.'},
+  lava:{id:'lava',name:'Lava Cavern',cost:40,hazard:true,blurb:'Black basalt and obsidian pillars, veined with glowing lava cracks that burn the careless.'}
+};
+const DUEL_MAP_ORDER=['turf','snow','lava'];
+function duelMapUnlocked(id){return true;/* PILOT: all arenas free for now; restore -> return id==='turf'||!!(player.cageMaps&&player.cageMaps[id]); */}
+
+let mathesDuelGroup=null;     /* THREE.Group of the active map's meshes (null on turf / no duel) */
+let _duelHazardSet=null;      /* Set of "x,y" walkable tiles that burn, checked in duelTick */
+let _duelMapDyn=null;         /* {lava:[...], snow:[...]} meshes animated per frame */
+let _duelMapTileSnap=null;    /* [[x,y,tile]...] originals of map tile overrides, for restore */
+
+/* obstacle (wall) + hazard tiles, authored for the north half then mirrored across the
+   pit centre-line so neither spawn is favoured. The central column (x=120) is always
+   left open, guaranteeing a clear path between the two spawns (no soft-lock). */
+function _duelMapLayout(id){
+  const cy=MPIT.y0+MPIT.y1;                 /* y mirror: y' = cy - y */
+  const out={walls:[],hazards:[]};
+  const add=(arr,x,y)=>{arr.push([x,y]);const my=cy-y;if(my!==y)arr.push([x,my]);};
+  if(id==='snow'){
+    add(out.walls,114,17);add(out.walls,126,17);     /* ice boulders (4 incl. mirror) */
+    add(out.walls,116,19);add(out.walls,124,19);     /* pine stumps  (4 incl. mirror) */
+  }else if(id==='lava'){
+    add(out.walls,115,15);add(out.walls,125,15);      /* obsidian pillars */
+    for(const x of [117,118,119,121,122,123])add(out.hazards,x,20);   /* lava line, safe gap at x=120 */
+  }
+  return out;
+}
+
+function _duelMapApply(){
+  const id=(duel.rules&&duel.rules.mapId)||'turf';
+  _duelHazardSet=null;_duelMapTileSnap=null;_duelMapDyn=null;
+  if(id==='turf'||!DUEL_MAPS[id])return;                 /* turf = the bare pit, nothing to do */
+  const lay=_duelMapLayout(id);
+  _duelMapTileSnap=[];
+  for(const w of lay.walls){const x=w[0],y=w[1];if(y<MPIT.y0||y>MPIT.y1||x<MPIT.x0||x>MPIT.x1)continue;_duelMapTileSnap.push([x,y,mathesTiles[y][x]]);mathesTiles[y][x]=T_WALL;}
+  if(lay.hazards.length){_duelHazardSet=new Set();for(const h of lay.hazards){const x=h[0],y=h[1];if(y<MPIT.y0||y>MPIT.y1||x<MPIT.x0||x>MPIT.x1)continue;_duelHazardSet.add(x+','+y);}}
+  if(typeof THREE==='undefined'||typeof mathesGroup==='undefined'||!mathesGroup)return;
+  mathesDuelGroup=new THREE.Group();
+  _duelMapDyn={lava:[],snow:[]};
+  if(id==='snow')_duelBuildSnow(mathesDuelGroup,lay);
+  else if(id==='lava')_duelBuildLava(mathesDuelGroup,lay);
+  mathesGroup.add(mathesDuelGroup);
+}
+
+function _duelMapClear(){
+  if(_duelMapTileSnap){for(const t of _duelMapTileSnap)mathesTiles[t[1]][t[0]]=t[2];_duelMapTileSnap=null;}
+  _duelHazardSet=null;_duelMapDyn=null;
+  if(mathesDuelGroup){
+    mathesDuelGroup.traverse(o=>{if(o.geometry&&o.geometry.dispose)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];for(const mm of ms)if(mm&&mm.dispose)mm.dispose();}});
+    if(mathesDuelGroup.parent)mathesDuelGroup.parent.remove(mathesDuelGroup);
+    mathesDuelGroup=null;
+  }
+}
+
+function _duelBuildSnow(G,lay){
+  const FY=MPITY,W=MPIT.x1-MPIT.x0+1,D=MPIT.y1-MPIT.y0+1;
+  const cx=(MPIT.x0+MPIT.x1)/2+0.5,cz=(MPIT.y0+MPIT.y1)/2+0.5;
+  const mk=(geo,mat,x,y,z,ry)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);if(ry)m.rotation.y=ry;G.add(m);return m;};
+  mk(new THREE.BoxGeometry(W,0.12,D),new THREE.MeshLambertMaterial({color:0xe9eef5}),cx,FY+0.08,cz);                 /* packed-snow floor */
+  const drift=new THREE.MeshLambertMaterial({color:0xf5f9fd});
+  for(const d of [[111,12],[129,31],[111,31],[129,12],[120,21],[118,14],[122,29]]){const s=0.85+((d[0]*7+d[1])%5)*0.16;const m=mk(new THREE.SphereGeometry(s,10,8),drift,d[0]+0.5,FY+0.08,d[1]+0.5);m.scale.y=0.32;}
+  const iceMat=new THREE.MeshPhongMaterial({color:0xc2d9ee,shininess:95,specular:0x6e90b4,transparent:true,opacity:0.88});
+  for(const p of [[112,13],[128,30]])mk(new THREE.CylinderGeometry(2.0,2.0,0.06,22),iceMat,p[0]+0.5,FY+0.12,p[1]+0.5);   /* frozen ponds */
+  const iceRock=new THREE.MeshPhongMaterial({color:0xd2e3f3,shininess:80,specular:0x90b2d2,transparent:true,opacity:0.94});
+  const bark=new THREE.MeshLambertMaterial({color:0x5a3d24}),cap=new THREE.MeshLambertMaterial({color:0xf7fbff});
+  for(let i=0;i<lay.walls.length;i++){const wx=lay.walls[i][0]+0.5,wz=lay.walls[i][1]+0.5;
+    if(i<4){const r=0.72+((i*3)%2)*0.12;const m=mk(new THREE.IcosahedronGeometry(r,0),iceRock,wx,FY+r*0.7,wz,i*1.27);m.scale.set(1.12,0.92,1.0);mk(new THREE.IcosahedronGeometry(r*0.5,0),cap,wx,FY+r*1.2,wz,i*0.7);}  /* ice boulder + snow cap */
+    else{mk(new THREE.CylinderGeometry(0.42,0.52,1.0,9),bark,wx,FY+0.5,wz,0);mk(new THREE.CylinderGeometry(0.54,0.54,0.12,9),cap,wx,FY+1.04,wz,0);}                                                            /* pine stump + snow cap */
+  }
+  const fl=new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.85});
+  for(let i=0;i<64;i++){const m=mk(new THREE.SphereGeometry(0.05,4,4),fl,MPIT.x0+Math.random()*W,FY+0.3+Math.random()*5.2,MPIT.y0+Math.random()*D);m.userData.fall=0.55+Math.random()*0.8;m.userData.sway=Math.random()*6.28;_duelMapDyn.snow.push(m);}  /* falling snow */
+}
+
+function _duelBuildLava(G,lay){
+  const FY=MPITY,W=MPIT.x1-MPIT.x0+1,D=MPIT.y1-MPIT.y0+1;
+  const cx=(MPIT.x0+MPIT.x1)/2+0.5,cz=(MPIT.y0+MPIT.y1)/2+0.5;
+  const mk=(geo,mat,x,y,z,ry)=>{const m=new THREE.Mesh(geo,mat);m.position.set(x,y,z);if(ry)m.rotation.y=ry;G.add(m);return m;};
+  mk(new THREE.BoxGeometry(W,0.12,D),new THREE.MeshLambertMaterial({color:0x2a2622}),cx,FY+0.08,cz);                  /* basalt floor */
+  const rub=new THREE.MeshLambertMaterial({color:0x38322b});
+  for(const r of [[112,12],[128,31],[112,31],[128,12],[114,23],[126,20]]){const s=0.45+((r[0]+r[1])%3)*0.13;const m=mk(new THREE.DodecahedronGeometry(s,0),rub,r[0]+0.5,FY+s*0.4,r[1]+0.5,r[0]);m.scale.y=0.6;}                          /* cooled rubble */
+  const crust=new THREE.MeshLambertMaterial({color:0x130c09});
+  if(_duelHazardSet)for(const key of _duelHazardSet){const xy=key.split(',');const hx=+xy[0]+0.5,hz=+xy[1]+0.5;
+    mk(new THREE.BoxGeometry(1.0,0.06,1.0),crust,hx,FY+0.10,hz);
+    const m=mk(new THREE.BoxGeometry(0.8,0.05,0.8),new THREE.MeshBasicMaterial({color:0xff5a18}),hx,FY+0.13,hz);m.userData.glow=1;_duelMapDyn.lava.push(m);}    /* glowing lava cracks */
+  const obs=new THREE.MeshPhongMaterial({color:0x15110f,shininess:120,specular:0x5a3522,emissive:0x180905});
+  for(const w of lay.walls){const wx=w[0]+0.5,wz=w[1]+0.5,h=2.4+((w[0]*3+w[1])%3)*0.3;
+    mk(new THREE.CylinderGeometry(0.46,0.62,h,6),obs,wx,FY+h/2,wz,(w[0]%2)*0.5);
+    const e=mk(new THREE.CylinderGeometry(0.66,0.72,0.10,6),new THREE.MeshBasicMaterial({color:0xff6a22,transparent:true,opacity:0.55}),wx,FY+0.09,wz,0);e.userData.glow=0.55;_duelMapDyn.lava.push(e);}   /* obsidian pillar + ember base */
+  const em=new THREE.MeshBasicMaterial({color:0xff7a2a,transparent:true,opacity:0.9});
+  for(let i=0;i<44;i++){const m=mk(new THREE.SphereGeometry(0.045,4,4),em,MPIT.x0+Math.random()*W,FY+0.2+Math.random()*4,MPIT.y0+Math.random()*D);m.userData.rise=0.5+Math.random()*0.9;m.userData.flick=Math.random()*6.28;_duelMapDyn.lava.push(m);}   /* rising embers */
+}
+
+function duelMapAnimate(now){
+  if(!_duelMapDyn)return;
+  const t=now*0.001;
+  if(_duelMapDyn.lava)for(const m of _duelMapDyn.lava){const u=m.userData;
+    if(u.glow!==undefined){const p=0.72+0.28*Math.sin(t*2.3+m.position.x+m.position.z);if(m.material&&m.material.opacity!==undefined)m.material.opacity=Math.min(1,u.glow*p+0.18);m.scale.setScalar(0.92+0.1*Math.sin(t*3.1+m.position.x));}
+    else if(u.rise!==undefined){m.position.y+=u.rise*0.02;m.position.x+=Math.sin(t*2+u.flick)*0.004;if(m.position.y>MPITY+4.6)m.position.y=MPITY+0.2;}
+  }
+  if(_duelMapDyn.snow)for(const m of _duelMapDyn.snow){const u=m.userData;m.position.y-=u.fall*0.02;m.position.x+=Math.sin(t*1.5+u.sway)*0.004;if(m.position.y<MPITY+0.2)m.position.y=MPITY+5.2;}
+}
+/* ===================== end PvP arena maps ===================== */
+
 let _duelRingSnap=null;
 function _duelPitOpen(){   /* drop the sealed pit floor so combatants stand on the sunken turf */
   for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++){mathesTiles[y][x]=T_GRASS;hts[y][x]=MPITY;}
@@ -14236,8 +14428,10 @@ function _duelPitOpen(){   /* drop the sealed pit floor so combatants stand on t
     _duelRingSnap.push([x,y,mathesTiles[y][x]]);
     mathesTiles[y][x]=T_WALL;
   }
+  _duelMapApply();   /* transform the bare pit into the chosen arena map (turf = no-op) */
 }
 function _duelPitSeal(){   /* re-seal the pit (tiles always; heights only while we are inside) */
+  _duelMapClear();          /* tear down any arena map (restore tiles, dispose meshes) first */
   for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++){mathesTiles[y][x]=T_WALL;if(inMathes)hts[y][x]=_mFY;}
   if(_duelRingSnap){for(const t of _duelRingSnap)mathesTiles[t[1]][t[0]]=t[2];_duelRingSnap=null;}   /* restore the ring */
 }
@@ -14275,6 +14469,17 @@ function duelTick(){
     return;
   }
   /* Combat is now click-to-attack (the 'datk' action) with auto-retaliate - no proximity auto-swing. */
+  /* lava-map hazard: standing on a glowing crack burns you (local only; each client burns its own
+     fighter, and a lava death concedes the bout). Ignores the No-food rule by design. */
+  if(duel.state==='fight'&&_duelHazardSet&&_duelHazardSet.has(player.x+','+player.y)){
+    if(now-(duel._hazT||0)>=600){
+      duel._hazT=now;
+      const dmg=2+rndi(0,2);
+      player.hp=Math.max(0,player.hp-dmg);player.combatT=now;
+      splats.push({ent:'player',dmg,t:now});if(sfx.hit)sfx.hit();updateOrb();
+      if(player.hp<=0){player.hp=0;updateOrb();if(typeof MP!=='undefined'&&MP.duelConcede)MP.duelConcede();endDuel('lose');return;}
+    }
+  }
 }
 function applyDuelHit(dmg){     /* a blow landed on ME by my opponent */
   if(duel.state!=='fight')return;
@@ -14408,6 +14613,7 @@ function drawOverlay(now){
   if(inParty)drawPartyChats();
   if(inMathes)drawMathesChats();
   if(duel.state!=='none'){duelTick();drawDuelOverlay();}
+  if(mathesDuelGroup)duelMapAnimate(now);
   if(player.chat&&player.chatT>performance.now())drawSayText(player.px+0.5,player.py+0.5,2.35,player.chat);
   if(typeof MP!=='undefined')MP.drawOverlays();
   if(inWild(player.x,player.y)){
@@ -15210,8 +15416,8 @@ const MP = (function () {
   const tradeReqOut = new Map();  /* uid -> t */
   const duelReqIn = new Map();    /* uid -> {name,t}  duel challenges received */
   const duelReqOut = new Map();   /* uid -> t         duel challenges sent */
-  const duelSetup = { active:false, withUid:null, withName:null, rules:{ noFood:false, noPrayer:false, noWeapons:false }, myAccept:false, theirAccept:false };
-  function _duelRulesBlank() { return { noFood:false, noPrayer:false, noWeapons:false }; }
+  const duelSetup = { active:false, withUid:null, withName:null, rules:{ noFood:false, noPrayer:false, noWeapons:false, mapId:'turf' }, myAccept:false, theirAccept:false };
+  function _duelRulesBlank() { return { noFood:false, noPrayer:false, noWeapons:false, mapId:'turf' }; }
   function _duelSetupReset() { duelSetup.active=false; duelSetup.withUid=null; duelSetup.withName=null; duelSetup.rules=_duelRulesBlank(); duelSetup.myAccept=false; duelSetup.theirAccept=false; }
   function _duelSetupOpen(uid, name) { duelReqIn.delete(uid); duelReqOut.delete(uid); _duelSetupReset(); duelSetup.active=true; duelSetup.withUid=uid; duelSetup.withName=name; if (typeof renderDuelSetup==='function') renderDuelSetup(); }
   function _duelSetupClose() { _duelSetupReset(); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
@@ -15224,7 +15430,8 @@ const MP = (function () {
     duelReqOut.set(uid, now()); send({ t: 'dreq', to: uid }); return 'sent';
   }
   function duelReqFrom(uid) { return duelReqIn.has(uid); }
-  function duelSetToggle(key) { if (!duelSetup.active || !(key in duelSetup.rules)) return; duelSetup.rules[key] = !duelSetup.rules[key]; duelSetup.myAccept=false; duelSetup.theirAccept=false; if (conn) send({ t:'drules', to:duelSetup.withUid, rules:duelSetup.rules }); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
+  function duelSetToggle(key) { if (!duelSetup.active || !(key in duelSetup.rules) || key==='mapId') return; duelSetup.rules[key] = !duelSetup.rules[key]; duelSetup.myAccept=false; duelSetup.theirAccept=false; if (conn) send({ t:'drules', to:duelSetup.withUid, rules:duelSetup.rules }); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
+  function duelSetCycleMap(dir){ if(!duelSetup.active)return; const avail=DUEL_MAP_ORDER.filter(id=>id==='turf'||(typeof duelMapUnlocked==='function'&&duelMapUnlocked(id))); if(avail.length<=1)return; let i=avail.indexOf(duelSetup.rules.mapId); if(i<0)i=0; i=(i+dir+avail.length)%avail.length; duelSetup.rules.mapId=avail[i]; duelSetup.myAccept=false; duelSetup.theirAccept=false; if(conn)send({t:'drules',to:duelSetup.withUid,rules:duelSetup.rules}); if(typeof renderDuelSetup==='function')renderDuelSetup(); }
   function duelSetAccept() { if (!duelSetup.active) return; duelSetup.myAccept=true; if (conn) send({ t:'dsaccept', to:duelSetup.withUid, rules:duelSetup.rules }); if (duelSetup.theirAccept) _duelSetupStart(); else if (typeof renderDuelSetup==='function') renderDuelSetup(); }
   function duelSetDecline() { if (!duelSetup.active) return; if (conn) send({ t:'dsdecline', to:duelSetup.withUid }); _duelSetupClose(); }
   function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
@@ -15927,7 +16134,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'drules': {
         if (m.to !== player.uid) break;
         if (!duelSetup.active || duelSetup.withUid !== m.uid) break;
-        if (m.rules && typeof m.rules === 'object') { for (const k in duelSetup.rules) duelSetup.rules[k] = !!m.rules[k]; }
+        if (m.rules && typeof m.rules === 'object') { for (const k in duelSetup.rules) if(k!=='mapId') duelSetup.rules[k] = !!m.rules[k]; duelSetup.rules.mapId = (typeof m.rules.mapId==='string' && DUEL_MAPS[m.rules.mapId]) ? m.rules.mapId : 'turf'; }
         duelSetup.myAccept = false; duelSetup.theirAccept = false;
         if (typeof renderDuelSetup === 'function') renderDuelSetup();
         break;
@@ -16422,7 +16629,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
-    duelChallenge, duelReqFrom, duelSetToggle, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelConcede, duelClear,
+    duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelConcede, duelClear,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
