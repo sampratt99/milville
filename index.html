@@ -10326,13 +10326,43 @@ function syncGroundItems(){
 }
 
 /* ----------------------------- picking ---------------------------- */
-const _rc=new THREE.Raycaster(),_ndc=new THREE.Vector2();
+const _rc=new THREE.Raycaster(),_ndc=new THREE.Vector2(),_pitPlane=new THREE.Plane(new THREE.Vector3(0,1,0),0),_pitHit=new THREE.Vector3(),_dProj=new THREE.Vector3();
+/* During a Cage duel the fighters stand on the sunken pit floor (MPITY), far below the flat
+   terrain plane the normal raycast uses - so the opponent and the forfeit trapdoors are picked in
+   SCREEN space (their true 3D position projected to pixels), which is immune to the pit depth. */
+function _duelScreenPick(cx,cy,r){
+  const proj=(wx,wy,wz)=>{_dProj.set(wx,wy,wz).project(camera);return {x:r.left+(_dProj.x*0.5+0.5)*r.width,y:r.top+(-_dProj.y*0.5+0.5)*r.height,inFront:_dProj.z<1};};
+  if(duel.state==='fight'){
+    const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
+    if(opp){
+      const g=(opp.rig&&opp.rig.g)?opp.rig.g.position:null;
+      const wx=g?g.x:opp.px+0.5, wy=(g?g.y:MPITY)+1.1, wz=g?g.z:opp.py+0.5;
+      const sp=proj(wx,wy,wz);
+      if(sp.inFront&&Math.hypot(cx-sp.x,cy-sp.y)<=62)return {tx:Math.round(opp.px),ty:Math.round(opp.py),wp:new THREE.Vector3(wx,MPITY,wz)};
+    }
+  }
+  let best=null,bd=1e9;
+  for(const td of [[120,10],[120,33]]){
+    const sp=proj(td[0]+0.5,MPITY+0.25,td[1]+0.5);
+    if(!sp.inFront)continue;const d=Math.hypot(cx-sp.x,cy-sp.y);
+    if(d<=48&&d<bd){bd=d;best={tx:td[0],ty:td[1],wp:new THREE.Vector3(td[0]+0.5,MPITY,td[1]+0.5)};}
+  }
+  return best;
+}
 function castPick(ev){
   const r=view.getBoundingClientRect();
   if(r.width<2||r.height<2)return null;
   _ndc.x=((ev.clientX-r.left)/r.width)*2-1;
   _ndc.y=-((ev.clientY-r.top)/r.height)*2+1;
   _rc.setFromCamera(_ndc,camera);
+  /* duel in the pit: screen-pick the opponent / trapdoors, else resolve a move on the pit floor */
+  if(inMathes&&(duel.state==='count'||duel.state==='fight')){
+    const dp=_duelScreenPick(ev.clientX,ev.clientY,r);
+    if(dp)return dp;
+    _pitPlane.constant=-MPITY;
+    if(_rc.ray.intersectPlane(_pitPlane,_pitHit))return {tx:clamp(Math.floor(_pitHit.x),0,W-1),ty:clamp(Math.floor(_pitHit.z),0,H-1),wp:_pitHit.clone(),terrain:true};
+    return null;
+  }
   const hits=_rc.intersectObjects(inMathes?mathesProxies:(inParty?[]:(inChapel?chapelProxies:proxies)),false).filter(h=>{
     const d=h.object.userData;
     if(d.kind==='rat')return d.r.alive;
