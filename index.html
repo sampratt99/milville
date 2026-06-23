@@ -14323,17 +14323,19 @@ let mathesDuelGroup=null;     /* THREE.Group of the active map's meshes (null on
 let _duelHazardSet=null;      /* Set of "x,y" walkable tiles that burn, checked in duelTick */
 let _duelMapDyn=null;         /* {lava:[...], snow:[...]} meshes animated per frame */
 let _duelMapTileSnap=null;    /* [[x,y,tile]...] originals of map tile overrides, for restore */
+let _duelIceSet=null;         /* Set of "x,y" slippery ice tiles (snow rink), checked on movement */
 
 /* obstacle (wall) + hazard tiles, authored for the north half then mirrored across the
    pit centre-line so neither spawn is favoured. The central column (x=120) is always
    left open, guaranteeing a clear path between the two spawns (no soft-lock). */
 function _duelMapLayout(id){
   const cy=MPIT.y0+MPIT.y1;                 /* y mirror: y' = cy - y */
-  const out={walls:[],hazards:[]};
+  const out={walls:[],hazards:[],ice:[]};
   const add=(arr,x,y)=>{arr.push([x,y]);const my=cy-y;if(my!==y)arr.push([x,my]);};
   if(id==='snow'){
     add(out.walls,114,17);add(out.walls,126,17);     /* ice boulders (4 incl. mirror) */
     add(out.walls,116,19);add(out.walls,124,19);     /* pine stumps  (4 incl. mirror) */
+    for(let y=19;y<=24;y++)for(let x=118;x<=122;x++)out.ice.push([x,y]);   /* central frozen rink (already symmetric): slip across it */
   }else if(id==='lava'){
     add(out.walls,115,15);add(out.walls,125,15);      /* obsidian pillars */
     for(const x of [117,118,119,121,122,123])add(out.hazards,x,20);   /* lava line, safe gap at x=120 */
@@ -14343,23 +14345,25 @@ function _duelMapLayout(id){
 
 function _duelMapApply(){
   const id=(duel.rules&&duel.rules.mapId)||'turf';
-  _duelHazardSet=null;_duelMapTileSnap=null;_duelMapDyn=null;
+  _duelHazardSet=null;_duelMapTileSnap=null;_duelMapDyn=null;_duelIceSet=null;
   if(id==='turf'||!DUEL_MAPS[id])return;                 /* turf = the bare pit, nothing to do */
   const lay=_duelMapLayout(id);
   _duelMapTileSnap=[];
   for(const w of lay.walls){const x=w[0],y=w[1];if(y<MPIT.y0||y>MPIT.y1||x<MPIT.x0||x>MPIT.x1)continue;_duelMapTileSnap.push([x,y,mathesTiles[y][x]]);mathesTiles[y][x]=T_WALL;}
   if(lay.hazards.length){_duelHazardSet=new Set();for(const h of lay.hazards){const x=h[0],y=h[1];if(y<MPIT.y0||y>MPIT.y1||x<MPIT.x0||x>MPIT.x1)continue;_duelHazardSet.add(x+','+y);}}
+  if(lay.ice&&lay.ice.length){_duelIceSet=new Set();for(const t of lay.ice){const x=t[0],y=t[1];if(y<MPIT.y0||y>MPIT.y1||x<MPIT.x0||x>MPIT.x1)continue;_duelIceSet.add(x+','+y);}}
   if(typeof THREE==='undefined'||typeof mathesGroup==='undefined'||!mathesGroup)return;
   mathesDuelGroup=new THREE.Group();
   _duelMapDyn={lava:[],snow:[]};
   if(id==='snow')_duelBuildSnow(mathesDuelGroup,lay);
   else if(id==='lava')_duelBuildLava(mathesDuelGroup,lay);
+  _duelBuildTrapdoors(mathesDuelGroup);   /* redraw the forfeit grates ON TOP of the new floor (the baked ones sit beneath it) */
   mathesGroup.add(mathesDuelGroup);
 }
 
 function _duelMapClear(){
   if(_duelMapTileSnap){for(const t of _duelMapTileSnap)mathesTiles[t[1]][t[0]]=t[2];_duelMapTileSnap=null;}
-  _duelHazardSet=null;_duelMapDyn=null;
+  _duelHazardSet=null;_duelMapDyn=null;_duelIceSet=null;
   if(mathesDuelGroup){
     mathesDuelGroup.traverse(o=>{if(o.geometry&&o.geometry.dispose)o.geometry.dispose();if(o.material){const ms=Array.isArray(o.material)?o.material:[o.material];for(const mm of ms)if(mm&&mm.dispose)mm.dispose();}});
     if(mathesDuelGroup.parent)mathesDuelGroup.parent.remove(mathesDuelGroup);
@@ -14374,8 +14378,14 @@ function _duelBuildSnow(G,lay){
   mk(new THREE.BoxGeometry(W,0.12,D),new THREE.MeshLambertMaterial({color:0xe9eef5}),cx,FY+0.08,cz);                 /* packed-snow floor */
   const drift=new THREE.MeshLambertMaterial({color:0xf5f9fd});
   for(const d of [[111,12],[129,31],[111,31],[129,12],[120,21],[118,14],[122,29]]){const s=0.85+((d[0]*7+d[1])%5)*0.16;const m=mk(new THREE.SphereGeometry(s,10,8),drift,d[0]+0.5,FY+0.08,d[1]+0.5);m.scale.y=0.32;}
-  const iceMat=new THREE.MeshPhongMaterial({color:0xc2d9ee,shininess:95,specular:0x6e90b4,transparent:true,opacity:0.88});
-  for(const p of [[112,13],[128,30]])mk(new THREE.CylinderGeometry(2.0,2.0,0.06,22),iceMat,p[0]+0.5,FY+0.12,p[1]+0.5);   /* frozen ponds */
+  const iceMat=new THREE.MeshPhongMaterial({color:0xbcd9f0,shininess:110,specular:0x88b0d8,transparent:true,opacity:0.9});
+  const rW=5,rD=6,rcx=120.5,rcz=22;                                            /* central frozen rink, matches lay.ice */
+  mk(new THREE.BoxGeometry(rW,0.07,rD),iceMat,rcx,FY+0.12,rcz);
+  const rim=new THREE.MeshLambertMaterial({color:0xeaf3fb});
+  mk(new THREE.BoxGeometry(rW+0.2,0.05,0.16),rim,rcx,FY+0.135,rcz-rD/2+0.08);mk(new THREE.BoxGeometry(rW+0.2,0.05,0.16),rim,rcx,FY+0.135,rcz+rD/2-0.08);
+  mk(new THREE.BoxGeometry(0.16,0.05,rD+0.2),rim,rcx-rW/2+0.08,FY+0.135,rcz);mk(new THREE.BoxGeometry(0.16,0.05,rD+0.2),rim,rcx+rW/2-0.08,FY+0.135,rcz);
+  const crackM=new THREE.MeshBasicMaterial({color:0xdbeaf6,transparent:true,opacity:0.5});
+  mk(new THREE.BoxGeometry(0.06,0.05,rD*0.7),crackM,rcx-0.8,FY+0.135,rcz+0.4);mk(new THREE.BoxGeometry(rW*0.55,0.05,0.06),crackM,rcx+0.5,FY+0.135,rcz-0.7);
   const iceRock=new THREE.MeshPhongMaterial({color:0xd2e3f3,shininess:80,specular:0x90b2d2,transparent:true,opacity:0.94});
   const bark=new THREE.MeshLambertMaterial({color:0x5a3d24}),cap=new THREE.MeshLambertMaterial({color:0xf7fbff});
   for(let i=0;i<lay.walls.length;i++){const wx=lay.walls[i][0]+0.5,wz=lay.walls[i][1]+0.5;
@@ -14414,6 +14424,34 @@ function duelMapAnimate(now){
   }
   if(_duelMapDyn.snow)for(const m of _duelMapDyn.snow){const u=m.userData;m.position.y-=u.fall*0.02;m.position.x+=Math.sin(t*1.5+u.sway)*0.004;if(m.position.y<MPITY+0.2)m.position.y=MPITY+5.2;}
 }
+function _duelBuildTrapdoors(G){   /* the two forfeit grates, drawn on TOP of the map floor so they stay visible */
+  const FY=MPITY+0.16,GR=0x24262b,GR2=0x3c4047,BOLT=0x55585f,FR=0x5a4a30;
+  const mk=(geo,col,x,y,z)=>{const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:col}));m.position.set(x,y,z);G.add(m);return m;};
+  for(const td of [[120,10],[120,33]]){const tx=td[0]+0.5,tz=td[1]+0.5;
+    mk(new THREE.BoxGeometry(1.7,0.10,1.7),FR,tx,FY+0.03,tz);
+    mk(new THREE.BoxGeometry(1.5,0.07,1.5),GR,tx,FY+0.07,tz);
+    for(let i=-2;i<=2;i++)mk(new THREE.BoxGeometry(1.42,0.05,0.10),GR2,tx,FY+0.11,tz+i*0.30);
+    for(const dx of [-0.62,0.62])for(const dz of [-0.62,0.62])mk(new THREE.BoxGeometry(0.13,0.08,0.13),BOLT,tx+dx,FY+0.12,tz+dz);
+  }
+}
+function _duelIceSlip(pX,pY){   /* step onto the rink and you slide straight on to the first solid tile beyond it */
+  if(!_duelIceSet)return;
+  let dx=Math.sign(player.x-pX),dy=Math.sign(player.y-pY);
+  if(dx===0&&dy===0){dy=player.y<(MPIT.y0+MPIT.y1)/2?1:-1;}
+  let nx=player.x,ny=player.y,guard=0;
+  while(guard++<30){
+    const tx=nx+dx,ty=ny+dy;
+    if(tx<MPIT.x0||tx>MPIT.x1||ty<MPIT.y0||ty>MPIT.y1)break;          /* the pit edge stops the slide */
+    if(typeof blocked==='function'&&blocked(tx,ty))break;             /* an obstacle stops the slide */
+    nx=tx;ny=ty;
+    if(!_duelIceSet.has(nx+','+ny))break;                             /* first solid ground past the ice = landing */
+  }
+  if(nx!==player.x||ny!==player.y){
+    player.x=nx;player.y=ny;player.path.length=0;player.face=dx||player.face;
+    player._slideT=performance.now()+700;                            /* a short fast-glide window so it reads as a slide */
+    if(typeof msg==='function')msg('You skid across the ice!','#bcd6ec');
+  }
+}
 /* ===================== end PvP arena maps ===================== */
 
 let _duelRingSnap=null;
@@ -14447,7 +14485,7 @@ function _duelAcc(){
 }
 function startDuel(uid,name,rules){
   if(!inMathes||duel.state!=='none')return;
-  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};
+  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};duel.oppHp=null;duel.oppMhp=null;duel._hpSendT=0;
   duel.side=((player.uid||'')<(uid||''))?0:1;            /* deterministic ends on both clients */
   duel.startAt=performance.now()+DUEL_COUNT;duel.nextSwing=0;duel.flash=0;
   _duelPitOpen();
@@ -14464,6 +14502,7 @@ function duelTick(){
   const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
   if(!opp||!(typeof MP!=='undefined'&&MP.remoteHere&&MP.remoteHere(opp))){endDuel('forfeit-win');return;}   /* opponent bailed (left the Cage / disconnected); presence inferred from position - the relay drops the interior tag */
   const now=performance.now();
+  if(now-(duel._hpSendT||0)>=350){duel._hpSendT=now;if(typeof MP!=='undefined'&&MP.duelHp)MP.duelHp(player.hp,maxHp());}   /* keep the opponent's HP bar current (direct duel msgs survive the relay) */
   if(duel.state==='count'){
     if(now>=duel.startAt){duel.state='fight';duel.flash=now+800;msg('FIGHT! Click your opponent to attack.','#7a3b12');}
     return;
@@ -14521,6 +14560,9 @@ function endDuel(reason){
 }
 function drawDuelOverlay(){
   if(duel.state==='none')return;
+  drawBar(player.px+0.5,player.py+0.5,2.05,clamp(player.hp/maxHp(),0,1));                          /* persistent HP bar: me */
+  {const _o=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
+   if(_o){const _r=(duel.oppMhp>0)?clamp(duel.oppHp/duel.oppMhp,0,1):1;drawBar(_o.px+0.5,_o.py+0.5,2.05,_r);}}  /* persistent HP bar: opponent */
   const now=performance.now();let txt=null;
   if(duel.state==='count'){const left=Math.ceil((duel.startAt-now)/1000);if(left>0)txt=String(left);}
   if(duel.flash&&now<duel.flash)txt='FIGHT!';
@@ -14799,7 +14841,7 @@ function render(now){
   if(keys.has('U'))camPitch=clamp(camPitch+1.2*dts,0.30,1.50);
   if(keys.has('D'))camPitch=clamp(camPitch-1.2*dts,0.30,1.50);
 
-  const pMoving=lerpEnt(player,(player.run&&player.stamina>0&&!inParty)?150:300,dt);
+  const pMoving=lerpEnt(player,(player._slideT&&performance.now()<player._slideT)?70:((player.run&&player.stamina>0&&!inParty&&duel.state==='none')?150:300),dt);
   for(const r of rats)lerpEnt(r,600,dt);
   if(typeof MP!=='undefined')MP.frame(now,dt);
 
@@ -15140,12 +15182,14 @@ setInterval(()=>{
   }
   if(beat%8===0)updateMusic();
   let _ranThisBeat=false;
-  const _canRun=player.run&&player.stamina>0&&!inParty;
+  const _canRun=player.run&&player.stamina>0&&!inParty&&duel.state==='none';
   if((beat%2===0||_canRun)&&player.path.length){
     const nxt=player.path.shift();
     if(!blocked(nxt[0],nxt[1])){
+      const _pX=player.x,_pY=player.y;
       player.face=Math.sign(nxt[0]-player.x)||player.face;
       player.x=nxt[0];player.y=nxt[1];
+      if(typeof _duelIceSet!=='undefined'&&_duelIceSet&&_duelIceSet.has(player.x+','+player.y))_duelIceSlip(_pX,_pY);
       if(_canRun){player.stamina=Math.max(0,player.stamina-RUN_DRAIN);_ranThisBeat=true;
         if(player.stamina<=0)player.run=false; updateRunOrb();}
     }else player.path.length=0;
@@ -15436,6 +15480,7 @@ const MP = (function () {
   function duelSetDecline() { if (!duelSetup.active) return; if (conn) send({ t:'dsdecline', to:duelSetup.withUid }); _duelSetupClose(); }
   function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
   function duelSwing(dmg) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0 }); }
+  function duelHp(hp,mhp) { if (duel.oppUid && conn) send({ t: 'dhp', to: duel.oppUid, hp: hp | 0, mhp: mhp | 0 }); }
   function duelConcede() { if (duel.oppUid && conn) send({ t: 'dend', to: duel.oppUid }); }
   function duelClear() { duelReqIn.clear(); duelReqOut.clear(); _duelSetupClose(); }
 
@@ -16157,6 +16202,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (duel.state === 'fight' && m.uid === duel.oppUid && typeof applyDuelHit === 'function') applyDuelHit(m.dmg | 0);
         break;
       }
+      case 'dhp': {
+        if (m.to !== player.uid) break;
+        if (duel.state !== 'none' && m.uid === duel.oppUid) { duel.oppHp = m.hp | 0; duel.oppMhp = m.mhp | 0; }
+        break;
+      }
       case 'dend': {
         if (m.to !== player.uid) break;
         if (duel.state !== 'none' && m.uid === duel.oppUid && typeof endDuel === 'function') endDuel('win');
@@ -16629,7 +16679,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
-    duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelConcede, duelClear,
+    duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
