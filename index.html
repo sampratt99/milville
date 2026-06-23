@@ -1225,7 +1225,7 @@ const OBJ_DEFS={
   dig_hebra:{name:'Mr. Hebra',action:'Examine',noBlock:true,ex:'Mr. Hebra. Nobody is entirely sure what he teaches. He out-lifts the whole wrestling team and answers most questions with a slow, knowing nod.'},
   dig_bassi:{name:'Dr. Bassi',action:'Examine',noBlock:true,ex:'Dr. Bassi, the school doctor, here to mend whatever the pit breaks. Has filed several strongly-worded memos to the Discipline Committee and is drafting the next one now.'},
   dig_chase:{name:'Mr. Chase',action:'Examine',noBlock:true,ex:'Mr. Chase, who teaches maths and coaches baseball. He watches the duels as one long word problem, quietly solving for the optimal swing.'},
-  quartermaster:{name:'Quartermaster',action:'Talk-to',noBlock:true,ex:'The Cage quartermaster \u2014 keeper of the tokens and the rewards, and the only soul down here who seems to turn a profit on all this bloodshed.'},
+  quartermaster:{name:'Todd the Quartermaster',action:'Talk-to',noBlock:true,ex:'Todd \u2014 once the gym laundryman, now self-styled lord of the Cage. He keeps the tokens, the rewards, and a jealous eye on his beloved turf.'},
   furnace:{name:'Furnace',action:'Smelt-at',
     ex:'Coal-fired and hungry for ore.'},
   anvil:{name:'Anvil',action:'Smith-at',
@@ -1803,7 +1803,7 @@ addObj('chest',32,98);
 addObj('bankchest',122,19,true);addObj('bankchest',164,116,true);
 addObj('fire',93,60);
 addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
-addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',130,19,true);addObj('dig_hebra',130,20,true);addObj('dig_bassi',130,22,true);addObj('dig_chase',130,23,true);addObj('quartermaster',114,38,true);
+addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',132,19,true);addObj('dig_hebra',132,20,true);addObj('dig_bassi',132,22,true);addObj('dig_chase',132,23,true);addObj('quartermaster',120,37,true);
 addObj('furnace',128,18);addObj('anvil',130,18);
 addObj('fire',150,23);
 addObj('fire',68,44);
@@ -3520,6 +3520,7 @@ function playerTick(){
     n2.heading=Math.atan2(player.x-n2.x,player.y-n2.y);
     if(a.trade)openCapeShop();
     else if(a.bank)openBank();
+    else if(a.cageshop)openCageShop();
     else openDialogue(n2);
   }
 
@@ -4394,9 +4395,9 @@ function optionsAt(tx,ty){
       {html:'Leave <span class="t">Matthes Cage</span>',label:'Leave Matthes Cage',fn:()=>setAction({type:'leavemathes',o:io},io.x,io.y)},
       {html:'Examine <span class="t">Cage doors</span>',fn:()=>msg(OBJ_DEFS['mathesexit'].ex)});
     else if(io&&io.def==='quartermaster')opts.push(
-      {html:'Talk-to <span class="t">Quartermaster</span>',label:'Talk-to Quartermaster',fn:()=>openDialogue({id:'quartermaster',name:'Quartermaster',i:0})},
-      {html:'View <span class="t">Cage rewards</span>',label:'View Cage rewards',fn:()=>openCageShop()},
-      {html:'Examine <span class="t">Quartermaster</span>',label:'Examine Quartermaster',fn:()=>msg(OBJ_DEFS['quartermaster'].ex)});
+      {html:'Talk-to <span class="t">Todd</span>',label:'Talk-to Todd',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y,id:'quartermaster',name:'Todd the Quartermaster'}},io.x,io.y)},
+      {html:'View <span class="t">Cage rewards</span>',label:'View Cage rewards',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y,cageshop:true}},io.x,io.y)},
+      {html:'Examine <span class="t">Todd</span>',label:'Examine Todd',fn:()=>msg(OBJ_DEFS['quartermaster'].ex)});
     else if(io)opts.push(
       {html:'Examine <span class="t">'+OBJ_DEFS[io.def].name+'</span>',label:'Examine '+OBJ_DEFS[io.def].name,fn:()=>msg(OBJ_DEFS[io.def].ex)});
     const _rp=(typeof MP!=='undefined'&&MP.active())?MP.remoteAt(tx,ty):null;
@@ -12149,17 +12150,18 @@ function slayerTree(){
 }
 const DIALOGUES={
   quartermaster:()=>({
-    start:{who:'npc',text:"Welcome to the Matthes Cage, {name}. I keep the tokens, the rewards, and what passes for order down here. Looking to learn the ropes, or to spend?",opts:[
-      {label:"What is this place?",next:'about'},
+    start:{who:'npc',text:"Oh - fresh meat! Welcome to the Matthes Cage, {name}. Name's Todd, and I run this place. Used to run the laundry up in the gym - towels, kit, the lot - till the Rector decided I had a knack for 'crowd management.' Now I count the tokens and mop the turf after. What'll it be?",opts:[
+      {label:"Who are you, then?",next:'about'},
       {label:"How do duels work?",next:'how'},
       {label:"How do I earn Cage tokens?",next:'earn'},
       {label:"Show me the rewards.",next:()=>{closeDialogue();openCageShop();return null;}},
       {label:"Nothing for now.",next:'bye'}
     ]},
-    about:{who:'npc',text:"The old field house, gutted and sunk into a pit. Sixth-formers settle their scores down on the turf while the whole school looks on. The Rector calls it character-building. I call it steady work.",next:'start'},
-    how:{who:'npc',text:"Find another contender on the floor and challenge them. You agree on the rules - food, prayer, weapons, whatever's barred - and once you both accept, the floor drops open. Last one standing takes the bout. Nobody truly dies here; we patch you up and haul you out.",next:'start'},
-    earn:{who:'npc',text:"Win a bout and you earn three Cage tokens, paid the moment your opponent falls. Bring them to me and I'll see you decked out in something the rest of the school will envy.",next:'start'},
-    bye:{who:'npc',text:"The pit's always open. Mind the drop.",next:null}
+    about:{who:'npc',text:"Todd. Laundryman by trade. Twenty years in the gym basement wringing the stink out of rugby kit - you would not BELIEVE what comes back off a Saturday match. Then they gutted this old field house, sank a pit in the floor, and someone had to keep the towels stocked and the blood off the good turf. So here I am. A promotion, they called it.",next:'start'},
+    how:{who:'npc',text:"Simple enough. Find another fighter down here, walk up, and CHALLENGE them. Up pops a little screen where the two of you settle the rules - food allowed, prayers allowed, weapons, all that. You both tick accept, and the floor drops clean out from under you into the pit.",next:'how2'},
+    how2:{who:'npc',text:"Once you're both on the turf: CLICK your opponent to set on them. You'll chase them down and start trading blows, and you hit back on your own if they catch you first. Knock their health to nothing and the bout's yours. Nobody actually DIES - I'm not scrubbing THAT off the turf - we patch you up and haul you out. Fresh towel, and on with your day.",next:'start'},
+    earn:{who:'npc',text:"Win a bout, pocket three Cage tokens - paid the moment your opponent hits the dirt. Lose, or scarper mid-fight, and you get nowt but my disappointment. Stack 'em up and bring 'em here; I'll kit you out in something to make the rest of the school weep.",next:'start'},
+    bye:{who:'npc',text:"Right you are. Mind the drop - and don't track mud on my clean turf.",next:null}
   }),
   mr_callahan:()=>(totalLevel()<PARTY_MIN_TOTAL?({start:{who:'npc',text:"Welcome, {name}! The Party Room is grand fun — but I can't turn a raw newcomer loose in here; you'd be carried off in the crush before you learned the ropes. Come back when you're a touch more seasoned: a total level of "+PARTY_MIN_TOTAL+" will see you right — you're at "+totalLevel()+" just now.",next:null}}):player.partyQuiz?({
     start:{who:'npc',text:'Welcome to the Party Room! Pull the lever and balloons rain down across the hall — but a round will cost you a Party token.',next:'ask'},
@@ -13922,7 +13924,7 @@ function exitChapel(){
    the outdoor world is never disturbed. With interior-id presence tagging, several
    players occupy it cleanly at once. */
 const MCAGE={x0:99,x1:141,y0:1,y1:43};
-const MPIT ={x0:111,x1:129,y0:11,y1:32};      /* the sunken turf ditch (sealed until a duel) */
+const MPIT ={x0:109,x1:131,y0:9,y1:34};       /* the sunken turf ditch (sealed until a duel) - enlarged 2 tiles on every side */
 const MDEPTH=3.2;
 const MATHES_RECTOR_LINES=[
   'The pit remembers every contest fought on its sand.',
@@ -13941,7 +13943,7 @@ const mathesTiles=TILES_MAIN.map(r=>r.slice());
   for(let x=119;x<=121;x++)mathesTiles[MCAGE.y1][x]=T_FLOOR;                 /* south doorway */
   for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++)
     mathesTiles[y][x]=T_WALL;                                                /* sealed ditch */
-  for(let y=18;y<=24;y++)for(let x=130;x<=133;x++)mathesTiles[y][x]=T_WALL;  /* rector's podium (front rim blocked) */
+  for(let y=18;y<=24;y++)for(let x=132;x<=135;x++)mathesTiles[y][x]=T_WALL;  /* rector's podium (front rim blocked) */
 })();
 const mathesGroup=new THREE.Group();mathesGroup.visible=false;scene.add(mathesGroup);
 let mathesRector=null, mathesChatT=0;
@@ -14074,7 +14076,7 @@ function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
   }
   climbWallN(137);   /* NE corner - north-wall section */
   /* ---------- the Rector's open podium on the EAST edge of the ditch (widened for his retinue) ---------- */
-  const podX=131.5, podZ=21, podDeck=FY+1.5, podD=7.4;
+  const podX=133.5, podZ=21, podDeck=FY+1.5, podD=7.4;
   S(box(3.6,1.5,podD),STONE,podX,FY+0.75,podZ,0);                   /* raised stone base */
   S(box(3.8,0.24,podD+0.2),STONE2,podX,podDeck,podZ,0);            /* viewing deck */
   S(box(1.0,1.0,podD-0.8),STONE2,podX+1.7,FY+0.5,podZ,0);          /* steps up from the concourse (back) */
@@ -14096,16 +14098,16 @@ function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
   ];
   for(const f of PODFIG){
     const hm=makeHumanoid(f.c);
-    hm.g.position.set(130.5,podDeck,f.z);
+    hm.g.position.set(132.5,podDeck,f.z);
     hm.g.rotation.y=-Math.PI/2;
     mathesGroup.add(hm.g);
-    if(f.rector)mathesRector={x:130,y:21,g:hm.g,chat:'',chatUntil:0};
+    if(f.rector)mathesRector={x:132,y:21,g:hm.g,chat:'',chatUntil:0};
     else if(f.def){const _do=objects.find(o=>o.def===f.def);if(_do)addProxy(hm.g,0.85,2.5,0,{kind:'obj',o:_do});}
   }
   /* Quartermaster: rewards desk on the south concourse near the doors (faces +z toward the entrance) */
   {const _qm=objects.find(o=>o.def==='quartermaster');
    const qh=makeHumanoid({skin:0xc98a5a,shirt:0x2f4a38,pants:0x232a20,hair:0x2a2018,beard:0x35291c,skirt:0x232a20,amulet:0xb08d3a,belt:0x6a4a28,boots:0x1a1812});
-   qh.g.position.set(114.5,FY,38.5); qh.g.rotation.y=0;
+   qh.g.position.set(120.5,FY,37.5); qh.g.rotation.y=0;
    mathesGroup.add(qh.g);
    if(_qm)addProxy(qh.g,0.85,2.5,0,{kind:'obj',o:_qm});}
   /* (removed: small red/blue wall panels that sat in front of - and covered - the PVP Arena banners on the E/W walls) */
@@ -14152,6 +14154,7 @@ function enterMathes(){
   stopMusic();
   mathesChatT=performance.now()+1400;if(mathesRector)mathesRector.chat='';
   msg('You step inside the Matthes Cage. The red track rings a deep turf pit, sunk into the floor.','#7a3b12');
+  if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();   /* announce the interior immediately so others see you without lag */
 }
 function exitMathes(){
   inMathes=false;
@@ -14163,6 +14166,7 @@ function exitMathes(){
   scene.fog.near=30;scene.fog.far=52;
   updateMusic();
   msg('You step back out onto the athletic grounds.');
+  if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
 }
 
 /* ============================ Matthes Cage duels (Phase 1) ============================ */
@@ -15198,13 +15202,13 @@ const MP = (function () {
     try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
     ws.onopen = function () {
       conn = true; backoff = 1000;
-      send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: BASE_APP, gear: selfGear(), hp: player.hp, mhp: maxHp(), snap: 1 });
+      send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: BASE_APP, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), snap: 1 });
       lastGear = ''; lastAct = ''; /* force a state push next frame */
       if (keepAlive) clearInterval(keepAlive);
       keepAlive = setInterval(function () {
         if (!conn) return;
         send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() });
-        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp() });
+        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior() });
       }, 2000);
       if (typeof console !== 'undefined') console.log('[Milville MP]', MP_VERSION, 'connected to', wsURL());
       if (!_announced) { _announced = true; if (typeof logSystem === 'function') logSystem('Multiplayer connected (' + MP_VERSION + ').'); }
@@ -15236,8 +15240,9 @@ const MP = (function () {
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct) { lastGear = g; lastAct = a; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
-    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp() }); }
+    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior() }); }
   }
+  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior() }); }
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120) }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
@@ -15677,7 +15682,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     const rig = makeHumanoid(app);
     rig.g.visible = false; scene.add(rig.g);
     const gearRig = buildGearRig(rig);
-    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, gearRig, _gearKey: '', x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, moving: false, tint: tint, last: Date.now() });
+    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, gearRig, _gearKey: '', x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, in: p.in || null, moving: false, tint: tint, last: Date.now() });
   }
   function absorb(uid, p) {
     const r = RP.get(uid); if (!r) return;
@@ -15712,12 +15717,12 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
       case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); duelReqIn.delete(m.uid); duelReqOut.delete(m.uid); if (duel.state !== 'none' && duel.oppUid === m.uid && typeof endDuel === 'function') endDuel('forfeit-win'); if (duelSetup.active && duelSetup.withUid === m.uid) { logSystem((duelSetup.withName || 'The other player') + ' left before the duel began.'); _duelSetupClose(); } despawn(m.uid); break; }
-      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.last = Date.now(); } break; }
+      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h, in: m.in }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
         if (!m.uid || m.uid === player.uid) break;
-        if (RP.has(m.uid)) { const r = RP.get(m.uid); absorb(m.uid, { name: m.name, gear: m.gear, hp: m.hp, mhp: m.mhp }); if (typeof m.x === 'number') { r.x = m.x; r.y = m.y; r.h = m.h; } r.last = Date.now(); }
-        else spawn({ uid: m.uid, name: m.name, x: m.x, y: m.y, h: m.h, gear: m.gear, hp: m.hp, mhp: m.mhp });
+        if (RP.has(m.uid)) { const r = RP.get(m.uid); absorb(m.uid, { name: m.name, gear: m.gear, hp: m.hp, mhp: m.mhp }); if (typeof m.x === 'number') { r.x = m.x; r.y = m.y; r.h = m.h; } if (m.in !== undefined) r.in = m.in || null; r.last = Date.now(); }
+        else spawn({ uid: m.uid, name: m.name, x: m.x, y: m.y, h: m.h, gear: m.gear, hp: m.hp, mhp: m.mhp, in: m.in });
         break;
       }
       case 'dmg': {
@@ -15896,6 +15901,18 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   }
 
   /* ---------------- per-frame update ---------------- */
+  /* Same-room test for a remote. The relay reconstructs 'pos' from a fixed
+     {x,y,h} schema and DROPS the interior tag, so r.in is usually null even for
+     someone standing in the Cage right next to you - which is why bodies never
+     appeared there. Positions DO survive the relay, so while you are inside the
+     Cage, treat anyone whose broadcast coordinates fall within the Cage footprint
+     as here with you. Outdoors the behaviour is unchanged (interior tag / null). */
+  function _remoteHere(r) {
+    const ci = curInterior();
+    if ((r.in || null) === ci) return true;
+    if (ci === 'mathes' && r.x >= MCAGE.x0 && r.x <= MCAGE.x1 && r.y >= MCAGE.y0 && r.y <= MCAGE.y1) return true;
+    return false;
+  }
   function frame(t, dt) {
     if (!active() || !conn) return;
     pushOutbound(t);
@@ -15967,7 +15984,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     for (const r of RP.values()) {
       r.moving = lerpEnt(r, r.run ? 150 : 300, dt);
       const fresh = (Date.now() - r.last) < CFG.hideMs;
-      const inView = ((r.in||null) === curInterior()) && dist1(player.px, player.py, r.px, r.py) <= CFG.viewR;
+      const inView = _remoteHere(r) && (curInterior() ? true : dist1(player.px, player.py, r.px, r.py) <= CFG.viewR);
       r.rig.g.visible = inView && fresh;
       if (!inView || !fresh) continue;
       const wx = r.px + 0.5, wz = r.py + 0.5, wy = groundH(wx, wz);
@@ -16111,7 +16128,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   /* ---------------- friends / presence ---------------- */
   function isOnline(name) { name = String(name || '').toLowerCase(); for (const r of RP.values()) if ((r.name || '').toLowerCase() === name) return true; return false; }
   function onlineList() { const out = []; for (const r of RP.values()) out.push({ uid: r.uid, name: r.name }); return out; }
-  function remoteAt(tx, ty) { for (const r of RP.values()) if ((r.in||null) === curInterior() && Math.round(r.px) === tx && Math.round(r.py) === ty) return r; return null; }
+  function remoteAt(tx, ty) { for (const r of RP.values()) if (_remoteHere(r) && Math.round(r.px) === tx && Math.round(r.py) === ty) return r; return null; }
   function addFriendByName(name) {
     name = String(name || '').trim(); if (!name) return false;
     player.friends = player.friends || [];
@@ -16311,7 +16328,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (!active() || !conn) return;
     for (const r of RP.values()) {
       if (Date.now() - r.last > CFG.hideMs) continue;
-      if ((r.in || null) !== curInterior()) continue;
+      if (!_remoteHere(r)) continue;
       const mx = Math.round(r.px * 4), my = Math.round(r.py * 4);
       g.fillStyle = '#0d0b08'; g.fillRect(mx - 1, my - 1, 6, 6);
       g.fillStyle = colHex(r.tint); g.fillRect(mx, my, 4, 4);
@@ -16322,7 +16339,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     g.textAlign = 'center'; g.font = 'bold 9px Verdana,sans-serif';
     for (const r of RP.values()) {
       if (Date.now() - r.last > CFG.hideMs) continue;
-      if ((r.in || null) !== curInterior()) continue;
+      if (!_remoteHere(r)) continue;
       const mx = (r.px + 0.5) * 6, my = (r.py + 0.5) * 6;
       g.beginPath(); g.arc(mx, my, 5, 0, 7); g.fillStyle = colHex(r.tint); g.fill();
       g.lineWidth = 1.8; g.strokeStyle = '#fff'; g.stroke();
@@ -16340,7 +16357,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   }
 
   return {
-    CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo,
+    CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo, pingPresence,
     onLocalChat, onLocalEmote, onNodeDepleted, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
