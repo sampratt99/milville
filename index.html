@@ -14022,6 +14022,7 @@ function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
   S(box(0.5,3.4,0.7),WOOD,118.6,FY+1.7,MCAGE.y1+0.5,0);
   S(box(0.5,3.4,0.7),WOOD,121.4,FY+1.7,MCAGE.y1+0.5,0);
   S(box(3.4,0.5,0.7),WOOD,120,FY+3.4,MCAGE.y1+0.5,0);
+  S(box(2.7,WH-3.4,0.6),STONE,120.25,FY+3.4+(WH-3.4)/2,MCAGE.y1+0.7,0);   /* transom: fill the wall above the doorway so there is no see-through gap */
   /* ---------- climbing walls (NE & SE corners): a solid panel flush to the EAST wall, holds sitting ON its face ---------- */
   function climbWall(zc){
     const wf=MCAGE.x1+0.4;                  /* inner face of the east wall */
@@ -14107,11 +14108,7 @@ function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
    qh.g.position.set(114.5,FY,38.5); qh.g.rotation.y=0;
    mathesGroup.add(qh.g);
    if(_qm)addProxy(qh.g,0.85,2.5,0,{kind:'obj',o:_qm});}
-  /* wall banners along the long walls */
-  for(const z of [16,22,28]){
-    S(box(0.1,1.8,1.1),0x7a2230,MCAGE.x0+0.9,FY+3.1,z,0);
-    S(box(0.1,1.8,1.1),0x223a7a,MCAGE.x1+0.1,FY+3.1,z,0);
-  }
+  /* (removed: small red/blue wall panels that sat in front of - and covered - the PVP Arena banners on the E/W walls) */
   const m1=bakeMesh(out ,false);mathesGroup.add(m1);
   const m2=bakeMesh(outS,true );m2.receiveShadow=true;mathesGroup.add(m2);
 })();
@@ -14478,6 +14475,7 @@ function lerpEnt(e,msPerTile,dt){
   const dx=e.x-e.px,dy=e.y-e.py;
   const d=Math.hypot(dx,dy);
   if(d<0.002){e.px=e.x;e.py=e.y;return false;}
+  if(d>10){e.px=e.x;e.py=e.y;return false;}   /* large jump (interior entry / teleport / respawn): SNAP, don't slide across the whole map - otherwise a remote who steps into the Cage crawls ~58 tiles over ~18s, staying outside viewR the whole time (invisible). */
   const step=Math.min(d,dt/msPerTile);
   e.px+=dx/d*step;e.py+=dy/d*step;
   return true;
