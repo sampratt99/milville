@@ -604,6 +604,9 @@
   .tradegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:3px; background:#1c1812; border:1px solid #15110c; border-radius:3px; padding:4px; min-height:124px; align-content:start;}
   .tradegrid.wide{grid-template-columns:repeat(8,1fr); min-height:84px;}
   .tradeempty{color:#6f6552; font-size:11px; padding:10px 6px; text-align:center; align-self:start;}
+  .duelstakehd{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1px; text-align:center; margin:7px 4px 2px; border-top:1px solid #4a3a22; padding-top:7px;}
+  .duelstakeoffers{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:2px 4px 6px;}
+  #duelstakeinvwrap{margin:0 4px 6px;}
   .tradestatus{min-height:18px; text-align:center; font:12px Verdana,sans-serif; color:#7fe07f; margin:2px 0 4px;}
   .duelsub{font-size:12px; color:#b9b0a0; text-align:center; padding:6px 6px 9px;}
   .duelrules{display:flex; flex-direction:column; gap:6px; margin:0 4px 8px;}
@@ -866,10 +869,16 @@
     <button class="gebtn tradedec" id="tradedecline">Decline</button>
   </div>
 </div></div>
-<div id="duelui" class="gemodal"><div class="gepanel" style="width:404px;">
+<div id="duelui" class="gemodal"><div class="gepanel" style="width:468px;max-height:92vh;overflow-y:auto;">
   <div class="gebar"><span id="dueltitle">Duel</span><div class="gex" id="duelclose" title="Close">&#10005;</div></div>
   <div class="duelsub">Agree on the rules of combat, then both players Accept to begin.</div>
   <div id="duelrules" class="duelrules"></div>
+  <div class="duelstakehd">Stake &mdash; the victor takes both stakes</div>
+  <div id="duelstakeoffers" class="duelstakeoffers">
+    <div class="tradecol"><div class="tradehd" id="mystakehd">Your stake</div><div id="mystakegrid" class="tradegrid"></div></div>
+    <div class="tradecol"><div class="tradehd" id="theirstakehd">Their stake</div><div id="theirstakegrid" class="tradegrid"></div></div>
+  </div>
+  <div id="duelstakeinvwrap"><div class="tradehd">Click an item to stake it, right-click for more</div><div id="duelstakeinvgrid" class="tradegrid wide"></div></div>
   <div id="duelstatus" class="tradestatus"></div>
   <div class="gefoot" style="gap:6px;">
     <button class="gebtn tradeacc" id="duelaccept">Accept</button>
@@ -10917,7 +10926,8 @@ function enterPartyRoom(fromEast){
 function exitPartyRoom(){
   inParty=false;tiles=TILES_MAIN;worldGroup.visible=true;partyGroup.visible=false;
   updateRunOrb();
-  if(partyActive){partyActive=false;partyGameMs=0;const _lv=partyGroup.userData.leverHandle;if(_lv)_lv.rotation.x=-0.5;}
+  if(partyActive){if(_partyIsHost&&typeof MP!=='undefined'&&MP.partyEnd)MP.partyEnd();partyActive=false;partyGameMs=0;const _lv=partyGroup.userData.leverHandle;if(_lv)_lv.rotation.x=-0.5;}
+  _partyHostUid=null;_partyIsHost=false;_poppedBids.clear();_partyLastSnap=0;
   if(partyTimerEl)partyTimerEl.style.display='none';
   for(const _b of balloons)partyGroup.remove(_b.g);balloons=[];
   player.x=partyReturn.x;player.y=partyReturn.y;player.px=partyReturn.x;player.py=partyReturn.y;
@@ -10971,6 +10981,9 @@ function buildPartyAgents(){
 }
 
 let balloons=[]; let partyActive=false; let partyGameMs=0; let partyPops=0;
+let _partyHostUid=null, _partyIsHost=false, _pBidSeq=0, _partySnapT=0, _partyLastSnap=0;   /* party multiplayer: shared balloons, host-authoritative */
+const _poppedBids=new Set();
+function _partySim(){ return !_partyHostUid || _partyIsHost; }   /* true when I drive the balloon sim (single-player or the host) */
 const PARTY_CAP=24, PARTY_LEN=75000, REAL_TARGET=22, FAKE_TARGET=14;
 let PARTY_FREE=false;  /* party rounds cost one Party token (bought from Mr Callahan) */
 const PARTY_PINK_VAL=5000;const PARTY_MIN_TOTAL=120;/* min total level to enter the party room */  /* drops worth >= this many gp (or jackpot 'big' drops) show pink+balloon in chat; rest are plain */
@@ -11016,7 +11029,15 @@ function spawnBalloon(){
   const ball=mesh(new THREE.SphereGeometry(0.34,10,9),col,false);ball.scale.y=1.22;g.add(ball);
   const knot=mesh(new THREE.ConeGeometry(0.09,0.14,6),col,false);knot.position.y=-0.42;knot.rotation.x=Math.PI;g.add(knot);
   g.position.set(x,FY+6.0+rnd(0,2.4),z);partyGroup.add(g);
-  balloons.push({g,ball,x,z,restY:FY+0.46,vy:-(1.0+rnd(0,0.7)),col,pop:false,bob:rnd(0,6.28),grounded:false});
+  balloons.push({g,ball,x,z,restY:FY+0.46,vy:-(1.0+rnd(0,0.7)),col,pop:false,bob:rnd(0,6.28),grounded:false,bid:(_pBidSeq++)});
+}
+function _spawnBalloonAt(bid,x,z,col){    /* non-host: materialise a host-owned balloon at rest */
+  const FY=groundH(120,8);
+  const g=new THREE.Group();
+  const ball=mesh(new THREE.SphereGeometry(0.34,10,9),col,false);ball.scale.y=1.22;g.add(ball);
+  const knot=mesh(new THREE.ConeGeometry(0.09,0.14,6),col,false);knot.position.y=-0.42;knot.rotation.x=Math.PI;g.add(knot);
+  g.position.set(x,FY+0.46,z);partyGroup.add(g);
+  balloons.push({g,ball,x,z,restY:FY+0.46,vy:0,col,pop:false,bob:rnd(0,6.28),grounded:true,bid});
 }
 function partyFakeFind(){
   const picks=['a Dragon scimitar','a Rune platebody','a purple party hat','an Adamant kiteshield','a Santa hat','a Rune full helm','a Dragon kiteshield','a pile of coins'];
@@ -11067,6 +11088,7 @@ function popBalloon(b,byPlayer,agent){
   tone(1200+rnd(0,300),300,0.06,'square',0.05); tone(150,70,0.05,'sine',0.045);
   if(!byPlayer){ if(agent)partySay(agent,'Ooh, '+partyFakeFind()+'!',2200); return; }
   partyPops++;
+  if(b.bid!=null){_poppedBids.add(b.bid);if(typeof MP!=='undefined'&&MP.partyPop)MP.partyPop(b.bid);}   /* tell everyone this balloon is gone (loot stays mine) */
   const lt=rollBalloonLoot();
   if(!lt.id){msg('You pop a balloon \u2014 empty.');return;}
   const dropVal=lt.id==='coins'?lt.qty:(ITEMS[lt.id].val||0)*lt.qty;   /* rare/valuable -> pink+balloon, else plain */
@@ -11145,6 +11167,7 @@ function pullPartyLever(){
     partyTakeOne('party_token');
   }
   partyActive=true;partyGameMs=PARTY_LEN;partyPops=0;
+  _partyIsHost=true;_partyHostUid=player.uid;_pBidSeq=0;_partySnapT=0;_partyLastSnap=performance.now();_poppedBids.clear();   /* I pulled the lever -> I host this round */
   const lv=partyGroup.userData.leverHandle;if(lv)lv.rotation.x=0.7;
   tone(300,1200,0.25,'sawtooth',0.05);
   msg('You heave the lever \u2014 balloons rain down across the hall!','#ff5bbf');
@@ -11156,6 +11179,34 @@ function endPartyGame(){
   const lv=partyGroup.userData.leverHandle;if(lv)lv.rotation.x=-0.5;
   if(partyTimerEl)partyTimerEl.style.display='none';
   msg('The party winds down. You popped '+partyPops+' balloon'+(partyPops===1?'':'s')+' this round.','#b04a9e');
+  if(_partyIsHost&&typeof MP!=='undefined'&&MP.partyEnd)MP.partyEnd();
+  _partyHostUid=null;_partyIsHost=false;_poppedBids.clear();_partyLastSnap=0;
+}
+function _partyNetSnapshot(arr,ms,hostUid){    /* a host's authoritative balloon set arrived */
+  if(!inParty||!hostUid||player.uid===hostUid)return;
+  if(_partyIsHost){ if(hostUid<player.uid)_partyIsHost=false; else return; }   /* two rounds started at once -> lowest uid hosts */
+  _partyLastSnap=performance.now();
+  if(!partyActive){partyActive=true;partyPops=0;const lv=partyGroup.userData.leverHandle;if(lv)lv.rotation.x=0.7;}
+  _partyHostUid=hostUid;_partyIsHost=false;
+  if(typeof ms==='number')partyGameMs=ms;
+  const want=new Map(); for(const e of arr)want.set(e[0],e);
+  let changed=false;
+  for(const b of balloons){if(b.pop)continue;if(!want.has(b.bid)){b.pop=true;partyGroup.remove(b.g);changed=true;}}
+  if(changed)balloons=balloons.filter(b=>!b.pop);
+  const have=new Set(balloons.map(b=>b.bid));
+  for(const e of arr){const bid=e[0];if(have.has(bid)||_poppedBids.has(bid))continue;_spawnBalloonAt(bid,e[1],e[2],e[3]);}
+  for(const bid of Array.from(_poppedBids))if(!want.has(bid))_poppedBids.delete(bid);
+}
+function _partyNetPop(bid,fromUid){           /* someone popped a shared balloon */
+  if(!inParty)return;
+  _poppedBids.add(bid);
+  const b=balloons.find(x=>x.bid===bid&&!x.pop);
+  if(b)popBalloon(b,false);                   /* visual pop only - the loot belongs to the popper */
+}
+function _partyNetEnd(fromUid){               /* the host ended the round */
+  if(!inParty)return;
+  if(_partyHostUid&&fromUid&&fromUid!==_partyHostUid)return;
+  if(partyActive){_partyIsHost=false;endPartyGame();}   /* end locally; endPartyGame won't rebroadcast (not host) */
 }
 function buyPartyToken(){
   if(coinCount()<30000){msg('Mr Callahan: \u201cThat\u2019ll be 30,000 coins for a token, friend.\u201d','#26345e');return;}
@@ -11214,14 +11265,20 @@ function updateParty(dt){
   }
   if(partyActive){
     partyGameMs-=dt;
-    if(partyGameMs<=0)endPartyGame();
+    if(partyGameMs<=0){if(_partySim())endPartyGame();}   /* non-host ends on the host's 'pend', not its own clock */
     else{
       if(partyTimerEl){const _sc=Math.max(0,Math.ceil(partyGameMs/1000));
         partyTimerEl.textContent='\u23f1\ufe0f '+Math.floor(_sc/60)+':'+String(_sc%60).padStart(2,'0');
         partyTimerEl.style.display='block';partyTimerEl.classList.toggle('low',_sc<=10);}
-      if(partyGameMs>8000){const live=balloons.filter(b=>!b.pop).length;
-        if(live<REAL_TARGET&&Math.random()<0.7)spawnBalloon();}
+      if(_partySim()&&partyGameMs>8000){const live=balloons.filter(b=>!b.pop).length;
+        if(live<REAL_TARGET&&Math.random()<0.7)spawnBalloon();}   /* only the host (or single-player) spawns balloons */
     }
+    if(_partyIsHost&&typeof MP!=='undefined'&&MP.connected&&MP.partySnap&&performance.now()-_partySnapT>=320){   /* host broadcasts the set ~3x/s (self-healing vs relay drops) */
+      _partySnapT=performance.now();const _arr=[];
+      for(const b of balloons){if(b.pop)continue;_arr.push([b.bid,Math.round(b.x*10)/10,Math.round(b.z*10)/10,b.col]);}
+      MP.partySnap(_arr,Math.max(0,Math.round(partyGameMs)));
+    }
+    if(!_partySim()&&performance.now()-_partyLastSnap>4000)endPartyGame();   /* host vanished -> end the round locally */
   }
   if(balloons.some(b=>b.pop))balloons=balloons.filter(b=>!b.pop);
   for(const b of balloons){if(b.pop)continue;
@@ -11287,7 +11344,7 @@ function updateParty(dt){
     if(a.popCd<=0){a.popCd=rnd(0.6,1.8);
       if(partyActive){
         const near=balloons.find(b=>!b.pop&&b.grounded&&Math.hypot(b.g.position.x-cx,b.g.position.z-cz)<0.95);
-        if(near){a.popAnim=1;popBalloon(near,false,a);}
+        if(near&&_partySim()){a.popAnim=1;popBalloon(near,false,a);}   /* only the host's NPCs pop shared balloons */
       }
     }
   }
@@ -13659,6 +13716,81 @@ function renderTrade(){
   acc.textContent = T.myAccept ? 'Waiting for other player\u2026' : (s2?'Accept & confirm':'Accept');
 }
 const DUEL_RULES=[{key:'noFood',label:'No food'},{key:'noPrayer',label:'No prayer'},{key:'noWeapons',label:'No weapons'}];
+let _duelEscrowIn={};
+function _duelNetEscrow(uid,stake){   /* my opponent told me what they actually locked in -> that's what I win */
+  const s=(stake||[]).map(o=>({id:o.id,qty:o.qty|0})).filter(o=>o.qty>0);
+  _duelEscrowIn[uid]=s;
+  if(typeof duel!=='undefined'&&duel.state!=='none'&&duel.oppUid===uid)duel.stakeTheirs=s;
+}
+function _duelTakeItems(list){   /* lock a stake out of inventory; returns what was actually taken */
+  const taken=[];
+  for(const o of (list||[])){
+    if(!o||!o.id||o.qty<=0)continue;
+    if(o.id==='coins'){const have=coinsCount(),q=Math.min(o.qty,have);if(q>0){spendCoins(q);taken.push({id:'coins',qty:q});}continue;}
+    let need=o.qty,got=0;
+    for(let i=0;i<player.inv.length&&need>0;i++){const sl=player.inv[i];
+      if(sl&&!sl.noted&&sl.id===o.id){
+        if(ITEMS[o.id].stack){const q=Math.min(need,sl.qty);sl.qty-=q;need-=q;got+=q;if(sl.qty<=0)player.inv[i]=null;}
+        else{player.inv[i]=null;need--;got++;}
+      }}
+    if(got>0)taken.push({id:o.id,qty:got});
+  }
+  renderInv();dirty=true;return taken;
+}
+function _duelGiveItems(list){   /* hand a stake to the winner (or refund) */
+  for(const o of (list||[])){
+    if(!o||!o.id||o.qty<=0)continue;
+    let ok;
+    if(o.id==='coins')ok=addItem('coins',o.qty);
+    else if(!ITEMS[o.id].stack&&o.qty>1)ok=addNote(o.id,o.qty);   /* consolidate as a banknote to avoid overflow */
+    else ok=addItem(o.id,o.qty);
+    if(!ok)msg('Your pack is full — some winnings could not be carried.','#d0312d');
+  }
+  renderInv();dirty=true;
+}
+function _stakeOffer(id,n){
+  if(typeof MP==='undefined'||!MP.duelSetupSnapshot)return;
+  const S=MP.duelSetupSnapshot();if(!S.active||S.myAccept)return;
+  if(!isTradeable(id)){msg('That item cannot be staked.','#9c1f1f');return;}
+  const m=new Map((S.myStake||[]).map(o=>[o.id,o.qty]));
+  const have=countTradeable(id),cur=m.get(id)||0,add=Math.min(n,have-cur);
+  if(add<=0)return;
+  m.set(id,cur+add);
+  if(typeof MP.duelSetStake==='function')MP.duelSetStake([...m.entries()].map(([id,qty])=>({id,qty})));
+}
+function _stakeUnoffer(id,n){
+  if(typeof MP==='undefined'||!MP.duelSetupSnapshot)return;
+  const S=MP.duelSetupSnapshot();if(!S.active||S.myAccept)return;
+  const m=new Map((S.myStake||[]).map(o=>[o.id,o.qty]));
+  const nv=Math.max(0,(m.get(id)||0)-n);if(nv<=0)m.delete(id);else m.set(id,nv);
+  if(typeof MP.duelSetStake==='function')MP.duelSetStake([...m.entries()].map(([id,qty])=>({id,qty})));
+}
+function renderDuelStakeGrid(gridId,list,removable){
+  const gr=document.getElementById(gridId);if(!gr)return;gr.innerHTML='';
+  if(!list.length){const d=document.createElement('div');d.className='tradeempty';d.textContent='Empty';gr.appendChild(d);return;}
+  for(const o of list){const id=o.id;
+    gr.appendChild(_tradeCell(o, removable?()=>_stakeUnoffer(id,1):null, removable?(e)=>showMenu(e.clientX,e.clientY,[
+      {html:'Remove-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_stakeUnoffer(id,1)},
+      {html:'Remove-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_stakeUnoffer(id,5)},
+      {html:'Remove-All <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_stakeUnoffer(id,1e9)}]):null));
+  }
+}
+function renderDuelStakeInv(myStake){
+  const gr=document.getElementById('duelstakeinvgrid');if(!gr)return;gr.innerHTML='';
+  const agg=tradeInvAgg(myStake);
+  if(!agg.size){const d=document.createElement('div');d.className='tradeempty';d.style.gridColumn='1/-1';d.textContent='No stakeable items.';gr.appendChild(d);return;}
+  for(const [id,rem] of agg){
+    gr.appendChild(_tradeCell({id,qty:rem}, ()=>_stakeOffer(id,1), (e)=>{
+      const opts=[{html:'Stake-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_stakeOffer(id,1)}];
+      if(rem>=5)opts.push({html:'Stake-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_stakeOffer(id,5)});
+      if(rem>=10)opts.push({html:'Stake-10 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_stakeOffer(id,10)});
+      if(rem>1)opts.push({html:'Stake-X <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_promptQty(ITEMS[id].name,n=>_stakeOffer(id,n))});   /* type any amount - great for coins; _stakeOffer caps at what you own */
+      opts.push({html:'Stake-All <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_stakeOffer(id,1e9)});
+      opts.push({html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)});
+      showMenu(e.clientX,e.clientY,opts);
+    }));
+  }
+}
 function renderDuelSetup(){
   const ui=document.getElementById('duelui'); if(!ui) return;
   const S=(typeof MP!=='undefined'&&MP.duelSetupSnapshot)?MP.duelSetupSnapshot():null;
@@ -13695,6 +13827,10 @@ function renderDuelSetup(){
     pv.addEventListener('click',()=>{audio();if(typeof MP!=='undefined'&&MP.duelSetCycleMap)MP.duelSetCycleMap(-1);});
     nx.addEventListener('click',()=>{audio();if(typeof MP!=='undefined'&&MP.duelSetCycleMap)MP.duelSetCycleMap(1);});
   }
+  renderDuelStakeGrid('mystakegrid',S.myStake||[],!S.myAccept);
+  renderDuelStakeGrid('theirstakegrid',S.theirStake||[],false);
+  const _siw=document.getElementById('duelstakeinvwrap');if(_siw)_siw.style.display=S.myAccept?'none':'';
+  if(!S.myAccept)renderDuelStakeInv(S.myStake||[]);
   const st=document.getElementById('duelstatus');
   st.className='tradestatus';
   st.textContent=S.theirAccept?(S.withName+' has accepted \u2014 Accept to begin.'):'';
@@ -14562,9 +14698,13 @@ function _duelAcc(){
   const w=(!noW)&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
   return clamp(0.5+(lvl('attack')+((w&&w.atk)||0)*1.5)*0.01,0.35,0.92);
 }
-function startDuel(uid,name,rules){
+function startDuel(uid,name,rules,myStake,theirStake){
   if(!inMathes||duel.state!=='none')return;
   duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};duel.oppHp=null;duel.oppMhp=null;duel._hpSendT=0;
+  duel.stakeMine=(myStake&&myStake.length)?_duelTakeItems(myStake):[];                        /* lock my stake out of inventory */
+  duel.stakeTheirs=_duelEscrowIn[uid]||((theirStake||[]).map(o=>({id:o.id,qty:o.qty})));       /* what I win: their confirmed escrow if it arrived, else their claim */
+  if(typeof MP!=='undefined'&&MP.duelEscrow)MP.duelEscrow(duel.stakeMine);                     /* tell them what I actually locked in */
+  if((duel.stakeMine||[]).length||(duel.stakeTheirs||[]).length)msg('Stakes are locked — winner takes all.','#caa23a');
   duel.side=((player.uid||'')<(uid||''))?0:1;            /* deterministic ends on both clients */
   duel.startAt=performance.now()+DUEL_COUNT;duel.nextSwing=0;duel.flash=0;
   _duelPitOpen();
@@ -14634,6 +14774,12 @@ function endDuel(reason){
   }
   else if(reason==='lose')msg('Defeated by '+oppName+'. You are hauled from the pit and patched up.','#9c1f1f');
   else msg('The duel is called off.','#7a3b12');
+  if((duel.stakeMine&&duel.stakeMine.length)||(duel.stakeTheirs&&duel.stakeTheirs.length)){
+    if(reason==='win'||reason==='forfeit-win'){_duelGiveItems(duel.stakeMine);_duelGiveItems(duel.stakeTheirs);if((duel.stakeTheirs||[]).length)msg('You claim the stakes of the duel!','#caa23a');}
+    else if(reason==='lose'||reason==='left'){if((duel.stakeMine||[]).length)msg('Your stake is forfeit to the victor.','#9c1f1f');}
+    else{_duelGiveItems(duel.stakeMine);if((duel.stakeMine||[]).length)msg('Your stake is returned.','#7a6a3a');}   /* called off before a result */
+  }
+  duel.stakeMine=null;duel.stakeTheirs=null;if(duel.oppUid)delete _duelEscrowIn[duel.oppUid];
   duel.oppUid=null;duel.oppName='';duel.rules={};
   if(typeof MP!=='undefined'&&MP.duelClear)MP.duelClear();
 }
@@ -15570,12 +15716,12 @@ const MP = (function () {
   const tradeReqOut = new Map();  /* uid -> t */
   const duelReqIn = new Map();    /* uid -> {name,t}  duel challenges received */
   const duelReqOut = new Map();   /* uid -> t         duel challenges sent */
-  const duelSetup = { active:false, withUid:null, withName:null, rules:{ noFood:false, noPrayer:false, noWeapons:false, mapId:'turf' }, myAccept:false, theirAccept:false };
+  const duelSetup = { active:false, withUid:null, withName:null, rules:{ noFood:false, noPrayer:false, noWeapons:false, mapId:'turf' }, myStake:[], theirStake:[], myAccept:false, theirAccept:false };
   function _duelRulesBlank() { return { noFood:false, noPrayer:false, noWeapons:false, mapId:'turf' }; }
-  function _duelSetupReset() { duelSetup.active=false; duelSetup.withUid=null; duelSetup.withName=null; duelSetup.rules=_duelRulesBlank(); duelSetup.myAccept=false; duelSetup.theirAccept=false; }
+  function _duelSetupReset() { duelSetup.active=false; duelSetup.withUid=null; duelSetup.withName=null; duelSetup.rules=_duelRulesBlank(); duelSetup.myStake=[]; duelSetup.theirStake=[]; duelSetup.myAccept=false; duelSetup.theirAccept=false; }
   function _duelSetupOpen(uid, name) { duelReqIn.delete(uid); duelReqOut.delete(uid); _duelSetupReset(); duelSetup.active=true; duelSetup.withUid=uid; duelSetup.withName=name; if (typeof renderDuelSetup==='function') renderDuelSetup(); }
   function _duelSetupClose() { _duelSetupReset(); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
-  function _duelSetupStart() { const uid=duelSetup.withUid, nm=duelSetup.withName, rules=Object.assign({},duelSetup.rules); _duelSetupClose(); if (typeof startDuel==='function') startDuel(uid, nm, rules); }
+  function _duelSetupStart() { const uid=duelSetup.withUid, nm=duelSetup.withName, rules=Object.assign({},duelSetup.rules), myStake=duelSetup.myStake.map(o=>({id:o.id,qty:o.qty})), theirStake=duelSetup.theirStake.map(o=>({id:o.id,qty:o.qty})); _duelSetupClose(); if (typeof startDuel==='function') startDuel(uid, nm, rules, myStake, theirStake); }
   function duelChallenge(uid, name) {
     if (!active() || !conn) return 'offline';
     if (duel.state !== 'none' || duelSetup.active) return 'busy';
@@ -15586,12 +15732,17 @@ const MP = (function () {
   function duelReqFrom(uid) { return duelReqIn.has(uid); }
   function duelSetToggle(key) { if (!duelSetup.active || !(key in duelSetup.rules) || key==='mapId') return; duelSetup.rules[key] = !duelSetup.rules[key]; duelSetup.myAccept=false; duelSetup.theirAccept=false; if (conn) send({ t:'drules', to:duelSetup.withUid, rules:duelSetup.rules }); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
   function duelSetCycleMap(dir){ if(!duelSetup.active)return; const avail=DUEL_MAP_ORDER.filter(id=>id==='turf'||(typeof duelMapUnlocked==='function'&&duelMapUnlocked(id))); if(avail.length<=1)return; let i=avail.indexOf(duelSetup.rules.mapId); if(i<0)i=0; i=(i+dir+avail.length)%avail.length; duelSetup.rules.mapId=avail[i]; duelSetup.myAccept=false; duelSetup.theirAccept=false; if(conn)send({t:'drules',to:duelSetup.withUid,rules:duelSetup.rules}); if(typeof renderDuelSetup==='function')renderDuelSetup(); }
+  function duelSetStake(items) { if (!duelSetup.active) return; duelSetup.myStake = (items||[]).map(o=>({id:o.id,qty:o.qty|0})).filter(o=>o.qty>0); duelSetup.myAccept=false; duelSetup.theirAccept=false; if (conn) send({ t:'dstake', to:duelSetup.withUid, stake:duelSetup.myStake }); if (typeof renderDuelSetup==='function') renderDuelSetup(); }
+  function duelEscrow(stake) { if (duel.oppUid && conn) send({ t:'descrow', to:duel.oppUid, stake: stake||[] }); }   /* confirm to my opponent what I actually locked in */
   function duelSetAccept() { if (!duelSetup.active) return; duelSetup.myAccept=true; if (conn) send({ t:'dsaccept', to:duelSetup.withUid, rules:duelSetup.rules }); if (duelSetup.theirAccept) _duelSetupStart(); else if (typeof renderDuelSetup==='function') renderDuelSetup(); }
   function duelSetDecline() { if (!duelSetup.active) return; if (conn) send({ t:'dsdecline', to:duelSetup.withUid }); _duelSetupClose(); }
-  function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
+  function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myStake:duelSetup.myStake.map(o=>({id:o.id,qty:o.qty})), theirStake:duelSetup.theirStake.map(o=>({id:o.id,qty:o.qty})), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
   function duelSwing(dmg) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0 }); }
   function duelHp(hp,mhp) { if (duel.oppUid && conn) send({ t: 'dhp', to: duel.oppUid, hp: hp | 0, mhp: mhp | 0 }); }
   function duelConcede() { if (duel.oppUid && conn) send({ t: 'dend', to: duel.oppUid }); }
+  function partySnap(arr, ms) { if (conn) send({ t: 'pset', b: arr, ms: ms }); }    /* host -> all: authoritative balloon set + remaining ms */
+  function partyPop(bid) { if (conn) send({ t: 'ppop', id: bid }); }                /* popper -> all: this balloon was popped */
+  function partyEnd() { if (conn) send({ t: 'pend' }); }                            /* host -> all: round over */
   function duelClear() { duelReqIn.clear(); duelReqOut.clear(); _duelSetupClose(); }
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
@@ -16295,6 +16446,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (typeof renderDuelSetup === 'function') renderDuelSetup();
         break;
       }
+      case 'dstake': { if (m.to !== player.uid) break; if (!duelSetup.active || duelSetup.withUid !== m.uid) break; duelSetup.theirStake = Array.isArray(m.stake) ? m.stake.map(o=>({id:o.id,qty:o.qty|0})).filter(o=>o.qty>0) : []; duelSetup.myAccept = false; duelSetup.theirAccept = false; if (typeof renderDuelSetup === 'function') renderDuelSetup(); break; }
+      case 'descrow': { if (m.to !== player.uid) break; if (typeof _duelNetEscrow === 'function') _duelNetEscrow(m.uid, Array.isArray(m.stake) ? m.stake : []); break; }
       case 'dsaccept': {
         if (m.to !== player.uid) break;
         if (!duelSetup.active || duelSetup.withUid !== m.uid) break;
@@ -16324,6 +16477,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         break;
       }
       case 'iroom': { if (m.uid && m.uid !== player.uid) _peerRoom[m.uid] = (m.r || null); break; }
+      case 'pset': { if (typeof _partyNetSnapshot === 'function') _partyNetSnapshot(m.b || [], m.ms, m.uid); break; }
+      case 'ppop': { if (typeof _partyNetPop === 'function') _partyNetPop(m.id, m.uid); break; }
+      case 'pend': { if (typeof _partyNetEnd === 'function') _partyNetEnd(m.uid); break; }
       case 'pong': break;
     }
   }
@@ -16796,7 +16952,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
-    duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
+    duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
+    partySnap, partyPop, partyEnd,
     active, get connected() { return conn; },
     /* test/debug seams */
     _RP: RP, _claims: claims, _remoteMobs: remoteMobs, _dmgFx: dmgFx, _sent: _sent, _handle: handle, _spawn: spawn, _despawn: despawn, _selfGear: selfGear, _selfAct: selfAct,
