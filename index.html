@@ -1804,7 +1804,7 @@ addObj('chest',32,98);
 addObj('bankchest',122,19,true);addObj('bankchest',164,116,true);
 addObj('fire',93,60);
 addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
-addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',132,19,true);addObj('dig_hebra',132,20,true);addObj('dig_bassi',132,22,true);addObj('dig_chase',132,23,true);addObj('quartermaster',120,37,true);addObj('duel_trapdoor',120,10,true);addObj('duel_trapdoor',120,33,true);
+addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',132,19,true);addObj('dig_hebra',132,20,true);addObj('dig_bassi',132,22,true);addObj('dig_chase',132,23,true);addObj('quartermaster',120,37,true);addObj('duel_trapdoor',120,10,true);addObj('duel_trapdoor',120,33,true);addObj('rector',132,21,true);
 addObj('furnace',128,18);addObj('anvil',130,18);
 addObj('fire',150,23);
 addObj('fire',68,44);
@@ -2213,6 +2213,7 @@ const projectiles=[]; /* {x0,z0,y0,ent,ex,ez,kind,col,t0,dur} */
 let tick=0,dirty=false,muted=false,musicOff=false,storageOK=false,playerLastHit=0;
 let inChapel=false;const CHAPEL_RETURN={x:100,y:100};
 let inMathes=false;const MATHES_RETURN={x:65,y:21};
+let followUid=null;   /* uid of the player we're following (session-only; cleared on any manual click) */
 function curInterior(){return inMathes?'mathes':(inChapel?'chapel':(inParty?'party':null));}
 function clickFx(tx,ty,col){clicks.push({wx:tx+0.5,wz:ty+0.5,t:performance.now(),col});}
 function clickFxAt(wx,wz,col){clicks.push({wx,wz,t:performance.now(),col});}
@@ -2969,6 +2970,7 @@ function walkTo(tx,ty,exact){
 function setAction(a,tx,ty){
   if(dlg)closeDialogue();
   player.action=a;player.actTick=0;
+  followUid=null;
   if(tx!==undefined){
     const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='datk'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray'||a.type==='cook'||a.type==='partylever'||a.type==='partydrops'||a.type==='popballoon'||a.type==='duelff')?'adj':undefined);
     if(!walkTo(tx,ty,mode)){player.action=null;}
@@ -4397,7 +4399,7 @@ function optionsAt(tx,ty){
   if(inParty)return partyOptionsAt(tx,ty);
   if(inMathes){
     /* inside the Cage: only interior objects are interactive - never the outdoor world beneath */
-    const io=objects.find(b=>b.x===tx&&b.y===ty&&(b.def==='mathesexit'||b.def==='quartermaster'||b.def==='duel_trapdoor'||(b.def&&b.def.slice(0,4)==='dig_')));
+    const io=objects.find(b=>b.x===tx&&b.y===ty&&(b.def==='mathesexit'||b.def==='quartermaster'||b.def==='duel_trapdoor'||b.def==='rector'||(b.def&&b.def.slice(0,4)==='dig_')));
     if(io&&io.def==='mathesexit')opts.push(
       {html:'Leave <span class="t">Matthes Cage</span>',label:'Leave Matthes Cage',fn:()=>setAction({type:'leavemathes',o:io},io.x,io.y)},
       {html:'Examine <span class="t">Cage doors</span>',fn:()=>msg(OBJ_DEFS['mathesexit'].ex)});
@@ -4493,8 +4495,8 @@ function optionsAt(tx,ty){
         label:'Leave Chapel',fn:()=>setAction({type:'leavechapel',o},o.x,o.y)},
         {html:'Examine <span class="t">Chapel doors</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='mathesdoor'){
-      opts.push({html:'Enter <span class="t">Matthes Cage</span>',
-        label:'Enter Matthes Cage',fn:()=>setAction({type:'entermathes',o},o.x,o.y)},
+      opts.push({html:'Enter <span class="t">PvP Arena</span>',
+        label:'Enter PvP Arena',fn:()=>setAction({type:'entermathes',o},o.x,o.y)},
         {html:'Examine <span class="t">Matthes Cage</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='mathesexit'){
       opts.push({html:'Leave <span class="t">Matthes Cage</span>',
@@ -4622,6 +4624,7 @@ function optionsAt(tx,ty){
   if(_rp){
     opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=(typeof MP!=='undefined'&&MP.examineInfo)?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' \u2014 a fellow adventurer of Milville.','#103a8c');return;}let s=info.name;if(info.cmb!=null)s+=' \u2014 Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}},
       {html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
+    opts.push({html:'Follow <span class="t">'+_rp.name+'</span>',label:'Follow '+_rp.name,fn:()=>{cancelAction();followUid=_rp.uid;player._flx=null;player._fly=null;if(typeof msg==='function')msg('You start following '+_rp.name+'. Click anywhere to stop.','#103a8c');}});
     if(typeof MP!=='undefined'&&MP.groupCanInvite&&MP.groupCanInvite(_rp.uid)){
       opts.push({html:'Invite <span class="t">'+_rp.name+'</span> to group',label:'Invite '+_rp.name+' to group',fn:()=>{
         const _gr=MP.groupInviteByUid(_rp.uid,_rp.name);
@@ -4646,6 +4649,16 @@ function optionsAt(tx,ty){
 /* =========================== item icons ============================ */
 function drawItemIcon(g,id,S){
   g.save();g.translate(S/2,S/2);g.imageSmoothingEnabled=false;
+  if(id==='cage_token'||(ITEMS[id]&&ITEMS[id].model==='token')){
+    /* brass cage token: disc with a crossed-fists stamp */
+    const R=S*0.34;
+    g.fillStyle='#b88a2e';g.beginPath();g.arc(0,0,R,0,7);g.fill();
+    g.fillStyle='#d8a84a';g.beginPath();g.arc(0,0,R*0.82,0,7);g.fill();
+    g.strokeStyle='#8a6420';g.lineWidth=Math.max(1,S*0.045);g.beginPath();g.arc(0,0,R,0,7);g.stroke();
+    g.strokeStyle='#7a5618';g.lineWidth=Math.max(1.6,S*0.07);g.lineCap='round';
+    const a=R*0.5;g.beginPath();g.moveTo(-a,-a);g.lineTo(a,a);g.moveTo(a,-a);g.lineTo(-a,a);g.stroke();
+    g.restore();return;
+  }
   if(/^clue_/.test(id)){
     const tt=(typeof CLUE_TIERS!=='undefined')&&CLUE_TIERS[CLUE_ITEM_TIER[id]];const col=tt?tt.col:'#caa23a';
     g.lineJoin='round';g.strokeStyle='#9a865a';g.lineWidth=1.4;g.fillStyle='#e8dcb0';
@@ -6850,15 +6863,17 @@ function buildObjModel(o){
     ring.position.set(-0.02,1.0,0.18);ring.rotation.y=Math.PI/2;g.add(ring);
     addProxy(g,1.05,3.0,0,{kind:'obj',o});
   }else if(def==='mathesexit'){
-    /* exit door set FLUSH in the south (east-west) wall, opening toward the interior (north / -z) */
-    const JAMB=0x8a8278, LINT=0x6b6f76;
-    const lp=mesh(new THREE.BoxGeometry(0.32,2.6,0.44),JAMB); lp.position.set(-0.95,1.3,0); g.add(lp);
-    const rp=mesh(new THREE.BoxGeometry(0.32,2.6,0.44),JAMB); rp.position.set(0.95,1.3,0); g.add(rp);
-    const lint=mesh(new THREE.BoxGeometry(2.45,0.42,0.52),LINT); lint.position.set(0,2.5,0); g.add(lint);
-    const op=mesh(new THREE.BoxGeometry(1.7,2.15,0.1),0x141009); op.position.set(0,1.08,0.02); g.add(op);
-    const d1=mesh(new THREE.BoxGeometry(0.82,2.1,0.14),0x3a2517); d1.position.set(-0.45,1.05,-0.16); d1.rotation.y=0.14; g.add(d1);
-    const d2=mesh(new THREE.BoxGeometry(0.82,2.1,0.14),0x4a3120); d2.position.set(0.45,1.05,-0.16); d2.rotation.y=-0.14; g.add(d2);
-    addProxy(g,1.2,3.0,0,{kind:'obj',o});
+    /* exit door FLUSH in the south wall, opening toward the interior (-z). Sized + centred to FILL the
+       cage's timber doorway: the frame's jambs sit at world x 118.6/121.4 (centre 120.0); the object
+       origin is world 120.5, so the opening centre is object-local x = -0.5. Leaves span the full
+       opening with no gap, up to the lintel. (The cage build supplies the jambs+lintel; the door does not.) */
+    const cxL=-0.5, OW=2.26, OH=3.12;
+    const op=mesh(new THREE.BoxGeometry(OW,OH,0.1),0x141009); op.position.set(cxL,OH/2,0.02); g.add(op);
+    const lw=OW/2-0.03;
+    const d1=mesh(new THREE.BoxGeometry(lw,OH-0.1,0.14),0x3a2517); d1.position.set(cxL-lw/2,OH/2,-0.12); d1.rotation.y=0.10; g.add(d1);
+    const d2=mesh(new THREE.BoxGeometry(lw,OH-0.1,0.14),0x4a3120); d2.position.set(cxL+lw/2,OH/2,-0.12); d2.rotation.y=-0.10; g.add(d2);
+    const rg=mesh(new THREE.TorusGeometry(0.08,0.022,6,10),0x8a6a30); rg.position.set(cxL+0.12,OH*0.42,-0.2); rg.rotation.y=Math.PI/2; g.add(rg);
+    addProxy(g,1.4,3.2,0,{kind:'obj',o});
   }else if(def==='mathesdoor'){
     /* A real, clickable double-door set into the Matthes Cage's SOUTH wall.
        The building itself only has slit windows here, so this IS the entrance.
@@ -6881,8 +6896,7 @@ function buildObjModel(o){
   }else if(def.slice(0,4)==='dig_'){
     /* podium dignitaries: both their model and click proxy are built in buildMathesCage */
   }else if(def==='rector'){
-    /* (rector is no longer a clickable object; this branch is dead but harmless) */
-    addProxy(g,0.9,2.4,0,{kind:'obj',o});
+    /* the rector model + click proxy are built in buildMathesCage (balcony height) */
   }else if(def==='fire'){
     for(let i=0;i<3;i++){
       const log=mesh(new THREE.BoxGeometry(0.5,0.09,0.09),0x4a3220);
@@ -10011,6 +10025,10 @@ function makeGroundItem(id){
   else if(id==='coins'){
     for(let i=0;i<3;i++){const c=add(CYL(0.11,0.11,0.035,8),0xe8c23d);c.position.set((i-1)*0.07,0.02+i*0.04,(i%2)*0.06);}
   }
+  else if(id==='cage_token'||IT.model==='token'){
+    const t=add(CYL(0.12,0.12,0.035,10),0xc89a3a);t.position.y=0.02;
+    const t2=add(CYL(0.085,0.085,0.045,10),0xe0b85a);t2.position.y=0.04;
+  }
   else if(/^clue_/.test(id)){
     const tt=(typeof CLUE_TIERS!=='undefined')&&CLUE_TIERS[CLUE_ITEM_TIER[id]];
     const col=tt?parseInt(tt.col.slice(1),16):0xcaa23a;
@@ -10503,7 +10521,7 @@ view.addEventListener('mousemove',ev=>{
 });
 view.addEventListener('mouseleave',()=>{hoverEl.innerHTML='';});
 function walkHere(p){
-  cancelAction();
+  cancelAction();followUid=null;
   if(walkTo(p.tx,p.ty,true))clickFxAt(p.wp.x,p.wp.z,'#ffe600');
 }
 view.addEventListener('click',ev=>{
@@ -10639,6 +10657,7 @@ invGrid.addEventListener('contextmenu',e=>{
     showMenu(e.clientX,e.clientY,[
       {html:'Deposit-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>depositSlot(i,1)},
       {html:'Deposit-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>depositId(id,5)},
+      {html:'Deposit-X <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_promptQty(ITEMS[id].name,n=>depositId(id,n))},
       {html:'Deposit-All <span class="t">'+ITEMS[id].name+'</span>',fn:()=>depositId(id,1e9)},
       {html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)}]);
     return;
@@ -11599,6 +11618,13 @@ function withdrawId(id,n){
   b.qty-=got;if(b.qty<=0)bank.splice(bank.indexOf(b),1);
   renderBank();dirty=true;sfx.pickup();
 }
+function _promptQty(name,cb){   /* native numeric prompt -> calls cb(N); the target fns all clamp safely */
+  const v=(typeof prompt==='function')?prompt('Enter quantity'+(name?' of '+name:'')+':',''):null;
+  if(v===null||v==='')return;
+  const num=parseInt(v,10);
+  if(!(num>=1)){if(typeof msg==='function')msg('Enter a whole number, 1 or more.','#9c1f1f');return;}
+  cb(Math.min(num,2000000000));
+}
 /* ------------------ dialogue boxes with talking heads ------------------ */
 const dlgUI=document.getElementById('dlgui');
 const dlgFace=document.getElementById('dlgface');
@@ -12148,7 +12174,7 @@ function ownProctorAny(){const ids=['proctor_helm','crimson_proctor_helm','gilde
 function ownsHelmAnywhere(id){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;return bank.some(b=>b&&b.id===id&&(b.qty||1)>0);}
 function crimsonDyeSpent(){return ownsHelmAnywhere('crimson_proctor_helm')||ownsHelmAnywhere('gilded_warden_helm');}
 function giltDyeSpent(){return ownsHelmAnywhere('gilded_warden_helm');}
-function neededHelmPiece(){const have=id=>countItem(id)>0||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&countItem('sentinel_visor')<1)return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&countItem('scholar_crest')<1)return 'scholar_crest';return null;}
+function neededHelmPiece(){const have=id=>countItem(id)>0||(typeof bank!=='undefined'&&bank.some(b=>b.id===id&&(b.qty||0)>0))||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&!have('sentinel_visor'))return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&!have('scholar_crest'))return 'scholar_crest';return null;}
 const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150,skip:30,block:100};
 const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks, with a bonus every tenth task. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, and a Dragon Slayer shield or an Elemental Shield against the wyvern\u2019s frost \u2014 either turns its freezing breath. Keep the right gear equipped or these creatures tear straight through armour.';
 function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else if(id==='block'){sl.unlocks=sl.unlocks||{};sl.unlocks.block=true;msg('Task blocking unlocked \u2014 toggle blocks in the rewards shop.','#9a6fb0');}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
@@ -13510,6 +13536,7 @@ function renderBank(){
       showMenu(ev.clientX,ev.clientY,[
         {html:'Withdraw-1 <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,1)},
         {html:'Withdraw-5 <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,5)},
+        {html:'Withdraw-X <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>_promptQty(ITEMS[b.id].name,n=>withdrawId(b.id,n))},
         {html:'Withdraw-All <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,1e9)},
         {html:'Examine <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>examineItem(b.id)}]);});
     gr.appendChild(d);
@@ -13759,6 +13786,7 @@ function renderSell(){
       const opts=[{label:'Sell 1',fn:()=>sellItem(_sid,1)}];
       if(owned>=5)opts.push({label:'Sell 5',fn:()=>sellItem(_sid,5)});
       if(owned>=10)opts.push({label:'Sell 10',fn:()=>sellItem(_sid,10)});
+      if(owned>1)opts.push({label:'Sell X',fn:()=>_promptQty(ITEMS[_sid].name,n=>sellItem(_sid,n))});
       if(owned>1)opts.push({label:'Sell all ('+owned+')',fn:()=>sellItem(_sid,owned)});
       showMenu(ev.clientX,ev.clientY,opts);
     });
@@ -13804,6 +13832,7 @@ function renderShop(){
         {html:'Buy-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>buyItem(id,5)},
         {html:'Buy-50 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>buyItem(id,50)},
         {html:'Buy-100 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>buyItem(id,100)},
+        {html:'Buy-X <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_promptQty(ITEMS[id].name,n=>buyItem(id,n))},
         {html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)}]);});
     ls.appendChild(r);
   }
@@ -14046,6 +14075,13 @@ function exitChapel(){
 const MCAGE={x0:99,x1:141,y0:1,y1:43};
 const MPIT ={x0:109,x1:131,y0:9,y1:34};       /* the sunken turf ditch (sealed until a duel) - enlarged 2 tiles on every side */
 const MDEPTH=3.2;
+const MATHES_SPECTATOR_LINES=[
+  'SPS! SPS! SPS!','Send him through the trapdoor!','Get in the pit!','Smite him!',
+  'My money\u2019s on the red corner!','Use the ice, you fool!','Now THAT was a hit!',
+  'Finish it!','Boooo!','Pelican pride!','Defend! Defend!','He\u2019s on the ropes!',
+  'Best bout all term!','Hit him again!','For the form room!','Cage! Cage! Cage!',
+  'Don\u2019t slip on the rink!','Down to the wire!','Mind the lava!','Off with his health bar!'
+];
 const MATHES_RECTOR_LINES=[
   'The pit remembers every contest fought on its sand.',
   'Step down only when you are challenged - not before.',
@@ -14067,6 +14103,7 @@ const mathesTiles=TILES_MAIN.map(r=>r.slice());
 })();
 const mathesGroup=new THREE.Group();mathesGroup.visible=false;scene.add(mathesGroup);
 let mathesRector=null, mathesChatT=0;
+let mathesSpectators=[], mathesSpecT=0;
 /* transient heightmap: flatten the whole room to one level on enter, restore on exit */
 const _mFY=groundH(120,8);
 const MPITY=_mFY-MDEPTH;
@@ -14230,7 +14267,7 @@ function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
     hm.g.position.set(132.5,podDeck,f.z);
     hm.g.rotation.y=-Math.PI/2;
     mathesGroup.add(hm.g);
-    if(f.rector)mathesRector={x:132,y:21,g:hm.g,chat:'',chatUntil:0};
+    if(f.rector){mathesRector={x:132,y:21,g:hm.g,chat:'',chatUntil:0};const _ro=objects.find(o=>o.def==='rector');if(_ro)addProxy(hm.g,0.85,2.5,0,{kind:'obj',o:_ro});}
     else if(f.def){const _do=objects.find(o=>o.def===f.def);if(_do)addProxy(hm.g,0.85,2.5,0,{kind:'obj',o:_do});}
   }
   /* Quartermaster: rewards desk on the south concourse near the doors (faces +z toward the entrance) */
@@ -14239,6 +14276,48 @@ function _mathesRestore(){for(const s of _mSnap)hts[s[1]][s[0]]=s[2];}
    qh.g.position.set(120.5,FY,37.5); qh.g.rotation.y=0;
    mathesGroup.add(qh.g);
    if(_qm)addProxy(qh.g,0.85,2.5,0,{kind:'obj',o:_qm});}
+  /* ---------- packed student crowd: SOLID stepped bleachers around the pit (N / W / S), everyone facing the turf ---------- */
+  {
+    mathesSpectators.length=0;
+    const cx=cxp, cz=czp;                                   /* pit centre - every fan faces here (atan2, same as the dignitaries) */
+    const STEP=0x938974, STEP2=0x837a66, LIP=0x6a6150;
+    const SKINS=[0xe8c19a,0xe0b48c,0xc89a6a,0xd9a877,0xb07d52,0xeac4a0,0x8a5e3a,0xf0d0b0];
+    const SHIRTS=[0x2a4d8a,0x7a2f2f,0x2f6a3a,0x5a3d7a,0xb0892e,0x2f6a6a,0x3a5a8a,0x8a3a5a,0x4a4a52,0xc8a020,0x356a45,0x9a3050,0xd06a20];
+    const PANTS=[0x21314f,0x3a2020,0x20402a,0x3a2850,0x2a2a30,0x402a18,0x24343a];
+    const HAIRS=[0x3a2a1a,0x1a1410,0x6b4a2e,0x2a2218,0x4a3420,0x7a7a7a,0x141014,0x53381f];
+    const pick=a=>a[(Math.random()*a.length)|0];
+    const fig=(sx,sy,sz)=>{                                  /* a compact baked seated fan: thighs + torso + head, facing the pit */
+      const a=Math.atan2(cx-sx,cz-sz), fwx=Math.sin(a), fwz=Math.cos(a);
+      const sk=pick(SKINS), sh=pick(SHIRTS), pn=pick(PANTS), hr=pick(HAIRS);
+      B(box(0.30,0.16,0.5),pn, sx+fwx*0.17, sy+0.10, sz+fwz*0.17, a);          /* thighs jut toward the pit */
+      B(box(0.34,0.46,0.26),sh, sx, sy+0.40, sz, a);                            /* torso */
+      B(box(0.46,0.15,0.22),sh, sx, sy+0.585, sz, a);                           /* shoulders */
+      B(sph(0.115),sk, sx+fwx*0.05, sy+0.72, sz+fwz*0.05, a);                   /* head */
+      B(sph(0.125),hr, sx-fwx*0.03, sy+0.765, sz-fwz*0.03, a, 0.85);            /* hair (back of head) */
+      mathesSpectators.push({x:sx,y:sy,z:sz,chat:'',chatUntil:0});
+    };
+    /* a stand = rows of SOLID steps (each from the floor up to its seat, so nothing floats) + a packed row of fans on each */
+    const stand=(axis,w0,w1,frontW,dirOut,rows)=>{
+      for(let r=0;r<rows;r++){
+        const h=0.5+r*0.62, seatY=FY+h;
+        const front=frontW+dirOut*r*1.5, back=front+dirOut*1.5, ctr=(front+back)/2;
+        const fanP=front+dirOut*0.45;                          /* fans sit ON the step (back from the front edge) -> clears the arena railing */
+        if(axis==='x'){
+          S(box(w1-w0,h,1.5),(r&1)?STEP2:STEP,(w0+w1)/2,FY+h/2,ctr,0);          /* solid step (floor -> seat) */
+          S(box(w1-w0,0.07,0.34),LIP,(w0+w1)/2,seatY+0.02,fanP,0);              /* seat lip */
+          for(let x=Math.floor(w0)+0.5;x<w1;x+=1)if(Math.random()<0.9)fig(x+rnd(-0.13,0.13),seatY,fanP+rnd(-0.08,0.08));
+        }else{
+          S(box(1.5,h,w1-w0),(r&1)?STEP2:STEP,ctr,FY+h/2,(w0+w1)/2,0);
+          S(box(0.34,0.07,w1-w0),LIP,fanP,seatY+0.02,(w0+w1)/2,0);
+          for(let z=Math.floor(w0)+0.5;z<w1;z+=1)if(Math.random()<0.9)fig(fanP+rnd(-0.08,0.08),seatY,z+rnd(-0.13,0.13));
+        }
+      }
+    };
+    stand('x',110,131, 8.0,-1,3);                              /* NORTH: 3 tiers receding to the wall */
+    stand('z', 10, 33,108.0,-1,3);                             /* WEST */
+    stand('x',106,116,36.0, 1,3);                              /* SOUTH (west of the doors) */
+    stand('x',124,134,36.0, 1,3);                              /* SOUTH (east of the doors) */
+  }
   /* (removed: small red/blue wall panels that sat in front of - and covered - the PVP Arena banners on the E/W walls) */
   const m1=bakeMesh(out ,false);mathesGroup.add(m1);
   const m2=bakeMesh(outS,true );m2.receiveShadow=true;mathesGroup.add(m2);
@@ -14583,6 +14662,22 @@ function drawMathesChats(){
   }
   if(mathesRector.chat&&mathesRector.chatUntil>nowp)
     drawSayText(mathesRector.x+0.5,mathesRector.y+0.5,3.6,mathesRector.chat);
+  if(mathesSpectators&&mathesSpectators.length){
+    if(nowp>=mathesSpecT){
+      mathesSpecT=nowp+((duel.state==='fight')?rnd(1100,2600):rnd(3800,7500));   /* louder during a bout */
+      const sp=mathesSpectators[Math.floor(Math.random()*mathesSpectators.length)];
+      sp.chat=MATHES_SPECTATOR_LINES[Math.floor(Math.random()*MATHES_SPECTATOR_LINES.length)];
+      sp.chatUntil=nowp+2600;
+    }
+    octx.save();octx.textAlign='center';octx.font='bold 12px Georgia';
+    for(const sp of mathesSpectators){
+      if(sp.chat&&sp.chatUntil>nowp){
+        const pp=proj(sp.x,sp.y+1.05,sp.z);
+        if(pp){octx.lineWidth=3;octx.strokeStyle='rgba(0,0,0,0.85)';octx.strokeText(sp.chat,pp.x,pp.y);octx.fillStyle='#ffff2a';octx.fillText(sp.chat,pp.x,pp.y);}
+      }
+    }
+    octx.restore();
+  }
 }
 /* interior minimap: black void + track ring + turf ditch + rector marker */
 const miniBaseMathes=document.createElement('canvas');
@@ -14814,9 +14909,9 @@ let chapelProxies=[];let mathesProxies=[];
   for(let i=proxies.length-1;i>=0;i--){const _po=proxies[i].userData&&proxies[i].userData.o;
     if(_po&&(_po.def==='relic'||_po.def==='chapelexit'||_po.def==='chapeldoor'))proxies.splice(i,1);}
   mathesProxies=proxies.filter(px=>px.userData&&px.userData.o&&
-    (px.userData.o.def==='mathesexit'||px.userData.o.def==='quartermaster'||(px.userData.o.def&&px.userData.o.def.slice(0,4)==='dig_')));
+    (px.userData.o.def==='mathesexit'||px.userData.o.def==='quartermaster'||px.userData.o.def==='rector'||(px.userData.o.def&&px.userData.o.def.slice(0,4)==='dig_')));
   for(let i=proxies.length-1;i>=0;i--){const _mo=proxies[i].userData&&proxies[i].userData.o;
-    if(_mo&&(_mo.def==='mathesexit'||_mo.def==='quartermaster'||(_mo.def&&_mo.def.slice(0,4)==='dig_')))proxies.splice(i,1);}
+    if(_mo&&(_mo.def==='mathesexit'||_mo.def==='quartermaster'||_mo.def==='rector'||(_mo.def&&_mo.def.slice(0,4)==='dig_')))proxies.splice(i,1);}
 })();
 function render(now){
   requestAnimationFrame(render);
@@ -14864,7 +14959,7 @@ function render(now){
   axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
-  const act=player.action;
+  const act=player.action;let _swRest=true;
   if(act&&acting){
     if(act.type==='gather'){
       const sk=OBJ_DEFS[act.obj.def].skill;
@@ -14890,7 +14985,7 @@ function render(now){
       }else{
         /* melee: overhead chop */
         armR=-0.45;
-        if(swA<480){const k2=Math.sin(Math.PI*(swA/480));armR=-0.35-2.0*k2;}
+        if(swA<480){const k2=Math.sin(Math.PI*(swA/480));armR=-0.35-2.0*k2;_swRest=false;}
       }
     }else if(act.type==='cook'){
       showTool=null;armR=-0.6+Math.sin(now*0.01)*0.2;
@@ -14898,8 +14993,8 @@ function render(now){
   }
   if(showTool==='axe')axe.visible=true;
   else if(showTool==='pick')pick.visible=true;
-  else if(showTool==='sword')sword.visible=true;
-  else if(showTool==='scim')scim.visible=true;
+  else if(showTool==='sword'){sword.visible=true;sword.rotation.x=_swRest?-1.5:0;}   /* -1.5 ~= held out front; 0 = down for the chop (tunable) */
+  else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?-1.5:0;}
   else if(showTool==='bow')bowM.visible=true;
   else if(showTool==='staff')staffM.visible=true;
   shieldM.visible=!!player.equip.shield;
@@ -14976,6 +15071,15 @@ function render(now){
     tintG(showTool==='scim'?scim:sword,we.tint!==undefined?we.tint:0xc7ccd4,
       we.trim!==undefined?we.trim:0x8a6a2a);
   }
+  {const _ce=player.emote&&EMOTES_BY_ID[player.emote];   /* costume emotes (jack/xmas/chef) strip worn gear so the costume isn't covered */
+   if(_ce&&_ce.build){
+     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
+     shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;
+     bodyM.visible=armPL.visible=armPR.visible=hideBodyM.visible=robeBodyM.visible=false;
+     legL.visible=legR.visible=hideLegL.visible=hideLegR.visible=robeSkirtM.visible=false;
+     bootL.visible=bootR.visible=false;
+     helmM.visible=chefHatM.visible=pumpkinM.visible=partyHatM.visible=santaHatM.visible=slayerHelmM.visible=wizHatM.visible=coifM.visible=false;
+   }}
   {const brA=now-(player.braceT||-1e9);
    if(brA<480){const k2=Math.sin(Math.PI*(brA/480)),_ds=currentWeaponStyle();
      if(_ds==='ranged'){armR-=0.26*k2;armL-=0.42*k2;}      /* bow drawn in to guard */
@@ -15181,6 +15285,12 @@ setInterval(()=>{
     updatePrayOrb();
   }
   if(beat%8===0)updateMusic();
+  if(followUid){
+    const _tgt=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(followUid):null;
+    if(!_tgt||!(typeof MP!=='undefined'&&MP.remoteHere&&MP.remoteHere(_tgt))){followUid=null;if(typeof msg==='function')msg('You stop following.','#103a8c');}
+    else{const _fx=Math.round(_tgt.px),_fy=Math.round(_tgt.py);
+      if(Math.max(Math.abs(_fx-player.x),Math.abs(_fy-player.y))>1&&(!player.path.length||player._flx!==_fx||player._fly!==_fy)){walkTo(_fx,_fy,'adj');player._flx=_fx;player._fly=_fy;}}
+  }
   let _ranThisBeat=false;
   const _canRun=player.run&&player.stamina>0&&!inParty&&duel.state==='none';
   if((beat%2===0||_canRun)&&player.path.length){
@@ -16008,6 +16118,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     const r = RP.get(uid); if (!r) return;
     try { scene.remove(r.rig.g); } catch (e) {}
     RP.delete(uid);
+    delete _peerRoom[uid];
     for (const [m, c] of claims) if (c.uid === uid) claims.delete(m);
     for (const [mi, e] of remoteMobs) if (e.owner === uid) remoteMobs.delete(mi);
   }
@@ -16212,6 +16323,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (duel.state !== 'none' && m.uid === duel.oppUid && typeof endDuel === 'function') endDuel('win');
         break;
       }
+      case 'iroom': { if (m.uid && m.uid !== player.uid) _peerRoom[m.uid] = (m.r || null); break; }
       case 'pong': break;
     }
   }
@@ -16223,15 +16335,20 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
      appeared there. Positions DO survive the relay, so while you are inside the
      Cage, treat anyone whose broadcast coordinates fall within the Cage footprint
      as here with you. Outdoors the behaviour is unchanged (interior tag / null). */
+  const _peerRoom = {};                 /* uid -> interior id ('party'|'mathes'|'chapel'|null), learned from 'iroom' beacons */
+  let _roomSent, _roomT = 0;            /* the interior I last broadcast, and when */
   function _remoteHere(r) {
     const ci = curInterior();
-    if ((r.in || null) === ci) return true;
+    const pr = _peerRoom[r.uid];
+    if (pr !== undefined) return (pr || null) === ci;        /* beacon known -> exact room match (separates Party / Cage / Chapel, which overlap in world space) */
+    if ((r.in || null) === ci) return true;                  /* legacy fallback: peer has not sent a beacon yet */
     if (ci === 'mathes' && r.x >= MCAGE.x0 && r.x <= MCAGE.x1 && r.y >= MCAGE.y0 && r.y <= MCAGE.y1) return true;
     return false;
   }
   function frame(t, dt) {
     if (!active() || !conn) return;
     pushOutbound(t);
+    { const _ci = curInterior(); if (_ci !== _roomSent || (_ci && t - _roomT > 1500)) { send({ t: 'iroom', r: _ci }); _roomSent = _ci; _roomT = t; } }   /* interior presence beacon: survives the relay, so interior peers see each other */
     manageClaims();
     if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
     {
