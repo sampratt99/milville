@@ -780,7 +780,7 @@
           <h4>Options</h4>
           <label><input type="checkbox" id="sndchk" checked> Sound effects</label>
           <label><input type="checkbox" id="muschk" checked> Music</label>
-          <label><input type="checkbox" id="winterchk"> Winter scenery</label>
+          <label id="winterrow" style="display:none"><input type="checkbox" id="winterchk"> Winter scenery</label>
           <div id="savestatus">Checking autosave…</div>
           <button class="sbtn" id="savebtn">Save now</button>
           <button class="sbtn" id="exportbtn">Copy save to clipboard</button>
@@ -2252,7 +2252,7 @@ async function upsertSlot(id,name){
   await writeSlots(list);
 }
 const player={
-  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,
+  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,winterUnlocked:false,
   x:89,y:88,px:89,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
   hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0},
@@ -4001,7 +4001,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,winterUnlocked:player.winterUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -4145,6 +4145,7 @@ async function loadSlot(id){
       player.emoteUnlocks=s.emoteUnlocks||{};
       player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
       player.title=s.title||null;
+      player.winterUnlocked=!!s.winterUnlocked;
       if(s.name)player.name=s.name;
       if(s.mmf)Object.assign(player.mmf,s.mmf);
       if(s.quests)for(const k in player.quests)
@@ -13408,7 +13409,13 @@ const DIALOGUES={
     if(_r2&&_r2.s===4)return _rxmas2RewardTree();
     if(_r2&&_r2.s>=5)return{start:{who:'npc',text:'A very happy Christmas, dear! All Millville is talking of the Old Chapel tonight. (Winter scenery lives in the Settings, whenever you fancy it.)',next:null}};
     const Q=player.quests,q=Q.m3;
-    if(q.s===2)return{
+    if(Q.m5.s>=2&&Q.rxmas.s===0)return{
+      start:{who:'npc',text:'There you are, dear -- the whole school is talking of what you have done. Now: we hold the Rectory Christmas party tonight, before the Christmas Eve service, and I am at my wits end in the kitchen. Would you lend a hand?',next:'xm2'},
+      xm2:{opts:[{label:'I would be glad to help.',next:()=>{ Q.rxmas.s=1; renderQuests(); dirty=true; msg('Quest started: A Rectory Christmas','#103a8c'); return 'xacc'; }},
+        {label:'Maybe another time.',next:'xno'}]},
+      xacc:{who:'npc',text:'Bless you! The door is open now -- come inside, I will be in the kitchen.',next:null},
+      xno:{who:'npc',text:'No matter. The door is open whenever you are, dear.',next:null}};
+    if(q.s===2&&Q.rxmas.s===0)return{
       start:{who:'npc',text:'The Cage is quiet again \u2014 the Rector\u2019s wife hears these things first.'+(Q.m4.s<2?' It also says the Librarian at Ohrstrom has been asking after those letters \u2014 and dear, she looked frightened.':''),next:'ask'},
       ask:{opts:[{label:'What is it like, living at the Rectory?',next:'lf'},
         {label:'Good day, Mrs. Matthews.',next:'by'}]},
@@ -16430,7 +16437,7 @@ function _rxmas2RewardTree(){ return {
 function finishRxmas2(){
   const q=player.quests&&player.quests.rxmas2; if(!q||q.s>=5)return;
   q.s=5; if(typeof unlockEmote==='function')unlockEmote('xmas',true);
-  player.winter=true; if(typeof applyWinter==='function')applyWinter();
+  player.winterUnlocked=true; player.winter=true; if(typeof applyWinter==='function')applyWinter();
   giveCoins(5000); addXp('prayer',800); addXp('woodcutting',300); dirty=true;
   if(typeof renderQuests==='function')renderQuests();
   questDone('Away in a Manger');
@@ -16508,6 +16515,7 @@ function buildRoofSnow(on){
 function applyWinter(){
   const on=!!(player&&player.winter);
   const wc=document.getElementById('winterchk'); if(wc)wc.checked=on;
+  const _wr=document.getElementById('winterrow'); if(_wr)_wr.style.display=(player&&player.winterUnlocked)?'':'none';
   if(typeof buildWinterIce==='function')buildWinterIce(on);
   if(typeof recolorTerrain==='function')recolorTerrain();
   if(typeof buildRoofSnow==='function')buildRoofSnow(on);
@@ -16942,7 +16950,7 @@ function exitStPaul(){
   scene.fog.near=30;scene.fog.far=52;
   if(typeof stopOrgan==='function')stopOrgan();
   updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
-  if(player.quests&&player.quests.rxmas2&&player.quests.rxmas2.s>=4&&!player.winter){ player.winter=true; if(typeof applyWinter==='function')applyWinter(); dirty=true; msg('You step out into a hushed, snow-falling Millville. Winter has come to the grounds.','#bcd6ec'); }
+  if(player.quests&&player.quests.rxmas2&&player.quests.rxmas2.s>=4&&!player.winter){ player.winterUnlocked=true; player.winter=true; if(typeof applyWinter==='function')applyWinter(); dirty=true; msg('You step out into a hushed, snow-falling Millville. Winter has come to the grounds.','#bcd6ec'); }
   else msg('You step back out onto the chapel green.');
 }
 let chapelProxies=[];let mathesProxies=[];let rectoryProxies=[];let stPaulProxies=[];
@@ -17414,12 +17422,25 @@ fit();
 renderSkills();renderInv();renderEquip();updateOrb();
 drawUiIcon(document.getElementById('hpheart').getContext('2d'),'heart',14);
 const statusEl=document.getElementById('savestatus');
+function backfillUnlocks(){
+  if(!player.titleUnlocks)player.titleUnlocks={};
+  const Q=player.quests;
+  if(Q&&Q.rxmas2&&Q.rxmas2.s>=4)player.winterUnlocked=true;          /* winter has arrived -> toggle is theirs */
+  if(!player.winterUnlocked&&player.winter)player.winter=false;       /* never earned it -> off */
+  let granted=0;
+  const sg=function(id){ if(typeof TITLES!=='undefined'&&TITLES[id]&&!player.titleUnlocks[id]){player.titleUnlocks[id]=true;granted++;} };
+  if(Q){ if(Q.dq&&Q.dq.s>=2)sg('orange_shirts'); if(Q.rxmas2&&Q.rxmas2.s>=5)sg('merry'); }
+  if(typeof _titleStats==='function'&&typeof TITLES!=='undefined'){ const st=_titleStats(); for(const id in TITLES){ const T=TITLES[id]; if(T.cond&&!player.titleUnlocks[id]&&T.cond(st))sg(id); } }
+  if(granted>0){ dirty=true; if(typeof msg==='function')msg('You have earned '+granted+' title'+(granted>1?'s':'')+' from your past achievements -- choose one from the Titles list in the Emotes panel (the smiley tab).','#7a18c9'); }
+  if(typeof renderTitles==='function')renderTitles();
+}
 function enterGame(){
   splashEl.style.display='none';
   audio();
   syncStyleUI();
   renderSkills();renderInv();renderEquip();updateOrb();updateRunOrb();
   player.px=player.x;player.py=player.y;
+  if(typeof backfillUnlocks==='function')backfillUnlocks();
   if(typeof applyWinter==='function')applyWinter();
   statusEl.textContent=storageOK?
     ('Autosave: on \u2014 '+player.name+' (this device).'):
