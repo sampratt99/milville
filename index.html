@@ -781,6 +781,7 @@
           <label><input type="checkbox" id="sndchk" checked> Sound effects</label>
           <label><input type="checkbox" id="muschk" checked> Music</label>
           <label id="winterrow" style="display:none"><input type="checkbox" id="winterchk"> Winter scenery</label>
+          <label id="fallrow" style="display:none"><input type="checkbox" id="fallchk"> Fall scenery</label>
           <div id="savestatus">Checking autosave…</div>
           <button class="sbtn" id="savebtn">Save now</button>
           <button class="sbtn" id="exportbtn">Copy save to clipboard</button>
@@ -2252,7 +2253,7 @@ async function upsertSlot(id,name){
   await writeSlots(list);
 }
 const player={
-  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,winterUnlocked:false,
+  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
   x:89,y:88,px:89,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
   hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0},
@@ -4001,7 +4002,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,winterUnlocked:player.winterUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -4146,6 +4147,7 @@ async function loadSlot(id){
       player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
       player.title=s.title||null;
       player.winterUnlocked=!!s.winterUnlocked;
+      player.winter=!!s.winter; player.fall=!!s.fall; player.fallUnlocked=!!s.fallUnlocked;
       if(s.name)player.name=s.name;
       if(s.mmf)Object.assign(player.mmf,s.mmf);
       if(s.quests)for(const k in player.quests)
@@ -4191,7 +4193,7 @@ async function resetGame(){
   if(storageOK&&SAVE_KEY){try{await STORE.delete(SAVE_KEY);}catch(e){}}
   player.skills={attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0};
   player.inv=new Array(28).fill(null);player.partyQuiz=false;player.friends.length=0;player.uid=genUid();
-  player.hp=10;player.pray=100;player.style='stab';player.autoRetaliate=true;player.emoteUnlocks={};player.titleUnlocks={};player.title=null;player.x=89;player.y=88;player.px=89;player.py=88;
+  player.hp=10;player.pray=100;player.style='stab';player.autoRetaliate=true;player.emoteUnlocks={};player.titleUnlocks={};player.title=null;player.winterUnlocked=false;player.winter=false;player.fall=false;player.fallUnlocked=false;player.x=89;player.y=88;player.px=89;player.py=88;
   player.equip={weapon:null,shield:null};player.kit=false;bank.length=0;
   closeBank();closeShop();
   player.path.length=0;cancelAction();ground.length=0;
@@ -4555,7 +4557,8 @@ document.querySelectorAll('.ctab').forEach(t=>{
   });
 });
 document.getElementById('sndchk').addEventListener('change',e=>{muted=!e.target.checked;});
-(function(){var _wc=document.getElementById('winterchk'); if(_wc)_wc.addEventListener('change',function(e){ if(player)player.winter=e.target.checked; if(typeof applyWinter==='function')applyWinter(); dirty=true; });})();
+(function(){var _wc=document.getElementById('winterchk'); if(_wc)_wc.addEventListener('change',function(e){ if(player){player.winter=e.target.checked; if(player.winter)player.fall=false;} if(typeof applyWinter==='function')applyWinter(); dirty=true; });})();
+(function(){var _fc=document.getElementById('fallchk'); if(_fc)_fc.addEventListener('change',function(e){ if(player){player.fall=e.target.checked; if(player.fall)player.winter=false;} if(typeof applyFall==='function')applyFall(); dirty=true; });})();
 document.getElementById('muschk').addEventListener('change',e=>{musicOff=!e.target.checked;updateMusic();});
 document.getElementById('savebtn').addEventListener('click',()=>{
   if(storageOK)saveGame(false);else msg('Autosave is not available here.','#103a8c');});
@@ -6568,13 +6571,18 @@ function mesh(geo,hex,shadow){
 }
 
 /* ---------------------------- terrain ----------------------------- */
-let _terraWinter=false;   /* set true only while recolouring the terrain for winter */
+let _terraWinter=false,_terraFall=false;   /* set true only while recolouring the terrain for winter/fall */
 function tileColor(x,y){
   const t=tiles[y][x],h=tileHash(x,y);
   if(_terraWinter){
     if(t===T_GRASS){ const SN=[0xdfe9f1,0xe7eff6,0xeff5fa,0xf3f8fc]; return SN[Math.min(3,Math.floor(h*4))]; }
     if(t===T_PATH){ return h<0.5?0xd6dde4:0xccd4dc; }
     if(t===T_FOREST){ return h<0.5?0x46544a:0x515f54; }
+  }
+  if(_terraFall){
+    if(t===T_GRASS){ const AU=[0x7a8438,0x84883a,0x90883a,0x788034]; return AU[Math.min(3,Math.floor(h*4))]; }
+    if(t===T_PATH){ return h<0.5?0x8c7440:0x947c44; }
+    if(t===T_FOREST){ const FG=[0xa86a2a,0x9c5e24,0xb87a32,0x8c5220]; return FG[Math.min(3,Math.floor(h*4))]; }
   }
   if(t===T_LAVA){
     const LA=[0xc23c16,0xd84a1e,0xe85a20,0xf07a28,0x8c2810];
@@ -6711,10 +6719,10 @@ function _computeTerraColors(){
 }
 function recolorTerrain(){
   if(!terra||!terra.geometry||typeof THREE==='undefined')return;
-  const on=!!(player&&player.winter);
-  const prevTiles=tiles, prevWin=_terraWinter;
-  tiles=TILES_MAIN; _terraWinter=on;
-  let col; try{ col=_computeTerraColors(); } finally { tiles=prevTiles; _terraWinter=prevWin; }
+  const on=!!(player&&player.winter), fon=!!(player&&player.fall);
+  const prevTiles=tiles, prevWin=_terraWinter, prevFall=_terraFall;
+  tiles=TILES_MAIN; _terraWinter=on; _terraFall=fon;
+  let col; try{ col=_computeTerraColors(); } finally { tiles=prevTiles; _terraWinter=prevWin; _terraFall=prevFall; }
   terra.geometry.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
   terra.geometry.attributes.color.needsUpdate=true;
 }
@@ -6766,7 +6774,9 @@ function bakeMesh(out,shadow){
 }
 
 /* ----------------------- forest border trees ---------------------- */
-(function buildForest(){
+let _treeMesh=null,_treeFall=false;
+const _FALL_LEAF=[0xc0392b,0xd86a1e,0xe0a82a,0xb8541e,0xc88a20,0x9c4a2a];
+function buildForest(){
   const out={pos:[],nor:[],col:[]};
   const cone=new THREE.ConeGeometry(0.7,1.6,5);
   const cone2=new THREE.ConeGeometry(0.55,1.3,5);
@@ -6785,12 +6795,18 @@ function bakeMesh(out,shadow){
       continue;
     }
     bake(out,trunk,0x4a3220,wx,gy+0.25*s,wz,h2*6,s);
-    bake(out,cone,h1<0.5?0x2e5a26:0x356b2b,wx,gy+1.3*s,wz,h1*6,s);
-    if(h3>0.45)
-      bake(out,cone2,0x2a5423,wx+(h2-0.5)*0.7,gy+1.05*s*0.85,wz+(h1-0.5)*0.7,h3*6,s*0.85);
+    const _f1=_treeFall?_FALL_LEAF[Math.floor(tileHash(x+5,y+9)*6)%6]:(h1<0.5?0x2e5a26:0x356b2b);
+    bake(out,cone,_f1,wx,gy+1.3*s,wz,h1*6,s);
+    if(h3>0.45){
+      const _f2=_treeFall?_FALL_LEAF[Math.floor(tileHash(x+11,y+3)*6)%6]:0x2a5423;
+      bake(out,cone2,_f2,wx+(h2-0.5)*0.7,gy+1.05*s*0.85,wz+(h1-0.5)*0.7,h3*6,s*0.85);
+    }
   }
-  if(out.pos.length)bakeMesh(out,true);
-})();
+  if(_treeMesh&&_treeMesh.parent)_treeMesh.parent.remove(_treeMesh);
+  _treeMesh=out.pos.length?bakeMesh(out,true):null;
+}
+buildForest();
+function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFall=on; buildForest(); }
 
 /* ------------------ ground clutter (no shadows) ------------------- */
 (function buildDetail(){
@@ -13249,7 +13265,7 @@ const DIALOGUES={
           for(let k9=0;k9<bozekGot(q);k9++){
             const i9=findItem('candy');if(i9>=0)removeSlot(i9);}
           addItem('coins',500);addItem('pumpkin_helmet');
-          q.s=2;questDone('Trick or Treat');
+          q.s=2;if(player)player.fallUnlocked=true;questDone('Trick or Treat');
           return 'done';}}]},
       done:{who:'npc',text:'Gold for your trouble \u2014 and the pumpkin helmet! Carved it myself. You are practically festive now.',next:null}};
     if(q.s===1)return{
@@ -13263,7 +13279,9 @@ const DIALOGUES={
       p1:{who:'npc',text:'My knees gave up on hills years ago, but my sweet tooth never did. Make my rounds for me: Pratt House, 31 Hockey Lane, and the two faculty cottages by the south fields.',next:'p2'},
       p2:{opts:[{label:'I will fetch your candy.',next:()=>{
           q.s=1;renderQuests();dirty=true;
+          if(player){player.fall=true;player.winter=false;} if(typeof applyFall==='function')applyFall();
           msg('Quest started: Trick or Treat','#103a8c');
+          msg('A crisp New England autumn settles over the grounds -- the leaves turn and jack-o-lanterns appear on the doorsteps.','#c88a20');
           return 'acc';}},
         {label:'Maybe later.',next:'no'}]},
       acc:{who:'npc',text:'Splendid! Knock at all four \u2014 and no eating the merchandise! ...One piece. Two, tops.',next:null},
@@ -15626,6 +15644,7 @@ function drawBar(wx,wz,h,ratio){
 function drawOverlay(now){
   octx.clearRect(0,0,ow,oh);
   if(typeof drawWinter==='function')drawWinter();
+  if(typeof drawFall==='function')drawFall();
   if(inParty)drawPartyChats();
   if(inMathes)drawMathesChats();
   if(inRectory)drawRectoryChats();
@@ -16437,7 +16456,7 @@ function _rxmas2RewardTree(){ return {
 function finishRxmas2(){
   const q=player.quests&&player.quests.rxmas2; if(!q||q.s>=5)return;
   q.s=5; if(typeof unlockEmote==='function')unlockEmote('xmas',true);
-  player.winterUnlocked=true; player.winter=true; if(typeof applyWinter==='function')applyWinter();
+  player.winterUnlocked=true; player.winter=true; player.fall=false; if(typeof applyWinter==='function')applyWinter();
   giveCoins(5000); addXp('prayer',800); addXp('woodcutting',300); dirty=true;
   if(typeof renderQuests==='function')renderQuests();
   questDone('Away in a Manger');
@@ -16454,6 +16473,19 @@ function drawWinter(){
     octx.globalAlpha=f.a; octx.fillStyle='#ffffff'; octx.beginPath(); octx.arc(f.x,f.y,f.r,0,7); octx.fill();
   }
   octx.restore();
+}
+function fallActive(){ return !!(player&&player.fall)&&!inStPaul&&!inRectory&&!inMathes&&!inChapel&&!inParty; }
+let _fallleaves=null;
+function drawFall(){
+  if(!fallActive())return;
+  const COL=['#c0392b','#d86a1e','#e0a82a','#b8541e','#c88a20'];
+  if(!_fallleaves){ _fallleaves=[]; for(let i=0;i<70;i++)_fallleaves.push({x:Math.random()*ow,y:Math.random()*oh,r:2+Math.random()*3.2,vy:14+Math.random()*30,sw:Math.random()*6.28,amp:0.5+Math.random()*1.2,rot:Math.random()*6.28,vr:(Math.random()-0.5)*0.12,a:0.45+Math.random()*0.5,c:COL[(Math.random()*COL.length)|0]}); }
+  for(const f of _fallleaves){ f.y+=f.vy*0.016; f.sw+=0.035; f.x+=Math.sin(f.sw)*f.amp; f.rot+=f.vr;
+    if(f.y>oh+6){ f.y=-6; f.x=Math.random()*ow; }
+    if(f.x<-8)f.x=ow+8; else if(f.x>ow+8)f.x=-8;
+    octx.save(); octx.globalAlpha=f.a; octx.fillStyle=f.c; octx.translate(f.x,f.y); octx.rotate(f.rot);
+    octx.beginPath(); octx.ellipse(0,0,f.r,f.r*0.5,0,0,7); octx.fill(); octx.restore();
+  }
 }
 function _isFishHole(x,y){ const o=(typeof objAt==='function')?objAt(x,y):null; return !!(o&&o.def==='spot'); }
 function buildWinterIce(on){
@@ -16512,14 +16544,54 @@ function buildRoofSnow(on){
   }
   (typeof worldGroup!=='undefined'&&worldGroup?worldGroup:scene).add(_roofSnow);
 }
-function applyWinter(){
-  const on=!!(player&&player.winter);
-  const wc=document.getElementById('winterchk'); if(wc)wc.checked=on;
-  const _wr=document.getElementById('winterrow'); if(_wr)_wr.style.display=(player&&player.winterUnlocked)?'':'none';
-  if(typeof buildWinterIce==='function')buildWinterIce(on);
-  if(typeof recolorTerrain==='function')recolorTerrain();
-  if(typeof buildRoofSnow==='function')buildRoofSnow(on);
+let _pumpkins=null;
+function buildPumpkins(on){
+  if(_pumpkins){ if(_pumpkins.parent)_pumpkins.parent.remove(_pumpkins); _pumpkins=null; }
+  if(!on||typeof BUILDINGS==='undefined')return;
+  _pumpkins=new THREE.Group();
+  const out={pos:[],nor:[],col:[]}, outF={pos:[],nor:[],col:[]};
+  const pBody=new THREE.SphereGeometry(0.2,8,6); pBody.scale(1.15,0.82,1.15);
+  const pStem=new THREE.CylinderGeometry(0.028,0.045,0.12,5);
+  const fEye=new THREE.BoxGeometry(0.055,0.055,0.05), fMouth=new THREE.BoxGeometry(0.14,0.05,0.05);
+  for(const b of BUILDINGS){
+    if(b.w>13||b.kind==='chapel'||b.kind==='oldchapel')continue;
+    const hh=tileHash(b.x*3+1,b.y*5+2);
+    if(hh<0.32)continue;
+    const n=hh>0.72?2:1;
+    const cz=b.y+b.h+0.42;
+    for(let i=0;i<n;i++){
+      const px=b.x+b.w*(0.3+i*0.4)+(tileHash(b.x+i*3,b.y+i*5)-0.5)*0.5;
+      const gy=(typeof groundH==='function')?groundH(px,cz):0;
+      const s=0.85+tileHash((px*7)|0,(cz*5)|0)*0.45;
+      bake(out,pBody,0xd86a16,px,gy+0.16*s,cz,0,s);
+      bake(out,pStem,0x4a5a26,px,gy+0.33*s,cz,0,s);
+      bake(outF,fEye,0xffc23a,px-0.075*s,gy+0.2*s,cz+0.2*s,0,s);
+      bake(outF,fEye,0xffc23a,px+0.075*s,gy+0.2*s,cz+0.2*s,0,s);
+      bake(outF,fMouth,0xffc23a,px,gy+0.11*s,cz+0.21*s,0,s);
+    }
+  }
+  const mk=(o,basic)=>{ if(!o.pos.length)return; const g=new THREE.BufferGeometry();
+    g.setAttribute('position',new THREE.Float32BufferAttribute(o.pos,3));
+    g.setAttribute('normal',new THREE.Float32BufferAttribute(o.nor,3));
+    g.setAttribute('color',new THREE.Float32BufferAttribute(o.col,3));
+    _pumpkins.add(new THREE.Mesh(g, basic?new THREE.MeshBasicMaterial({vertexColors:true}):new THREE.MeshLambertMaterial({vertexColors:true}))); };
+  mk(out,false); mk(outF,true);
+  (typeof worldGroup!=='undefined'&&worldGroup?worldGroup:scene).add(_pumpkins);
 }
+function applyWinter(){
+  if(player&&player.winter&&player.fall)player.fall=false;          /* winter + fall are mutually exclusive */
+  const won=!!(player&&player.winter), fon=!!(player&&player.fall);
+  const wc=document.getElementById('winterchk'); if(wc)wc.checked=won;
+  const _wr=document.getElementById('winterrow'); if(_wr)_wr.style.display=(player&&player.winterUnlocked)?'':'none';
+  const fc=document.getElementById('fallchk'); if(fc)fc.checked=fon;
+  const _fr=document.getElementById('fallrow'); if(_fr)_fr.style.display=(player&&player.fallUnlocked)?'':'none';
+  if(typeof buildWinterIce==='function')buildWinterIce(won);
+  if(typeof recolorTerrain==='function')recolorTerrain();
+  if(typeof buildRoofSnow==='function')buildRoofSnow(won);
+  if(typeof recolorTrees==='function')recolorTrees(fon);
+  if(typeof buildPumpkins==='function')buildPumpkins(fon);
+}
+function applyFall(){ applyWinter(); }
 function completeRxmas2(){
   const q=player.quests&&player.quests.rxmas2; if(!q||q.s>=4)return;
   q.s=4; if(typeof decorateChapelForService==='function')decorateChapelForService();
@@ -16950,7 +17022,7 @@ function exitStPaul(){
   scene.fog.near=30;scene.fog.far=52;
   if(typeof stopOrgan==='function')stopOrgan();
   updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
-  if(player.quests&&player.quests.rxmas2&&player.quests.rxmas2.s>=4&&!player.winter){ player.winterUnlocked=true; player.winter=true; if(typeof applyWinter==='function')applyWinter(); dirty=true; msg('You step out into a hushed, snow-falling Millville. Winter has come to the grounds.','#bcd6ec'); }
+  if(player.quests&&player.quests.rxmas2&&player.quests.rxmas2.s>=4&&!player.winter){ player.winterUnlocked=true; player.winter=true; player.fall=false; if(typeof applyWinter==='function')applyWinter(); dirty=true; msg('You step out into a hushed, snow-falling Millville. Winter has come to the grounds.','#bcd6ec'); }
   else msg('You step back out onto the chapel green.');
 }
 let chapelProxies=[];let mathesProxies=[];let rectoryProxies=[];let stPaulProxies=[];
@@ -17427,6 +17499,10 @@ function backfillUnlocks(){
   const Q=player.quests;
   if(Q&&Q.rxmas2&&Q.rxmas2.s>=4)player.winterUnlocked=true;          /* winter has arrived -> toggle is theirs */
   if(!player.winterUnlocked&&player.winter)player.winter=false;       /* never earned it -> off */
+  if(Q&&Q.bozek&&Q.bozek.s===1)player.fall=true;                     /* mid Trick-or-Treat -> fall is active */
+  if(Q&&Q.bozek&&Q.bozek.s>=2)player.fallUnlocked=true;              /* completed -> toggle available */
+  if(!player.fallUnlocked&&!(Q&&Q.bozek&&Q.bozek.s===1)&&player.fall)player.fall=false;
+  if(player.winter&&player.fall)player.fall=false;                   /* both cannot be on */
   let granted=0;
   const sg=function(id){ if(typeof TITLES!=='undefined'&&TITLES[id]&&!player.titleUnlocks[id]){player.titleUnlocks[id]=true;granted++;} };
   if(Q){ if(Q.dq&&Q.dq.s>=2)sg('orange_shirts'); if(Q.rxmas2&&Q.rxmas2.s>=5)sg('merry'); }
