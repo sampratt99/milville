@@ -171,7 +171,7 @@
     background:linear-gradient(#46342a,#352720); box-shadow:0 0 0 1px #5a4a38 inset;}
   #retalbtn.on{color:#eafbe6; background:linear-gradient(#3a5b3a,#274327); box-shadow:0 0 0 1px #5fa15f inset, 0 0 8px rgba(95,200,95,.3);}
   #retalbtn:active{transform:translateY(1px);}
-  #emotehead{text-align:center; color:#ffe8b0; font:bold 13px Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin:4px 0 8px;}
+  #emotehead,.subhead{text-align:center; color:#ffe8b0; font:bold 13px Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin:4px 0 8px;}
   #emotegrid{display:grid; grid-template-columns:repeat(3,1fr); gap:5px; padding:0 4px 6px;}
   .emotebtn{
     display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -780,6 +780,7 @@
           <h4>Options</h4>
           <label><input type="checkbox" id="sndchk" checked> Sound effects</label>
           <label><input type="checkbox" id="muschk" checked> Music</label>
+          <label><input type="checkbox" id="winterchk"> Winter scenery</label>
           <div id="savestatus">Checking autosave…</div>
           <button class="sbtn" id="savebtn">Save now</button>
           <button class="sbtn" id="exportbtn">Copy save to clipboard</button>
@@ -793,7 +794,7 @@
           </div>
         </div>
         <div class="panel" id="panel-friends"><h4>Friends</h4><div id="friendslist"></div></div>
-        <div class="panel" id="panel-emotes"><div id="emotehead">Emotes</div><div id="emotegrid"></div></div>
+        <div class="panel" id="panel-emotes"><div id="emotehead">Emotes</div><div id="emotegrid"></div><div class="subhead" style="margin-top:7px">Titles</div><div id="titlebar" style="display:flex;flex-wrap:wrap;padding:0 4px 8px"></div></div>
         <div id="tabsbot">
           <div class="tab" data-p="friends" data-icon="friends" title="Friends"><canvas width="22" height="22"></canvas></div>
           <div class="tab" data-p="settings" data-icon="wrench" title="Options"><canvas width="22" height="22"></canvas></div>
@@ -1046,7 +1047,8 @@ const ITEMS={
     equip:{slot:'cape',def:0,model:'cape',verb:'Wear',tint:0x2f7a3a}},
   cape_black:{name:'Black cape',ex:'For those with nothing left to prove.',val:40,
     equip:{slot:'cape',def:0,model:'cape',verb:'Wear',tint:0x26262c}},
-  coins:{name:'Coins',ex:'Lovely money!',stack:true}
+  coins:{name:'Coins',ex:'Lovely money!',stack:true},
+  nativity_figure:{name:'nativity figure',ex:'A small carved figure for the Old Chapel nativity scene.',stack:true,noDrop:true}
 };
 /* the Grand Exchange armoury: bronze through rune */
 const GE_STOCK=[];
@@ -1101,11 +1103,23 @@ ITEMS.clue_hard={name:'Hard clue scroll',ex:'A three-step trail across the groun
 ITEMS.clue_elite={name:'Elite clue scroll',ex:'A grand four-step expedition. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
 GE_STOCK.push('santa_hat');
 GE_STOCK.push('bronze_axe','bronze_pickaxe','iron_axe','iron_pickaxe','steel_axe','steel_pickaxe','mithril_axe','mithril_pickaxe','adamant_axe','adamant_pickaxe','rune_axe','rune_pickaxe');
+ITEMS.jellybean={name:'Jellybean',ex:'A single, perfect jellybean of no particular flavour and no earthly use \u2014 the prize of the Rectory jar. Impossibly rare; one of a kind.',val:500000,noSell:true,noDrop:true};
+/* --- A Rectory Christmas (quest items) --- */
+ITEMS.xmas_cabinet_key={name:'Spice cabinet key',ex:'A small brass key, won at the piano. It opens the Rectory spice cabinet.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_firewood={name:'Firewood',ex:'A split armful of dry firewood for the kitchen range.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_flour={name:'Sack of flour',ex:'Fine white flour for the Christmas bake.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_sugar={name:'Sugar',ex:'Sweet white sugar for the Christmas bake.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_butter={name:'Butter',ex:'A golden pat of butter from the spice cabinet.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_spice={name:'Mixed spice',ex:'Martha\u2019s blend of cinnamon, nutmeg and clove.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_eggs={name:'Eggs',ex:'Half a dozen brown eggs from the basket.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_cookies={name:'Christmas cookies',ex:'A warm tray of spiced Christmas cookies, fresh from the range.',val:0,noSell:true,noDrop:true};
+ITEMS.xmas_sweater={name:'Festive Christmas sweater',ex:'A cosy green Christmas sweater with red trim and a jolly Santa knitted across the front. Wear it with pride.',val:0,noSell:true,noDrop:true,
+  equip:{slot:'body',model:'sweater',verb:'Wear',def:1,tint:0x2f7a3a,trim:0xc0241f}};
 const RARE_ITEMS=['draconic_visage','abyssal_whip','granite_maul','basilisk_jaw','wailing_relic',
   'scholar_crest','sentinel_visor',
   'dragon_sword','dragon_scimitar','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield','dragon_shield',
   'red_bead','yellow_bead','black_bead','white_bead',
-  'party_hat_red','party_hat_yellow','party_hat_blue','party_hat_green','party_hat_white','party_hat_purple','santa_hat'];
+  'party_hat_red','party_hat_yellow','party_hat_blue','party_hat_green','party_hat_white','party_hat_purple','santa_hat','jellybean'];
 const RARE_SET=Object.fromEntries(RARE_ITEMS.map(i=>[i,true]));
 function markCollected(id){if(typeof player!=='undefined'&&player.collected&&RARE_SET[id])player.collected[id]=true;}
 function backfillCollected(){if(!player.collected)player.collected={};const scan=arr=>{if(!arr)return;for(const it of arr)if(it&&RARE_SET[it.id])player.collected[it.id]=true;};scan(player.inv);if(typeof bank!=='undefined')scan(bank);for(const sl in player.equip){const e=player.equip[sl];if(e&&RARE_SET[e.id])player.collected[e.id]=true;}}
@@ -1226,6 +1240,36 @@ const OBJ_DEFS={
   fire:{name:'Campfire',action:'Cook-at',ex:'Mmm, toasty.',noBlock:1},
   chapeldoor:{name:'Chapel doors',action:'Enter',ex:'The great oak doors of the Chapel of St. Peter & St. Paul.'},
   chapelexit:{name:'Chapel doors',action:'Leave',ex:'The way back out to the lawn.'},
+  rectorydoor:{name:'Rectory door',action:'Enter',ex:'The south door of the Rectory \u2014 the Rector\u2019s warm New England home.'},
+  rectoryexit:{name:'Rectory door',action:'Leave',ex:'The way back out to the Rectory lawn.'},
+  jellybean_jar:{name:'jellybean jar',action:'Guess',ex:'A great glass jar crammed with jellybeans. A little card reads: "Guess the count exactly to win the prize."'},
+  rectory_range:{name:'kitchen range',action:'Examine',ex:'A cast-iron range, the heart of the Rectory kitchen. (Baking comes with the Christmas tale.)'},
+  rectory_pantry:{name:'pantry',action:'Examine',ex:'A well-stocked larder of flour, tins and preserves.'},
+  rectory_cabinet:{name:'spice cabinet',action:'Examine',ex:'A handsome cabinet of spices, locked tight. (It has a part to play in the Christmas tale.)'},
+  stpauldoor:{name:'Old Chapel door',action:'Enter',ex:'The west door of the Old Chapel of St. Paul \u2014 small, ancient, and dim within.'},
+  stpaulexit:{name:'Old Chapel door',action:'Leave',ex:'The way back out to the chapel green.'},
+  sp_spencer:{name:'Reverend Spencer',action:'Talk-to',ex:'The chaplain of the Old Chapel, grey and gentle, forever tending the place.'},
+  sp_organ:{name:'chapel organ',action:'Examine',ex:'A small pipe organ at the south end. Its keys wait for a carol.'},
+  sp_manger:{name:'the manger',action:'Examine',ex:'A little wooden stable for the nativity. The figures are meant to stand here.'},
+  sp_wreath:{name:'Advent wreath',action:'Examine',ex:'A ring of greenery with four candles, ready to be lit through Advent.'},
+  sp_fig_pew:{name:'kneeling cushion',action:'Search',noBlock:true,ex:'A worn velvet kneeler at the end of the north pews.'},
+  sp_fig_choir:{name:'choir stand',action:'Search',noBlock:true,ex:'The old choir stand, a hymnbook still open on it.'},
+  sp_fig_alms:{name:'alms box',action:'Search',noBlock:true,ex:'A small iron alms-box bolted near the door.'},
+  sp_fig_curtain:{name:'vestry curtain',action:'Search',noBlock:true,ex:'A heavy curtain drawn across the vestry nook.'},
+  sp_fig_pipes:{name:'organ pipes',action:'Search',noBlock:true,ex:'The shadowed gap behind the organ pipes.'},
+  sp_fig_step:{name:'chancel step',action:'Search',noBlock:true,ex:'The carpeted step before the chancel.'},
+  rectory_woodpile:{name:'woodpile',action:'Chop',noBlock:true,ex:'A chopping block, split logs and an axe by the Rectory lawn \u2014 firewood for the kitchen range. Help yourself.'},
+  rectory_eggbasket:{name:'egg basket',action:'Take',noBlock:true,ex:'A wicker basket of fresh brown eggs.'},
+  rectory_martha:{name:'Martha Matthews',action:'Talk-to',ex:'The Rector\u2019s wife, brisk and kind, forever mid-task in the kitchen.'},
+  rectory_rector:{name:'Rector Matthews',action:'Talk-to',ex:'The Rector, at his ease in his own parlour for once.'},
+  rectory_cake:{name:'lemon-poppyseed cake',action:'Examine',ex:'A golden lemon-poppyseed cake on a glass stand, dusted with sugar. Martha must have been baking.'},
+  rectory_piano:{name:'grand piano',action:'Play',ex:'A handsome grand piano, its lid closed and a book of carols left open on the stand.'},
+  rectory_tree:{name:'Christmas tree',action:'Examine',ex:'A tall fir hung with baubles and a bright star, with presents heaped beneath.'},
+  rectory_fireplace:{name:'fireplace',action:'Examine',ex:'A great stone hearth crackling with a warm fire, stockings hung along the mantel.'},
+  rectory_island:{name:'kitchen island',action:'Examine',ex:'A scrubbed butcher-block island, mid-preparation: a pie, a mixing bowl, and chopped vegetables.'},
+  rectory_book_horae:{name:'Alumni Horae',action:'Read',ex:'The school magazine, bound in red boards \u2014 class notes, news of old boys, and a letter from the Rector.'},
+  rectory_book_hymns:{name:'Chapel Services \u0026 Hymns',action:'Read',ex:'A slim hymnal: the School Prayer, and carols for the Christmas season.'},
+  rectory_bozek:{name:'Mr. Bozek',action:'Examine',ex:'Mr. Bozek, the chemistry master, squeezed into a Father Christmas suit a size too small \u2014 a cushion for a belly, cotton-wool whiskers, and a weary \u201cHo, ho, ho\u201d for every child who passes.'},
   relic:{name:'Blessed Censer',action:'Take',ex:'A founder-era censer on the altar. Its light still burns against the dark.'},
   mathesdoor:{name:'Matthes Cage',action:'Enter',ex:'The Matthes Cage field house. Within, a sunken pit waits beneath an indoor track.'},
   mathesexit:{name:'Cage doors',action:'Leave',ex:'The way back out to the athletic grounds.'},
@@ -1764,8 +1808,10 @@ for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(tiles[y][x]===T_BRIDGE){
   hts[y+1][x]=Math.max(hts[y+1][x],b);hts[y+1][x+1]=Math.max(hts[y+1][x+1],b);
 }
 const WATER_Y=-0.26;
+let _iceTiles=null,_iceMesh=null;   /* frozen-pond tiles + overlay mesh (winter) */
 function groundH(x,z){
   const cx=clamp(Math.floor(x),0,W-1),cz=clamp(Math.floor(z),0,H-1);
+  if(_iceTiles&&!inStPaul&&!inRectory&&!inMathes&&!inChapel&&!inParty&&_iceTiles.has(cx+','+cz))return waterYAt(cx,cz)+0.04;
   const fx=clamp(x-cx,0,1),fz=clamp(z-cz,0,1);
   const h00=hts[cz][cx],h10=hts[cz][cx+1],h01=hts[cz+1][cx],h11=hts[cz+1][cx+1];
   return h00*(1-fx)*(1-fz)+h10*fx*(1-fz)+h01*(1-fx)*fz+h11*fx*fz;
@@ -1813,6 +1859,17 @@ addObj('chest',32,98);
 addObj('bankchest',122,19,true);addObj('bankchest',164,116,true);
 addObj('fire',93,60);
 addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
+addObj('rectorydoor',88,84,true);addObj('rectoryexit',109,31,true);
+addObj('stpauldoor',100,88,true);
+addObj('stpaulexit',48,113,true);addObj('sp_spencer',61,113,true);addObj('sp_organ',61,126,true);addObj('sp_manger',61,120,true);addObj('sp_wreath',64,121,true);
+addObj('sp_fig_pew',60,102,true);addObj('sp_fig_choir',62,101,true);addObj('sp_fig_alms',52,114,true);addObj('sp_fig_curtain',73,113,true);addObj('sp_fig_pipes',59,127,true);addObj('sp_fig_step',62,124,true);
+addObj('jellybean_jar',135,25,true);addObj('rectory_range',107,5,true);addObj('rectory_pantry',113,9,true);
+addObj('rectory_cabinet',117,6,true);addObj('rectory_martha',105,6,true);addObj('rectory_rector',124,13,true);
+addObj('rectory_cake',126,11,true);addObj('rectory_piano',121,23,true);addObj('rectory_tree',135,5,true);
+addObj('rectory_eggbasket',112,6,true);
+addObj('rectory_fireplace',124,4,true);addObj('rectory_island',108,16,true);
+addObj('rectory_book_hymns',126,14,true);addObj('rectory_book_horae',121,11,true);
+addObj('rectory_bozek',133,6,true);
 addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('dig_pratt',132,19,true);addObj('dig_hebra',132,20,true);addObj('dig_bassi',132,22,true);addObj('dig_chase',132,23,true);addObj('quartermaster',120,37,true);addObj('duel_trapdoor',120,10,true);addObj('duel_trapdoor',120,33,true);addObj('rector',132,21,true);
 addObj('furnace',128,18);addObj('anvil',130,18);
 addObj('fire',150,23);
@@ -2139,7 +2196,10 @@ const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
 function blocked(x,y){
   if(!inb(x,y))return true;
   const t=tiles[y][x];
-  if(t===T_WATER||t===T_WALL||t===T_FOREST||t===T_FENCE||t===T_DITCH||t===T_LAVA)return true;
+  if(t===T_WATER){ if(_iceTiles&&_iceTiles.has(x+','+y))return false; return true; }
+  if(t===T_WALL||t===T_FOREST||t===T_FENCE||t===T_DITCH||t===T_LAVA)return true;
+  if(inRectory&&RFURN.has(y*W+x))return true;   /* rectory furniture blocks movement */
+  if(inStPaul&&SPFURN.has(y*W+x))return true;   /* chapel pews + props block movement */
   const o=objAt(x,y);
   if(o&&o.alive&&!OBJ_DEFS[o.def].noBlock)return true;
   return false;
@@ -2147,7 +2207,10 @@ function blocked(x,y){
 function blockedStrict(x,y){
   if(!inb(x,y))return true;
   const t=tiles[y][x];
-  if(t===T_WATER||t===T_WALL||t===T_FOREST||t===T_FENCE||t===T_DITCH||t===T_LAVA)return true;
+  if(t===T_WATER){ if(_iceTiles&&_iceTiles.has(x+','+y))return false; return true; }
+  if(t===T_WALL||t===T_FOREST||t===T_FENCE||t===T_DITCH||t===T_LAVA)return true;
+  if(inRectory&&RFURN.has(y*W+x))return true;   /* rectory furniture blocks movement */
+  if(inStPaul&&SPFURN.has(y*W+x))return true;   /* chapel pews + props block movement */
   const o=objAt(x,y);
   if(o&&o.def==='sgate'&&!o.alive)return false;
   if(o&&!OBJ_DEFS[o.def].noBlock)return true;
@@ -2189,7 +2252,7 @@ async function upsertSlot(id,name){
   await writeSlots(list);
 }
 const player={
-  name:'Adventurer',partyQuiz:false,
+  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,
   x:89,y:88,px:89,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
   hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0},
@@ -2198,7 +2261,8 @@ const player={
   mmf:{fish:1,mine:1,smith:1,bank:1,altar:1,quest:1,shop:1},
   quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
-  m4:{s:0,b:0,k:0,d:0},m5:{s:0,d:0},sos:{s:0,k1:0,k2:0,k3:0,k4:0,o:0}},
+  m4:{s:0,b:0,k:0,d:0},m5:{s:0,d:0},sos:{s:0,k1:0,k2:0,k3:0,k4:0,o:0},
+  rxmas:{s:0,cab:0,prov:0},rxmas2:{s:0,figs:0,placed:0,wreath:0,spots:{}}},
   lostStash:[],
   friends:[],
   uid:null,
@@ -2221,9 +2285,11 @@ const parts=[];    /* {wx,wy,wz,vx,vy,t,col} */
 const projectiles=[]; /* {x0,z0,y0,ent,ex,ez,kind,col,t0,dur} */
 let tick=0,dirty=false,muted=false,musicOff=false,storageOK=false,playerLastHit=0;
 let inChapel=false;const CHAPEL_RETURN={x:100,y:100};
+let inRectory=false;
+let inStPaul=false;const STPAUL_RETURN={x:99,y:88};const SPFURN=new Set();
 let inMathes=false;const MATHES_RETURN={x:65,y:21};
 let followUid=null;   /* uid of the player we're following (session-only; cleared on any manual click) */
-function curInterior(){return inMathes?'mathes':(inChapel?'chapel':(inParty?'party':null));}
+function curInterior(){return inMathes?'mathes':(inChapel?'chapel':(inParty?'party':(inRectory?'rectory':(inStPaul?'stpaul':null))));}
 function clickFx(tx,ty,col){clicks.push({wx:tx+0.5,wz:ty+0.5,t:performance.now(),col});}
 function clickFxAt(wx,wz,col){clicks.push({wx,wz,t:performance.now(),col});}
 function burstFx(wx,wy,wz,col,n){n=n||12;for(let k=0;k<n;k++){const a=(k/n)*Math.PI*2;
@@ -2284,7 +2350,7 @@ function dropMobLoot(r){
 }
 function mobDie(r,groupKill){
   const mk3=MOB_KINDS[r.kind];
-  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;
+  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   if(engagedMob===r)engagedMob=null;
   if(typeof MP!=='undefined')MP.onMobKilled(r);
   msg((groupKill?'Your group has defeated the ':'You have defeated the ')+r.name.toLowerCase()+'.');
@@ -2760,7 +2826,14 @@ const TRACKS={
     melody:[659.25,783.99,659.25,523.25, 587.33,659.25,587.33,0, 698.46,659.25,587.33,523.25, 587.33,0,523.25,0,
             783.99,880,783.99,659.25, 698.46,783.99,698.46,0, 880,783.99,659.25,587.33, 523.25,0,0,0],
     bass:[130.81,0,98,0, 110,0,82.41,0, 87.31,0,65.41,0, 98,0,98,0,
-          130.81,0,98,0, 110,0,82.41,0, 87.31,0,98,0, 130.81,0,0,0]}
+          130.81,0,98,0, 110,0,82.41,0, 87.31,0,98,0, 130.81,0,0,0]},
+  /* warm, cosy Christmas tune for the Rectory - soft triangle lead, sine bass, sleigh bells */
+  rectory:{tempo:0.28,lead:'triangle',bw:'sine',mvol:0.17,bvol:0.15,bassLen:2.0,bellvol:0.09,
+    melody:[392.00,0,493.88,0, 587.33,0,493.88,0, 440.00,0,493.88,0, 392.00,0,0,0,
+            523.25,0,493.88,0, 440.00,0,392.00,0, 440.00,0,329.63,0, 392.00,0,0,0],
+    bass:[196.00,0,0,0, 196.00,0,0,0, 146.83,0,0,0, 196.00,0,0,0,
+          174.61,0,0,0, 146.83,0,0,0, 220.00,0,0,0, 196.00,0,0,0],
+    bells:[1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1]}
 };
 function startMusic(mode){
   if(musicMode===mode)return;
@@ -2790,6 +2863,22 @@ function stepMusic(){
       g.gain.linearRampToValueAtTime(tk.bvol,t+0.04);
       g.gain.exponentialRampToValueAtTime(0.0001,t+tk.tempo*tk.bassLen);
       o.connect(g);o.start(t);o.stop(t+tk.tempo*tk.bassLen+0.05);}
+    if(tk.bells&&tk.bells[i%tk.bells.length]){
+      const dur=0.17, nb=ac.createBuffer(1,Math.max(1,Math.floor(ac.sampleRate*dur)),ac.sampleRate), dd=nb.getChannelData(0);
+      for(let k=0;k<dd.length;k++)dd[k]=Math.random()*2-1;
+      const ns=ac.createBufferSource(); ns.buffer=nb;
+      const bp=ac.createBiquadFilter(); bp.type='bandpass'; bp.frequency.value=4200; bp.Q.value=4.0;
+      const bg=ac.createGain(); bg.gain.value=0; bg.connect(musicMaster);
+      bg.gain.linearRampToValueAtTime((tk.bellvol||0.1),t+0.005);
+      bg.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+      ns.connect(bp); bp.connect(bg); ns.start(t); ns.stop(t+dur+0.02);
+      for(const bf2 of[3136,4186.01]){ const o=ac.createOscillator(),g=ac.createGain();
+        o.type='triangle'; o.frequency.value=bf2*(0.99+Math.random()*0.02);
+        g.gain.value=0; g.connect(musicMaster);
+        g.gain.linearRampToValueAtTime((tk.bellvol||0.1)*0.5,t+0.004);
+        g.gain.exponentialRampToValueAtTime(0.0001,t+0.13);
+        o.connect(g); o.start(t); o.stop(t+0.15); }
+    }
   }
   musicStep++;
   musicTimer=setTimeout(stepMusic,(musicTrack?musicTrack.tempo:0.3)*1000);
@@ -2800,7 +2889,8 @@ function stopMusic(){
   musicMaster=null;
 }
 function updateMusic(){
-  if(musicOff||inChapel){ if(musicMode)stopMusic(); return; }
+  if(musicOff||inChapel||inStPaul){ if(musicMode)stopMusic(); return; }
+  if(inRectory){ startMusic('rectory'); return; }
   if(inParty){ startMusic('party'); return; }
   startMusic(inWild(player.x,player.y)?'wild':'map');
 }
@@ -2913,6 +3003,7 @@ function addXp(skill,amt){
   if(after>before){
     msg('Congratulations! Your '+SKILL_META[skill].name+' level is now '+after+'.','#9c1f1f');
     sfx.level();
+    if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
     if(skill==='prayer'&&Math.floor(after/10)>Math.floor(before/10))msg('Your faith deepens \u2014 your prayers now drain more slowly.','#7a4a0a');
     if(before<50&&after>=50)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from the '+SKILL_META[skill].name+' Master at the Grand Exchange.','#7a4a0a');
     const c9=cmbLvl();
@@ -3302,6 +3393,127 @@ function playerTick(){
   else if(a.type==='leavechapel'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     exitChapel();cancelAction();
+  }
+  else if(a.type==='enterrectory'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    enterRectory();cancelAction();
+  }
+  else if(a.type==='leaverectory'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    exitRectory();cancelAction();
+  }
+  else if(a.type==='enterstpaul'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    enterStPaul();cancelAction();
+  }
+  else if(a.type==='leavestpaul'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    exitStPaul();cancelAction();
+  }
+  else if(a.type==='spsearch'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    const q=player.quests.rxmas2, d=a.o.def;
+    if(q.s!==1){ msg(OBJ_DEFS[d].ex); cancelAction(); return; }
+    if(q.spots[d]){ msg('You have already found the figure here.'); cancelAction(); return; }
+    q.spots[d]=1; q.figs++; qGrant('nativity_figure');
+    msg('Tucked away here you find one of the nativity figures. ('+q.figs+'/6)','#103a8c');
+    if(q.figs>=6) msg('That is the last of the six. Now set them into the manger by the chancel.','#103a8c');
+    if(typeof renderQuests==='function')renderQuests();
+    cancelAction();
+  }
+  else if(a.type==='spmanger'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction(); const q=player.quests.rxmas2;
+    if(q.s>=2){ msg('The figures stand in their places around the cradle.'); return; }
+    if(q.s!==1||q.figs<6){ msg('You have not gathered all six figures yet ('+q.figs+'/6).'); return; }
+    if(countItem('nativity_figure')<6){ msg('You need all six nativity figures with you to set the scene.'); return; }
+    takeItems('nativity_figure',6); q.placed=1; q.s=2; if(typeof despawnChapelChildren==='function')despawnChapelChildren(); if(typeof despawnFigureSpots==='function')despawnFigureSpots(); syncStPaulQuestVisuals();
+    msg('You arrange Mary, Joseph, the shepherd, the angel, the ox, and the Child in His manger. The little nativity is complete.','#103a8c');
+    msg('Reverend Spencer beams. "Now light the four candles of the Advent wreath."','#103a8c');
+    renderQuests();
+  }
+  else if(a.type==='spwreath'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction(); const q=player.quests.rxmas2;
+    if(q.s<2){ msg(OBJ_DEFS['sp_wreath'].ex); return; }
+    if(q.s>2){ msg('All four candles of the Advent wreath burn brightly.'); return; }
+    if(q.wreath>=4){ return; }
+    const names=['Hope','Peace','Joy','Love'];
+    lightWreathCandle(q.wreath); q.wreath++;
+    tone(360+q.wreath*48,360+q.wreath*48,0.5,'sine',0.14);
+    msg('You light the candle of '+names[q.wreath-1]+'. ('+q.wreath+'/4)','#103a8c');
+    if(q.wreath>=4){ q.s=3; msg('The Advent wreath blazes with light. Now take your place at the organ and play the carol.','#103a8c'); }
+    renderQuests();
+  }
+  else if(a.type==='sporgan'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction(); openOrgan();
+  }
+  else if(a.type==='rjar'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction();jellybeanGuess();
+  }
+  else if(a.type==='rbook'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction();openBook(a.book);
+  }
+  else if(a.type==='rpiano'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction();openPiano();
+  }
+  else if(a.type==='rchop'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;
+    if(countItem('xmas_firewood')>0){cancelAction();msg('You have plenty of firewood already.');return;}
+    if(!a.started){a.started=true;msg('You take up the axe and set to splitting logs\u2026');}
+    player.actTick++;
+    if(player.actTick%2!==0)return;
+    sfx.chop&&sfx.chop(); a.n=(a.n||0)+1; clickFx(a.o.x,a.o.y,'#7ea35a');
+    if(a.n<3)return;
+    cancelAction(); qGrant('xmas_firewood'); addXp('woodcutting',20);
+    msg('You split a good armful of firewood for the range.','#103a8c'); renderQuests(); syncQuestWorld();
+  }
+  else if(a.type==='rcabinet'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction(); const q=player.quests.rxmas;
+    if(q.s<2){msg(OBJ_DEFS['rectory_cabinet'].ex);return;}
+    if(countItem('xmas_cabinet_key')===0){msg('The spice cabinet is locked tight \u2014 you need the key.');return;}
+    if(q.cab||(countItem('xmas_butter')>0&&countItem('xmas_spice')>0)){msg('You have already taken the butter and spice.');return;}
+    q.cab=1; qGrant('xmas_butter'); qGrant('xmas_spice'); dirty=true;
+    msg('You unlock the cabinet and take the butter and mixed spice.','#103a8c'); renderQuests();
+  }
+  else if(a.type==='rlarder'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction(); const q=player.quests.rxmas;
+    if(q.s<2){msg(OBJ_DEFS['rectory_pantry'].ex);return;}
+    if(q.prov||(countItem('xmas_flour')>0&&countItem('xmas_sugar')>0)){msg('You have already taken flour and sugar from the larder.');return;}
+    q.prov=1; qGrant('xmas_flour'); qGrant('xmas_sugar'); dirty=true;
+    msg('You take a sack of flour and some sugar from the larder.','#103a8c'); renderQuests();
+  }
+  else if(a.type==='reggs'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction(); const q=player.quests.rxmas;
+    if(q.s<2){msg('A basket of fresh brown eggs.');return;}
+    if(countItem('xmas_eggs')>0){msg('You have already taken eggs from the basket.');return;}
+    qGrant('xmas_eggs'); dirty=true; msg('You take half a dozen eggs from the basket.','#103a8c'); renderQuests();
+  }
+  else if(a.type==='rbake'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    cancelAction(); const q=player.quests.rxmas;
+    if(q.s<2){msg(OBJ_DEFS['rectory_range'].ex);return;}
+    if(q.s>=4||countItem('xmas_cookies')>0){msg('The cookies are already baked \u2014 take them to Martha.');return;}
+    const need=[];
+    if(countItem('xmas_firewood')<1)need.push('firewood');
+    if(countItem('xmas_flour')<1)need.push('flour');
+    if(countItem('xmas_butter')<1)need.push('butter');
+    if(countItem('xmas_sugar')<1)need.push('sugar');
+    if(countItem('xmas_spice')<1)need.push('mixed spice');
+    if(countItem('xmas_eggs')<1)need.push('eggs');
+    if(need.length){msg('You still need: '+need.join(', ')+'.');return;}
+    takeItems('xmas_firewood',1);takeItems('xmas_flour',1);takeItems('xmas_butter',1);
+    takeItems('xmas_sugar',1);takeItems('xmas_spice',1);takeItems('xmas_eggs',1);
+    qGrant('xmas_cookies'); addXp('cooking',120); q.s=4; renderQuests(); dirty=true;
+    msg('You fire the range and bake a warm tray of Christmas cookies! Take them to Martha.','#103a8c');
   }
   else if(a.type==='entermathes'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
@@ -3789,7 +4001,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -3931,6 +4143,8 @@ async function loadSlot(id){
       player.autocast=s.autocast||null;
       player.autoRetaliate=s.autoRetaliate!==false;
       player.emoteUnlocks=s.emoteUnlocks||{};
+      player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
+      player.title=s.title||null;
       if(s.name)player.name=s.name;
       if(s.mmf)Object.assign(player.mmf,s.mmf);
       if(s.quests)for(const k in player.quests)
@@ -3976,7 +4190,7 @@ async function resetGame(){
   if(storageOK&&SAVE_KEY){try{await STORE.delete(SAVE_KEY);}catch(e){}}
   player.skills={attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0};
   player.inv=new Array(28).fill(null);player.partyQuiz=false;player.friends.length=0;player.uid=genUid();
-  player.hp=10;player.pray=100;player.style='stab';player.autoRetaliate=true;player.emoteUnlocks={};player.x=89;player.y=88;player.px=89;player.py=88;
+  player.hp=10;player.pray=100;player.style='stab';player.autoRetaliate=true;player.emoteUnlocks={};player.titleUnlocks={};player.title=null;player.x=89;player.y=88;player.px=89;player.py=88;
   player.equip={weapon:null,shield:null};player.kit=false;bank.length=0;
   closeBank();closeShop();
   player.path.length=0;cancelAction();ground.length=0;
@@ -4317,7 +4531,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     if(t.dataset.p==='quests')renderQuests();
     if(t.dataset.p==='magic')renderSpellbook();
     if(t.dataset.p==='combat')renderCombat();
-    if(t.dataset.p==='emotes')renderEmotes();
+    if(t.dataset.p==='emotes'){renderEmotes();if(typeof renderTitles==='function')renderTitles();}
     if(t.dataset.p==='friends')renderFriends();
   });
 });
@@ -4340,6 +4554,7 @@ document.querySelectorAll('.ctab').forEach(t=>{
   });
 });
 document.getElementById('sndchk').addEventListener('change',e=>{muted=!e.target.checked;});
+(function(){var _wc=document.getElementById('winterchk'); if(_wc)_wc.addEventListener('change',function(e){ if(player)player.winter=e.target.checked; if(typeof applyWinter==='function')applyWinter(); dirty=true; });})();
 document.getElementById('muschk').addEventListener('change',e=>{musicOff=!e.target.checked;updateMusic();});
 document.getElementById('savebtn').addEventListener('click',()=>{
   if(storageOK)saveGame(false);else msg('Autosave is not available here.','#103a8c');});
@@ -4406,6 +4621,8 @@ function partyOptionsAt(tx,ty){
 function optionsAt(tx,ty){
   const opts=[];
   if(inParty)return partyOptionsAt(tx,ty);
+  if(inStPaul)return stPaulOptionsAt(tx,ty);
+  if(inRectory)return rectoryOptionsAt(tx,ty);
   if(inMathes){
     /* inside the Cage: only interior objects are interactive - never the outdoor world beneath */
     const io=objects.find(b=>b.x===tx&&b.y===ty&&(b.def==='mathesexit'||b.def==='quartermaster'||b.def==='duel_trapdoor'||b.def==='rector'||(b.def&&b.def.slice(0,4)==='dig_')));
@@ -4435,11 +4652,11 @@ function optionsAt(tx,ty){
         else if(r==='busy')msg('You are already in a duel.','#9c1f1f');
         else if(r==='offline')msg(_rp.name+' is not available to duel.','#9c1f1f');
       }});
-      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+' - a fellow contender in the Cage.','#103a8c')});
+      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+titleSuffix(_rp.title)+' - a fellow contender in the Cage.','#103a8c')});
     }
     else if(_rp&&duel.state==='fight'&&_rp.uid===duel.oppUid){
       opts.push({html:'Attack <span class="t">'+_rp.name+'</span>',label:'Attack '+_rp.name,fn:()=>{setAction({type:'datk'},Math.round(_rp.px),Math.round(_rp.py));if(typeof clickFx==='function')clickFx(Math.round(_rp.px),Math.round(_rp.py),'#ff4d3d');}});
-      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+' - your opponent in the pit.','#103a8c')});
+      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+titleSuffix(_rp.title)+' - your opponent in the pit.','#103a8c')});
     }
     return opts;
   }
@@ -4503,6 +4720,19 @@ function optionsAt(tx,ty){
       opts.push({html:'Leave <span class="t">Chapel</span>',
         label:'Leave Chapel',fn:()=>setAction({type:'leavechapel',o},o.x,o.y)},
         {html:'Examine <span class="t">Chapel doors</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='rectorydoor'){
+      if(player.quests.rxmas.s>=1)opts.push({html:'Enter <span class="t">Rectory</span>',
+        label:'Enter Rectory',fn:()=>setAction({type:'enterrectory',o},o.x,o.y)});
+      else opts.push({html:'Enter <span class="t">Rectory</span>',
+        label:'Enter Rectory',fn:()=>msg('The Rectory door is shut. Perhaps the family will invite you in \u2014 speak to Martha by the gate.','#103a8c')});
+      opts.push({html:'Examine <span class="t">Rectory door</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='stpauldoor'){
+      opts.push({html:'Enter <span class="t">Old Chapel</span>',label:'Enter Old Chapel',fn:()=>setAction({type:'enterstpaul',o},o.x,o.y)});
+      opts.push({html:'Examine <span class="t">Old Chapel door</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='rectoryexit'){
+      opts.push({html:'Leave <span class="t">Rectory</span>',
+        label:'Leave Rectory',fn:()=>setAction({type:'leaverectory',o},o.x,o.y)},
+        {html:'Examine <span class="t">Rectory door</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='mathesdoor'){
       opts.push({html:'Enter <span class="t">PvP Arena</span>',
         label:'Enter PvP Arena',fn:()=>setAction({type:'entermathes',o},o.x,o.y)},
@@ -4531,6 +4761,10 @@ function optionsAt(tx,ty){
       opts.push({html:'Search <span class="t">Supply crate</span>',
         label:'Search Supply crate',fn:()=>startCrate(o)},
         {html:'Examine <span class="t">Supply crate</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='rectory_woodpile'){
+      opts.push({html:'Chop <span class="t">woodpile</span>',
+        label:'Chop woodpile',fn:()=>setAction({type:'rchop',o},o.x,o.y)},
+        {html:'Examine <span class="t">woodpile</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='sgate'){
       opts.push({html:'Open <span class="t">Portal gate</span>',
         label:'Open Portal gate',fn:()=>startGate(o)},
@@ -4631,7 +4865,7 @@ function optionsAt(tx,ty){
       fn:()=>msg('The woods are too thick to pass.')});
   const _rp=(typeof MP!=='undefined'&&MP.active())?MP.remoteAt(tx,ty):null;
   if(_rp){
-    opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=(typeof MP!=='undefined'&&MP.examineInfo)?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' \u2014 a fellow adventurer of Milville.','#103a8c');return;}let s=info.name;if(info.cmb!=null)s+=' \u2014 Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}},
+    opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=(typeof MP!=='undefined'&&MP.examineInfo)?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' \u2014 a fellow adventurer of Milville.','#103a8c');return;}let s=info.name+((typeof titleSuffix==='function')?titleSuffix(info.title):'');if(info.cmb!=null)s+=' \u2014 Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}},
       {html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
     opts.push({html:'Follow <span class="t">'+_rp.name+'</span>',label:'Follow '+_rp.name,fn:()=>{cancelAction();followUid=_rp.uid;player._flx=null;player._fly=null;if(typeof msg==='function')msg('You start following '+_rp.name+'. Click anywhere to stop.','#103a8c');}});
     if(typeof MP!=='undefined'&&MP.groupCanInvite&&MP.groupCanInvite(_rp.uid)){
@@ -4658,6 +4892,102 @@ function optionsAt(tx,ty){
 /* =========================== item icons ============================ */
 function drawItemIcon(g,id,S){
   g.save();g.translate(S/2,S/2);g.imageSmoothingEnabled=false;
+  if(id==='jellybean'){
+    g.rotate(-0.5);
+    g.fillStyle='#cf3a6e';g.beginPath();g.ellipse(0,0,S*0.27,S*0.17,0,0,7);g.fill();
+    g.fillStyle='#ec6a98';g.beginPath();g.ellipse(-S*0.04,-S*0.04,S*0.17,S*0.09,0,0,7);g.fill();
+    g.fillStyle='rgba(255,255,255,0.85)';g.beginPath();g.ellipse(-S*0.09,-S*0.06,S*0.06,S*0.028,0,0,7);g.fill();
+    g.restore();return;
+  }
+  if(id==='nativity_figure'){
+    g.fillStyle='#d8b24a';g.beginPath();g.arc(0,-S*0.16,S*0.135,0,7);g.fill();          /* golden halo */
+    g.fillStyle='#9a6a3c';                                                               /* carved-wood robe */
+    g.beginPath();g.moveTo(-S*0.055,-S*0.1);g.lineTo(S*0.055,-S*0.1);g.lineTo(S*0.18,S*0.26);g.lineTo(-S*0.18,S*0.26);g.closePath();g.fill();
+    g.fillStyle='#82572e';                                                               /* robe shadow side */
+    g.beginPath();g.moveTo(0,-S*0.1);g.lineTo(S*0.055,-S*0.1);g.lineTo(S*0.18,S*0.26);g.lineTo(0,S*0.26);g.closePath();g.fill();
+    g.fillStyle='#ecc9a3';g.beginPath();g.arc(0,-S*0.16,S*0.082,0,7);g.fill();           /* head */
+    g.fillStyle='#caa23a';g.fillRect(-S*0.07,S*0.0,S*0.14,S*0.03);                        /* robe trim */
+    g.restore();return;
+  }
+  if(id==='xmas_sweater'){
+    g.fillStyle='#2f7a3a';
+    g.fillRect(-S*0.21,-S*0.17,S*0.42,S*0.40);                 /* torso */
+    g.fillRect(-S*0.35,-S*0.15,S*0.15,S*0.15);                 /* left sleeve */
+    g.fillRect(S*0.20,-S*0.15,S*0.15,S*0.15);                  /* right sleeve */
+    g.fillStyle='#c0241f';
+    g.fillRect(-S*0.21,-S*0.21,S*0.42,S*0.05);                 /* collar */
+    g.fillRect(-S*0.21,S*0.19,S*0.42,S*0.05);                  /* hem */
+    g.fillRect(-S*0.35,-S*0.02,S*0.15,S*0.035);               /* left cuff */
+    g.fillRect(S*0.20,-S*0.02,S*0.15,S*0.035);                /* right cuff */
+    g.fillStyle='#f1c9a5';g.beginPath();g.arc(0,-S*0.015,S*0.07,0,7);g.fill();   /* santa face */
+    g.fillStyle='#ffffff';g.beginPath();g.arc(0,S*0.03,S*0.08,Math.PI*0.05,Math.PI*0.95);g.fill(); /* beard */
+    g.fillStyle='#c0241f';g.beginPath();g.moveTo(-S*0.075,-S*0.045);g.lineTo(S*0.075,-S*0.045);g.lineTo(S*0.015,-S*0.135);g.closePath();g.fill(); /* hat */
+    g.fillStyle='#ffffff';g.fillRect(-S*0.078,-S*0.065,S*0.156,S*0.025);          /* hat brim */
+    g.beginPath();g.arc(S*0.015,-S*0.135,S*0.02,0,7);g.fill();                    /* pompom */
+    g.restore();return;
+  }
+  if(id==='xmas_cabinet_key'){
+    g.rotate(0.5);
+    g.strokeStyle='#8a6a18';g.lineWidth=Math.max(1,S*0.03);
+    g.fillStyle='#e0b94a';
+    g.beginPath();g.arc(-S*0.16,0,S*0.13,0,7);g.fill();g.stroke();                /* bow */
+    g.fillStyle='#2a2018';g.beginPath();g.arc(-S*0.16,0,S*0.055,0,7);g.fill();    /* bow hole */
+    g.fillStyle='#e0b94a';g.fillRect(-S*0.04,-S*0.04,S*0.32,S*0.08);              /* shaft */
+    g.fillRect(S*0.18,S*0.04,S*0.05,S*0.13);g.fillRect(S*0.25,S*0.04,S*0.045,S*0.09); /* teeth */
+    g.restore();return;
+  }
+  if(id==='xmas_firewood'){
+    for(let i=0;i<3;i++){const yy=-S*0.18+i*S*0.15;
+      g.fillStyle=['#7a5230','#6e4a2c','#5a3a1e'][i];g.fillRect(-S*0.28,yy,S*0.56,S*0.12);
+      g.fillStyle='#d8c49a';g.beginPath();g.ellipse(-S*0.28,yy+S*0.06,S*0.045,S*0.06,0,0,7);g.fill();
+      g.beginPath();g.ellipse(S*0.28,yy+S*0.06,S*0.045,S*0.06,0,0,7);g.fill();}
+    g.strokeStyle='#caa23a';g.lineWidth=Math.max(1,S*0.035);
+    g.beginPath();g.moveTo(-S*0.04,-S*0.24);g.lineTo(-S*0.08,S*0.26);g.stroke();  /* twine */
+    g.restore();return;
+  }
+  if(id==='xmas_flour'){
+    g.fillStyle='#e9ddc2';
+    g.beginPath();g.moveTo(-S*0.19,S*0.24);g.lineTo(-S*0.23,-S*0.06);g.lineTo(-S*0.1,-S*0.16);g.lineTo(S*0.1,-S*0.16);g.lineTo(S*0.23,-S*0.06);g.lineTo(S*0.19,S*0.24);g.closePath();g.fill();
+    g.fillStyle='#cdbb95';g.fillRect(-S*0.11,-S*0.24,S*0.22,S*0.09);              /* tied neck */
+    g.fillStyle='#b9a578';g.beginPath();g.moveTo(-S*0.11,-S*0.16);g.lineTo(0,-S*0.2);g.lineTo(S*0.11,-S*0.16);g.fill();
+    g.strokeStyle='#c2ae84';g.lineWidth=Math.max(1,S*0.022);g.beginPath();g.moveTo(0,-S*0.04);g.lineTo(0,S*0.16);g.stroke();
+    g.restore();return;
+  }
+  if(id==='xmas_sugar'){
+    const cs=S*0.17;
+    for(const[cx,cy]of[[-S*0.09,S*0.06],[S*0.09,S*0.06],[0,-S*0.1]]){
+      g.fillStyle='#f6f4ee';g.fillRect(cx-cs/2,cy-cs/2,cs,cs);
+      g.strokeStyle='#cfcabd';g.lineWidth=Math.max(1,S*0.02);g.strokeRect(cx-cs/2,cy-cs/2,cs,cs);
+      g.fillStyle='#ffffff';g.fillRect(cx-cs/2+S*0.015,cy-cs/2+S*0.015,cs*0.4,cs*0.4);}
+    g.restore();return;
+  }
+  if(id==='xmas_butter'){
+    g.fillStyle='#f2cf52';g.beginPath();g.moveTo(-S*0.26,S*0.06);g.lineTo(-S*0.16,-S*0.06);g.lineTo(S*0.26,-S*0.06);g.lineTo(S*0.26,S*0.14);g.lineTo(-S*0.26,S*0.14);g.closePath();g.fill(); /* block side */
+    g.fillStyle='#ffe680';g.beginPath();g.moveTo(-S*0.26,S*0.06);g.lineTo(-S*0.16,-S*0.06);g.lineTo(S*0.16,-S*0.06);g.lineTo(S*0.06,S*0.06);g.closePath();g.fill(); /* top */
+    g.fillStyle='#e0b73e';g.fillRect(-S*0.26,S*0.06,S*0.52,S*0.03);
+    g.restore();return;
+  }
+  if(id==='xmas_spice'){
+    g.fillStyle='rgba(120,90,60,0.25)';g.beginPath();g.ellipse(0,S*0.22,S*0.16,S*0.05,0,0,7);g.fill();
+    g.fillStyle='#a9743a';g.beginPath();g.moveTo(-S*0.16,S*0.22);g.lineTo(-S*0.05,-S*0.05);g.lineTo(S*0.05,-S*0.05);g.lineTo(S*0.16,S*0.22);g.fill(); /* spice mound/jar */
+    g.fillStyle='#c89a5a';g.beginPath();g.ellipse(0,-S*0.05,S*0.1,S*0.04,0,0,7);g.fill();
+    g.fillStyle='#7a4a22';for(const[dx,dy]of[[-S*0.05,S*0.06],[S*0.04,S*0.1],[0,S*0.15],[-S*0.03,S*0.16]]){g.beginPath();g.arc(dx,dy,S*0.012,0,7);g.fill();}
+    g.restore();return;
+  }
+  if(id==='xmas_eggs'){
+    for(const[ex,ey,c]of[[-S*0.12,S*0.02,'#f4ead2'],[S*0.12,S*0.04,'#e8d8b8'],[0,-S*0.08,'#fbf3e0']]){
+      g.fillStyle=c;g.beginPath();g.ellipse(ex,ey,S*0.12,S*0.155,0,0,7);g.fill();
+      g.fillStyle='rgba(255,255,255,0.55)';g.beginPath();g.ellipse(ex-S*0.04,ey-S*0.06,S*0.035,S*0.05,0,0,7);g.fill();}
+    g.restore();return;
+  }
+  if(id==='xmas_cookies'){
+    g.fillStyle='#e8e4da';g.beginPath();g.ellipse(0,S*0.16,S*0.3,S*0.1,0,0,7);g.fill();   /* plate */
+    g.fillStyle='#c9c4b6';g.beginPath();g.ellipse(0,S*0.16,S*0.3,S*0.1,0,Math.PI,0);g.fill();
+    for(const[cx,cy]of[[-S*0.12,S*0.04],[S*0.12,S*0.06],[0,-S*0.06]]){
+      g.fillStyle='#c98a48';g.beginPath();g.arc(cx,cy,S*0.135,0,7);g.fill();
+      g.fillStyle='#9a5f2c';for(const[dx,dy]of[[-S*0.04,-S*0.02],[S*0.05,S*0.02],[0,S*0.05],[-S*0.02,S*0.05]]){g.beginPath();g.arc(cx+dx,cy+dy,S*0.018,0,7);g.fill();}}
+    g.restore();return;
+  }
   if(id==='cage_token'||(ITEMS[id]&&ITEMS[id].model==='token')){
     /* brass cage token: disc with a crossed-fists stamp */
     const R=S*0.34;
@@ -5664,6 +5994,44 @@ const _emoteChef={id:'chef',name:'Chef\u2019s Flair',dur:3600,locked:true,lockHi
 function _at(m,x,y,z){m.position.set(x,y,z);return m;}
 
 for(const E of [_emoteJack,_emoteXmas,_emoteChef]){EMOTES.push(E);EMOTES_BY_ID[E.id]=E;}
+/* ===================== TITLES ===================== */
+const TITLES={
+  orange_shirts:{text:'of the Orange Shirts',col:'#e8761a',hint:'Slay the dragon in Here Be Dragons.'},
+  merry:{text:'the Merry',col:'#1f8a3c',hint:'Save Millville Christmas (Away in a Manger).'},
+  promising:{text:'the Promising',col:'#4a90c2',cond:st=>st.tot>=250,hint:'Reach total level 250.'},
+  capable:{text:'the Capable',col:'#3f7bb0',cond:st=>st.tot>=500,hint:'Reach total level 500.'},
+  seasoned:{text:'the Seasoned',col:'#36689c',cond:st=>st.tot>=750,hint:'Reach total level 750.'},
+  accomplished:{text:'the Accomplished',col:'#5a4fb0',cond:st=>st.tot>=1000,hint:'Reach total level 1000.'},
+  renowned:{text:'the Renowned',col:'#7a3fb0',cond:st=>st.tot>=1250,hint:'Reach total level 1250.'},
+  compleat:{text:'the Compleat',col:'#b8860b',cond:st=>st.tot>=1386,hint:'Reach the maximum total level (every skill 99).'},
+  brawler:{text:'the Brawler',col:'#c2772e',cond:st=>st.kills>=100,hint:'Defeat 100 monsters.'},
+  monsterslayer:{text:'the Slayer',col:'#b5532a',cond:st=>st.kills>=500,hint:'Defeat 500 monsters.'},
+  beastslayer:{text:'the Beastslayer',col:'#9c3320',cond:st=>st.kills>=1000,hint:'Defeat 1,000 monsters.'},
+  doombringer:{text:'the Bringer of Doom',col:'#7a1f1f',cond:st=>st.kills>=2500,hint:'Defeat 2,500 monsters.'},
+  expert:{text:'the Expert',col:'#b8860b',cond:st=>st.max99,hint:'Reach level 99 in any skill.'}
+};
+function _titleStats(){ let m99=false; for(const k of SKILLS){ if(levelFor(player.skills[k])>=99){m99=true;break;} } return {tot:totalLevel(),kills:player.kills||0,max99:m99}; }
+function _titleResolve(id){ return (id&&TITLES[id])?{text:TITLES[id].text,col:TITLES[id].col}:null; }
+function titleSuffix(id){ const t=_titleResolve(id); return t?(' '+t.text):''; }
+function activeTitle(){ const id=player.title; return (id&&TITLES[id]&&player.titleUnlocks&&player.titleUnlocks[id])?_titleResolve(id):null; }
+function grantTitle(id){ const T=TITLES[id]; if(!T)return; if(!player.titleUnlocks)player.titleUnlocks={}; if(player.titleUnlocks[id])return;
+  player.titleUnlocks[id]=true; dirty=true;
+  if(typeof msg==='function'){ msg('Title unlocked: "'+T.text+'"!','#7a18c9'); msg('Add it after your name from the Titles list in the Emotes panel (the smiley tab).','#103a8c'); }
+  if(typeof sfx!=='undefined'&&sfx.level)sfx.level();
+  if(typeof renderTitles==='function')renderTitles();
+}
+function checkTitleUnlocks(){ if(!player.titleUnlocks)player.titleUnlocks={}; const st=_titleStats(); for(const id in TITLES){ const T=TITLES[id]; if(T.cond&&!player.titleUnlocks[id]&&T.cond(st))grantTitle(id); } }
+function setTitle(id){ if(id&&(!player.titleUnlocks||!player.titleUnlocks[id]))return; player.title=id||null; dirty=true; if(typeof renderTitles==='function')renderTitles(); }
+function renderTitles(){
+  const box=document.getElementById('titlebar'); if(!box)return; box.innerHTML='';
+  const mk=(id,label,col,on)=>{ const b=document.createElement('div'); b.textContent=label;
+    b.style.cssText='display:inline-block;margin:2px;padding:3px 9px;border-radius:11px;cursor:pointer;font-size:12px;border:1px solid '+(on?'#c79a3a':'#3a2f22')+';background:'+(on?'#3a2f1a':'#1b1610')+';color:'+(col||'#cfc3b0');
+    b.addEventListener('click',()=>setTitle(id)); return b; };
+  box.appendChild(mk(null,'(No title)','#9a8f80',!player.title));
+  let any=false;
+  for(const id in TITLES){ if(player.titleUnlocks&&player.titleUnlocks[id]){ any=true; box.appendChild(mk(id,TITLES[id].text,TITLES[id].col,player.title===id)); } }
+  if(!any){ const d=document.createElement('div'); d.style.cssText='opacity:.62;font-size:11.5px;padding:4px 6px'; d.textContent='No titles yet -- earn them from quests, total-level milestones, and monster kills.'; box.appendChild(d); }
+}
 
 function playEmote(id){
   const E=EMOTES_BY_ID[id];if(!E)return;
@@ -6199,8 +6567,14 @@ function mesh(geo,hex,shadow){
 }
 
 /* ---------------------------- terrain ----------------------------- */
+let _terraWinter=false;   /* set true only while recolouring the terrain for winter */
 function tileColor(x,y){
   const t=tiles[y][x],h=tileHash(x,y);
+  if(_terraWinter){
+    if(t===T_GRASS){ const SN=[0xdfe9f1,0xe7eff6,0xeff5fa,0xf3f8fc]; return SN[Math.min(3,Math.floor(h*4))]; }
+    if(t===T_PATH){ return h<0.5?0xd6dde4:0xccd4dc; }
+    if(t===T_FOREST){ return h<0.5?0x46544a:0x515f54; }
+  }
   if(t===T_LAVA){
     const LA=[0xc23c16,0xd84a1e,0xe85a20,0xf07a28,0x8c2810];
     const v2=tileHash(x>>1,(y>>1)+77)*0.6+h*0.4;
@@ -6305,6 +6679,44 @@ let terra=null;
   terra.receiveShadow=true;
   scene.add(terra);
 })();
+function _computeTerraColors(){
+  const base=[];
+  for(let y=0;y<H;y++){ const row=[]; for(let x=0;x<W;x++)row.push(new THREE.Color(tileColor(x,y))); base.push(row); }
+  const corner=[];
+  for(let cy=0;cy<=H;cy++){ const row=[];
+    for(let cx=0;cx<=W;cx++){
+      const c=new THREE.Color(0,0,0);let n=0,np=0,nl=0;
+      const cp=new THREE.Color(0,0,0),clv=new THREE.Color(0,0,0);
+      const offs=[[-1,-1],[0,-1],[-1,0],[0,0]];
+      for(let i=0;i<4;i++){ const tx=cx+offs[i][0],ty=cy+offs[i][1];
+        if(tx>=0&&ty>=0&&tx<W&&ty<H){ const b=base[ty][tx],tt=tiles[ty][tx];
+          if(tt===T_LAVA){clv.r+=b.r;clv.g+=b.g;clv.b+=b.b;nl++;}
+          if(tt===T_PATH||tt===T_FLOOR||tt===T_BRIDGE){cp.r+=b.r;cp.g+=b.g;cp.b+=b.b;np++;}
+          c.r+=b.r;c.g+=b.g;c.b+=b.b;n++;
+        } }
+      if(nl){cp.copy(clv);np=nl;}
+      if(np){c.r=cp.r;c.g=cp.g;c.b=cp.b;n=np;}
+      const j=(0.9+tileHash(cx*5+11,cy*7+3)*0.2)/n;
+      c.r=Math.min(1,c.r*j);c.g=Math.min(1,c.g*j);c.b=Math.min(1,c.b*j);
+      row.push(c);
+    } corner.push(row); }
+  const col=[];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    const c00=corner[y][x],c01=corner[y+1][x],c10=corner[y][x+1],c11=corner[y+1][x+1];
+    col.push(c00.r,c00.g,c00.b, c01.r,c01.g,c01.b, c10.r,c10.g,c10.b,
+             c10.r,c10.g,c10.b, c01.r,c01.g,c01.b, c11.r,c11.g,c11.b);
+  }
+  return col;
+}
+function recolorTerrain(){
+  if(!terra||!terra.geometry||typeof THREE==='undefined')return;
+  const on=!!(player&&player.winter);
+  const prevTiles=tiles, prevWin=_terraWinter;
+  tiles=TILES_MAIN; _terraWinter=on;
+  let col; try{ col=_computeTerraColors(); } finally { tiles=prevTiles; _terraWinter=prevWin; }
+  terra.geometry.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  terra.geometry.attributes.color.needsUpdate=true;
+}
 
 /* ----------------------------- water ------------------------------ */
 let waterMesh=null,waterBase=null;
@@ -6859,7 +7271,7 @@ function buildObjModel(o){
       new THREE.MeshBasicMaterial({color:0xffe6a0}));
     glow.position.y=1.2;g.add(glow);
     addProxy(g,0.4,1.7,0,{kind:'obj',o});
-  }else if(def==='chapeldoor'||def==='chapelexit'){
+  }else if(def==='chapeldoor'||def==='chapelexit'||def==='rectorydoor'||def==='rectoryexit'||def==='stpauldoor'){
     const arch=mesh(new THREE.BoxGeometry(0.3,2.4,1.8),0x8a5c3e);
     arch.position.y=1.2;g.add(arch);
     const d1=mesh(new THREE.BoxGeometry(0.16,2.0,0.78),0x3a2517);
@@ -6870,7 +7282,10 @@ function buildObjModel(o){
     top.rotation.z=Math.PI/2;top.rotation.y=Math.PI/2;top.position.set(0.05,2.1,0);g.add(top);
     const ring=mesh(new THREE.TorusGeometry(0.09,0.025,6,10),0xc9a23a);
     ring.position.set(-0.02,1.0,0.18);ring.rotation.y=Math.PI/2;g.add(ring);
+    if(def==='rectorydoor'||def==='rectoryexit')g.rotation.y=Math.PI/2;   /* rectory doors sit in E-W south walls */
     addProxy(g,1.05,3.0,0,{kind:'obj',o});
+  }else if(def==='jellybean_jar'||def==='rectory_range'||def==='rectory_pantry'||def==='rectory_cabinet'||def==='rectory_martha'||def==='rectory_rector'||def==='rectory_cake'||def==='rectory_piano'||def==='rectory_tree'||def==='rectory_fireplace'||def==='rectory_island'||def==='rectory_book_horae'||def==='rectory_book_hymns'||def==='rectory_bozek'||def==='rectory_eggbasket'||def==='stpaulexit'||def==='sp_spencer'||def==='sp_organ'||def==='sp_manger'||def==='sp_wreath'||def==='sp_fig_pew'||def==='sp_fig_choir'||def==='sp_fig_alms'||def==='sp_fig_curtain'||def==='sp_fig_pipes'||def==='sp_fig_step'){
+    /* model + clickable proxy are built in buildRectoryInterior / buildStPaulInterior */
   }else if(def==='mathesexit'){
     /* exit door FLUSH in the south wall, opening toward the interior (-z). Sized + centred to FILL the
        cage's timber doorway: the frame's jambs sit at world x 118.6/121.4 (centre 120.0); the object
@@ -7045,6 +7460,17 @@ function buildObjModel(o){
       h.position.set(-0.24+i*0.1,0.42,(i%2?0.07:-0.07));g.add(h);}
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,0.82,0.6,0,{kind:'obj',o});
+  }else if(def==='rectory_woodpile'){
+    const blk=mesh(new THREE.CylinderGeometry(0.32,0.34,0.42,10),0x5a3a1e);blk.position.y=0.21;g.add(blk);
+    const top=mesh(new THREE.CylinderGeometry(0.32,0.32,0.05,10),0x8a6a40);top.position.y=0.43;g.add(top);
+    for(let r=0;r<2;r++)for(let c=0;c<3;c++){
+      const lg=mesh(new THREE.BoxGeometry(0.72,0.17,0.18),[0x6e4a2c,0x7a5230,0x5a3a1e][(r+c)%3]);
+      lg.position.set(-0.62,0.3+r*0.18,-0.42+c*0.21);g.add(lg);
+      const e1=mesh(new THREE.CylinderGeometry(0.085,0.085,0.02,8),0xd8c49a);e1.rotation.z=Math.PI/2;e1.position.set(-0.98,0.3+r*0.18,-0.42+c*0.21);g.add(e1);}
+    const sh=mesh(new THREE.CylinderGeometry(0.022,0.026,0.5,6),0x6b4a2e);sh.position.set(0.05,0.62,0);sh.rotation.z=0.28;g.add(sh);
+    const hd=mesh(new THREE.BoxGeometry(0.07,0.16,0.05),0x9aa2aa);hd.position.set(0.17,0.83,0);hd.rotation.z=0.28;g.add(hd);
+    g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
+    addProxy(g,0.7,1.0,0,{kind:'obj',o});
   }else if(def==='bonfire'){
     if(o.lit){
       for(let i=0;i<6;i++){const a=i*Math.PI/3;
@@ -10147,6 +10573,16 @@ function makeGroundItem(id){
     add(BOX(0.3,0.02,0.24),trim).position.y=0.03;
     if(eq.model==='chain'){const c=add(TOR(0.09,0.015,10),trim);c.rotation.x=Math.PI/2;c.position.y=0.16;}
   }
+  else if(eq.model==='sweater'){
+    add(BOX(0.3,0.13,0.24),tint).position.y=0.09;                         /* knit torso */
+    add(BOX(0.34,0.07,0.12),tint).position.set(0,0.16,0);                 /* shoulders */
+    add(BOX(0.3,0.028,0.245),trim).position.y=0.03;                       /* red hem */
+    add(BOX(0.32,0.028,0.13),trim).position.set(0,0.155,0);               /* red collar */
+    add(SPH(0.05,7,6),0xffffff).position.set(0,0.085,0.115);              /* santa beard */
+    add(SPH(0.034,7,6),0xf1c9a5).position.set(0,0.12,0.12);               /* santa face */
+    add(CON(0.045,0.07,6),trim).position.set(0,0.17,0.115);               /* santa hat */
+    add(SPH(0.016,6,5),0xffffff).position.set(0,0.205,0.115);             /* pompom */
+  }
   else if(eq.model==='legs'){
     for(const sd of[-1,1]){const lg=add(BOX(0.11,0.1,0.3),tint);lg.position.set(sd*0.075,0.07,0.02);}
     add(BOX(0.28,0.06,0.1),trim).position.set(0,0.1,-0.1);
@@ -10391,13 +10827,13 @@ function castPick(ev){
     if(_rc.ray.intersectPlane(_pitPlane,_pitHit))return {tx:clamp(Math.floor(_pitHit.x),0,W-1),ty:clamp(Math.floor(_pitHit.z),0,H-1),wp:_pitHit.clone(),terrain:true};
     return null;
   }
-  const hits=_rc.intersectObjects(inMathes?mathesProxies:(inParty?[]:(inChapel?chapelProxies:proxies)),false).filter(h=>{
+  const hits=_rc.intersectObjects(inMathes?mathesProxies:(inParty?[]:(inChapel?chapelProxies:(inRectory?rectoryProxies:(inStPaul?stPaulProxies:proxies)))),false).filter(h=>{
     const d=h.object.userData;
     if(d.kind==='rat')return d.r.alive;
     if(d.kind==='item')return ground.some(gi=>gi.uid===d.uid);
     return true;
   });
-  const th=_rc.intersectObject(inChapel&&chapelFloor?chapelFloor:terra,false)[0];
+  const th=_rc.intersectObject(inStPaul&&stPaulFloor?stPaulFloor:(inRectory&&rectoryFloor?rectoryFloor:(inChapel&&chapelFloor?chapelFloor:terra)),false)[0];
   const ph=hits[0];
   if(ph&&(!th||ph.distance<=th.distance+0.0001)){
     const d=ph.object.userData;
@@ -10449,12 +10885,16 @@ window.addEventListener('blur',()=>keys.clear());
 const chatEntryEl=document.getElementById('chatentry');
 const chatSendEl=document.getElementById('chatsend');
 const chatRowEl=document.getElementById('chatinputrow');
-function logSay(name,text,mine){
+function logSay(name,text,mine,titleId){
   if(!chatEl)return;
   const d=document.createElement('div');d.className='saychat';
-  const nm=document.createElement('span');nm.className='sayname';nm.textContent=(name||'???')+' says: ';
+  const nm=document.createElement('span');nm.className='sayname';nm.textContent=(name||'???');
+  d.appendChild(nm);
+  const _ti=(typeof _titleResolve==='function')?_titleResolve(titleId):null;
+  if(_ti){ const ts=document.createElement('span');ts.className='sayname';ts.textContent=' '+_ti.text;ts.style.color=_ti.col;d.appendChild(ts); }
+  const _sp=document.createElement('span');_sp.className='sayname';_sp.textContent=' says: ';d.appendChild(_sp);
   const tx=document.createElement('span');tx.textContent=text;
-  d.appendChild(nm);d.appendChild(tx);
+  d.appendChild(tx);
   d.style.color=mine?'#0a2f6e':'#155a52';
   chatEl.appendChild(d);
   while(chatEl.children.length>70)chatEl.removeChild(chatEl.firstChild);
@@ -10470,7 +10910,7 @@ function openChat(){ if(chatEntryEl)chatEntryEl.focus(); }
 function closeChat(){ if(chatEntryEl)chatEntryEl.blur(); }
 function sendChat(){
   const v=chatEntryEl?chatEntryEl.value.trim():'';
-  if(v){sayOverhead(v);logSay(player.name,v,true);}
+  if(v){sayOverhead(v);logSay(player.name,v,true,player.title);}
   if(chatEntryEl)chatEntryEl.value='';
   closeChat();
 }
@@ -11491,8 +11931,8 @@ buildWmLegend();
 function drawMini(){
   const g=miniDyn.getContext('2d');
   g.clearRect(0,0,miniDyn.width,miniDyn.height);
-  g.drawImage(inMathes?miniBaseMathes:(inParty?miniBaseParty:(inChapel?miniBaseChapel:miniBase)),0,0);
-  if(!inChapel&&!inParty&&!inMathes){
+  g.drawImage(inMathes?miniBaseMathes:(inParty?miniBaseParty:(inChapel?miniBaseChapel:(inRectory?miniBaseRectory:(inStPaul?miniBaseStPaul:miniBase)))),0,0);
+  if(!inChapel&&!inParty&&!inMathes&&!inRectory&&!inStPaul){
   g.fillStyle='#ff3b30';
   for(const it of ground)g.fillRect(it.x*4,it.y*4,4,4);
   g.fillStyle='#ffd23d';
@@ -11566,7 +12006,7 @@ document.getElementById('compass').addEventListener('click',()=>{camYaw=0;});
 /* ------------------------- world map popup ------------------------ */
 const wmapEl=document.getElementById('wmap');
 function openWorldMap(){
-  if(inChapel||inMathes)return;   /* interiors are their own space, not the outdoor map */
+  if(inChapel||inMathes||inRectory||inParty||inStPaul)return;   /* interiors are their own space, not the outdoor map */
   const c=document.getElementById('wmapc'),g=c.getContext('2d');
   g.imageSmoothingEnabled=false;
   g.clearRect(0,0,c.width,c.height);
@@ -11961,8 +12401,38 @@ function questKill(r){
     }
   }
 }
+const _SKN={attack:'Attack',strength:'Strength',defense:'Defence',hitpoints:'Hitpoints',woodcutting:'Woodcutting',mining:'Mining',smithing:'Smithing',fishing:'Fishing',cooking:'Cooking',firemaking:'Firemaking',prayer:'Prayer',slayer:'Slayer',ranged:'Ranged',magic:'Magic'};
+function _skillName(sk){return _SKN[sk]||(sk.charAt(0).toUpperCase()+sk.slice(1));}
+const QUEST_REWARDS={
+  'Stronghold of Security':{coins:2000,items:['fighting_boots'],xp:[['attack',250],['strength',250],['defense',250]]},
+  'Here Be Dragons':{coins:5000,items:['dragon_shield'],xp:[['strength',1500],['defense',1000]]},
+  'Steady Hands':{coins:200,items:['iron_scimitar',['shrimps',3]],xp:[['attack',75],['strength',50],['hitpoints',25]]},
+  'The Pale Procession':{coins:400,items:['steel_scimitar','steel_full_helm'],xp:[['attack',62],['strength',25],['defense',50],['hitpoints',25]]},
+  'The Beast of the Cage':{coins:650,items:['steel_platebody','steel_kiteshield','amulet_defence',['shrimps',4]],xp:[['attack',312],['defense',350],['hitpoints',137]]},
+  'The Hollow Dean':{coins:900,items:['mithril_scimitar','mithril_full_helm',['shrimps',6]],xp:[['attack',1050],['strength',900],['defense',1600],['hitpoints',750]]},
+  'The First Rector':{coins:2000,items:['adamant_scimitar','pelican_cape'],xp:[['attack',2250],['strength',1500],['defense',1500],['hitpoints',750]]},
+  'The Three Tables of Millville':{coins:750,items:['oven_mitts'],xp:[['cooking',1200]]},
+  'The Missing Shipment':{coins:350,items:['chefs_hat'],xp:[['cooking',100]]},
+  'Lost at Practice':{coins:400,items:['amulet_strength'],xp:[['strength',75]]},
+  'The Training Table':{coins:500,xp:[['fishing',230],['cooking',117]]},
+  'Trick or Treat':{coins:500,items:['pumpkin_helmet']},
+  'A Rectory Christmas':{items:['xmas_sweater'],xp:[['cooking',450]]},
+  'Away in a Manger':{coins:5000,xp:[['prayer',800],['woodcutting',300]],extra:['the Festive Spirit emote','winter scenery (toggle in Settings)']}
+};
+function _questRewardLine(nm){
+  const r=QUEST_REWARDS[nm]; if(!r)return null;
+  const parts=[];
+  if(r.coins)parts.push(r.coins.toLocaleString()+' coins');
+  if(r.items)for(const it of r.items){ const id=Array.isArray(it)?it[0]:it, q=Array.isArray(it)?it[1]:1; const nm2=(ITEMS[id]&&ITEMS[id].name)||id; parts.push(q>1?(q+'x '+nm2):nm2); }
+  if(r.xp)for(const x of r.xp)parts.push('+'+x[1].toLocaleString()+' '+_skillName(x[0])+' XP');
+  if(r.extra)for(const e of r.extra)parts.push(e);
+  return parts.length?('Rewards: '+parts.join(', ')+'.'):null;
+}
 function questDone(nm){
   msg('Quest complete: '+nm+'!','#7a18c9');
+  const _rl=(typeof _questRewardLine==='function')?_questRewardLine(nm):null; if(_rl)msg(_rl,'#1d7a33');
+  if(typeof grantTitle==='function'){ if(nm==='Here Be Dragons')grantTitle('orange_shirts'); else if(nm==='Away in a Manger')grantTitle('merry'); }
+  if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   if(sfx.level)sfx.level();
   if(typeof refreshEmoteUnlocks==='function')refreshEmoteUnlocks(true);
   fireworks();
@@ -11981,7 +12451,7 @@ function removeWorldObj(def){
   for(let i=objects.length-1;i>=0;i--){
     const o=objects[i];
     if(o.def===def){
-      if(action&&action.o===o)cancelAction();
+      if(player.action&&player.action.o===o)cancelAction();
       if(o._m&&o._m.group)scene.remove(o._m.group);
       objects.splice(i,1);
     }
@@ -11999,6 +12469,7 @@ function syncChefObjects(){
 }
 function syncQuestWorld(){
   syncChefObjects();
+  {const rx=player.quests.rxmas; ensureWorldObj('rectory_woodpile',90,85, rx.s>=2&&rx.s<4&&countItem('xmas_firewood')<1);}
   const mq=player.quests.mish;
   for(const[id,fl]of[['lost1','r1'],['lost2','r2']]){
     const n=npcs.find(n2=>n2.id===id);
@@ -12874,7 +13345,68 @@ const DIALOGUES={
   },
   lost1:()=>lostTree('lost1','r1'),
   lost2:()=>lostTree('lost2','r2'),
+  spaulrev:()=>{
+    const q=player.quests.rxmas2;
+    if(q.s>=5)return{start:{who:'npc',text:'The carol is sung and the chapel is full of friends. Bless you, and a very happy Christmas to you.',next:null}};
+    if(q.s===4)return{start:{who:'npc',text:'The service is saved, and the snow is coming down! Now hurry to Martha Matthews at the Rectory -- she will want to thank you for what you have done tonight.',next:null}};
+    if(q.s===3)return{start:{who:'npc',text:'All that remains now is the music. Take your seat at the organ and play the carol to call the town to worship.',next:null}};
+    if(q.s===2)return{start:{who:'npc',text:'The nativity looks a picture. Now light the four candles of the Advent wreath, each in its turn.',next:null}};
+    if(q.s===1&&q.figs>=6)return{start:{who:'npc',text:'You found them all! Wonderful. Now set the figures into the manger by the chancel.',next:null}};
+    if(q.s===1)return{start:{who:'npc',text:'How goes the search? '+(6-q.figs)+' of the six figures are still hiding. Try the pew kneeler, the choir stand, the alms box, the vestry curtain, behind the organ pipes, and the chancel step.',next:null}};
+    if(q.s===0&&player.quests.rxmas&&player.quests.rxmas.s<5)return{start:{who:'npc',text:'Welcome to the Old Chapel, friend. We have a muddle to sort before the Christmas Eve service, but Martha Matthews at the Rectory has first claim on every willing pair of hands tonight. Lend her a hand with the party first, and then come back to me.',next:null}};
+    return{
+      start:{who:'npc',text:'Ah, welcome, welcome. I am Reverend Spencer, and you have found the Old Chapel of St. Paul on a busy evening. We hold the Christmas Eve service here, as the school has done for near two hundred years.',next:'intro2'},
+      intro2:{who:'npc',text:'The whole town crowds in by candlelight for the carols and the little nativity beside the altar. There is no service in all the year I love better. But I am in a muddle, I confess.',next:'intro3'},
+      intro3:{who:'npc',text:'The carved figures of the crib have gone wandering, tucked into every corner by well-meaning, tidy hands. Six there should be, and the service is but an hour off. Might I prevail upon you to help an old man find them?',next:'ask'},
+      ask:{opts:[
+        {label:'I will find them for you.',next:()=>{ const qq=player.quests.rxmas2; if(qq.s===0){ qq.s=1; msg('Quest started: Away in a Manger','#103a8c'); msg('Search the Old Chapel for the six nativity figures.','#103a8c'); if(typeof renderQuests==='function')renderQuests(); if(typeof spawnChapelChildren==='function')spawnChapelChildren(); } return 'acc'; }},
+        {label:'Not just now.',next:'no'}]},
+      acc:{who:'npc',text:'Bless you. Look in the pew kneeler, the choir stand, the alms box, the vestry curtain, behind the organ pipes, and the chancel step. Bring the figures back to the manger.',next:null},
+      no:{who:'npc',text:'The figures will keep; the season is patient. Come back when you have a moment.',next:null}
+    };
+  },
+  rmartha:()=>{
+    const _r2=player.quests.rxmas2;
+    if(_r2&&_r2.s===4)return _rxmas2RewardTree();
+    if(_r2&&_r2.s>=5)return{start:{who:'npc',text:'A very happy Christmas, dear! The carols carried clear across the Lower Grounds tonight. (Winter scenery lives in the Settings, whenever you fancy it.)',next:null}};
+    const q=player.quests.rxmas;
+    if(q.s>=4&&countItem('xmas_cookies')>0)return{
+      start:{who:'npc',text:'Cookies! And still warm \u2014 you wonderful thing. The party is saved!',next:'r2'},
+      r2:{who:'npc',text:'Here, every helper gets one \u2014 I knitted it myself. A very happy Christmas to you, dear.',next:()=>{
+        takeItems('xmas_cookies',countItem('xmas_cookies'));
+        qGrant('xmas_sweater'); addXp('cooking',450);
+        q.s=5; questDone('A Rectory Christmas'); return 'r3'; }},
+      r3:{who:'npc',text:'Now go and enjoy yourself. Mr. Bozek is handing out his Ho-ho-hos by the tree.',next:null}};
+    if(q.s>=5)return{
+      start:{who:'npc',text:'Happy Christmas, dear! The cookies were perfect. Do help yourself by the tree.',next:null}};
+    if(q.s===4)return{
+      start:{who:'npc',text:'You baked them? Bring the cookies here to me, dear!',next:null}};
+    if(q.s===3)return{
+      start:{who:'npc',text:'You have the key \u2014 wonderful. Now: butter and spice from the cabinet, flour and sugar from the larder, eggs from the basket, and chop firewood at the woodpile out on the Rectory lawn. Then bake the cookies here and bring them to me.',next:null}};
+    if(q.s===2)return{
+      start:{who:'npc',text:'Have you the cabinet key yet, dear? Ask the Rector in the parlour \u2014 he hid it behind some old carol on the piano. The Chapel hymnal on the side table will tell you the notes.',next:null}};
+    return{
+      start:{who:'npc',text:'There you are! The party is tonight, before the Eve service \u2014 and I am in a fix. I must bake the Christmas cookies, but the spice cabinet is locked and I have lost the key.',next:'m2'},
+      m2:{who:'npc',text:'My husband, the Rector, is in the parlour; he knows where the key is. And the range is stone cold \u2014 we shall need firewood, too.',next:'m3'},
+      m3:{opts:[{label:'Leave it all to me.',next:()=>{ if(q.s<2){q.s=2;renderQuests();dirty=true;syncQuestWorld();} return 'm4'; }}]},
+      m4:{who:'npc',text:'Bless you! Ask the Rector about the key first. Then gather everything \u2014 the firewood you chop at the woodpile out on the lawn \u2014 and bake the cookies at the range.',next:null}};
+  },
+  rmatthews:()=>{
+    const q=player.quests.rxmas;
+    if(q.s===2&&countItem('xmas_cabinet_key')===0)return{
+      start:{who:'npc',text:'The cabinet key? Ha \u2014 I hid it behind an old Rectory custom. To claim it, you must play the carol on the parlour piano: two notes, in the right order.',next:'k2'},
+      k2:{who:'npc',text:'I never can recall which \u2014 but Martha keeps the Chapel hymnal on the side table. The carol is written there. Read it, then play the piano.',next:null}};
+    if(q.s===1)return{
+      start:{who:'npc',text:'Ah \u2014 Martha\u2019s new helper. See her in the kitchen first, then come to me about the cabinet.',next:null}};
+    if(q.s>=2)return{
+      start:{who:'npc',text:'You are doing splendidly. Help Martha with the bake \u2014 she frets so over her cookies.',next:null}};
+    return{
+      start:{who:'npc',text:'A happy Christmas to you. Mind the candles by the tree.',next:null}};
+  },
   martha:()=>{
+    const _r2=player.quests.rxmas2;
+    if(_r2&&_r2.s===4)return _rxmas2RewardTree();
+    if(_r2&&_r2.s>=5)return{start:{who:'npc',text:'A very happy Christmas, dear! All Millville is talking of the Old Chapel tonight. (Winter scenery lives in the Settings, whenever you fancy it.)',next:null}};
     const Q=player.quests,q=Q.m3;
     if(q.s===2)return{
       start:{who:'npc',text:'The Cage is quiet again \u2014 the Rector\u2019s wife hears these things first.'+(Q.m4.s<2?' It also says the Librarian at Ohrstrom has been asking after those letters \u2014 and dear, she looked frightened.':''),next:'ask'},
@@ -12895,6 +13427,10 @@ const DIALOGUES={
       done:{who:'npc',text:'The same letters as the slate \u2014 even I can see that. Take plate, shield and a little protection; the Rector\u2019s old set, he will not miss it. And dear... take what you know to the Librarian at Ohrstrom. She READS the old hands.',next:null}};
     if(q.s===1)return{
       start:{who:'npc',text:q.c?'The Cage\u2019s south doors, dear \u2014 Coach told you true. Two beasts. Be quick and be careful.':'Coach first, dear \u2014 he is at the boathouse on Turkey Pond, and he talks better fed. Three cooked shrimps should do it.',next:null}};
+    if(Q.rxmas.s>=1&&Q.rxmas.s<5)return{
+      start:{who:'npc',text:'You came back, dear \u2014 go on inside, the kitchen needs you. The door is open.',next:null}};
+    if(Q.rxmas.s>=5)return{
+      start:{who:'npc',text:'Those cookies were the talk of the party, dear. A very happy Christmas to you.',next:null}};
     if(Q.m2.s===2&&q.s===0)return{
       start:{who:'npc',text:'There you are. Word travels fast to the Rector\u2019s wife, dear.',next:'p1'},
       p1:{who:'npc',text:'The Cage beasts have broken loose \u2014 pacing the south doors, mad-eyed, horns all scratched with letters. The Crew Coach saw where they drink at night. He is the one to ask.',next:'p2'},
@@ -12907,9 +13443,15 @@ const DIALOGUES={
       no:{who:'npc',text:'It is exactly so bad, dear. I will be here.',next:null}};
     return{
       start:{who:'npc',text:'Ah, a new face at the Rectory gate. Martha Matthews. The Rector is the wise one; I am the informed one.',next:'ask'},
-      ask:{opts:[{label:'What is it like, living at the Rectory?',next:'lf'},
+      ask:{opts:[{label:'I hear the Rectory hosts a Christmas party?',next:'xm'},
+        {label:'What is it like, living at the Rectory?',next:'lf'},
         {label:'Anything I should know?',next:'kn'},
         {label:'Good day, Mrs. Matthews.',next:'by'}]},
+      xm:{who:'npc',text:(Q.m5.s>=2)?'We do, dear -- tonight, before the Christmas Eve service. And I am at my wits end in the kitchen. Would you lend a hand?':'There will be one, dear, at the close of term -- but the school has graver troubles to settle first. Make your name about the grounds, and then come back to me.',next:(Q.m5.s>=2)?'xm2':'ask'},
+      xm2:{opts:[{label:'I would be glad to help.',next:()=>{ Q.rxmas.s=1; renderQuests(); dirty=true; msg('Quest started: A Rectory Christmas','#103a8c'); return 'xacc'; }},
+        {label:'Maybe another time.',next:'xno'}]},
+      xacc:{who:'npc',text:'Bless you! The door is open now \u2014 come inside, I will be in the kitchen.',next:null},
+      xno:{who:'npc',text:'No matter. The door is open whenever you are, dear.',next:null},
       lf:{who:'npc',text:'Drafty, historic, and never once dull. I would not trade it.',next:'ask'},
       kn:{who:'npc',text:'Nothing happens on these grounds that the Rectory does not hear about.',next:'ask'},
       by:{who:'npc',text:'Mind the roses, dear.',next:null}};
@@ -13001,7 +13543,11 @@ dlgContEl.addEventListener('click',()=>{
   audio();
   const node=dlg.tree[dlg.node];
   if(!node){closeDialogue();return;}
-  if(node.next){dlg.node=node.next;dlg.talkT=performance.now();dlgRender();}
+  if(node.next){
+    const nx=typeof node.next==='function'?node.next():node.next;
+    if(nx&&dlg&&dlg.tree[nx]){dlg.node=nx;dlg.talkT=performance.now();dlgRender();}
+    else closeDialogue();
+  }
   else closeDialogue();
 });
 window.addEventListener('keydown',e=>{
@@ -13229,6 +13775,44 @@ function trickOrTreat(bld,ck){
   renderInv();
 }
 const QUESTS=[
+ ['rxmas','A Rectory Christmas','Martha Matthews \u2014 the Rectory (outside)',
+  'A festive Christmas sweater & Cooking XP',
+  null,
+  ()=>{
+   const q=player.quests.rxmas;
+   if(q.s===0)return{cls:0,text:'It is Christmas at St. Paul\u2019s. Speak to Martha Matthews outside the Rectory to lend a hand with the party.'};
+   if(q.s===1)return{cls:1,text:'Martha has invited you inside. Enter the Rectory and speak to her in the kitchen.'};
+   if(q.s===2){
+     if(countItem('xmas_cabinet_key')>0)return{cls:1,text:'You have the cabinet key. Gather the bake: butter & spice from the spice cabinet, flour & sugar from the larder, eggs from the basket, and chop firewood at the woodpile outside on the Rectory lawn.'};
+     return{cls:1,text:'The spice cabinet is locked. Ask Rector Matthews (in the parlour) about the key \u2014 he speaks of a carol on the piano. Read the Chapel hymnal on the table, then play the two notes on the piano.'};
+   }
+   if(q.s===3){
+     const need=[];
+     if(countItem('xmas_firewood')<1)need.push('chop firewood at the woodpile out on the lawn');
+     if(countItem('xmas_butter')<1||countItem('xmas_spice')<1)need.push('open the spice cabinet (butter & spice)');
+     if(countItem('xmas_flour')<1||countItem('xmas_sugar')<1)need.push('flour & sugar (the larder)');
+     if(countItem('xmas_eggs')<1)need.push('eggs (the basket)');
+     if(need.length)return{cls:1,text:'Gather everything for the bake: '+need.join('; ')+'.'};
+     return{cls:1,text:'You have everything. Bake the Christmas cookies at the kitchen range, then take them to Martha.'};
+   }
+   if(q.s===4)return{cls:1,text:'The cookies are baked. Take them to Martha in the kitchen.'};
+   return{cls:2,text:'Complete. The Rectory Christmas party was a triumph \u2014 and you have the sweater to prove it.'};
+  }],
+ ['rxmas2','Away in a Manger','Reverend Spencer, the Old Chapel',
+  'Christmas XP & coins',
+  null,
+  ()=>{
+   const q=player.quests.rxmas2;
+   if(q.s===0)return{cls:0,text:'The Old Chapel of St. Paul is making ready for Christmas Eve. Speak to Reverend Spencer inside (enter by the west door of the Old Chapel).'};
+   if(q.s===1){
+     if(q.figs>=6)return{cls:1,text:'You have found all six nativity figures. Set them into the manger in the Old Chapel.'};
+     return{cls:1,text:'Search the Old Chapel for the six nativity figures ('+q.figs+'/6): the pew kneeler, the choir stand, the alms box, the vestry curtain, behind the organ pipes, and the chancel step.'};
+   }
+   if(q.s===2)return{cls:1,text:'Light the four candles of the Advent wreath in the Old Chapel, each in its turn ('+q.wreath+'/4).'};
+   if(q.s===3)return{cls:1,text:'Play the carol on the chapel organ to begin the Christmas Eve service.'};
+   if(q.s===4)return{cls:1,text:'The service is saved! Return to Martha Matthews at the Rectory (outside, or in the kitchen) to be thanked.'};
+   return{cls:2,text:'You saved Millville Christmas. The Old Chapel rings with carols and candlelight.'};
+  }],
  ['tut','A Warm Welcome','Rector Matthews \u2014 the Rectory',
   'A bronze sword & kiteshield, and your footing in Milville',
   q=>{if(q.s===0)return 'Speak to Rector Matthews at the Rectory to begin.';
@@ -14798,6 +15382,147 @@ function drawDuelOverlay(){
   octx.restore();
 }
 /* the Rector's occasional overhead call (yellow text, like the party room) */
+const RECTORY_XMAS_LINES=[
+  'Merry Christmas!','Happy Christmas!','Is the cake ready yet?','I love the tree!',
+  'Carols after supper?','Mind the wet boots!',"It's snowing again!",'Smells like cinnamon!',
+  'Pass the mince pies!','Did you see the lights?','Where are my mittens?','Only three sleeps to go!',
+  'The Rector tells grand stories.','I hope it snows all week.','Hot cocoa, anyone?','Deck the halls!'];
+let rectoryStudents=[]; let _rStudentsBuilt=false; let rectoryFire=[];
+const _RROOMS={foyer:[102,116,23,29],piano:[120,136,23,29],living:[117,136,4,19]};
+function buildRectoryStudents(){
+  _rStudentsBuilt=true; rectoryStudents.length=0;
+  const FYr=rectFY;
+  const kits=[
+    {skin:0xe7b98e,shirt:0x26345e,pants:0x2a2a32,hair:0x3a2a1a,belt:0x1a1a20,boots:0x222226},
+    {skin:0xd9a878,shirt:0x6e1a24,pants:0x33405c,hair:0x20160e,belt:0x2a2018,boots:0x2a2118},
+    {skin:0xf0c79a,shirt:0x2f6a4a,pants:0x3a3a42,hair:0x4a3320,belt:0x222226,boots:0x2a2118},
+    {skin:0xc98e63,shirt:0x4a3a6a,pants:0x2a2a32,hair:0x140d08,belt:0x222226,boots:0x222226},
+    {skin:0xe7b98e,shirt:0x8a6d1f,pants:0x33405c,hair:0x6a4a2a,belt:0x2a2018,boots:0x2a2118},
+    {skin:0xd9a878,shirt:0x2a5a8a,pants:0x2a2a32,hair:0x2a1c12,belt:0x222226,boots:0x222226}];
+  const spawns=[
+    {room:'foyer',x:106,z:27},{room:'foyer',x:112,z:24.5},
+    {room:'living',x:122,z:9},{room:'living',x:130,z:14},
+    {room:'piano',x:126,z:26},{room:'piano',x:131,z:24}];
+  for(let i=0;i<spawns.length;i++){
+    const sp=spawns[i], hm=makeHumanoid(kits[i%kits.length]);
+    hm.g.position.set(sp.x,FYr,sp.z); hm.g.rotation.y=Math.random()*6.28; rectoryGroup.add(hm.g);
+    rectoryStudents.push({hm,g:hm.g,x:sp.x,z:sp.z,tx:sp.x,tz:sp.z,room:sp.room,
+      spd:rnd(0.85,1.45),walk:0,retargetAt:0,chat:'',chatT:0,nextChat:performance.now()+rnd(1200,6000)});
+  }
+}
+function _pickRTarget(st){
+  const r=_RROOMS[st.room]; if(!r)return;
+  for(let k=0;k<10;k++){
+    const tx=r[0]+Math.random()*(r[1]-r[0]), tz=r[2]+Math.random()*(r[3]-r[2]);
+    const cz=Math.floor(tz), cx=Math.floor(tx);
+    if(rectoryTiles[cz]&&rectoryTiles[cz][cx]===T_FLOOR&&!RFURN.has(cz*W+cx)){ st.tx=tx; st.tz=tz; return; }
+  }
+}
+function tickRectoryStudents(dt){
+  if(!_rStudentsBuilt)buildRectoryStudents();
+  const ds=Math.min(dt,90)/1000, now=performance.now(), FYr=rectFY;
+  for(const st of rectoryStudents){
+    const dx=st.tx-st.x, dz=st.tz-st.z, d=Math.hypot(dx,dz);
+    if(d<0.2||now>=st.retargetAt){ _pickRTarget(st); st.retargetAt=now+rnd(2600,6800); }
+    else{
+      const step=Math.min(st.spd*ds,d);
+      const nx2=st.x+dx/d*step, nz2=st.z+dz/d*step;
+      if(RFURN.has(Math.floor(nz2)*W+Math.floor(nx2))){ _pickRTarget(st); st.retargetAt=now+rnd(2600,6800); st.g.position.set(st.x,FYr,st.z); continue; }
+      st.x=nx2; st.z=nz2;
+      st.g.rotation.y=Math.atan2(dx,dz);
+      st.walk+=ds*9; const sw=Math.sin(st.walk)*0.42;
+      if(st.hm.lLeg)st.hm.lLeg.rotation.x=sw;
+      if(st.hm.rLeg)st.hm.rLeg.rotation.x=-sw;
+      if(st.hm.lArm)st.hm.lArm.rotation.x=-sw*0.7;
+      if(st.hm.rArm)st.hm.rArm.rotation.x=sw*0.7;
+    }
+    st.g.position.set(st.x,FYr,st.z);
+    if(now>=st.nextChat){ st.nextChat=now+rnd(6500,13000);
+      st.chat=RECTORY_XMAS_LINES[Math.floor(Math.random()*RECTORY_XMAS_LINES.length)]; st.chatT=now+3400; }
+  }
+}
+function animateRectoryFire(now){
+  const t=now*0.001;
+  for(const f of rectoryFire){
+    if(f.glow){ f.m.material.opacity=0.14+Math.abs(Math.sin(t*4))*0.1; }
+    else { f.m.scale.y=0.7+Math.abs(Math.sin(t*7+f.ph))*0.6; f.m.scale.x=0.88+Math.sin(t*10+f.ph)*0.1; }
+  }
+}
+function drawRectoryChats(){
+  const now=performance.now();
+  octx.save(); octx.textAlign='center'; octx.font='bold 13px Georgia';
+  for(const st of rectoryStudents){
+    if(st.chat&&st.chatT>now){
+      const pp=proj(st.g.position.x,st.g.position.y+2.25,st.g.position.z);
+      if(pp){ octx.lineWidth=3; octx.strokeStyle='rgba(0,0,0,0.85)';
+        octx.strokeText(st.chat,pp.x,pp.y); octx.fillStyle='#ffff2a'; octx.fillText(st.chat,pp.x,pp.y); }
+    }
+  }
+  octx.restore();
+}
+const CHAPEL_CHILD_LINES=['Where are the statues?','I will find one first!','I hope I get presents!','Is it Christmas yet?','I looked under a pew!','Merry Christmas!','I want a sled this year!','Have you seen the angel one?','Maybe behind the curtain?','Santa is coming soon!','I love the carols!','Mary must be here somewhere!','I checked by the organ!','So many candles!','Can we sing soon?','Where is the baby Jesus?','My mittens are itchy.','I found a shiny one! ...no, just a button.'];
+const CHILD_KITS=[
+  {skin:0xf0c79a,shirt:0xb53636,pants:0x2f4a8a,hair:0x3a2a1a,boots:0x2a2118},
+  {skin:0xe7b98e,shirt:0x2f8a46,pants:0x33405c,hair:0x6a4a2a,boots:0x222226},
+  {skin:0xd9a878,shirt:0x3a5fa8,pants:0x5a2d2d,hair:0x20160e,boots:0x2a2118},
+  {skin:0xc98e63,shirt:0xcaa23a,pants:0x2a2a32,hair:0x140d08,boots:0x222226},
+  {skin:0xf0c79a,shirt:0x7a4a8c,pants:0x2f6a4a,hair:0x4a3320,boots:0x222226},
+  {skin:0xe7b98e,shirt:0x2a86a0,pants:0x2a2a32,hair:0x2a1c12,boots:0x222226}];
+let chapelChildren=[];
+const _CHILD_ZONES=[[59,63,101,108],[57,65,109,117],[49,73,112,114],[59,63,118,127]];
+function spawnChapelChildren(){
+  if(typeof stPaulGroup==='undefined'||!stPaulGroup||chapelChildren.length)return;
+  const spawns=[[60,103],[62,105],[58,112],[66,113],[61,123],[63,108]];
+  for(let i=0;i<spawns.length;i++){
+    const hm=makeHumanoid(CHILD_KITS[i%CHILD_KITS.length]);
+    hm.g.scale.setScalar(0.62); hm.g.position.set(spawns[i][0]+0.5,spFY,spawns[i][1]+0.5);
+    hm.g.rotation.y=Math.random()*6.28; stPaulGroup.add(hm.g);
+    chapelChildren.push({hm,g:hm.g,x:spawns[i][0]+0.5,z:spawns[i][1]+0.5,tx:spawns[i][0]+0.5,tz:spawns[i][1]+0.5,
+      spd:rnd(0.7,1.25),walk:0,retargetAt:0,chat:'',chatT:0,nextChat:performance.now()+rnd(700,4200)});
+  }
+}
+function despawnChapelChildren(){
+  for(const c of chapelChildren){ if(c.g&&c.g.parent)c.g.parent.remove(c.g); }
+  chapelChildren.length=0;
+}
+function _pickChildTarget(st){
+  for(let k=0;k<12;k++){
+    const z=_CHILD_ZONES[Math.floor(Math.random()*_CHILD_ZONES.length)];
+    const tx=z[0]+Math.random()*(z[1]-z[0]), tz=z[2]+Math.random()*(z[3]-z[2]);
+    if(!SPFURN.has(Math.floor(tz)*W+Math.floor(tx))){ st.tx=tx; st.tz=tz; return; }
+  }
+}
+function tickChapelChildren(dt){
+  if(!chapelChildren.length)return;
+  const ds=Math.min(dt,90)/1000, now=performance.now(), FY=spFY;
+  for(const st of chapelChildren){
+    const dx=st.tx-st.x, dz=st.tz-st.z, d=Math.hypot(dx,dz);
+    if(d<0.2||now>=st.retargetAt){ _pickChildTarget(st); st.retargetAt=now+rnd(2200,5600); }
+    else{
+      const step=Math.min(st.spd*ds,d), nx2=st.x+dx/d*step, nz2=st.z+dz/d*step;
+      if(SPFURN.has(Math.floor(nz2)*W+Math.floor(nx2))){ _pickChildTarget(st); st.retargetAt=now+rnd(2200,5600); st.g.position.set(st.x,FY,st.z); continue; }
+      st.x=nx2; st.z=nz2; st.g.rotation.y=Math.atan2(dx,dz);
+      st.walk+=ds*10; const sw=Math.sin(st.walk)*0.5;
+      if(st.hm.lLeg)st.hm.lLeg.rotation.x=sw; if(st.hm.rLeg)st.hm.rLeg.rotation.x=-sw;
+      if(st.hm.lArm)st.hm.lArm.rotation.x=-sw*0.7; if(st.hm.rArm)st.hm.rArm.rotation.x=sw*0.7;
+    }
+    st.g.position.set(st.x,FY,st.z);
+    if(now>=st.nextChat){ st.nextChat=now+rnd(4200,9500);
+      st.chat=CHAPEL_CHILD_LINES[Math.floor(Math.random()*CHAPEL_CHILD_LINES.length)]; st.chatT=now+3200; }
+  }
+}
+function drawChapelChats(){
+  if(!chapelChildren.length)return;
+  const now=performance.now();
+  octx.save(); octx.textAlign='center'; octx.font='bold 12px Georgia';
+  for(const st of chapelChildren){
+    if(st.chat&&st.chatT>now){
+      const pp=proj(st.g.position.x,st.g.position.y+1.7,st.g.position.z);
+      if(pp){ octx.lineWidth=3; octx.strokeStyle='rgba(0,0,0,0.85)'; octx.strokeText(st.chat,pp.x,pp.y); octx.fillStyle='#ffff2a'; octx.fillText(st.chat,pp.x,pp.y); }
+    }
+  }
+  octx.restore();
+}
 function drawMathesChats(){
   if(!mathesRector)return;
   const nowp=performance.now();
@@ -14893,8 +15618,11 @@ function drawBar(wx,wz,h,ratio){
 }
 function drawOverlay(now){
   octx.clearRect(0,0,ow,oh);
+  if(typeof drawWinter==='function')drawWinter();
   if(inParty)drawPartyChats();
   if(inMathes)drawMathesChats();
+  if(inRectory)drawRectoryChats();
+  if(inStPaul)drawChapelChats();
   if(duel.state!=='none'){duelTick();drawDuelOverlay();}
   if(mathesDuelGroup)duelMapAnimate(now);
   if(player.chat&&player.chatT>performance.now())drawSayText(player.px+0.5,player.py+0.5,2.35,player.chat);
@@ -15035,16 +15763,1200 @@ function lerpEnt(e,msPerTile,dt){
 let prevT=performance.now(),walkBlend=0;
 /* ---- split the scene: a main world group + the chapel-interior group ---- */
 const worldGroup=new THREE.Group();scene.add(worldGroup);
-let chapelProxies=[];let mathesProxies=[];
+/* ===================== Rectory interior (cozy New England home) ===================== */
+/* A four-room house in the hidden north-forest footprint (shared with the other interiors -
+   only one is ever visible at a time). Foyer (SW, south entry + grand staircase), piano room
+   (SE), living room (NE, the grand room), kitchen (NW). Built fresh; the existing big chapel
+   is untouched. Tiles are a private clone; geometry is a hidden group; the heightmap is
+   flattened on enter and restored on exit so the outdoor world is never disturbed. */
+const RECT={x0:85,y0:2,x1:138,y1:31};
+const rectoryTiles=TILES_MAIN.map(r=>r.slice());
+let rectoryFloor=null, rectFY=0;
+const rectoryGroup=new THREE.Group();rectoryGroup.visible=false;scene.add(rectoryGroup);
+const RECT_RETURN={x:88,y:85};
+(function carveRectory(){
+  for(let y=RECT.y0;y<=RECT.y1;y++)for(let x=RECT.x0;x<=RECT.x1;x++)
+    rectoryTiles[y][x]=(x===RECT.x0||x===RECT.x1||y===RECT.y0||y===RECT.y1)?T_WALL:T_FLOOR;
+  for(let x=RECT.x0+1;x<RECT.x1;x++)rectoryTiles[21][x]=T_WALL;        /* divider: north band | south band */
+  for(let x=102;x<=106;x++)rectoryTiles[21][x]=T_FLOOR;                /* foyer -> kitchen opening (more wall W of the staircase) */
+  for(let x=124;x<=130;x++)rectoryTiles[21][x]=T_FLOOR;                /* piano -> living opening (wide) */
+  for(let y=22;y<=30;y++)rectoryTiles[y][118]=T_WALL;                  /* foyer | piano wall (south band) */
+  for(let y=24;y<=27;y++)rectoryTiles[y][118]=T_FLOOR;                 /* foyer -> piano opening (wide) */
+  for(let y=3;y<=20;y++)rectoryTiles[y][115]=T_WALL;                   /* kitchen | living wall (no opening) */
+  for(let x=108;x<=110;x++)rectoryTiles[RECT.y1][x]=T_FLOOR;           /* south doorway (exit) */
+  for(let y=3;y<=20;y++)for(let x=86;x<=100;x++)rectoryTiles[y][x]=T_WALL; /* seal the non-room block NW of kitchen/dining */
+  for(let y=22;y<=30;y++)rectoryTiles[y][100]=T_WALL;                  /* foyer | dining divider */
+  for(let y=24;y<=27;y++)rectoryTiles[y][100]=T_FLOOR;                 /* foyer -> dining opening (west) */
+})();
+const RFURN=new Set();  /* rectory furniture footprints: block the player + NPCs */
+(function(){
+  const rf=(x0,y0,x1,y1)=>{for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++)RFURN.add(y*W+x);};
+  rf(124,16,129,17); rf(124,5,129,6); rf(118,9,119,13);          /* couches */
+  rf(125,10,127,11);                                              /* centre table (cake reachable via y12) */
+  rf(133,9,133,9); rf(133,13,133,13);                            /* armchairs */
+  rf(125,14,127,14); rf(120,11,122,11);                          /* coffee tables */
+  rf(134,4,136,5);                                               /* christmas tree (reachable via y6) */
+  rf(125,3,127,4);                                               /* living fireplace */
+  rf(102,3,113,4); rf(101,6,102,18);                             /* kitchen north + west counters */
+  rf(106,12,110,15);                                             /* big island (obj moved to 108,16) */
+  rf(114,4,114,19);                                              /* east-wall dresser/pots/shelves */
+  rf(88,24,96,27); rf(87,26,87,26); rf(87,30,97,30); rf(92,22,94,22);  /* dining table+chairs, buffet, fireplace */
+  rf(119,22,122,23); rf(120,25,120,25); rf(134,25,136,25);       /* piano+bench, jar table */
+  rf(110,22,114,24);                                             /* grand staircase */
+})();
+const _rSnap=[];
+for(let y=RECT.y0;y<=RECT.y1;y++)for(let x=RECT.x0;x<=RECT.x1;x++)_rSnap.push([x,y,hts[y][x]]);
+rectFY=groundH(88,82);
+function _rectFlatten(){for(const s of _rSnap)hts[s[1]][s[0]]=rectFY;}
+function _rectRestore(){for(const s of _rSnap)hts[s[1]][s[0]]=s[2];}
+(function buildRectoryInterior(){
+  const out={pos:[],nor:[],col:[]};
+  const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  const B=(geo,hex,x,y,z,ry)=>bake(out,geo,hex,x,y,z,ry||0,1,0,0);
+  const FY=rectFY, WALLH=4.3;
+  const PLAS=0xede3d0, WOODB=0x5a3c24, FLOORW=0x8a5a30;
+  /* baked plank floor across the whole footprint */
+  B(box(RECT.x1-RECT.x0+1,0.12,RECT.y1-RECT.y0+1),FLOORW,(RECT.x0+RECT.x1)/2+0.5,FY+0.02,(RECT.y0+RECT.y1)/2+0.5,0);
+  /* walls: a plaster-over-wainscot cube on every wall tile (matches collision exactly) */
+  for(let y=RECT.y0;y<=RECT.y1;y++)for(let x=RECT.x0;x<=RECT.x1;x++){
+    if(rectoryTiles[y][x]!==T_WALL)continue;
+    if(x>=86&&x<=99&&y>=3&&y<=20)continue;                                       /* hidden sealed block (filled below) */
+    B(box(1.02,1.32,1.02),WOODB,x+0.5,FY+0.66,y+0.5,0);                          /* tall wood-panel wainscot */
+    B(box(1.1,0.12,1.1),0x6e4a2c,x+0.5,FY+1.38,y+0.5,0);                         /* chair-rail molding */
+    B(box(1.0,WALLH-1.44,1.0),0xb7a06a,x+0.5,FY+1.44+(WALLH-1.44)/2,y+0.5,0);    /* warm wallpaper */
+    B(box(1.08,0.13,1.08),0xddd2bb,x+0.5,FY+WALLH-0.2,y+0.5,0);                  /* crown molding */
+  }
+  B(box(14,WALLH,18),0xb7a06a,93,FY+WALLH/2,12,0);                              /* solid filler over the sealed NW block */
+  /* ============================ FURNITURE (baked, decorative) ============================ */
+  const cyl=(rt,rb,h,seg)=>new THREE.CylinderGeometry(rt,rb,h,seg||10);
+  const con=(r,h,seg)=>new THREE.ConeGeometry(r,h,seg||8);
+  const RUG1=0x8c2f2a, RUG2=0xc9a23a, RUG3=0x274a6a, WOOD=0x6e4a2c, WOODD=0x4a3018, BLACK=0x1a1a1e;
+  const CREAM=0xeee6d4, GOLD=0xcaa23a, GREEN=0x2f6a3a, GREEN2=0x255a30, SILVER=0xb8bcc4;
+  /* ---------------- FOYER: rug + grand decorative staircase on the north wall ---------------- */
+  B(box(10,0.05,6),0x8a1c24,109.5,FY+0.06,26.0,0);       /* regal red field */
+  B(box(9.0,0.05,5.0),0xcaa23a,109.5,FY+0.07,26.0,0);    /* gold border */
+  B(box(7.6,0.05,3.8),0x6e1320,109.5,FY+0.08,26.0,0);    /* deep red field */
+  B(box(2.4,0.05,2.4),0xcaa23a,109.5,FY+0.09,26.0,0);    /* gold medallion */
+  /* grand staircase: a solid closed-string flight up to a landing against the north wall (decorative) */
+  {
+    const SX=112.0, SW=3.8, STEPS=7, Z0=24.6, DZ=0.40, RISE=0.36, BY=FY;
+    for(let i=0;i<STEPS;i++){
+      const topY=BY+(i+1)*RISE, z=Z0-i*DZ;
+      B(box(SW,topY-BY,0.44),WOOD,SX,(BY+topY)/2,z,0);          /* solid step block */
+      B(box(SW+0.06,0.08,0.5),WOODD,SX,topY,z,0);              /* tread nosing */
+      B(box(2.0,0.05,0.44),0x8a1c24,SX,topY+0.06,z,0);         /* regal red runner */
+      B(box(2.0,0.02,0.44),GOLD,SX,topY+0.10,z,0);             /* gold runner stripe */
+    }
+    const TOPY=BY+STEPS*RISE, ZL=Z0-STEPS*DZ;
+    B(box(SW,0.22,1.1),WOOD,SX,TOPY+0.11,ZL-0.35,0);           /* landing */
+    B(box(2.0,0.05,1.1),0x8a1c24,SX,TOPY+0.24,ZL-0.35,0);      /* landing runner */
+    for(const ex of[-1,1]){
+      const px=SX+ex*(SW/2+0.04);
+      for(let i=0;i<STEPS;i++){
+        const topY=BY+(i+1)*RISE, z=Z0-i*DZ;
+        B(box(0.16,topY-BY+0.12,0.44),WOODD,px,(BY+topY)/2+0.06,z,0);   /* solid side stringer */
+      }
+      B(box(0.22,1.15,0.22),WOODD,px,BY+0.57,Z0+0.28,0);       /* bottom newel */
+      B(con(0.17,0.24,8),GOLD,px,BY+1.26,Z0+0.28,0);
+      B(box(0.22,1.15,0.22),WOODD,px,TOPY+0.57,ZL-0.35,0);     /* top newel */
+      B(con(0.17,0.24,8),GOLD,px,TOPY+1.26,ZL-0.35,0);
+      for(let i=0;i<STEPS;i++){
+        const topY=BY+(i+1)*RISE, z=Z0-i*DZ;
+        B(cyl(0.04,0.04,0.5,6),CREAM,px,topY+0.27,z,0);        /* baluster */
+        B(box(0.1,0.1,0.46),WOOD,px,topY+0.54,z,0);            /* stepped handrail */
+      }
+    }
+  }
+  /* ---------------- PIANO ROOM: grand piano (NW) + table on the east wall ---------------- */
+  B(box(2.6,0.8,1.7),BLACK,121.2,FY+0.95,23.4,0);        /* piano body */
+  B(box(2.7,0.12,1.8),0x101014,121.2,FY+1.42,23.4,0);    /* closed lid */
+  B(box(1.5,0.1,0.9),0x101014,122.8,FY+1.5,23.4,0.5);    /* raised lid wing */
+  B(box(1.2,0.18,0.34),CREAM,120.4,FY+0.95,24.45,0);     /* keyboard */
+  for(let k=0;k<10;k++)B(box(0.05,0.2,0.34),BLACK,119.9+k*0.13,FY+0.99,24.45,0);
+  for(const lp of[[120.1,22.7],[122.3,22.7],[121.2,24.1]])B(cyl(0.07,0.07,0.95,6),BLACK,lp[0],FY+0.48,lp[1],0);
+  B(box(0.9,0.45,0.5),WOODD,120.4,FY+0.42,25.3,0);       /* piano bench */
+  B(box(2.0,0.7,1.0),WOOD,135.4,FY+0.45,25.5,0);         /* table on the east wall (jellybean jar sits here, added next) */
+  B(box(2.2,0.1,1.2),WOODD,135.4,FY+0.82,25.5,0);
+  B(box(11,0.05,6.5),0x8a1c24,128.0,FY+0.06,26.0,0);    /* piano room regal rug */
+  B(box(9.6,0.05,5.1),0xcaa23a,128.0,FY+0.07,26.0,0);
+  B(box(8.2,0.05,3.7),0x6e1320,128.0,FY+0.08,26.0,0);
+  B(box(2.6,0.05,2.4),0xcaa23a,128.0,FY+0.09,26.0,0);
+  /* ---------------- LIVING ROOM: rug, couches, armchairs, centre table + cake, NE tree + presents ---------------- */
+  B(box(17,0.05,12),0x8a1c24,126.5,FY+0.06,11.5,0);      /* regal red field */
+  B(box(15.4,0.05,10.4),0xcaa23a,126.5,FY+0.07,11.5,0);  /* gold border */
+  B(box(13.6,0.05,8.8),0x6e1320,126.5,FY+0.08,11.5,0);   /* deep red field */
+  B(box(4.0,0.05,3.4),0xcaa23a,126.5,FY+0.09,11.5,0);    /* central medallion */
+  /* face = direction the couch FACES (toward the room centre); backrest goes on the opposite side */
+  function couch(cx,cz,face,len){
+    const ns=(face==='N'||face==='S'); const w=ns?len:1.1, d=ns?1.1:len;
+    const SEAT=0x234a36, CUSH=0x2f5e44, TRIM=0xcaa23a, FRAME=0x3a2414;
+    B(box(w,0.16,d),FRAME,cx,FY+0.18,cz,0);
+    B(box(w-0.2,0.34,d-0.2),SEAT,cx,FY+0.42,cz,0);
+    B(box(w-0.4,0.16,d-0.4),CUSH,cx,FY+0.62,cz,0);
+    let bx=cx,bz=cz,bw=w,bd=d;
+    if(face==='N'){bz=cz+d/2-0.12;bd=0.24;} if(face==='S'){bz=cz-d/2+0.12;bd=0.24;}
+    if(face==='E'){bx=cx-w/2+0.12;bw=0.24;} if(face==='W'){bx=cx+w/2-0.12;bw=0.24;}
+    B(box(bw,0.62,bd),SEAT,bx,FY+0.78,bz,0);
+    B(box(bw+0.02,0.08,bd+0.02),TRIM,bx,FY+1.07,bz,0);
+    if(ns){for(const e of[-1,1])B(box(0.22,0.5,d),SEAT,cx+e*(w/2-0.11),FY+0.6,cz,0);}
+    else  {for(const e of[-1,1])B(box(w,0.5,0.22),SEAT,cx,FY+0.6,cz+e*(d/2-0.11),0);}
+  }
+  couch(126.5,17.0,'N',5.0);          /* south couch faces centre (N) */
+  couch(126.5,5.6,'S',4.6);           /* north couch faces centre (S) */
+  couch(118.6,11.5,'E',4.4);          /* west couch faces centre (E) */
+  function armchair(cx,cz,face){
+    const SEAT=0x6e1a24, CUSH=0x8a2630, TRIM=0xcaa23a;
+    B(box(1.1,0.16,1.1),0x3a2414,cx,FY+0.18,cz,0);
+    B(box(0.95,0.34,0.95),SEAT,cx,FY+0.42,cz,0);
+    B(box(0.8,0.16,0.8),CUSH,cx,FY+0.62,cz,0);
+    let bx=cx,bz=cz,bw=1.1,bd=1.1;
+    if(face==='N'){bz=cz+0.45;bd=0.22;} if(face==='S'){bz=cz-0.45;bd=0.22;}
+    if(face==='E'){bx=cx-0.45;bw=0.22;} if(face==='W'){bx=cx+0.45;bw=0.22;}
+    B(box(bw,0.7,bd),SEAT,bx,FY+0.82,bz,0);
+    B(box(bw+0.02,0.07,bd+0.02),TRIM,bx,FY+1.15,bz,0);
+    const ns=(face==='N'||face==='S');
+    if(ns){for(const e of[-1,1])B(box(0.2,0.5,1.0),SEAT,cx+e*0.45,FY+0.6,cz,0);}
+    else  {for(const e of[-1,1])B(box(1.0,0.5,0.2),SEAT,cx,FY+0.6,cz+e*0.45,0);}
+  }
+  armchair(133.2,9.5,'W'); armchair(133.2,13.5,'W');
+  /* coffee tables with readable books, in front of the couches */
+  function coffeeTable(cx,cz){
+    B(box(1.7,0.1,0.95),WOOD,cx,FY+0.44,cz,0); B(box(1.82,0.06,1.05),WOODD,cx,FY+0.5,cz,0);
+    for(const lx of[-0.74,0.74])for(const lz of[-0.36,0.36])B(box(0.08,0.44,0.08),WOODD,cx+lx,FY+0.22,cz+lz,0);
+  }
+  function bookProp(cx,cz,cover){
+    B(box(0.52,0.1,0.38),cover,cx,FY+0.58,cz,0);            /* covers */
+    B(box(0.46,0.07,0.32),0xefe7d2,cx,FY+0.585,cz,0);       /* page block */
+    B(box(0.52,0.02,0.38),cover,cx,FY+0.635,cz,0);          /* top board */
+    B(box(0.05,0.11,0.38),0x241810,cx-0.255,FY+0.585,cz,0); /* spine */
+  }
+  coffeeTable(126.5,14.5); bookProp(126.5,14.5,0x26425f);   /* Chapel Services & Hymns */
+  coffeeTable(121.5,11.5); bookProp(121.5,11.5,0x7a2420);   /* Alumni Horae */
+  B(cyl(0.95,0.8,0.55,16),WOOD,126.5,FY+0.55,11.5,0);   /* centre table */
+  B(cyl(1.05,1.05,0.12,16),WOODD,126.5,FY+0.86,11.5,0);
+  B(cyl(0.42,0.42,0.28,14),0xf0e2a0,126.5,FY+1.06,11.5,0);   /* lemon-poppyseed cake */
+  B(cyl(0.44,0.44,0.05,14),0xe8d070,126.5,FY+1.21,11.5,0);   /* glaze top */
+  for(let i=0;i<10;i++){const a=i/10*6.28;B(box(0.04,0.05,0.04),0x33312c,126.5+Math.cos(a)*0.3,FY+1.24,11.5+Math.sin(a)*0.3,0);} /* poppy seeds */
+  /* Christmas tree + presents, NE corner */
+  B(cyl(0.16,0.22,0.7,8),WOODD,135.0,FY+0.35,5.0,0);    /* trunk */
+  B(con(1.5,1.6,12),GREEN2,135.0,FY+1.4,5.0,0);
+  B(con(1.2,1.4,12),GREEN,135.0,FY+2.1,5.0,0);
+  B(con(0.85,1.2,12),GREEN2,135.0,FY+2.8,5.0,0);
+  B(con(0.5,0.9,10),GREEN,135.0,FY+3.45,5.0,0);
+  B(con(0.18,0.4,5),GOLD,135.0,FY+4.0,5.0,0);           /* star topper */
+  const BB=[0xc0241f,0xcaa23a,0x274a6a,0xeee6d4,0x7a3550];
+  for(let i=0;i<16;i++){const a=i*2.39,r=0.5+(i%4)*0.22,h=1.3+(i%5)*0.55;
+    B(new THREE.SphereGeometry(0.12,6,5),BB[i%5],135.0+Math.cos(a)*r,FY+h,5.0+Math.sin(a)*r,0);}
+  for(const pr of[[133.6,6.0,0.7,0xc0241f],[135.6,6.3,0.6,0x274a6a],[134.4,4.0,0.55,0xcaa23a],[136.2,5.0,0.5,0x2f6a3a]]){
+    B(box(pr[2],pr[2]*0.8,pr[2]),pr[3],pr[0],FY+pr[2]*0.4,pr[1],pr[0]*0.3);
+    B(box(pr[2]+0.04,0.05,0.1),GOLD,pr[0],FY+pr[2]*0.8,pr[1],0);   /* ribbon */
+    B(box(0.1,0.05,pr[2]+0.04),GOLD,pr[0],FY+pr[2]*0.8,pr[1],0);
+  }
+  /* ---------------- KITCHEN: a warm, busy working kitchen ---------------- */
+  /* counter runs along the north + west walls */
+  for(let x=102;x<=113;x++)if(x<106||x>108){ B(box(1.0,0.9,0.9),CREAM,x+0.5,FY+0.45,4.0,0); B(box(1.02,0.12,0.96),0x6e4a2c,x+0.5,FY+0.95,4.0,0); }
+  for(let z=6;z<=18;z++)if(z<7||z>8){ B(box(0.9,0.9,1.0),CREAM,102.0,FY+0.45,z+0.5,0); B(box(0.96,0.12,1.02),0x6e4a2c,102.0,FY+0.95,z+0.5,0); }
+  /* range (cast-iron stove) on the north wall */
+  B(box(2.0,1.05,1.0),0x2b2b30,107.0,FY+0.53,4.0,0);
+  B(box(2.1,0.12,1.04),0x141418,107.0,FY+1.1,4.0,0);
+  for(const bx of[-0.55,0.55])for(const bz of[-0.22,0.22])B(cyl(0.16,0.16,0.04,12),0x3a3a40,107.0+bx,FY+1.18,4.0+bz,0);
+  B(box(2.0,0.9,0.14),0x222226,107.0,FY+1.7,3.5,0);
+  B(box(2.4,0.5,0.7),0x1a1a1e,107.0,FY+2.3,3.4,0);
+  B(box(0.16,0.5,0.16),0x6a6a72,107.0,FY+2.0,3.5,0);
+  B(cyl(0.28,0.24,0.34,12),0x3a3a42,106.6,FY+1.32,4.0,0); B(cyl(0.3,0.3,0.04,12),0x4a4a52,106.6,FY+1.5,4.0,0);   /* stockpot */
+  B(cyl(0.22,0.26,0.3,12),0x5a4a3a,107.5,FY+1.3,4.0,0);                                                          /* kettle */
+  /* pot rack on the north wall (west of the range) with hanging copper pots */
+  B(box(3.2,0.08,0.1),0x4a3018,103.5,FY+2.5,3.2,0);
+  for(let i=0;i<4;i++){ const px=102.2+i*0.8; B(cyl(0.16,0.18,0.26,10),[0xb87333,0xa8a8b0,0xb87333,0x8c6a3a][i],px,FY+2.2,3.25,0); B(box(0.04,0.18,0.04),0x2a2a2e,px,FY+2.4,3.25,0); }
+  /* pantry / larder: flush against the east wall */
+  B(box(1.0,2.6,2.0),WOOD,114.3,FY+1.3,9.0,0);
+  for(let i=0;i<4;i++)B(box(1.04,0.08,2.02),0x6e4a2c,114.3,FY+0.5+i*0.6,9.0,0);
+  for(let i=0;i<8;i++)B(cyl(0.1,0.1,0.22,8),[0xc9a23a,0x8c2f2a,0xeee6d4,0x2f6a3a][i%4],114.1,FY+0.65+Math.floor(i/2)*0.6,8.4+(i%2?0.5:-0.5),0);
+  /* ---- east wall: plate dresser, hanging pots & pans, crockery, herbs (was bare) ---- */
+  B(box(1.0,2.7,1.9),WOOD,114.3,FY+1.35,5.2,0);
+  for(let i=0;i<3;i++)B(box(1.04,0.08,1.94),0x6e4a2c,114.3,FY+0.95+i*0.7,5.2,0);
+  for(let i=0;i<6;i++)B(box(0.04,0.34,0.34),0xeee6d4,114.0,FY+1.18+Math.floor(i/2)*0.7,4.6+(i%2)*1.1,0);
+  B(box(0.12,0.08,3.6),0x3a2414,114.5,FY+2.55,14.2,0);
+  for(let i=0;i<6;i++){ const pz=12.6+i*0.62; B(cyl(0.16,0.19,0.28,10),[0xb87333,0xa8a8b0,0xc88a3a,0xb87333,0x9a9aa2,0xb87333][i],114.35,FY+2.18,pz,0); B(box(0.04,0.2,0.04),0x2a2a2e,114.45,FY+2.42,pz,0); }
+  for(const pz of[11.6,16.4]){ B(box(0.05,0.5,0.5),0x33333a,114.55,FY+1.95,pz,0); B(box(0.05,0.08,0.42),0x4a4a52,114.55,FY+1.95,pz,0); }
+  B(box(1.0,0.1,2.4),0x6e4a2c,114.3,FY+1.55,18.2,0);
+  for(let i=0;i<5;i++)B(cyl(0.13,0.11,0.26,10),[0xc9a23a,0x8c2f2a,0xeee6d4,0x2f6a3a,0x3a6a8a][i],114.2,FY+1.72,17.2+i*0.5,0);
+  for(const hz of[10.3,11.1]){ B(con(0.11,0.5,6),0x5a7a3a,114.5,FY+2.55,hz,0); B(box(0.03,0.3,0.03),0x3a2a1a,114.5,FY+2.88,hz,0); }
+  /* --- A Rectory Christmas: egg basket (the woodpile lives outdoors now) --- */
+  { const _bx=112.5,_bz=6.5;
+    B(cyl(0.3,0.22,0.32,12),0xb9893f,_bx,FY+0.17,_bz,0);                        /* wicker basket */
+    B(cyl(0.32,0.32,0.06,12),0x8c6a2a,_bx,FY+0.32,_bz,0);                       /* rim */
+    for(const _e of[[-0.1,-0.05],[0.1,-0.03],[0,0.1],[-0.08,0.08],[0.09,0.06]])
+      B(cyl(0.075,0.06,0.16,8),0xefe2c8,_bx+_e[0],FY+0.36,_bz+_e[1],0); }
+  /* a large central prep island with a butcher-block top */
+  B(box(4.8,0.85,3.0),WOOD,108.0,FY+0.43,13.5,0);
+  B(box(4.9,0.16,3.1),0x7a5a36,108.0,FY+0.93,13.5,0);
+  for(const ix of[-2.25,2.25])for(const iz of[-1.35,1.35])B(box(0.18,0.85,0.18),0x4a3018,108.0+ix,FY+0.42,13.5+iz,0);
+  /* food + tools on the island */
+  B(box(0.7,0.06,0.5),0x8a5a30,107.2,FY+1.02,13.3,0);
+  B(cyl(0.04,0.04,0.5,6),0xc9a06a,107.2,FY+1.06,13.6,1.5);
+  for(const v of[[107.0,13.2,0xc0241f],[107.4,13.4,0xe87f1f],[106.9,13.5,0x2f8a3a]])B(new THREE.SphereGeometry(0.1,7,6),v[2],v[0],FY+1.06,v[1],0);
+  B(cyl(0.32,0.34,0.16,14),0xeee0c0,109.0,FY+1.1,13.5,0); B(cyl(0.3,0.3,0.06,14),0xd8b86a,109.0,FY+1.2,13.5,0);
+  B(cyl(0.26,0.28,0.2,12),0x8a6a4a,108.3,FY+1.12,13.8,0);
+  /* extra prep on the enlarged island */
+  B(cyl(0.3,0.32,0.32,12),0x9a6a3a,105.9,FY+1.12,13.0,0);
+  B(box(0.62,0.07,0.44),0x8a5a30,110.0,FY+1.0,13.8,0); B(cyl(0.26,0.26,0.14,12),0xeee0c0,110.0,FY+1.14,13.8,0);
+  for(const v of[[105.8,14.4,0x6a8a3a],[110.3,13.0,0xc0241f],[106.4,14.6,0xe87f1f]])B(new THREE.SphereGeometry(0.11,7,6),v[2],v[0],FY+1.08,v[1],0);
+  B(box(0.5,0.18,0.34),0xcf9a5a,109.6,FY+1.12,14.4,0);
+  /* food along the north + west counters */
+  B(box(0.5,0.22,0.28),0xd9a566,103.0,FY+1.12,4.0,0); B(box(0.5,0.22,0.28),0xcf9a5a,103.7,FY+1.12,4.0,0);
+  B(cyl(0.2,0.22,0.16,12),0x6a8a3a,111.5,FY+1.1,4.0,0);
+  for(let a=0;a<5;a++)B(new THREE.SphereGeometry(0.07,6,5),0xc0241f,111.5+Math.cos(a)*0.1,FY+1.22,4.0+Math.sin(a)*0.1,0);
+  B(cyl(0.22,0.24,0.18,12),0xeee0c0,102.0,FY+1.1,15.5,0);
+  B(box(0.6,0.18,0.4),0xb8702a,102.0,FY+1.12,12.0,0);
+  /* ---- fireplace: centre of the living-room north wall ---- */
+  {
+    const FPX=126.0, FPZ=3.6;
+    const STONE=0x9a8f80, STONE2=0x7c7264, HEARTH=0x6e655a, MANT=0x5a3c24;
+    B(box(3.6,0.18,1.3),HEARTH,FPX,FY+0.09,FPZ+0.15,0);                        /* raised hearth */
+    for(const e of[-1,1])B(box(0.7,2.7,1.0),STONE,FPX+e*1.4,FY+1.35,FPZ,0);    /* side piers */
+    B(box(3.5,0.7,1.0),STONE2,FPX,FY+3.05,FPZ,0);                              /* lintel */
+    B(box(2.1,2.0,0.12),0x1a1510,FPX,FY+1.2,FPZ-0.42,0);                       /* dark firebox BACK panel (behind the fire) */
+    B(box(1.9,0.4,0.42),0x3a2414,FPX,FY+0.38,FPZ+0.05,0);                      /* log bed */
+    for(const lz of[0,0.12,0.06])B(box(1.7,0.2,0.2),0x5a3c24,FPX,FY+0.44+lz,FPZ+0.15,0); /* stacked logs (in front) */
+    B(box(3.9,0.2,1.4),MANT,FPX,FY+3.5,FPZ+0.08,0);                            /* mantel shelf */
+    B(box(3.7,0.1,1.3),0x6e4a2c,FPX,FY+3.62,FPZ+0.08,0);
+    B(box(2.2,1.2,0.9),STONE,FPX,FY+4.0,FPZ-0.05,0);                           /* chimney breast */
+    for(const sx of[-1.3,-0.6,0.6,1.3]){ B(box(0.22,0.5,0.06),(sx<0?0xc0241f:0x2f6a3a),FPX+sx,FY+3.28,FPZ+0.72,0);
+      B(box(0.24,0.12,0.07),0xffffff,FPX+sx,FY+3.05,FPZ+0.72,0); }              /* hanging stockings */
+    for(const c2 of[-1.5,1.5]){ B(cyl(0.06,0.08,0.3,8),GOLD,FPX+c2,FY+3.75,FPZ+0.1,0);
+      B(con(0.05,0.12,6),0xffcf66,FPX+c2,FY+3.97,FPZ+0.1,0); }                  /* candlesticks */
+  }
+  /* ================= WINDOWS (snowy views) + ORNATE DECOR ================= */
+  const SKY=0xbcd4e6, SNOWC=0xeef3f7, EVERG=0x2c4636, WFRAME=0x4a3322, MUNT=0x5a4030, FLAKE=0xffffff;
+  function windowOn(cx,cz,wall,w,h){
+    const ax=(wall==='N'||wall==='S');
+    const nx=wall==='W'?1:wall==='E'?-1:0, nz=wall==='N'?1:wall==='S'?-1:0;
+    const tx=ax?w:0.08, tz=ax?0.08:w, cy=FY+1.55+h/2;
+    B(box(tx,h,tz),SKY,cx,cy,cz,0);                                                 /* sky pane */
+    B(box(ax?w*0.98:0.06,h*0.36,ax?0.06:w*0.98),SNOWC,cx+nx*0.03,cy-h*0.32,cz+nz*0.03,0); /* snow ground */
+    for(let i=-1;i<=1;i++){ const ox=ax?i*w*0.28:0, oz=ax?0:i*w*0.28;
+      B(con(0.16,0.5,5),EVERG,cx+ox+nx*0.04,cy-h*0.12,cz+oz+nz*0.04,0); }            /* evergreens */
+    for(let k=0;k<6;k++){
+      const r1=tileHash(Math.floor(cx*3)+k,Math.floor(cz*5)+k*2)-0.5;
+      const r2=tileHash(Math.floor(cz*7)+k*3,Math.floor(cx*2)+k);
+      const ox=ax?r1*w*0.8:0, oz=ax?0:r1*w*0.8;
+      B(box(0.05,0.05,0.05),FLAKE,cx+ox+nx*0.05,cy+(r2-0.3)*h*0.7,cz+oz+nz*0.05,0); } /* falling snow */
+    B(box(ax?w+0.3:0.16,0.16,ax?0.16:w+0.3),WFRAME,cx,cy+h/2+0.06,cz,0);            /* head */
+    B(box(ax?w+0.3:0.16,0.16,ax?0.16:w+0.3),WFRAME,cx,cy-h/2-0.06,cz,0);            /* sill */
+    for(const e of[-1,1]){ if(ax)B(box(0.14,h+0.3,0.18),WFRAME,cx+e*(w/2+0.05),cy,cz,0);
+      else B(box(0.18,h+0.3,0.14),WFRAME,cx,cy,cz+e*(w/2+0.05),0); }                /* jambs */
+    if(ax){ B(box(0.06,h,tz+0.04),MUNT,cx,cy,cz+nz*0.02,0); B(box(w,0.06,tz+0.04),MUNT,cx,cy,cz+nz*0.02,0); }
+    else  { B(box(tx+0.04,h,0.06),MUNT,cx+nx*0.02,cy,cz,0); B(box(tx+0.04,0.06,w),MUNT,cx+nx*0.02,cy,cz,0); }
+  }
+  windowOn(104,3.08,'N',2.4,1.8); windowOn(110,3.08,'N',2.4,1.8);
+  /* (kitchen west windows removed \u2014 that wall is internal to the dining extension now) */
+  windowOn(119,3.08,'N',2.2,1.9); windowOn(131,3.08,'N',2.0,1.9);   /* flank the fireplace + clear the tree */
+  windowOn(137.92,9,'E',2.4,1.9); windowOn(137.92,15,'E',2.4,1.9);
+  /* (foyer west windows removed \u2014 the dining-room entry is on that wall now) */
+  windowOn(104,30.92,'S',2.0,1.7); windowOn(114,30.92,'S',2.0,1.7);
+  windowOn(137.92,23.5,'E',2.2,1.8); windowOn(137.92,28,'E',2.2,1.8);
+  windowOn(124,30.92,'S',2.2,1.8); windowOn(131,30.92,'S',2.2,1.8);
+
+  function grandClock(cx,cz,face){
+    const fx=face==='E'?1:face==='W'?-1:0, fz=face==='S'?1:face==='N'?-1:0, az=(fz!==0);
+    const cw=az?0.74:0.5, cd=az?0.5:0.74, ox=fx*0.27, oz=fz*0.27;
+    B(box(cw,2.8,cd),0x3a2414,cx,FY+1.4,cz,0);
+    B(box(cw+0.1,0.18,cd+0.1),0x5a3c24,cx,FY+2.86,cz,0);
+    B(con(0.18,0.26,4),0x5a3c24,cx,FY+3.05,cz,0.78);
+    B(box(az?0.5:0.05,1.4,az?0.05:0.5),0x1a2a24,cx+ox,FY+1.15,cz+oz,0);
+    B(box(0.05,0.95,0.05),GOLD,cx+ox,FY+1.3,cz+oz,0);
+    B(cyl(0.13,0.13,0.06,10),GOLD,cx+ox,FY+0.85,cz+oz,0);
+    B(box(az?0.5:0.07,0.5,az?0.07:0.5),GOLD,cx+ox*0.9,FY+2.36,cz+oz*0.9,0);
+    B(box(az?0.44:0.06,0.42,az?0.06:0.44),0xefe9d8,cx+ox,FY+2.36,cz+oz,0);
+    B(box(az?0.04:0.07,0.16,az?0.07:0.04),0x222226,cx+ox*1.1,FY+2.42,cz+oz*1.1,0);
+    B(box(az?0.12:0.07,0.04,az?0.07:0.12),0x222226,cx+ox*1.1,FY+2.34,cz+oz*1.1,0);
+  }
+  grandClock(122,20.6,'N');    /* living: against the south wall, flush, faces room (north wall is for the fireplace) */
+  grandClock(117.75,29,'W');   /* foyer: flush against the east wall */
+
+  function sideTable(cx,cz){ B(cyl(0.12,0.16,0.66,8),0x4a3320,cx,FY+0.33,cz,0); B(cyl(0.4,0.4,0.07,12),0x5a3c24,cx,FY+0.69,cz,0); }
+  function vase(cx,cz,col){ const by=FY+0.72;
+    B(cyl(0.16,0.1,0.3,10),col,cx,by+0.15,cz,0); B(cyl(0.09,0.12,0.12,10),col,cx,by+0.36,cz,0); B(cyl(0.13,0.09,0.05,10),col,cx,by+0.45,cz,0);
+    for(let i=0;i<5;i++){const a=i/5*6.283; B(cyl(0.02,0.02,0.22,5),GREEN2,cx+Math.cos(a)*0.05,by+0.56,cz+Math.sin(a)*0.05,0);}
+    for(let i=0;i<5;i++){const a=i/5*6.283+0.4, fc=[0xc0241f,0xeae0a0,0xd86a8a,0xffffff,GOLD][i%5];
+      B(cyl(0.06,0.04,0.05,6),fc,cx+Math.cos(a)*0.07,by+0.68,cz+Math.sin(a)*0.07,0);} }
+  sideTable(102.0,23.0); vase(102.0,23.0,0x2a5a8a);
+  sideTable(135.6,18.5); vase(135.6,18.5,0x6e1a24);
+  sideTable(118.6,4.2);  vase(118.6,4.2,0x2f6a4a);
+  sideTable(120.6,29.0); vase(120.6,29.0,0x7a2f8a);
+  sideTable(134.8,29.0); vase(134.8,29.0,0x2a5a8a);
+
+  function portrait(cx,cz,face,w,h){
+    const fx=face==='E'?1:face==='W'?-1:0, fz=face==='S'?1:face==='N'?-1:0, az=(fz!==0);
+    const fw=az?(w+0.16):0.05, fd=az?0.05:(w+0.16);
+    B(box(fw,h+0.16,fd),GOLD,cx,FY+2.5,cz,0);                                          /* flat gold frame on the wall */
+    B(box(az?w:0.04,h,az?0.04:w),0x241b22,cx+fx*0.06,FY+2.5,cz+fz*0.06,0);             /* dark canvas, proud of frame */
+    B(box(az?w*0.42:0.06,h*0.34,az?0.06:w*0.42),0xc8a9b0,cx+fx*0.09,FY+2.66,cz+fz*0.09,0); /* face */
+    B(box(az?w*0.66:0.06,h*0.34,az?0.06:w*0.66),0x5a4a64,cx+fx*0.09,FY+2.36,cz+fz*0.09,0); /* robe/shoulders */
+  }
+  portrait(116.0,7,'E',0.9,1.2); portrait(116.0,15,'E',0.9,1.2);   /* living west wall, flush */
+  portrait(118.0,23,'W',0.8,1.1);                                  /* foyer east wall, clear of opening + the north divider */
+  portrait(119.0,29,'E',0.8,1.1);                                  /* piano west wall, clear of opening */
+
+  function sconce(cx,cz,face){
+    const fx=face==='E'?1:face==='W'?-1:0, fz=face==='S'?1:face==='N'?-1:0;
+    B(box(0.1,0.26,0.1),0x2a2118,cx,FY+2.7,cz,0);
+    B(cyl(0.05,0.06,0.16,8),CREAM,cx+fx*0.12,FY+2.86,cz+fz*0.12,0);
+    B(con(0.05,0.13,6),0xffcf66,cx+fx*0.12,FY+3.0,cz+fz*0.12,0);
+  }
+  sconce(116.2,11,'E'); sconce(113.5,3.3,'N'); sconce(135,30.5,'S');
+
+  function bookshelf(cx,cz,face){
+    const fx=face==='E'?1:face==='W'?-1:0, fz=face==='S'?1:face==='N'?-1:0, az=(fz!==0);
+    B(box(az?1.6:0.42,2.4,az?0.42:1.6),0x3a2414,cx,FY+1.2,cz,0);
+    for(let r=0;r<4;r++)for(let i=0;i<7;i++){
+      const col=[0x7a2f2f,0x2f5a3a,0x2a4d8a,0x6b4423,0x5a3d7a,0xb0892e,0x356a6a][(r*7+i)%7];
+      if(az) B(box(0.18,0.34,0.32),col,cx-0.65+i*0.2,FY+0.5+r*0.55,cz+fz*0.05,0);
+      else   B(box(0.32,0.34,0.18),col,cx+fx*0.05,FY+0.5+r*0.55,cz-0.65+i*0.2,0);
+    }
+  }
+  bookshelf(137.7,12,'W');     /* living east wall, flush, between windows */
+  bookshelf(133,30.7,'N');     /* piano south wall, flush */
+
+  /* ================= GRAND DINING ROOM (west of the foyer) ================= */
+  {
+    const DCX=92, DCZ=26.0;
+    B(box(11,0.05,6.5),0x8a1c24,DCX,FY+0.06,DCZ,0); B(box(9.6,0.05,5.1),0xcaa23a,DCX,FY+0.07,DCZ,0);
+    B(box(8.2,0.05,3.7),0x6e1320,DCX,FY+0.08,DCZ,0); B(box(2.6,0.05,2.4),0xcaa23a,DCX,FY+0.09,DCZ,0);
+    /* long dining table, draped in a white cloth */
+    B(box(8.0,0.1,1.6),WOOD,DCX,FY+0.88,DCZ,0);
+    B(box(8.5,0.82,2.0),0xf2efe6,DCX,FY+0.5,DCZ,0);
+    B(box(8.6,0.06,2.1),0xf6f3ec,DCX,FY+0.93,DCZ,0);
+    B(box(7.0,0.02,0.5),0x8a1c24,DCX,FY+0.965,DCZ,0);
+    for(const cx2 of[-2.6,0,2.6]){ B(cyl(0.08,0.12,0.1,8),GOLD,DCX+cx2,FY+1.0,DCZ,0);
+      B(cyl(0.04,0.04,0.34,6),0xefe6d0,DCX+cx2,FY+1.18,DCZ,0); B(con(0.04,0.12,6),0xffcf66,DCX+cx2,FY+1.4,DCZ,0); }
+    B(cyl(0.4,0.44,0.18,14),0xc9c4bc,DCX-1.3,FY+1.0,DCZ,0); B(new THREE.SphereGeometry(0.26,8,6),0xb87038,DCX-1.3,FY+1.12,DCZ,0);
+    B(new THREE.SphereGeometry(0.3,8,6),0xcf9a52,DCX+1.4,FY+1.06,DCZ,0);
+    for(const px of[-3.0,3.0]){ B(cyl(0.26,0.28,0.14,12),0xeee0c0,DCX+px,FY+1.0,DCZ,0); B(cyl(0.24,0.24,0.05,12),0xd8b86a,DCX+px,FY+1.09,DCZ,0); }
+    for(const gx of[-2.0,-0.6,0.8,2.2]){ B(cyl(0.07,0.05,0.18,8),GOLD,DCX+gx,FY+1.0,DCZ+0.6,0); B(cyl(0.07,0.05,0.18,8),GOLD,DCX+gx,FY+1.0,DCZ-0.6,0); }
+    function diningChair(cx,cz,face){
+      const fx=face==='E'?1:face==='W'?-1:0, fz=face==='S'?1:face==='N'?-1:0;
+      B(box(0.52,0.1,0.52),0x3a2414,cx,FY+0.52,cz,0); B(box(0.44,0.08,0.44),0x6e1a24,cx,FY+0.58,cz,0);
+      for(const lx of[-0.21,0.21])for(const lz of[-0.21,0.21])B(box(0.06,0.52,0.06),0x3a2414,cx+lx,FY+0.26,cz+lz,0);
+      const bx=cx-fx*0.23, bz=cz-fz*0.23, bw=(fz!==0)?0.52:0.06, bd=(fz!==0)?0.06:0.52;
+      B(box(bw,0.95,bd),0x3a2414,bx,FY+1.08,bz,0); B(box(bw+0.04,0.1,bd+0.04),GOLD,bx,FY+1.58,bz,0);
+    }
+    for(const cx2 of[89,91,93,95])diningChair(cx2,24.6,'S');
+    for(const cx2 of[89,91,93,95])diningChair(cx2,27.4,'N');
+    diningChair(87.6,26.0,'E'); diningChair(96.4,26.0,'W');
+    /* grand feast buffet along the south wall */
+    B(box(10,1.0,0.8),WOOD,DCX,FY+0.5,30.4,0); B(box(10.2,0.1,0.9),0x6e4a2c,DCX,FY+1.0,30.4,0);
+    for(const bx of[-3.5,-1.2,1.2,3.5])B(cyl(0.24,0.26,0.18,12),0xeee0c0,DCX+bx,FY+1.12,30.4,0);
+    B(new THREE.SphereGeometry(0.34,8,6),0x8a3a2a,DCX,FY+1.18,30.4,0);
+    for(const bx of[-2.4,2.4]){ B(cyl(0.06,0.08,0.4,8),GOLD,DCX+bx,FY+1.2,30.4,0); B(con(0.04,0.12,6),0xffcf66,DCX+bx,FY+1.44,30.4,0); }
+    /* fireplace on the north wall (y21 divider), centre */
+    { const FPX=93.0, FPZ=22.6, STONE=0x9a8f80, STONE2=0x7c7264, HEARTH=0x6e655a, MANT=0x5a3c24;
+      B(box(3.6,0.18,1.3),HEARTH,FPX,FY+0.09,FPZ+0.15,0);
+      for(const e of[-1,1])B(box(0.7,2.7,1.0),STONE,FPX+e*1.4,FY+1.35,FPZ,0);
+      B(box(3.5,0.7,1.0),STONE2,FPX,FY+3.05,FPZ,0);
+      B(box(2.1,2.0,0.12),0x1a1510,FPX,FY+1.2,FPZ-0.42,0);
+      B(box(1.9,0.4,0.42),0x3a2414,FPX,FY+0.38,FPZ+0.05,0);
+      for(const lz of[0,0.12,0.06])B(box(1.7,0.2,0.2),0x5a3c24,FPX,FY+0.44+lz,FPZ+0.15,0);
+      B(box(3.9,0.2,1.4),MANT,FPX,FY+3.5,FPZ+0.08,0); B(box(3.7,0.1,1.3),0x6e4a2c,FPX,FY+3.62,FPZ+0.08,0);
+      B(box(2.2,1.2,0.9),STONE,FPX,FY+4.0,FPZ-0.05,0);
+      for(const sx of[-1.3,-0.6,0.6,1.3]){ B(box(0.22,0.5,0.06),(sx<0?0xc0241f:0x2f6a3a),FPX+sx,FY+3.28,FPZ+0.72,0); B(box(0.24,0.12,0.07),0xffffff,FPX+sx,FY+3.05,FPZ+0.72,0); } }
+    /* snowy windows on the exterior west + south walls */
+    windowOn(86.08,24,'W',2.2,1.8); windowOn(86.08,28,'W',2.2,1.8);
+    windowOn(90,30.92,'S',2.0,1.7); windowOn(96,30.92,'S',2.0,1.7);
+    portrait(100.0,29,'W',0.9,1.2);
+  }
+
+  rectoryGroup.add(bakeMesh(out,false));
+  /* invisible floor plane for click-to-walk picking inside */
+  rectoryFloor=new THREE.Mesh(new THREE.PlaneGeometry(RECT.x1-RECT.x0+1,RECT.y1-RECT.y0+1),
+    new THREE.MeshBasicMaterial({visible:false}));
+  rectoryFloor.rotation.x=-Math.PI/2;
+  rectoryFloor.position.set((RECT.x0+RECT.x1)/2+0.5,FY+0.12,(RECT.y0+RECT.y1)/2+0.5);
+  rectoryGroup.add(rectoryFloor);
+  /* ---- interactive figures + props (separate groups carry clickable proxies) ---- */
+  const _findO=def=>objects.find(b=>b.def===def);
+  function _mkNPC(cfg,wx,wz,ry,def){
+    const hm=makeHumanoid(cfg);
+    hm.g.position.set(wx,FY,wz); hm.g.rotation.y=ry;
+    rectoryGroup.add(hm.g);
+    const o=_findO(def); if(o)addProxy(hm.g,0.85,2.3,0,{kind:'obj',o});
+  }
+  _mkNPC({skin:0xe6bb92,shirt:0x6b3a52,pants:0x5a3148,hair:0xd8d2c8,skirt:0x6b3a52,belt:0x4a2838,boots:0x3a2630},105.5,6.5,0,'rectory_martha');
+  _mkNPC({skin:0xe2b58c,shirt:0x5a1f2e,pants:0x2a2330,hair:0xeceae4,beard:0xe8e6e0,skirt:0x4a1a28,belt:0xd9b04a,boots:0x2a2118},124.5,13.5,Math.PI/2,'rectory_rector');
+  {
+    const jg=new THREE.Group(); jg.position.set(135.4,FY+0.88,25.5); rectoryGroup.add(jg);
+    const glass=new THREE.Mesh(new THREE.CylinderGeometry(0.32,0.28,0.72,12),new THREE.MeshLambertMaterial({color:0xbfe0ea,transparent:true,opacity:0.45}));
+    glass.position.y=0.36; jg.add(glass);
+    const beans=new THREE.Mesh(new THREE.CylinderGeometry(0.27,0.24,0.52,12),new THREE.MeshLambertMaterial({color:0xd86a8a}));
+    beans.position.y=0.28; jg.add(beans);
+    const lid=new THREE.Mesh(new THREE.CylinderGeometry(0.3,0.34,0.12,12),new THREE.MeshLambertMaterial({color:0xcaa23a}));
+    lid.position.y=0.74; jg.add(lid);
+    const jo=_findO('jellybean_jar'); if(jo)addProxy(jg,0.62,2.2,-0.88,{kind:'obj',o:jo});
+  }
+  {
+    const cg=new THREE.Group(); cg.position.set(117.5,FY,6.5); rectoryGroup.add(cg);
+    const cab=new THREE.Mesh(new THREE.BoxGeometry(1.0,1.8,1.3),new THREE.MeshLambertMaterial({color:0x5a3c24}));
+    cab.position.y=0.9; cg.add(cab);
+    for(const dz of[-0.3,0.3]){const dr=new THREE.Mesh(new THREE.BoxGeometry(0.08,1.5,0.55),new THREE.MeshLambertMaterial({color:0x6e4a2c}));dr.position.set(0.5,0.95,dz);cg.add(dr);}
+    const co=_findO('rectory_cabinet'); if(co)addProxy(cg,0.85,2.2,0,{kind:'obj',o:co});
+  }
+  /* clickable proxies for baked-in examinables (visuals are part of the merged mesh) */
+  function _exProxy(def,wx,wz,r,h,yoff){
+    const o=_findO(def); if(!o)return;
+    const g=new THREE.Group(); g.position.set(wx,FY,wz); rectoryGroup.add(g);
+    addProxy(g,r,h,yoff||0,{kind:'obj',o});
+  }
+  _exProxy('rectory_cake',126.5,11.5,0.6,1.3,0.55);
+  _exProxy('rectory_piano',121.2,23.4,1.4,1.9,0);
+  _exProxy('rectory_tree',135.0,5.0,1.0,3.2,0);
+  _exProxy('rectory_fireplace',126.0,4.4,1.7,2.8,0);
+  _exProxy('rectory_island',108.0,13.5,2.4,1.4,0);
+  _exProxy('rectory_range',107.0,4.6,1.0,2.2,0);
+  _exProxy('rectory_pantry',114.3,9.0,0.85,2.6,0);
+  _exProxy('rectory_eggbasket',112.5,6.5,0.5,0.6,0);
+  _exProxy('rectory_book_hymns',126.5,14.5,0.55,1.1,0.45);
+  _exProxy('rectory_book_horae',121.5,11.5,0.55,1.1,0.45);
+  _exProxy('rectory_bozek',133.0,6.4,0.6,2.3,0);
+  /* fireplace flames: separate meshes so they can flicker each frame */
+  rectoryFire.length=0;
+  (function(){
+    const fyB=rectFY+0.45, fcols=[0xff5a1e,0xff8a26,0xffb733,0xffd84a,0xff6a1e,0xffa030];
+    function mkFire(fpx,fpz){
+      for(let i=0;i<6;i++){
+        const fx=fpx-0.85+i*0.34;
+        const fl=new THREE.Mesh(new THREE.ConeGeometry(0.17,0.55,6),new THREE.MeshBasicMaterial({color:fcols[i%fcols.length]}));
+        fl.position.set(fx,fyB+0.28,fpz); rectoryGroup.add(fl);
+        rectoryFire.push({m:fl,ph:Math.random()*6.28});
+      }
+      const gl=new THREE.Mesh(new THREE.PlaneGeometry(2.2,1.4),new THREE.MeshBasicMaterial({color:0xff7a2a,transparent:true,opacity:0.2,side:THREE.DoubleSide}));
+      gl.position.set(fpx,fyB+0.45,fpz+0.12); rectoryGroup.add(gl);
+      rectoryFire.push({m:gl,glow:true});
+    }
+    mkFire(126.0,3.85);   /* living room */
+    mkFire(93.0,22.85);   /* dining room */
+  })();
+  /* kitchen staff: black-and-white maid outfits (rendered into the body) */
+  (function(){
+    const mkMaid=(skin,hair,wx,wz,ry)=>{
+      const f=makeHumanoid({skin:skin,shirt:0x18181c,pants:0x18181c,hair:hair,skirt:0x18181c,belt:0x18181c,boots:0x141418});
+      f.g.position.set(wx,rectFY,wz); f.g.rotation.y=ry; rectoryGroup.add(f.g);
+      const W=0xf4f1ea;
+      const col=mesh(new THREE.CylinderGeometry(0.165,0.15,0.06,8),W); col.position.y=1.36; col.scale.z=0.64; f.g.add(col);  /* collar */
+      const bib=mesh(new THREE.BoxGeometry(0.2,0.28,0.02),W); bib.position.set(0,1.12,0.15); f.g.add(bib);                   /* apron bib */
+      const ap=mesh(new THREE.BoxGeometry(0.34,0.46,0.02),W); ap.position.set(0,0.58,0.2); f.g.add(ap);                     /* apron skirt */
+      const tie=mesh(new THREE.BoxGeometry(0.36,0.05,0.02),W); tie.position.set(0,0.86,0.19); f.g.add(tie);                 /* waist tie */
+      const cap=mesh(new THREE.CylinderGeometry(0.1,0.16,0.09,8),W); cap.position.set(0,1.64,-0.02); f.g.add(cap);          /* maid cap */
+      return f;
+    };
+    mkMaid(0xe2b58c,0x4a3320,104.0,5.2,0.45);     /* by the north counter */
+    mkMaid(0xd9a878,0x2a1c12,102.9,15.5,-0.4);    /* by the west counter */
+    mkMaid(0xc98e63,0x6a4a2a,108.0,12.0,0.1);     /* by the island */
+  })();
+  /* Mr. Bozek, the chemistry master, dressed as Father Christmas by the tree */
+  (function(){
+    const b=makeHumanoid({skin:0xe8b488,shirt:0xc0241f,pants:0xc0241f,hair:0xf0f0f0,beard:0xf4f4f4,belt:0x1a1a1e,boots:0x1a1a1e});
+    b.g.position.set(133.0,rectFY,6.4); b.g.rotation.y=-0.9; rectoryGroup.add(b.g);
+    const R=0xc0241f, WH=0xf4f4f4, BK=0x1a1a1e, GD=0xd8b24a;
+    const add=(geo,hex,x,y,z,sx,sy,sz)=>{const m=mesh(geo,hex);m.position.set(x,y,z);if(sx!==undefined)m.scale.set(sx,sy,sz);b.g.add(m);return m;};
+    add(new THREE.SphereGeometry(0.36,10,8),R,0,1.02,0.17,1.18,1.02,0.98);        /* big round belly */
+    add(new THREE.BoxGeometry(0.12,0.66,0.06),WH,0,1.05,0.3);                     /* white coat trim */
+    add(new THREE.BoxGeometry(0.58,0.13,0.52),WH,0,0.77,0.02);                    /* coat hem fur */
+    add(new THREE.CylinderGeometry(0.39,0.39,0.13,12),BK,0,0.86,0.0,1.05,1,0.97); /* black belt */
+    add(new THREE.BoxGeometry(0.18,0.18,0.05),GD,0,0.86,0.4);                     /* gold buckle */
+    for(const sx of[-0.31,0.31])add(new THREE.CylinderGeometry(0.072,0.072,0.1,8),WH,sx,0.73,0.0); /* white cuffs */
+    add(new THREE.ConeGeometry(0.2,0.54,12),R,0,2.0,0.0);                         /* hat cone */
+    add(new THREE.CylinderGeometry(0.215,0.24,0.11,14),WH,0,1.75,0.0);            /* hat brim */
+    add(new THREE.SphereGeometry(0.08,8,6),WH,0,2.28,0.0);                        /* pompom */
+  })();
+})();
+const miniBaseRectory=document.createElement('canvas');
+miniBaseRectory.width=W*4;miniBaseRectory.height=H*4;
+(function(){
+  const g=miniBaseRectory.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,W*4,H*4);
+  for(let y=RECT.y0;y<=RECT.y1;y++)for(let x=RECT.x0;x<=RECT.x1;x++){
+    const t=rectoryTiles[y][x];
+    let c=null;
+    if(t===T_FLOOR)c='#6e4a30';
+    else if(t===T_WALL)c='#b8a98c';
+    if(c){g.fillStyle=c;g.fillRect(x*4,y*4,4,4);}
+  }
+})();
+function enterRectory(){
+  inRectory=true;tiles=rectoryTiles;worldGroup.visible=false;rectoryGroup.visible=true;
+  _rectFlatten();
+  player.x=109;player.y=29;player.px=109;player.py=29;
+  player.path.length=0;cancelAction();
+  scene.fog.near=44;scene.fog.far=120;
+  msg('You step inside the Rectory \u2014 warm light, polished wood, the hush of a fine home.','#103a8c');
+  stopMusic();updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
+}
+function exitRectory(){
+  inRectory=false;tiles=TILES_MAIN;worldGroup.visible=true;rectoryGroup.visible=false;
+  _rectRestore();
+  player.x=RECT_RETURN.x;player.y=RECT_RETURN.y;player.px=RECT_RETURN.x;player.py=RECT_RETURN.y;
+  player.path.length=0;cancelAction();
+  scene.fog.near=30;scene.fog.far=52;
+  updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
+  syncQuestWorld();
+  msg('You step back out onto the Rectory lawn.');
+}
+function _jarCount(){
+  const u=(typeof player!=='undefined'&&player&&player.uid)?String(player.uid):'milville';
+  let h=2166136261>>>0;
+  for(let i=0;i<u.length;i++){h^=u.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}
+  return 1+(h%200);
+}
+function openPiano(){
+  if(document.getElementById('pnModal'))return;
+  audio();
+  const NOTES=[{n:'C',f:261.63},{n:'C#',f:277.18,b:1},{n:'D',f:293.66},{n:'D#',f:311.13,b:1},{n:'E',f:329.63},{n:'F',f:349.23},{n:'F#',f:369.99,b:1},{n:'G',f:392.00},{n:'G#',f:415.30,b:1},{n:'A',f:440.00},{n:'A#',f:466.16,b:1},{n:'B',f:493.88},{n:'C2',f:523.25,disp:'C'}];
+  const TARGET=['G','C']; let seq=[], won=false;
+  const ov=document.createElement('div'); ov.id='pnModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
+  const box=document.createElement('div');
+  box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:16px 18px;max-width:520px;width:96%;font-family:Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);';
+  box.innerHTML='<div style="font-size:18px;font-weight:bold;color:#ffe08a;margin-bottom:4px;">The Parlour Piano</div>'+
+    '<div id="pnHint" style="font-size:12.5px;margin-bottom:12px;color:#e8dcc0;min-height:16px;">Tap the keys to play. (The Rectory carol opens with two notes\u2026)</div>'+
+    '<div id="pnKeys" style="position:relative;height:132px;margin:0 auto 12px;width:100%;max-width:450px;"></div>'+
+    '<button id="pnClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 18px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;">Close</button>';
+  ov.appendChild(box); document.body.appendChild(ov);
+  const keys=box.querySelector('#pnKeys'), hint=box.querySelector('#pnHint');
+  const ww=100/NOTES.filter(x=>!x.b).length; let widx=0;
+  NOTES.forEach(nt=>{
+    const k=document.createElement('button');
+    if(nt.b){
+      k.style.cssText='position:absolute;top:0;height:82px;width:'+(ww*0.62)+'%;left:'+(widx*ww-ww*0.31)+'%;background:linear-gradient(#3a3a42,#141418);border:1px solid #000;border-radius:0 0 4px 4px;cursor:pointer;z-index:2;';
+    } else {
+      k.style.cssText='position:absolute;top:0;height:132px;width:'+(ww-0.5)+'%;left:'+(widx*ww)+'%;background:linear-gradient(#fff,#ece8de);border:1px solid #b6b0a2;border-radius:0 0 5px 5px;cursor:pointer;color:#a89878;font-family:Georgia,serif;font-size:11px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;';
+      k.textContent=nt.disp||nt.n; widx++;
+    }
+    k.onclick=()=>play(nt);
+    keys.appendChild(k);
+  });
+  function play(nt){
+    if(won)return; audio(); tone(nt.f,nt.f,0.6,'triangle',0.17);
+    const name=nt.disp||nt.n; seq.push(name); if(seq.length>2)seq.shift();
+    hint.textContent='\u266a  '+seq.join('  \u2014  ');
+    const q=player.quests.rxmas;
+    if(q.s===2&&countItem('xmas_cabinet_key')===0&&seq.length===2&&seq[0]===TARGET[0]&&seq[1]===TARGET[1]){
+      won=true; hint.textContent='Somewhere a small lock clicks \u2014 and a brass key drops into your hand!';
+      qGrant('xmas_cabinet_key'); q.s=3; renderQuests(); dirty=true;
+      setTimeout(()=>tone(523.25,523.25,0.6,'triangle',0.19),200);
+      msg('You played the Rectory carol \u2014 the spice cabinet key is yours.','#103a8c');
+      setTimeout(close,1500);
+    }
+  }
+  function close(){const m=document.getElementById('pnModal');if(m&&m.parentNode)m.parentNode.removeChild(m);}
+  box.querySelector('#pnClose').onclick=close;
+  ov.onclick=e=>{if(e.target===ov)close();};
+}
+function revealNativity(){
+  if(typeof stPaulGroup==='undefined'||!stPaulGroup||stPaulGroup._nat)return; stPaulGroup._nat=true;
+  const g=new THREE.Group(), fy=spFY;
+  function fig(x,z,robe,h){
+    const b=new THREE.Mesh(new THREE.CylinderGeometry(0.06,0.13,h,7),new THREE.MeshLambertMaterial({color:robe}));
+    b.position.set(x,fy+h/2,z); g.add(b);
+    const hd=new THREE.Mesh(new THREE.SphereGeometry(0.07,7,6),new THREE.MeshLambertMaterial({color:0xe7c39c}));
+    hd.position.set(x,fy+h+0.06,z); g.add(hd);
+  }
+  fig(60.35,120.4,0x3a6ea0,0.6); fig(61.65,120.4,0x7a4a2a,0.62);
+  fig(60.0,119.6,0x8a8a8a,0.52);  fig(62.0,119.6,0xe6dcc0,0.56);
+  fig(60.7,119.2,0x5a4632,0.34);
+  const baby=new THREE.Mesh(new THREE.SphereGeometry(0.085,8,6),new THREE.MeshLambertMaterial({color:0xf2e6c8}));
+  baby.position.set(61.0,fy+0.62,119.88); g.add(baby);
+  stPaulGroup.add(g);
+}
+function lightWreathCandle(i){
+  if(typeof stPaulGroup==='undefined'||!stPaulGroup||(stPaulGroup._wreathN||0)>i)return;
+  const a=i*Math.PI/2, cx=64+Math.cos(a)*0.34, cz=121+Math.sin(a)*0.34;
+  const fl=new THREE.Mesh(new THREE.SphereGeometry(0.06,7,6),new THREE.MeshBasicMaterial({color:0xffd24a}));
+  fl.position.set(cx,spFY+1.46,cz); stPaulGroup.add(fl);
+  stPaulGroup._wreathN=(stPaulGroup._wreathN||0)+1;
+}
+function despawnFigureSpots(){
+  ['sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step'].forEach(function(d){ if(typeof removeWorldObj==='function')removeWorldObj(d); });
+  if(typeof stPaulGroup!=='undefined'&&stPaulGroup){
+    if(stPaulGroup._figMesh){ stPaulGroup.remove(stPaulGroup._figMesh); stPaulGroup._figMesh=null; }
+    if(stPaulGroup._figProxies){ for(const g of stPaulGroup._figProxies)stPaulGroup.remove(g); stPaulGroup._figProxies=null; }
+  }
+}
+function syncStPaulQuestVisuals(){
+  const q=player.quests&&player.quests.rxmas2; if(!q||typeof stPaulGroup==='undefined'||!stPaulGroup)return;
+  if(q.s>=2)revealNativity();
+  if(q.s>=2&&typeof despawnFigureSpots==='function')despawnFigureSpots();
+  if(q.s>=4&&typeof decorateChapelForService==='function')decorateChapelForService();
+  const w=q.s>=3?4:(q.wreath||0);
+  while((stPaulGroup._wreathN||0)<w)lightWreathCandle(stPaulGroup._wreathN||0);
+}
+function decorateChapelForService(){
+  if(typeof stPaulGroup==='undefined'||!stPaulGroup||stPaulGroup._decorated)return; stPaulGroup._decorated=true;
+  const fy=spFY, G=new THREE.Group();
+  function add(geo,col,x,y,z,basic){ const m=new THREE.Mesh(geo, basic?new THREE.MeshBasicMaterial({color:col}):new THREE.MeshLambertMaterial({color:col})); m.position.set(x,y,z); G.add(m); return m; }
+  /* wreath flush on the wall to the (dir) side of floor tile (cx,cy); walls: nave x57/x65, transept y109/y117 */
+  function wreath(cx,cy,dir){
+    const yy=fy+2.4; let x=cx+0.5, z=cy+0.5;
+    if(dir==='W')x=cx+0.15; else if(dir==='E')x=cx+0.85; else if(dir==='N')z=cy+0.15; else z=cy+0.85;
+    const faceX=(dir==='W'||dir==='E');
+    const w=add(new THREE.TorusGeometry(0.26,0.075,6,12),0x1f5a2a,x,yy,z); if(faceX)w.rotation.y=Math.PI/2;
+    for(let k=0;k<5;k++){ const a=k*1.256;
+      const bx=faceX?x:x+Math.cos(a)*0.26, by=yy+Math.sin(a)*0.26, bz=faceX?z+Math.cos(a)*0.26:z;
+      add(new THREE.SphereGeometry(0.04,5,4),0xc0241f,bx,by,bz,true); }
+  }
+  /* wreaths flush on the nave side walls (north + south arms) and the transept long walls */
+  for(const cy of [103,107,121,124]){ wreath(58,cy,'W'); wreath(64,cy,'E'); }
+  for(const cx of [51,54,68,71]){ wreath(cx,110,'N'); wreath(cx,116,'S'); }
+  /* holly garland flush along the nave walls, skipping the open crossing */
+  for(const cy of [101,104,107,119,122,125]){ add(new THREE.BoxGeometry(0.1,0.16,0.72),0x265e2c,58.15,fy+2.05,cy+0.5); add(new THREE.BoxGeometry(0.1,0.16,0.72),0x265e2c,64.85,fy+2.05,cy+0.5); }
+  /* the congregation: a seated figure on every pew, facing the chancel */
+  const pews=[];
+  for(let y=101;y<=107;y++){pews.push([58,y]);pews.push([59,y]);pews.push([63,y]);pews.push([64,y]);}
+  for(const y of [118,119,122,123,124]){pews.push([58,y]);pews.push([64,y]);}
+  for(let x=50;x<=55;x++)for(const y of [110,111,115,116])pews.push([x,y]);
+  for(let x=67;x<=72;x++)for(const y of [110,111,115,116])pews.push([x,y]);
+  const cols=[0x3a4a6a,0x6a2a2a,0x2a5a3a,0x5a3a6a,0x6a5a2a,0x2a4a6a,0x4a3a2a,0x6a6a6a,0x70502a,0x2f5a5a];
+  const skins=[0xe7c39c,0xd9a878,0xc98e63,0xf0c79a,0xb88254];
+  for(let i=0;i<pews.length;i++){ const px=pews[i][0], py=pews[i][1];
+    add(new THREE.CylinderGeometry(0.13,0.16,0.42,6),cols[i%cols.length],px+0.5,fy+0.55,py+0.5);
+    add(new THREE.SphereGeometry(0.11,6,5),skins[i%skins.length],px+0.5,fy+0.86,py+0.5);
+  }
+  stPaulGroup.add(G);
+}
+function _rxmas2RewardTree(){ return {
+  start:{who:'npc',text:'Oh my dear, you wonderful thing -- word came up from the chapel! You found the whole nativity and set the Old Chapel singing on Christmas Eve. You have saved Millville Christmas!',next:'xm2'},
+  xm2:{who:'npc',text:'We must give you a proper thank-you. A little Christmas in your pocket, and a gift to make you merry whenever the mood takes you.',next:function(){ finishRxmas2(); return 'xm3'; }},
+  xm3:{who:'npc',text:'And look -- the snow has come down over all of Millville, just as it should on Christmas Eve. If ever you tire of it, you can turn the winter scenery on or off in the Settings (the little wrench). A very happy Christmas, dear!',next:null} }; }
+function finishRxmas2(){
+  const q=player.quests&&player.quests.rxmas2; if(!q||q.s>=5)return;
+  q.s=5; if(typeof unlockEmote==='function')unlockEmote('xmas',true);
+  player.winter=true; if(typeof applyWinter==='function')applyWinter();
+  giveCoins(5000); addXp('prayer',800); addXp('woodcutting',300); dirty=true;
+  if(typeof renderQuests==='function')renderQuests();
+  questDone('Away in a Manger');
+}
+function winterActive(){ return !!(player&&player.winter)&&!inStPaul&&!inRectory&&!inMathes&&!inChapel&&!inParty; }
+let _snowflakes=null;
+function drawWinter(){
+  if(!winterActive())return;
+  if(!_snowflakes){ _snowflakes=[]; for(let i=0;i<110;i++)_snowflakes.push({x:Math.random()*ow,y:Math.random()*oh,r:0.7+Math.random()*2.3,vy:22+Math.random()*46,sw:Math.random()*6.28,amp:0.2+Math.random()*0.7,a:0.3+Math.random()*0.65}); }
+  octx.save();
+  for(const f of _snowflakes){ f.y+=f.vy*0.016; f.sw+=0.03; f.x+=Math.sin(f.sw)*f.amp;
+    if(f.y>oh+4){ f.y=-4; f.x=Math.random()*ow; }
+    if(f.x<-6)f.x=ow+6; else if(f.x>ow+6)f.x=-6;
+    octx.globalAlpha=f.a; octx.fillStyle='#ffffff'; octx.beginPath(); octx.arc(f.x,f.y,f.r,0,7); octx.fill();
+  }
+  octx.restore();
+}
+function _isFishHole(x,y){ const o=(typeof objAt==='function')?objAt(x,y):null; return !!(o&&o.def==='spot'); }
+function buildWinterIce(on){
+  if(_iceMesh){ if(_iceMesh.parent)_iceMesh.parent.remove(_iceMesh); _iceMesh=null; }
+  _iceTiles=null;
+  if(!on)return;
+  _iceTiles=new Set();
+  const pos=[],col=[], ICY=new THREE.Color(0xcfe6ee), ICY2=new THREE.Color(0xe7f3f8);
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(tiles[y][x]!==T_WATER)continue;
+    if(_isFishHole(x,y))continue;                 /* fishing spots stay open holes */
+    _iceTiles.add(x+','+y);
+    const wy=waterYAt(x,y)+0.035, c=(tileHash(x,y)<0.5)?ICY:ICY2;
+    pos.push(x,wy,y, x,wy,y+1, x+1,wy,y,  x+1,wy,y, x,wy,y+1, x+1,wy,y+1);
+    for(let k=0;k<6;k++)col.push(c.r,c.g,c.b);
+  }
+  if(!_iceTiles.size){_iceTiles=null;return;}
+  const g=new THREE.BufferGeometry();
+  g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
+  g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
+  g.computeVertexNormals();
+  _iceMesh=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));
+  _iceMesh.receiveShadow=true;
+  (typeof worldGroup!=='undefined'&&worldGroup?worldGroup:scene).add(_iceMesh);
+}
+function _winterIceSlip(pX,pY){
+  if(!_iceTiles)return;
+  let dx=Math.sign(player.x-pX),dy=Math.sign(player.y-pY);
+  if(dx===0&&dy===0)return;
+  let nx=player.x,ny=player.y,guard=0;
+  while(guard++<40){
+    const tx=nx+dx,ty=ny+dy;
+    if(!inb(tx,ty)||blocked(tx,ty))break;          /* shore / wall / open hole stops the slide */
+    nx=tx;ny=ty;
+    if(!_iceTiles.has(nx+','+ny))break;            /* first solid tile past the ice = landing */
+  }
+  if(nx!==player.x||ny!==player.y){
+    player.x=nx;player.y=ny;player.path.length=0;player.face=dx||player.face;
+    player._slideT=performance.now()+700;
+    if(!player._slideMsgT||performance.now()>player._slideMsgT){ if(typeof msg==='function')msg('You skid across the ice!','#bcd6ec'); player._slideMsgT=performance.now()+1400; }
+  }
+}
+let _roofSnow=null;
+function buildRoofSnow(on){
+  if(_roofSnow){ if(_roofSnow.parent)_roofSnow.parent.remove(_roofSnow); _roofSnow=null; }
+  if(!on||typeof BUILDINGS==='undefined')return;
+  _roofSnow=new THREE.Group();
+  const mat=new THREE.MeshLambertMaterial({color:0xeef4f8});
+  for(const b of BUILDINGS){
+    const cx=b.x+b.w/2, cz=b.y+b.h/2;
+    const gy=(typeof groundH==='function')?groundH(cx,cz):0;
+    const rise=Math.min(b.w,b.h)*0.35;
+    const m=new THREE.Mesh(new THREE.BoxGeometry(Math.max(0.6,b.w*0.82),0.16,Math.max(0.6,b.h*0.82)),mat);
+    m.position.set(cx,gy+(b.hgt||3)+rise*0.42,cz);
+    _roofSnow.add(m);
+  }
+  (typeof worldGroup!=='undefined'&&worldGroup?worldGroup:scene).add(_roofSnow);
+}
+function applyWinter(){
+  const on=!!(player&&player.winter);
+  const wc=document.getElementById('winterchk'); if(wc)wc.checked=on;
+  if(typeof buildWinterIce==='function')buildWinterIce(on);
+  if(typeof recolorTerrain==='function')recolorTerrain();
+  if(typeof buildRoofSnow==='function')buildRoofSnow(on);
+}
+function completeRxmas2(){
+  const q=player.quests&&player.quests.rxmas2; if(!q||q.s>=4)return;
+  q.s=4; if(typeof decorateChapelForService==='function')decorateChapelForService();
+  if(typeof despawnChapelChildren==='function')despawnChapelChildren();
+  if(typeof renderQuests==='function')renderQuests();
+  msg('The carol rings out true, and the Old Chapel blazes with candlelight and song!','#103a8c');
+  setTimeout(function(){ msg('Reverend Spencer: the service is saved. Now hurry to Martha Matthews at the Rectory before the snow sets in -- she will want to thank you herself.','#103a8c'); },1400);
+}
+function openOrgan(){
+  if(document.getElementById('orModal'))return; audio();
+  const KEYS=[{c:'#b53636',f:261.63},{c:'#caa23a',f:329.63},{c:'#2f8a46',f:392.00},{c:'#2f5fb0',f:523.25}];
+  const WIN=5; let seq=[], input=[], playing=false, won=false;
+  const ov=document.createElement('div'); ov.id='orModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
+  const box=document.createElement('div');
+  box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:16px 18px;max-width:460px;width:96%;font-family:Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);';
+  box.innerHTML='<div style=\"font-size:18px;font-weight:bold;color:#ffe08a;margin-bottom:4px;\">The Chapel Organ</div>'+
+    '<div id=\"orHint\" style=\"font-size:12.5px;margin-bottom:12px;color:#e8dcc0;min-height:18px;\">Press Begin, watch the carol the organ plays, then echo it back. It grows each round.</div>'+
+    '<div id=\"orKeys\" style=\"display:flex;gap:10px;justify-content:center;margin-bottom:12px;\"></div>'+
+    '<div style=\"display:flex;gap:8px;justify-content:center;\">'+
+      '<button id=\"orStart\" style=\"font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 16px;border-radius:7px;border:1px solid #caa23a;background:#3a5a30;color:#fff;cursor:pointer;\">Begin the carol</button>'+
+      '<button id=\"orClose\" style=\"font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 16px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;\">Close</button>'+
+    '</div>';
+  ov.appendChild(box); document.body.appendChild(ov);
+  const keysEl=box.querySelector('#orKeys'), hint=box.querySelector('#orHint');
+  const btns=KEYS.map(function(k,i){ const b=document.createElement('button');
+    b.style.cssText='width:62px;height:84px;border-radius:8px;border:2px solid rgba(0,0,0,0.4);background:'+k.c+';filter:brightness(0.5);cursor:pointer;transition:filter 0.1s;';
+    b.onclick=function(){press(i);}; keysEl.appendChild(b); return b; });
+  function flash(i){ btns[i].style.filter='brightness(1.5)'; tone(KEYS[i].f,KEYS[i].f,0.42,'triangle',0.16); setTimeout(function(){btns[i].style.filter='brightness(0.5)';},320); }
+  function playSeq(){ playing=true; input=[]; hint.textContent='Listen...'; let t=420; seq.forEach(function(i){ setTimeout(function(){flash(i);},t); t+=640; }); setTimeout(function(){ playing=false; hint.textContent='Your turn: echo the carol ('+seq.length+' notes).'; },t+120); }
+  function nextRound(){ if(won)return; seq.push(Math.floor(Math.random()*4)); setTimeout(playSeq,450); }
+  function press(i){ if(playing||won)return; audio(); flash(i); input.push(i); const k=input.length-1;
+    if(input[k]!==seq[k]){ hint.textContent='A sour note! The carol slips away. Listen once more...'; seq=[]; setTimeout(nextRound,950); return; }
+    if(input.length===seq.length){
+      if(seq.length>=WIN){ won=true; hint.textContent='The carol rings out true, and the Old Chapel fills with music!';
+        const q=player.quests&&player.quests.rxmas2; if(q&&q.s===3){ setTimeout(completeRxmas2,300); }
+        setTimeout(close,1700);
+      } else { hint.textContent='Well played! The carol grows...'; setTimeout(nextRound,800); }
+    }
+  }
+  function close(){ const m=document.getElementById('orModal'); if(m&&m.parentNode)m.parentNode.removeChild(m); }
+  box.querySelector('#orStart').onclick=function(){ if(playing||won)return; seq=[]; nextRound(); };
+  box.querySelector('#orClose').onclick=close;
+  ov.onclick=function(e){ if(e.target===ov)close(); };
+}
+const RECTORY_BOOKS={
+  rectory_book_hymns:{title:'Chapel Services \u0026 Hymns',pages:[
+    {h:'The School Prayer',t:'Grant, O Lord, that we may never forget to be kind. Help us to be unselfish in friendship, thoughtful of those less happy than ourselves, and eager to bear the burdens of others, through Jesus Christ our Saviour. Amen.'},
+    {h:'Carol of the Winter Star',t:'O star that crowns the longest night\nand spills its silver on the snow,\nlead every weary heart to light\nand warm the world that lies below.\n\nThen sing, ye halls of Millville, sing,\nand let the frosted rafters ring.'},
+    {h:'The Chapel Bells',t:'Ring out, ye bells, o\u2019er field and fen,\no\u2019er chapel roof and frozen pond;\ncall home the sons of Millville, then,\nand all the friends of years beyond.\n\nFor peace is born this holy morn,\nand hope is to the cold world sworn.'},
+    {h:'A Hymn for the Nativity',t:'A child is laid where oxen feed,\nno crown but straw, no throne but stall;\nyet kings shall kneel and shepherds heed \u2014\nthe lowest cradle holds them all.\n\nGive thanks, give thanks, this Christmas Day,\nfor love that came the humble way.'},
+    {h:'The Rectory Carol',t:'An old custom of the house: the spice cabinet answers only to the opening of the Rectory carol, played on the parlour piano \u2014 two notes, in order.\n\nThe notes are:\n\n     G ,  then  C .'}
+  ]},
+  rectory_book_horae:{title:'Alumni Horae',pages:[
+    {h:'From the Rector',t:'A blessed Christmas to every old boy of Millville, near and far. The chapel stands candlelit, snow lies deep upon the Lower Grounds, and the Rectory kitchen is loud with Martha\u2019s baking. May the term\u2019s labours give way to a season of rest and kindness.'},
+    {h:'Form Notes',t:'The Sixth Form reports a hard-fought victory at hockey. The choir prepares the Festival of Lessons and Carols. Mr. Pratt\u2019s natural-philosophy boys have flooded the rink for skating \u2014 with mixed success and several wet coats.'},
+    {h:'Old Boys',t:'Word reaches us of Pelicans scattered across the wide world, from the counting-houses of Boston to expeditions further afield. Write to the Rectory at Christmas; you are remembered, and never forgotten.'}
+  ]}
+};
+function openBook(id){
+  if(document.getElementById('bkModal'))return;
+  const bk=RECTORY_BOOKS[id]; if(!bk)return; let spread=0;
+  const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  const BS='font-family:Georgia,serif;font-size:13px;font-weight:bold;padding:7px 16px;border-radius:6px;border:1px solid #8a6a30;cursor:pointer;background:#caa23a;color:#2a2018;';
+  const ov=document.createElement('div'); ov.id='bkModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.66);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
+  const book=document.createElement('div');
+  book.style.cssText='display:flex;max-width:660px;width:96%;background:linear-gradient(#6e4a2c,#42301c);padding:14px;border-radius:10px 14px 14px 10px;box-shadow:0 16px 46px rgba(0,0,0,0.72),inset 0 0 0 2px #36240f;';
+  const pageCss='flex:1;background:#f3ead2;color:#2a2018;font-family:Georgia,serif;padding:20px 22px;min-height:300px;max-height:70vh;overflow:auto;box-sizing:border-box;line-height:1.55;';
+  book.innerHTML=
+    '<div id="bkL" style="'+pageCss+'border-radius:5px 0 0 5px;box-shadow:inset -18px 0 24px -16px rgba(70,46,22,0.55);"></div>'+
+    '<div style="width:13px;background:linear-gradient(90deg,#2a1c10,#5a3c24 50%,#2a1c10);"></div>'+
+    '<div id="bkR" style="'+pageCss+'border-radius:0 5px 5px 0;box-shadow:inset 18px 0 24px -16px rgba(70,46,22,0.55);"></div>';
+  const bar=document.createElement('div');
+  bar.style.cssText='display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap;justify-content:center;';
+  bar.innerHTML='<button id="bkPrev" style="'+BS+'">\u2190 Prev</button>'+
+    '<span id="bkPage" style="font-family:Georgia,serif;color:#f0e6d2;font-size:13px;"></span>'+
+    '<button id="bkNext" style="'+BS+'">Next \u2192</button>'+
+    '<button id="bkClose" style="'+BS+'background:#5a3030;color:#fff;">Close</button>';
+  ov.appendChild(book); ov.appendChild(bar); document.body.appendChild(ov);
+  function pageHTML(i){
+    if(i>=bk.pages.length) return '';
+    const pg=bk.pages[i];
+    const head=(i===0)?('<div style="text-align:center;font-size:17px;font-weight:bold;color:#6e201c;border-bottom:1px solid #c9b893;padding-bottom:6px;margin-bottom:10px;">'+esc(bk.title)+'</div>'):'';
+    return head+'<div style="text-align:center;font-size:15px;font-weight:bold;margin-bottom:10px;">'+esc(pg.h)+'</div>'+
+      '<div style="white-space:pre-wrap;font-size:13.5px;">'+esc(pg.t)+'</div>'+
+      '<div style="text-align:center;color:#9a865a;font-size:11px;margin-top:16px;">\u2014 '+(i+1)+' \u2014</div>';
+  }
+  function render(){
+    const L=spread*2, R=L+1;
+    book.querySelector('#bkL').innerHTML=pageHTML(L);
+    book.querySelector('#bkR').innerHTML=pageHTML(R);
+    bar.querySelector('#bkPage').textContent='Pages '+(L+1)+(R<bk.pages.length?('\u2013'+(R+1)):'')+' of '+bk.pages.length;
+    bar.querySelector('#bkPrev').style.visibility=spread>0?'visible':'hidden';
+    bar.querySelector('#bkNext').style.visibility=((spread+1)*2<bk.pages.length)?'visible':'hidden';
+  }
+  bar.querySelector('#bkPrev').onclick=function(){if(spread>0){spread--;render();}};
+  bar.querySelector('#bkNext').onclick=function(){if((spread+1)*2<bk.pages.length){spread++;render();}};
+  function close(){const m=document.getElementById('bkModal');if(m&&m.parentNode)m.parentNode.removeChild(m);}
+  bar.querySelector('#bkClose').onclick=close;
+  ov.onclick=function(e){if(e.target===ov)close();};
+  render();
+}
+function jellybeanGuess(){
+  if(player.collected&&player.collected.jellybean){
+    msg('You have already guessed the jar exactly \u2014 the impossibly rare jellybean is yours for good.','#103a8c');return;
+  }
+  if(document.getElementById('jbModal'))return;
+  const target=_jarCount();
+  const BS='font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 14px;border-radius:7px;border:1px solid #caa23a;cursor:pointer;';
+  const ov=document.createElement('div'); ov.id='jbModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:99999;';
+  const bx=document.createElement('div');
+  bx.style.cssText='background:#2a2018;border:3px solid #caa23a;border-radius:12px;padding:18px 20px;max-width:320px;width:84%;font-family:Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.6);';
+  bx.innerHTML='<div style="font-size:18px;font-weight:bold;margin-bottom:6px;color:#ffe08a;">The Jellybean Jar</div>'+
+    '<div style="font-size:13px;margin-bottom:12px;line-height:1.4;">Guess exactly how many jellybeans are in the jar (1\u2013200) to win the prize:</div>'+
+    '<input id="jbInput" type="number" inputmode="numeric" min="1" max="200" placeholder="?" style="width:96px;font-size:20px;text-align:center;padding:7px;border-radius:7px;border:1px solid #caa23a;background:#1a1410;color:#fff;font-family:Georgia,serif;" />'+
+    '<div id="jbFeed" style="min-height:22px;font-size:13px;margin:12px 0 4px;color:#ffd23a;line-height:1.4;"></div>'+
+    '<div style="display:flex;gap:10px;justify-content:center;margin-top:6px;">'+
+    '<button id="jbGuess" style="'+BS+'background:#3a6a3a;color:#fff;">Guess</button>'+
+    '<button id="jbCancel" style="'+BS+'background:#5a3030;color:#fff;">Leave</button></div>';
+  ov.appendChild(bx); document.body.appendChild(ov);
+  const inp=bx.querySelector('#jbInput'), feed=bx.querySelector('#jbFeed');
+  setTimeout(function(){try{inp.focus();}catch(e){}},60);
+  function close(){ if(ov.parentNode)ov.parentNode.removeChild(ov); }
+  function doGuess(){
+    const g=parseInt(inp.value,10);
+    if(!(g>=1&&g<=200)){ feed.textContent='Enter a whole number from 1 to 200.'; feed.style.color='#ff9a9a'; return; }
+    if(g<target){ feed.textContent='Too low \u2014 there are more jellybeans than that.'; feed.style.color='#ffd23a'; inp.select(); return; }
+    if(g>target){ feed.textContent='Too high \u2014 there are fewer jellybeans than that.'; feed.style.color='#ffd23a'; inp.select(); return; }
+    if(player.inv.findIndex(function(sl){return !sl;})<0){ feed.textContent='Exactly right! But your pack is full \u2014 make room and guess again.'; feed.style.color='#ff9a9a'; return; }
+    addItem('jellybean');
+    if(typeof sfx!=='undefined'&&sfx.pickup)sfx.pickup();
+    msg('Exactly '+target+'! The jar clicks open and a single, perfect, impossibly rare jellybean rolls into your palm.','#1f7a33');
+    close();
+  }
+  bx.querySelector('#jbGuess').onclick=doGuess;
+  bx.querySelector('#jbCancel').onclick=close;
+  ov.addEventListener('click',function(e){ if(e.target===ov)close(); });
+  inp.addEventListener('keydown',function(e){ if(e.key==='Enter')doGuess(); });
+}
+function stPaulOptionsAt(tx,ty){
+  const opts=[];
+  const SD={stpaulexit:1,sp_spencer:1,sp_organ:1,sp_manger:1,sp_wreath:1,sp_fig_pew:1,sp_fig_choir:1,sp_fig_alms:1,sp_fig_curtain:1,sp_fig_pipes:1,sp_fig_step:1};
+  const io=objects.find(b=>b.x===tx&&b.y===ty&&SD[b.def]);
+  if(!io)return opts;
+  if(io.def==='stpaulexit')opts.push(
+    {html:'Leave <span class="t">Old Chapel</span>',label:'Leave Old Chapel',fn:()=>setAction({type:'leavestpaul',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">Old Chapel door</span>',fn:()=>msg(OBJ_DEFS['stpaulexit'].ex)});
+  else if(io.def==='sp_spencer')opts.push(
+    {html:'Talk-to <span class="t">Reverend Spencer</span>',label:'Talk-to Reverend Spencer',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y,id:'spaulrev',name:'Reverend Spencer'}},io.x,io.y)},
+    {html:'Examine <span class="t">Reverend Spencer</span>',fn:()=>msg(OBJ_DEFS['sp_spencer'].ex)});
+  else if(io.def==='sp_organ')opts.push(
+    {html:'Play <span class="t">chapel organ</span>',label:'Play chapel organ',fn:()=>setAction({type:'sporgan',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">chapel organ</span>',fn:()=>msg(OBJ_DEFS['sp_organ'].ex)});
+  else if(io.def==='sp_manger')opts.push(
+    {html:'Set figures <span class="t">the manger</span>',label:'Set figures in the manger',fn:()=>setAction({type:'spmanger',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">the manger</span>',fn:()=>msg(OBJ_DEFS['sp_manger'].ex)});
+  else if(io.def==='sp_wreath')opts.push(
+    {html:'Light <span class="t">Advent wreath</span>',label:'Light the Advent wreath',fn:()=>setAction({type:'spwreath',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">Advent wreath</span>',fn:()=>msg(OBJ_DEFS['sp_wreath'].ex)});
+  else if(io.def&&io.def.slice(0,7)==='sp_fig_')opts.push(
+    {html:'Search <span class="t">'+OBJ_DEFS[io.def].name+'</span>',label:'Search '+OBJ_DEFS[io.def].name,fn:()=>setAction({type:'spsearch',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">'+OBJ_DEFS[io.def].name+'</span>',fn:()=>msg(OBJ_DEFS[io.def].ex)});
+  return opts;
+}
+function rectoryOptionsAt(tx,ty){
+  const opts=[];
+  const RD={rectoryexit:1,jellybean_jar:1,rectory_range:1,rectory_pantry:1,rectory_cabinet:1,rectory_martha:1,rectory_rector:1,rectory_cake:1,rectory_piano:1,rectory_tree:1,rectory_fireplace:1,rectory_island:1,rectory_book_horae:1,rectory_book_hymns:1,rectory_bozek:1,rectory_eggbasket:1};
+  const io=objects.find(b=>b.x===tx&&b.y===ty&&RD[b.def]);
+  if(!io)return opts;
+  if(io.def==='rectoryexit')opts.push(
+    {html:'Leave <span class="t">Rectory</span>',label:'Leave Rectory',fn:()=>setAction({type:'leaverectory',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">Rectory door</span>',fn:()=>msg(OBJ_DEFS['rectoryexit'].ex)});
+  else if(io.def==='jellybean_jar')opts.push(
+    {html:'Guess <span class="t">jellybean jar</span>',label:'Guess jellybean jar',fn:()=>setAction({type:'rjar',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">jellybean jar</span>',fn:()=>msg(OBJ_DEFS['jellybean_jar'].ex)});
+  else if(io.def==='rectory_martha')opts.push(
+    {html:'Talk-to <span class="t">Martha Matthews</span>',label:'Talk-to Martha',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y,id:'rmartha',name:'Martha Matthews'}},io.x,io.y)},
+    {html:'Examine <span class="t">Martha Matthews</span>',fn:()=>msg(OBJ_DEFS['rectory_martha'].ex)});
+  else if(io.def==='rectory_rector')opts.push(
+    {html:'Talk-to <span class="t">Rector Matthews</span>',label:'Talk-to Rector',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y,id:'rmatthews',name:'Rector Matthews'}},io.x,io.y)},
+    {html:'Examine <span class="t">Rector Matthews</span>',fn:()=>msg(OBJ_DEFS['rectory_rector'].ex)});
+  else if(io.def==='rectory_eggbasket')opts.push(
+    {html:'Take <span class="t">eggs</span>',label:'Take eggs',fn:()=>setAction({type:'reggs',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">egg basket</span>',fn:()=>msg(OBJ_DEFS['rectory_eggbasket'].ex)});
+  else if(io.def==='rectory_cabinet'){
+    if(player.quests.rxmas.s>=2)opts.push({html:'Open <span class="t">spice cabinet</span>',label:'Open spice cabinet',fn:()=>setAction({type:'rcabinet',o:io},io.x,io.y)});
+    opts.push({html:'Examine <span class="t">spice cabinet</span>',fn:()=>msg(OBJ_DEFS['rectory_cabinet'].ex)});
+  }
+  else if(io.def==='rectory_pantry'){
+    if(player.quests.rxmas.s>=2)opts.push({html:'Take from <span class="t">larder</span>',label:'Take from larder',fn:()=>setAction({type:'rlarder',o:io},io.x,io.y)});
+    opts.push({html:'Examine <span class="t">larder</span>',fn:()=>msg(OBJ_DEFS['rectory_pantry'].ex)});
+  }
+  else if(io.def==='rectory_range'){
+    if(player.quests.rxmas.s>=2)opts.push({html:'Bake at <span class="t">range</span>',label:'Bake at range',fn:()=>setAction({type:'rbake',o:io},io.x,io.y)});
+    opts.push({html:'Examine <span class="t">kitchen range</span>',fn:()=>msg(OBJ_DEFS['rectory_range'].ex)});
+  }
+  else if(io.def==='rectory_piano')opts.push(
+    {html:'Play <span class="t">grand piano</span>',label:'Play piano',fn:()=>setAction({type:'rpiano',o:io},io.x,io.y)},
+    {html:'Examine <span class="t">grand piano</span>',fn:()=>msg(OBJ_DEFS['rectory_piano'].ex)});
+  else if(io.def==='rectory_book_horae'||io.def==='rectory_book_hymns')opts.push(
+    {html:'Read <span class="t">'+OBJ_DEFS[io.def].name+'</span>',label:'Read '+OBJ_DEFS[io.def].name,fn:()=>setAction({type:'rbook',o:io,book:io.def},io.x,io.y)},
+    {html:'Examine <span class="t">'+OBJ_DEFS[io.def].name+'</span>',fn:()=>msg(OBJ_DEFS[io.def].ex)});
+  else opts.push(
+    {html:'Examine <span class="t">'+OBJ_DEFS[io.def].name+'</span>',fn:()=>msg(OBJ_DEFS[io.def].ex)});
+  return opts;
+}
+/* ================= Chapel of St. Paul (the Old Chapel) -- interior ================= */
+const SP={x0:44,y0:98,x1:80,y1:132};
+const stPaulTiles=TILES_MAIN.map(r=>r.slice());
+let stPaulFloor=null, spFY=0;
+const stPaulGroup=new THREE.Group();stPaulGroup.visible=false;scene.add(stPaulGroup);
+const _spCross=(x,y)=>((x>=57&&x<=65&&y>=100&&y<=128)||(x>=48&&x<=74&&y>=109&&y<=117));
+(function carveStPaul(){
+  const T=stPaulTiles;
+  for(let y=SP.y0;y<=SP.y1;y++)for(let x=SP.x0;x<=SP.x1;x++)T[y][x]=_spCross(x,y)?T_FLOOR:T_WALL;
+  const wl=[];
+  for(let y=SP.y0;y<=SP.y1;y++)for(let x=SP.x0;x<=SP.x1;x++){
+    if(T[y][x]!==T_FLOOR)continue;
+    if(!_spCross(x-1,y)||!_spCross(x+1,y)||!_spCross(x,y-1)||!_spCross(x,y+1))wl.push([x,y]);
+  }
+  for(const c of wl)T[c[1]][c[0]]=T_WALL;
+  T[113][48]=T_FLOOR;   /* the west door tile */
+})();
+const _SP_PEWS=[];
+(function(){
+  for(let y=101;y<=107;y++){_SP_PEWS.push([58,y]);_SP_PEWS.push([59,y]);_SP_PEWS.push([63,y]);_SP_PEWS.push([64,y]);}  /* north arm: 2 columns each side */
+  for(const y of [118,119,122,123,124]){_SP_PEWS.push([58,y]);_SP_PEWS.push([64,y]);}                                   /* south chancel: wall pews only (keep side lanes) */
+  for(let x=50;x<=55;x++){_SP_PEWS.push([x,110]);_SP_PEWS.push([x,111]);_SP_PEWS.push([x,115]);_SP_PEWS.push([x,116]);}  /* west transept: 2 rows each side */
+  for(let x=67;x<=72;x++){_SP_PEWS.push([x,110]);_SP_PEWS.push([x,111]);_SP_PEWS.push([x,115]);_SP_PEWS.push([x,116]);}  /* east transept */
+  for(const pp of _SP_PEWS)SPFURN.add(pp[1]*W+pp[0]);
+  SPFURN.add(120*W+60);SPFURN.add(120*W+61);SPFURN.add(120*W+62);   /* nativity stable (mid-south; lanes x59 & x63 stay open) */
+  SPFURN.add(126*W+60);SPFURN.add(126*W+61);SPFURN.add(126*W+62);   /* organ (far south) */
+  SPFURN.add(121*W+64);                                             /* Advent wreath (east wall, off the lanes) */
+})();
+const _spSnap=[];
+for(let y=SP.y0;y<=SP.y1;y++)for(let x=SP.x0;x<=SP.x1;x++)_spSnap.push([x,y,hts[y][x]]);
+spFY=groundH(61,113);
+function _spFlatten(){for(const sgv of _spSnap)hts[sgv[1]][sgv[0]]=spFY;}
+function _spRestore(){for(const sgv of _spSnap)hts[sgv[1]][sgv[0]]=sgv[2];}
+(function buildStPaulInterior(){
+  const out={pos:[],nor:[],col:[]};
+  const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
+  const cyl=(rt,rb,h,seg)=>new THREE.CylinderGeometry(rt,rb,h,seg||10);
+  const B=(geo,hex,x,y,z,ry,sc,rx,rz)=>bake(out,geo,hex,x,y,z,ry||0,sc===undefined?1:sc,rx||0,rz||0);
+  const FY=spFY, WALLH=5.6, WAINS=2.3;
+  const BRICK=0xb5733f, BRICK2=0xa9683a, BRICK_DK=0x8a4f2e, BRICKMORT=0xc8a07a;
+  const WOOD_DK=0x351f12, WOOD=0x583725, WOOD_LT=0x6e4a2c, STONE_C=0xa99a7e;
+  const CARPET=0x8c2f2a, HAY=0xc9a23a, HAY2=0xe6c662, GREEN=0x2f6a3a, GREEN2=0x255a2f, GOLD=0xcaa23a, WHITE=0xeae4d6, REDC=0x9c2f2a;
+  const GLASS=[0x2f5fb0,0xb53636,0x2f8a46,0xcaa23a,0x6a3a9a,0xcf5a2a,0x2a86a0,0xc23a6a];
+  const T=stPaulTiles;
+  /* ---- brick floor (terracotta flagstones + mortar grid) + a red aisle runner ---- */
+  for(let y=SP.y0;y<=SP.y1;y++)for(let x=SP.x0;x<=SP.x1;x++)if(T[y][x]===T_FLOOR){
+    B(box(1.0,0.12,1.0),((x+y)&1)?BRICK:BRICK2,x+0.5,FY+0.02,y+0.5,0);
+    B(box(1.0,0.04,0.08),BRICKMORT,x+0.5,FY+0.085,y+0.5,0);
+    B(box(0.08,0.04,1.0),BRICKMORT,x+0.5,FY+0.085,y+0.5,0);
+  }
+  for(let y=101;y<=127;y++)if(T[y][61]===T_FLOOR)B(box(0.9,0.05,1.0),CARPET,61.5,FY+0.1,y+0.5,0);
+  for(let x=49;x<=73;x++)if(T[113][x]===T_FLOOR)B(box(1.0,0.05,0.9),CARPET,x+0.5,FY+0.1,113.5,0);
+  /* ---- walls: ornate brick shell (the building exterior, seen above) + dark-wood wainscot inside ---- */
+  function inward(x,y){
+    if(T[y]&&T[y][x+1]===T_FLOOR)return[1,0]; if(T[y]&&T[y][x-1]===T_FLOOR)return[-1,0];
+    if(T[y+1]&&T[y+1][x]===T_FLOOR)return[0,1]; if(T[y-1]&&T[y-1][x]===T_FLOOR)return[0,-1]; return null;
+  }
+  for(let y=SP.y0;y<=SP.y1;y++)for(let x=SP.x0;x<=SP.x1;x++){
+    if(T[y][x]!==T_WALL)continue; const inn=inward(x,y); if(!inn)continue;
+    const ix=inn[0], iy=inn[1];
+    /* brick shell (full height) + brick cornice */
+    B(box(1.04,WALLH,1.04),((x+y)&1)?BRICK_DK:BRICK,x+0.5,FY+WALLH/2,y+0.5,0);
+    B(box(1.14,0.26,1.14),BRICK,x+0.5,FY+WALLH-0.14,y+0.5,0);
+    /* dark-wood wainscot panelling on the inner face (lower portion) */
+    const px=x+0.5+ix*0.46, pz=y+0.5+iy*0.46;
+    const aw=ix!==0?0.1:1.0, ad=ix!==0?1.0:0.1;
+    B(box(aw,WAINS,ad),WOOD_DK,px,FY+WAINS/2,pz,0);
+    B(box(aw+0.05,0.12,ad+0.05),WOOD_LT,px,FY+WAINS,pz,0);   /* chair rail */
+    B(box(aw+0.05,0.12,ad+0.05),WOOD,px,FY+0.07,pz,0);       /* base board */
+  }
+  /* ---- ornate Gothic stained-glass windows set high in the brick, all around ---- */
+  function glassWin(wx,wy,ix,iy){
+    const fx=wx+0.5+ix*0.47, fz=wy+0.5+iy*0.47, cy=FY+3.3;
+    const aw=ix!==0?0.12:1.0, ad=ix!==0?1.0:0.12;
+    B(box(aw,2.1,ad),0x20303f,fx,cy,fz,0);                                  /* dark reveal behind the glass */
+    B(box((ix!==0?0.16:1.05),0.2,(ix!==0?1.05:0.16)),STONE_C,fx,cy+1.15,fz,0);  /* arch lintel */
+    B(box((ix!==0?0.16:1.05),0.16,(ix!==0?1.05:0.16)),STONE_C,fx,cy-1.05,fz,0); /* sill */
+    const g=new THREE.Group(); const cols=3, rows=5;
+    for(let c=0;c<cols;c++)for(let r=0;r<rows;r++){
+      const m=new THREE.Mesh(new THREE.PlaneGeometry(0.34,0.44),new THREE.MeshBasicMaterial({color:GLASS[(c+r+wx+wy)%GLASS.length],side:THREE.DoubleSide}));
+      m.position.set((c-1)*0.36,(r-2)*0.46,0); g.add(m);
+    }
+    for(let k=0;k<3;k++){const j=new THREE.Mesh(new THREE.CircleGeometry(0.12,6),new THREE.MeshBasicMaterial({color:GLASS[(k+wx)%GLASS.length],side:THREE.DoubleSide}));j.position.set((k-1)*0.26,1.12,0);g.add(j);}
+    g.position.set(wx+0.5+ix*0.62,cy,wy+0.5+iy*0.62);   /* sit the glass clearly in front of the brick, like the big chapel */
+    g.rotation.y = ix!==0 ? (ix>0?Math.PI/2:-Math.PI/2) : (iy>0?0:Math.PI);
+    stPaulGroup.add(g);
+  }
+  glassWin(61,100,0,1);                                              /* north tip */
+  for(const wy of [103,106,122,124]){glassWin(57,wy,1,0);glassWin(65,wy,-1,0);}   /* nave side walls */
+  for(const wx of [51,54,68,71]){glassWin(wx,109,0,1);glassWin(wx,117,0,-1);}     /* transept long walls */
+  glassWin(48,110,1,0);glassWin(48,116,1,0);                         /* west tip (flanking the door) */
+  glassWin(74,111,-1,0);glassWin(74,113,-1,0);glassWin(74,115,-1,0); /* east tip */
+  glassWin(61,128,0,-1);                                             /* great south window behind the organ */
+  /* ---- pews (dark wood benches) ---- */
+  function pew(tx,ty){
+    const x=tx+0.5,z=ty+0.5;
+    if(tx<=56){            /* west transept -> face EAST, toward the centre */
+      B(box(0.8,0.12,0.86),WOOD,x,FY+0.42,z,0);
+      B(box(0.12,0.5,0.86),WOOD_DK,x-0.36,FY+0.64,z,0);
+    } else if(tx>=66){     /* east transept -> face WEST, toward the centre */
+      B(box(0.8,0.12,0.86),WOOD,x,FY+0.42,z,0);
+      B(box(0.12,0.5,0.86),WOOD_DK,x+0.36,FY+0.64,z,0);
+    } else {               /* nave -> face the central aisle */
+      const bx=(tx<=60)?-1:1;
+      B(box(0.86,0.12,0.8),WOOD,x,FY+0.42,z,0);
+      B(box(0.12,0.5,0.84),WOOD_DK,x+bx*0.36,FY+0.64,z,0);
+    }
+  }
+  for(const pp of _SP_PEWS)pew(pp[0],pp[1]);
+  /* ---- the organ (south end; the carol minigame comes in Phase 2) ---- */
+  (function(){ const ox=61.0, oz=126.2;
+    B(box(2.6,1.1,0.7),WOOD_DK,ox,FY+0.55,oz,0);
+    B(box(2.6,0.18,0.8),WOOD,ox,FY+1.15,oz,0);
+    B(box(2.2,0.12,0.55),0xece6d6,ox,FY+1.0,oz-0.18,0);
+    for(let i=0;i<11;i++){ const h=1.5+(i%4)*0.55, px=ox-1.2+i*0.24;
+      B(cyl(0.085,0.085,h,8),i%2?0xb8a05a:0xcdbf86,px,FY+1.35+h/2,oz+0.34,0); }
+  })();
+  /* ---- the Nativity: a little stable with a pitched roof, straw, and an empty cradle ---- */
+  (function(){ const mx=61.0, mz=120.0, by=FY;
+    B(box(2.2,1.5,0.14),WOOD,mx,by+0.75,mz+0.55,0);                 /* back wall */
+    B(box(0.14,1.5,1.2),WOOD,mx-1.05,by+0.75,mz,0);                 /* side walls */
+    B(box(0.14,1.5,1.2),WOOD,mx+1.05,by+0.75,mz,0);
+    B(box(1.55,0.12,1.5),WOOD_DK,mx-0.52,by+1.78,mz,0,1,0,0.62);    /* gable roof slopes */
+    B(box(1.55,0.12,1.5),WOOD_DK,mx+0.52,by+1.78,mz,0,1,0,-0.62);
+    B(box(0.16,0.16,1.5),WOOD_LT,mx,by+2.12,mz,0);                  /* ridge beam */
+    B(box(1.95,0.1,1.1),HAY,mx,by+0.1,mz,0);                        /* straw on the floor */
+    for(let i=0;i<5;i++)B(box(0.5,0.05,0.12),HAY2,mx-0.7+i*0.34,by+0.17,mz-0.3+(i%2)*0.6,i*1.3);
+    B(box(0.72,0.18,0.34),WOOD,mx,by+0.46,mz-0.12,0);               /* the empty cradle (trough) */
+    B(box(0.1,0.4,0.1),WOOD_LT,mx-0.28,by+0.2,mz-0.12,0);
+    B(box(0.1,0.4,0.1),WOOD_LT,mx+0.28,by+0.2,mz-0.12,0);
+    B(box(0.58,0.1,0.24),HAY2,mx,by+0.57,mz-0.12,0);               /* hay in the cradle (no figure yet) */
+  })();
+  /* ---- Advent wreath (east wall) ---- */
+  (function(){ const wx=64.0, wz=121.0;
+    B(cyl(0.12,0.12,1.0,8),WOOD_DK,wx,FY+0.5,wz,0);
+    B(cyl(0.5,0.5,0.12,16),GREEN2,wx,FY+1.0,wz,0);
+    B(cyl(0.42,0.42,0.1,16),GREEN,wx,FY+1.06,wz,0);
+    for(let i=0;i<4;i++){const a=i*Math.PI/2; B(cyl(0.06,0.06,0.34,8),i<1?REDC:WHITE,wx+Math.cos(a)*0.34,FY+1.2,wz+Math.sin(a)*0.34,0);}
+  })();
+  /* ---- west exit door (dark wood in the stone opening) ---- */
+  (function(){ const dx=48.0, dz=113.0;
+    B(box(0.24,2.7,1.55),STONE_C,dx+0.55,FY+1.35,dz+0.5,0);         /* stone arch reveal */
+    B(box(0.14,2.15,0.6),0x281710,dx+0.66,FY+1.08,dz+0.28,0);       /* left leaf */
+    B(box(0.14,2.15,0.6),0x33200f,dx+0.66,FY+1.08,dz+0.72,0);       /* right leaf */
+    B(cyl(0.06,0.06,0.06,8),GOLD,dx+0.74,FY+1.08,dz+0.5,0,1,Math.PI/2,0);
+  })();
+  /* ---- the six hidden-figure search spots (Away in a Manger): baked into their OWN mesh so they can despawn once the figures are placed ---- */
+  const outF={pos:[],nor:[],col:[]};
+  const BF=(geo,hex,x,y,z,ry,sc,rx,rz)=>bake(outF,geo,hex,x,y,z,ry||0,sc===undefined?1:sc,rx||0,rz||0);
+  BF(box(0.5,0.16,0.32),0x7a2e2e,60.5,FY+0.1,102.5,0);
+  BF(box(0.1,0.7,0.1),WOOD_DK,62.5,FY+0.35,101.5,0);
+  BF(box(0.42,0.06,0.3),WOOD,62.5,FY+0.72,101.5,0,1,0,0.3);
+  BF(box(0.1,0.62,0.1),WOOD_DK,52.5,FY+0.31,114.5,0);
+  BF(box(0.28,0.3,0.24),0x2a2a30,52.5,FY+0.64,114.5,0);
+  BF(box(0.12,1.95,1.7),0x5a2d3a,73.82,FY+0.97,113.0,0);
+  BF(box(0.16,0.1,1.8),WOOD_DK,73.82,FY+1.95,113.0,0);
+  BF(box(0.4,0.5,0.3),WOOD_DK,59.5,FY+0.25,127.5,0);
+  BF(box(0.62,0.12,0.5),0x8c2f2a,62.5,FY+0.06,124.5,0);
+  BF(box(0.2,0.18,0.16),0xcfc0a0,62.5,FY+0.17,124.5,0);
+  stPaulGroup.add(bakeMesh(out,false));
+  stPaulGroup._figMesh=bakeMesh(outF,false); stPaulGroup.add(stPaulGroup._figMesh);
+  stPaulFloor=new THREE.Mesh(new THREE.PlaneGeometry(SP.x1-SP.x0+1,SP.y1-SP.y0+1),new THREE.MeshBasicMaterial({visible:false}));
+  stPaulFloor.rotation.x=-Math.PI/2;
+  stPaulFloor.position.set((SP.x0+SP.x1)/2+0.5,FY+0.12,(SP.y0+SP.y1)/2+0.5);
+  stPaulGroup.add(stPaulFloor);
+  const _findO=def=>objects.find(b=>b.def===def);
+  function _mkNPC(cfg,wx,wz,ry,def){const hm=makeHumanoid(cfg);hm.g.position.set(wx,FY,wz);hm.g.rotation.y=ry;stPaulGroup.add(hm.g);const o=_findO(def);if(o)addProxy(hm.g,0.85,2.3,0,{kind:'obj',o});}
+  function _spProxy(def,wx,wz,r,h,yoff){const o=_findO(def);if(!o)return;const g=new THREE.Group();g.position.set(wx,FY,wz);stPaulGroup.add(g);addProxy(g,r,h,yoff||0,{kind:'obj',o});if(def.slice(0,7)==='sp_fig_'){(stPaulGroup._figProxies=stPaulGroup._figProxies||[]).push(g);}}
+  (function(){
+    const hm=makeHumanoid({skin:0xe7c39c,hair:0x8c8c8c,beard:0x8c8c8c,mustache:1,hairstyle:'full',shirt:0x191920,pants:0x191920,skirt:0x191920,boots:0x141417});
+    hm.g.position.set(61.5,FY,113.5); hm.g.rotation.y=-Math.PI/2;
+    const addM=(geo,col,x,y,z)=>{const mm=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:col}));mm.position.set(x,y,z);hm.g.add(mm);return mm;};
+    addM(new THREE.CylinderGeometry(0.17,0.3,0.95,8),0x191920,0,0.5,0);          /* floor-length black cassock */
+    addM(new THREE.CylinderGeometry(0.135,0.135,0.1,12),0xf2f1ec,0,1.5,0);        /* white clerical collar */
+    addM(new THREE.BoxGeometry(0.07,0.82,0.04),0x5a2d82,-0.11,1.02,0.16);          /* violet Advent stole (left) */
+    addM(new THREE.BoxGeometry(0.07,0.82,0.04),0x5a2d82, 0.11,1.02,0.16);          /* stole (right) */
+    addM(new THREE.BoxGeometry(0.05,0.24,0.03),0xd4af37,0,1.0,0.2);                /* gold pectoral cross (vertical) */
+    addM(new THREE.BoxGeometry(0.16,0.05,0.03),0xd4af37,0,1.06,0.2);               /* cross (horizontal) */
+    stPaulGroup.add(hm.g);
+    const _o=objects.find(b=>b.def==='sp_spencer'); if(_o)addProxy(hm.g,0.85,2.3,0,{kind:'obj',o:_o});
+  })();
+  _spProxy('sp_organ',61.0,126.2,1.4,2.6,0);
+  _spProxy('sp_manger',61.0,120.0,1.1,1.8,0);
+  _spProxy('sp_wreath',64.0,121.0,0.6,1.4,0);
+  _spProxy('stpaulexit',48.6,113.5,0.7,2.6,0);
+  _spProxy('sp_fig_pew',60.5,102.5,0.5,0.9,0);
+  _spProxy('sp_fig_choir',62.5,101.5,0.5,1.2,0);
+  _spProxy('sp_fig_alms',52.5,114.5,0.5,1.1,0);
+  _spProxy('sp_fig_curtain',73.4,113.0,0.6,2.0,0);
+  _spProxy('sp_fig_pipes',59.5,127.5,0.5,1.0,0);
+  _spProxy('sp_fig_step',62.5,124.5,0.5,0.8,0);
+})();
+const miniBaseStPaul=document.createElement('canvas');
+miniBaseStPaul.width=W*4;miniBaseStPaul.height=H*4;
+(function(){
+  const g=miniBaseStPaul.getContext('2d');
+  g.fillStyle='#000';g.fillRect(0,0,W*4,H*4);
+  for(let y=SP.y0;y<=SP.y1;y++)for(let x=SP.x0;x<=SP.x1;x++){
+    const t=stPaulTiles[y][x]; let c=null;
+    if(t===T_FLOOR)c='#5a5346'; else if(t===T_WALL&&(_spCross(x-1,y)||_spCross(x+1,y)||_spCross(x,y-1)||_spCross(x,y+1)))c='#a7a092';
+    if(c){g.fillStyle=c;g.fillRect(x*4,y*4,4,4);}
+  }
+})();
+function enterStPaul(){
+  inStPaul=true;tiles=stPaulTiles;worldGroup.visible=false;stPaulGroup.visible=true;
+  _spFlatten();
+  player.x=49;player.y=113;player.px=49;player.py=113;
+  player.path.length=0;cancelAction();
+  scene.fog.near=40;scene.fog.far=110;
+  msg('You step into the Old Chapel \u2014 cold stone, dim light, the smell of beeswax and pine.','#103a8c');
+  if(typeof syncStPaulQuestVisuals==='function')syncStPaulQuestVisuals();
+  if(player.quests&&player.quests.rxmas2){ if(player.quests.rxmas2.s===1)spawnChapelChildren(); else despawnChapelChildren(); }
+  stopMusic();if(typeof startOrgan==='function')startOrgan();updateRunOrb&&updateRunOrb();
+}
+function exitStPaul(){
+  inStPaul=false;tiles=TILES_MAIN;worldGroup.visible=true;stPaulGroup.visible=false;
+  _spRestore();
+  player.x=STPAUL_RETURN.x;player.y=STPAUL_RETURN.y;player.px=STPAUL_RETURN.x;player.py=STPAUL_RETURN.y;
+  player.path.length=0;cancelAction();
+  scene.fog.near=30;scene.fog.far=52;
+  if(typeof stopOrgan==='function')stopOrgan();
+  updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
+  if(player.quests&&player.quests.rxmas2&&player.quests.rxmas2.s>=4&&!player.winter){ player.winter=true; if(typeof applyWinter==='function')applyWinter(); dirty=true; msg('You step out into a hushed, snow-falling Millville. Winter has come to the grounds.','#bcd6ec'); }
+  else msg('You step back out onto the chapel green.');
+}
+let chapelProxies=[];let mathesProxies=[];let rectoryProxies=[];let stPaulProxies=[];
 (function partitionScene(){
   /* interiors are self-contained groups; everything else is the outdoor world.
      partition by IDENTITY (not map position) so stray forest props never leak inside. */
+  const _RDEFS={rectoryexit:1,jellybean_jar:1,rectory_range:1,rectory_pantry:1,rectory_cabinet:1,rectory_martha:1,rectory_rector:1,rectory_cake:1,rectory_piano:1,rectory_tree:1,rectory_fireplace:1,rectory_island:1,rectory_book_horae:1,rectory_book_hymns:1,rectory_bozek:1,rectory_eggbasket:1};
   for(const c of scene.children.slice()){
-    if(c===chapelGroup||c===worldGroup||c===partyGroup||c===pm.g||c===mathesGroup)continue;
+    if(c===chapelGroup||c===worldGroup||c===partyGroup||c===pm.g||c===mathesGroup||c===rectoryGroup||c===stPaulGroup)continue;
     if(!(c.isMesh||c.isGroup))continue;
     const od=c.userData&&c.userData.o&&c.userData.o.def;
     if(od==='relic'||od==='chapelexit'||od==='chapeldoor')chapelGroup.add(c);
     else if(od==='mathesexit'||od==='quartermaster'||(od&&od.slice(0,4)==='dig_'))mathesGroup.add(c);
+    else if(od&&_RDEFS[od])rectoryGroup.add(c);
     else worldGroup.add(c);
   }
   chapelProxies=proxies.filter(px=>px.userData&&px.userData.o&&
@@ -15052,6 +16964,13 @@ let chapelProxies=[];let mathesProxies=[];
   /* interior proxies must NOT be clickable from the outdoor world (their models live hidden
      inside chapelGroup, in the dead north-forest footprint) — pull them out of the main proxy
      list so only chapelProxies (used while inChapel) can hit them. */
+  rectoryProxies=proxies.filter(px=>px.userData&&px.userData.o&&_RDEFS[px.userData.o.def]);
+  for(let i=proxies.length-1;i>=0;i--){const _ro=proxies[i].userData&&proxies[i].userData.o;
+    if(_ro&&_RDEFS[_ro.def])proxies.splice(i,1);}
+  const _SPDEFS={stpaulexit:1,sp_spencer:1,sp_organ:1,sp_manger:1,sp_wreath:1,sp_fig_pew:1,sp_fig_choir:1,sp_fig_alms:1,sp_fig_curtain:1,sp_fig_pipes:1,sp_fig_step:1};
+  stPaulProxies=proxies.filter(px=>px.userData&&px.userData.o&&_SPDEFS[px.userData.o.def]);
+  for(let i=proxies.length-1;i>=0;i--){const _so=proxies[i].userData&&proxies[i].userData.o;
+    if(_so&&_SPDEFS[_so.def])proxies.splice(i,1);}
   for(let i=proxies.length-1;i>=0;i--){const _po=proxies[i].userData&&proxies[i].userData.o;
     if(_po&&(_po.def==='relic'||_po.def==='chapelexit'||_po.def==='chapeldoor'))proxies.splice(i,1);}
   mathesProxies=proxies.filter(px=>px.userData&&px.userData.o&&
@@ -15064,6 +16983,8 @@ function render(now){
   const dt=Math.min(50,now-prevT);prevT=now;
   const dts=dt/1000;
   if(player)player.playMs=(player.playMs||0)+dt;
+  if(inRectory){tickRectoryStudents(dt);animateRectoryFire(now);}
+  if(inStPaul)tickChapelChildren(dt);
   if(inParty){const t9=now*0.001;
     updateParty(dt);
     for(const k of partyKnights){
@@ -15446,11 +17367,13 @@ setInterval(()=>{
       player.face=Math.sign(nxt[0]-player.x)||player.face;
       player.x=nxt[0];player.y=nxt[1];
       if(typeof _duelIceSet!=='undefined'&&_duelIceSet&&_duelIceSet.has(player.x+','+player.y))_duelIceSlip(_pX,_pY);
+      else if(_iceTiles&&_iceTiles.has(player.x+','+player.y))_winterIceSlip(_pX,_pY);
       if(_canRun){player.stamina=Math.max(0,player.stamina-RUN_DRAIN);_ranThisBeat=true;
         if(player.stamina<=0)player.run=false; updateRunOrb();}
     }else player.path.length=0;
     if(inChapel&&player.x===139&&player.y===8)exitChapel();
     if(inMathes&&player.x===120&&player.y===43)exitMathes();
+    if(inRectory&&player.x===109&&player.y===31)exitRectory();
   }
   if(!_ranThisBeat&&player.stamina<100&&performance.now()-(player.combatT||0)>=3000){
     player.stamina=Math.min(100,player.stamina+(player.path.length?RUN_REGEN_WALK:RUN_REGEN_IDLE));
@@ -15497,6 +17420,7 @@ function enterGame(){
   syncStyleUI();
   renderSkills();renderInv();renderEquip();updateOrb();updateRunOrb();
   player.px=player.x;player.py=player.y;
+  if(typeof applyWinter==='function')applyWinter();
   statusEl.textContent=storageOK?
     ('Autosave: on \u2014 '+player.name+' (this device).'):
     'Autosave: unavailable here \u2014 progress lasts this session.';
@@ -15780,7 +17704,7 @@ const MP = (function () {
       keepAlive = setInterval(function () {
         if (!conn) return;
         send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() });
-        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior() });
+        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null });
       }, 2000);
       if (typeof console !== 'undefined') console.log('[Milville MP]', MP_VERSION, 'connected to', wsURL());
       if (!_announced) { _announced = true; if (typeof logSystem === 'function') logSystem('Multiplayer connected (' + MP_VERSION + ').'); }
@@ -15812,10 +17736,10 @@ const MP = (function () {
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct) { lastGear = g; lastAct = a; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
-    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior() }); }
+    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null }); }
   }
-  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior() }); }
-  function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120) }); }
+  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null }); }
+  function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120), title: player.title || null }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
 
@@ -16254,11 +18178,12 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     const rig = makeHumanoid(app);
     rig.g.visible = false; scene.add(rig.g);
     const gearRig = buildGearRig(rig);
-    RP.set(p.uid, { uid: p.uid, name: p.name || '?', rig, gearRig, _gearKey: '', x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, in: p.in || null, moving: false, tint: tint, last: Date.now() });
+    RP.set(p.uid, { uid: p.uid, name: p.name || '?', title: p.title || null, rig, gearRig, _gearKey: '', x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, in: p.in || null, moving: false, tint: tint, last: Date.now() });
   }
   function absorb(uid, p) {
     const r = RP.get(uid); if (!r) return;
     if (p.name) r.name = p.name;
+    if (p.title !== undefined) r.title = p.title || null;
     if (p.gear !== undefined) r.gear = p.gear;
     if (p.act !== undefined) r.act = p.act;
     if (p.hp !== undefined) r.hp = p.hp;
@@ -16294,8 +18219,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
         if (!m.uid || m.uid === player.uid) break;
-        if (RP.has(m.uid)) { const r = RP.get(m.uid); absorb(m.uid, { name: m.name, gear: m.gear, hp: m.hp, mhp: m.mhp }); if (typeof m.x === 'number') { r.x = m.x; r.y = m.y; r.h = m.h; } if (m.in !== undefined) r.in = m.in || null; r.last = Date.now(); }
-        else spawn({ uid: m.uid, name: m.name, x: m.x, y: m.y, h: m.h, gear: m.gear, hp: m.hp, mhp: m.mhp, in: m.in });
+        if (RP.has(m.uid)) { const r = RP.get(m.uid); absorb(m.uid, { name: m.name, gear: m.gear, hp: m.hp, mhp: m.mhp, title: m.title }); if (typeof m.x === 'number') { r.x = m.x; r.y = m.y; r.h = m.h; } if (m.in !== undefined) r.in = m.in || null; r.last = Date.now(); }
+        else spawn({ uid: m.uid, name: m.name, x: m.x, y: m.y, h: m.h, gear: m.gear, hp: m.hp, mhp: m.mhp, in: m.in, title: m.title });
         break;
       }
       case 'dmg': {
@@ -16306,7 +18231,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         break;
       }
       case 'friended': { if (m.to === player.uid) logSystem(((m.by) || 'Someone') + ' added you as a friend.'); break; }
-      case 'chat': { const r = RP.get(m.uid); if (r) { r.chat = m.text; r.chatT = now() + 4500; } if (typeof logSay === 'function') logSay(m.name || (r && r.name) || '?', m.text, false); break; }
+      case 'chat': { const r = RP.get(m.uid); if (r) { r.chat = m.text; r.chatT = now() + 4500; } if (typeof logSay === 'function') logSay(m.name || (r && r.name) || '?', m.text, false, (m.title!==undefined?m.title:(r&&r.title))||null); break; }
       case 'emote': { const r = RP.get(m.uid); if (r) { r.emote = m.e; r.emoteT = now(); } break; }
       case 'claim': {
         const mi = m.m | 0, c = claims.get(mi);
@@ -16942,7 +18867,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     for (const sl of ['head', 'cape', 'neck', 'body', 'legs', 'weapon', 'shield', 'feet', 'hands']) {
       const id = gg[sl]; if (id && typeof ITEMS !== 'undefined' && ITEMS[id]) worn.push(ITEMS[id].name);
     }
-    return { name: rec.name, cmb: (typeof gg.cmb === 'number' ? gg.cmb : null), hp: rec.hp, mhp: rec.mhp, worn };
+    return { name: rec.name, cmb: (typeof gg.cmb === 'number' ? gg.cmb : null), hp: rec.hp, mhp: rec.mhp, worn, title: rec.title || null };
   }
 
   return {
