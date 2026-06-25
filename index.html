@@ -794,7 +794,7 @@
             bury bones for Prayer. The guide by the fire can help.
           </div>
         </div>
-        <div class="panel" id="panel-friends"><h4>Friends</h4><div id="friendslist"></div></div>
+        <div class="panel" id="panel-friends"><h4>Friends</h4><button id="lbbtn" style="display:block;width:100%;margin:0 0 8px;font-family:Georgia,serif;font-size:13px;font-weight:bold;padding:7px 10px;border-radius:7px;border:1px solid #caa23a;background:#3a5a30;color:#fff;cursor:pointer;">View Leaderboard</button><div id="friendslist"></div></div>
         <div class="panel" id="panel-emotes"><div id="emotehead">Emotes</div><div id="emotegrid"></div><div class="subhead" style="margin-top:7px">Titles</div><div id="titlebar" style="display:flex;flex-wrap:wrap;padding:0 4px 8px"></div></div>
         <div id="tabsbot">
           <div class="tab" data-p="friends" data-icon="friends" title="Friends"><canvas width="22" height="22"></canvas></div>
@@ -2253,7 +2253,7 @@ async function upsertSlot(id,name){
   await writeSlots(list);
 }
 const player={
-  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
+  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,maxHit:0,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
   x:89,y:88,px:89,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
   hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0},
@@ -3339,6 +3339,7 @@ function playerTick(){
       }
       addXp('hitpoints',0.85*dmg);
     }
+    if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;}
     if(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dmg))return;
     if(player.slayer&&player.slayer.unlocks&&player.slayer.unlocks.bigger&&!r.superiorRolled&&player.slayer.task===r.kind&&player.slayer.done<player.slayer.need&&inWild(r.sx,r.sy)){r.superiorRolled=true;if(Math.random()<0.14){r.superior=true;if(r._m&&r._m.group){if(r._supScale===undefined)r._supScale=r._m.group.scale.x;r._m.group.scale.setScalar(r._supScale*1.4);}msg('A superior '+r.name.toLowerCase()+' rises \u2014 bigger, and badder!','#9a6fb0');}}
     {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
@@ -3367,6 +3368,7 @@ function playerTick(){
     if(nowC<player.nextAtk)return;
     player.nextAtk=nowC+2400;player.swingT=nowC;
     let dmg=0;if(Math.random()<_duelAcc())dmg=rndi(0,_duelMaxhit());
+    if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;}
     splats.push({ent:opp,dmg,t:performance.now()});
     player.combatT=performance.now();
     (dmg>0?sfx.hit:sfx.miss)();
@@ -4002,7 +4004,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:player.x,y:player.y,
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,mapv:'sps3'};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -4147,6 +4149,7 @@ async function loadSlot(id){
       player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
       player.title=s.title||null;
       player.winterUnlocked=!!s.winterUnlocked;
+      player.maxHit=s.maxHit||0;
       player.winter=!!s.winter; player.fall=!!s.fall; player.fallUnlocked=!!s.fallUnlocked;
       if(s.name)player.name=s.name;
       if(s.mmf)Object.assign(player.mmf,s.mmf);
@@ -17518,6 +17521,7 @@ function enterGame(){
   player.px=player.x;player.py=player.y;
   if(typeof backfillUnlocks==='function')backfillUnlocks();
   if(typeof applyWinter==='function')applyWinter();
+  if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},2500);
   statusEl.textContent=storageOK?
     ('Autosave: on \u2014 '+player.name+' (this device).'):
     'Autosave: unavailable here \u2014 progress lasts this session.';
@@ -18984,6 +18988,112 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 })();
 
 /* <<< MULTIPLAYER MODULE <<< */
+
+/* ===================== ONLINE LEADERBOARD ===================== */
+const LB = (function(){
+  /* STANDALONE WORKER ONLY: if you deploy the leaderboard as its own separate
+     worker, paste its url here, e.g. 'https://milville-lb.sampratt99.workers.dev'.
+     Leave it '' if you merged the /lb/ routes into your existing relay worker. */
+  const LB_BASE = '';
+  const CATS = [
+    {id:'cmb',    label:'Combat',  fmt:function(v){return ''+v;}},
+    {id:'total',  label:'Total',   fmt:function(v){return ''+v;}},
+    {id:'maxhit', label:'Top hit', fmt:function(v){return ''+v;}},
+    {id:'kills',  label:'Kills',   fmt:function(v){return ''+v;}},
+    {id:'gold',   label:'Gold',    fmt:function(v){return _comma(v);}}
+  ];
+  function _comma(v){ return (''+(v|0)).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
+  function _esc(t){ return (''+t).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
+  function _url(){ try{ var u=LB_BASE||((typeof MP!=='undefined'&&MP.CFG&&MP.CFG.url)||''); return u?(''+u).replace(/\/+$/,''):''; }catch(e){ return ''; } }
+  function _world(){ try{ return (typeof MP!=='undefined'&&MP.CFG&&MP.CFG.world)||'milville'; }catch(e){ return 'milville'; } }
+  function _gold(){ var g=(typeof countItem==='function')?countItem('coins'):0;
+    try{ if(typeof bank!=='undefined'&&bank){ var bc=bank.find(function(b){return b&&b.id==='coins';}); if(bc)g+=(bc.qty||bc.n||0); } }catch(e){}
+    return g; }
+  function _stats(){
+    return { world:_world(), uid:(player&&player.uid)||'', name:(player&&player.name)||'Adventurer',
+      cmb:(typeof cmbLvl==='function')?cmbLvl():((player&&player.cmb)||3),
+      total:(typeof totalLevel==='function')?totalLevel():0,
+      maxhit:(player&&player.maxHit)||0, kills:(player&&player.kills)||0, gold:_gold(),
+      title:(player&&player.title)||null };
+  }
+  var _lastKey='', _lastT=0;
+  function submit(force){
+    var u=_url(); if(!u||!player||!player.uid)return;
+    var st=_stats();
+    var key=[st.cmb,st.total,st.maxhit,st.kills,st.gold,st.name,st.title].join('|');
+    var now=Date.now();
+    if(!force && key===_lastKey && (now-_lastT)<60000)return;
+    _lastKey=key; _lastT=now;
+    try{ fetch(u+'/lb/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(st),keepalive:true}).catch(function(){}); }catch(e){}
+  }
+  function fetchTop(cat, cb){
+    var u=_url(); if(!u){ cb(null,'noserver'); return; }
+    try{
+      fetch(u+'/lb/top?world='+encodeURIComponent(_world())+'&cat='+encodeURIComponent(cat)+'&n=50')
+        .then(function(r){ return r.ok?r.json():Promise.reject(r.status); })
+        .then(function(d){ cb((d&&d.rows)||[], null); })
+        .catch(function(){ cb(null,'err'); });
+    }catch(e){ cb(null,'err'); }
+  }
+  function open(){
+    if(document.getElementById('lbModal'))return;
+    submit(true);
+    var ov=document.createElement('div'); ov.id='lbModal';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
+    var box=document.createElement('div');
+    box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:14px 16px;max-width:470px;width:96%;max-height:86vh;display:flex;flex-direction:column;font-family:Georgia,serif;color:#f0e6d2;box-shadow:0 12px 40px rgba(0,0,0,0.6);box-sizing:border-box;';
+    box.innerHTML='<div style="font-size:18px;font-weight:bold;color:#ffe08a;text-align:center;margin-bottom:8px;">Milville Leaderboard</div>'+
+      '<div id="lbTabs" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;"></div>'+
+      '<div id="lbList" style="overflow-y:auto;flex:1 1 auto;min-height:140px;border-top:1px solid #4a3a26;border-bottom:1px solid #4a3a26;padding:6px 2px;"></div>'+
+      '<div style="display:flex;justify-content:center;margin-top:10px;"><button id="lbClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 18px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;">Close</button></div>';
+    ov.appendChild(box); document.body.appendChild(ov);
+    function close(){ if(ov.parentNode)ov.parentNode.removeChild(ov); }
+    ov.addEventListener('click',function(e){ if(e.target===ov)close(); });
+    box.querySelector('#lbClose').onclick=close;
+    var tabsEl=box.querySelector('#lbTabs'), listEl=box.querySelector('#lbList');
+    var cur=CATS[0].id;
+    function info(t){ listEl.innerHTML='<div style="text-align:center;color:#c8b890;padding:24px 10px;font-size:13px;">'+t+'</div>'; }
+    function renderTabs(){ tabsEl.innerHTML='';
+      CATS.forEach(function(c){ var b=document.createElement('button');
+        b.textContent=c.label;
+        b.style.cssText='font-family:Georgia,serif;font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #caa23a;cursor:pointer;color:#fff;background:'+(c.id===cur?'#3a5a30':'#33271a')+';';
+        b.onclick=function(){ cur=c.id; renderTabs(); load(); };
+        tabsEl.appendChild(b); });
+    }
+    function load(){
+      info('Loading...');
+      fetchTop(cur,function(rows,err){
+        if(!document.body.contains(ov))return;
+        if(err==='noserver'){ info('The leaderboard server is not set up yet. (See the deploy notes that came with this build.)'); return; }
+        if(err){ info('Could not reach the leaderboard. Check your connection and try again.'); return; }
+        if(!rows.length){ info('No scores yet -- be the first to post one!'); return; }
+        var cat=CATS.filter(function(c){return c.id===cur;})[0];
+        var myRank=-1, html='';
+        rows.forEach(function(r,i){
+          var mine=(r.uid&&player&&r.uid===player.uid); if(mine)myRank=i+1;
+          var medal=i<3?'#ffd24a':'#b8a888';
+          var ttl=(r.title&&typeof titleSuffix==='function')?titleSuffix(r.title):'';
+          html+='<div style="display:flex;align-items:center;gap:6px;padding:5px 7px;border-radius:5px;'+(mine?'background:#3a4a26;':(i%2?'background:rgba(255,255,255,0.03);':''))+'">'+
+            '<span style="width:30px;text-align:right;color:'+medal+';font-weight:bold;flex:0 0 auto;">'+(i+1)+'</span>'+
+            '<span style="flex:1 1 auto;color:'+(mine?'#fff5c8':'#e8dcc0')+';overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(r.name)+ttl+'</span>'+
+            '<span style="color:#ffe08a;font-weight:bold;flex:0 0 auto;">'+cat.fmt(r.v)+'</span></div>';
+        });
+        listEl.innerHTML=html;
+        var note=document.createElement('div');
+        if(myRank>0){ note.style.cssText='text-align:center;color:#bcd29a;font-size:11.5px;padding:8px 4px 2px;';
+          note.textContent='You are ranked #'+myRank+' for '+cat.label.toLowerCase()+'.'; }
+        else { note.style.cssText='text-align:center;color:#a89878;font-size:11.5px;padding:8px 4px 2px;';
+          note.textContent='Your '+cat.label.toLowerCase()+' score is not in the top yet -- keep at it!'; }
+        listEl.appendChild(note);
+      });
+    }
+    renderTabs(); load();
+  }
+  try{ setInterval(function(){ try{ submit(false); }catch(e){} }, 45000); }catch(e){}
+  return { submit:submit, fetchTop:fetchTop, open:open, CATS:CATS };
+})();
+(function(){ var _b=document.getElementById('lbbtn'); if(_b)_b.addEventListener('click',function(){ if(typeof LB!=='undefined')LB.open(); }); })();
+/* =================== END ONLINE LEADERBOARD =================== */
 
 requestAnimationFrame(render);
 </script>
