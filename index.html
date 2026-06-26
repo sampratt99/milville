@@ -189,10 +189,10 @@
   #friendslist{background:#211b14; border:1px solid #0d0b08; border-radius:3px; padding:3px; min-height:120px; max-height:300px; overflow-y:auto;}
   .friendsempty{color:#b8a87a; font:12px Verdana,sans-serif; line-height:1.55; text-align:center; padding:18px 10px;}
   .friendsub{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1.5px; text-align:center; margin:9px 0 3px; opacity:.9;}
-  .friendrow{display:flex; align-items:center; gap:7px; font:12px Verdana,sans-serif; padding:5px 8px; border-radius:2px;}
+  .friendrow{display:flex; flex-wrap:wrap; align-items:center; gap:3px 7px; font:12px Verdana,sans-serif; padding:5px 8px; border-radius:2px;}
   .friendrow:nth-child(odd){background:rgba(0,0,0,.16);}
   .friendrow:hover{background:rgba(202,168,60,.13);}
-  .friendrow .fname{flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:bold;}
+  .friendrow .fname{flex:1 0 100%; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:bold;}
   .friendrow.on .fname{color:#7fe07f;}
   .friendrow.off .fname{color:#9f988a;}
   .friendrow .fstatus{font-size:10.5px; color:#8a8472; white-space:nowrap;}
@@ -1143,6 +1143,13 @@ ITEMS.amulet_strength={name:'Amulet of Strength',
 ITEMS.amulet_defence={name:'Amulet of Defence',
   ex:'A warding pendant. Blows land softer on you.',val:140,
   equip:{slot:'neck',def:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x2f5dc9}};
+ITEMS.amulet_magic={name:'Amulet of Magic',
+  ex:'An enchanted pendant set with polished lapis. Your spells strike surer.',val:150,
+  equip:{slot:'neck',matk:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x8a4fd0}};
+ITEMS.amulet_archery={name:'Amulet of Archery',
+  ex:'A sinew-strung pendant carved from yew. Your aim flies truer.',val:150,
+  equip:{slot:'neck',ratk:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x2aa07a}};
+GE_STOCK.push('amulet_magic','amulet_archery');
 ITEMS.bronze_bar={name:'Bronze bar',
   ex:'Copper and tin, married in fire.',val:20};
 ITEMS.iron_bar={name:'Iron bar',ex:'A solid bar of iron.',val:60};
@@ -1270,7 +1277,7 @@ const OBJ_DEFS={
   rectory_island:{name:'kitchen island',action:'Examine',ex:'A scrubbed butcher-block island, mid-preparation: a pie, a mixing bowl, and chopped vegetables.'},
   rectory_book_horae:{name:'Alumni Horae',action:'Read',ex:'The school magazine, bound in red boards \u2014 class notes, news of old boys, and a letter from the Rector.'},
   rectory_book_hymns:{name:'Chapel Services \u0026 Hymns',action:'Read',ex:'A slim hymnal: the School Prayer, and carols for the Christmas season.'},
-  rectory_bozek:{name:'Mr. Bozek',action:'Examine',ex:'Mr. Bozek, the chemistry master, squeezed into a Father Christmas suit a size too small \u2014 a cushion for a belly, cotton-wool whiskers, and a weary \u201cHo, ho, ho\u201d for every child who passes.'},
+  rectory_bozek:{name:'Mr. Bozek',action:'Examine',ex:'Mr. Bozek, the mathematics master, squeezed into a Father Christmas suit a size too small \u2014 a cushion for a belly, cotton-wool whiskers, and a weary \u201cHo, ho, ho\u201d for every child who passes.'},
   relic:{name:'Blessed Censer',action:'Take',ex:'A founder-era censer on the altar. Its light still burns against the dark.'},
   mathesdoor:{name:'Matthes Cage',action:'Enter',ex:'The Matthes Cage field house. Within, a sunken pit waits beneath an indoor track.'},
   mathesexit:{name:'Cage doors',action:'Leave',ex:'The way back out to the athletic grounds.'},
@@ -1828,7 +1835,7 @@ function addObj(def,x,y,force){
     if(tiles[y][x]===T_FOREST)tiles[y][x]=T_GRASS;
     if(tiles[y][x]!==T_GRASS)return;
   }
-  objects.push({def,x,y,alive:true,respawnAt:0});
+  const _o={def,x,y,alive:true,respawnAt:0};objects.push(_o);return _o;
 }
 [[60,28],[68,30],[80,33],[86,32],[92,36],[64,46],[84,46],[64,57],[78,57],
  [88,58],[68,66],[78,68],[86,64],[60,66],[44,54],[44,64],[58,58],[36,57],
@@ -1852,6 +1859,7 @@ function addObj(def,x,y,force){
   [[15,14],[19,18]].forEach(p=>addObj('adamant',p[0],p[1]));
   [[11,13],[8,15]].forEach(p=>addObj('rune',p[0],p[1]));
 [[155,12],[156,13],[110,52],[129,100]].forEach(p=>addObj('spot',p[0],p[1]));
+[[157,14],[126,52]].forEach(p=>{const _o=addObj('spot',p[0],p[1]);if(_o)_o.deep=true;});
 addObj('furnace',59,68);addObj('anvil',61,68);
 addObj('crate',124,20);
 addObj('sgate',47,98);addObj('sgate',43,98);
@@ -2040,7 +2048,7 @@ const MOB_KINDS={
   sentinel:{name:'Vault Sentinel',ex:'Issued a halberd in 1893. Never signed it back in.',
     hp:34,acc:0.65,maxhit:4,resp:45000,bones:1,coinP:1,coins:[80,200],aggro:1,cmb:17},
   dragon:{name:'Grounds Dragon',ex:'Hand-reared by the grounds crew. It did not take to the leash.',
-    hp:110,acc:0.78,maxhit:8,resp:75000,bones:1,coinP:1,coins:[200,500],aggro:1,cmb:30},
+    hp:110,acc:0.78,maxhit:8,resp:75000,bigbones:1,coinP:1,coins:[200,500],aggro:1,cmb:30},
   boar:{name:'Wild boar',ex:'Tusked, bristling and twice as cross as it looks. Larry wants its head.',
     hp:26,acc:0.6,maxhit:3,resp:20000,bones:1,coinP:.5,coins:[8,32],aggro:1,cmb:14}
 };
@@ -2056,6 +2064,7 @@ const MOB_KINDS={
   /* archer: the sentinel looses arrows from range; mitigated by Ranged defence */
   if(MOB_KINDS.wyvern)MOB_KINDS.wyvern.projCol='#9fe8ff';
   if(MOB_KINDS.sentinel){MOB_KINDS.sentinel.atkStyle='ranged';MOB_KINDS.sentinel.atkRange=4;MOB_KINDS.sentinel.projCol='#cfd6da';}
+  if(MOB_KINDS.dragon){MOB_KINDS.dragon.atkStyle='magic';MOB_KINDS.dragon.atkRange=3;MOB_KINDS.dragon.projCol='#e8801f';}
 })();
 const NPC_LINES=[
  'Late for chapel. Again.',
@@ -2201,7 +2210,7 @@ function blocked(x,y){
   if(t===T_WALL||t===T_FOREST||t===T_FENCE||t===T_DITCH||t===T_LAVA)return true;
   if(inRectory&&RFURN.has(y*W+x))return true;   /* rectory furniture blocks movement */
   if(inStPaul&&SPFURN.has(y*W+x))return true;   /* chapel pews + props block movement */
-  const o=objAt(x,y);
+  const o=inParty?null:objAt(x,y);
   if(o&&o.alive&&!OBJ_DEFS[o.def].noBlock)return true;
   return false;
 }
@@ -2212,7 +2221,7 @@ function blockedStrict(x,y){
   if(t===T_WALL||t===T_FOREST||t===T_FENCE||t===T_DITCH||t===T_LAVA)return true;
   if(inRectory&&RFURN.has(y*W+x))return true;   /* rectory furniture blocks movement */
   if(inStPaul&&SPFURN.has(y*W+x))return true;   /* chapel pews + props block movement */
-  const o=objAt(x,y);
+  const o=inParty?null:objAt(x,y);
   if(o&&o.def==='sgate'&&!o.alive)return false;
   if(o&&!OBJ_DEFS[o.def].noBlock)return true;
   return false;
@@ -2343,6 +2352,12 @@ function dropMobLoot(r){
   if(mk.bigbones)dropGround(r.x,r.y,'big_bones',1);else if(mk.bones)dropGround(r.x,r.y,'bones',1);
   if(Math.random()<mk.coinP)dropGround(r.x,r.y,'coins',rndi(mk.coins[0],mk.coins[1]));
   rollRareDrop(r);
+  if(r.kind==='dragon'&&Math.random()<0.2){
+    const _dc=['red','green','blue'][r.sx<170?0:(r.sx<174?1:2)];
+    const _hid=_dc+'_dhide_'+['coif','body','chaps'][rndi(0,2)];
+    dropGround(r.x,r.y,_hid,1);
+    msg('The '+r.name.toLowerCase()+' sheds a slab of '+_dc+' dragonhide.','#caa23a');
+  }
   if(r.kind==='brat'){
     dropGround(r.x,r.y,'small_bones',1);
     const _bd=['red_bead','yellow_bead','black_bead','white_bead'];
@@ -2418,7 +2433,7 @@ const CLUE_SPOTS=[
  {x:103,y:90, clue:'At the Old Chapel with the patterned slate roof and slender spire.'},
  {x:98,y:105, clue:'Kneel where the faithful pray, in the glade south of the great chapel.'},
  {x:117,y:95, clue:'Cross the footbridge to the library on the water; dig by its great arched window.'},
- {x:108,y:44, clue:'The old library\u2019s colonnade stands over the water \u2014 dig at Sheldon.'},
+ {x:108,y:38, clue:'The old library\u2019s colonnade stands over the water \u2014 dig at Sheldon.'},
  {x:41,y:91,  clue:'Where math and science rise on the southern slope, dig by the Lindsay Center.'},
  {x:76,y:22,  clue:'Three brick gables hold every machine you could want; dig by the fitness center doors.'},
  {x:129,y:101,clue:'Where the anglers cast their lines on the pond\u2019s quiet bend.'},
@@ -3081,8 +3096,9 @@ function cancelAction(){player.action=null;closeDialogue();}
 
 function startGather(obj){
   const def=OBJ_DEFS[obj.def];
-  if(lvl(def.skill)<def.req){
-    msg('You need a '+SKILL_META[def.skill].name+' level of '+def.req+' to do that.');return;
+  const _req=obj.deep?14:def.req;
+  if(lvl(def.skill)<_req){
+    msg('You need a '+SKILL_META[def.skill].name+' level of '+_req+' to do that.');return;
   }
   setAction({type:'gather',obj,started:false},obj.x,obj.y);
   clickFx(obj.x,obj.y,'#ff4d3d');
@@ -3111,6 +3127,7 @@ function lightFire(i){
   const fo={def:'fire',x:fx,y:fy,alive:true,tmp:true,burnAt:performance.now()+60000};
   objects.push(fo);
   buildObjModel(fo);
+  if(typeof MP!=='undefined'&&MP.onFireLit)MP.onFireLit(fx,fy,60000);
   clickFx(fx,fy,'#ff7a2d');
   msg('You light a fire. Cook on it before it burns out.');
 }
@@ -3195,7 +3212,7 @@ function playerTick(){
     if(Math.random()<chance){
       let gid=def.item,gxp=def.xp;
       if(def.skill==='fishing'){
-        const FT=[['raw_swordfish',18,58,1.3],['raw_lobster',14,42,2],['raw_trout',8,26,2.6],
+        const FT=o.deep?[['raw_swordfish',18,58,1.3],['raw_lobster',14,42,2]]:[['raw_swordfish',18,58,1.3],['raw_lobster',14,42,2],['raw_trout',8,26,2.6],
           ['raw_sardine',3,15,3.4],['raw_shrimps',1,9,5]];
         const el=FT.filter(f=>lvl('fishing')>=f[1]);
         let tot=0;for(const f of el)tot+=f[3];
@@ -4036,9 +4053,11 @@ async function encodeSave(str){
 async function decodeSave(code){
   code=(code||'').replace(/\s+/g,'');
   let mode,body;
-  if(code.indexOf('ALDV1:')===0){mode=1;body=code.slice(6);}
-  else if(code.indexOf('ALDV0:')===0){mode=0;body=code.slice(6);}
+  const _i1=code.indexOf('ALDV1:'),_i0=code.indexOf('ALDV0:');
+  if(_i1>=0&&(_i0<0||_i1<_i0)){mode=1;body=code.slice(_i1+6);}
+  else if(_i0>=0){mode=0;body=code.slice(_i0+6);}
   else throw new Error('That does not look like an Aldervale save code.');
+  body=body.replace(/[^A-Za-z0-9_-]/g,'');
   let bytes;
   try{bytes=saveCodeB64ToBytes(body);}catch(e){throw new Error('The save code is damaged or incomplete.');}
   if(mode===0)return new TextDecoder().decode(bytes);
@@ -4100,7 +4119,6 @@ async function exportSaveToClipboard(){
   showSaveCodeModal(code,ok);
 }
 async function importSaveFromString(str){
-  if(!STORE)return {ok:false,err:'Saving is not available in this browser, so codes cannot be loaded here.'};
   let json;
   try{ json=await decodeSave(str); }
   catch(e){ return {ok:false,err:(e&&e.message)||'That save code could not be read.'}; }
@@ -4108,15 +4126,13 @@ async function importSaveFromString(str){
   try{ obj=JSON.parse(json); }
   catch(e){ return {ok:false,err:'The save code is damaged (could not read the data).'}; }
   if(!validSave(obj)) return {ok:false,err:'That save code is missing required character data.'};
-  try{
-    newSlot(obj.name||'Adventurer');
-    const id=activeSlot;
-    await STORE.set('aldervale-save-'+id,JSON.stringify(obj));
-    const loaded=await loadSlot(id);
-    if(!loaded) return {ok:false,err:'Could not load the imported character.'};
-    await upsertSlot(id,player.name);
-    return {ok:true,name:player.name};
-  }catch(e){ return {ok:false,err:'Could not store the imported character.'}; }
+  newSlot(obj.name||'Adventurer');
+  const id=activeSlot;
+  let loaded=false;
+  try{ loaded=await loadSlot(id,obj); }catch(e){ loaded=false; }
+  if(!loaded) return {ok:false,err:'That save code could not be applied to a character.'};
+  if(STORE){ try{ await STORE.set('aldervale-save-'+id,JSON.stringify(obj)); await upsertSlot(id,player.name); }catch(e){} }
+  return {ok:true,name:player.name};
 }
 async function saveGame(silent){
   if(!storageOK||!SAVE_KEY)return;
@@ -4127,13 +4143,13 @@ async function saveGame(silent){
     if(!silent)msg('Game saved.','#103a8c');
   }catch(e){}
 }
-async function loadSlot(id){
-  if(!STORE)return false;
-  storageOK=true;activeSlot=id;SAVE_KEY='aldervale-save-'+id;
+async function loadSlot(id, preObj){
+  if(!STORE && !preObj)return false;
+  storageOK=!!STORE;activeSlot=id;SAVE_KEY='aldervale-save-'+id;
   try{
-    const r=await STORE.get(SAVE_KEY);
-    if(r&&r.value){
-      const s=JSON.parse(r.value);
+    let s=preObj;
+    if(!s){ const r=await STORE.get(SAVE_KEY); if(r&&r.value)s=JSON.parse(r.value); }
+    if(s){
       Object.assign(player.skills,s.skills);
       player.inv=s.inv;player.hp=s.hp;
       player.x=s.x;player.y=s.y;player.px=s.x;player.py=s.y;
@@ -4607,6 +4623,7 @@ function partyEntrance(tx,ty){
 }
 function partyOptionsAt(tx,ty){
   const opts=[];
+  pushPeerOpts(opts,tx,ty);
   for(const g of ground)if(g.x===tx&&g.y===ty){opts.push({html:'Take <span class="t">'+ITEMS[g.id].name+'</span>',label:'Take '+ITEMS[g.id].name,fn:()=>startPickup(g)});}
   const iE={x:140,y:8},iW={x:100,y:8};
   if(dist1(iE.x,iE.y,tx,ty)<=1||dist1(iW.x,iW.y,tx,ty)<=1){
@@ -4625,6 +4642,20 @@ function partyOptionsAt(tx,ty){
   }
   return opts;
 }
+function pushPeerOpts(opts,tx,ty){
+  if(typeof MP==='undefined'||!MP.active())return;
+  const _rp=MP.remoteAt(tx,ty);
+  if(!_rp)return;
+  opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=MP.examineInfo?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' -- a fellow adventurer of Milville.','#103a8c');return;}let s=info.name+((typeof titleSuffix==='function')?titleSuffix(info.title):'');if(info.cmb!=null)s+=' -- Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}});
+  opts.push({html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
+  opts.push({html:'Follow <span class="t">'+_rp.name+'</span>',label:'Follow '+_rp.name,fn:()=>{cancelAction();followUid=_rp.uid;player._flx=null;player._fly=null;msg('You start following '+_rp.name+'. Click anywhere to stop.','#103a8c');}});
+  if(MP.groupCanInvite&&MP.groupCanInvite(_rp.uid)){
+    opts.push({html:'Invite <span class="t">'+_rp.name+'</span> to group',label:'Invite '+_rp.name+' to group',fn:()=>{const _gr=MP.groupInviteByUid(_rp.uid,_rp.name);if(_gr==='sent')msg('You invite '+_rp.name+' to your group.','#103a8c');else if(_gr==='full')msg('Your group is already full (max 4).','#9c1f1f');else if(_gr==='already')msg(_rp.name+' is already in your group.','#103a8c');else msg('Could not invite '+_rp.name+' right now.','#9c1f1f');}});
+  }
+  if(MP.tradeSnapshot&&!MP.tradeSnapshot().active){
+    opts.push({html:'Trade with <span class="t">'+_rp.name+'</span>',label:'Trade with '+_rp.name,fn:()=>{const _tr=MP.tradeRequest(_rp.uid,_rp.name);if(_tr==='sent')msg('Sending a trade request to '+_rp.name+'...','#103a8c');else if(_tr==='busy')msg('You are already in a trade.','#9c1f1f');else if(_tr==='offline')msg(_rp.name+' is not available to trade.','#9c1f1f');}});
+  }
+}
 function optionsAt(tx,ty){
   const opts=[];
   if(inParty)return partyOptionsAt(tx,ty);
@@ -4638,7 +4669,7 @@ function optionsAt(tx,ty){
       {html:'Examine <span class="t">Cage doors</span>',fn:()=>msg(OBJ_DEFS['mathesexit'].ex)});
     else if(io&&io.def==='quartermaster')opts.push(
       {html:'Talk-to <span class="t">Todd</span>',label:'Talk-to Todd',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y,id:'quartermaster',name:'Todd the Quartermaster'}},io.x,io.y)},
-      {html:'View <span class="t">Cage rewards</span>',label:'View Cage rewards',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y,cageshop:true}},io.x,io.y)},
+      {html:'View <span class="t">Cage rewards</span>',label:'View Cage rewards',fn:()=>setAction({type:'talkn',n:{x:io.x,y:io.y},cageshop:1},io.x,io.y)},
       {html:'Examine <span class="t">Todd</span>',label:'Examine Todd',fn:()=>msg(OBJ_DEFS['quartermaster'].ex)});
     else if(io&&io.def==='duel_trapdoor'){
       if(duel.state==='count'||duel.state==='fight')opts.push(
@@ -4836,9 +4867,11 @@ function optionsAt(tx,ty){
         opts.push({html:'Borrow <span class="t">a sack of flour</span>',label:'Borrow a sack of flour',fn:()=>setAction({type:'borrowflour',o},o.x,o.y)});
       opts.push({html:'Search <span class="t">larder</span>',label:'Search larder',fn:()=>msg(def.ex)});
     }else if(o.alive){
-      opts.push({html:def.action+' <span class="t">'+def.name+'</span>',
-        label:def.action+' '+def.name,fn:()=>startGather(o)},
-        {html:'Examine <span class="t">'+def.name+'</span>',fn:()=>msg(def.ex)});
+      const _onm=o.deep?'Deep-sea fishing spot':def.name;
+      const _oex=o.deep?'Dark, deep water -- lobster and swordfish lurk below.':def.ex;
+      opts.push({html:def.action+' <span class="t">'+_onm+'</span>',
+        label:def.action+' '+_onm,fn:()=>startGather(o)},
+        {html:'Examine <span class="t">'+_onm+'</span>',fn:()=>msg(_oex)});
     }else{
       opts.push({html:'Examine <span class="t">'+def.depName+'</span>',
         fn:()=>msg(def.depEx)});
@@ -4995,7 +5028,7 @@ function drawItemIcon(g,id,S){
       g.fillStyle='#9a5f2c';for(const[dx,dy]of[[-S*0.04,-S*0.02],[S*0.05,S*0.02],[0,S*0.05],[-S*0.02,S*0.05]]){g.beginPath();g.arc(cx+dx,cy+dy,S*0.018,0,7);g.fill();}}
     g.restore();return;
   }
-  if(id==='cage_token'||(ITEMS[id]&&ITEMS[id].model==='token')){
+  if(id!=='party_token'&&(id==='cage_token'||(ITEMS[id]&&ITEMS[id].model==='token'))){
     /* brass cage token: disc with a crossed-fists stamp */
     const R=S*0.34;
     g.fillStyle='#b88a2e';g.beginPath();g.arc(0,0,R,0,7);g.fill();
@@ -6809,7 +6842,7 @@ function buildForest(){
   _treeMesh=out.pos.length?bakeMesh(out,true):null;
 }
 buildForest();
-function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFall=on; buildForest(); }
+function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFall=on; buildForest(); if(_treeMesh&&typeof worldGroup!=='undefined'&&worldGroup)worldGroup.add(_treeMesh); }
 
 /* ------------------ ground clutter (no shadows) ------------------- */
 (function buildDetail(){
@@ -10652,7 +10685,7 @@ function makeGroundItem(id){
     add(OCT(0.04),0xc0182f).position.y=0.085;
   }
   else if(/amulet/.test(id)){
-    const col=id==='amulet_strength'?0xc0182f:id==='amulet_defence'?0x2a5fd0:0x2fae5a;
+    const col=id==='amulet_strength'?0xc0182f:id==='amulet_defence'?0x2a5fd0:id==='amulet_magic'?0x8a4fd0:id==='amulet_archery'?0x2aa07a:0x2fae5a;
     const ch=add(TOR(0.1,0.012,14),0xe8c23d);ch.rotation.x=1.2;ch.position.y=0.04;
     const gem=add(OCT(0.05),col);gem.position.set(0,0.05,0.09);gem.scale.y=1.3;
   }
@@ -13614,6 +13647,8 @@ const SMITH_RECIPES=[
   ['amulet_strength',3,'bronze_bar',1],
   ['bronze_chainbody',3,'bronze_bar',3],
   ['amulet_defence',3,'bronze_bar',1],
+  ['amulet_magic',4,'bronze_bar',1],
+  ['amulet_archery',4,'bronze_bar',1],
   ['bronze_kiteshield',4,'bronze_bar',3],
   ['bronze_platebody',5,'bronze_bar',5],
   ['bronze_platelegs',4,'bronze_bar',3],
@@ -16282,7 +16317,7 @@ function _rectRestore(){for(const s of _rSnap)hts[s[1]][s[0]]=s[2];}
     mkMaid(0xd9a878,0x2a1c12,102.9,15.5,-0.4);    /* by the west counter */
     mkMaid(0xc98e63,0x6a4a2a,108.0,12.0,0.1);     /* by the island */
   })();
-  /* Mr. Bozek, the chemistry master, dressed as Father Christmas by the tree */
+  /* Mr. Bozek, the mathematics master, dressed as Father Christmas by the tree */
   (function(){
     const b=makeHumanoid({skin:0xe8b488,shirt:0xc0241f,pants:0xc0241f,hair:0xf0f0f0,beard:0xf4f4f4,belt:0x1a1a1e,boots:0x1a1a1e});
     b.g.position.set(133.0,rectFY,6.4); b.g.rotation.y=-0.9; rectoryGroup.add(b.g);
@@ -16738,6 +16773,7 @@ function jellybeanGuess(){
 }
 function stPaulOptionsAt(tx,ty){
   const opts=[];
+  pushPeerOpts(opts,tx,ty);
   const SD={stpaulexit:1,sp_spencer:1,sp_organ:1,sp_manger:1,sp_wreath:1,sp_fig_pew:1,sp_fig_choir:1,sp_fig_alms:1,sp_fig_curtain:1,sp_fig_pipes:1,sp_fig_step:1};
   const io=objects.find(b=>b.x===tx&&b.y===ty&&SD[b.def]);
   if(!io)return opts;
@@ -16763,6 +16799,7 @@ function stPaulOptionsAt(tx,ty){
 }
 function rectoryOptionsAt(tx,ty){
   const opts=[];
+  pushPeerOpts(opts,tx,ty);
   const RD={rectoryexit:1,jellybean_jar:1,rectory_range:1,rectory_pantry:1,rectory_cabinet:1,rectory_martha:1,rectory_rector:1,rectory_cake:1,rectory_piano:1,rectory_tree:1,rectory_fireplace:1,rectory_island:1,rectory_book_horae:1,rectory_book_hymns:1,rectory_bozek:1,rectory_eggbasket:1};
   const io=objects.find(b=>b.x===tx&&b.y===ty&&RD[b.def]);
   if(!io)return opts;
@@ -17025,7 +17062,7 @@ function exitStPaul(){
   scene.fog.near=30;scene.fog.far=52;
   if(typeof stopOrgan==='function')stopOrgan();
   updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
-  if(player.quests&&player.quests.rxmas2&&player.quests.rxmas2.s>=4&&!player.winter){ player.winterUnlocked=true; player.winter=true; player.fall=false; if(typeof applyWinter==='function')applyWinter(); dirty=true; msg('You step out into a hushed, snow-falling Millville. Winter has come to the grounds.','#bcd6ec'); }
+  if(player.quests&&player.quests.rxmas2&&player.quests.rxmas2.s===4&&!player.winter){ player.winterUnlocked=true; player.winter=true; player.fall=false; if(typeof applyWinter==='function')applyWinter(); dirty=true; msg('You step out into a hushed, snow-falling Millville. Winter has come to the grounds.','#bcd6ec'); }
   else msg('You step back out onto the chapel green.');
 }
 let chapelProxies=[];let mathesProxies=[];let rectoryProxies=[];let stPaulProxies=[];
@@ -17843,6 +17880,7 @@ const MP = (function () {
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120), title: player.title || null }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
+  function onFireLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'fire', x: x | 0, y: y | 0, burn: burn | 0 }); }
 
   /* ---- shared-world reconciliation (Phase 1): dead mobs + depleted nodes ---- */
   const MAX_RS = 3600000;
@@ -18354,6 +18392,16 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
              respawning, revive it so ratsTick's mobOverride can sync it (ratsTick skips !alive). */
           if (typeof rats !== 'undefined' && rats[mi] && !rats[mi].alive) { rats[mi].alive = true; rats[mi].respawnAt = 0; }
         }
+        break;
+      }
+      case 'fire': {
+        if (m.uid === player.uid) break;
+        if (typeof objects === 'undefined') break;
+        const fx = m.x | 0, fy = m.y | 0;
+        if (objects.some(o0 => o0 && o0.def === 'fire' && o0.x === fx && o0.y === fy)) break;
+        const fo = { def: 'fire', x: fx, y: fy, alive: true, tmp: true, burnAt: performance.now() + (m.burn | 0 || 60000) };
+        objects.push(fo);
+        if (typeof buildObjModel === 'function') buildObjModel(fo);
         break;
       }
       case 'node': {
@@ -18973,7 +19021,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 
   return {
     CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo, pingPresence,
-    onLocalChat, onLocalEmote, onNodeDepleted, onMobKilled,
+    onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, sendMobAtk, clearMobAggro, groupParticipants,
