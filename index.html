@@ -2298,7 +2298,7 @@ const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   for(let y=3;y<H-3;y++)for(let x=OFF;x<OFF+3;x++)
     if(tiles[y][x]===T_FOREST)tiles[y][x]=T_GRASS;
   W=NW;
-  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector']);
+  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step']);
   for(const o of objects)if(!INT_DEFS.has(o.def))o.x+=WX;  /* interior objects stay at their (unshifted) interior coords */
   for(const b of BUILDINGS)b.x+=WX;
   for(const n of npcs){n.x+=WX;if(n.sx!=null)n.sx+=WX;if(n.px!=null)n.px+=WX;}
@@ -2643,7 +2643,7 @@ async function upsertSlot(id,name){
   await writeSlots(list);
 }
 const player={
-  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,maxHit:0,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
+  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,maxHit:0,maxMagicHit:0,maxRangeHit:0,deaths:0,pvpWins:0,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
   x:89+WX,y:88,px:89+WX,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
   hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0},
@@ -2752,7 +2752,7 @@ function dropMobLoot(r){
      if(r.kind==='blackdragon'){
        dropGround(r.x,r.y,'coins',rndi(1200,3000));
        if(Math.random()<0.6)dropGround(r.x,r.y,['rune_bar','runite_ore','uncut_diamond'][rndi(0,2)],rndi(3,8));
-       if(Math.random()<1/400){if(invFull())dropGround(r.x,r.y,'draconic_visage',1);else addItem('draconic_visage',1);msg('The Black dragon yields a Draconic visage \u2014 an extraordinary find!','#e0b020');}
+       if(Math.random()<1/400){if(invFull())dropGround(r.x,r.y,'draconic_visage',1);else addItem('draconic_visage',1);msg('The Black dragon yields a Draconic visage \u2014 an extraordinary find!','#8a5e0a');}
      }
    }}
   if(r.kind==='brat'){
@@ -2801,10 +2801,10 @@ function rollRareDrop(r){
   const c=MOB_KINDS[r.kind].cmb;
   {const NB={wyvern:['rune_bar','mithril_bar','uncut_diamond'],basilisk:['mithril_bar','steel_bar'],gargoyle:['steel_bar','iron_bar'],banshee:['iron_bar','copper_ore'],dragon:['rune_bar','uncut_diamond','uncut_ruby']}[r.kind];
    if(NB&&Math.random()<0.1){const nid=NB[rndi(0,NB.length-1)],nq=rndi(5,15);if(!addNote(nid,nq))dropGround(r.x,r.y,nid,nq);msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a');sfx.pickup&&sfx.pickup();}}
-  if(r.kind==='wyvern'){if(Math.random()<1/800){(addItem('draconic_visage',1)||dropGround(r.x,r.y,'draconic_visage',1));msg('The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!','#e0b020');}else if(Math.random()<1/350){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The skeletal wyvern drops an Abyssal whip!','#e0b020');}}
-  else if(r.kind==='gargoyle'){if(Math.random()<1/220){(addItem('granite_maul',1)||dropGround(r.x,r.y,'granite_maul',1));msg('The gargoyle drops a Granite maul!','#e0b020');}}
-  else if(r.kind==='basilisk'){if(Math.random()<1/300){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The basilisk drops an Abyssal whip!','#e0b020');}else if(Math.random()<1/110){(addItem('basilisk_jaw',1)||dropGround(r.x,r.y,'basilisk_jaw',1));msg('The basilisk drops a Basilisk jaw.','#e0b020');}}
-  else if(r.kind==='banshee'){if(Math.random()<1/100){(addItem('wailing_relic',1)||dropGround(r.x,r.y,'wailing_relic',1));msg('The banshee leaves behind a Wailing relic.','#e0b020');}}
+  if(r.kind==='wyvern'){if(Math.random()<1/800){(addItem('draconic_visage',1)||dropGround(r.x,r.y,'draconic_visage',1));msg('The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!','#8a5e0a');}else if(Math.random()<1/350){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The skeletal wyvern drops an Abyssal whip!','#8a5e0a');}}
+  else if(r.kind==='gargoyle'){if(Math.random()<1/220){(addItem('granite_maul',1)||dropGround(r.x,r.y,'granite_maul',1));msg('The gargoyle drops a Granite maul!','#8a5e0a');}}
+  else if(r.kind==='basilisk'){if(Math.random()<1/300){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The basilisk drops an Abyssal whip!','#8a5e0a');}else if(Math.random()<1/110){(addItem('basilisk_jaw',1)||dropGround(r.x,r.y,'basilisk_jaw',1));msg('The basilisk drops a Basilisk jaw.','#8a5e0a');}}
+  else if(r.kind==='banshee'){if(Math.random()<1/100){(addItem('wailing_relic',1)||dropGround(r.x,r.y,'wailing_relic',1));msg('The banshee leaves behind a Wailing relic.','#8a5e0a');}}
   if(Math.random()<Math.min(0.16,0.015+c*0.005)){
     const roll=Math.random()*Math.max(6,c);
     let gem='uncut_sapphire';
@@ -2872,7 +2872,7 @@ function rollClueDrop(r){
     if(Math.random()>=1/T.rate)continue;   /* this tier didn't roll */
     if(clueHeld(tier))continue;            /* already have one of this tier -> try a lower tier */
     if(invFull())dropGround(r.x,r.y,T.item,1); else addItem(T.item,1);
-    msg('A '+T.label+' clue scroll! Read it to begin the trail.','#caa23a');
+    msg('A '+T.label+' clue scroll! Read it to begin the trail.','#8a5e0a');
     return;                                /* one scroll per kill */
   }
 }
@@ -2887,7 +2887,7 @@ function readClue(itemId){
   if(!player.clueData[tier])player.clueData[tier]=buildClueTrail(tier);
   const cd=player.clueData[tier], T=CLUE_TIERS[tier], spot=CLUE_SPOTS[cd.trail[cd.step]];
   const si=T.steps>1?(' (step '+(cd.step+1)+' of '+T.steps+')'):'';
-  msg(T.label+' clue'+si+': '+spot.clue,'#caa23a');
+  msg(T.label+' clue'+si+': '+spot.clue,'#8a5e0a');
   dirty=true; updateTreasureX();
 }
 function activeClueTargets(){
@@ -2905,6 +2905,7 @@ function clearTreasureX(){
   treasureX=null;
 }
 function updateTreasureX(){
+  if(curInterior()){clearTreasureX();return;}
   let best=null,bd=1e9;
   for(const t of activeClueTargets()){
     const d=Math.max(Math.abs(t.x-player.x),Math.abs(t.y-player.y));
@@ -3307,7 +3308,7 @@ function updateMusic(){
   if(musicOff||inChapel||inStPaul||inSos){ if(musicMode)stopMusic(); return; }
   if(inRectory){ startMusic('rectory'); return; }
   if(inParty){ startMusic('party'); return; }
-  startMusic(inWild(player.x,player.y)?'wild':'map');
+  startMusic((!curInterior()&&inWild(player.x,player.y))?'wild':'map');
 }
 const sfx={
   chop:()=>tone(140,70,.12,'triangle',.12),
@@ -3348,7 +3349,7 @@ function drawNoteBg(g,S){g.save();
   g.strokeStyle='#9c8240';g.lineWidth=1;g.strokeRect(S*0.13+0.5,S*0.15+0.5,S*0.74,S*0.70);
   g.fillStyle='#cdb46e';g.beginPath();g.moveTo(S*0.87,S*0.15);g.lineTo(S*0.87,S*0.31);g.lineTo(S*0.71,S*0.15);g.closePath();g.fill();
   g.restore();}
-function findItem(id){return player.inv.findIndex(s=>s&&s.id===id);}
+function findItem(id){return player.inv.findIndex(s=>s&&s.id===id&&!s.noted);}
 function invFull(){return player.inv.every(s=>s);}
 
 /* =============================== xp ================================ */
@@ -3429,7 +3430,7 @@ function addXp(skill,amt){
     sfx.level();
     if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
     if(skill==='prayer'&&Math.floor(after/10)>Math.floor(before/10))msg('Your faith deepens \u2014 your prayers now drain more slowly.','#7a4a0a');
-    if(before<50&&after>=50)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from the '+SKILL_META[skill].name+' Master at the Grand Exchange.','#7a4a0a');
+    if(before<99&&after>=99)msg('You have mastered '+SKILL_META[skill].name+'! Claim your '+SKILL_META[skill].name+' Master Cape from the '+SKILL_META[skill].name+' Master at the Grand Exchange.','#7a4a0a');
     const c9=cmbLvl();
     if(c9>(player.cmb||3)){
       player.cmb=c9;
@@ -3780,6 +3781,8 @@ function playerTick(){
       addXp('hitpoints',0.5*dmg);
     }
     if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;}
+    if(wstyle==='magic'){if(dmg>(player.maxMagicHit||0)){player.maxMagicHit=dmg;dirty=true;}}
+    else if(wstyle==='ranged'){if(dmg>(player.maxRangeHit||0)){player.maxRangeHit=dmg;dirty=true;}}
     if(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dmg))return;
     if(player.slayer&&player.slayer.unlocks&&player.slayer.unlocks.bigger&&!r.superiorRolled&&player.slayer.task===r.kind&&player.slayer.done<player.slayer.need&&inWild(r.sx,r.sy)){r.superiorRolled=true;if(Math.random()<0.14){r.superior=true;if(r._m&&r._m.group){if(r._supScale===undefined)r._supScale=r._m.group.scale.x;r._m.group.scale.setScalar(r._supScale*1.4);}msg('A superior '+r.name.toLowerCase()+' rises \u2014 bigger, and badder!','#9a6fb0');}}
     {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
@@ -4396,7 +4399,8 @@ function isRecoverable(id){
 }
 function die(){
   sfx.die();
-  if(inWild(player.x,player.y)){
+  player.deaths=(player.deaths||0)+1;dirty=true;
+  if(!curInterior()&&inWild(player.x,player.y)){
     const dx2=player.x,dy2=player.y;
     player.lostStash=player.lostStash||[];
     for(let i=0;i<28;i++){const sl=player.inv[i];
@@ -4453,7 +4457,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:(inChapel?CHAPEL_RETURN.x:inRectory?RECT_RETURN.x:inStPaul?STPAUL_RETURN.x:inMathes?MATHES_RETURN.x:inSos?SOS_RETURN.x:inParty?partyReturn.x:player.x),y:(inChapel?CHAPEL_RETURN.y:inRectory?RECT_RETURN.y:inStPaul?STPAUL_RETURN.y:inMathes?MATHES_RETURN.y:inSos?SOS_RETURN.y:inParty?partyReturn.y:player.y),
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,mapv:'sps4',xpv:2};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -4602,7 +4606,7 @@ async function loadSlot(id, preObj){
       player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
       player.title=s.title||null;
       player.winterUnlocked=!!s.winterUnlocked;
-      player.maxHit=s.maxHit||0;
+      player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;
       player.winter=!!s.winter; player.fall=!!s.fall; player.fallUnlocked=!!s.fallUnlocked;
       if(s.name)player.name=s.name;
       if(s.mmf)Object.assign(player.mmf,s.mmf);
@@ -4713,9 +4717,9 @@ let _skTip=null;
 function showSkillTip(skill){
   if(!_skTip){_skTip=document.createElement('div');_skTip.id='skilltip';document.body.appendChild(_skTip);}
   const xp=Math.floor(player.skills[skill]),l=levelFor(xp),nm=SKILL_META[skill].name;
-  if(l>=99){_skTip.innerHTML='<b>'+nm+'</b> &mdash; Level 99<br>'+fmt(xp)+' xp &middot; <span style="color:#c9a23a">Max level</span>';}
+  if(l>=99){_skTip.innerHTML='<b>'+nm+'</b> &mdash; Level 99<br>'+fmt(xp)+' xp &middot; <span style="color:#c9a23a">Mastered</span>';}
   else{const base=XP_TABLE[l],nx=XP_TABLE[l+1],pct=Math.max(0,Math.min(100,Math.round((xp-base)/(nx-base)*100)));
-    _skTip.innerHTML='<b>'+nm+'</b> &mdash; Level '+l+(l>=50?' <span style="color:#c9a23a">(Mastered)</span>':'')+'<br>'+fmt(xp)+' xp<br><span style="color:#e8c93f">'+fmt(nx-xp)+' xp to level '+(l+1)+'</span><div class="stipbar"><div class="stipfill" style="width:'+pct+'%"></div></div>';}
+    _skTip.innerHTML='<b>'+nm+'</b> &mdash; Level '+l+'<br>'+fmt(xp)+' xp<br><span style="color:#e8c93f">'+fmt(nx-xp)+' xp to level '+(l+1)+'</span><div class="stipbar"><div class="stipfill" style="width:'+pct+'%"></div></div>';}
   _skTip.style.display='block';
 }
 function moveSkillTip(e){if(!_skTip)return;const r=_skTip.getBoundingClientRect();let x=e.clientX+14,y=e.clientY+14;if(x+r.width>innerWidth-6)x=e.clientX-r.width-14;if(y+r.height>innerHeight-6)y=e.clientY-r.height-14;_skTip.style.left=x+'px';_skTip.style.top=y+'px';}
@@ -6088,7 +6092,7 @@ function drawItemIcon(g,id,S){
  case 'rock_hammer':{g.strokeStyle='#6e4a26';g.lineWidth=2.8;g.beginPath();g.moveTo(-5,9);g.lineTo(3,-5);g.stroke();g.save();g.translate(4,-6);g.rotate(0.5);g.fillStyle='#7a818a';g.strokeStyle='#3a3f47';g.lineWidth=1.2;g.fillRect(-6,-3.5,12,7);g.strokeRect(-6,-3.5,12,7);g.fillStyle='#9aa3ad';g.fillRect(-6,-3.5,12,2);g.restore();break;}
  case 'abyssal_whip':{g.strokeStyle='#1c1118';g.lineWidth=3;g.fillStyle='#3a1820';g.beginPath();g.arc(-4,6,3,0,7);g.fill();g.strokeStyle='#7a2030';g.lineWidth=2;g.beginPath();g.moveTo(-4,6);g.quadraticCurveTo(8,2,4,-4);g.quadraticCurveTo(0,-9,-6,-6);g.stroke();g.strokeStyle='#c0394b';g.lineWidth=1;g.beginPath();g.moveTo(-6,-6);g.lineTo(-9,-9);g.stroke();break;}
  case 'granite_maul':{g.strokeStyle='#5a4326';g.lineWidth=2.6;g.beginPath();g.moveTo(-4,9);g.lineTo(2,-3);g.stroke();g.fillStyle='#6e6f73';g.strokeStyle='#3a3b3f';g.lineWidth=1.2;g.beginPath();g.moveTo(-6,-9);g.lineTo(8,-7);g.lineTo(7,-1);g.lineTo(-7,-3);g.closePath();g.fill();g.stroke();g.fillStyle='#9a9ca0';g.fillRect(-5,-8,3,3);g.fillRect(2,-6,3,3);break;}
- case 'draconic_visage':{g.fillStyle='#7a2d22';g.strokeStyle='#3a120c';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-9);g.lineTo(8,-2);g.lineTo(5,8);g.lineTo(-5,8);g.lineTo(-8,-2);g.closePath();g.fill();g.stroke();g.fillStyle='#e0b020';g.beginPath();g.moveTo(-4,-1);g.lineTo(-1,1);g.lineTo(-4,3);g.closePath();g.fill();g.beginPath();g.moveTo(4,-1);g.lineTo(1,1);g.lineTo(4,3);g.closePath();g.fill();g.strokeStyle='#3a120c';g.beginPath();g.moveTo(-2,5);g.lineTo(2,5);g.stroke();break;}
+ case 'draconic_visage':{g.fillStyle='#7a2d22';g.strokeStyle='#3a120c';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-9);g.lineTo(8,-2);g.lineTo(5,8);g.lineTo(-5,8);g.lineTo(-8,-2);g.closePath();g.fill();g.stroke();g.fillStyle='#8a5e0a';g.beginPath();g.moveTo(-4,-1);g.lineTo(-1,1);g.lineTo(-4,3);g.closePath();g.fill();g.beginPath();g.moveTo(4,-1);g.lineTo(1,1);g.lineTo(4,3);g.closePath();g.fill();g.strokeStyle='#3a120c';g.beginPath();g.moveTo(-2,5);g.lineTo(2,5);g.stroke();break;}
  case 'basilisk_jaw':{g.fillStyle='#cdbf8a';g.strokeStyle='#6a5e3a';g.lineWidth=1.2;g.beginPath();g.moveTo(-8,-2);g.quadraticCurveTo(0,4,8,-2);g.quadraticCurveTo(8,2,0,7);g.quadraticCurveTo(-8,2,-8,-2);g.closePath();g.fill();g.stroke();g.fillStyle='#f2ecd0';for(const fx of [-5,-2,1,4]){g.beginPath();g.moveTo(fx,2);g.lineTo(fx+1.4,7);g.lineTo(fx+2.8,2);g.closePath();g.fill();}break;}
  case 'wailing_relic':{g.fillStyle='#7d8794';g.strokeStyle='#3a4049';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-8);g.quadraticCurveTo(6,-6,6,4);g.lineTo(-6,4);g.quadraticCurveTo(-6,-6,0,-8);g.closePath();g.fill();g.stroke();g.fillStyle='#3a4049';g.beginPath();g.arc(0,5,1.6,0,7);g.fill();g.strokeStyle='#bfe6f5';g.lineWidth=0.8;g.beginPath();g.arc(0,-2,9,-0.6,0.6);g.stroke();break;}
  case 'elemental_shield':{g.fillStyle='#6fa8d8';g.strokeStyle='#3a6a94';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-9);g.lineTo(8,-5);g.quadraticCurveTo(8,6,0,10);g.quadraticCurveTo(-8,6,-8,-5);g.closePath();g.fill();g.stroke();g.strokeStyle='#dff0fb';g.lineWidth=1.4;g.beginPath();g.moveTo(0,-5);g.lineTo(0,6);g.moveTo(-4,-1);g.lineTo(4,3);g.moveTo(4,-1);g.lineTo(-4,3);g.stroke();break;}
@@ -8037,7 +8041,7 @@ function buildObjModel(o){
     if(def==='birch'){
       for(let bi=0;bi<5;bi++){const by=0.22+bi*0.27;const rr=trunkR*(1-0.45*(by/trunkH))+0.013;
         const band=mesh(new THREE.CylinderGeometry(rr,rr,0.04,6),0x2b2620);
-        band.position.y=by;band.rotation.z=trunk.rotation.z;g.add(band);}
+        band.position.y=by-trunkH/2;trunk.add(band);}
     }
     const fol=new THREE.Group();
     const br1=mesh(new THREE.CylinderGeometry(0.035,0.06,0.5,4),trunkCol);
@@ -10768,9 +10772,9 @@ function makeMaster(g,sk){
 function masterTree(sk){
   const nm=SKILL_META[sk].name;
   const lv=levelFor(player.skills[sk]);
-  const claimable=lv>=50&&!hasMasterCape(sk);
+  const claimable=lv>=99&&!hasMasterCape(sk);
   const tree={
-    start:{who:'npc',text:'I am the '+nm+' Master. '+(claimable?'And you have mastered '+nm+' \u2014 your cape is ready whenever you wish to claim it.':(hasMasterCape(sk)?'You already wear the '+nm+' cape with honour.':'Reach level 50 '+nm+' and the '+nm+' Master Cape is yours.')),next:'menu'},
+    start:{who:'npc',text:'I am the '+nm+' Master. '+(claimable?'And you have mastered '+nm+' \u2014 your cape is ready whenever you wish to claim it.':(hasMasterCape(sk)?'You already wear the '+nm+' cape with honour.':'Reach level 99 '+nm+' and the '+nm+' Master Cape is yours.')),next:'menu'},
     menu:{opts:[]},
     teach:{who:'npc',text:MASTER_TIPS[sk],next:'menu'},
     by:{who:'npc',text:'May your '+nm+' never falter.',next:null}
@@ -11708,10 +11712,12 @@ function makeGroundItem(id){
     const c=id==='raw_shrimps'?0xe8a7b4:id==='shrimps'?0xe87a4a:0x3c3733;
     const s=add(SPH(0.13),c);s.scale.set(1.3,0.45,0.9);s.position.y=0.06;
   }
-  else if(id==='bones'){
-    const bGeo=CYL(0.025,0.025,0.34,5);
-    const b1=add(bGeo,0xefe9d8);b1.rotation.z=Math.PI/2;b1.rotation.y=0.6;b1.position.y=0.04;
-    const b2=add(bGeo,0xe7e0cc);b2.rotation.z=Math.PI/2;b2.rotation.y=-0.7;b2.position.y=0.07;
+  else if(id==='bones'||id==='big_bones'||id==='small_bones'){
+    const sc=id==='big_bones'?1.4:id==='small_bones'?0.62:1;
+    const bGeo=CYL(0.025*sc,0.025*sc,0.34*sc,5);
+    const b1=add(bGeo,0xefe9d8);b1.rotation.z=Math.PI/2;b1.rotation.y=0.6;b1.position.y=0.04*sc;
+    const b2=add(bGeo,0xe7e0cc);b2.rotation.z=Math.PI/2;b2.rotation.y=-0.7;b2.position.y=0.07*sc;
+    if(id==='big_bones'){const b3=add(bGeo,0xe0d8c0);b3.rotation.z=Math.PI/2;b3.rotation.y=0.15;b3.position.set(0.05,0.11,0.04);}
   }
   else if(id==='coins'){
     for(let i=0;i<3;i++){const c=add(CYL(0.11,0.11,0.035,8),0xe8c23d);c.position.set((i-1)*0.07,0.02+i*0.04,(i%2)*0.06);}
@@ -12096,6 +12102,7 @@ function castPick(ev){
   const hits=_rc.intersectObjects(inMathes?mathesProxies:(inParty?[]:(inChapel?chapelProxies:(inRectory?rectoryProxies:(inStPaul?stPaulProxies:proxies)))),false).filter(h=>{
     const d=h.object.userData;
     if(d.kind==='rat')return d.r.alive&&(d.r.interior||null)===curInterior();
+    if(d.kind==='sosportal')return curInterior()==='sos';
     if(d.kind==='item')return ground.some(gi=>gi.uid===d.uid);
     return true;
   });
@@ -12359,6 +12366,50 @@ invGrid.addEventListener('click',e=>{
   if(shopOpen){sellSlot(+sl.dataset.i,1);return;}
   itemPrimary(+sl.dataset.i);
 });
+/* ---- drag items to reorganize the inventory (mobile + desktop) ---- */
+(function(){
+  invGrid.style.touchAction='none';
+  let dg=null,dragJust=false;const TH=8;
+  function slotIdxAt(x,y){
+    const el=document.elementFromPoint(x,y);
+    const sl=el&&el.closest&&el.closest('.slot');
+    return (sl&&sl.parentElement===invGrid)?+sl.dataset.i:-1;
+  }
+  invGrid.addEventListener('pointerdown',e=>{
+    const sl=e.target.closest('.slot');if(!sl||sl.parentElement!==invGrid)return;
+    const i=+sl.dataset.i;if(!player.inv[i])return;
+    dg={from:i,ghost:null,sx:e.clientX,sy:e.clientY,moved:false};
+  });
+  window.addEventListener('pointermove',e=>{
+    if(!dg)return;
+    const dx=e.clientX-dg.sx,dy=e.clientY-dg.sy;
+    if(!dg.moved){
+      if(dx*dx+dy*dy<TH*TH)return;
+      dg.moved=true;
+      const gh=document.createElement('canvas');gh.width=30;gh.height=30;
+      try{gh.getContext('2d').drawImage(slotEls[dg.from].firstChild,0,0);}catch(_){}
+      gh.style.cssText='position:fixed;width:36px;height:36px;pointer-events:none;z-index:99999;opacity:.85;transform:translate(-50%,-50%);filter:drop-shadow(0 2px 4px rgba(0,0,0,.55));image-rendering:pixelated;';
+      document.body.appendChild(gh);dg.ghost=gh;
+      slotEls[dg.from].style.opacity='0.35';
+    }
+    if(dg.ghost){dg.ghost.style.left=e.clientX+'px';dg.ghost.style.top=e.clientY+'px';}
+    e.preventDefault();
+  },{passive:false});
+  window.addEventListener('pointerup',e=>{
+    if(!dg)return;const d=dg;dg=null;
+    if(d.ghost)d.ghost.remove();
+    if(slotEls[d.from])slotEls[d.from].style.opacity='';
+    if(!d.moved)return;             /* a tap -> leave it to the click handler */
+    dragJust=true;
+    const to=slotIdxAt(e.clientX,e.clientY);
+    if(to>=0&&to!==d.from){
+      const inv=player.inv,t=inv[to];inv[to]=inv[d.from];inv[d.from]=t;
+      renderInv();dirty=true;if(typeof audio==='function')audio();
+    }
+  });
+  /* swallow the synthetic click that can follow a drag (capture phase, before the use handler) */
+  invGrid.addEventListener('click',e=>{ if(dragJust){dragJust=false;e.stopPropagation();e.preventDefault();} },true);
+})();
 invGrid.addEventListener('contextmenu',e=>{
   e.preventDefault();
   const sl=e.target.closest('.slot');if(!sl)return;
@@ -13244,7 +13295,7 @@ function drawMini(){
   if(player.mmf.shop&&capeNpc)
     mmIcon(g,Math.round(capeNpc.px*4)+2,Math.round(capeNpc.py*4)+2,
       'shop','#b04a9e');
-  for(const t of activeClueTargets()){
+  if(!curInterior())for(const t of activeClueTargets()){
     const mx=t.x*4+2,my=t.y*4+2;
     const near=Math.max(Math.abs(t.x-player.x),Math.abs(t.y-player.y))<=CLUE_REVEAL;
     g.beginPath();g.arc(mx,my,near?5:6.5,0,7);
@@ -13697,7 +13748,7 @@ const QUEST_REWARDS={
   'The Missing Shipment':{coins:350,items:['chefs_hat'],xp:[['cooking',100]]},
   'Lost at Practice':{coins:400,items:['amulet_strength'],xp:[['strength',150]]},
   'The Training Table':{coins:500,xp:[['fishing',200],['cooking',125]]},
-  'Trick or Treat':{coins:500,items:['pumpkin_helmet']},
+  'Trick or Treat':{coins:500,items:['pumpkin_helmet'],extra:['the Jack-o\u2019-Lantern emote','fall scenery (toggle in Settings)']},
   'A Rectory Christmas':{items:['xmas_sweater'],xp:[['cooking',225]]},
   'Away in a Manger':{coins:5000,xp:[['prayer',400],['woodcutting',250]],extra:['the Festive Spirit emote','winter scenery (toggle in Settings)']}
 };
@@ -13746,12 +13797,13 @@ function ensureWorldObj(def,x,y,want){
 }
 function syncChefObjects(){
   const cs=player.quests.chef.s;
-  ensureWorldObj('herbplanter',138,58,cs===1);          /* herb garden: only during Part 1 */
-  ensureWorldObj('range',135,48,cs>=1&&cs<6);            /* kitchen range: only during the questline */
+  ensureWorldObj('herbplanter',138+WX,58,cs===1);          /* herb garden: south of Coit, only during Part 1 */
+  ensureWorldObj('range',135+WX,48,cs>=1&&cs<6);            /* kitchen range: next to Larry, only during the questline */
+  ensureWorldObj('larder',137+WX,69,cs<6);                  /* 31 Hockey Lane larder: despawns once the chef quest is complete */
 }
 function syncQuestWorld(){
   syncChefObjects();
-  {const rx=player.quests.rxmas; ensureWorldObj('rectory_woodpile',90,85, rx.s>=2&&rx.s<4&&countItem('xmas_firewood')<1);}
+  {const rx=player.quests.rxmas; ensureWorldObj('rectory_woodpile',90+WX,85, rx.s>=2&&rx.s<4&&countItem('xmas_firewood')<1);}
   const mq=player.quests.mish;
   for(const[id,fl]of[['lost1','r1'],['lost2','r2']]){
     const n=npcs.find(n2=>n2.id===id);
@@ -14015,7 +14067,7 @@ function signetGo(tx,ty,text){if(performance.now()-(player.combatT||0)<6000){msg
   },560);
   dirty=true;}
 function signetTeleMaster(){signetGo(49+WX,31,'The signet carries you to the Slayer Master at the wild\u2019s edge.');}
-const SIGNET_TASK_TELE={basilisk:[15,19],banshee:[11,12],gargoyle:[33,6],wyvern:[47,13]};for(const k in SIGNET_TASK_TELE)SIGNET_TASK_TELE[k][0]+=WX;
+const SIGNET_TASK_TELE={ghost:[86,25],wolf:[120,82],darkwizard:[144,35],hillgiant:[118,74],redspider:[46,73],bandit:[123,18],patient:[89,40],mossgiant:[122,64],student:[37,80],skelearcher:[137,44],banditleader:[126,13],cyclops:[115,80],lesser:[46,102],firegiant:[43,114],greater:[46,116],icegolem:[40,24],kurask:[69,117],banshee:[90,59],gargoyle:[73,108],basilisk:[74,127],wyvern:[32,28]};
 function signetTeleTask(){const sl=player.slayer;
   if(!sl.task){msg('You hold no contract. Seek the Slayer Master first.','#9a6fb0');return;}
   if(sl.done>=sl.need){msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');return;}
@@ -14184,7 +14236,7 @@ const DIALOGUES={
           addXp('attack',300);addXp('strength',250);addXp('defense',225);addXp('hitpoints',250);
           q5.s=2;questDone('The First Rector');
           return 'done';}}]},
-      done:{who:'npc',text:'Then take the school\u2019s deepest thanks \u2014 gold, an adamant blade, and the Pelican cape. Only one other ever wore it. He founded this place.',next:'slpt'},
+      done:{who:'npc',text:'Then take the school\u2019s deepest thanks \u2014 gold, a suit of black armour, and the Pelican cape. Only one other ever wore it. He founded this place.',next:'slpt'},
       slpt:{who:'npc',text:'One thing more. The wild beyond the ditch will not stay quiet for long. Seek the Slayer Master in the northwest, by the Blass Clubhouse \u2014 a ledger is kept there of everything out there that still needs killing, and the work pays well.',next:null}};
     if(q5.s===1)return{
       start:{who:'npc',text:'The western wastes. The ruin that still burns. He is sealed there \u2014 but not for much longer. Go, and strike true.',next:null}};
@@ -14438,14 +14490,14 @@ const DIALOGUES={
           return 'done';}}]},
       done:{who:'npc',text:'Gold \u2014 and my old Amulet of Strength. It has carried me through worse than ghosts. Wear it well.',next:null}};
     if(q.s===1)return{
-      start:{who:'npc',text:'Any luck? Northwest, past the ditch \u2014 they were running the wood-line route. Find them and tell them to RUN HOME.',next:null}};
+      start:{who:'npc',text:'Any luck? Across the ditch \u2014 out in the Wilderness, they were running the wood-line route. Find them and tell them to RUN HOME.',next:null}};
     return{
       start:{who:'npc',text:'Hey! Training or loit\u2014 actually, no time. I have a real problem. Two of mine never came back from practice.',next:'ask'},
       ask:{opts:[{label:'What happened?',next:'p1'},
         {label:'Any training tips?',next:'tp'},
         {label:'See you, Mish.',next:'sy'}]},
       tp:{who:'npc',text:'Strength is showing up. Rotate your styles: stab for accuracy, slash for power, block to take a hit.',next:'ask'},
-      p1:{who:'npc',text:'My cross-country pair, running the wood-line. Last seen northwest \u2014 PAST the Wilderness ditch. I cannot leave the floor unstaffed.',next:'p2'},
+      p1:{who:'npc',text:'My cross-country pair, running the wood-line. Last seen across the ditch \u2014 out in the Wilderness. I cannot leave the floor unstaffed.',next:'p2'},
       p2:{opts:[{label:'I will find them.',next:()=>{
           q.s=1;renderQuests();dirty=true;
           msg('Quest started: Lost at Practice','#103a8c');
@@ -14529,7 +14581,7 @@ const DIALOGUES={
           for(let k9=0;k9<bozekGot(q);k9++){
             const i9=findItem('candy');if(i9>=0)removeSlot(i9);}
           addItem('coins',500);addItem('pumpkin_helmet');
-          q.s=2;if(player)player.fallUnlocked=true;questDone('Trick or Treat');
+          q.s=2;if(player)player.fallUnlocked=true;if(typeof applyFall==='function')applyFall();questDone('Trick or Treat');
           return 'done';}}]},
       done:{who:'npc',text:'Gold for your trouble \u2014 and the pumpkin helmet! Carved it myself. You are practically festive now.',next:null}};
     if(q.s===1)return{
@@ -14774,9 +14826,9 @@ function hasMasterCape(sk){
   if(player.inv.some(sl=>sl&&sl.id===id))return true;
   return bank.some(b=>b&&b.id===id&&(b.qty||1)>0);
 }
-function claimableCapes(){return SKILLS.filter(sk=>levelFor(player.skills[sk])>=50&&!hasMasterCape(sk));}
+function claimableCapes(){return SKILLS.filter(sk=>levelFor(player.skills[sk])>=99&&!hasMasterCape(sk));}
 function grantMasterCape(sk){
-  if(levelFor(player.skills[sk])<50||hasMasterCape(sk))return false;
+  if(levelFor(player.skills[sk])<99||hasMasterCape(sk))return false;
   if(!addItem(masterCapeId(sk))){msg('Your pack is full \u2014 make room for the cape first.');return false;}
   if(sfx.level)sfx.level();
   msg('The Master fastens the '+SKILL_META[sk].name+' Master Cape about your shoulders. Wear it for a great boost to '+SKILL_META[sk].name+'.','#9c1f1f');
@@ -14921,7 +14973,7 @@ const COOKED_FISH=['shrimps','sardine','trout','lobster','swordfish'];
 function cookedFishCount(){let n=0;for(const f of COOKED_FISH)n+=countItem(f);return n;}
 function consumeCookedFish(n){for(const f of COOKED_FISH){while(n>0&&countItem(f)>0){removeSlot(findItem(f));n--;}}return n<=0;}
 function countItem(id){
-  return player.inv.reduce((a,sl)=>a+(sl&&sl.id===id?(sl.qty||1):0),0);
+  return player.inv.reduce((a,sl)=>a+(sl&&sl.id===id&&!sl.noted?(sl.qty||1):0),0);
 }
 function cageDrawMapIcon(cv,mid){   /* a little top-down minimap of the arena: floor colour + obstacles + hazards + spawns */
   const g=cv.getContext('2d'),cw=cv.width,ch=cv.height;
@@ -15567,10 +15619,11 @@ function renderTradeInv(myOffer){
   const agg=tradeInvAgg(myOffer);
   if(!agg.size){ const d=document.createElement('div'); d.className='tradeempty'; d.style.gridColumn='1/-1'; d.textContent='No tradeable items.'; gr.appendChild(d); return; }
   for(const [id,rem] of agg){
-    gr.appendChild(_tradeCell({id,qty:rem}, ()=>tradeOffer(id,1), (e)=>{
+    gr.appendChild(_tradeCell({id,qty:rem}, id==='coins'?()=>_promptQty(ITEMS['coins'].name,n=>tradeOffer('coins',n)):()=>tradeOffer(id,1), (e)=>{
       const opts=[{html:'Offer-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,1)}];
       if(rem>=5)opts.push({html:'Offer-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,5)});
       if(rem>=10)opts.push({html:'Offer-10 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,10)});
+      if(rem>=2)opts.push({html:'Offer-X <span class="t">'+ITEMS[id].name+'</span>',fn:()=>_promptQty(ITEMS[id].name,n=>tradeOffer(id,n))});
       opts.push({html:'Offer-All <span class="t">'+ITEMS[id].name+'</span>',fn:()=>tradeOffer(id,1e9)});
       opts.push({html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)});
       showMenu(e.clientX,e.clientY,opts);
@@ -15591,9 +15644,12 @@ function renderTrade(){
   document.getElementById('tradeinvwrap').style.display = s2?'none':'';
   if(!s2) renderTradeInv(T.myOffer);
   const st=document.getElementById('tradestatus');
-  st.className='tradestatus'+(s2?' warn':'');
-  st.textContent = s2 ? '\u26a0 When you both accept, the items are exchanged. Make sure the trade is fair.'
-                      : (T.theirAccept?(T.withName+' has accepted.'):'');
+  let _stTxt,_stWarn=false;
+  if(T.theirAccept&&!T.myAccept){_stTxt='\u2713 '+T.withName+' has accepted \u2014 waiting for you to '+(s2?'confirm':'accept')+'.';_stWarn=s2;}
+  else if(T.myAccept&&!T.theirAccept){_stTxt='\u2713 You have accepted. Waiting for '+T.withName+'\u2026';}
+  else{_stTxt=s2?'\u26a0 When you both accept, the items are exchanged. Make sure the trade is fair.':'';_stWarn=s2;}
+  st.className='tradestatus'+(_stWarn?' warn':'');
+  st.textContent=_stTxt;
   const acc=document.getElementById('tradeaccept');
   acc.classList.toggle('on',T.myAccept);
   acc.textContent = T.myAccept ? 'Waiting for other player\u2026' : (s2?'Accept & confirm':'Accept');
@@ -15868,9 +15924,9 @@ function deactivateAllPrayers(){
   prayers.halcyon=prayers.gordon=prayers.love=prayers.pelicans_eye=prayers.sheldons_insight=false;renderPrayers();
 }
 const TELEPORTS={
-  rectory_tele:{name:'Rectory Teleport',req:3,cost:50,x:88,y:86,fx:'#ffd23d',
+  rectory_tele:{name:'Rectory Teleport',req:3,cost:50,x:200,y:86,fx:'#ffd23d',
     msg:'You call on the Rectory\u2019s grace and slip away...'},
-  wild_tele:{name:'Wilderness Teleport',req:5,cost:50,x:51,y:31,fx:'#9a6fb0',
+  wild_tele:{name:'Wilderness Teleport',req:5,cost:50,x:163,y:31,fx:'#9a6fb0',
     msg:'A cold pull drags you out past the ditch...'}};
 function teleFlash(col){
   const w=document.getElementById('viewwrap');if(!w)return;
@@ -16845,6 +16901,7 @@ function endDuel(reason){
   if(inMathes){player.x=120;player.y=MPIT.y1+4;player.px=120;player.py=player.y;player.path.length=0;cancelAction();}
   if(reason==='win'||reason==='forfeit-win'){
     msg('Victory! You have bested '+oppName+' in the Matthes Cage.','#1f7a2e');
+    if(reason==='win'){player.pvpWins=(player.pvpWins||0)+1;dirty=true;}
     if(reason==='win'&&typeof addItem==='function'){addItem('cage_token',3);msg('The Quartermaster credits you 3 Cage tokens.','#caa23a');}
   }
   else if(reason==='lose')msg('Defeated by '+oppName+'. You are hauled from the pit and patched up.','#9c1f1f');
@@ -17119,7 +17176,7 @@ function drawOverlay(now){
   if(mathesDuelGroup)duelMapAnimate(now);
   if(player.chat&&player.chatT>performance.now())drawSayText(player.px+0.5,player.py+0.5,2.35,player.chat);
   if(typeof MP!=='undefined')MP.drawOverlays();
-  if(inWild(player.x,player.y)){
+  if(!curInterior()&&inWild(player.x,player.y)){
     octx.save();octx.textAlign='center';
     octx.font='bold 14px Georgia,serif';
     octx.fillStyle='rgba(0,0,0,0.5)';
@@ -17300,6 +17357,7 @@ const RFURN=new Set();  /* rectory furniture footprints: block the player + NPCs
 const _rSnap=[];
 for(let y=RECT.y0;y<=RECT.y1;y++)for(let x=RECT.x0;x<=RECT.x1;x++)_rSnap.push([x,y,hts[y][x]]);
 rectFY=groundH(88,82);
+{const _rx=objects.find(o=>o.def==='rectoryexit'); if(_rx&&_rx._m&&_rx._m.group){rectoryGroup.add(_rx._m.group);_rx._m.group.position.y=rectFY;}}   /* door mesh was built at the unflattened wilderness height + parented to scene; seat it on the rectory floor and hide it outside */
 function _rectFlatten(){for(const s of _rSnap)hts[s[1]][s[0]]=rectFY;}
 function _rectRestore(){for(const s of _rSnap)hts[s[1]][s[0]]=s[2];}
 (function buildRectoryInterior(){
@@ -18261,6 +18319,12 @@ function rectoryOptionsAt(tx,ty){
 /* ================= Chapel of St. Paul (the Old Chapel) -- interior ================= */
 const SP={x0:44,y0:98,x1:80,y1:132};
 const stPaulTiles=TILES_MAIN.map(r=>r.slice());
+/* Interior footprints sit on tiles the post-expansion wilderness flood-fill claimed (chapel,
+   rectory, party and cage all overlap reachable wild tiles), so a player INSIDE one shares
+   world coordinates with a player out in the wilderness. Used to stop an interior peer from
+   leaking onto a wilderness player during the brief window before their room beacon lands. */
+const INTERIOR_FOOTPRINTS=[CHAPEL,RECT,MCAGE,SOS,SP,{x0:100,y0:1,x1:140,y1:15}];
+function _inInteriorFootprint(x,y){for(const _fp of INTERIOR_FOOTPRINTS)if(x>=_fp.x0&&x<=_fp.x1&&y>=_fp.y0&&y<=_fp.y1)return true;return false;}
 let stPaulFloor=null, spFY=0;
 const stPaulGroup=new THREE.Group();stPaulGroup.visible=false;scene.add(stPaulGroup);
 const _spCross=(x,y)=>((x>=57&&x<=65&&y>=100&&y<=128)||(x>=48&&x<=74&&y>=109&&y<=117));
@@ -19327,7 +19391,7 @@ const MP = (function () {
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120), title: player.title || null }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
-  function onFireLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'fire', x: x | 0, y: y | 0, burn: burn | 0 }); }
+  function onFireLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'fire', x: x | 0, y: y | 0, burn: burn | 0, in: curInterior() }); }
 
   /* ---- shared-world reconciliation (Phase 1): dead mobs + depleted nodes ---- */
   const MAX_RS = 3600000;
@@ -19844,6 +19908,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (m.uid === player.uid) break;
         if (typeof objects === 'undefined') break;
         const fx = m.x | 0, fy = m.y | 0;
+        if ((m.in || null) !== curInterior()) break;
         if (objects.some(o0 => o0 && o0.def === 'fire' && o0.x === fx && o0.y === fy)) break;
         const fo = { def: 'fire', x: fx, y: fy, alive: true, tmp: true, burnAt: performance.now() + (m.burn | 0 || 60000) };
         objects.push(fo);
@@ -20017,14 +20082,12 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     const ci = curInterior();
     const pr = _peerRoom[r.uid];
     if (pr !== undefined) return (pr || null) === ci;        /* beacon known -> exact room match (separates Party / Cage / Chapel, which overlap in world space) */
-    if ((r.in || null) === ci) return true;                  /* legacy fallback: peer has not sent a beacon yet */
-    if (ci === 'mathes' && r.x >= MCAGE.x0 && r.x <= MCAGE.x1 && r.y >= MCAGE.y0 && r.y <= MCAGE.y1) return true;
-    return false;
+    return ci === null && (r.in || null) === null && !_inInteriorFootprint(r.x, r.y);  /* beacon unknown: same-exterior only, and never a peer sitting inside an interior footprint (they are almost certainly inside it, sharing world coords with the wilderness) */
   }
   function frame(t, dt) {
     if (!active() || !conn) return;
     pushOutbound(t);
-    { const _ci = curInterior(); if (_ci !== _roomSent || (_ci && t - _roomT > 1500)) { send({ t: 'iroom', r: _ci }); _roomSent = _ci; _roomT = t; } }   /* interior presence beacon: survives the relay, so interior peers see each other */
+    { const _ci = curInterior(); if (_ci !== _roomSent || (t - _roomT > 1500)) { send({ t: 'iroom', r: _ci }); _roomSent = _ci; _roomT = t; } }   /* interior presence beacon: survives the relay, so interior peers see each other */
     manageClaims();
     if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
     {
@@ -20219,8 +20282,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       const s = dmgFx[i], age = now() - s.t;
       if (age > 800) { dmgFx.splice(i, 1); continue; }
       let ax, az, ah;
-      if (s.ent === 'mob') { const r = (typeof rats !== 'undefined') ? rats[s.m] : null; if (!r) { dmgFx.splice(i, 1); continue; } ax = r.px + 0.5; az = r.py + 0.5; ah = 0.5; }
-      else { const r = RP.get(s.uid); if (!r) { dmgFx.splice(i, 1); continue; } ax = r.px + 0.5; az = r.py + 0.5; ah = 1.55; }
+      if (s.ent === 'mob') { const r = (typeof rats !== 'undefined') ? rats[s.m] : null; if (!r || (r.interior || null) !== curInterior()) { dmgFx.splice(i, 1); continue; } ax = r.px + 0.5; az = r.py + 0.5; ah = 0.5; }
+      else { const r = RP.get(s.uid); if (!r || !_remoteHere(r)) { dmgFx.splice(i, 1); continue; } ax = r.px + 0.5; az = r.py + 0.5; ah = 1.55; }
       const pp = proj(ax, groundH(ax, az) + ah + age / 800 * 0.4, az);
       if (!pp) continue;
       octx.save();
@@ -20494,7 +20557,11 @@ const LB = (function(){
     {id:'total',  label:'Total',   fmt:function(v){return ''+v;}},
     {id:'maxhit', label:'Top hit', fmt:function(v){return ''+v;}},
     {id:'kills',  label:'Kills',   fmt:function(v){return ''+v;}},
-    {id:'gold',   label:'Gold',    fmt:function(v){return _comma(v);}}
+    {id:'gold',   label:'Gold',    fmt:function(v){return _comma(v);}},
+    {id:'pvp_wins', label:'PvP wins',  fmt:function(v){return ''+v;}},
+    {id:'deaths',   label:'Deaths',    fmt:function(v){return ''+v;}},
+    {id:'magic_hit',label:'Top magic', fmt:function(v){return ''+v;}},
+    {id:'range_hit',label:'Top range', fmt:function(v){return ''+v;}}
   ];
   function _comma(v){ return (''+(v|0)).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
   function _esc(t){ return (''+t).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
@@ -20508,13 +20575,14 @@ const LB = (function(){
       cmb:(typeof cmbLvl==='function')?cmbLvl():((player&&player.cmb)||3),
       total:(typeof totalLevel==='function')?totalLevel():0,
       maxhit:(player&&player.maxHit)||0, kills:(player&&player.kills)||0, gold:_gold(),
+      pvp_wins:(player&&player.pvpWins)||0, deaths:(player&&player.deaths)||0, magic_hit:(player&&player.maxMagicHit)||0, range_hit:(player&&player.maxRangeHit)||0,
       title:(player&&player.title)||null };
   }
   var _lastKey='', _lastT=0;
   function submit(force){
     var u=_url(); if(!u||!player||!player.uid)return;
     var st=_stats();
-    var key=[st.cmb,st.total,st.maxhit,st.kills,st.gold,st.name,st.title].join('|');
+    var key=[st.cmb,st.total,st.maxhit,st.kills,st.gold,st.pvp_wins,st.deaths,st.magic_hit,st.range_hit,st.name,st.title].join('|');
     var now=Date.now();
     if(!force && key===_lastKey && (now-_lastT)<60000)return;
     _lastKey=key; _lastT=now;
