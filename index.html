@@ -10792,10 +10792,10 @@ pm.rArm.add(tool);
 tool.position.set(0,-0.58,0.06);
 const axe=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=0.18;axe.add(h);
- const b=mesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,0.34,0.10);axe.add(b);}
+ const b=gmesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,0.34,0.10);axe.add(b);axe.userData.head=b;}
 const pick=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.6,0.05),0x6b4a2e);h.position.y=-0.16;pick.add(h);
- const b=mesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);}
+ const b=gmesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);pick.userData.head=b;}
 const sword=new THREE.Group();
 {/* clean straight double-edged blade */
  const blade=TT(gmesh(new THREE.BoxGeometry(0.052,0.46,0.018),0xc7ccd4),'tint');
@@ -11058,6 +11058,16 @@ const santaHatM=new THREE.Group();
  const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
  pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
 santaHatM.position.y-=0.78;pm.upper.add(santaHatM);santaHatM.visible=false;
+function _tintTool(grp,skill){
+  if(!grp||!grp.userData||!grp.userData.head)return;
+  let tint=null,bestGb=-1;
+  const we=player.equip.weapon?ITEMS[player.equip.weapon.id].equip:null;
+  const consider=e=>{if(e&&e.tool===skill&&lvl(skill)>=(e.treq||0)&&(e.gb||0)>=bestGb){bestGb=e.gb||0;tint=e.tint;}};
+  consider(we);
+  for(const s of player.inv){if(s){const e=ITEMS[s.id]&&ITEMS[s.id].equip;consider(e);}}
+  if(tint===null||tint===undefined)tint=(we&&we.tint!==undefined&&we.model===(skill==='mining'?'pick':'axe'))?we.tint:(skill==='mining'?0x8f949c:0xb9bdc4);
+  grp.userData.head.material.color.setHex(tint);
+}
 function applyGearTint(){
   try{
     const tg=(grp,t9,r9)=>{grp.traverse(o9=>{
@@ -12787,7 +12797,9 @@ document.addEventListener('touchend',()=>clearTimeout(_glpTimer),{passive:true})
 invGrid.addEventListener('click',e=>{
   const sl=e.target.closest('.slot');if(!sl)return;
   audio();
-  if(bankOpen){depositSlot(+sl.dataset.i,1);return;}
+  if(bankOpen){const _bi=+sl.dataset.i,_bit=player.inv[_bi];
+    if(_bit&&_bit.id==='mining_pouch'){if(pouchTotal()>0)emptyPouchToBank();else depositSlot(_bi,_bit.qty||1);return;}
+    depositSlot(_bi,1);return;}
   if(shopOpen){sellSlot(+sl.dataset.i,1);return;}
   itemPrimary(+sl.dataset.i);
 });
@@ -12849,6 +12861,7 @@ invGrid.addEventListener('contextmenu',e=>{
   if(bankOpen){
     if(id==='mining_pouch'){showMenu(e.clientX,e.clientY,[
       {html:'Empty <span class="t">to bank</span>',fn:()=>emptyPouchToBank()},
+      {html:'Deposit <span class="t">Mining pouch</span>',fn:()=>depositSlot(i,player.inv[i]?(player.inv[i].qty||1):1)},
       {html:'Check <span class="t">Mining pouch</span>',fn:()=>checkPouch()},
       {html:'Examine <span class="t">Mining pouch</span>',fn:()=>examineItem(id)}]);return;}
     showMenu(e.clientX,e.clientY,[
@@ -13917,7 +13930,8 @@ const FACES={
     hairstyle:'short'},
   wren:{skin:0xe0b18c,hair:0x4a3828,robe:0x5a3a6a,collar:1,
     hairstyle:'pony'},
-  capeseller:{skin:0xd9a878,hair:0xc89868,robe:0x8a8148,hairstyle:'bald'}
+  capeseller:{skin:0xd9a878,hair:0xc89868,robe:0x8a8148,hairstyle:'bald'},
+  swenson:{skin:0xc99a6e,hair:0x4a3a2a,beard:0x4a3a2a,robe:0x4a5a3a,hairstyle:'short',cap:1,capcol:0x3a3228}
 };
 function faceCfgFor(n){
   if(FACES[n.id])return FACES[n.id];
@@ -13953,8 +13967,8 @@ function drawFace(cfg,mo,blink){
     g.fillRect(25,10,50,16);g.fillRect(25,22,7,20);g.fillRect(68,22,7,20);
   }else if(cfg.hairstyle==='bald'){/* gleaming */}
   else{g.fillRect(27,12,46,12);}
-  if(cfg.cap){g.fillStyle='#2a5246';g.fillRect(25,8,50,14);
-    g.fillRect(32,20,42,6);g.fillStyle='#223f37';g.fillRect(58,22,20,5);}
+  if(cfg.cap){g.fillStyle=cfg.capcol?C(cfg.capcol):'#2a5246';g.fillRect(25,8,50,14);
+    g.fillRect(32,20,42,6);g.fillStyle=cfg.capcol?dk(cfg.capcol,0.7):'#223f37';g.fillRect(58,22,20,5);}
   if(cfg.beard){g.fillStyle=C(cfg.beard);g.fillRect(30,52,40,22);
     g.fillRect(28,44,6,16);g.fillRect(66,44,6,16);}
   g.fillStyle=dk(cfg.hair,0.7);g.fillRect(34,34,12,3);g.fillRect(54,34,12,3);
@@ -19313,8 +19327,8 @@ function render(now){
       showTool=null;armR=-0.6+Math.sin(now*0.01)*0.2;
     }
   }
-  if(showTool==='axe')axe.visible=true;
-  else if(showTool==='pick')pick.visible=true;
+  if(showTool==='axe'){axe.visible=true;_tintTool(axe,'woodcutting');}
+  else if(showTool==='pick'){pick.visible=true;_tintTool(pick,'mining');}
   else if(showTool==='sword'){sword.visible=true;sword.rotation.x=_swRest?-1.5:0;}   /* -1.5 ~= held out front; 0 = down for the chop (tunable) */
   else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?-1.5:0;}
   else if(showTool==='maul'){maul.visible=true;maul.rotation.x=_swRest?-1.5:0;}
@@ -19583,7 +19597,7 @@ function render(now){
   syncGroundItems();
   if(dlg){
     const node=dlg.tree[dlg.node]||{};
-    const cfg=(node.opts||node.who==='player')?FACES.player:faceCfgFor(dlg.npc);
+    const cfg=(node.who==='player')?FACES.player:faceCfgFor(dlg.npc);
     const tt=now-dlg.talkT;
     const mo=(!node.opts&&tt<1600)?Math.abs(Math.sin(now*0.014)):0;
     drawFace(cfg,mo,(now%3400)<150);
@@ -20127,10 +20141,10 @@ rig.rArm.add(tool);
 tool.position.set(0,-0.58,0.06);
 const axe=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=0.18;axe.add(h);
- const b=mesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,0.34,0.10);axe.add(b);}
+ const b=gmesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,0.34,0.10);axe.add(b);axe.userData.head=b;}
 const pick=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.6,0.05),0x6b4a2e);h.position.y=-0.16;pick.add(h);
- const b=mesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);}
+ const b=gmesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);pick.userData.head=b;}
 const sword=new THREE.Group();
 {/* clean straight double-edged blade */
  const blade=TT(gmesh(new THREE.BoxGeometry(0.052,0.46,0.018),0xc7ccd4),'tint');
