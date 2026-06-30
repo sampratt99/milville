@@ -556,7 +556,7 @@
   .capebuy{background:#5d7a3a;border:1px solid #0d0b08;border-radius:3px;
     color:#fff;font:bold 11px Verdana;padding:3px 16px;cursor:pointer;}
   .capebuy:hover{background:#6f9148;}
-  #capemsg{font:11px Verdana;color:#cfc0a0;text-align:center;min-height:15px;padding-top:7px;}
+  #capemsg,#swenmsg{font:11px Verdana;color:#cfc0a0;text-align:center;min-height:15px;padding-top:7px;}
   #wmaprow{display:flex;gap:8px;align-items:stretch;}
   #wmaplegend{width:158px;background:#352e24;border:1px solid #15110c;
     border-radius:3px;padding:7px;display:flex;flex-direction:column;
@@ -868,6 +868,13 @@
   <div id="capemsg"></div>
  </div>
 </div>
+<div id="swenshopui" class="gemodal">
+ <div class="gepanel" style="width:330px;">
+  <div class="gebar"><span>Ron Swenson — Pickaxes</span><div class="gex" id="swenx">×</div></div>
+  <div class="capegrid" id="swengrid"></div>
+  <div id="swenmsg"></div>
+ </div>
+</div>
 <div id="bankui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Bank of Milville</span><div class="gex" id="bankclose" title="Close">&#10005;</div></div>
   <input id="banksearch" type="text" placeholder="Search your bank…" autocomplete="off" spellcheck="false">
@@ -1148,6 +1155,7 @@ ITEMS.clue_easy={name:'Easy clue scroll',ex:'A riddle pointing somewhere on the 
 ITEMS.clue_medium={name:'Medium clue scroll',ex:'A two-step trail to buried treasure. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
 ITEMS.clue_hard={name:'Hard clue scroll',ex:'A three-step trail across the grounds. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
 ITEMS.clue_elite={name:'Elite clue scroll',ex:'A grand four-step expedition. Read it to begin the hunt.',val:1,noDrop:true,prim:'Read'};
+ITEMS.mining_pouch={name:'Mining pouch',ex:'A stout leather ore sack from Ron Swenson. Fill it from your pack, then empty it at a bank \u2014 fewer trips from the quarry.',val:1,noDrop:true,noSell:true,prim:'Fill'};
 GE_STOCK.push('santa_hat');
 GE_STOCK.push('bronze_axe','bronze_pickaxe','iron_axe','iron_pickaxe','steel_axe','steel_pickaxe','mithril_axe','mithril_pickaxe','adamant_axe','adamant_pickaxe','rune_axe','rune_pickaxe');
 ITEMS.jellybean={name:'Jellybean',ex:'A single, perfect jellybean of no particular flavour and no earthly use \u2014 the prize of the Rectory jar. Impossibly rare; one of a kind.',val:500000,noSell:true,noDrop:true};
@@ -1352,6 +1360,8 @@ const OBJ_DEFS={
   duel_trapdoor:{name:'Trapdoor',action:'Forfeit',noBlock:true,ex:'A heavy iron grate set into the turf at your end of the pit. Drop through it to forfeit the bout - hauled back up top, beaten but breathing.'},
   furnace:{name:'Furnace',action:'Smelt-at',
     ex:'Coal-fired and hungry for ore.'},
+  swenson_furnace:{name:'Swenson\u2019s furnace',action:'Smelt-at',ex:'The furnace half of Ron Swenson\u2019s home-built forge-rig \u2014 ornate brass, iron and granite. Cracked and stone cold for now.'},
+  swenson_anvil:{name:'Swenson\u2019s anvil',action:'Smith-at',ex:'The trip-hammer anvil of Ron Swenson\u2019s contraption, all gears and granite. The hammer-linkage is bent and still.'},
   anvil:{name:'Anvil',action:'Smith-at',
     ex:'Ring it like a bell. Make something.'},
   crate:{name:'Supply crate',action:'Search',
@@ -2460,9 +2470,15 @@ function wildLevelAt(x,y){x|=0;y|=0;return (wildMask[y]&&wildMask[y][x])?wildLev
     ['iron',84,112],['iron',84,120],['iron',82,114],['iron',87,119],
     ['mithril',80,117],['mithril',79,114],['mithril',81,119],
     ['adamant',78,116],['adamant',79,118],
-    ['rune',78,115],['rune',77,117]];
+    ['rune',78,115],['rune',77,117],
+    ['berrite',85,113],['berrite',83,118]];
   for(const q of NODES) if(inb(q[1],q[2])&&tiles[q[2]][q[1]]===T_PATH) addObj(q[0],q[1],q[2],true);
   addObj('bankchest',90,113,true);   /* quarry deposit chest */
+  addObj('swenson_furnace',81,109,true);   /* Swenson\u2019s contraption: furnace half, back to the north wall, facing south */
+  addObj('swenson_anvil',80,109,true);     /* Swenson\u2019s contraption: anvil half */
+  npcs.push({id:'swenson',name:'Ron Swenson',x:86,y:116,r:0,sex:'m',
+    ex:'Ron Swenson \u2014 owner, foreman and sole shareholder of Swenson Granite. Wields a pickaxe like a sceptre.',
+    i:npcs.length,sx:86,sy:116,px:86,py:116,heading:Math.PI});
 })();
 
 (function hsFootprint(){
@@ -2693,7 +2709,8 @@ const player={
   lostStash:[],
   friends:[],
   uid:null,
-  slayer:{task:null,need:0,done:0,streak:0,points:0,unlocks:{},blocked:{}}
+  slayer:{task:null,need:0,done:0,streak:0,points:0,unlocks:{},blocked:{}},
+  swensonFixed:false,swensonOrders:0,swenOrder:null,pouch:{unlocked:false,cap:50,ore:{},auto:true}
 };
 function masterBoost(s){
   const c=player.equip&&player.equip.cape;
@@ -2887,6 +2904,13 @@ function rollMobDrops(r){
     if(d.pool){ if(d.c!==undefined&&Math.random()>=d.c)continue; dropGround(r.x,r.y,d.pool[rndi(0,d.pool.length-1)],_q(d)); continue; }
     if(d.i){ if(d.c!==undefined&&Math.random()>=d.c)continue; const q=_q(d); if(d.inv){ if(!addItem(d.i,q))dropGround(r.x,r.y,d.i,q); } else dropGround(r.x,r.y,d.i,q); if(d.m){msg(d.m,'#8a5e0a');sfx.pickup&&sfx.pickup();} continue; }
   }
+}
+function bestToolBoost(skill){
+  let gb=0;
+  const we=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+  if(we&&we.tool===skill&&lvl(skill)>=(we.treq||0))gb=Math.max(gb,we.gb||0);
+  for(const s of player.inv){if(!s)continue;const e=ITEMS[s.id]&&ITEMS[s.id].equip;if(e&&e.tool===skill&&lvl(skill)>=(e.treq||0))gb=Math.max(gb,e.gb||0);}
+  return gb;
 }
 function dropMobLoot(r){
   const mk=MOB_KINDS[r.kind];
@@ -3379,11 +3403,7 @@ function mobDetail(kind){
   const cat=document.createElement('div');cat.className='enccat';cat.textContent='Combat level '+(mk.cmb||'?')+(mk.boss?'  \u2022  Boss':'');
   ht.appendChild(title);ht.appendChild(cat);hd.appendChild(ht);det.appendChild(hd);
   const cv=document.createElement('canvas');cv.className='bview';cv.width=380;cv.height=210;det.appendChild(cv);
-  const arrows=document.createElement('div');arrows.className='barrows';
-  const bl=document.createElement('button');bl.className='barrow';bl.innerHTML='&#8249;';bl.title='Rotate left';
-  const br=document.createElement('button');br.className='barrow';br.innerHTML='&#8250;';br.title='Rotate right';
-  arrows.appendChild(bl);arrows.appendChild(br);det.appendChild(arrows);
-  const hint=document.createElement('div');hint.className='bhint';hint.textContent='Drag the model to rotate \u2022 or use the arrows';det.appendChild(hint);
+  const hint=document.createElement('div');hint.className='bhint';hint.textContent='Drag the model to rotate';det.appendChild(hint);
   if(mk.ex){const ex=document.createElement('div');ex.className='encex';ex.textContent=mk.ex;det.appendChild(ex);}
   const rows=document.createElement('div');rows.className='encrows';
   const row=(k,v,col)=>{const d=document.createElement('div');d.className='encrow';const a=document.createElement('span');a.textContent=k;const b=document.createElement('b');b.textContent=v;if(col)b.style.color=col;d.appendChild(a);d.appendChild(b);rows.appendChild(d);};
@@ -3403,13 +3423,15 @@ function mobDetail(kind){
   const ul=document.createElement('div');ul.className='encsrcs';
   for(const pr of mobUniversalRows(kind)){const d=document.createElement('div');d.className='encsrc';const x=document.createElement('b');x.textContent=pr[0];const y=document.createElement('span');y.textContent=pr[1];d.appendChild(x);d.appendChild(y);ul.appendChild(d);}
   det.appendChild(ul);
-  /* ---- live 3D model: drag + arrows, no auto-rotate ---- */
+  /* ---- live 3D model: drag to rotate (no auto-rotate) ---- */
   try{
     const grp=buildBestiaryMesh(kind);
+    const DPR=Math.min(window.devicePixelRatio||1,2);
+    const cw=cv.clientWidth||520, ch=cv.clientHeight||210;
     const ren=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
-    ren.setSize(380,210,false); _bestRen=ren;
+    ren.setSize(Math.round(cw*DPR),Math.round(ch*DPR),false); _bestRen=ren;
     const scn=new THREE.Scene();
-    const cam=new THREE.PerspectiveCamera(42,380/210,0.1,100);
+    const cam=new THREE.PerspectiveCamera(42,cw/ch,0.1,100);
     scn.add(new THREE.AmbientLight(0xffffff,0.82));
     const dl=new THREE.DirectionalLight(0xfff0e0,0.9);dl.position.set(3,6,4);scn.add(dl);
     const dl2=new THREE.DirectionalLight(0x9ab0ff,0.4);dl2.position.set(-4,2,3);scn.add(dl2);
@@ -3429,9 +3451,7 @@ function mobDetail(kind){
     cv.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX;lastX=e.clientX;drag.rotation.y+=dx*0.012;render();});
     const end=e=>{dragging=false;try{cv.releasePointerCapture(e.pointerId);}catch(_){}};
     cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);cv.addEventListener('pointerleave',()=>{dragging=false;});
-    bl.onclick=()=>{drag.rotation.y-=0.5;render();};
-    br.onclick=()=>{drag.rotation.y+=0.5;render();};
-  }catch(e){ cv.style.display='none';bl.style.display='none';br.style.display='none';hint.style.display='none'; }
+  }catch(e){ cv.style.display='none';hint.style.display='none'; }
 }
 /* ========================== END BESTIARY ========================== */
 
@@ -3894,7 +3914,7 @@ function playerTick(){
     if(!o.alive){cancelAction();return;}
     if(!adjacentTo(o.x,o.y)){if(!player.path.length)walkTo(o.x,o.y);return;}
     player.path.length=0;player.face=Math.sign(o.x-player.x)||player.face;
-    if(invFull()&&!ITEMS[def.item].stack){
+    if(invFull()&&!ITEMS[def.item].stack&&!pouchAutoCanTake(def.item)){
       msg('Your pack is too full to hold any more '+ITEMS[def.item].name.toLowerCase()+'.');
       cancelAction();return;
     }
@@ -3902,7 +3922,7 @@ function playerTick(){
     player.actTick++;
     if(player.actTick%2!==0)return;
     (def.skill==='woodcutting'?sfx.chop:def.skill==='mining'?sfx.mine:sfx.splash)();
-    const _tw=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;const _tb=(_tw&&_tw.tool===def.skill&&lvl(def.skill)>=(_tw.treq||0))?(_tw.gb||0):0;const chance=clamp(def.base+(lvl(def.skill)-def.req)*.012+_tb,.05,.93);
+    const _tb=bestToolBoost(def.skill);const chance=clamp(def.base+(lvl(def.skill)-def.req)*.012+_tb,.05,.93);
     if(Math.random()<chance){
       let gid=def.item,gxp=def.xp;
       if(def.skill==='fishing'){
@@ -3913,8 +3933,10 @@ function playerTick(){
         let r9=Math.random()*tot;
         for(const f of el){r9-=f[3];if(r9<=0){gid=f[0];gxp=f[2];break;}}
       }
-      addItem(gid);
+      if(def.skill==='mining'&&invFull()&&pouchAutoCanTake(gid)){pouchAdd(gid,1);if(pouchTotal()>=player.pouch.cap)msg('Your mining pouch is full \u2014 empty it at a bank.','#caa23a');}
+      else addItem(gid);
       addXp(def.skill,gxp);
+      swenOrderProgress(gid);
       msg(VERBS[def.skill][1].replace('{item}',ITEMS[gid].name.toLowerCase()));
       if(def.skill==='woodcutting'&&player.quests.chef.s===3){
         const _lh=countLogs();
@@ -4561,13 +4583,14 @@ function ratsTick(){
     if(!r.alive)continue;
     if(typeof MP!=='undefined'&&MP.mobOverride(r))continue;
     if(curInterior()!==(r.interior||null)){if(r.target===player)r.target=null;continue;}
+    const _ct=(player.action&&player.action.type==='attack'&&player.action.rat&&player.action.rat.alive)?player.action.rat:((engagedMob&&engagedMob.alive&&engagedMob.target===player)?engagedMob:null);
+    if(r.target===player&&_ct&&_ct!==r&&!r.tame){r.target=null;r._chaseStart=undefined;if(engagedMob===r)engagedMob=null;continue;}
     if(!r.target&&!r.tame&&(MOB_KINDS[r.kind].aggro||inWild(r.x,r.y))
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
       &&MOB_KINDS[r.kind].cmb>=cmbLvl()&&player.hp>0
       &&dist1(r.x,r.y,player.x,player.y)<=4
       &&dist1(r.x,r.y,r.sx,r.sy)<=8
-      &&(!engagedMob||!engagedMob.alive||engagedMob===r
-        ||engagedMob.target!==player))r.target=player;
+      &&(!_ct||_ct===r))r.target=player;
     if(MOB_KINDS[r.kind].boss&&r.target)bossSpecialTick(r,performance.now());
     if(r.kind==='zombie'&&(tick&1)
       &&!(r.target&&dist1(r.x,r.y,player.x,player.y)===1))continue;
@@ -4732,7 +4755,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:(inChapel?CHAPEL_RETURN.x:inRectory?RECT_RETURN.x:inStPaul?STPAUL_RETURN.x:inMathes?MATHES_RETURN.x:inSos?SOS_RETURN.x:inParty?partyReturn.x:player.x),y:(inChapel?CHAPEL_RETURN.y:inRectory?RECT_RETURN.y:inStPaul?STPAUL_RETURN.y:inMathes?MATHES_RETURN.y:inSos?SOS_RETURN.y:inParty?partyReturn.y:player.y),
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,mapv:'sps4',xpv:2};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -4881,7 +4904,7 @@ async function loadSlot(id, preObj){
       player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
       player.title=s.title||null;
       player.winterUnlocked=!!s.winterUnlocked;
-      player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;
+      player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
       player.winter=!!s.winter; player.fall=!!s.fall; player.fallUnlocked=!!s.fallUnlocked;
       if(s.name)player.name=s.name;
       if(s.mmf)Object.assign(player.mmf,s.mmf);
@@ -5062,6 +5085,7 @@ function itemPrimary(i){
   const s=player.inv[i];if(!s)return;
   if(s.noted){if(bankOpen)depositSlot(i,s.qty);else msg('A banknote. Take it to a bank to deposit it.');return;}
   const id=s.id,prim=ITEMS[id].prim;
+  if(id==='mining_pouch'){if(bankOpen)emptyPouchToBank();else fillPouch();return;}
   if(id==='logs'||id==='oak_logs'||id==='willow_logs'){lightFire(i);return;}
   if(ITEMS[id].equip){equipFromInv(i);return;}
   if(prim==='Eat'){
@@ -5180,6 +5204,10 @@ function equipFromInv(i){
       msg('You need '+SKILL_META[rsk].name+' level '+eq.req+' to '+eq.verb.toLowerCase()+' that.');
       return;
     }
+  }
+  if(eq.tool&&eq.treq&&lvl(eq.tool)<eq.treq){
+    msg('You need '+SKILL_META[eq.tool].name+' level '+eq.treq+' to '+(eq.verb||'Wield').toLowerCase()+' that.');
+    return;
   }
   if(eq.slot==='ammo'){
     const cur=player.equip.ammo;
@@ -5532,6 +5560,14 @@ function optionsAt(tx,ty){
       opts.push({html:'Smith-at <span class="t">Anvil</span>',
         label:'Smith-at Anvil',fn:()=>startSmith(o)},
         {html:'Examine <span class="t">Anvil</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='swenson_furnace'){
+      opts.push({html:'Smelt-at <span class="t">Swenson\u2019s furnace</span>',
+        label:'Smelt-at Swenson\u2019s furnace',fn:()=>player.swensonFixed?startSmelt(o):msg('Swenson\u2019s contraption is cracked and cold. Speak to Ron Swenson about setting it right.','#9c1f1f')},
+        {html:'Examine <span class="t">Swenson\u2019s furnace</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='swenson_anvil'){
+      opts.push({html:'Smith-at <span class="t">Swenson\u2019s anvil</span>',
+        label:'Smith-at Swenson\u2019s anvil',fn:()=>player.swensonFixed?startSmith(o):msg('The trip-hammer won\u2019t budge \u2014 Swenson\u2019s contraption is broken. Speak to Ron Swenson.','#9c1f1f')},
+        {html:'Examine <span class="t">Swenson\u2019s anvil</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='crate'){
       opts.push({html:'Search <span class="t">Supply crate</span>',
         label:'Search Supply crate',fn:()=>startCrate(o)},
@@ -5673,6 +5709,15 @@ function optionsAt(tx,ty){
 /* =========================== item icons ============================ */
 function drawItemIcon(g,id,S){
   g.save();g.translate(S/2,S/2);g.imageSmoothingEnabled=false;
+  if(id==='mining_pouch'){
+    g.fillStyle='#6e4a28';g.beginPath();g.moveTo(-S*0.26,S*0.10);g.quadraticCurveTo(-S*0.36,S*0.36,-S*0.16,S*0.38);g.lineTo(S*0.16,S*0.38);g.quadraticCurveTo(S*0.36,S*0.36,S*0.26,S*0.10);g.closePath();g.fill();
+    g.fillStyle='#8a5e34';g.beginPath();g.moveTo(-S*0.26,S*0.10);g.quadraticCurveTo(0,0,S*0.26,S*0.10);g.quadraticCurveTo(0,S*0.18,-S*0.26,S*0.10);g.fill();
+    g.fillStyle='#4a3018';g.fillRect(-S*0.13,-S*0.10,S*0.26,S*0.07);
+    g.fillStyle='#3a2614';g.beginPath();g.moveTo(-S*0.11,-S*0.10);g.lineTo(0,-S*0.27);g.lineTo(S*0.11,-S*0.10);g.closePath();g.fill();
+    g.fillStyle='#ec71a1';g.beginPath();g.arc(-S*0.05,S*0.22,S*0.05,0,7);g.fill();
+    g.fillStyle='#b87a3a';g.beginPath();g.arc(S*0.08,S*0.26,S*0.045,0,7);g.fill();
+    g.restore();return;
+  }
   if(id==='jellybean'){
     g.rotate(-0.5);
     g.fillStyle='#cf3a6e';g.beginPath();g.ellipse(0,0,S*0.27,S*0.17,0,0,7);g.fill();
@@ -6282,10 +6327,10 @@ function drawItemIcon(g,id,S){
     g.strokeStyle=P.dark;g.lineWidth=0.8;[[-4,-2],[-4.2,0.5],[1.8,-2],[2,0.5]].forEach(l=>{g.beginPath();g.moveTo(-1+l[0]*0.25,l[1]);g.lineTo(l[0],l[1]+2.6);g.stroke();});
     g.strokeStyle=P.body;g.lineWidth=1;g.beginPath();g.moveTo(-1.5,-5.5);g.lineTo(-5,-11);g.moveTo(-0.5,-5.5);g.lineTo(2.5,-11);g.stroke();
     g.fillStyle='#16110d';g.beginPath();g.arc(-2.6,-4.8,0.85,0,7);g.fill();g.beginPath();g.arc(0.6,-4.8,0.85,0,7);g.fill();g.restore();};
-  const mt=id.match(/^(bronze|iron|steel|black|mithril|adamant|rune)_(sword|scimitar|kiteshield)$/);
+  const mt=id.match(/^(bronze|iron|steel|black|berrite|mithril|adamant|rune)_(sword|scimitar|kiteshield)$/);
   if(mt&&id!=='bronze_sword'){
     const tn={bronze:['#b07a3e','#dba968'],iron:['#7a766f','#a8a49c'],
-      steel:['#aab2ba','#e2e8ee'],black:['#3a3a42','#5a5a64'],mithril:['#6b6bb0','#9a9ade'],
+      steel:['#aab2ba','#e2e8ee'],black:['#3a3a42','#5a5a64'],berrite:['#ec71a1','#f5a8c8'],mithril:['#6b6bb0','#9a9ade'],
       adamant:['#468852','#7cba8a'],rune:['#5a8ab0','#94c8ea']}[mt[1]];
     if(mt[2]==='sword'){
       g.strokeStyle=tn[0];g.lineWidth=5;g.lineCap='round';
@@ -7868,7 +7913,7 @@ function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFa
       }
     }
     /* big granite boulders on the floor */
-    for(const bb of [[81,114,0.95],[87,119,0.85]]) Babs(new THREE.DodecahedronGeometry(bb[2]),gp(bb[0]),bb[0],FLOOR+bb[2]*0.6,bb[1],bb[0]*0.3,1);
+    for(const bb of [[81,114,0.95],[90,120,0.85]]) Babs(new THREE.DodecahedronGeometry(bb[2]),gp(bb[0]),bb[0],FLOOR+bb[2]*0.6,bb[1],bb[0]*0.3,1);
     /* cut granite blocks: neat stacks on the rim */
     const stack=(x,z)=>{const b=groundH(x,z);
       for(const c of [[0,0,0,0.74],[0.76,0,0.06,0.68],[0.38,0.74,0.03,0.62],[0.02,0,0.76,0.64],[0.44,0.68,0.58,0.56]])
@@ -7882,8 +7927,6 @@ function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFa
       bake(out,new THREE.BoxGeometry(0.2,0.2,6.0),WOOD,gx+2.7,b+3.45,gz+1.9,0.62,1);   /* jib over the pit */
       const hx=80.2,hz=114.4;
       bake(out,new THREE.CylinderGeometry(0.14,0.14,0.2,8),IRON,hx,groundH(hx,hz)+3.35,hz,Math.PI/2,1,Math.PI/2,0);
-      Babs(new THREE.CylinderGeometry(0.03,0.03,2.5,5),ROPE,hx,2.2,hz);
-      Babs(new THREE.BoxGeometry(0.8,0.8,0.8),gp(2),hx,1.0,hz,0.2,1);
     })();
     /* ore cart on a rail across the floor */
     (function rail(){
@@ -7906,10 +7949,10 @@ function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFa
     })();
     /* foreman's lean-to at the NE rim */
     (function shack(){
-      const hx=92.0,hz=110.5,b=groundH(hx,hz);
+      const hx=98.0,hz=106.5,b=groundH(hx,hz);   /* north of the SWENSON sign so it does not block it; door + open side face east */
       Babs(new THREE.BoxGeometry(2.3,1.6,2.0),0x6e5436,hx,b+0.8,hz);
-      bake(out,new THREE.BoxGeometry(2.7,0.14,2.4),0x46371f,hx,b+1.75,hz,0,1,0.16,0);
-      Babs(new THREE.BoxGeometry(0.62,1.0,0.08),0x33271a,hx,b+0.5,hz+1.0);
+      bake(out,new THREE.BoxGeometry(2.7,0.14,2.4),0x46371f,hx,b+1.75,hz,0,1,0,0.16);
+      Babs(new THREE.BoxGeometry(0.08,1.0,0.62),0x33271a,hx+1.15,b+0.5,hz);
     })();
     /* gravel mounds on the floor */
     for(const r of [[82.5,116,0.9],[85,118.5,0.62],[80,117,0.56],[88,115,0.62]])
@@ -8502,6 +8545,64 @@ function buildObjModel(o){
     mouth.position.set(0,0.34,0.376);g.add(mouth);
     o._m.glow=mouth;
     addProxy(g,0.62,1.35,0,{kind:'obj',o});
+
+  }else if(def==='swenson_furnace'){
+    /* Ron Swenson's bespoke forge-rig: FURNACE half. Front faces -z (into the quarry); chimney backs the wall (+z). */
+    var GR=0x6e6b64,IR=0x35353c,BR=0xb88a3a,BRH=0xd8b25a,BK=0x7a3f30,sfFixed=(typeof player!=='undefined'&&player.swensonFixed);
+    var sbase=mesh(new THREE.BoxGeometry(1.0,0.3,0.9),GR);sbase.position.y=0.15;g.add(sbase);
+    var sbody=mesh(new THREE.BoxGeometry(0.8,0.94,0.72),IR);sbody.position.y=0.77;g.add(sbody);
+    var sbrick=mesh(new THREE.BoxGeometry(0.7,0.5,0.6),BK);sbrick.position.set(0,0.62,-0.06);g.add(sbrick);
+    for(var _bi=0;_bi<2;_bi++){var sbnd=mesh(new THREE.BoxGeometry(0.86,0.08,0.78),BR);sbnd.position.y=[0.5,1.08][_bi];g.add(sbnd);}
+    var scap=mesh(new THREE.BoxGeometry(0.94,0.13,0.86),GR);scap.position.y=1.3;g.add(scap);
+    var schim=mesh(new THREE.CylinderGeometry(0.15,0.19,1.5,8),IR);schim.position.set(0.2,2.12,0.2);g.add(schim);
+    var scol=mesh(new THREE.CylinderGeometry(0.21,0.21,0.12,8),BR);scol.position.set(0.2,1.5,0.2);g.add(scol);
+    var scowl=mesh(new THREE.CylinderGeometry(0.25,0.16,0.22,8),IR);scowl.position.set(0.2,2.92,0.2);g.add(scowl);
+    /* big brass drive gear on the anvil side (+x), with teeth */
+    var sgear=mesh(new THREE.CylinderGeometry(0.3,0.3,0.1,12),BR);sgear.rotation.z=Math.PI/2;sgear.position.set(0.47,0.78,0.16);g.add(sgear);
+    for(var _gi=0;_gi<8;_gi++){var _ga=_gi/8*Math.PI*2;var st=mesh(new THREE.BoxGeometry(0.05,0.1,0.09),BRH);st.position.set(0.47,0.78+Math.sin(_ga)*0.32,0.16+Math.cos(_ga)*0.32);g.add(st);}
+    /* pressure gauge + brass feed pipe toward the anvil */
+    var sgz=mesh(new THREE.CylinderGeometry(0.1,0.1,0.05,10),BRH);sgz.rotation.x=Math.PI/2;sgz.position.set(-0.28,1.04,-0.37);g.add(sgz);
+    var spipe=mesh(new THREE.CylinderGeometry(0.05,0.05,0.95,6),BR);spipe.rotation.z=Math.PI/2;spipe.position.set(0.7,1.12,0.0);g.add(spipe);
+    if(sfFixed){
+      var smouth=new THREE.Mesh(new THREE.PlaneGeometry(0.34,0.32),new THREE.MeshBasicMaterial({color:0xff7a2a}));
+      smouth.position.set(0,0.64,-0.365);g.add(smouth);o._m.glow=smouth;
+    }else{
+      var smouth2=mesh(new THREE.BoxGeometry(0.34,0.32,0.04),0x14110d);smouth2.position.set(0,0.64,-0.365);g.add(smouth2);
+      var scrk=mesh(new THREE.BoxGeometry(0.04,0.5,0.04),0x141115);scrk.position.set(0.2,0.85,-0.37);scrk.rotation.z=0.34;g.add(scrk);
+    }
+    addProxy(g,0.72,1.45,0,{kind:'obj',o});g.rotation.y=Math.PI;g.scale.set(1.3,1.3,1.3);
+
+  }else if(def==='swenson_anvil'){
+    /* Ron Swenson's bespoke forge-rig: ANVIL + trip-hammer half. Front (-z) faces the quarry; furnace sits to -x. */
+    var aGR=0x6e6b64,aIR=0x35353c,aBR=0xb88a3a,aBRH=0xd8b25a,aWD=0x5a3f22,aST=0x9aa0a8,saFixed=(typeof player!=='undefined'&&player.swensonFixed);
+    var abase=mesh(new THREE.BoxGeometry(0.95,0.3,0.9),aGR);abase.position.y=0.15;g.add(abase);
+    /* the anvil: stacked body + steel face + horn toward -z */
+    var an=new THREE.Group();
+    var aab=mesh(new THREE.BoxGeometry(0.42,0.18,0.3),aIR);aab.position.y=0.09;an.add(aab);
+    var aaw=mesh(new THREE.BoxGeometry(0.22,0.16,0.18),aIR);aaw.position.y=0.24;an.add(aaw);
+    var aat=mesh(new THREE.BoxGeometry(0.5,0.12,0.26),aST);aat.position.y=0.38;an.add(aat);
+    var ahorn=mesh(new THREE.ConeGeometry(0.08,0.26,6),aST);ahorn.rotation.x=-Math.PI/2;ahorn.position.set(0,0.38,-0.26);an.add(ahorn);
+    an.position.set(0.05,0.3,-0.04);g.add(an);
+    /* timber + brass A-frame straddling the anvil */
+    for(var _si=0;_si<2;_si++){var _sx=[-1,1][_si];
+      var aleg=mesh(new THREE.CylinderGeometry(0.05,0.06,1.55,6),aWD);aleg.position.set(0.05+_sx*0.34,0.96,0.14);aleg.rotation.z=_sx*0.18;g.add(aleg);
+      var aban=mesh(new THREE.BoxGeometry(0.1,0.1,0.12),aBR);aban.position.set(0.05+_sx*0.3,1.62,0.14);g.add(aban);
+    }
+    var abeam=mesh(new THREE.BoxGeometry(0.88,0.12,0.16),aWD);abeam.position.set(0.05,1.68,0.14);g.add(abeam);
+    /* big brass crown gear (furnace side, -x) driving the hammer */
+    var agear=mesh(new THREE.CylinderGeometry(0.26,0.26,0.1,12),aBR);agear.rotation.z=Math.PI/2;agear.position.set(-0.44,1.42,0.14);g.add(agear);
+    for(var _ai=0;_ai<8;_ai++){var _aa=_ai/8*Math.PI*2;var at2=mesh(new THREE.BoxGeometry(0.05,0.09,0.08),aBRH);at2.position.set(-0.44,1.42+Math.sin(_aa)*0.28,0.14+Math.cos(_aa)*0.28);g.add(at2);}
+    /* trip-hammer arm + weighted head: broken -> cocked up & stuck; fixed -> poised over the anvil */
+    var arm=new THREE.Group();
+    var aha=mesh(new THREE.BoxGeometry(0.72,0.08,0.08),aWD);arm.add(aha);
+    var ahh=mesh(new THREE.BoxGeometry(0.16,0.22,0.2),aIR);ahh.position.set(0.36,-0.02,0);arm.add(ahh);
+    var ahbr=mesh(new THREE.BoxGeometry(0.18,0.06,0.22),aBR);ahbr.position.set(0.36,0.1,0);arm.add(ahbr);
+    arm.position.set(-0.12,1.44,0.0);
+    arm.rotation.z=saFixed?-0.12:0.55;
+    g.add(arm);
+    /* brass linkage band toward the furnace (-x) */
+    var alink=mesh(new THREE.CylinderGeometry(0.04,0.04,0.7,6),aBR);alink.rotation.z=Math.PI/2;alink.position.set(-0.7,1.12,0.14);g.add(alink);
+    addProxy(g,0.72,1.6,0,{kind:'obj',o});g.rotation.y=Math.PI;g.scale.set(1.3,1.3,1.3);
 
   }else if(def==='anvil'){
     const base=mesh(new THREE.BoxGeometry(0.5,0.22,0.34),0x3f444c);
@@ -10690,8 +10791,8 @@ const tool=new THREE.Group();
 pm.rArm.add(tool);
 tool.position.set(0,-0.58,0.06);
 const axe=new THREE.Group();
-{const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=-0.18;axe.add(h);
- const b=mesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,-0.34,0.10);axe.add(b);}
+{const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=0.18;axe.add(h);
+ const b=mesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,0.34,0.10);axe.add(b);}
 const pick=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.6,0.05),0x6b4a2e);h.position.y=-0.16;pick.add(h);
  const b=mesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);}
@@ -11144,6 +11245,15 @@ function makeNpc(n){
     const pt=mesh(new THREE.CylinderGeometry(0.045,0.03,0.34,5),0x3a2a1a);
     pt.position.set(0,1.5,-0.17);pt.rotation.x=0.5;g.add(pt);
     g.scale.set(0.85,0.85,0.85);
+  }else if(n.id==='swenson'){
+    hm=makeHumanoid({skin:0xc99a6e,shirt:0x4a5a3a,pants:0x3a3228,hair:0x4a3a2a,beard:0x4a3a2a,boots:0x2a2018,belt:0x6b4a2e});
+    g.add(hm.g);
+    var spx=new THREE.Group();
+    var shaft=mesh(new THREE.CylinderGeometry(0.028,0.032,0.92,6),0x6b4a2e);spx.add(shaft);
+    var phead=mesh(new THREE.BoxGeometry(0.06,0.08,0.5),0x8f949c);phead.position.y=0.44;spx.add(phead);
+    spx.position.set(0.27,0.95,0.06);spx.rotation.z=0.34;spx.rotation.x=0.12;g.add(spx);
+    var scap=mesh(new THREE.CylinderGeometry(0.17,0.18,0.1,8),0x3a3228);scap.position.y=1.62;g.add(scap);
+    var sbrim=mesh(new THREE.BoxGeometry(0.3,0.03,0.16),0x2a241c);sbrim.position.set(0,1.6,0.18);g.add(sbrim);
   }else if(n.id==='coach'){
     hm=makeHumanoid({skin:0xd9a878,shirt:0x2a5246,pants:0x2a2f3a,
       hair:0x8a8d92,boots:0x1d1f24});
@@ -12419,7 +12529,7 @@ function castPick(ev){
     if(d.kind==='sosportal')return curInterior()==='sos';
     if(d.kind==='obj'&&(d.o.def==='sos_exit'||d.o.def==='sos_chest'))return curInterior()==='sos';   /* stronghold vault/exit: never hoverable from the schoolhouse lawn above (proxies live in the global list) */
     if(d.kind==='item'){const _gi=ground.find(gi=>gi.uid===d.uid);return !!_gi&&(_gi.interior||null)===curInterior();}
-    return true;
+    return !inSos;   /* inside the cave, ignore leaked overworld proxies so clicks land on the floor */
   });
   const th=_rc.intersectObject(inSos&&sosFloor?sosFloor:(inStPaul&&stPaulFloor?stPaulFloor:(inRectory&&rectoryFloor?rectoryFloor:(inChapel&&chapelFloor?chapelFloor:terra))),false)[0];
   const ph=hits[0];
@@ -12737,6 +12847,10 @@ invGrid.addEventListener('contextmenu',e=>{
       {html:'Examine <span class="t">'+ITEMS[id].name+' note</span>',fn:()=>examineItem(id)}]);
     return;}
   if(bankOpen){
+    if(id==='mining_pouch'){showMenu(e.clientX,e.clientY,[
+      {html:'Empty <span class="t">to bank</span>',fn:()=>emptyPouchToBank()},
+      {html:'Check <span class="t">Mining pouch</span>',fn:()=>checkPouch()},
+      {html:'Examine <span class="t">Mining pouch</span>',fn:()=>examineItem(id)}]);return;}
     showMenu(e.clientX,e.clientY,[
       {html:'Deposit-1 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>depositSlot(i,1)},
       {html:'Deposit-5 <span class="t">'+ITEMS[id].name+'</span>',fn:()=>depositId(id,5)},
@@ -12753,6 +12867,12 @@ invGrid.addEventListener('contextmenu',e=>{
       {html:'Examine <span class="t">'+ITEMS[id].name+'</span>',fn:()=>examineItem(id)}]);
     return;
   }
+  if(id==='mining_pouch'){showMenu(e.clientX,e.clientY,[
+    {html:'Fill <span class="t">Mining pouch</span>',fn:()=>fillPouch()},
+    {html:'Empty <span class="t">to bank</span>',fn:()=>emptyPouchToBank()},
+    {html:'Check <span class="t">Mining pouch</span>',fn:()=>checkPouch()},
+    {html:'Auto-stow: <span class="t">'+(player.pouch&&player.pouch.auto?'On':'Off')+'</span>',fn:()=>{if(player.pouch){player.pouch.auto=!player.pouch.auto;msg('Auto-stow '+(player.pouch.auto?'enabled':'disabled')+'.');dirty=true;}}},
+    {html:'Examine <span class="t">Mining pouch</span>',fn:()=>examineItem(id)}]);return;}
   if(ITEMS[id].equip)
     opts.push({html:ITEMS[id].equip.verb+' <span class="t">'+ITEMS[id].name+'</span>',
       fn:()=>equipFromInv(i)});
@@ -14422,7 +14542,170 @@ function slayerTree(){
       {label:'Not now.',next:null}]},
     info:{who:'npc',text:'I name a creature and a number. You cull them in the wild and return. I pay in coin and in skill \u2014 Slayer, and the strength of arms. The wild grows to meet you: never trivial, never quite hopeless.',next:'start'}};
 }
+/* ===================== Swenson orders + mining pouch ===================== */
+const SWEN_ORE={iron:'iron_ore',berrite:'berrite_ore',mithril:'mithril_ore',adamant:'adamant_ore',rune:'runite_ore'};
+const SWEN_OREXP={iron:18,berrite:28,mithril:40,adamant:48,rune:62};
+const SWEN_TIERREQ=[['rune',85],['adamant',70],['mithril',55],['berrite',35],['iron',15]];
+const SWEN_QTY=25;
+const SWEN_FIX_AT=3;
+function swenHighestTier(){const m=lvl('mining');for(const t of SWEN_TIERREQ)if(m>=t[1])return t[0];return 'iron';}
+function swenOrderTier(){const n=player.swensonOrders||0;if(n===0)return 'iron';if(n===1)return 'berrite';return swenHighestTier();}
+function swenOreVal(tier){const it=ITEMS[SWEN_ORE[tier]];return it?(it.val||1):1;}
+function swenOreName(tier){return ITEMS[SWEN_ORE[tier]].name.toLowerCase();}
+function swenOrderProgress(gid){
+  const o=player.swenOrder;if(!o)return;
+  if(gid!==SWEN_ORE[o.tier]||o.got>=o.qty)return;
+  o.got++;dirty=true;
+  if(o.got<o.qty)msg('Order for Ron: '+o.got+'/'+o.qty+' '+ITEMS[gid].name.toLowerCase()+'.','#c9a24a');
+  else msg('Order ready \u2014 take the '+ITEMS[gid].name.toLowerCase()+' back to Ron Swenson.','#caa23a');
+}
+function swenAcceptOrder(){
+  player.swenOrder={tier:swenOrderTier(),qty:SWEN_QTY,got:0};dirty=true;
+  const first=(player.swensonOrders||0)===0;
+  msg((first?'New quest started \u2014 Swenson\u2019s Standing Order. ':'New order from Ron Swenson. ')+'Mine '+SWEN_QTY+' '+swenOreName(player.swenOrder.tier)+' (freshly cut) and bring them to the granite quarry.','#c9a24a');
+  renderQuests&&renderQuests();
+}
+function pouchOK(){return !!(player.pouch&&player.pouch.unlocked);}
+function pouchTotal(){let t=0;const o=(player.pouch&&player.pouch.ore)||{};for(const k in o)t+=o[k];return t;}
+function pouchCount(id){return (player.pouch&&player.pouch.ore&&player.pouch.ore[id])||0;}
+function pouchAutoCanTake(id){return pouchOK()&&player.pouch.auto&&/_ore$/.test(id)&&pouchTotal()<player.pouch.cap;}
+function pouchAdd(id,n){
+  if(!pouchOK())return 0;
+  const room=player.pouch.cap-pouchTotal();const add=Math.min(n,room);if(add<=0)return 0;
+  player.pouch.ore[id]=(player.pouch.ore[id]||0)+add;dirty=true;return add;
+}
+function fillPouch(){
+  if(!pouchOK()){msg('You do not have a mining pouch yet.');return;}
+  let moved=0;
+  for(let i=0;i<28;i++){const sl=player.inv[i];if(!sl||sl.noted||!/_ore$/.test(sl.id))continue;
+    if(pouchTotal()>=player.pouch.cap)break;
+    const got=pouchAdd(sl.id,sl.qty||1);
+    if(got>0){player.inv[i]=null;moved+=got;}
+  }
+  renderInv();
+  if(moved>0){if(sfx.pickup)sfx.pickup();msg('You stow '+moved+' ore in your mining pouch. ('+pouchTotal()+'/'+player.pouch.cap+')','#caa23a');}
+  else if(pouchTotal()>=player.pouch.cap)msg('Your mining pouch is already full. ('+pouchTotal()+'/'+player.pouch.cap+')');
+  else msg('No ore in your pack to stow.');
+}
+function emptyPouchToBank(){
+  if(!pouchOK()){msg('You do not have a mining pouch yet.');return;}
+  if(!bankOpen){msg('Open a bank to empty your mining pouch into it.');return;}
+  const o=player.pouch.ore;let moved=0;
+  for(const id in o){if(o[id]>0){bankAdd(id,o[id]);moved+=o[id];}}
+  player.pouch.ore={};dirty=true;renderBank();
+  if(moved>0){if(sfx.pickup)sfx.pickup();msg('You empty '+moved+' ore from your pouch into the bank.','#caa23a');}
+  else msg('Your mining pouch is already empty.');
+}
+function checkPouch(){
+  if(!pouchOK()){msg('You do not have a mining pouch yet.');return;}
+  const o=player.pouch.ore;const parts=[];for(const id in o)if(o[id]>0)parts.push(o[id]+' '+ITEMS[id].name.toLowerCase());
+  msg('Mining pouch ('+pouchTotal()+'/'+player.pouch.cap+', auto-stow '+(player.pouch.auto?'on':'off')+'): '+(parts.length?parts.join(', '):'empty')+'.','#c9a24a');
+}
+function swenGrantPouch(){
+  if(!player.pouch)player.pouch={unlocked:false,cap:50,ore:{},auto:true};
+  if(countItem('mining_pouch')<1&&!addItem('mining_pouch'))return false;
+  player.pouch.unlocked=true;player.pouch.cap=50;if(!player.pouch.ore)player.pouch.ore={};player.pouch.auto=true;
+  dirty=true;if(sfx.pickup)sfx.pickup();renderQuests&&renderQuests();return true;
+}
+function swenRebuildContraption(){
+  for(const ob of objects){
+    if(ob.def!=='swenson_furnace'&&ob.def!=='swenson_anvil')continue;
+    if(ob._m&&ob._m.group)scene.remove(ob._m.group);
+    for(let k=proxies.length-1;k>=0;k--){const m=proxies[k];if(m&&m.userData&&m.userData.o===ob)proxies.splice(k,1);}
+    buildObjModel(ob);
+  }
+}
+function swenTurnIn(){
+  const o=player.swenOrder;if(!o||o.got<o.qty)return false;
+  const oreId=SWEN_ORE[o.tier];
+  if(countItem(oreId)+pouchCount(oreId)<o.qty)return false;
+  let need=o.qty;const fromInv=Math.min(need,countItem(oreId));
+  if(fromInv>0){takeItems(oreId,fromInv);need-=fromInv;}
+  if(need>0&&player.pouch&&player.pouch.ore){player.pouch.ore[oreId]=(player.pouch.ore[oreId]||0)-need;if(player.pouch.ore[oreId]<=0)delete player.pouch.ore[oreId];need=0;}
+  const bonus=Math.round(o.qty*(SWEN_OREXP[o.tier]||18)*0.5);
+  const coins=Math.round(o.qty*swenOreVal(o.tier)*1.3);
+  addXp('mining',bonus);qCoins(coins);
+  player.swensonOrders=(player.swensonOrders||0)+1;player.swenOrder=null;dirty=true;
+  if(sfx.pickup)sfx.pickup();
+  msg('Order filled: +'+fmt(bonus)+' Mining xp and '+fmt(coins)+' coins.','#caa23a');
+  if(player.swensonOrders>=SWEN_FIX_AT&&!player.swensonFixed){
+    player.swensonFixed=true;swenRebuildContraption();
+    msg('Ron fires up the contraption \u2014 the furnace glows and the trip-hammer thunks to life. Smelt and smith here whenever you like.','#7a4a0a');
+  }
+  renderQuests&&renderQuests();
+  return true;
+}
+function swenGreeting(){
+  const n=player.swensonOrders||0;
+  if(n===0)return 'Ron Swenson \u2014 I own this quarry, every slab and seam of it. You look like you can swing a pick. Care to earn your keep?';
+  if(n<SWEN_FIX_AT)return 'Back again. Good \u2014 I can always use fresh stone. What is it?';
+  return 'My best supplier returns. What can I do you for?';
+}
+function swenForgeText(){
+  return player.swensonFixed
+    ? 'Runs like a dream now, thanks to you. Smelt and smith all you like \u2014 finest furnace-and-anvil this side of the ravine, and I built every gear of it myself.'
+    : 'My pride and joy \u2014 a furnace and a trip-hammer anvil in one rig, all my own design. Cracked her flue and bent the linkage, though. Fill a few of my orders and I will have the coin and the spare hands to set her right.';
+}
+
+let swenBuilt=false;
+function buildSwensonShop(){
+  if(swenBuilt)return;swenBuilt=true;
+  const grid=document.getElementById('swengrid');
+  const PICKS=['bronze_pickaxe','iron_pickaxe','steel_pickaxe','mithril_pickaxe','adamant_pickaxe','rune_pickaxe'];
+  for(const id of PICKS){
+    const cost=ITEMS[id].val;
+    const card=document.createElement('div');card.className='capecard';
+    const cv=document.createElement('canvas');cv.width=46;cv.height=46;
+    drawItemIcon(cv.getContext('2d'),id,46);
+    const nm=document.createElement('div');nm.className='cnm';nm.textContent=ITEMS[id].name;
+    const pr=document.createElement('div');pr.className='cpr';pr.textContent=fmt(cost)+' coins';
+    const bt=document.createElement('button');bt.className='capebuy';bt.textContent='Buy';
+    bt.addEventListener('click',()=>{
+      const cm=document.getElementById('swenmsg');
+      if(coinCount()<cost){cm.textContent='You don\u2019t have enough coins.';return;}
+      if(!addItem(id)){cm.textContent='Your pack is too full.';return;}
+      spendCoins(cost);if(sfx.pickup)sfx.pickup();dirty=true;
+      cm.textContent='You buy the '+ITEMS[id].name+'.';
+      renderInv();
+    });
+    card.appendChild(cv);card.appendChild(nm);card.appendChild(pr);card.appendChild(bt);
+    grid.appendChild(card);
+  }
+  document.getElementById('swenx').addEventListener('click',()=>{
+    document.getElementById('swenshopui').classList.remove('on');});
+}
+function openSwensonShop(){
+  buildSwensonShop();
+  document.getElementById('swenmsg').textContent='Best pickaxes in the wilderness. Knapped \u2019em myself.';
+  document.getElementById('swenshopui').classList.add('on');
+}
+function swensonTree(){
+  const o=player.swenOrder;
+  const tier=o?o.tier:swenOrderTier();
+  const oreName=swenOreName(tier);
+  const canPouch=(!player.pouch||!player.pouch.unlocked)&&lvl('mining')>=50&&(player.swensonOrders||0)>=5;
+  const opts=[];
+  if(!o)opts.push({label:'Got any mining work?',next:()=>{swenAcceptOrder();return 'accepted';}});
+  else if(o.got<o.qty)opts.push({label:'About that order\u2026',next:'progress'});
+  else opts.push({label:'I have your '+oreName+'.',next:()=>{return swenTurnIn()?'delivered':'noore';}});
+  if(canPouch)opts.push({label:'You mentioned a mining pouch?',next:()=>{return swenGrantPouch()?'gotpouch':'pouchfull';}});
+  opts.push({label:'Show me your pickaxes.',next:()=>{openSwensonShop();return null;}});
+  opts.push({label:'What\u2019s with that contraption?',next:'forge'});
+  opts.push({label:'Just passing through.',next:'bye'});
+  return {
+    start:{who:'npc',text:swenGreeting(),opts},
+    accepted:{who:'npc',text:'Right then \u2014 bring me '+SWEN_QTY+' '+oreName+', freshly cut. Mine it after we have shaken on it; I will know if you try to fob me off with old stock.',next:null},
+    progress:{who:'npc',text:o?('You are at '+o.got+' of '+o.qty+' '+oreName+'. Back to the seams.'):'No order running just now.',next:'start'},
+    delivered:{who:'npc',text:'Good clean stone. Pleasure doing business \u2014 come back when you fancy another load.',next:null},
+    noore:{who:'npc',text:'You are not carrying the ore. Dig it up and bring it to me.',next:null},
+    gotpouch:{who:'npc',text:'You have earned it. Here \u2014 my spare ore sack; holds fifty stone. Fill it from your pack, empty it at a bank. Saves your legs.',next:null},
+    pouchfull:{who:'npc',text:'Your pack is stuffed full. Free up a slot and ask me again.',next:null},
+    forge:{who:'npc',text:swenForgeText(),next:'start'},
+    bye:{who:'npc',text:'Mind the cliffs. And don\u2019t chip my granite on the way out.',next:null}
+  };
+}
 const DIALOGUES={
+  swenson:()=>swensonTree(),
   quartermaster:()=>({
     start:{who:'npc',text:"Oh - fresh meat! Welcome to the Matthes Cage, {name}. Name's Todd, and I run this place. Used to run the laundry up in the gym - towels, kit, the lot - till the Rector decided I had a knack for 'crowd management.' Now I count the tokens and mop the turf after. What'll it be?",opts:[
       {label:"Who are you, then?",next:'about'},
@@ -15627,7 +15910,26 @@ const QUESTS=[
    if(C[2])return 'Three chambers contained. Face the Vault Sentinel in the last chamber ('+((K[3])||0)+' of 2).';
    if(C[1])return 'Two chambers contained. Banish the ghosts in chamber three ('+((K[2])||0)+' of 10).';
    if(C[0])return 'Chamber one contained. Put down the zombies in chamber two ('+((K[1])||0)+' of 8).';
-   return 'Enter the cavern and contain chamber one: minotaurs ('+((K[0])||0)+' of 6).';}]];
+   return 'Enter the cavern and contain chamber one: minotaurs ('+((K[0])||0)+' of 6).';}],
+ ['swenson','Swenson\u2019s Standing Order','Ron Swenson \u2014 the granite quarry',
+  'Repeatable Mining XP & coins; Swenson\u2019s furnace & anvil restored at 3 orders; a Mining pouch at Mining 50 + 5 orders',
+  null,
+  ()=>{
+   const n=player.swensonOrders||0,o=player.swenOrder;
+   const fixed=!!player.swensonFixed,pouch=!!(player.pouch&&player.pouch.unlocked);
+   if(n===0&&!o)return{cls:0,text:'Ron Swenson runs the granite quarry out in the wilderness, west of the red barn (past the ditch \u2014 watch yourself out there). Look for the SWENSON sign by the cliffs. Speak to him and ask for mining work to begin; he pays coin and Mining XP for ore mined fresh and delivered to order.'};
+   let line;
+   if(o){const nm=ITEMS[SWEN_ORE[o.tier]].name.toLowerCase();
+     line=o.got>=o.qty?('Order ready \u2014 take '+o.qty+' '+nm+' back to Ron at the granite quarry.')
+       :('Current order: mine '+o.qty+' '+nm+' ('+o.got+'/'+o.qty+', mined since you accepted), then return to Ron.');
+   }else line='No active order \u2014 see Ron at the granite quarry for your next one.';
+   const ms=[];
+   ms.push(fixed?'\u2713 Furnace & anvil restored \u2014 you can smelt and smith at the quarry':('Furnace & anvil: fill '+Math.max(0,3-n)+' more order(s) to restore them ('+Math.min(n,3)+'/3)'));
+   if(pouch)ms.push('\u2713 Mining pouch earned');
+   else{const r=[];if(lvl('mining')<50)r.push('Mining 50 (now '+lvl('mining')+')');if(n<5)r.push((5-n)+' more order(s)');ms.push('Mining pouch: '+(r.length?('need '+r.join(' and ')):'ready \u2014 ask Ron for it'));}
+   return{cls:(fixed&&pouch)?2:1,text:line+'  \u2014  Orders filled: '+n+'.  '+ms.join('.  ')+'.'};
+  }]
+];
 function renderQuests(){
   const box=document.getElementById('qlist');
   if(!box)return;
@@ -19824,8 +20126,8 @@ const tool=new THREE.Group();
 rig.rArm.add(tool);
 tool.position.set(0,-0.58,0.06);
 const axe=new THREE.Group();
-{const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=-0.18;axe.add(h);
- const b=mesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,-0.34,0.10);axe.add(b);}
+{const h=mesh(new THREE.BoxGeometry(0.05,0.55,0.05),0x6b4a2e);h.position.y=0.18;axe.add(h);
+ const b=mesh(new THREE.BoxGeometry(0.055,0.18,0.22),0xb9bdc4);b.position.set(0,0.34,0.10);axe.add(b);}
 const pick=new THREE.Group();
 {const h=mesh(new THREE.BoxGeometry(0.05,0.6,0.05),0x6b4a2e);h.position.y=-0.16;pick.add(h);
  const b=mesh(new THREE.BoxGeometry(0.05,0.07,0.44),0x8f949c);b.position.set(0,-0.40,0);pick.add(b);}
@@ -20970,8 +21272,14 @@ function openDragonInfo(){
     scn.add(new THREE.AmbientLight(0xffffff,0.7));
     var dl=new THREE.DirectionalLight(0xfff0e0,0.95); dl.position.set(3,6,4); scn.add(dl);
     var dl2=new THREE.DirectionalLight(0xff7a3a,0.4); dl2.position.set(-4,2,3); scn.add(dl2);
-    var drag=buildShowcaseDragon(); scn.add(drag);
-    (function loop(){ if(!document.body.contains(ov))return; raf=requestAnimationFrame(loop); drag.rotation.y+=0.012; ren.render(scn,cam); })();
+    var drag=buildShowcaseDragon(); scn.add(drag); drag.rotation.y=0.5;
+    cv.style.touchAction='none'; cv.style.cursor='grab';
+    function _dren(){ try{ ren.render(scn,cam); }catch(_){} } _dren();
+    var _dg=false,_lx=0;
+    cv.addEventListener('pointerdown',function(e){ _dg=true; _lx=e.clientX; try{cv.setPointerCapture(e.pointerId);}catch(_){} });
+    cv.addEventListener('pointermove',function(e){ if(!_dg)return; var dx=e.clientX-_lx; _lx=e.clientX; drag.rotation.y+=dx*0.012; _dren(); });
+    var _de=function(e){ _dg=false; try{cv.releasePointerCapture(e.pointerId);}catch(_){} };
+    cv.addEventListener('pointerup',_de); cv.addEventListener('pointercancel',_de); cv.addEventListener('pointerleave',function(){ _dg=false; });
   }catch(e){ var c2=box.querySelector('#dragCanvas'); if(c2)c2.style.display='none'; }
 }
 /* =================== END BLACK DRAGON INFO POPUP =================== */
