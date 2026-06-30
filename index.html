@@ -629,6 +629,20 @@
     background:#1c1810;border:1px solid #5d5141;border-radius:4px;padding:6px 9px;margin-bottom:7px;outline:none;}
   .encsearch:focus{border-color:#caa23a;}
   .encsearch::placeholder{color:#8a7d63;}
+  .enctabs{display:flex;gap:6px;margin:0 0 9px;}
+  .enctab{flex:1;font:bold 12px Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);border:1px solid #5a4d2e;border-radius:6px;padding:7px 0;cursor:pointer;}
+  .enctab:hover{color:#ffd98c;border-color:#7a6a3e;}
+  .enctab.on{color:#1c1710;background:linear-gradient(#e8c878,#caa23a);border-color:#caa23a;}
+  .bcell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:#241f15;border:1px solid #3a3322;border-radius:5px;cursor:pointer;min-height:46px;}
+  .bcell:hover{border-color:#caa23a;background:#2c2618;}
+  .bcell .bn{font:bold 11px Georgia,serif;color:#e8dcc0;text-align:center;line-height:1.15;}
+  .bcell .bl{font:bold 10px Georgia,serif;}
+  .bview{width:100%;height:210px;display:block;background:radial-gradient(circle at 50% 36%,#2c2740,#0f0c12);border-radius:8px;border:1px solid #463c2b;touch-action:none;cursor:grab;}
+  .bview:active{cursor:grabbing;}
+  .barrows{display:flex;justify-content:center;gap:20px;margin:9px 0 2px;}
+  .barrow{font:bold 19px Georgia,serif;color:#1c1710;background:linear-gradient(#e8c878,#caa23a);border:1px solid #caa23a;border-radius:6px;width:58px;height:33px;cursor:pointer;line-height:1;}
+  .barrow:hover{background:linear-gradient(#ffd98c,#e0b850);}
+  .bhint{text-align:center;font:italic 10.5px Georgia,serif;color:#9a8b6a;margin-bottom:9px;}
   .encempty{grid-column:1/-1;text-align:center;color:#9a8b6a;font:italic 12px Georgia,serif;padding:24px 8px;}
   .encfilters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;}
   .encchip{font:bold 11px Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);
@@ -857,6 +871,7 @@
 <div id="bankui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Bank of Milville</span><div class="gex" id="bankclose" title="Close">&#10005;</div></div>
   <input id="banksearch" type="text" placeholder="Search your bank…" autocomplete="off" spellcheck="false">
+  <div id="banksort" title="Group your vault by category" style="margin:0 0 6px;padding:5px 9px;border:1px solid #4a3f2c;border-radius:5px;color:#caa83c;font-size:11px;text-align:center;cursor:pointer;user-select:none;">Sort by category: off</div>
   <div id="bankgrid"></div>
   <div class="gefoot" style="border-top:1px solid #2a241a;">Your pack &mdash; click to deposit, right-click to deposit all</div>
   <div id="bankinv"></div>
@@ -906,6 +921,7 @@
 </div></div>
 <div id="encui" class="gemodal"><div class="gepanel" style="width:560px;">
   <div class="gebar"><span>Encyclopedia</span><div class="gex" id="encclose" title="Close">&#10005;</div></div>
+  <div id="enctabs" class="enctabs"><button class="enctab on" data-encmode="items">Items</button><button class="enctab" data-encmode="bestiary">Bestiary</button></div>
   <input id="encsearch" class="encsearch" type="text" placeholder="Search items…" autocomplete="off" spellcheck="false">
   <div id="encfilters" class="encfilters"></div>
   <div id="enccount" class="enccount"></div>
@@ -1020,6 +1036,7 @@ const ITEMS={
   mithril_ore:{name:'Mithril ore',ex:'A dense, blue-tinged ore.',val:150},
   adamant_ore:{name:'Adamant ore',ex:'A heavy green-black ore.',val:400},
   runite_ore:{name:'Runite ore',ex:'It faintly hums with old magic.',val:1500},
+  berrite_ore:{name:'Berrite ore',ex:'A rosy-pink crystal ore with a soft blush sheen.',val:75},
   raw_shrimps:{name:'Raw shrimps',ex:'I should cook these at the campfire.',prim:'CookHint',val:5},
   shrimps:{name:'Shrimps',ex:'Some nicely cooked shrimps.',prim:'Eat',val:15},
   burnt_shrimps:{name:'Burnt shrimps',ex:'Oops. Charred beyond rescue.',prim:'Yuck',val:1},
@@ -1073,19 +1090,19 @@ const ITEMS={
 const GE_STOCK=[];
 {
   const T=[['bronze',0xb07a3e,0xdba968,2,30,1],['iron',0x7a766f,0xa8a49c,4,90,1],
-    ['steel',0xaab2ba,0xe2e8ee,7,300,5],['black',0x33333a,0x55555e,8,500,10],
+    ['steel',0xaab2ba,0xe2e8ee,7,300,5],['black',0x33333a,0x55555e,8,500,10],['berrite',0xec71a1,0xf5a8c8,8,500,11],
     ['mithril',0x6b6bb0,0x9a9ade,10,800,20],
     ['adamant',0x468852,0x7cba8a,13,2000,30],['rune',0x5a8ab0,0x94c8ea,17,12000,40]];
   /* OSRS-exact melee bonuses, tier-indexed [bronze,iron,steel,black,mithril,adamant,rune].
      Single-stat collapse: weapon atk = OSRS slash bonus, str = OSRS strength bonus,
      armour def = OSRS slash defence. (Verified vs oldschool.runescape.wiki type pages.) */
-  const _SCIM_A=[7,10,15,19,21,29,45],_SCIM_S=[6,9,14,14,20,28,44];
-  const _SWD_A=[5,8,14,18,20,29,47],_SWD_S=[7,10,16,16,22,31,49];
-  const _HELM_D=[5,7,10,13,14,21,32];
-  const _PLATE_D=[14,20,31,40,44,63,80];
-  const _LEGS_D=[7,10,16,20,22,31,49];
-  const _CHAIN_D=[11,15,25,32,35,50,72];
-  const _KITE_D=[7,10,15,19,22,31,48];
+  const _SCIM_A=[7,10,15,19,19,21,29,45],_SCIM_S=[6,9,14,14,14,20,28,44];
+  const _SWD_A=[5,8,14,18,18,20,29,47],_SWD_S=[7,10,16,16,16,22,31,49];
+  const _HELM_D=[5,7,10,13,13,14,21,32];
+  const _PLATE_D=[14,20,31,40,40,44,63,80];
+  const _LEGS_D=[7,10,16,20,20,22,31,49];
+  const _CHAIN_D=[11,15,25,32,32,35,50,72];
+  const _KITE_D=[7,10,15,19,19,22,31,48];
   T.forEach((t,ix)=>{
     const n=t[0],tint=t[1],trim=t[2],atk=t[3],v=t[4],rq=t[5];
     const N=n[0].toUpperCase()+n.slice(1);
@@ -1160,6 +1177,15 @@ ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with
 ITEMS.dragon_platelegs={name:'Dragon platelegs',ex:'Red dragon-plate greaves trimmed in gold.',val:130000,equip:{slot:'legs',def:66,model:'legs',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_kiteshield={name:'Dragon kiteshield',ex:'A red kiteshield bearing a golden wyrm.',val:120000,equip:{slot:'shield',def:60,model:'shieldM',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.uncut_sapphire={name:'Uncut sapphire',ex:'A rough blue gem. The Exchange will pay for it.',val:300,prim:'Examine'};
+ITEMS.red_spider_eggs={name:'Red spider eggs',ex:'A clutch of glistening crimson eggs. Apothecaries pay a fair price for them.',val:90,stack:true,prim:'Examine'};
+ITEMS.ectoplasm={name:'Ectoplasm',ex:'A cold, luminous residue left where a ghost was laid to rest.',val:12,prim:'Bury'};
+ITEMS.infernal_ashes={name:'Infernal ashes',ex:'The smouldering remains of a demon. Scatter them and the gods take notice.',val:30,prim:'Bury'};
+ITEMS.glens_baton={name:'Glen\u2019s baton',ex:'A striped car-park baton. Glen waves these at illegally parked carts; the bandits were not impressed.',val:320,prim:'Examine'};
+ITEMS.bozeks_pocket_watch={name:'Bozek\u2019s pocket watch',ex:'A brass pocket watch, still ticking. Bozek timed his salt-grinding by it.',val:540,prim:'Examine'};
+ITEMS.ricks_flask={name:'Rick\u2019s flask',ex:'A dented hip flask. Rick swears it has only ever held water.',val:280,prim:'Examine'};
+ITEMS.spencers_snuffbox={name:'Reverend Spencer\u2019s snuffbox',ex:'An ornate silver snuffbox. The Reverend will pretend he never owned it.',val:460,prim:'Examine'};
+ITEMS.mishs_dice={name:'Mish\u2019s lucky dice',ex:'A pair of suspiciously weighted dice. No wonder Mish never loses.',val:360,prim:'Examine'};
+ITEMS.stolen_signet={name:'Stolen signet ring',ex:'A heavy gold signet, prised from someone important. The Bandit Leader was fencing it.',val:3000,prim:'Examine'};
 ITEMS.uncut_emerald={name:'Uncut emerald',ex:'A rough green gem, flecked with light.',val:600,prim:'Examine'};
 ITEMS.uncut_ruby={name:'Uncut ruby',ex:'A deep red gem, warm to the touch.',val:1400,prim:'Examine'};
 ITEMS.uncut_diamond={name:'Uncut diamond',ex:'A brilliant rough diamond. A small fortune.',val:3500,prim:'Examine'};
@@ -1184,6 +1210,7 @@ ITEMS.bronze_bar={name:'Bronze bar',
 ITEMS.iron_bar={name:'Iron bar',ex:'A solid bar of iron.',val:60};
 ITEMS.steel_bar={name:'Steel bar',ex:'Iron, refined and hardened.',val:140};
 ITEMS.mithril_bar={name:'Mithril bar',ex:'A bar of blue-tinged mithril.',val:320};
+ITEMS.berrite_bar={name:'Berrite bar',ex:'A bar of pink-tinged berrite.',val:100};
 ITEMS.adamant_bar={name:'Adamant bar',ex:'A bar of dark adamantite.',val:800};
 ITEMS.rune_bar={name:'Runite bar',ex:'A humming bar of pure runite.',val:2400};
 ITEMS.lost_crate={name:'Supply crate',
@@ -1236,7 +1263,7 @@ ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u201
 ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8}};
 ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,equip:{slot:'weapon',atk:0,str:0,model:'maul',verb:'Wield',req:0}};
 ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:82,str:82,model:'scim',verb:'Wield',req:70,tint:0x1c1118,trim:0x7a2030}};
-ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft. It lands like a rockfall.',val:45000,equip:{slot:'weapon',atk:16,str:28,model:'scim',verb:'Wield',req:28,tint:0x6e6f73,trim:0x9a9ca0}};
+ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft, swung two-handed. Slow to heave, but it lands like a rockfall.',val:90000,equip:{slot:'weapon',atk:62,str:120,spd:3600,model:'maul',twoHand:true,verb:'Wield',req:50,tint:0x6e6f73,trim:0x9a9ca0}};
 ITEMS.draconic_visage={name:'Draconic visage',ex:'The petrified face of an ancient wyrm. Collectors pay fortunes for it.',val:250000,prim:'Examine'};
 ITEMS.basilisk_jaw={name:'Basilisk jaw',ex:'A heavy, fanged jawbone \u2014 worth a great deal to the right buyer.',val:35000,prim:'Examine'};
 ITEMS.wailing_relic={name:'Wailing relic',ex:'A cold iron charm that still hums with a banshee\u2019s grief. Valuable.',val:18000,prim:'Examine'};
@@ -1274,6 +1301,8 @@ const OBJ_DEFS={
     base:.16,fall:1,respawn:[10,16],cap:[1,2],ex:'Dark green adamantite, hard as the dean.',depEx:'Mined clean.',depName:'Rocks'},
   rune:{name:'Runite rocks',action:'Mine',skill:'mining',req:85,xp:62,item:'runite_ore',
     base:.1,fall:1,respawn:[14,22],cap:[1,2],ex:'It hums. Runite \u2014 worth a term\u2019s tuition.',depEx:'Mined clean.',depName:'Rocks'},
+  berrite:{name:'Berrite rocks',action:'Mine',skill:'mining',req:35,xp:28,item:'berrite_ore',
+    base:.27,fall:1,respawn:[6,10],cap:[2,4],ex:'A seam of rosy-pink berrite crystal.',depEx:'Mined clean.',depName:'Rocks'},
   spot:{name:'Fishing spot',action:'Net',skill:'fishing',req:1,xp:5,item:'raw_shrimps',
     base:.42,fall:0,respawn:[12,20],cap:[6,10],ex:'Shrimps dart beneath the surface.',noBlock:true},
   fire:{name:'Campfire',action:'Cook-at',ex:'Mmm, toasty.',noBlock:1},
@@ -1342,6 +1371,7 @@ const OBJ_DEFS={
   altar:{name:'Chaos altar',ex:'An altar humming with grim energy.'},
   paltar:{name:'Chapel altar',ex:'A serene altar beneath the rose window.'},
   wildsign:{name:'Warning sign',ex:'A skull and crossbones. It needs no words.'},
+  dragon_sign:{name:'Dragon-warning signpost',action:'Read',ex:'A heavy iron-bound notice board, scorched black at the edges. It warns travellers of the Black Dragon that lairs just to the west.'},
   banker:{name:'Banker',ex:'He keeps the vault keys very close.'},
   bankchest:{name:'Bank chest',action:'Bank',ex:'A strongbox bound to the Bank of Milville. Open it to reach your vault.'},
   clerk:{name:'Grand Exchange clerk',
@@ -1885,6 +1915,9 @@ function addObj(def,x,y,force){
   [[116,21],[120,19]].forEach(p=>addObj('tin',p[0],p[1]));
   [[117,20],[119,21]].forEach(p=>addObj('iron',p[0],p[1]));
   [[124,22],[161,119],[185,118]].forEach(p=>addObj('mithril',p[0],p[1]));
+  [[50,46],[47,44]].forEach(p=>addObj('berrite',p[0],p[1]));         /* berrite: white farm */
+  [[121,20],[114,20]].forEach(p=>addObj('berrite',p[0],p[1]));       /* berrite: heating plant */
+  [[163,118],[183,119]].forEach(p=>addObj('berrite',p[0],p[1]));     /* berrite: Swenson granite quarry */
   /* NE-wilderness adamant+rune rocks removed (quarry still has full ore) */
 [[155,12],[156,13],[110,52],[129,100]].forEach(p=>addObj('spot',p[0],p[1]));
 [[157,14],[126,52]].forEach(p=>{const _o=addObj('spot',p[0],p[1]);if(_o)_o.deep=true;});
@@ -1931,6 +1964,7 @@ const SIGNS=[
  [69,111,'Rectory Road \u2014 past the chapel to Coit'],
 ];
 SIGNS.forEach(sp=>addObj('sign',sp[0],sp[1]));
+addObj('dragon_sign',155,124,true);
 /* the wasteland claims its trees */
 objects.forEach(o=>{
   if((o.def==='tree'||o.def==='oak'||o.def==='willow'||o.def==='birch')&&inWild(o.x,o.y))o.def='deadtree';
@@ -2053,18 +2087,18 @@ const SPELL_LIST=Object.keys(SPELLS).sort(function(a,b){return SPELLS[a].req-SPE
 ].forEach(function(a){ITEMS[a[0]]={name:a[1],ex:'Magical robes that channel the arts.',val:a[7],
   equip:{slot:a[2],model:'robe',armStyle:'magic',verb:'Wear',mdef:a[4],matk:a[5],mdmg:a[6],def:1,req:a[3],tint:a[8]}};GE_STOCK.push(a[0]);});
 const MOB_KINDS={
-  rat:{name:'Giant rat',ex:'Overgrown vermin with a bad attitude.',hp:8,acc:0.46,
-    maxhit:2,resp:12000,bones:1,coinP:.4,coins:[3,18],aggro:0,cmb:2},
+  rat:{name:'Giant rat',ex:'Overgrown vermin with a bad attitude.',hp:6,acc:0.32,
+    maxhit:1,resp:12000,bones:1,coinP:.4,coins:[3,18],aggro:0,cmb:2},
   zombie:{name:'Zombie',ex:'It shambles a beat nobody assigned.',
     hp:22,acc:0.5,maxhit:3,resp:16000,bones:1,coinP:.5,coins:[5,25],aggro:1,cmb:13},
   spider:{name:'Giant spider',ex:'Eight legs and not one nice thought.',hp:10,acc:0.44,
-    maxhit:1,resp:10000,bones:0,coinP:.3,coins:[2,12],aggro:1,cmb:3},
+    maxhit:1,resp:10000,bones:0,coinP:.3,coins:[2,12],aggro:0,cmb:3},
   redspider:{name:'Deadly red spider',ex:'Venom-bright and half again the size. It wants you, specifically.',hp:20,acc:0.62,
     maxhit:3,resp:11000,bones:0,coinP:.55,coins:[8,30],aggro:1,cmb:34},
   minotaur:{name:'Minotaur',ex:'Half man, half bull, entirely furious.',hp:26,acc:0.52,
     maxhit:3,resp:20000,bones:1,coinP:.75,coins:[8,40],aggro:1,cmb:12},
   brat:{name:'Fac Brat',ex:'A faculty child in full goblin mode. Armed, somehow.',
-    hp:8,acc:0.4,maxhit:1,resp:25000,bones:1,coinP:.6,coins:[1,8],aggro:0,roam:1,cmb:7},
+    hp:8,acc:0.4,maxhit:1,resp:25000,bones:0,coinP:.6,coins:[1,8],aggro:0,roam:1,cmb:7},
   priest:{name:'Corrupted Priest',ex:'Something hollow wears the vestments now.',
     hp:9,acc:0.48,maxhit:1,resp:18000,bones:1,coinP:.5,coins:[4,20],aggro:0,cmb:6},
   dean:{name:'Dean of Students',ex:'The final word in campus discipline. The sword is not ceremonial.',
@@ -2073,7 +2107,7 @@ const MOB_KINDS={
     hp:22,acc:0.56,maxhit:3,resp:20000,bones:1,coinP:.6,coins:[5,30],aggro:0,cmb:21},
   ghost:{name:'Ghost',ex:'A cold draught with a grudge.',hp:19,acc:0.54,maxhit:3,
     resp:14000,bones:1,coinP:0,coins:[0,0],aggro:1,cmb:19},
-  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:22,acc:0.6,maxhit:7,resp:18000,bones:1,coinP:0.6,coins:[15,55],aggro:0,cmb:23,magic:1},
+  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:44,acc:0.66,maxhit:9,resp:18000,bones:1,coinP:0.6,coins:[15,55],aggro:0,cmb:48,magic:1},
   gargoyle:{name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:105,acc:0.82,maxhit:10,resp:22000,bones:1,coinP:0.9,coins:[80,220],aggro:0,cmb:111},
   basilisk:{name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:82,acc:0.7,maxhit:8,resp:24000,bones:1,coinP:0.8,coins:[45,130],aggro:0,cmb:61,magic:1},
   wyvern:{name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:200,acc:0.84,maxhit:14,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:1,cmb:140,magic:1},
@@ -2095,16 +2129,16 @@ const MOB_KINDS={
   mossgiant:{name:'Moss giant',ex:'Draped in damp green growth, slow but mighty.',hp:60,acc:0.64,maxhit:8,resp:22000,bigbones:1,coinP:.9,coins:[25,80],aggro:0,cmb:42,weak:'melee',resist:'magic'},
   firegiant:{name:'Fire giant',ex:'Embers smoulder in its hide; the air shimmers around it.',hp:111,acc:0.76,maxhit:13,resp:28000,bigbones:1,coinP:1,coins:[80,200],aggro:1,cmb:86,weak:'melee',resist:'magic'},
   cyclops:{name:'Cyclops',ex:'One eye, one purpose: stomp the intruder flat.',hp:70,acc:0.68,maxhit:12,resp:24000,bigbones:1,coinP:.9,coins:[40,120],aggro:0,cmb:56,weak:'melee',resist:'magic'},
-  darkwizard:{name:'Dark wizard',ex:'Robed in midnight; the air crackles at its fingertips.',hp:20,acc:0.58,maxhit:6,resp:16000,bones:1,coinP:.6,coins:[10,40],aggro:0,cmb:20,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:4,projCol:'#7b6bf0'},
+  darkwizard:{name:'Dark wizard',ex:'Robed in midnight; the air crackles at its fingertips.',hp:32,acc:0.64,maxhit:8,resp:16000,bones:1,coinP:.6,coins:[10,40],aggro:0,cmb:35,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:4,projCol:'#7b6bf0'},
   skelearcher:{name:'Skeleton archer',ex:'Fleshless fingers still know the draw and the loose.',hp:30,acc:0.64,maxhit:6,resp:18000,bones:1,coinP:.6,coins:[15,55],aggro:0,cmb:49,weak:'melee',resist:'magic',atkStyle:'ranged',atkRange:5,projCol:'#d8d2bc'},
   kurask:{name:'Kurask',ex:'A horned brute that only leaf-bladed steel seems to wound.',hp:105,acc:0.80,maxhit:9,resp:30000,bones:1,coinP:1,coins:[60,160],aggro:0,cmb:106,weak:'ranged',resist:'melee'},
   greendragon:{name:'Green dragon',ex:'A chromatic dragon of the marshes; its breath is liquid fire.',hp:35,acc:0.72,maxhit:10,resp:30000,bigbones:1,coinP:1,coins:[60,180],aggro:0,cmb:88,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   bluedragon:{name:'Blue dragon',ex:'Frost-scaled but fire-breathing; larger and deadlier than its green kin.',hp:105,acc:0.76,maxhit:10,resp:34000,bigbones:1,coinP:1,coins:[90,240],aggro:0,cmb:111,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   reddragon:{name:'Red dragon',ex:'Crimson and vast, with a furnace in its chest.',hp:140,acc:0.80,maxhit:12,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:0,cmb:152,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
-  blackdragon:{name:'Black dragon',ex:'The apex of the chromatic brood; its dragonfire melts stone.',hp:180,acc:0.86,maxhit:16,resp:48000,bigbones:1,coinP:1,coins:[200,480],aggro:0,boss:1,cmb:227,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
+  blackdragon:{name:'Black dragon',ex:'The apex of the chromatic brood; its dragonfire melts stone.',hp:180,acc:0.86,maxhit:16,resp:1800000,bigbones:1,coinP:1,coins:[30000,45000],aggro:0,boss:1,cmb:227,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   goblin:{name:'Goblin',ex:'Small, green and spoiling for a scrap. Smells of wet dog and ambition.',hp:5,acc:0.42,maxhit:1,resp:12000,bones:1,coinP:.6,coins:[2,14],aggro:0,cmb:3,weak:'melee',resist:'magic'},
-  biggoblin:{name:'Goblin brute',ex:'A head taller than its kin and twice as mean. War-paint, bad attitude.',hp:14,acc:0.5,maxhit:2,resp:14000,bones:1,coinP:.7,coins:[6,26],aggro:1,cmb:6,weak:'melee',resist:'magic'},
-  bigspider:{name:'Deathwidow spider',ex:'A bloated giant spider with venom to spare. Mind the fangs.',hp:24,acc:0.56,maxhit:3,resp:16000,bones:0,coinP:.4,coins:[6,24],aggro:1,cmb:8,weak:'melee',resist:'magic'},
+  biggoblin:{name:'Goblin brute',ex:'A head taller than its kin and twice as mean. War-paint, bad attitude.',hp:14,acc:0.5,maxhit:2,resp:14000,bones:1,coinP:.7,coins:[6,26],aggro:0,cmb:6,weak:'melee',resist:'magic'},
+  bigspider:{name:'Deathwidow spider',ex:'A bloated giant spider with venom to spare. Mind the fangs.',hp:24,acc:0.56,maxhit:3,resp:16000,bones:0,coinP:.4,coins:[6,24],aggro:0,cmb:8,weak:'melee',resist:'magic'},
   wolf:{name:'Wolf',ex:'A lean grey hunter that has decided you are lunch.',hp:15,acc:0.55,maxhit:3,resp:14000,bones:1,coinP:.4,coins:[3,20],aggro:0,cmb:25,weak:'melee',resist:'magic'},
   bandit:{name:'Bandit',ex:'A camp tough in a stolen coat. Robs first, asks never.',hp:30,acc:0.55,maxhit:4,resp:14000,bones:1,coinP:1,coins:[15,60],aggro:0,cmb:30,weak:'melee',resist:'magic'},
   banditleader:{name:'Bandit Leader',ex:'Runs the camp by the simple rule of the biggest blade.',hp:55,acc:0.66,maxhit:7,resp:30000,bones:1,coinP:1,coins:[60,200],aggro:1,cmb:52,weak:'melee',resist:'magic'},
@@ -2251,6 +2285,8 @@ const MOB_SPAWNS=[
   ['ghost',179,69],['ghost',184,74],['ghost',180,72],['hdean',182,71],
   /* Fac brats -- roam the campus */
   ['brat',78,52],['brat',68,40],['brat',116,62],['brat',55,100],['brat',88,30],
+  /* Maddened minotaurs -- directly south of Matthes Cage (Beast of the Cage needs 3) */
+  ['minotaur',64,21],['minotaur',67,21],['minotaur',65,23],
   /* First Rector -- shallow wilderness, m5-gated (starts hidden) */
   ['master',24,50],
   /* Wild boar -- by Crumpacker Boathouse, chef-gated (starts hidden) */
@@ -2643,7 +2679,7 @@ async function upsertSlot(id,name){
   await writeSlots(list);
 }
 const player={
-  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,maxHit:0,maxMagicHit:0,maxRangeHit:0,deaths:0,pvpWins:0,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
+  name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,maxHit:0,maxMagicHit:0,maxRangeHit:0,deaths:0,pvpWins:0,bossKills:0,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
   x:89+WX,y:88,px:89+WX,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
   hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
   skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0},
@@ -2716,6 +2752,69 @@ function castCharge(r,col){
     parts.push({wx:mx,wy:my,wz:mz,vx:Math.cos(a)*rnd(0.7,1.9),vy:rnd(-1.5,0.5),
     t:performance.now()+k*9,col:col});}
 }
+function dragonFireBreath(r,dir){
+  const dx=dir?dir[0]:(Math.sign(player.x-r.x)||0), dy=dir?dir[1]:(Math.sign(player.y-r.y)||1);
+  const sdir=Math.sign(player.px-r.px)||(dx||1);
+  const mx=r.px+0.5+dx*0.5, my=groundH(r.px,r.py)+1.55, mz=r.py+0.5+dy*0.5, now=performance.now();
+  const cols=['#ffe89a','#ffc24a','#ff8a1e','#ff5a1e','#e0401a'];
+  for(let k=0;k<60;k++){parts.push({wx:mx,wy:my,wz:mz,
+    vx:sdir*rnd(2.4,7.2)+rnd(-1.3,1.3),vy:rnd(-2.1,0.5),
+    t:now+k*8,life:520+rnd(0,260),col:cols[k%cols.length]});}
+  for(let k=0;k<12;k++){parts.push({wx:mx,wy:my,wz:mz,smoke:true,r0:rnd(7,12),grow:rnd(12,26),a0:rnd(0.22,0.46),
+    vx:sdir*rnd(1.6,5.0),vy:rnd(-1.4,0.2),t:now+k*14,life:520+rnd(0,220),col:k%2?'#ff7a1e':'#ffae3a'});}
+}
+function groundFire(tx,ty){
+  const gx=tx+0.5,gz=ty+0.5,gy=groundH(tx,ty)+0.08,now=performance.now();
+  const cols=['#ffd24a','#ff8a1e','#ff5a1e','#e0401a'];
+  for(let k=0;k<16;k++){parts.push({wx:gx+rnd(-0.38,0.38),wy:gy,wz:gz+rnd(-0.38,0.38),
+    vx:rnd(-0.4,0.4),vy:-rnd(1.3,2.8),t:now+k*16,life:420+rnd(0,220),col:cols[k%cols.length]});}
+  for(let k=0;k<4;k++){parts.push({wx:gx+rnd(-0.3,0.3),wy:gy,wz:gz+rnd(-0.3,0.3),smoke:true,r0:rnd(5,9),grow:rnd(8,16),a0:rnd(0.2,0.4),
+    vx:rnd(-0.3,0.3),vy:-rnd(0.6,1.4),t:now+k*22,life:460+rnd(0,200),col:'#6a4a3a'});}
+}
+function bossSpecialTick(r,nowM){
+  if(player.hp<=0){r.spec=null;return;}
+  const near=dist1(r.x,r.y,player.x,player.y)<=6;
+  if(!r.spec){
+    if(!near){r.specCd=nowM+9000;return;}
+    if(r.specCd===undefined)r.specCd=nowM+rndi(8000,12000);
+    if(nowM>=r.specCd){
+      let cdx=0,cdy=0;
+      if(Math.abs(player.x-r.x)>=Math.abs(player.y-r.y))cdx=Math.sign(player.x-r.x)||1; else cdy=Math.sign(player.y-r.y)||1;
+      const tiles=[];for(let k=1;k<=5;k++)tiles.push([r.x+cdx*k,r.y+cdy*k]);
+      r.spec={phase:'windup',t:nowM,fireAt:nowM+2600,dir:[cdx,cdy],tiles:tiles};
+      r.nextAtk=nowM+5400;
+      msg('The Black Dragon rears back, drawing a furnace-breath — step out of the line of fire!','#e8801f');
+    }
+    return;
+  }
+  if(r.spec.phase==='windup'){
+    r.nextAtk=Math.max(r.nextAtk||0,nowM+1400);
+    if(nowM>=r.spec.fireAt){
+      r.spec.phase='fire';r.spec.fireT=nowM;r.spec.endAt=nowM+650;
+      dragonFireBreath(r,r.spec.dir);
+      for(const tl of r.spec.tiles)groundFire(tl[0],tl[1]);
+      const onLine=r.spec.tiles.some(function(tl){return tl[0]===player.x&&tl[1]===player.y;});
+      const sid=player.equip.shield&&player.equip.shield.id;
+      const shielded=(sid==='dragon_shield'||sid==='elemental_shield');
+      if(!onLine){msg('You sidestep the dragonfire!','#86c56a');sfx.miss&&sfx.miss();}
+      else{
+        let dmg;
+        if(shielded){dmg=rndi(0,Math.ceil(mobMaxhit(r)*1.6));msg('Your Dragon Slayer shield turns the worst of the dragonfire aside.','#caa23a');}
+        else{dmg=rndi(45,72);msg('The dragonfire engulfs you!','#ff5a1e');}
+        player.braceT=performance.now();
+        splats.push({ent:'player',dmg:dmg,t:performance.now()});
+        playerLastHit=performance.now();
+        (dmg>0?sfx.hit:sfx.miss)();
+        if(dmg>0){player.hp-=dmg;player.combatT=performance.now();updateOrb();if(player.hp<=0)die();}
+      }
+    }
+    return;
+  }
+  if(r.spec.phase==='fire'){
+    r.nextAtk=Math.max(r.nextAtk||0,nowM+1000);
+    if(nowM>=r.spec.endAt){r.spec=null;r.specCd=nowM+rndi(12000,18000);}
+  }
+}
 function spawnProjectile(x0,z0,ent,kind,col,dur){
   projectiles.push({x0,z0,y0:groundH(x0,z0)+1.0,ent,
     ex:(ent&&ent.px!==undefined)?ent.px+0.5:x0,ez:(ent&&ent.py!==undefined)?ent.py+0.5:z0,
@@ -2727,43 +2826,80 @@ function dropGround(x,y,id,qty){
     const ex=ground.find(g=>g.x===x&&g.y===y&&g.id===id);
     if(ex){ex.qty+=qty;ex.exp=performance.now()+90000;return;}
   }
-  ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc});
+  ground.push({x,y,id,qty,exp:performance.now()+90000,uid:++uidc,interior:curInterior()});
+}
+/* ============ MOB DROP REGISTRY (single source of truth) ============ */
+/* Per-mob drops live here so the game AND the in-game Bestiary read the same data.
+   Entry shapes: {i,q,c,inv,m}  single item (q=n or [min,max], c=chance, inv=try pack first, m=message)
+                 {pool,q,c}      uniform pick   {wpool:[[id,w,qmin,qmax],...],c}  weighted pick
+                 {note,c}        banknote (pool of ids, 5-15, sent as a note)
+                 {dhide:'green'|'blue'|'red'|'black'|'sx', c?}   {dgear:chance}   dragon-specific */
+const MOB_DROPS={
+  brat:[{pool:['red_bead','yellow_bead','black_bead','white_bead'],c:0.85}],
+  redspider:[{i:'red_spider_eggs',c:1/6}],
+  skelearcher:[{i:'rune_arrow',q:[5,12],c:1/15}],
+  bandit:[{pool:['glens_baton','bozeks_pocket_watch','ricks_flask','spencers_snuffbox','mishs_dice'],c:1/16}],
+  banditleader:[{pool:['glens_baton','bozeks_pocket_watch','ricks_flask','spencers_snuffbox','mishs_dice'],c:1/16},{i:'stolen_signet',c:1/30}],
+  firegiant:[{i:'fire_rune',q:[30,80],c:0.5}],
+  mossgiant:[{i:'earth_rune',q:[15,40],c:0.5}],
+  icegolem:[{i:'water_rune',q:[30,80],c:0.5}],
+  darkwizard:[
+    {wpool:[['air_rune',30,8,22],['water_rune',30,8,22],['earth_rune',30,8,22],['fire_rune',30,8,22],['mind_rune',20,6,18],['chaos_rune',10,3,9],['death_rune',5,2,6],['blood_rune',2,1,3],['soul_rune',1,1,2]],c:0.4},
+    {wpool:[['wizard_hat',24],['wizard_robe_top',24],['wizard_robe_skirt',24],['staff',24],['air_staff',12],['water_staff',8],['earth_staff',6],['fire_staff',4],['mystic_hat',2],['mystic_robe_bottom',1.5],['mystic_robe_top',1],['battlestaff',0.6],['enchanted_hat',0.4],['enchanted_top',0.12],['mystic_staff',0.1]],c:1/24}],
+  wyvern:[{note:['rune_bar','mithril_bar','uncut_diamond'],c:0.1},
+          {i:'draconic_visage',c:1/800,inv:1,m:'The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!'},
+          {i:'abyssal_whip',c:1/350,inv:1,m:'The skeletal wyvern drops an Abyssal whip!'}],
+  basilisk:[{note:['mithril_bar','steel_bar'],c:0.1},
+            {i:'abyssal_whip',c:1/300,inv:1,m:'The basilisk drops an Abyssal whip!'},
+            {i:'basilisk_jaw',c:1/110,inv:1,m:'The basilisk drops a Basilisk jaw.'}],
+  gargoyle:[{note:['steel_bar','iron_bar'],c:0.1},
+            {i:'granite_maul',c:1/220,inv:1,m:'The gargoyle drops a Granite maul!'}],
+  banshee:[{note:['iron_bar','copper_ore'],c:0.1},
+           {i:'wailing_relic',c:1/100,inv:1,m:'The banshee leaves behind a Wailing relic.'}],
+  dragon:[{note:['rune_bar','uncut_diamond','uncut_ruby'],c:0.1},{dhide:'sx',c:0.2}],
+  greendragon:[{dhide:'green'},{dgear:1/120}],
+  bluedragon:[{dhide:'blue'},{dgear:1/72}],
+  reddragon:[{dhide:'red'},{dgear:1/48}],
+  blackdragon:[{dhide:'black'},{dgear:1/12},
+               {pool:['rune_bar','runite_ore','uncut_diamond'],q:[3,8],c:0.6},
+               {i:'draconic_visage',c:1/400,inv:1,m:'The Black dragon yields a Draconic visage \u2014 an extraordinary find!'}],
+};
+function mobBoneDrop(kind){
+  if(kind==='ghost')return 'ectoplasm';
+  if(kind==='lesser'||kind==='greater')return 'infernal_ashes';
+  if(kind==='brat')return 'small_bones';
+  const mk=MOB_KINDS[kind];
+  if(mk.bigbones)return 'big_bones';
+  if(mk.bones)return 'bones';
+  return null;
+}
+function rollMobDrops(r){
+  const D=MOB_DROPS[r.kind]; if(!D)return;
+  const _q=d=>Array.isArray(d.q)?rndi(d.q[0],d.q[1]):(d.q||1);
+  for(const d of D){
+    if(d.note){ if(Math.random()<(d.c||1)){ const nid=d.note[rndi(0,d.note.length-1)],nq=rndi(5,15); if(!addNote(nid,nq))dropGround(r.x,r.y,nid,nq); msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a'); sfx.pickup&&sfx.pickup(); } continue; }
+    if(d.dhide){ if(d.c!==undefined&&Math.random()>=d.c)continue;
+      if(d.dhide==='sx'){ const _dc=['red','green','blue'][r.sx<170?0:(r.sx<174?1:2)]; dropGround(r.x,r.y,_dc+'_dhide_'+['coif','body','chaps'][rndi(0,2)],1); msg('The '+r.name.toLowerCase()+' sheds a slab of '+_dc+' dragonhide.','#caa23a'); }
+      else dropGround(r.x,r.y,d.dhide+'_dhide_'+['coif','body','chaps','vambraces'][rndi(0,3)],1);
+      continue; }
+    if(d.dgear!==undefined){ if(Math.random()<d.dgear){ const _DGp=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield']; const _dd=_DGp[rndi(0,_DGp.length-1)]; if(invFull())dropGround(r.x,r.y,_dd,1);else addItem(_dd,1); msg('The '+r.name.toLowerCase()+' yields a '+ITEMS[_dd].name+' \u2014 dragon equipment!','#7a4a0a'); sfx.pickup&&sfx.pickup(); } continue; }
+    if(d.wpool){ if(d.c!==undefined&&Math.random()>=d.c)continue; let tw=0;for(const e of d.wpool)tw+=e[1]; let rr=Math.random()*tw,p=d.wpool[0]; for(const e of d.wpool){rr-=e[1];if(rr<=0){p=e;break;}} dropGround(r.x,r.y,p[0],p.length>=4?rndi(p[2],p[3]):1); continue; }
+    if(d.pool){ if(d.c!==undefined&&Math.random()>=d.c)continue; dropGround(r.x,r.y,d.pool[rndi(0,d.pool.length-1)],_q(d)); continue; }
+    if(d.i){ if(d.c!==undefined&&Math.random()>=d.c)continue; const q=_q(d); if(d.inv){ if(!addItem(d.i,q))dropGround(r.x,r.y,d.i,q); } else dropGround(r.x,r.y,d.i,q); if(d.m){msg(d.m,'#8a5e0a');sfx.pickup&&sfx.pickup();} continue; }
+  }
 }
 function dropMobLoot(r){
   const mk=MOB_KINDS[r.kind];
-  if(mk.bigbones)dropGround(r.x,r.y,'big_bones',1);else if(mk.bones)dropGround(r.x,r.y,'bones',1);
+  const _bd=mobBoneDrop(r.kind);
+  if(_bd)dropGround(r.x,r.y,_bd,1);
   if(Math.random()<mk.coinP)dropGround(r.x,r.y,'coins',rndi(mk.coins[0],mk.coins[1]));
+  rollMobDrops(r);
   rollRareDrop(r);
-  if(r.kind==='dragon'&&Math.random()<0.2){
-    const _dc=['red','green','blue'][r.sx<170?0:(r.sx<174?1:2)];
-    const _hid=_dc+'_dhide_'+['coif','body','chaps'][rndi(0,2)];
-    dropGround(r.x,r.y,_hid,1);
-    msg('The '+r.name.toLowerCase()+' sheds a slab of '+_dc+' dragonhide.','#caa23a');
-  }
-  {const _CD={greendragon:['green',0],bluedragon:['blue',0],reddragon:['red',0],blackdragon:['black',1/12]}[r.kind];
-   if(_CD){
-     dropGround(r.x,r.y,_CD[0]+'_dhide_'+['coif','body','chaps','vambraces'][rndi(0,3)],1);
-     if(_CD[1]>0&&Math.random()<_CD[1]){
-       const _DGp=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield'];
-       const _dd=_DGp[rndi(0,_DGp.length-1)];
-       if(invFull())dropGround(r.x,r.y,_dd,1);else addItem(_dd,1);
-       msg('The '+r.name.toLowerCase()+' yields a '+ITEMS[_dd].name+' \u2014 dragon equipment!','#7a4a0a');sfx.pickup&&sfx.pickup();
-     }
-     if(r.kind==='blackdragon'){
-       dropGround(r.x,r.y,'coins',rndi(1200,3000));
-       if(Math.random()<0.6)dropGround(r.x,r.y,['rune_bar','runite_ore','uncut_diamond'][rndi(0,2)],rndi(3,8));
-       if(Math.random()<1/400){if(invFull())dropGround(r.x,r.y,'draconic_visage',1);else addItem('draconic_visage',1);msg('The Black dragon yields a Draconic visage \u2014 an extraordinary find!','#8a5e0a');}
-     }
-   }}
-  if(r.kind==='brat'){
-    dropGround(r.x,r.y,'small_bones',1);
-    const _bd=['red_bead','yellow_bead','black_bead','white_bead'];
-    if(Math.random()<0.85)dropGround(r.x,r.y,_bd[rndi(0,_bd.length-1)],1);
-  }
 }
+
 function mobDie(r,groupKill){
   const mk3=MOB_KINDS[r.kind];
-  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
+  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;if(mk3.boss)player.bossKills=(player.bossKills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   if(engagedMob===r)engagedMob=null;
   if(typeof MP!=='undefined')MP.onMobKilled(r);
   msg((groupKill?'Your group has defeated the ':'You have defeated the ')+r.name.toLowerCase()+'.');
@@ -2799,12 +2935,6 @@ function incomingMobHit(mi){
 }
 function rollRareDrop(r){
   const c=MOB_KINDS[r.kind].cmb;
-  {const NB={wyvern:['rune_bar','mithril_bar','uncut_diamond'],basilisk:['mithril_bar','steel_bar'],gargoyle:['steel_bar','iron_bar'],banshee:['iron_bar','copper_ore'],dragon:['rune_bar','uncut_diamond','uncut_ruby']}[r.kind];
-   if(NB&&Math.random()<0.1){const nid=NB[rndi(0,NB.length-1)],nq=rndi(5,15);if(!addNote(nid,nq))dropGround(r.x,r.y,nid,nq);msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a');sfx.pickup&&sfx.pickup();}}
-  if(r.kind==='wyvern'){if(Math.random()<1/800){(addItem('draconic_visage',1)||dropGround(r.x,r.y,'draconic_visage',1));msg('The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!','#8a5e0a');}else if(Math.random()<1/350){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The skeletal wyvern drops an Abyssal whip!','#8a5e0a');}}
-  else if(r.kind==='gargoyle'){if(Math.random()<1/220){(addItem('granite_maul',1)||dropGround(r.x,r.y,'granite_maul',1));msg('The gargoyle drops a Granite maul!','#8a5e0a');}}
-  else if(r.kind==='basilisk'){if(Math.random()<1/300){(addItem('abyssal_whip',1)||dropGround(r.x,r.y,'abyssal_whip',1));msg('The basilisk drops an Abyssal whip!','#8a5e0a');}else if(Math.random()<1/110){(addItem('basilisk_jaw',1)||dropGround(r.x,r.y,'basilisk_jaw',1));msg('The basilisk drops a Basilisk jaw.','#8a5e0a');}}
-  else if(r.kind==='banshee'){if(Math.random()<1/100){(addItem('wailing_relic',1)||dropGround(r.x,r.y,'wailing_relic',1));msg('The banshee leaves behind a Wailing relic.','#8a5e0a');}}
   if(Math.random()<Math.min(0.16,0.015+c*0.005)){
     const roll=Math.random()*Math.max(6,c);
     let gem='uncut_sapphire';
@@ -2813,9 +2943,10 @@ function rollRareDrop(r){
   }
   if(c>=13&&Math.random()<0.035){
     let pool;
-    if(c>=22)pool=['rune_scimitar','rune_platebody','rune_kiteshield','rune_full_helm'];
-    else if(c>=19)pool=['adamant_scimitar','rune_chainbody','adamant_platebody','rune_full_helm'];
-    else pool=['mithril_scimitar','adamant_full_helm','mithril_platebody','adamant_kiteshield'];
+    if(c>=60)pool=['rune_scimitar','rune_platebody','rune_kiteshield','rune_full_helm','rune_platelegs','rune_chainbody'];
+    else if(c>=40)pool=['adamant_scimitar','adamant_platebody','adamant_kiteshield','adamant_full_helm','adamant_platelegs'];
+    else if(c>=25)pool=['mithril_scimitar','mithril_platebody','mithril_kiteshield','mithril_full_helm'];
+    else pool=['steel_scimitar','steel_platebody','steel_kiteshield','black_full_helm'];
     dropGround(r.x,r.y,pool[rndi(0,pool.length-1)],1);
   }
   rollClueDrop(r);
@@ -2971,6 +3102,8 @@ const ENCY_SRC={
   draconic_visage:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/800'}],
   abyssal_whip:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/350 · Basilisk — 1/300'}],
   granite_maul:[{label:'Monster drop',sub:'Gargoyle — 1/220'}],
+  red_spider_eggs:[{label:'Monster drop',sub:'Deadly red spider — ~1/6'}],
+  rune_arrow:[{label:'Monster drop',sub:'Skeleton archer — ~1/15 (5—12)'},{label:'Shop',sub:'Grand Exchange'}],
   basilisk_jaw:[{label:'Monster drop',sub:'Basilisk — 1/110'}],
   wailing_relic:[{label:'Monster drop',sub:'Banshee — 1/100'}],
   scholar_crest:[{label:'Slayer task drop',sub:'A task monster — 2.2% (34% if superior), once you own a Proctor’s Helm'}],
@@ -3162,8 +3295,145 @@ function encDetail(id){
     d.appendChild(b);d.appendChild(sp);sl.appendChild(d);}
   det.appendChild(sl);
 }
-function openEncy(){const el=document.getElementById('encui');if(el){el.classList.add('on');encFilter='All';encQuery='';const _es=document.getElementById('encsearch');if(_es)_es.value='';renderEncy();}}
-function closeEncy(){const el=document.getElementById('encui');if(el)el.classList.remove('on');}
+function openEncy(){const el=document.getElementById('encui');if(el){el.classList.add('on');encFilter='All';encQuery='';const _es=document.getElementById('encsearch');if(_es)_es.value='';setEncMode('items');}}
+function closeEncy(){const el=document.getElementById('encui');if(el)el.classList.remove('on');_bestDispose();}
+
+/* ============================ BESTIARY ============================ */
+/* A page per mob. Stats are read live from MOB_KINDS and drops from MOB_DROPS /
+   mobBoneDrop / the universal rare rolls, so editing a mob auto-updates its page. */
+let encMode='items', _bestRen=null;
+function _bestDispose(){ if(_bestRen){try{_bestRen.forceContextLoss&&_bestRen.forceContextLoss();_bestRen.dispose();}catch(_){}} _bestRen=null; }
+function setEncMode(m){
+  _bestDispose(); encMode=m; encQuery='';
+  const se=document.getElementById('encsearch'); if(se){se.value='';se.placeholder=(m==='bestiary')?'Search creatures\u2026':'Search items\u2026';}
+  const tb=document.getElementById('enctabs'); if(tb)for(const b of tb.children)b.classList.toggle('on',b.getAttribute('data-encmode')===m);
+  const fl=document.getElementById('encfilters'); if(fl)fl.style.display=(m==='bestiary')?'none':'';
+  if(m==='bestiary')renderBestiary(); else renderEncy();
+}
+function bestiaryKinds(){ return Object.keys(MOB_KINDS).sort((a,b)=>(MOB_KINDS[a].cmb||0)-(MOB_KINDS[b].cmb||0)); }
+function renderBestiary(){
+  _bestDispose();
+  const grid=document.getElementById('encgrid'),det=document.getElementById('encdetail');
+  if(!grid)return;
+  if(det)det.style.display='none';
+  grid.style.display='grid';grid.innerHTML='';
+  const q=(encQuery||'').trim().toLowerCase();
+  const ks=bestiaryKinds().filter(k=>!q||(MOB_KINDS[k].name||k).toLowerCase().indexOf(q)>=0);
+  for(const k of ks){
+    const mk=MOB_KINDS[k], cmb=mk.cmb||0;
+    const cell=document.createElement('div');cell.className='bcell';cell.title=mk.name||k;
+    const nm=document.createElement('div');nm.className='bn';nm.textContent=mk.name||k;
+    const lv=document.createElement('div');lv.className='bl';lv.textContent='Lv '+cmb;
+    if(typeof cmbColForVal==='function')lv.style.color=cmbColForVal(cmb);
+    cell.appendChild(nm);cell.appendChild(lv);
+    cell.addEventListener('click',()=>mobDetail(k));
+    grid.appendChild(cell);
+  }
+  if(!ks.length){const e=document.createElement('div');e.className='encempty';e.textContent=q?'No creatures match \u201c'+encQuery.trim()+'\u201d.':'No creatures.';grid.appendChild(e);}
+  const cnt=document.getElementById('enccount');if(cnt)cnt.textContent=ks.length+(ks.length===1?' creature':' creatures');
+}
+function _dropChance(c){ if(c===undefined||c>=1)return 'Always'; if(c>=0.05)return Math.round(c*100)+'%'; return '1/'+Math.round(1/c); }
+function _dropQty(q){ if(Array.isArray(q))return fmt(q[0])+'\u2013'+fmt(q[1]); return (q&&q>1)?fmt(q):''; }
+function _inm(id){ return (ITEMS[id]&&ITEMS[id].name)?ITEMS[id].name:id; }
+function mobDropRows(kind){
+  const mk=MOB_KINDS[kind], rows=[];
+  const bone=mobBoneDrop(kind); if(bone)rows.push([_inm(bone),'Always']);
+  if(mk.coinP){rows.push(['Coins', fmt(mk.coins[0])+'\u2013'+fmt(mk.coins[1])+(mk.coinP<1?'  ('+Math.round(mk.coinP*100)+'%)':'')]);}
+  for(const d of (MOB_DROPS[kind]||[])){
+    if(d.note){rows.push(['Banknote: '+d.note.map(_inm).join(' / '),_dropChance(d.c)]);continue;}
+    if(d.dhide){const lbl=(d.dhide==='sx')?'Dragonhide (red/green/blue)':(d.dhide.charAt(0).toUpperCase()+d.dhide.slice(1)+' dragonhide');rows.push([lbl,_dropChance(d.c)]);continue;}
+    if(d.dgear!==undefined){rows.push(['Dragon equipment (1 of 6)',_dropChance(d.dgear)]);continue;}
+    if(d.wpool){const rune=d.wpool[0].length>=4;rows.push([rune?'Magic runes (air\u2013soul)':'Wizard & mystic gear',_dropChance(d.c)]);continue;}
+    if(d.pool){const nm=(d.pool.length<=2)?d.pool.map(_inm).join(' / '):(_inm(d.pool[0])+' + '+(d.pool.length-1)+' more');const qs=_dropQty(d.q);rows.push([nm+(qs?' ('+qs+')':''),_dropChance(d.c)]);continue;}
+    if(d.i){const qs=_dropQty(d.q);rows.push([_inm(d.i)+(qs?' ('+qs+')':''),_dropChance(d.c)]);continue;}
+  }
+  return rows;
+}
+function mobUniversalRows(kind){
+  const cmb=MOB_KINDS[kind].cmb||0, rows=[];
+  rows.push(['Uncut gems (sapphire\u2013diamond)','~'+Math.round(Math.min(0.16,0.015+cmb*0.005)*100)+'%']);
+  if(cmb>=13){const t=cmb>=60?'Rune':cmb>=40?'Adamant':cmb>=25?'Mithril':'Steel';rows.push([t+' armour piece','~3.5%']);}
+  const ct=mobClueTier(cmb),CR={easy:35,medium:55,hard:85,elite:120}[ct],CL={easy:'Easy',medium:'Medium',hard:'Hard',elite:'Elite'}[ct];
+  rows.push(['Clue scroll ('+CL+')','~1/'+CR]);
+  return rows;
+}
+function buildBestiaryMesh(kind){
+  const fake={kind:kind,i:-9999,sx:165,sy:124,x:0,y:0,px:0,py:0,heading:0,alive:true,hp:1,maxhp:1,name:(MOB_KINDS[kind].name||kind)};
+  let grp=null;
+  try{ makeRat(fake); grp=fake._m&&fake._m.group; }catch(e){ return null; }
+  if(grp&&grp.parent)grp.parent.remove(grp);
+  for(let i=proxies.length-1;i>=0;i--){const p=proxies[i];if(p.userData&&p.userData.r===fake){if(p.parent)p.parent.remove(p);proxies.splice(i,1);}}
+  return grp;
+}
+function mobDetail(kind){
+  _bestDispose();
+  const grid=document.getElementById('encgrid'),det=document.getElementById('encdetail');
+  if(!det)return;
+  grid.style.display='none';det.style.display='block';det.innerHTML='';
+  const mk=MOB_KINDS[kind];
+  const back=document.createElement('button');back.className='encback';back.innerHTML='&#8592; All creatures';
+  back.addEventListener('click',renderBestiary);det.appendChild(back);
+  const hd=document.createElement('div');hd.className='enchd';
+  const ht=document.createElement('div');ht.className='enchtext';
+  const title=document.createElement('div');title.className='enctitle';title.textContent=mk.name||kind;
+  const cat=document.createElement('div');cat.className='enccat';cat.textContent='Combat level '+(mk.cmb||'?')+(mk.boss?'  \u2022  Boss':'');
+  ht.appendChild(title);ht.appendChild(cat);hd.appendChild(ht);det.appendChild(hd);
+  const cv=document.createElement('canvas');cv.className='bview';cv.width=380;cv.height=210;det.appendChild(cv);
+  const arrows=document.createElement('div');arrows.className='barrows';
+  const bl=document.createElement('button');bl.className='barrow';bl.innerHTML='&#8249;';bl.title='Rotate left';
+  const br=document.createElement('button');br.className='barrow';br.innerHTML='&#8250;';br.title='Rotate right';
+  arrows.appendChild(bl);arrows.appendChild(br);det.appendChild(arrows);
+  const hint=document.createElement('div');hint.className='bhint';hint.textContent='Drag the model to rotate \u2022 or use the arrows';det.appendChild(hint);
+  if(mk.ex){const ex=document.createElement('div');ex.className='encex';ex.textContent=mk.ex;det.appendChild(ex);}
+  const rows=document.createElement('div');rows.className='encrows';
+  const row=(k,v,col)=>{const d=document.createElement('div');d.className='encrow';const a=document.createElement('span');a.textContent=k;const b=document.createElement('b');b.textContent=v;if(col)b.style.color=col;d.appendChild(a);d.appendChild(b);rows.appendChild(d);};
+  row('Hitpoints',''+mk.hp);
+  row('Max hit',''+mk.maxhit);
+  const style=(mk.atkStyle||(mk.magic?'magic':'melee'));
+  row('Attack style',style.charAt(0).toUpperCase()+style.slice(1),style==='magic'?'#b58be0':style==='ranged'?'#86c56a':'#e0a060');
+  if(mk.weak)row('Weakness',mk.weak.charAt(0).toUpperCase()+mk.weak.slice(1),'#86c56a');
+  if(mk.resist)row('Resists',mk.resist.charAt(0).toUpperCase()+mk.resist.slice(1),'#c98a8a');
+  row('Aggressive',mk.aggro?'Yes':'No');
+  det.appendChild(rows);
+  const sh=document.createElement('div');sh.className='encsrch';sh.textContent='Drop table';det.appendChild(sh);
+  const sl=document.createElement('div');sl.className='encsrcs';
+  for(const pr of mobDropRows(kind)){const d=document.createElement('div');d.className='encsrc';const x=document.createElement('b');x.textContent=pr[0];const y=document.createElement('span');y.textContent=pr[1];d.appendChild(x);d.appendChild(y);sl.appendChild(d);}
+  det.appendChild(sl);
+  const uh=document.createElement('div');uh.className='encsrch';uh.style.marginTop='9px';uh.textContent='Universal rare drops';det.appendChild(uh);
+  const ul=document.createElement('div');ul.className='encsrcs';
+  for(const pr of mobUniversalRows(kind)){const d=document.createElement('div');d.className='encsrc';const x=document.createElement('b');x.textContent=pr[0];const y=document.createElement('span');y.textContent=pr[1];d.appendChild(x);d.appendChild(y);ul.appendChild(d);}
+  det.appendChild(ul);
+  /* ---- live 3D model: drag + arrows, no auto-rotate ---- */
+  try{
+    const grp=buildBestiaryMesh(kind);
+    const ren=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
+    ren.setSize(380,210,false); _bestRen=ren;
+    const scn=new THREE.Scene();
+    const cam=new THREE.PerspectiveCamera(42,380/210,0.1,100);
+    scn.add(new THREE.AmbientLight(0xffffff,0.82));
+    const dl=new THREE.DirectionalLight(0xfff0e0,0.9);dl.position.set(3,6,4);scn.add(dl);
+    const dl2=new THREE.DirectionalLight(0x9ab0ff,0.4);dl2.position.set(-4,2,3);scn.add(dl2);
+    const drag=new THREE.Group();
+    if(grp){
+      drag.add(grp);
+      const box=new THREE.Box3().setFromObject(grp),sz=new THREE.Vector3(),ctr=new THREE.Vector3();
+      box.getSize(sz);box.getCenter(ctr);
+      grp.position.set(-ctr.x,-box.min.y,-ctr.z);
+      const span=Math.max(sz.x,sz.y,sz.z)||1;
+      cam.position.set(0,sz.y*0.52,span*1.7+1.3);cam.lookAt(0,sz.y*0.46,0);
+    }else{cam.position.set(0,1,4.4);cam.lookAt(0,0.7,0);}
+    scn.add(drag);drag.rotation.y=0.62;
+    const render=()=>{try{ren.render(scn,cam);}catch(_){}}; render();
+    let dragging=false,lastX=0;
+    cv.addEventListener('pointerdown',e=>{dragging=true;lastX=e.clientX;try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+    cv.addEventListener('pointermove',e=>{if(!dragging)return;const dx=e.clientX-lastX;lastX=e.clientX;drag.rotation.y+=dx*0.012;render();});
+    const end=e=>{dragging=false;try{cv.releasePointerCapture(e.pointerId);}catch(_){}};
+    cv.addEventListener('pointerup',end);cv.addEventListener('pointercancel',end);cv.addEventListener('pointerleave',()=>{dragging=false;});
+    bl.onclick=()=>{drag.rotation.y-=0.5;render();};
+    br.onclick=()=>{drag.rotation.y+=0.5;render();};
+  }catch(e){ cv.style.display='none';bl.style.display='none';br.style.display='none';hint.style.display='none'; }
+}
+/* ========================== END BESTIARY ========================== */
 
 
 
@@ -3331,10 +3601,14 @@ function addItem(id,qty){
   if(ITEMS[id].stack){
     const s=player.inv.find(s=>s&&s.id===id);
     if(s){s.qty+=qty;renderInv();dirty=true;return true;}
+    const i=player.inv.findIndex(s=>!s);
+    if(i<0)return false;
+    player.inv[i]={id,qty};renderInv();dirty=true;return true;
   }
-  const i=player.inv.findIndex(s=>!s);
-  if(i<0)return false;
-  player.inv[i]={id,qty:ITEMS[id].stack?qty:1};
+  /* non-stackable: need qty free slots (all-or-nothing, so callers' overflow drop stays correct) */
+  let free=0;for(const s of player.inv)if(!s)free++;
+  if(free<qty)return false;
+  for(let k=0;k<qty;k++){const i=player.inv.findIndex(s=>!s);player.inv[i]={id,qty:1};}
   renderInv();dirty=true;return true;
 }
 function removeSlot(i){player.inv[i]=null;renderInv();dirty=true;}
@@ -3516,7 +3790,7 @@ function cancelAction(){player.action=null;closeDialogue();}
 
 function startGather(obj){
   const def=OBJ_DEFS[obj.def];
-  const _req=obj.deep?14:def.req;
+  const _req=obj.deep?40:def.req;
   if(lvl(def.skill)<_req){
     msg('You need a '+SKILL_META[def.skill].name+' level of '+_req+' to do that.');return;
   }
@@ -4287,13 +4561,14 @@ function ratsTick(){
     if(!r.alive)continue;
     if(typeof MP!=='undefined'&&MP.mobOverride(r))continue;
     if(curInterior()!==(r.interior||null)){if(r.target===player)r.target=null;continue;}
-    if(!r.target&&!r.tame&&MOB_KINDS[r.kind].aggro
+    if(!r.target&&!r.tame&&(MOB_KINDS[r.kind].aggro||inWild(r.x,r.y))
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
       &&MOB_KINDS[r.kind].cmb>=cmbLvl()&&player.hp>0
       &&dist1(r.x,r.y,player.x,player.y)<=4
       &&dist1(r.x,r.y,r.sx,r.sy)<=8
       &&(!engagedMob||!engagedMob.alive||engagedMob===r
         ||engagedMob.target!==player))r.target=player;
+    if(MOB_KINDS[r.kind].boss&&r.target)bossSpecialTick(r,performance.now());
     if(r.kind==='zombie'&&(tick&1)
       &&!(r.target&&dist1(r.x,r.y,player.x,player.y)===1))continue;
     if(r.target){
@@ -4795,8 +5070,8 @@ function itemPrimary(i){
     removeSlot(i);player.hp=clamp(player.hp+heal,0,maxHp());updateOrb();sfx.eat();
     msg('You eat the '+ITEMS[id].name.toLowerCase()+'. It heals some health.');
   }else if(prim==='Bury'){
-    removeSlot(i);addXp('prayer',{big_bones:30,small_bones:5}[id]||10);sfx.bury();
-    msg('You bury the bones.');
+    removeSlot(i);addXp('prayer',{big_bones:30,small_bones:5,ectoplasm:14,infernal_ashes:40}[id]||10);sfx.bury();
+    msg(id==='ectoplasm'?'You disperse the ectoplasm.':id==='infernal_ashes'?'You scatter the infernal ashes.':'You bury the bones.');
   }else if(prim==='Season'){
     const ch=player.quests.chef;
     if(ch.pouch!==1){msg('The spice pouch is empty. Fill it with Larry’s blend first.');return;}
@@ -4898,6 +5173,7 @@ function reqSkillFor(eq){
 function equipFromInv(i){
   const s=player.inv[i];if(!s)return;
   const eq=ITEMS[s.id].equip;if(!eq)return;
+  if(eq.slot==='weapon'&&typeof duel!=='undefined'&&duel.state&&duel.state!=='none'&&duel.rules&&duel.rules.noWeapons){msg('No weapons are allowed in this duel.');return;}
   if(eq.req){
     const rsk=reqSkillFor(eq);
     if(lvl(rsk)<eq.req){
@@ -4912,15 +5188,15 @@ function equipFromInv(i){
     sfx.pickup();msg('You ready the '+ITEMS[s.id].name.toLowerCase()+'.');
     renderInv();renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;return;
   }
-  if(eq.slot==='shield'&&player.equip.weapon){const wm=ITEMS[player.equip.weapon.id].equip.model;if(wm==='bow'||wm==='staff'){msg('You cannot use a shield with a two-handed weapon.');return;}}
-  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff')&&player.equip.shield){
+  if(eq.slot==='shield'&&player.equip.weapon){const _we=ITEMS[player.equip.weapon.id].equip,wm=_we.model;if(wm==='bow'||wm==='staff'||_we.twoHand){msg('You cannot use a shield with a two-handed weapon.');return;}}
+  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff'||eq.twoHand)&&player.equip.shield){
     const _prevW=player.equip.weapon,_free=player.inv.filter(x9=>!x9).length;
     if(_free+(_prevW?0:1)<1){msg('You need a free inventory slot for your shield before wielding a two-handed weapon.');return;}
   }
   const prev=player.equip[eq.slot]||null;
   player.equip[eq.slot]={id:s.id};
   player.inv[i]=prev?{id:prev.id,qty:1}:null;
-  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff')&&player.equip.shield){const sh=player.equip.shield;player.equip.shield=null;const free=player.inv.findIndex(x=>!x);player.inv[free]={id:sh.id,qty:1};msg('You sling your shield off to wield two-handed.');}
+  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff'||eq.twoHand)&&player.equip.shield){const sh=player.equip.shield;player.equip.shield=null;const free=player.inv.findIndex(x=>!x);player.inv[free]={id:sh.id,qty:1};msg('You sling your shield off to wield two-handed.');}
   sfx.pickup();
   msg('You '+eq.verb.toLowerCase()+' the '+ITEMS[s.id].name.toLowerCase()+'.');
   renderInv();renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;
@@ -5072,7 +5348,7 @@ function partyEntrance(tx,ty){tx-=WX;
 function partyOptionsAt(tx,ty){
   const opts=[];
   pushPeerOpts(opts,tx,ty);
-  for(const g of ground)if(g.x===tx&&g.y===ty){opts.push({html:'Take <span class="t">'+ITEMS[g.id].name+'</span>',label:'Take '+ITEMS[g.id].name,fn:()=>startPickup(g)});}
+  for(const g of ground)if(g.x===tx&&g.y===ty&&(g.interior||null)===curInterior()){opts.push({html:'Take <span class="t">'+ITEMS[g.id].name+'</span>',label:'Take '+ITEMS[g.id].name,fn:()=>startPickup(g)});}
   const iE={x:140,y:8},iW={x:100,y:8};
   if(dist1(iE.x,iE.y,tx,ty)<=1||dist1(iW.x,iW.y,tx,ty)<=1){
     const east=dist1(iE.x,iE.y,tx,ty)<=dist1(iW.x,iW.y,tx,ty);const dr=east?iE:iW;
@@ -5182,17 +5458,22 @@ function optionsAt(tx,ty){
      fn:()=>setAction({type:'talkn',n:np2,trade:1},np2.x,np2.y)});
     opts.push({html:'Bank <span class="t">'+np2.name+'</span>',label:'Bank '+np2.name,
      fn:()=>setAction({type:'talkn',n:np2,bank:1},np2.x,np2.y)});}
-  for(const g of ground)if(g.x===tx&&g.y===ty){
+  for(const g of ground)if(g.x===tx&&g.y===ty&&(g.interior||null)===curInterior()){
     opts.push({html:'Take <span class="t">'+ITEMS[g.id].name+'</span>',
       label:'Take '+ITEMS[g.id].name,fn:()=>startPickup(g)});
   }
-  const o=objAt(tx,ty);
+  let o=objAt(tx,ty);
+  if(o&&(SOS_CAVE_OBJS[o.def]?!inSos:inSos))o=null;   /* interior objects hidden from outside, and vice-versa */
   if(o){
     const def=OBJ_DEFS[o.def];
     if(o.def==='sign'){
       opts.push({html:'Read <span class="t">Signpost</span>',
         label:'Read Signpost',fn:()=>msg(signTextAt(o.x,o.y)||def.ex)},
         {html:'Examine <span class="t">Signpost</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='dragon_sign'){
+      opts.push({html:'Read <span class="t">Dragon notice</span>',
+        label:'Read Dragon notice',fn:()=>{if(typeof openDragonInfo==='function')openDragonInfo();else msg(def.ex);}},
+        {html:'Examine <span class="t">Dragon notice</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='relic'){
       if(player.quests.m2.s===1&&!player.quests.m2.relic)
         opts.push({html:'Take <span class="t">Blessed Censer</span>',
@@ -5928,7 +6209,7 @@ function drawItemIcon(g,id,S){
   }
   const BAR_COL={bronze_bar:['#b07a3e','#dba968'],iron_bar:['#8b8780','#b8b4ac'],
     steel_bar:['#aab2ba','#e2e8ee'],mithril_bar:['#6b6bb0','#9a9ade'],
-    adamant_bar:['#468852','#7cba8a'],rune_bar:['#5a8ab0','#94c8ea']};
+    adamant_bar:['#468852','#7cba8a'],rune_bar:['#5a8ab0','#94c8ea'],berrite_bar:['#ec71a1','#f5a8c8']};
   if(BAR_COL[id]){
     const tt=BAR_COL[id][0],hi=BAR_COL[id][1];
     g.fillStyle=tt;
@@ -6071,6 +6352,7 @@ function drawItemIcon(g,id,S){
     case 'mithril_ore':ore('#9a9ade');break;
     case 'adamant_ore':ore('#7cba8a');break;
     case 'runite_ore':ore('#94c8ea');break;
+    case 'berrite_ore':ore('#ec71a1');break;
     case 'raw_shrimps':fshShrimp(_SHr);break;
     case 'shrimps':fshShrimp(_SHc);break;
     case 'burnt_shrimps':fshShrimp(_BURN);break;
@@ -6092,6 +6374,15 @@ function drawItemIcon(g,id,S){
  case 'rock_hammer':{g.strokeStyle='#6e4a26';g.lineWidth=2.8;g.beginPath();g.moveTo(-5,9);g.lineTo(3,-5);g.stroke();g.save();g.translate(4,-6);g.rotate(0.5);g.fillStyle='#7a818a';g.strokeStyle='#3a3f47';g.lineWidth=1.2;g.fillRect(-6,-3.5,12,7);g.strokeRect(-6,-3.5,12,7);g.fillStyle='#9aa3ad';g.fillRect(-6,-3.5,12,2);g.restore();break;}
  case 'abyssal_whip':{g.strokeStyle='#1c1118';g.lineWidth=3;g.fillStyle='#3a1820';g.beginPath();g.arc(-4,6,3,0,7);g.fill();g.strokeStyle='#7a2030';g.lineWidth=2;g.beginPath();g.moveTo(-4,6);g.quadraticCurveTo(8,2,4,-4);g.quadraticCurveTo(0,-9,-6,-6);g.stroke();g.strokeStyle='#c0394b';g.lineWidth=1;g.beginPath();g.moveTo(-6,-6);g.lineTo(-9,-9);g.stroke();break;}
  case 'granite_maul':{g.strokeStyle='#5a4326';g.lineWidth=2.6;g.beginPath();g.moveTo(-4,9);g.lineTo(2,-3);g.stroke();g.fillStyle='#6e6f73';g.strokeStyle='#3a3b3f';g.lineWidth=1.2;g.beginPath();g.moveTo(-6,-9);g.lineTo(8,-7);g.lineTo(7,-1);g.lineTo(-7,-3);g.closePath();g.fill();g.stroke();g.fillStyle='#9a9ca0';g.fillRect(-5,-8,3,3);g.fillRect(2,-6,3,3);break;}
+ case 'red_spider_eggs':{g.strokeStyle='#5a1014';g.lineWidth=1;for(const e of [[-4,3],[3,4],[0,-2],[-2,-4],[5,-1]]){g.fillStyle='#a8242a';g.beginPath();g.ellipse(e[0],e[1],2.4,3,0.3,0,7);g.fill();g.stroke();g.fillStyle='#d85a5e';g.beginPath();g.ellipse(e[0]-0.6,e[1]-0.8,0.7,0.9,0.3,0,7);g.fill();}break;}
+ case 'ectoplasm':{g.fillStyle='rgba(90,210,130,0.55)';g.beginPath();g.ellipse(0,S*0.04,S*0.26,S*0.20,0,0,7);g.fill();g.fillStyle='rgba(150,240,180,0.7)';g.beginPath();g.ellipse(-S*0.06,-S*0.04,S*0.12,S*0.09,0,0,7);g.fill();g.fillStyle='rgba(225,255,235,0.85)';g.beginPath();g.ellipse(-S*0.09,-S*0.07,S*0.05,S*0.035,0,0,7);g.fill();g.fillStyle='rgba(90,210,130,0.5)';for(const dx of [-S*0.14,S*0.02,S*0.16]){g.beginPath();g.ellipse(dx,S*0.18,S*0.03,S*0.06,0,0,7);g.fill();}break;}
+ case 'infernal_ashes':{g.fillStyle='#3a3330';g.beginPath();g.moveTo(-S*0.24,S*0.18);g.quadraticCurveTo(0,-S*0.02,S*0.24,S*0.18);g.closePath();g.fill();g.fillStyle='#55504a';g.beginPath();g.moveTo(-S*0.16,S*0.18);g.quadraticCurveTo(0,S*0.05,S*0.16,S*0.18);g.closePath();g.fill();g.fillStyle='#ff6a1e';for(const e of [[-S*0.08,S*0.10],[S*0.06,S*0.13],[0,S*0.06]]){g.beginPath();g.arc(e[0],e[1],S*0.022,0,7);g.fill();}g.fillStyle='#ffd24a';g.beginPath();g.arc(-S*0.08,S*0.10,S*0.01,0,7);g.fill();break;}
+ case 'glens_baton':{g.save();g.rotate(-0.5);g.fillStyle='#cf3a2a';g.fillRect(-S*0.06,-S*0.30,S*0.12,S*0.60);g.fillStyle='#eaeaea';for(let i=0;i<4;i++)g.fillRect(-S*0.06,-S*0.26+i*S*0.16,S*0.12,S*0.05);g.fillStyle='#3a2a18';g.fillRect(-S*0.05,S*0.18,S*0.10,S*0.12);g.restore();break;}
+ case 'bozeks_pocket_watch':{g.strokeStyle='#c9a23a';g.lineWidth=Math.max(1,S*0.03);g.beginPath();g.moveTo(S*0.14,-S*0.24);g.lineTo(S*0.02,-S*0.06);g.stroke();g.fillStyle='#e8c24a';g.beginPath();g.arc(0,S*0.06,S*0.20,0,7);g.fill();g.fillStyle='#f4ecd0';g.beginPath();g.arc(0,S*0.06,S*0.14,0,7);g.fill();g.strokeStyle='#3a2a18';g.lineWidth=Math.max(1,S*0.022);g.beginPath();g.moveTo(0,S*0.06);g.lineTo(0,-S*0.02);g.moveTo(0,S*0.06);g.lineTo(S*0.08,S*0.06);g.stroke();break;}
+ case 'ricks_flask':{g.fillStyle='#8a9098';g.beginPath();g.moveTo(-S*0.16,-S*0.08);g.lineTo(S*0.16,-S*0.08);g.lineTo(S*0.13,S*0.26);g.lineTo(-S*0.13,S*0.26);g.closePath();g.fill();g.fillStyle='#6a7078';g.fillRect(-S*0.06,-S*0.20,S*0.12,S*0.12);g.fillStyle='#2e2e2e';g.fillRect(-S*0.07,-S*0.26,S*0.14,S*0.06);g.strokeStyle='#c8ccd2';g.lineWidth=1;g.beginPath();g.moveTo(-S*0.10,S*0.04);g.lineTo(S*0.10,S*0.04);g.stroke();break;}
+ case 'spencers_snuffbox':{g.fillStyle='#c8ccd2';g.fillRect(-S*0.20,-S*0.06,S*0.40,S*0.22);g.fillStyle='#e2e8ee';g.fillRect(-S*0.20,-S*0.14,S*0.40,S*0.10);g.strokeStyle='#7a8088';g.lineWidth=1;g.strokeRect(-S*0.20,-S*0.14,S*0.40,S*0.30);g.fillStyle='#c9a23a';g.beginPath();g.arc(0,S*0.04,S*0.05,0,7);g.fill();break;}
+ case 'mishs_dice':{g.fillStyle='#f0ece0';g.fillRect(-S*0.22,-S*0.14,S*0.20,S*0.20);g.fillRect(S*0.02,-S*0.02,S*0.20,S*0.20);g.strokeStyle='#9a8a6a';g.lineWidth=1;g.strokeRect(-S*0.22,-S*0.14,S*0.20,S*0.20);g.strokeRect(S*0.02,-S*0.02,S*0.20,S*0.20);g.fillStyle='#b03030';g.beginPath();g.arc(-S*0.12,-S*0.04,S*0.025,0,7);g.fill();g.fillStyle='#3a2a18';g.beginPath();g.arc(S*0.08,S*0.04,S*0.022,0,7);g.fill();g.beginPath();g.arc(S*0.16,S*0.12,S*0.022,0,7);g.fill();break;}
+ case 'stolen_signet':{g.strokeStyle='#e8c24a';g.lineWidth=Math.max(2,S*0.06);g.beginPath();g.arc(0,S*0.10,S*0.15,0,7);g.stroke();g.fillStyle='#c9a23a';g.beginPath();g.ellipse(0,-S*0.10,S*0.13,S*0.11,0,0,7);g.fill();g.fillStyle='#7a1f1a';g.beginPath();g.arc(0,-S*0.10,S*0.05,0,7);g.fill();break;}
  case 'draconic_visage':{g.fillStyle='#7a2d22';g.strokeStyle='#3a120c';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-9);g.lineTo(8,-2);g.lineTo(5,8);g.lineTo(-5,8);g.lineTo(-8,-2);g.closePath();g.fill();g.stroke();g.fillStyle='#8a5e0a';g.beginPath();g.moveTo(-4,-1);g.lineTo(-1,1);g.lineTo(-4,3);g.closePath();g.fill();g.beginPath();g.moveTo(4,-1);g.lineTo(1,1);g.lineTo(4,3);g.closePath();g.fill();g.strokeStyle='#3a120c';g.beginPath();g.moveTo(-2,5);g.lineTo(2,5);g.stroke();break;}
  case 'basilisk_jaw':{g.fillStyle='#cdbf8a';g.strokeStyle='#6a5e3a';g.lineWidth=1.2;g.beginPath();g.moveTo(-8,-2);g.quadraticCurveTo(0,4,8,-2);g.quadraticCurveTo(8,2,0,7);g.quadraticCurveTo(-8,2,-8,-2);g.closePath();g.fill();g.stroke();g.fillStyle='#f2ecd0';for(const fx of [-5,-2,1,4]){g.beginPath();g.moveTo(fx,2);g.lineTo(fx+1.4,7);g.lineTo(fx+2.8,2);g.closePath();g.fill();}break;}
  case 'wailing_relic':{g.fillStyle='#7d8794';g.strokeStyle='#3a4049';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-8);g.quadraticCurveTo(6,-6,6,4);g.lineTo(-6,4);g.quadraticCurveTo(-6,-6,0,-8);g.closePath();g.fill();g.stroke();g.fillStyle='#3a4049';g.beginPath();g.arc(0,5,1.6,0,7);g.fill();g.strokeStyle='#bfe6f5';g.lineWidth=0.8;g.beginPath();g.arc(0,-2,9,-0.6,0.6);g.stroke();break;}
@@ -7092,12 +7383,12 @@ function tileColor(x,y){
     if(t===T_WALL){ return h<0.5?0x9aa0a6:0x8e949a; }
     if(t===T_WATER){ return 0xbfd4e6; }
   }
-  if(_terraWinter){
+  if(_terraWinter&&!inWild(x,y)){
     if(t===T_GRASS){ const SN=[0xdfe9f1,0xe7eff6,0xeff5fa,0xf3f8fc]; return SN[Math.min(3,Math.floor(h*4))]; }
     if(t===T_PATH){ return h<0.5?0xd6dde4:0xccd4dc; }
     if(t===T_FOREST){ return h<0.5?0x46544a:0x515f54; }
   }
-  if(_terraFall){
+  if(_terraFall&&!inWild(x,y)){
     if(t===T_GRASS){ const AU=[0x7a8438,0x84883a,0x90883a,0x788034]; return AU[Math.min(3,Math.floor(h*4))]; }
     if(t===T_PATH){ return h<0.5?0x8c7440:0x947c44; }
     if(t===T_FOREST){ const FG=[0xa86a2a,0x9c5e24,0xb87a32,0x8c5220]; return FG[Math.min(3,Math.floor(h*4))]; }
@@ -8122,7 +8413,7 @@ function buildObjModel(o){
     sway.push({obj:fol,ph:hsh*9});
     addProxy(g,0.55,def==='willow'?1.9:2.3,0,{kind:'obj',o});
 
-  }else if(def==='copper'||def==='tin'||def==='iron'||def==='mithril'||def==='adamant'||def==='rune'){
+  }else if(def==='copper'||def==='tin'||def==='iron'||def==='mithril'||def==='adamant'||def==='rune'||def==='berrite'){
     const rmat=new THREE.MeshLambertMaterial({color:0x7d7a74});
     const rock=new THREE.Mesh(new THREE.DodecahedronGeometry(0.46,0),rmat);
     rock.scale.set(1.05,0.6,1);rock.position.y=0.2;
@@ -8134,7 +8425,7 @@ function buildObjModel(o){
     rock2.rotation.y=hsh*9;rock2.castShadow=true;
     g.add(rock2);
     const mins=new THREE.Group();
-    const mc=def==='copper'?0xd8843c:def==='tin'?0xcfd2d8:def==='iron'?0x9c4a32:def==='mithril'?0x5a5ab8:def==='adamant'?0x3a8a52:0x6ab0d8;
+    const mc=def==='copper'?0xd8843c:def==='tin'?0xcfd2d8:def==='iron'?0x9c4a32:def==='mithril'?0x5a5ab8:def==='adamant'?0x3a8a52:def==='berrite'?0xec71a1:0x6ab0d8;
     for(let i=0;i<3;i++){
       const b=mesh(new THREE.OctahedronGeometry(0.11,0),mc);
       const a=i/3*Math.PI*2+hsh*6;
@@ -8372,7 +8663,7 @@ function buildObjModel(o){
       :makeHumanoid({skin:0xe0b184,shirt:0x6e5a2e,pants:0x3c4a3e,hair:0x6b4a26,
         beard:0xe0b184,skirt:0x8a6a30,amulet:0xc9a23d,boots:0x4a3424});
     g.add(hm.g);
-    g.rotation.y=Math.atan2(o.x-73,o.y-48);
+    g.rotation.y=Math.atan2(o.x-(73+WX),o.y-48);
     addBlob(g,0.4);
     addProxy(g,0.4,1.9,0,{kind:'obj',o});
   }else if(def==='deadtree'){
@@ -8430,6 +8721,19 @@ function buildObjModel(o){
     g.rotation.y=Math.PI/2;
     addBlob(g,0.22);
     addProxy(g,0.32,1.7,0,{kind:'obj',o});
+  }else if(def==='dragon_sign'){
+    const post=mesh(new THREE.CylinderGeometry(0.055,0.07,1.2,6),0x3a2e22);post.position.y=0.6;g.add(post);
+    const board=mesh(new THREE.BoxGeometry(0.92,0.58,0.07),0x2a2420);board.position.y=1.32;g.add(board);
+    const fr1=mesh(new THREE.BoxGeometry(1.0,0.08,0.09),0x6b6f74);fr1.position.y=1.61;g.add(fr1);
+    const fr2=mesh(new THREE.BoxGeometry(1.0,0.08,0.09),0x6b6f74);fr2.position.y=1.03;g.add(fr2);
+    const dh=mesh(new THREE.BoxGeometry(0.3,0.22,0.05),0x4a4a52);dh.position.set(-0.04,1.38,0.06);g.add(dh);
+    const sn=mesh(new THREE.BoxGeometry(0.16,0.1,0.06),0x4a4a52);sn.position.set(0.16,1.34,0.06);g.add(sn);
+    for(let hsx=-1;hsx<=1;hsx+=2){const hn=mesh(new THREE.ConeGeometry(0.035,0.15,4),0x6b6f74);hn.position.set(-0.04+hsx*0.07,1.52,0.06);hn.rotation.z=-0.5*hsx;g.add(hn);}
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.032,6,5),new THREE.MeshBasicMaterial({color:0xff7a1e}));eye.position.set(0.06,1.4,0.09);g.add(eye);
+    for(const fx of [-0.3,-0.05,0.22]){const fl=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.17,5),new THREE.MeshBasicMaterial({color:0xff6a1e}));fl.position.set(fx,1.12,0.07);g.add(fl);}
+    g.rotation.y=Math.PI/2;
+    addBlob(g,0.24);
+    addProxy(g,0.34,1.8,0,{kind:'obj',o});
   }else if(def==='range'){
     const bodyM=mesh(new THREE.BoxGeometry(0.8,0.6,0.7),0x33302e);bodyM.position.y=0.3;g.add(bodyM);
     const top=mesh(new THREE.BoxGeometry(0.88,0.09,0.78),0x4a4642);top.position.y=0.64;g.add(top);
@@ -10421,7 +10725,7 @@ const scim=new THREE.Group();
  sgrip.position.y=-0.085;scim.add(sgrip);
  const spm=TT(gmesh(new THREE.SphereGeometry(0.034,6,5),0x8a6a2a),'trim');
  spm.position.y=-0.01;scim.add(spm);}
-tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);
+tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);const maul=new THREE.Group();{const haft=gmesh(new THREE.CylinderGeometry(0.025,0.03,0.6,7),0x5a3d22);haft.position.y=-0.33;maul.add(haft);const head=gmesh(new THREE.BoxGeometry(0.19,0.22,0.17),0x6e6f73);head.position.y=-0.6;maul.add(head);const band=gmesh(new THREE.BoxGeometry(0.21,0.06,0.18),0x9a9ca0);band.position.y=-0.52;maul.add(band);const grip=gmesh(new THREE.BoxGeometry(0.038,0.14,0.038),0x3a2a18);grip.position.y=-0.06;maul.add(grip);}tool.add(maul);
 const bowM=new THREE.Group();
 {/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
  const R=0.5,A=1.9,t2=A/2;
@@ -10445,7 +10749,7 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -11514,7 +11818,7 @@ function makeRat(r){
     addBlob(g,big?0.42:0.32);
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,big?0.42:0.34,big?1.85:1.45,0,{kind:'rat',r});
-    scene.add(g);r._m={group:g};return;
+    scene.add(g);r._m={group:g,hm};return;
   }
   if(r.kind==='wolf'){
     const FUR=0x7a7066,FUR2=0x5a5248,DARK=0x2a2620;
@@ -11542,11 +11846,11 @@ function makeRat(r){
     const blade=mesh(new THREE.BoxGeometry(0.05,0.5,0.1),0xc8ccd2);blade.position.y=0.3;sword.add(blade);
     const guard=mesh(new THREE.BoxGeometry(0.16,0.04,0.06),0x6a4a2a);guard.position.y=0.05;sword.add(guard);
     const grip=mesh(new THREE.CylinderGeometry(0.025,0.025,0.12,5),0x3a2a18);grip.position.y=-0.03;sword.add(grip);
-    sword.position.set(0,-0.5,0.04);sword.rotation.x=0.3;hm.rArm.add(sword);
+    sword.position.set(0,-0.5,0.04);sword.rotation.x=Math.PI/2;hm.rArm.add(sword);
     addBlob(g,0.4);
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,0.4,1.7,0,{kind:'rat',r});
-    scene.add(g);r._m={group:g};return;
+    scene.add(g);r._m={group:g,hm};return;
   }
   if(r.kind==='banditleader'){
     const SKIN=0xc99a6e;
@@ -11558,12 +11862,12 @@ function makeRat(r){
     const blade=mesh(new THREE.BoxGeometry(0.06,0.62,0.12),0xd8dce2);blade.position.y=0.36;sword.add(blade);
     const guard=mesh(new THREE.TorusGeometry(0.08,0.02,4,8),0xb8902a);guard.rotation.x=Math.PI/2;guard.position.y=0.05;sword.add(guard);
     const grip=mesh(new THREE.CylinderGeometry(0.028,0.028,0.14,5),0x3a2a18);grip.position.y=-0.04;sword.add(grip);
-    sword.position.set(0,-0.52,0.05);sword.rotation.x=0.3;hm.rArm.add(sword);
+    sword.position.set(0,-0.52,0.05);sword.rotation.x=Math.PI/2;hm.rArm.add(sword);
     g.scale.set(1.12,1.12,1.12);
     addBlob(g,0.45);
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,0.45,1.9,0,{kind:'rat',r});
-    scene.add(g);r._m={group:g};return;
+    scene.add(g);r._m={group:g,hm};return;
   }
   if(r.kind==='patient'){
     const SKIN=0xc7b8a8,GOWN=0xe2e0d6;
@@ -11575,7 +11879,7 @@ function makeRat(r){
     addBlob(g,0.4);
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,0.4,1.7,0,{kind:'rat',r});
-    scene.add(g);r._m={group:g};return;
+    scene.add(g);r._m={group:g,hm};return;
   }
   if(r.kind==='student'){
     const SKIN=0x9ab088;
@@ -11588,7 +11892,7 @@ function makeRat(r){
     addBlob(g,0.4);
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,0.4,1.7,0,{kind:'rat',r});
-    scene.add(g);r._m={group:g};return;
+    scene.add(g);r._m={group:g,hm};return;
   }
   if(r.kind==='icegolem'){
     const ICE=0xbfe4f0,ICE2=0x9fd0e8,CORE=0x6fe0ff;
@@ -11695,7 +11999,7 @@ function makeGroundItem(id){
   const OCT=(r)=>new THREE.OctahedronGeometry(r,0);
   const TOR=(r,t,s)=>new THREE.TorusGeometry(r,t,6,s||12);
   const METAL={bronze:[0xb07a3e,0xdba968],iron:[0x7a766f,0xa8a49c],steel:[0xaab2ba,0xe2e8ee],
-    mithril:[0x6b6bb0,0x9a9ade],adamant:[0x468852,0x7cba8a],rune:[0x5a8ab0,0x94c8ea],dragon:[0xb0202a,0x7a1018]};
+    mithril:[0x6b6bb0,0x9a9ade],adamant:[0x468852,0x7cba8a],rune:[0x5a8ab0,0x94c8ea],berrite:[0xec71a1,0xf5a8c8],dragon:[0xb0202a,0x7a1018]};
   const metalOf=s=>{for(const k in METAL)if(s.indexOf(k)===0||s.indexOf('_'+k)>=0||nm.indexOf(k)===0)return METAL[k];return null;};
 
   /* ---------------- existing resource models ---------------- */
@@ -11704,8 +12008,8 @@ function makeGroundItem(id){
     const l=add(CYL(0.07,0.07,0.5,6),c);l.rotation.z=Math.PI/2;l.position.y=0.07;
     const l2=add(CYL(0.06,0.06,0.42,6),c);l2.rotation.z=Math.PI/2;l2.rotation.y=0.5;l2.position.set(0.04,0.16,0.04);
   }
-  else if(id==='copper_ore'||id==='tin_ore'||id==='iron_ore'){
-    const c=id==='copper_ore'?0xc97f3e:id==='tin_ore'?0xc4c8ce:0x96503a;
+  else if(id==='copper_ore'||id==='tin_ore'||id==='iron_ore'||id==='berrite_ore'){
+    const c=id==='copper_ore'?0xc97f3e:id==='tin_ore'?0xc4c8ce:id==='berrite_ore'?0xec71a1:0x96503a;
     const o=add(DOD(0.13),c);o.position.y=0.1; const o2=add(DOD(0.08),0x6a5a4a);o2.position.set(0.1,0.06,-0.05);
   }
   else if(id==='raw_shrimps'||id==='shrimps'||id==='burnt_shrimps'){
@@ -12032,6 +12336,14 @@ function makeGroundItem(id){
     for(const e of[[-0.15,0],[0.15,0],[0,-0.15],[0,0.15]])add(BOX(e[0]?0.03:0.32,0.26,e[1]?0.03:0.32),0x5a3c22).position.set(e[0],0.13,e[1]);
     add(BOX(0.34,0.04,0.34),0x4a3322).position.y=0.25;
   }
+  else if(id==='glens_baton'){const b=add(CYL(0.035,0.035,0.34,8),0xcf3a2a);b.rotation.z=Math.PI/2;b.position.y=0.05;const t=add(CYL(0.037,0.037,0.07,8),0xeaeaea);t.rotation.z=Math.PI/2;t.position.set(0.14,0.05,0);}
+  else if(id==='bozeks_pocket_watch'){const c=add(CYL(0.13,0.13,0.03,16),0xe8c24a);c.position.y=0.03;const f=add(CYL(0.09,0.09,0.036,16),0xf4ecd0);f.position.y=0.046;add(SPH(0.022),0xc9a23a).position.set(0,0.05,0.15);}
+  else if(id==='ricks_flask'){add(BOX(0.18,0.26,0.06),0x8a9098).position.y=0.14;add(BOX(0.06,0.06,0.05),0x6a7078).position.y=0.29;add(BOX(0.07,0.03,0.06),0x2e2e2e).position.y=0.33;}
+  else if(id==='spencers_snuffbox'){add(BOX(0.22,0.10,0.16),0xc8ccd2).position.y=0.06;add(BOX(0.23,0.04,0.17),0xe2e8ee).position.y=0.12;add(SPH(0.022),0xc9a23a).position.y=0.15;}
+  else if(id==='mishs_dice'){const d1=add(BOX(0.11,0.11,0.11),0xf0ece0);d1.position.set(-0.07,0.06,0.03);d1.rotation.y=0.4;const d2=add(BOX(0.11,0.11,0.11),0xeae6da);d2.position.set(0.08,0.06,-0.04);d2.rotation.y=-0.3;}
+  else if(id==='stolen_signet'){const rg=add(TOR(0.1,0.03,12),0xe8c24a);rg.rotation.x=Math.PI/2;rg.position.y=0.07;const fc=add(CYL(0.06,0.06,0.03,8),0xc9a23a);fc.position.y=0.13;add(SPH(0.022),0x7a1f1a).position.y=0.15;}
+  else if(id==='ectoplasm'){const b=add(SPH(0.16),0x5ad27a);b.scale.set(1.3,0.5,1.1);b.position.y=0.06;b.material.transparent=true;b.material.opacity=0.72;const b2=add(SPH(0.08),0x9af0b4);b2.position.set(-0.05,0.1,0.03);b2.material.transparent=true;b2.material.opacity=0.85;}
+  else if(id==='infernal_ashes'){const m1=add(CYL(0.02,0.18,0.12,9),0x3a3330);m1.position.y=0.06;const m2=add(CYL(0.01,0.1,0.08,7),0x55504a);m2.position.y=0.11;for(const e of [[-0.06,0.04],[0.05,-0.03],[0,0.02]]){const em=new THREE.Mesh(new THREE.SphereGeometry(0.02,5,4),new THREE.MeshBasicMaterial({color:0xff6a1e}));em.position.set(e[0],0.11,e[1]);g.add(em);}}
   /* ---------------- fallback: faceted nugget (never a gray cube) ---------------- */
   else {
     const c=add(DOD(0.12),0xb89a5a);c.position.y=0.1;c.rotation.set(0.3,0.5,0.2);
@@ -12051,7 +12363,9 @@ function syncGroundItems(){
       scene.add(g);
       itemMeshes.set(it.uid,g);
     }
-    g.position.set(it.x+0.5,groundH(it.x+0.5,it.y+0.5)+0.02,it.y+0.5);
+    const _fy=(inSos&&it.interior==='sos')?_sFY:groundH(it.x+0.5,it.y+0.5);
+    g.position.set(it.x+0.5,_fy+0.02,it.y+0.5);
+    g.visible=(it.interior||null)===curInterior();
   }
   for(const [uid,g] of itemMeshes)if(!seen.has(uid)){
     scene.remove(g);
@@ -12103,7 +12417,8 @@ function castPick(ev){
     const d=h.object.userData;
     if(d.kind==='rat')return d.r.alive&&(d.r.interior||null)===curInterior();
     if(d.kind==='sosportal')return curInterior()==='sos';
-    if(d.kind==='item')return ground.some(gi=>gi.uid===d.uid);
+    if(d.kind==='obj'&&(d.o.def==='sos_exit'||d.o.def==='sos_chest'))return curInterior()==='sos';   /* stronghold vault/exit: never hoverable from the schoolhouse lawn above (proxies live in the global list) */
+    if(d.kind==='item'){const _gi=ground.find(gi=>gi.uid===d.uid);return !!_gi&&(_gi.interior||null)===curInterior();}
     return true;
   });
   const th=_rc.intersectObject(inSos&&sosFloor?sosFloor:(inStPaul&&stPaulFloor?stPaulFloor:(inRectory&&rectoryFloor?rectoryFloor:(inChapel&&chapelFloor?chapelFloor:terra))),false)[0];
@@ -12498,7 +12813,7 @@ miniBase.width=W*4;miniBase.height=H*4;
     let c=null,r2=2.4;
     if(o.def==='tree'||o.def==='oak'||o.def==='willow'){c='#1e3a16';r2=2.8;}
     else if(o.def==='deadtree'){c='#4a3e2a';r2=2.6;}
-    else if(o.def==='copper'||o.def==='tin'||o.def==='iron'||o.def==='mithril'||o.def==='adamant'||o.def==='rune'){c='#9aa0a8';r2=2;}
+    else if(o.def==='copper'||o.def==='tin'||o.def==='iron'||o.def==='mithril'||o.def==='adamant'||o.def==='rune'||o.def==='berrite'){c='#9aa0a8';r2=2;}
     else if(o.def==='spot'){c='#7adfff';r2=2;}
     else if(o.def==='fire'){c='#ff8c2a';r2=2;}
     if(c){g.fillStyle=c;g.beginPath();g.arc(o.x*4+2,o.y*4+2,r2,0,7);g.fill();}
@@ -13210,7 +13525,7 @@ function buildIconPts(){
   let bankDone=false,clerkDone=false;
   for(const o of objects){
     if(o.def==='spot')ICON_PTS.push({x:o.x,y:o.y,c:'fish'});
-    else if(o.def==='copper'||o.def==='tin'||o.def==='iron'||o.def==='mithril'||o.def==='adamant'||o.def==='rune')
+    else if(o.def==='copper'||o.def==='tin'||o.def==='iron'||o.def==='mithril'||o.def==='adamant'||o.def==='rune'||o.def==='berrite')
       ICON_PTS.push({x:o.x,y:o.y,c:'mine'});
     else if(o.def==='furnace'||o.def==='anvil')
       ICON_PTS.push({x:o.x,y:o.y,c:'smith'});
@@ -13647,6 +13962,7 @@ function isQuestTarget(r){
       if(k===pn.kind&&r.sx>=pn.x0&&r.sx<=pn.x1&&r.sy>=96&&r.sy<=100
         &&so['k'+(pi+1)]<pn.need)return true;
     }
+  {const sl=player.slayer;if(sl&&sl.task&&k===sl.task&&(sl.done||0)<sl.need&&inWild(r.sx,r.sy))return true;}
   return false;
 }
 function questKill(r){
@@ -13667,7 +13983,7 @@ function questKill(r){
      {const _pc=neededHelmPiece();if(_pc&&Math.random()<(r.superior?0.34:0.022)){if(invFull())dropGround(r.x,r.y,_pc,1);else addItem(_pc,1);msg('The '+r.name.toLowerCase()+' yields a '+ITEMS[_pc].name+'!','#e8b020');}}
      renderQuests&&renderQuests();dirty=true;
    }}
-  if(player.slayer&&player.slayer.task&&kind===player.slayer.task&&inWild(r.sx,r.sy)&&MOB_KINDS[kind].cmb>=60&&Math.random()<1/150){
+  if(inWild(r.sx,r.sy)&&MOB_KINDS[kind].cmb>=60&&Math.random()<1/150){
     const _DR=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield'];
     const _did=_DR[rndi(0,_DR.length-1)];
     if(invFull())dropGround(r.x,r.y,_did,1); else addItem(_did,1);
@@ -14918,6 +15234,7 @@ const SMELT_BARS=[
   ['bronze_bar',1,3,[['copper_ore',1],['tin_ore',1]]],
   ['iron_bar',15,8,[['iron_ore',1]]],
   ['steel_bar',30,10,[['iron_ore',2]]],
+  ['berrite_bar',35,12,[['berrite_ore',1]]],
   ['mithril_bar',50,15,[['mithril_ore',1],['iron_ore',2]]],
   ['adamant_bar',70,20,[['adamant_ore',1],['iron_ore',3]]],
   ['rune_bar',85,25,[['runite_ore',1],['iron_ore',4]]]];
@@ -14948,6 +15265,13 @@ const SMITH_RECIPES=[
   ['steel_kiteshield',32,'steel_bar',3],
   ['steel_platebody',33,'steel_bar',5],
   ['steel_platelegs',32,'steel_bar',3],
+  ['berrite_full_helm',35,'berrite_bar',1],
+  ['berrite_sword',35,'berrite_bar',1],
+  ['berrite_scimitar',36,'berrite_bar',2],
+  ['berrite_chainbody',36,'berrite_bar',3],
+  ['berrite_kiteshield',37,'berrite_bar',3],
+  ['berrite_platebody',38,'berrite_bar',5],
+  ['berrite_platelegs',37,'berrite_bar',3],
   ['mithril_full_helm',50,'mithril_bar',1],
   ['mithril_sword',51,'mithril_bar',1],
   ['mithril_scimitar',51,'mithril_bar',2],
@@ -15376,7 +15700,7 @@ const SKILL_GUIDE={
   mining:[[1,'Mine copper and tin rocks'],[1,'A bronze pickaxe mines a little faster'],
     [5,'Use an iron pickaxe for faster mining'],[10,'Use a steel pickaxe for faster mining'],
     [15,'Mine iron rocks'],[20,'Use a mithril pickaxe for faster mining'],
-    [30,'Use an adamant pickaxe for faster mining'],[40,'Use a rune pickaxe for faster mining'],
+    [30,'Use an adamant pickaxe for faster mining'],[35,'Mine berrite rocks'],[40,'Use a rune pickaxe for faster mining'],
     [55,'Mine mithril rocks'],[70,'Mine adamantite rocks'],[85,'Mine runite rocks']],
   smithing:[],
   fishing:[[1,'Net shrimps at fishing spots'],[5,'Fish sardines'],
@@ -15505,6 +15829,7 @@ function renderBankInv(){
     bi.appendChild(d2);
   }
 }
+let bankSortCat=false;
 function renderBank(){
   renderBankInv();
   const gr=document.getElementById('bankgrid');gr.innerHTML='';
@@ -15516,7 +15841,10 @@ function renderBank(){
   if(!_blist.length){const d=document.createElement('div');
     d.style.cssText='grid-column:1/-1;color:#7a6f5c;font-size:11px;padding:14px;text-align:center;';
     d.textContent='No items match \u201c'+_bq+'\u201d.';gr.appendChild(d);return;}
-  for(const b of _blist){
+  const _items=bankSortCat?_blist.slice().sort((a2,b2)=>{const ca=itemCategory(a2.id),cb=itemCategory(b2.id);return ca===cb?ITEMS[a2.id].name.localeCompare(ITEMS[b2.id].name):(ca<cb?-1:1);}):_blist;
+  let _lastCat=null;
+  for(const b of _items){
+    if(bankSortCat){const _c=itemCategory(b.id);if(_c!==_lastCat){_lastCat=_c;const hd=document.createElement('div');hd.textContent=_c;hd.style.cssText='grid-column:1/-1;color:#caa83c;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;padding:5px 2px 1px;';gr.appendChild(hd);}}
     const d=document.createElement('div');d.className='bslot';d.title=ITEMS[b.id].name;
     const c=document.createElement('canvas');c.width=30;c.height=30;
     drawItemIcon(c.getContext('2d'),b.id,30);
@@ -16832,6 +17160,7 @@ function _duelAcc(){
 function startDuel(uid,name,rules,myStake,theirStake){
   if(!inMathes||duel.state!=='none')return;
   duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};duel.oppHp=null;duel.oppMhp=null;duel._hpSendT=0;
+  if(duel.rules.noWeapons&&player.equip.weapon){const _dw=player.equip.weapon;player.equip.weapon=null;if(!invFull())addItem(_dw.id,_dw.qty||1);else bankAdd(_dw.id,_dw.qty||1);if(typeof renderEquip==='function')renderEquip();if(typeof renderInv==='function')renderInv();if(typeof renderStyleBar==='function')renderStyleBar();msg('No weapons this bout \u2014 you set your weapon aside.','#caa23a');}
   duel.stakeMine=(myStake&&myStake.length)?_duelTakeItems(myStake):[];                        /* lock my stake out of inventory */
   duel.stakeTheirs=_duelEscrowIn[uid]||((theirStake||[]).map(o=>({id:o.id,qty:o.qty})));       /* what I win: their confirmed escrow if it arrived, else their claim */
   if(typeof MP!=='undefined'&&MP.duelEscrow)MP.duelEscrow(duel.stakeMine);                     /* tell them what I actually locked in */
@@ -17134,6 +17463,7 @@ document.getElementById('bankclose').addEventListener('click',closeBank);
 {const _dd=document.getElementById('dueldecline'); if(_dd)_dd.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.duelSetDecline)MP.duelSetDecline();});}
 {const _dx2=document.getElementById('duelclose'); if(_dx2)_dx2.addEventListener('click',()=>{audio(); if(typeof MP!=='undefined'&&MP.duelSetDecline)MP.duelSetDecline();});}
 document.getElementById('banksearch').addEventListener('input',()=>{if(bankOpen)renderBank();});
+{const _bsrt=document.getElementById('banksort');if(_bsrt)_bsrt.addEventListener('click',()=>{bankSortCat=!bankSortCat;_bsrt.textContent='Sort by category: '+(bankSortCat?'on':'off');if(bankOpen)renderBank();});}
 document.getElementById('geclose').addEventListener('click',closeShop);
 document.getElementById('depall').addEventListener('click',()=>{
   audio();for(let i=0;i<28;i++)depositSlot(i,1e9);});
@@ -17143,7 +17473,7 @@ geEl.addEventListener('click',e=>{if(e.target===geEl)closeShop();});
 {const csEl=document.getElementById('cageshopui');if(csEl){csEl.addEventListener('click',e=>{if(e.target===csEl)closeCageShop();});}const csc=document.getElementById('cageshopclose');if(csc)csc.addEventListener('click',closeCageShop);}
 {const logEl=document.getElementById('logui');if(logEl)logEl.addEventListener('click',e=>{if(e.target===logEl)closeLog();});
  const logC=document.getElementById('logclose');if(logC)logC.addEventListener('click',closeLog);
- const logB=document.getElementById('logbtn');if(logB)logB.addEventListener('click',openLog);const encB=document.getElementById('encybtn');if(encB)encB.addEventListener('click',openEncy);const encC=document.getElementById('encclose');if(encC)encC.addEventListener('click',closeEncy);const encX=document.getElementById('encui');if(encX)encX.addEventListener('click',e=>{if(e.target===encX)closeEncy();});const encS=document.getElementById('encsearch');if(encS)encS.addEventListener('input',()=>{encQuery=encS.value;renderEncy();});}
+ const logB=document.getElementById('logbtn');if(logB)logB.addEventListener('click',openLog);const encB=document.getElementById('encybtn');if(encB)encB.addEventListener('click',openEncy);const encC=document.getElementById('encclose');if(encC)encC.addEventListener('click',closeEncy);const encX=document.getElementById('encui');if(encX)encX.addEventListener('click',e=>{if(e.target===encX)closeEncy();});const encS=document.getElementById('encsearch');if(encS)encS.addEventListener('input',()=>{encQuery=encS.value;(encMode==='bestiary'?renderBestiary:renderEncy)();});const etb=document.getElementById('enctabs');if(etb)etb.querySelectorAll('.enctab').forEach(b=>b.addEventListener('click',()=>setEncMode(b.getAttribute('data-encmode'))));}
 wmapEl.addEventListener('click',e=>{if(e.target===wmapEl)wmapEl.classList.remove('on');});
 window.addEventListener('keydown',e=>{if(e.key==='Escape'){wmapEl.classList.remove('on');closeBank();closeShop();document.getElementById('wildui').classList.remove('on');wildHop=null;}});
 miniC.addEventListener('click',()=>{audio();openWorldMap();});
@@ -18646,7 +18976,7 @@ function render(now){
   const swing=Math.sin(now*0.012)*0.7*walkBlend;
   pm.lLeg.rotation.x=swing;pm.rLeg.rotation.x=-swing;
   let armL=-swing*0.5,armR=swing*0.5;
-  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
+  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
   const act=player.action;let _swRest=true;
@@ -18685,6 +19015,7 @@ function render(now){
   else if(showTool==='pick')pick.visible=true;
   else if(showTool==='sword'){sword.visible=true;sword.rotation.x=_swRest?-1.5:0;}   /* -1.5 ~= held out front; 0 = down for the chop (tunable) */
   else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?-1.5:0;}
+  else if(showTool==='maul'){maul.visible=true;maul.rotation.x=_swRest?-1.5:0;}
   else if(showTool==='bow')bowM.visible=true;
   else if(showTool==='staff')staffM.visible=true;
   shieldM.visible=!!player.equip.shield;
@@ -18764,7 +19095,7 @@ function render(now){
   }
   {const _ce=player.emote&&EMOTES_BY_ID[player.emote];   /* costume emotes (jack/xmas/chef) strip worn gear so the costume isn't covered */
    if(_ce&&_ce.build){
-     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
+     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
      shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;
      bodyM.visible=armPL.visible=armPR.visible=hideBodyM.visible=robeBodyM.visible=false;
      legL.visible=legR.visible=hideLegL.visible=hideLegR.visible=robeSkirtM.visible=false;
@@ -18815,7 +19146,7 @@ function render(now){
     const moving=Math.hypot(n.x-n.px,n.y-n.py)>0.04;
     if(!moving){
       if(n.id.slice(0,3)==='sm_'){
-        n.heading=(dlg&&dlg.npc===n)?Math.atan2(player.px-n.px,player.py-n.py):Math.atan2(73.5-n.px,48.5-n.py);
+        n.heading=(dlg&&dlg.npc===n)?Math.atan2(player.px-n.px,player.py-n.py):Math.atan2(73.5+WX-n.px,48.5-n.py);
       }else{
         const pd=Math.hypot(player.px-n.px,player.py-n.py);
         if(pd<4&&pd>0.3)
@@ -18852,12 +19183,30 @@ function render(now){
       tht=Math.atan2(player.px-r.px,player.py-r.py);
     if(tht!==null)r.heading=lerpAngle(r.heading,tht,Math.min(1,dt*0.012));
     m.group.rotation.y=r.heading;
-    if(MOB_KINDS[r.kind].boss&&m.dhead&&!r.target){                     /* idle only -- when fought, it chases + faces the player normally */
-      r.heading=Math.PI/2;m.group.rotation.y=Math.PI/2;                 /* stand still, face east */
-      m.dhead.rotation.y=Math.sin(now*0.0023+r.i)*0.10;                 /* gradual head sway */
-      m.dhead.rotation.x=Math.sin(now*0.0017+r.i)*0.05;                 /* slow nod */
-      const _st=Math.sin(now*0.0008+r.i*1.7);
-      if(_st>0.985)m.group.position.y-=(_st-0.985)*5.5;                 /* occasional stomp dip */
+    if(MOB_KINDS[r.kind].boss&&m.dhead){
+      if(r.spec){
+        const fh=Math.atan2(r.spec.dir[0],r.spec.dir[1]);
+        r.heading=fh;m.group.rotation.y=fh;
+        if(r.spec.phase==='windup'){
+          const f=Math.min(1,(now-r.spec.t)/Math.max(1,r.spec.fireAt-r.spec.t));
+          m.dhead.rotation.x=-0.72*f+Math.sin(now*0.045)*0.05*f;        /* rear head up/back + building quiver */
+          m.dhead.rotation.y=0; m.dhead.position.y=0.14*f;
+          m.group.position.y-=0.04*f;                                    /* haunches coil */
+        }else{
+          const f=Math.min(1,(now-(r.spec.fireT||now))/240);
+          m.dhead.rotation.x=0.6*(f<0.45?(f/0.45):(1-(f-0.45)/0.55));    /* lunge down-forward, then ease back */
+          m.dhead.position.y=0;
+        }
+      }else if(!r.target){
+        r.heading=Math.PI/2;m.group.rotation.y=Math.PI/2;
+        m.dhead.rotation.y=Math.sin(now*0.0023+r.i)*0.10;
+        m.dhead.rotation.x=Math.sin(now*0.0017+r.i)*0.05;
+        m.dhead.position.y=0;
+        const _st=Math.sin(now*0.0008+r.i*1.7);
+        if(_st>0.985)m.group.position.y-=(_st-0.985)*5.5;
+      }else{
+        m.dhead.rotation.x*=0.86;m.dhead.rotation.y*=0.86;m.dhead.position.y*=0.86;
+      }
     }
     if(m.tail){
       m.tail.rotation.y=Math.sin(now*0.01+r.i)*0.5;
@@ -19510,7 +19859,7 @@ const scim=new THREE.Group();
  sgrip.position.y=-0.085;scim.add(sgrip);
  const spm=TT(gmesh(new THREE.SphereGeometry(0.034,6,5),0x8a6a2a),'trim');
  spm.position.y=-0.01;scim.add(spm);}
-tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);
+tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);const maul=new THREE.Group();{const haft=gmesh(new THREE.CylinderGeometry(0.025,0.03,0.6,7),0x5a3d22);haft.position.y=-0.33;maul.add(haft);const head=gmesh(new THREE.BoxGeometry(0.19,0.22,0.17),0x6e6f73);head.position.y=-0.6;maul.add(head);const band=gmesh(new THREE.BoxGeometry(0.21,0.06,0.18),0x9a9ca0);band.position.y=-0.52;maul.add(band);const grip=gmesh(new THREE.BoxGeometry(0.038,0.14,0.038),0x3a2a18);grip.position.y=-0.06;maul.add(grip);}tool.add(maul);
 const bowM=new THREE.Group();
 {/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
  const R=0.5,A=1.9,t2=A/2;
@@ -19534,7 +19883,7 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -20546,6 +20895,86 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 
 /* <<< MULTIPLAYER MODULE <<< */
 
+/* ===================== BLACK DRAGON INFO POPUP ===================== */
+function buildShowcaseDragon(){
+  var g=new THREE.Group();
+  var SCALE=0x26262c,SCALE2=0x141418,BELLY=0x4a4a52;
+  function m(geo,c){var mm=new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:c,roughness:0.72,metalness:0.16}));g.add(mm);return mm;}
+  var torso=m(new THREE.SphereGeometry(0.55,12,9),SCALE);torso.scale.set(1.0,0.9,1.7);torso.position.y=0.95;
+  var belly=m(new THREE.SphereGeometry(0.42,10,8),BELLY);belly.scale.set(0.82,0.7,1.45);belly.position.set(0,0.62,0.08);
+  for(var i=0;i<5;i++){var sp=m(new THREE.ConeGeometry(0.07,0.2,5),SCALE2);sp.position.set(0,1.42-i*0.04,0.5-i*0.4);sp.rotation.x=0.1;}
+  var neck=m(new THREE.CylinderGeometry(0.18,0.26,0.7,8),SCALE);neck.position.set(0,1.4,0.55);neck.rotation.x=0.7;
+  m(new THREE.BoxGeometry(0.32,0.3,0.5),SCALE).position.set(0,1.72,0.92);
+  m(new THREE.BoxGeometry(0.22,0.18,0.28),SCALE).position.set(0,1.66,1.22);
+  m(new THREE.BoxGeometry(0.2,0.07,0.24),SCALE2).position.set(0,1.56,1.2);
+  for(var sx=-1;sx<=1;sx+=2){
+    var horn=m(new THREE.ConeGeometry(0.05,0.34,5),0x6b6f74);horn.position.set(sx*0.11,1.95,0.86);horn.rotation.x=-0.5;
+    var eye=new THREE.Mesh(new THREE.SphereGeometry(0.05,7,6),new THREE.MeshBasicMaterial({color:0xff8a1e}));eye.position.set(sx*0.12,1.76,1.12);g.add(eye);
+    var wing=m(new THREE.BoxGeometry(0.05,0.62,0.85),SCALE2);wing.position.set(sx*0.42,1.5,-0.45);wing.rotation.z=sx*0.9;wing.rotation.y=sx*-0.7;wing.rotation.x=-0.3;
+    var wb=m(new THREE.BoxGeometry(0.07,0.78,0.07),SCALE);wb.position.set(sx*0.34,1.55,-0.4);wb.rotation.z=sx*0.9;wb.rotation.x=-0.3;
+    var fl=m(new THREE.CylinderGeometry(0.1,0.13,0.5,6),SCALE);fl.position.set(sx*0.34,0.5,0.4);
+    var bl=m(new THREE.CylinderGeometry(0.13,0.17,0.6,6),SCALE);bl.position.set(sx*0.4,0.45,-0.35);
+  }
+  var t1=m(new THREE.CylinderGeometry(0.16,0.22,0.7,6),SCALE);t1.position.set(0,0.85,-1.0);t1.rotation.x=-1.2;
+  var t2=m(new THREE.CylinderGeometry(0.07,0.16,0.7,6),SCALE);t2.position.set(0,0.6,-1.5);t2.rotation.x=-1.45;
+  var ttip=m(new THREE.ConeGeometry(0.1,0.3,5),SCALE2);ttip.position.set(0,0.4,-1.85);ttip.rotation.x=-1.6;
+  g.position.y=-0.62; g.scale.set(1.12,1.12,1.12);
+  return g;
+}
+function openDragonInfo(){
+  if(document.getElementById('dragModal'))return;
+  var ov=document.createElement('div'); ov.id='dragModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.62);display:flex;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
+  var box=document.createElement('div');
+  box.style.cssText='background:#1b1410;border:3px solid #e07a1e;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:Georgia,serif;color:#f0e6d2;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
+  box.innerHTML=
+    '<div style="font-size:20px;font-weight:bold;color:#ff9a3a;text-align:center;margin-bottom:2px;">Black Dragon</div>'+
+    '<div style="text-align:center;color:#b8a888;font-size:12px;margin-bottom:8px;font-style:italic;">The apex of the chromatic brood \u2014 its dragonfire melts stone.</div>'+
+    '<canvas id="dragCanvas" width="380" height="200" style="width:100%;height:auto;display:block;background:radial-gradient(circle at 50% 38%,#2c2330,#110d0b);border-radius:8px;border:1px solid #4a3a26;"></canvas>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:10px 2px;font-size:13px;">'+
+      '<div>Combat level: <b style="color:#ffd24a;">227</b></div>'+
+      '<div>Hitpoints: <b style="color:#ffd24a;">180</b></div>'+
+      '<div>Attack style: <b style="color:#b58be0;">Magic</b></div>'+
+      '<div>Weakness: <b style="color:#86c56a;">Ranged</b></div>'+
+    '</div>'+
+    '<div style="border-top:1px solid #4a3a26;margin-top:6px;padding-top:8px;">'+
+      '<div style="color:#ff9a3a;font-weight:bold;font-size:13px;margin-bottom:4px;">Notable drops</div>'+
+      '<div style="font-size:12.5px;line-height:1.55;color:#e8dcc0;">'+
+        '\u2022 Coins: <b>30,000\u201345,000</b> &mdash; every kill<br>'+
+        '\u2022 Dragon equipment &mdash; ~1/12<br>'+
+        '\u2022 Draconic visage &mdash; ~1/400<br>'+
+        '\u2022 Runite ore, rune bars &amp; diamonds &mdash; common<br>'+
+        '\u2022 Black dragonhide &amp; big bones'+
+      '</div></div>'+
+    '<div style="border-top:1px solid #4a3a26;margin-top:8px;padding-top:8px;">'+
+      '<div style="color:#ff5a1e;font-weight:bold;font-size:13px;margin-bottom:4px;">Fire-breath special</div>'+
+      '<div style="font-size:12.5px;line-height:1.55;color:#e8dcc0;">'+
+        'Every so often it rears its head back and blasts a line of dragonfire straight in front of it. A chat warning sounds a few seconds before. It deals <b style="color:#ff7a3a;">massive damage</b> unless you:<br>'+
+        '\u2022 <b>Sidestep</b> horizontally out of the line of fire, or<br>'+
+        '\u2022 Wear a <b>Dragon Slayer shield</b> &mdash; reduces it to a normal hit.'+
+      '</div></div>'+
+    '<div style="border-top:1px solid #4a3a26;margin-top:8px;padding-top:8px;font-size:12px;color:#b8a888;text-align:center;">Respawns roughly 30 minutes after it is slain.</div>'+
+    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="dragClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #e07a1e;background:#5a3322;color:#fff;cursor:pointer;">Close</button></div>';
+  ov.appendChild(box); document.body.appendChild(ov);
+  var raf=0, ren=null;
+  function cleanup(){ if(raf)cancelAnimationFrame(raf); if(ren){try{ren.forceContextLoss&&ren.forceContextLoss();ren.dispose();}catch(e){}} if(ov.parentNode)ov.parentNode.removeChild(ov); }
+  ov.addEventListener('click',function(e){ if(e.target===ov)cleanup(); });
+  box.querySelector('#dragClose').onclick=cleanup;
+  try{
+    var cv=box.querySelector('#dragCanvas');
+    ren=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
+    ren.setSize(380,200,false);
+    var scn=new THREE.Scene();
+    var cam=new THREE.PerspectiveCamera(42,380/200,0.1,100);
+    cam.position.set(0,1.25,5.3); cam.lookAt(0,0.7,0);
+    scn.add(new THREE.AmbientLight(0xffffff,0.7));
+    var dl=new THREE.DirectionalLight(0xfff0e0,0.95); dl.position.set(3,6,4); scn.add(dl);
+    var dl2=new THREE.DirectionalLight(0xff7a3a,0.4); dl2.position.set(-4,2,3); scn.add(dl2);
+    var drag=buildShowcaseDragon(); scn.add(drag);
+    (function loop(){ if(!document.body.contains(ov))return; raf=requestAnimationFrame(loop); drag.rotation.y+=0.012; ren.render(scn,cam); })();
+  }catch(e){ var c2=box.querySelector('#dragCanvas'); if(c2)c2.style.display='none'; }
+}
+/* =================== END BLACK DRAGON INFO POPUP =================== */
 /* ===================== ONLINE LEADERBOARD ===================== */
 const LB = (function(){
   /* STANDALONE WORKER ONLY: if you deploy the leaderboard as its own separate
@@ -20553,15 +20982,16 @@ const LB = (function(){
      Leave it '' if you merged the /lb/ routes into your existing relay worker. */
   const LB_BASE = '';
   const CATS = [
-    {id:'cmb',    label:'Combat',  fmt:function(v){return ''+v;}},
+    {id:'cmb',    label:'Combat Level',  fmt:function(v){return ''+v;}},
     {id:'total',  label:'Total',   fmt:function(v){return ''+v;}},
-    {id:'maxhit', label:'Top hit', fmt:function(v){return ''+v;}},
+    {id:'maxhit', label:'Top Melee Hit', fmt:function(v){return ''+v;}},
     {id:'kills',  label:'Kills',   fmt:function(v){return ''+v;}},
+    {id:'boss_kills', label:'Boss Kills', fmt:function(v){return ''+v;}},
     {id:'gold',   label:'Gold',    fmt:function(v){return _comma(v);}},
     {id:'pvp_wins', label:'PvP wins',  fmt:function(v){return ''+v;}},
     {id:'deaths',   label:'Deaths',    fmt:function(v){return ''+v;}},
-    {id:'magic_hit',label:'Top magic', fmt:function(v){return ''+v;}},
-    {id:'range_hit',label:'Top range', fmt:function(v){return ''+v;}}
+    {id:'magic_hit',label:'Top Magic Hit', fmt:function(v){return ''+v;}},
+    {id:'range_hit',label:'Top Ranged Hit', fmt:function(v){return ''+v;}}
   ];
   function _comma(v){ return (''+(v|0)).replace(/\B(?=(\d{3})+(?!\d))/g,','); }
   function _esc(t){ return (''+t).replace(/[&<>"]/g,function(c){return ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c];}); }
@@ -20575,14 +21005,14 @@ const LB = (function(){
       cmb:(typeof cmbLvl==='function')?cmbLvl():((player&&player.cmb)||3),
       total:(typeof totalLevel==='function')?totalLevel():0,
       maxhit:(player&&player.maxHit)||0, kills:(player&&player.kills)||0, gold:_gold(),
-      pvp_wins:(player&&player.pvpWins)||0, deaths:(player&&player.deaths)||0, magic_hit:(player&&player.maxMagicHit)||0, range_hit:(player&&player.maxRangeHit)||0,
+      pvp_wins:(player&&player.pvpWins)||0, boss_kills:(player&&player.bossKills)||0, deaths:(player&&player.deaths)||0, magic_hit:(player&&player.maxMagicHit)||0, range_hit:(player&&player.maxRangeHit)||0,
       title:(player&&player.title)||null };
   }
   var _lastKey='', _lastT=0;
   function submit(force){
     var u=_url(); if(!u||!player||!player.uid)return;
     var st=_stats();
-    var key=[st.cmb,st.total,st.maxhit,st.kills,st.gold,st.pvp_wins,st.deaths,st.magic_hit,st.range_hit,st.name,st.title].join('|');
+    var key=[st.cmb,st.total,st.maxhit,st.kills,st.gold,st.pvp_wins,st.boss_kills,st.deaths,st.magic_hit,st.range_hit,st.name,st.title].join('|');
     var now=Date.now();
     if(!force && key===_lastKey && (now-_lastT)<60000)return;
     _lastKey=key; _lastT=now;
