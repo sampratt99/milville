@@ -1277,7 +1277,7 @@ ITEMS.amulet_magic={name:'Amulet of Magic',
 ITEMS.amulet_archery={name:'Amulet of Archery',
   ex:'A sinew-strung pendant carved from yew. Your aim flies truer.',val:150,
   equip:{slot:'neck',ratk:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x2aa07a}};
-GE_STOCK.push('amulet_magic','amulet_archery');
+GE_STOCK.push('amulet_attack','amulet_strength','amulet_defence','amulet_magic','amulet_archery');
 ITEMS.bronze_bar={name:'Bronze bar',
   ex:'Copper and tin, married in fire.',val:20};
 ITEMS.iron_bar={name:'Iron bar',ex:'A solid bar of iron.',val:60};
@@ -3003,7 +3003,7 @@ function dropGround(x,y,id,qty){
    Entry shapes: {i,q,c,inv,m}  single item (q=n or [min,max], c=chance, inv=try pack first, m=message)
                  {pool,q,c}      uniform pick   {wpool:[[id,w,qmin,qmax],...],c}  weighted pick
                  {note,c}        banknote (pool of ids, 5-15, sent as a note)
-                 {dhide:'green'|'blue'|'red'|'black'|'sx', c?}   {dgear:chance}   dragon-specific */
+                 {dhide:'green'|'blue'|'red'|'black'|'sx', c?}   {dgear:chance} = 1-of-6 dragon equipment (dragons + cmb60+ wilderness mobs) */
 const MOB_DROPS={
   /* The Snow King -- Frostmaul 1/10, each Glacial piece 1/6 (50% pool, then 1-of-3), Aurora ~1/90, frost shards always; coins auto via coinP */
   snowking:[
@@ -3020,20 +3020,23 @@ const MOB_DROPS={
   skelearcher:[{i:'rune_arrow',q:[5,12],c:1/15}],
   bandit:[{pool:['glens_baton','bozeks_pocket_watch','ricks_flask','spencers_snuffbox','mishs_dice'],c:1/16}],
   banditleader:[{pool:['glens_baton','bozeks_pocket_watch','ricks_flask','spencers_snuffbox','mishs_dice'],c:1/16},{i:'stolen_signet',c:1/30}],
-  firegiant:[{i:'fire_rune',q:[30,80],c:0.5}],
+  firegiant:[{i:'fire_rune',q:[30,80],c:0.5},{dgear:1/150}],
   mossgiant:[{i:'earth_rune',q:[15,40],c:0.5}],
-  icegolem:[{i:'water_rune',q:[30,80],c:0.5}],
+  icegolem:[{i:'water_rune',q:[30,80],c:0.5},{dgear:1/150}],
+  lesser:[{dgear:1/150}],
+  greater:[{dgear:1/150}],
+  kurask:[{dgear:1/150}],
   darkwizard:[
     {wpool:[['air_rune',30,8,22],['water_rune',30,8,22],['earth_rune',30,8,22],['fire_rune',30,8,22],['mind_rune',20,6,18],['chaos_rune',10,3,9],['death_rune',5,2,6],['blood_rune',2,1,3],['soul_rune',1,1,2]],c:0.4},
     {wpool:[['wizard_hat',24],['wizard_robe_top',24],['wizard_robe_skirt',24],['staff',24],['air_staff',12],['water_staff',8],['earth_staff',6],['fire_staff',4],['mystic_hat',2],['mystic_robe_bottom',1.5],['mystic_robe_top',1],['battlestaff',0.6],['enchanted_hat',0.4],['enchanted_top',0.12],['mystic_staff',0.1]],c:1/24}],
   wyvern:[{note:['rune_bar','mithril_bar','uncut_diamond'],c:0.1},
           {i:'draconic_visage',c:1/200,inv:1,m:'The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!'},
-          {i:'abyssal_whip',c:1/50,inv:1,m:'The skeletal wyvern drops an Abyssal whip!'}],
+          {i:'abyssal_whip',c:1/50,inv:1,m:'The skeletal wyvern drops an Abyssal whip!'},{dgear:1/150}],
   basilisk:[{note:['mithril_bar','steel_bar'],c:0.1},
             {i:'abyssal_whip',c:1/100,inv:1,m:'The basilisk drops an Abyssal whip!'},
-            {i:'basilisk_jaw',c:1/30,inv:1,m:'The basilisk drops a Basilisk jaw.'}],
+            {i:'basilisk_jaw',c:1/30,inv:1,m:'The basilisk drops a Basilisk jaw.'},{dgear:1/150}],
   gargoyle:[{note:['steel_bar','iron_bar'],c:0.1},
-            {i:'granite_maul',c:1/100,inv:1,m:'The gargoyle drops a Granite maul!'}],
+            {i:'granite_maul',c:1/100,inv:1,m:'The gargoyle drops a Granite maul!'},{dgear:1/150}],
   banshee:[{note:['iron_bar','copper_ore'],c:0.1},
            {i:'wailing_relic',c:1/30,inv:1,m:'The banshee leaves behind a Wailing relic.'}],
   dragon:[{note:['rune_bar','uncut_diamond','uncut_ruby'],c:0.1},{dhide:'sx',c:0.2}],
@@ -3319,6 +3322,12 @@ const ENCY_SRC={
   scholar_crest:[{label:'Slayer task drop',sub:'A task monster — 2.2% (34% if superior), once you own a Proctor’s Helm'}],
   sentinel_visor:[{label:'Slayer task drop',sub:'A task monster — 2.2% (34% if superior), once you own a Crimson Proctor’s Helm'}],
   dragon_shield:[{label:'Quest reward',sub:'Dragon Slayer'}],
+  dragon_scimitar:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
+  dragon_sword:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
+  dragon_full_helm:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
+  dragon_platebody:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
+  dragon_platelegs:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
+  dragon_kiteshield:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
   clue_easy:[{label:'Monster drop',sub:'Combat 1–9 monsters — 1/35'}],
   clue_medium:[{label:'Monster drop',sub:'Combat 10+ monsters — 1/55'}],
   clue_hard:[{label:'Monster drop',sub:'Combat 19+ monsters — 1/85'}],
@@ -4075,6 +4084,7 @@ function lightBrazier(o){
   if(typeof clickFx==='function')clickFx(o.x,o.y,'#ff8c3a');
   msg('You strike the brazier alight \u2014 its warmth pushes back the cold.','#ff8c3a');
   sfx.pickup&&sfx.pickup();
+  if(typeof MP!=='undefined'&&MP.onBrazierLit)MP.onBrazierLit(o.x,o.y,45000);
 }
 function startCook(f){
   const fire=f||objects.find(o=>o.def==='fire');
@@ -4841,19 +4851,19 @@ function ratsTick(){
     if(curInterior()!==(r.interior||null)){if(r.target===player)r.target=null;continue;}
     if(r.frozen&&r.frozen>performance.now())continue;
     const _ct=(player.action&&player.action.type==='attack'&&player.action.rat&&player.action.rat.alive)?player.action.rat:((engagedMob&&engagedMob.alive&&engagedMob.target===player)?engagedMob:null);
-    if(r.target===player&&_ct&&_ct!==r&&!r.tame){r.target=null;r._chaseStart=undefined;if(engagedMob===r)engagedMob=null;continue;}
+    if(r.target===player&&_ct&&_ct!==r&&!r.tame&&!MOB_KINDS[r.kind].minion){r.target=null;r._chaseStart=undefined;if(engagedMob===r)engagedMob=null;continue;}
     if(!r.target&&!r.tame&&(MOB_KINDS[r.kind].aggro||(inWild(r.x,r.y)&&r.kind!=='snowking'))
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
-      &&MOB_KINDS[r.kind].cmb>=cmbLvl()&&player.hp>0
+      &&(MOB_KINDS[r.kind].minion||MOB_KINDS[r.kind].cmb>=cmbLvl())&&player.hp>0
       &&dist1(r.x,r.y,player.x,player.y)<=4
       &&dist1(r.x,r.y,r.sx,r.sy)<=8
-      &&(!_ct||_ct===r))r.target=player;
+      &&(!_ct||_ct===r||MOB_KINDS[r.kind].minion))r.target=player;
     if(MOB_KINDS[r.kind].boss&&r.kind!=='snowking'&&r.target)bossSpecialTick(r,performance.now());
     if(r.kind==='snowking'&&r.target)snowKingSpecialTick(r,performance.now());
     if(r.kind==='zombie'&&(tick&1)
       &&!(r.target&&dist1(r.x,r.y,player.x,player.y)===1))continue;
     if(r.target){
-      if(player.hp<=0||(dist1(r.x,r.y,r.sx,r.sy)>(r.kind==='snowking'?16:8)&&!(player.action&&player.action.type==='attack'&&player.action.rat===r))){
+      if(player.hp<=0||(dist1(r.x,r.y,r.sx,r.sy)>(MOB_KINDS[r.kind].boss?16:8)&&!(player.action&&player.action.type==='attack'&&player.action.rat===r))){
         if(MOB_KINDS[r.kind].boss&&typeof MP!=='undefined'&&MP.groupBossHandoff&&MP.groupBossHandoff(r)){
           if(engagedMob===r)engagedMob=null;
           r.target=null;r._chaseStart=undefined;continue;}
@@ -4931,7 +4941,7 @@ function ratsTick(){
           :[[0,dy],[dx,0],[1,0],[-1,0]];
         for(const [mx,my] of cand){ if(tryMove(mx,my))break; }
       }
-    }else if(r.kind==='snowking'&&tick%3===r.phase&&(r.x!==r.sx||r.y!==r.sy)){
+    }else if(MOB_KINDS[r.kind].boss&&tick%3===r.phase&&(r.x!==r.sx||r.y!==r.sy)){
       let nx,ny;
       if(Math.abs(r.sx-r.x)>=Math.abs(r.sy-r.y)){nx=r.x+Math.sign(r.sx-r.x);ny=r.y;}
       else{nx=r.x;ny=r.y+Math.sign(r.sy-r.y);}
@@ -21728,6 +21738,7 @@ const MP = (function () {
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
   function onFireLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'fire', x: x | 0, y: y | 0, burn: burn | 0, in: curInterior() }); }
+  function onBrazierLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'brz', x: x | 0, y: y | 0, burn: burn | 0 }); }
 
   /* ---- shared-world reconciliation (Phase 1): dead mobs + depleted nodes ---- */
   const MAX_RS = 3600000;
@@ -22234,6 +22245,13 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         }
         break;
       }
+      case 'brz': {
+        const _bx = m.x | 0, _by = m.y | 0;
+        const _bo = (typeof objects !== 'undefined') ? objects.find(o2 => o2.def === 'brazier' && o2.x === _bx && o2.y === _by) : null;
+        if (_bo) { _bo.lit = true; _bo.litUntil = performance.now() + ((m.burn | 0) || 45000);
+          if (_bo._m && _bo._m.group) scene.remove(_bo._m.group); buildObjModel(_bo); }
+        break;
+      }
       case 'fire': {
         if (m.uid === player.uid) break;
         if (typeof objects === 'undefined') break;
@@ -22306,7 +22324,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       }
       case 'gsync': {
         if (!Array.isArray(m.roster)) break;
-        groupOnSync(m.roster);
+        groupOnSync(m.uid, m.roster);
         if (typeof renderFriends === 'function') renderFriends();
         break;
       }
@@ -22441,6 +22459,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     { const _ci = curInterior(); if (_ci !== _roomSent || (t - _roomT > 1500)) { send({ t: 'iroom', r: _ci }); _roomSent = _ci; _roomT = t; } }   /* interior presence beacon: survives the relay, so interior peers see each other */
     manageClaims();
     if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
+    if (groupInGroup() && t - (group._hbT || 0) > 4000) { group._hbT = t; send({ t: 'gsync', roster: group.roster.map(m2 => ({ uid: m2.uid, name: m2.name })) }); }
     {
       /* 1) Mirror new hitsplats to peers AND record which mob I'm actually damaging.
             This damage signal — not player.action — is the robust "what am I fighting"
@@ -22721,13 +22740,18 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     send({ t: 'gsync', roster: group.roster.map(m => ({ uid: m.uid, name: m.name })) });
     return 'added';
   }
-  function groupOnSync(roster) {                  /* adopt authoritative roster if I'm in it, else I was removed */
-    if (roster.some(m => m.uid === player.uid)) group.roster = roster.map(m => ({ uid: m.uid, name: m.name }));
-    else group.roster = [];
+  function groupOnSync(fromUid, roster) {
+    /* adopt if I'm in it (heals lost gaccept/gsync); a sync that excludes me only clears my group
+       if it came from one of MY current groupmates (a kick) -- other groups' syncs are ignored. */
+    if (roster.some(m => m.uid === player.uid)) {
+      if (group.leftAt && (now() - group.leftAt) < 15000) { send({ t: 'gleave' }); return; }
+      group.roster = roster.map(m => ({ uid: m.uid, name: m.name }));
+    } else if (isGroupmate(fromUid)) group.roster = [];
   }
   function groupLeave() {
     if (!groupInGroup()) return;
     send({ t: 'gleave' });
+    group.leftAt = now();
     group.roster = []; group.invitesOut.clear();
     if (typeof renderFriends === 'function') renderFriends();
   }
@@ -22795,7 +22819,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function groupBossHandoff(r) {
     if (!active() || !conn || !groupInGroup() || !r) return false;
     const ag = mobAggro.get(r.i); if (!ag) return false;
-    const rad = (r.kind === 'snowking') ? 16 : 8;
+    const rad = MOB_KINDS[r.kind].boss ? 16 : 8;
     let found = false;
     for (const u of ag.acc.keys()) {
       if (u === player.uid || !isGroupmate(u)) continue;
@@ -22908,7 +22932,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
