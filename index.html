@@ -1246,6 +1246,9 @@ ITEMS.frostmaul={name:'Frostmaul',ex:'A two-handed maul hewn from blue-black gla
 ITEMS.glacial_full_helm={name:'Glacial full helm',ex:'A full helm of blue glacier-steel, crowned with a ring of frost spikes that never melt.',val:120000,equip:{slot:'head',def:56,model:'helm',verb:'Wear',req:60,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
 ITEMS.glacial_platebody={name:'Glacial platebody',ex:'A breastplate of blue glacier-steel, rimed white and studded with frost-shard spikes across the shoulders.',val:220000,equip:{slot:'body',def:122,model:'plate',verb:'Wear',req:60,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
 ITEMS.glacial_platelegs={name:'Glacial platelegs',ex:'Greaves of glacier-steel that never thaw, edged with a frost-spiked knee.',val:160000,equip:{slot:'legs',def:76,model:'legs',verb:'Wear',req:60,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
+ITEMS.leaf_sword={name:'Leaf-bladed sword',ex:'A broad green-steel blade honed for rubbery slayer hides \u2014 the only edge a kurask fears.',val:15000,equip:{slot:'weapon',atk:55,str:40,spd:2400,model:'sword',verb:'Wield',req:40,tint:0x5a8a3a,trim:0x8fc46a}};
+ITEMS.leaf_battleaxe={name:'Leaf-bladed battleaxe',ex:'A heavy leaf-forged axehead that shears through kurask hide \u2014 and most other things.',val:90000,equip:{slot:'weapon',atk:72,str:84,spd:3000,model:'sword',verb:'Wield',req:55,tint:0x4a7a2e,trim:0x9fd47a}};
+ITEMS.leaf_dagger={name:'Leaf-bladed dagger',ex:'A single perfect leaf of razor green-steel, gripped point-down in the off hand. The only offhand blade ever forged.',val:120000,equip:{slot:'shield',atk:16,str:10,def:8,model:'leafdag',verb:'Wield',req:60,tint:0x3f6b2e,trim:0x9fd47a}};
 ITEMS.icicle_crown={name:'Icicle Crown',ex:'A jagged diadem of everlasting ice, wrenched from the Snow King\u2019s brow \u2014 a trophy few will ever wear. Its frost never leaves you.',val:300000,equip:{slot:'head',def:42,str:6,matk:6,mdef:8,model:'icecrown',verb:'Wear',req:60,tint:0xbfe9ff,trim:0xffffff,frostset:1}};
 ITEMS.aurora_cape={name:'Aurora cape',ex:'A shimmering cloak woven from captured northern lights \u2014 the frost-forged pride of the Snow King\u2019s hoard, and the finest cape a fighter can wear.',val:150000,equip:{slot:'cape',atk:8,str:6,def:9,ratk:8,rstr:4,matk:8,mdmg:4,rdef:9,mdef:9,model:'cape',verb:'Wear',tint:0x3fd0c8,trim:0x9a7fe0}};
 ITEMS.frost_shard={name:'Frost shard',ex:'A sliver of never-melting glacier ice, prized by crafters. Cold to the touch, always.',val:800,stack:1};
@@ -1335,7 +1338,7 @@ ITEMS.gilt_dye={name:'Gilt Dye',ex:'Slayer dye. Apply it to a Crimson Proctor\u2
 ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u2019s wail \u2014 or just wear a Proctor\u2019s Helm.',val:1,noDrop:true,equip:{slot:'head',def:1,model:'earmuffs',verb:'Wear',req:0}};
 ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8}};
 ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,equip:{slot:'weapon',atk:0,str:0,model:'maul',verb:'Wield',req:0}};
-ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:82,str:82,model:'scim',verb:'Wield',req:70,tint:0x1c1118,trim:0x7a2030}};
+ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:82,str:82,model:'whip',verb:'Wield',req:70,tint:0x1c1118,trim:0x7a2030}};
 ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft, swung two-handed. Slow to heave, but it lands like a rockfall.',val:90000,equip:{slot:'weapon',atk:62,str:120,spd:3600,model:'maul',twoHand:true,verb:'Wield',req:50,tint:0x6e6f73,trim:0x9a9ca0}};
 ITEMS.draconic_visage={name:'Draconic visage',ex:'The petrified face of an ancient wyrm. Collectors pay fortunes for it.',val:250000,prim:'Examine'};
 ITEMS.basilisk_jaw={name:'Basilisk jaw',ex:'A heavy, fanged jawbone \u2014 worth a great deal to the right buyer.',val:35000,prim:'Examine'};
@@ -2184,10 +2187,10 @@ const MOB_KINDS={
     hp:22,acc:0.56,maxhit:3,resp:20000,bones:1,coinP:.6,coins:[5,30],aggro:0,cmb:21},
   ghost:{name:'Ghost',ex:'A cold draught with a grudge.',hp:19,acc:0.54,maxhit:3,
     resp:14000,bones:1,coinP:0,coins:[0,0],aggro:1,cmb:19},
-  banshee:{name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:44,acc:0.66,maxhit:9,resp:18000,bones:1,coinP:0.6,coins:[15,55],aggro:0,cmb:48,magic:1},
-  gargoyle:{name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:105,acc:0.82,maxhit:10,resp:22000,bones:1,coinP:0.9,coins:[80,220],aggro:0,cmb:111},
-  basilisk:{name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:82,acc:0.7,maxhit:8,resp:24000,bones:1,coinP:0.8,coins:[45,130],aggro:0,cmb:61,magic:1},
-  wyvern:{name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:200,acc:0.84,maxhit:14,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:1,cmb:140,magic:1},
+  banshee:{slayReq:10,name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:44,acc:0.66,maxhit:9,resp:18000,bones:1,coinP:0.6,coins:[15,55],aggro:0,cmb:48,magic:1},
+  gargoyle:{slayReq:70,name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:105,acc:0.82,maxhit:10,resp:22000,bones:1,coinP:0.9,coins:[80,220],aggro:0,cmb:111},
+  basilisk:{slayReq:35,name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:82,acc:0.7,maxhit:8,resp:24000,bones:1,coinP:0.8,coins:[45,130],aggro:0,cmb:61,magic:1},
+  wyvern:{slayReq:68,name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:200,acc:0.84,maxhit:14,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:1,cmb:140,magic:1},
   lesser:{name:'Lesser demon',ex:'Imported from somewhere much warmer.',hp:79,
     acc:0.74,maxhit:8,resp:25000,bigbones:1,coinP:.8,coins:[55,150],aggro:1,cmb:82},
   greater:{name:'Greater demon',ex:'The lesser ones speak of it only in whispers.',
@@ -2208,7 +2211,7 @@ const MOB_KINDS={
   cyclops:{name:'Cyclops',ex:'One eye, one purpose: stomp the intruder flat.',hp:70,acc:0.68,maxhit:12,resp:24000,bigbones:1,coinP:.9,coins:[40,120],aggro:0,cmb:56,weak:'melee',resist:'magic'},
   darkwizard:{name:'Dark wizard',ex:'Robed in midnight; the air crackles at its fingertips.',hp:32,acc:0.64,maxhit:8,resp:16000,bones:1,coinP:.6,coins:[10,40],aggro:0,cmb:35,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:4,projCol:'#7b6bf0'},
   skelearcher:{name:'Skeleton archer',ex:'Fleshless fingers still know the draw and the loose.',hp:30,acc:0.64,maxhit:6,resp:18000,bones:1,coinP:.6,coins:[15,55],aggro:0,cmb:49,weak:'melee',resist:'magic',atkStyle:'ranged',atkRange:5,projCol:'#d8d2bc'},
-  kurask:{name:'Kurask',ex:'A horned brute that only leaf-bladed steel seems to wound.',hp:105,acc:0.80,maxhit:9,resp:30000,bones:1,coinP:1,coins:[60,160],aggro:0,cmb:106,weak:'ranged',resist:'melee'},
+  kurask:{slayReq:65,name:'Kurask',ex:'A horned brute that only leaf-bladed steel seems to wound.',hp:105,acc:0.80,maxhit:9,resp:30000,bones:1,coinP:1,coins:[60,160],aggro:0,cmb:106,weak:'ranged',resist:'melee'},
   greendragon:{name:'Green dragon',ex:'A chromatic dragon of the marshes; its breath is liquid fire.',hp:35,acc:0.72,maxhit:10,resp:30000,bigbones:1,coinP:1,coins:[60,180],aggro:0,cmb:88,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   bluedragon:{name:'Blue dragon',ex:'Frost-scaled but fire-breathing; larger and deadlier than its green kin.',hp:105,acc:0.76,maxhit:10,resp:34000,bigbones:1,coinP:1,coins:[90,240],aggro:0,cmb:111,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   reddragon:{name:'Red dragon',ex:'Crimson and vast, with a furnace in its chest.',hp:140,acc:0.80,maxhit:12,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:0,cmb:152,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
@@ -2377,7 +2380,7 @@ const MOB_SPAWNS=[
   ['reddragon',163,123],['reddragon',166,126],
   ['blackdragon',147,124]
 ]
-const LOCKED_KINDS=['banshee','gargoyle','basilisk','wyvern'];
+const LOCKED_KINDS=['banshee','gargoyle','basilisk','wyvern','kurask'];
 const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   px:p[1],py:p[2],hp:MOB_KINDS[p[0]].hp,maxhp:MOB_KINDS[p[0]].hp,
   alive:p[0]!=='master'&&p[0]!=='boar'&&!LOCKED_KINDS.includes(p[0]),locked:LOCKED_KINDS.includes(p[0]),respawnAt:0,lastHit:0,heading:rnd(0,6.2),
@@ -3027,7 +3030,7 @@ const MOB_DROPS={
   icegolem:[{i:'water_rune',q:[30,80],c:0.5},{dgear:1/150}],
   lesser:[{dgear:1/150}],
   greater:[{dgear:1/150}],
-  kurask:[{dgear:1/150}],
+  kurask:[{i:'leaf_dagger',c:1/100,inv:1,m:'The kurask drops a Leaf-bladed dagger \u2014 the only offhand blade in the world!'},{i:'leaf_battleaxe',c:1/50,inv:1,m:'The kurask drops a Leaf-bladed battleaxe!'},{i:'leaf_sword',c:1/40,inv:1,m:'The kurask drops a Leaf-bladed sword.'},{dgear:1/150}],
   darkwizard:[
     {wpool:[['air_rune',30,8,22],['water_rune',30,8,22],['earth_rune',30,8,22],['fire_rune',30,8,22],['mind_rune',20,6,18],['chaos_rune',10,3,9],['death_rune',5,2,6],['blood_rune',2,1,3],['soul_rune',1,1,2]],c:0.4},
     {wpool:[['wizard_hat',24],['wizard_robe_top',24],['wizard_robe_skirt',24],['staff',24],['air_staff',12],['water_staff',8],['earth_staff',6],['fire_staff',4],['mystic_hat',2],['mystic_robe_bottom',1.5],['mystic_robe_top',1],['battlestaff',0.6],['enchanted_hat',0.4],['enchanted_top',0.12],['mystic_staff',0.1]],c:1/24}],
@@ -3102,7 +3105,7 @@ function dropMobLoot(r){
 
 function mobDie(r,groupKill){
   const mk3=MOB_KINDS[r.kind];
-  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;if(mk3.boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
+  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;if(mk3.boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}if(r.kind==='brat')player.bratKills=(player.bratKills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   if(engagedMob===r)engagedMob=null;
   if(typeof MP!=='undefined')MP.onMobKilled(r);
   msg((groupKill?'Your group has defeated the ':'You have defeated the ')+r.name.toLowerCase()+'.');
@@ -3116,6 +3119,7 @@ function mobDie(r,groupKill){
 function groupCoLoot(r){
   player.kills=(player.kills||0)+1;
   if(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}
+  if(r.kind==='brat')player.bratKills=(player.bratKills||0)+1;
   if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   msg('Your group has defeated the '+r.name.toLowerCase()+'.');
   questKill(r);
@@ -3316,6 +3320,9 @@ const ENCY_SRC={
   abyssal_whip:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/75 · Basilisk — 1/200'}],
   granite_maul:[{label:'Monster drop',sub:'Gargoyle — 1/100'}],
   frostmaul:[{label:'Monster drop',sub:'The Snow King — 1/10'}],
+  leaf_sword:[{label:'Slayer unlock',sub:'Comes with Kurask contracts (130 pts)'},{label:'Monster drop',sub:'Kurask — 1/40'}],
+  leaf_battleaxe:[{label:'Monster drop',sub:'Kurask — 1/50'}],
+  leaf_dagger:[{label:'Monster drop',sub:'Kurask — 1/100'}],
   glacial_full_helm:[{label:'Monster drop',sub:'The Snow King — 1/18'}],
   glacial_platebody:[{label:'Monster drop',sub:'The Snow King — 1/18'}],
   glacial_platelegs:[{label:'Monster drop',sub:'The Snow King — 1/18'}],
@@ -4218,6 +4225,9 @@ function playerTick(){
   else if(a.type==='attack'){
     const r=a.rat;
     if(!r.alive){cancelAction();return;}
+    if(MOB_KINDS[r.kind].slayReq&&lvl('slayer')<MOB_KINDS[r.kind].slayReq){
+      msg('You need Slayer level '+MOB_KINDS[r.kind].slayReq+' to harm a '+MOB_KINDS[r.kind].name.toLowerCase()+'.','#9a6fb0');
+      cancelAction();return;}
     r.target=player;
     const _reach=mobReach(r);
     if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>_reach){
@@ -4260,6 +4270,7 @@ function playerTick(){
     const _rapid=(wstyle==='ranged'&&player.style==='rapid');
     player.nextAtk=nowC+(wstyle==='ranged'?(_rapid?2200:((_weq&&_weq.slow)?3000:2400)):((_weq&&_weq.spd)||2400));
     player.swingT=nowC;
+    if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
     if(r.nextAtk===undefined||nowC>=r.nextAtk+6000)r.nextAtk=nowC+1200;
     const _tb=onTaskBonus(r);
     let acc,max;
@@ -4286,6 +4297,9 @@ function playerTick(){
     let dmg=0;
     if(Math.random()<acc)dmg=rndi(1,max);
     if(wstyle==='melee'&&_w&&_w.id==='rock_hammer')dmg=(r.kind==='gargoyle'&&r.hp<=1)?5:0;
+    if(r.kind==='kurask'){const _lw=player.equip.weapon&&player.equip.weapon.id;const _lo=player.equip.shield&&player.equip.shield.id==='leaf_dagger';
+      if(_lw!=='leaf_sword'&&_lw!=='leaf_battleaxe'&&!_lo){dmg=0;
+        if(!r._kw||performance.now()-r._kw>3000){r._kw=performance.now();msg('Your blows glance off the kurask\u2019s rubbery hide \u2014 only a leaf-bladed weapon can cut it.','#c9a23a');}}}
     if(r.kind==='priest'&&player.quests.m2.s===1&&!player.quests.m2.relic){
       dmg=0;
       if(!r._warned||performance.now()-r._warned>2500){
@@ -4371,6 +4385,7 @@ function playerTick(){
     if(!player.nextAtk||nowC>=player.nextAtk+4000)player.nextAtk=nowC;
     if(nowC<player.nextAtk)return;
     player.nextAtk=nowC+2400;player.swingT=nowC;
+    if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
     let dmg=0;if(Math.random()<_duelAcc())dmg=rndi(0,_duelMaxhit());
     if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;}
     splats.push({ent:opp,dmg,t:performance.now()});
@@ -5051,7 +5066,7 @@ function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:(inChapel?CHAPEL_RETURN.x:inRectory?RECT_RETURN.x:inStPaul?STPAUL_RETURN.x:inMathes?MATHES_RETURN.x:inSos?SOS_RETURN.x:inParty?partyReturn.x:player.x),y:(inChapel?CHAPEL_RETURN.y:inRectory?RECT_RETURN.y:inStPaul?STPAUL_RETURN.y:inMathes?MATHES_RETURN.y:inSos?SOS_RETURN.y:inParty?partyReturn.y:player.y),
     playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,mapv:'sps4',xpv:2};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -5200,7 +5215,7 @@ async function loadSlot(id, preObj){
       player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
       player.title=s.title||null;
       player.winterUnlocked=!!s.winterUnlocked;
-      player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;player.bossKills=s.bossKills||0;player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
+      player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;player.bossKills=s.bossKills||0;player.bratKills=s.bratKills||0;player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
       player.cosmetic=normCos(s.cosmetic);if(typeof pm!=='undefined'&&typeof applyCosmetic==='function')applyCosmetic(pm,player.cosmetic);
       player.winter=!!s.winter; player.fall=!!s.fall; player.fallUnlocked=!!s.fallUnlocked;
       if(s.name)player.name=s.name;
@@ -6716,6 +6731,28 @@ function drawItemIcon(g,id,S){
     }
     g.restore();return;
   }
+  if(id==='abyssal_whip'){
+    g.strokeStyle='#1a0e10';g.lineWidth=4;g.lineCap='round';
+    g.beginPath();g.moveTo(-9,11);g.lineTo(-5,5);g.stroke();
+    g.strokeStyle='#7a2030';g.lineWidth=1.4;
+    for(const yy of [9.4,7.4]){g.beginPath();g.moveTo(-9.5+(11-yy)*0.55,yy);g.lineTo(-6.5+(11-yy)*0.55,yy+1.6);g.stroke();}
+    g.strokeStyle='#2a1418';g.lineWidth=3.2;
+    g.beginPath();g.moveTo(-5,5);g.bezierCurveTo(4,-8,14,-2,8,5);g.bezierCurveTo(4,9,-2,6,1,0);g.stroke();
+    g.strokeStyle='#3a1d22';g.lineWidth=1.6;
+    g.beginPath();g.moveTo(-5,5);g.bezierCurveTo(4,-8,14,-2,8,5);g.stroke();
+    g.fillStyle='#c0242a';g.beginPath();g.arc(1.6,0.6,1.9,0,6.28);g.fill();
+    g.restore();return;
+  }
+  if(id==='leaf_dagger'){
+    g.strokeStyle='#6b4a2e';g.lineWidth=3;g.lineCap='round';
+    g.beginPath();g.moveTo(7,10);g.lineTo(10,13);g.stroke();
+    g.fillStyle='#d8c46a';g.beginPath();g.arc(11,14,1.8,0,6.28);g.fill();
+    g.fillStyle='#8fc46a';g.beginPath();g.moveTo(9,8);g.lineTo(4,10);g.lineTo(9,5);g.closePath();g.fill();
+    g.fillStyle='#3f6b2e';g.beginPath();g.moveTo(7,8);g.quadraticCurveTo(-8,6,-12,-10);g.quadraticCurveTo(2,-6,7,8);g.closePath();g.fill();
+    g.fillStyle='#9fd47a';g.beginPath();g.moveTo(6,7);g.quadraticCurveTo(-6,4,-11,-9);g.quadraticCurveTo(-3,-2,6,7);g.closePath();g.fill();
+    g.strokeStyle='#d8c46a';g.lineWidth=1.1;g.beginPath();g.moveTo(6,7);g.quadraticCurveTo(-4,2,-11,-9);g.stroke();
+    g.restore();return;
+  }
   if(id==='frost_shard'){
     g.fillStyle='#bfe9ff';g.strokeStyle='#5fa8d0';g.lineWidth=1;
     g.beginPath();g.moveTo(-2,-11);g.lineTo(3,-4);g.lineTo(1,9);g.lineTo(-4,3);g.closePath();g.fill();g.stroke();
@@ -6990,12 +7027,13 @@ const EMOTES=[
 const EMOTES_BY_ID={};for(const E of EMOTES)EMOTES_BY_ID[E.id]=E;
 /* ============ special unlockable emotes (detailed props + themed fade) ============ */
 const PILOT_EMOTES=false; /* gated for launch. set true to pilot (every special emote playable). */
+let _emoteRig=null,_emotePos=null; /* when set, special-emote props build on / emit at a REMOTE avatar instead of the local player */
 function _emoteUnlocked(id){const E=EMOTES_BY_ID[id];if(!E||!E.locked)return true;return PILOT_EMOTES||!!(player.emoteUnlocks&&player.emoteUnlocks[id]);}
 function _glow(geo,hex){const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex}));m.castShadow=false;return m;}
 function _addGlow(geo,hex,op){const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false}));m.castShadow=false;return m;}
 function _disposeObj(o){if(o.parent)o.parent.remove(o);o.traverse(n=>{if(n.geometry)n.geometry.dispose();if(n.material){if(Array.isArray(n.material))n.material.forEach(m=>m.dispose());else n.material.dispose();}});}
 function emoteThemePuff(kind){
-  const gx=player.px+0.5,gz=player.py+0.5,gy=groundH(gx,gz),T=performance.now();
+  const gx=(_emotePos?_emotePos.x:player.px)+0.5,gz=(_emotePos?_emotePos.y:player.py)+0.5,gy=groundH(gx,gz),T=performance.now();
   let smk,emb,fall=false;
   if(kind==='purple'){smk=['#3a2150','#4a2a66','#2a1838','#5b3a7a','#1f1430'];emb=['#b98fd6','#d8b6ff','#8a5fae'];}
   else if(kind==='snow'){smk=['#eef6ff','#dcebff','#ffffff','#cfe2f5'];emb=['#ffffff','#dff1ff'];fall=true;}
@@ -7087,7 +7125,7 @@ const _emoteJack={id:'jack',name:'Jack-o\u2019-Lantern',dur:3600,locked:true,loc
       const w1=mesh(new THREE.BoxGeometry(0.085,0.006,0.05),0x18101f,false);w1.position.x=-0.045;b.add(w1);
       const w2=w1.clone();w2.position.x=0.045;b.add(w2);
       b.add(mesh(new THREE.SphereGeometry(0.02,6,5),0x18101f,false));grp.add(b);bats.push(b);}
-    pm.rArm.add(grp);grp.position.set(0,-0.66,0.16);grp.rotation.x=Math.PI*0.16;
+    (_emoteRig||pm).rArm.add(grp);grp.position.set(0,-0.66,0.16);grp.rotation.x=Math.PI*0.16;
     return {grp,halo,bats,puffed:false,dispose(){_disposeObj(grp);}};
   },
   fx:(st,t,e,now)=>{
@@ -7095,7 +7133,7 @@ const _emoteJack={id:'jack',name:'Jack-o\u2019-Lantern',dur:3600,locked:true,loc
     st.halo.material.opacity=0.22*fl;st.halo.scale.setScalar(1+0.04*Math.sin(now*0.03));st.halo.scale.y*=0.84;
     st.bats.forEach((b,i)=>{const a=now*0.0042+i*Math.PI;b.position.set(Math.cos(a)*0.3,0.16+Math.sin(now*0.009+i)*0.05,Math.sin(a)*0.3+0.04);b.rotation.y=-a;
       b.children[0].rotation.z=Math.sin(now*0.03+i)*0.8;b.children[1].rotation.z=-Math.sin(now*0.03+i)*0.8;});
-    if(Math.random()<0.22){const gx=player.px+0.5,gz=player.py+0.5,gy=groundH(gx,gz);
+    if(Math.random()<0.22){const gx=(_emotePos?_emotePos.x:player.px)+0.5,gz=(_emotePos?_emotePos.y:player.py)+0.5,gy=groundH(gx,gz);
       parts.push({wx:gx+rnd(-0.15,0.15),wy:gy+1.0,wz:gz+rnd(-0.1,0.25),vx:rnd(-0.4,0.4),vy:-rnd(0.8,1.8),t:now,life:700,col:['#ff9a3a','#ffcc66','#b98fd6'][rndi(0,2)]});}
     if(t>0.74){const k=Math.max(0,1-(t-0.74)/0.22);st.grp.scale.setScalar(k);if(!st.puffed){st.puffed=true;emoteThemePuff('purple');if(typeof tone==='function')tone(300,110,0.5,'sawtooth',0.05);}}
   }};
@@ -7112,7 +7150,7 @@ const _emoteXmas={id:'xmas',name:'Festive Spirit',dur:4200,locked:true,lockHint:
     for(let i=0;i<4;i++){const loop=mesh(new THREE.TorusGeometry(0.05,0.017,6,10),0xf6e06a,false);loop.position.set(Math.cos(i*Math.PI/2)*0.05,0.12,Math.sin(i*Math.PI/2)*0.05);loop.rotation.y=i*Math.PI/2;present.add(loop);}
     const knot=mesh(new THREE.SphereGeometry(0.03,8,6),0xfff0a0,false);knot.position.y=0.12;present.add(knot);
     const tag=mesh(new THREE.BoxGeometry(0.06,0.04,0.006),0xfdf6e3,false);tag.position.set(0.1,0.05,0.105);tag.rotation.z=0.3;present.add(tag);
-    pm.g.add(present);present.position.set(0.3,1.17,0.54);present.scale.setScalar(0.82);
+    (_emoteRig||pm).g.add(present);present.position.set(0.3,1.17,0.54);present.scale.setScalar(0.82);
 
     const snow=new THREE.Group();
     snow.add(_seg(0.26,0.26,0xf3f7fb));snow.add(_seg(0.19,0.62,0xf6fafe));snow.add(_seg(0.14,0.9,0xffffff));
@@ -7128,7 +7166,7 @@ const _emoteXmas={id:'xmas',name:'Festive Spirit',dur:4200,locked:true,lockHint:
     snow.add(_disc(0.13,1.0,0.02,0x1a1a1f));
     const hatTop=mesh(new THREE.CylinderGeometry(0.09,0.09,0.17,12),0x1a1a1f,false);hatTop.position.y=1.1;snow.add(hatTop);
     snow.add(_disc(0.093,1.04,0.03,0xc0392b));
-    pm.g.add(snow);snow.position.set(0.72,0,0.12);snow.scale.setScalar(0.001);
+    (_emoteRig||pm).g.add(snow);snow.position.set(0.72,0,0.12);snow.scale.setScalar(0.001);
     return {present,snow,puffed:false,dispose(){_disposeObj(present);_disposeObj(snow);}};
   },
   fx:(st,t,e,now)=>{
@@ -7137,7 +7175,7 @@ const _emoteXmas={id:'xmas',name:'Festive Spirit',dur:4200,locked:true,lockHint:
     st.snow.scale.setScalar(Math.max(0.001,grow*shrink));
     st.snow.position.y=(1-grow)*-0.1;
     st.present.rotation.y=now*0.003;st.present.scale.setScalar(0.82*shrink);
-    if(Math.random()<0.34){const gx=player.px+0.5,gz=player.py+0.5,gy=groundH(gx,gz);
+    if(Math.random()<0.34){const gx=(_emotePos?_emotePos.x:player.px)+0.5,gz=(_emotePos?_emotePos.y:player.py)+0.5,gy=groundH(gx,gz);
       parts.push({wx:gx+rnd(-0.7,0.7),wy:gy+rnd(0.6,1.8),wz:gz+rnd(-0.6,0.6),vx:rnd(-0.25,0.25),vy:rnd(0.25,0.85),t:now,life:1300,col:['#ffffff','#dff1ff','#bfe0ff'][rndi(0,2)]});}
     if(t>0.74&&!st.puffed){st.puffed=true;emoteThemePuff('snow');if(typeof tone==='function'){tone(880,1320,0.16,'sine',0.04);tone(1320,1660,0.16,'sine',0.03);}}
   }};
@@ -7159,31 +7197,31 @@ const _emoteChef={id:'chef',name:'Chef\u2019s Flair',dur:3600,locked:true,lockHi
       const bL=mesh(new THREE.SphereGeometry(0.016,6,5),0x2a2a2e,false);bL.position.set(-0.05,y,0.165);apron.add(bL);
       const bR=mesh(new THREE.SphereGeometry(0.016,6,5),0x2a2a2e,false);bR.position.set(0.05,y,0.165);apron.add(bR);}
     const neck=mesh(new THREE.TorusGeometry(0.135,0.03,6,12),0xc0392b,false);neck.position.y=1.36;neck.rotation.x=Math.PI/2;neck.scale.y=0.55;apron.add(neck);
-    apron.position.y-=0.78;pm.upper.add(apron);
+    apron.position.y-=0.78;(_emoteRig||pm).upper.add(apron);
     const toque=new THREE.Group();
     toque.add(_at(mesh(new THREE.CylinderGeometry(0.15,0.158,0.13,10),0xf6f4ec,false),0,1.67,0));
     const crown=mesh(new THREE.SphereGeometry(0.175,9,7),0xfaf8f0,false);crown.scale.set(1.05,0.72,1.05);crown.position.y=1.81;toque.add(crown);
     for(let i=0;i<6;i++){const a=i/6*Math.PI*2;const pf=mesh(new THREE.SphereGeometry(0.062,6,5),0xf2efe6,false);pf.position.set(Math.cos(a)*0.108,1.79,Math.sin(a)*0.108);toque.add(pf);}
-    toque.position.y-=0.78;pm.upper.add(toque);
+    toque.position.y-=0.78;(_emoteRig||pm).upper.add(toque);
     const pan=new THREE.Group();
     pan.add(mesh(new THREE.CylinderGeometry(0.16,0.15,0.03,16),0x2a2a2e,false));
     const rim=mesh(new THREE.TorusGeometry(0.16,0.013,6,18),0x3a3a40,false);rim.rotation.x=Math.PI/2;pan.add(rim);
     pan.add(_at(mesh(new THREE.CylinderGeometry(0.13,0.13,0.006,16),0x4a4036,false),0,0.018,0));
     const handle=mesh(new THREE.CylinderGeometry(0.022,0.024,0.34,8),0x1a1a1d,false);handle.rotation.z=Math.PI/2;handle.position.x=0.3;pan.add(handle);
-    pm.rArm.add(pan);pan.position.set(0,-0.66,0.2);pan.rotation.x=Math.PI*0.08;
+    (_emoteRig||pm).rArm.add(pan);pan.position.set(0,-0.66,0.2);pan.rotation.x=Math.PI*0.08;
     const cake=new THREE.Group();
     cake.add(mesh(new THREE.CylinderGeometry(0.1,0.1,0.025,14),0xd8a24a,false));
     cake.add(mesh(new THREE.CylinderGeometry(0.103,0.103,0.012,14),0xc07f30,false));
     const butter=mesh(new THREE.BoxGeometry(0.05,0.03,0.05),0xf6e27a,false);butter.position.y=0.026;cake.add(butter);
-    pm.g.add(cake);cake.position.set(0,0.82,0.42);
+    (_emoteRig||pm).g.add(cake);cake.position.set(0,0.82,0.42);
     return {apron,toque,pan,cake,puffed:false,dispose(){_disposeObj(apron);_disposeObj(toque);_disposeObj(pan);_disposeObj(cake);}};
   },
   fx:(st,t,e,now)=>{
     if(t>0.12&&t<0.6){const ft=(t-0.12)/0.48,h=Math.sin(ft*Math.PI)*1.05;st.cake.visible=true;st.cake.position.set(0,0.86+h,0.44);st.cake.rotation.x=ft*Math.PI*4;
-      if(t<0.2&&Math.random()<0.5){const gx=player.px+0.5,gz=player.py+0.5,gy=groundH(gx,gz);
+      if(t<0.2&&Math.random()<0.5){const gx=(_emotePos?_emotePos.x:player.px)+0.5,gz=(_emotePos?_emotePos.y:player.py)+0.5,gy=groundH(gx,gz);
         parts.push({wx:gx,wy:gy+0.86,wz:gz+0.42,vx:rnd(-0.4,0.4),vy:-rnd(1.0,2.2),t:now,life:480,col:['#ff8a1a','#ffd23a','#ff5a1a'][rndi(0,2)]});}}
     else st.cake.visible=(t<=0.12);
-    if(Math.random()<0.2){const gx=player.px+0.5,gz=player.py+0.5,gy=groundH(gx,gz);
+    if(Math.random()<0.2){const gx=(_emotePos?_emotePos.x:player.px)+0.5,gz=(_emotePos?_emotePos.y:player.py)+0.5,gy=groundH(gx,gz);
       parts.push({wx:gx+rnd(-0.1,0.2),wy:gy+0.86,wz:gz+0.42,vx:rnd(-0.2,0.2),vy:-rnd(0.6,1.2),t:now,life:700,smoke:true,r0:rnd(4,7),grow:rnd(10,18),a0:0.3,col:'#efe7d6'});}
     if(t>0.78){const k=Math.max(0,1-(t-0.78)/0.2);st.pan.scale.setScalar(k);st.cake.scale.setScalar(k);if(!st.puffed){st.puffed=true;emoteThemePuff('flour');if(typeof tone==='function')tone(680,300,0.3,'sawtooth',0.04);}}
   }};
@@ -11434,6 +11472,19 @@ const fmaul=new THREE.Group();{
    _sh.position.set(_q[0],_q[1],_q[2]);_sh.rotation.x=_q[3];_sh.rotation.z=_q[4];fmaul.add(_sh);}
  const _rg=new THREE.Mesh(new THREE.TorusGeometry(0.19,0.012,5,10),new THREE.MeshBasicMaterial({color:0x9fe6ff}));_rg.position.y=-0.6;_rg.rotation.x=Math.PI/2;fmaul.add(_rg);
 }tool.add(fmaul);
+const whipM=new THREE.Group();
+{const _wg=gmesh(new THREE.CylinderGeometry(0.021,0.026,0.16,7),0x1a0e10);_wg.position.y=-0.08;whipM.add(_wg);
+ for(const _yy of [-0.03,-0.09,-0.14]){const _wb=gmesh(new THREE.TorusGeometry(0.027,0.006,5,8),0x7a2030);_wb.position.y=_yy;_wb.rotation.x=Math.PI/2;whipM.add(_wb);}
+ const _pm3=gmesh(new THREE.SphereGeometry(0.027,7,6),0x3a1d22);_pm3.position.y=0.01;whipM.add(_pm3);
+ let _px=0,_py=-0.17,_pz=0;
+ for(let _si=0;_si<9;_si++){
+   const _rr=0.030-_si*0.0026;
+   const _sg=gmesh(new THREE.SphereGeometry(Math.max(0.009,_rr),6,5),_si%2?0x2a1418:0x3a1d22);
+   _py-=0.062-_si*0.002;_pz+=0.012+_si*0.006;
+   _sg.position.set(_px,_py,_pz);_sg.scale.y=1.55;whipM.add(_sg);}
+ const _tp=new THREE.Mesh(new THREE.ConeGeometry(0.016,0.1,5),new THREE.MeshBasicMaterial({color:0xc0242a}));
+ _tp.position.set(_px,_py-0.08,_pz+0.02);_tp.rotation.x=Math.PI-0.5;whipM.add(_tp);}
+tool.add(whipM);
 const bowM=new THREE.Group();
 {/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
  const R=0.5,A=1.9,t2=A/2;
@@ -11457,7 +11508,7 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -11482,6 +11533,17 @@ const shieldM=new THREE.Group();
 pm.lArm.add(shieldM);
 shieldM.position.set(-0.075,-0.34,0.03);
 shieldM.visible=false;
+const leafDagM=new THREE.Group();
+{const _hg=gmesh(new THREE.CylinderGeometry(0.02,0.024,0.13,6),0x6b4a2e);_hg.position.y=0.06;leafDagM.add(_hg);
+ for(const _vy of [0.02,0.07,0.11]){const _vr=gmesh(new THREE.TorusGeometry(0.026,0.006,5,8),0x8fc46a);_vr.position.y=_vy;_vr.rotation.x=Math.PI/2;leafDagM.add(_vr);}
+ const _pm2=gmesh(new THREE.SphereGeometry(0.026,7,6),0xd8c46a);_pm2.position.y=0.14;leafDagM.add(_pm2);
+ const _gd=gmesh(new THREE.BoxGeometry(0.11,0.02,0.03),0x3f6b2e);_gd.position.y=-0.01;leafDagM.add(_gd);
+ for(const _gx of [-1,1]){const _gl=gmesh(new THREE.ConeGeometry(0.016,0.05,4),0x8fc46a);_gl.position.set(_gx*0.065,-0.02,0);_gl.rotation.z=_gx*1.2;leafDagM.add(_gl);}
+ const _bl=gmesh(new THREE.ConeGeometry(0.052,0.34,6),0x3f6b2e);_bl.scale.z=0.42;_bl.position.y=-0.2;_bl.rotation.x=Math.PI;leafDagM.add(_bl);
+ const _ed=new THREE.Mesh(new THREE.ConeGeometry(0.042,0.3,6),new THREE.MeshBasicMaterial({color:0x9fd47a}));_ed.scale.z=0.3;_ed.position.set(0,-0.19,0.006);_ed.rotation.x=Math.PI;leafDagM.add(_ed);
+ const _rb=gmesh(new THREE.BoxGeometry(0.012,0.26,0.02),0xd8c46a);_rb.position.set(0,-0.18,0.012);leafDagM.add(_rb);}
+leafDagM.rotation.z=0.25;leafDagM.position.set(-0.075,-0.5,0.05);leafDagM.visible=false;
+pm.lArm.add(leafDagM);
 const helmM=new THREE.Group();
 {const helmPts=[new THREE.Vector2(0.13,-0.14),new THREE.Vector2(0.185,-0.02),new THREE.Vector2(0.215,0.07),new THREE.Vector2(0.215,0.15),new THREE.Vector2(0.185,0.24),new THREE.Vector2(0.12,0.31),new THREE.Vector2(0.05,0.35),new THREE.Vector2(0.0,0.36)];
  const shell=TT(gmesh(new THREE.LatheGeometry(helmPts,18),0xb9bdc4),'tint');shell.material.side=THREE.DoubleSide;shell.scale.z=1.06;shell.position.y=1.52;helmM.add(shell);
@@ -13241,6 +13303,7 @@ for(const _p of WILD_SPAWNS){const _k=_p[0];rats.push({i:rats.length,kind:_k,sx:
   px:_p[1],py:_p[2],hp:MOB_KINDS[_k].hp,maxhp:MOB_KINDS[_k].hp,
   alive:true,locked:false,respawnAt:0,lastHit:0,
   heading:_k==='snowking'?Math.PI/4:rnd(0,6.2),target:null,phase:rats.length%2,name:MOB_KINDS[_k].name,ex:MOB_KINDS[_k].ex});}
+for(const _kr of rats)if(_kr.kind==='kurask'){_kr.locked=true;_kr.alive=false;}
 {const _ki=rats.findIndex(_r=>_r.kind==='snowking');
  if(_ki>=0)for(const _fp of [[10,5],[13,9]]){
    rats.push({i:rats.length,kind:'icefiend',sx:_fp[0],sy:_fp[1],x:_fp[0],y:_fp[1],px:_fp[0],py:_fp[1],
@@ -13629,6 +13692,12 @@ function makeGroundItem(id){
   else if(id==='stolen_signet'){const rg=add(TOR(0.1,0.03,12),0xe8c24a);rg.rotation.x=Math.PI/2;rg.position.y=0.07;const fc=add(CYL(0.06,0.06,0.03,8),0xc9a23a);fc.position.y=0.13;add(SPH(0.022),0x7a1f1a).position.y=0.15;}
   else if(id==='ectoplasm'){const b=add(SPH(0.16),0x5ad27a);b.scale.set(1.3,0.5,1.1);b.position.y=0.06;b.material.transparent=true;b.material.opacity=0.72;const b2=add(SPH(0.08),0x9af0b4);b2.position.set(-0.05,0.1,0.03);b2.material.transparent=true;b2.material.opacity=0.85;}
   else if(id==='infernal_ashes'){const m1=add(CYL(0.02,0.18,0.12,9),0x3a3330);m1.position.y=0.06;const m2=add(CYL(0.01,0.1,0.08,7),0x55504a);m2.position.y=0.11;for(const e of [[-0.06,0.04],[0.05,-0.03],[0,0.02]]){const em=new THREE.Mesh(new THREE.SphereGeometry(0.02,5,4),new THREE.MeshBasicMaterial({color:0xff6a1e}));em.position.set(e[0],0.11,e[1]);g.add(em);}}
+  else if(id==='leaf_dagger'){
+    const _b1=add(new THREE.ConeGeometry(0.06,0.3,6),0x3f6b2e);_b1.scale.z=0.4;_b1.position.set(0,0.05,0);_b1.rotation.z=Math.PI/2;
+    const _b2=add(new THREE.ConeGeometry(0.045,0.24,6),0x9fd47a);_b2.scale.z=0.35;_b2.position.set(0.01,0.055,0);_b2.rotation.z=Math.PI/2;
+    const _h1=add(new THREE.CylinderGeometry(0.02,0.02,0.1,6),0x6b4a2e);_h1.position.set(0.2,0.05,0);_h1.rotation.z=Math.PI/2;
+    const _p1=add(new THREE.SphereGeometry(0.024,6,5),0xd8c46a);_p1.position.set(0.26,0.05,0);
+  }
   else if(id==='frost_shard'){
     const s1=add(new THREE.ConeGeometry(0.06,0.3,5),0xbfe9ff);s1.position.set(-0.04,0.14,0);s1.rotation.z=0.18;
     const s2=add(new THREE.ConeGeometry(0.045,0.2,5),0x8fd0ea);s2.position.set(0.08,0.1,0.05);s2.rotation.z=-0.4;
@@ -15457,7 +15526,7 @@ function lostTree(id,flag){
     st:{who:'npc',text:'Staying put is ALL we have been doing! Please \u2014 just point us home.',next:'go'}};
 }
 /* ---------------- Slayer: repeatable wilderness contracts from the Slayer Master ---------------- */
-const SLAYER_POOL=['ghost','wolf','darkwizard','hillgiant','redspider','bandit','patient','mossgiant','student','skelearcher','banditleader','cyclops','lesser','firegiant','greater','icegolem','kurask'];
+const SLAYER_POOL=['ghost','wolf','darkwizard','hillgiant','redspider','bandit','patient','mossgiant','student','skelearcher','banditleader','cyclops','lesser','firegiant','greater','icegolem'];
 function slayName(k,n){const nm=MOB_KINDS[k].name.toLowerCase();return n===1?nm:nm+'s';}
 function assignSlayerTask(paid){
   const sl=player.slayer;
@@ -15466,7 +15535,7 @@ function assignSlayerTask(paid){
   let pick,t=0;
   do{pick=_pool[rndi(0,_pool.length-1)];t++;}while(pick===sl.task&&t<8);
   const k=MOB_KINDS[pick];
-  const need=rndi(5,8);
+  const _slv=lvl('slayer');const need=rndi(5+Math.floor(_slv/10),8+Math.floor(_slv/5));
   sl.task=pick;sl.need=need;sl.done=0;
   msg('Slayer Master: cull '+need+' '+slayName(pick,need)+' in the wild beyond the ditch.','#9a6fb0');
   renderQuests&&renderQuests();dirty=true;
@@ -15475,14 +15544,22 @@ function claimSlayerReward(){
   const sl=player.slayer;if(!sl.task||sl.done<sl.need)return;
   sl.streak=(sl.streak||0)+1;
   const cl=cmbLvl();
+  const tc=(MOB_KINDS[sl.task]&&MOB_KINDS[sl.task].cmb)||cl;   /* pay by TARGET difficulty, not player level */
   const sm=1+Math.min(sl.streak-1,24)*0.13;          /* +13% per consecutive task, caps ~4.1x at streak 25 */
   const milestone=(sl.streak%10===0);
-  let gold=Math.round(sl.need*(45+cl*4)*sm);
-  let slx=Math.round(sl.need*20*sm);
-  let cx=Math.max(10,Math.round(sl.need*cl*0.5*sm));
-  if(milestone){gold=Math.round(gold*2);slx=Math.round(slx*1.8);cx=Math.round(cx*1.5);}
+  let gold=Math.round(sl.need*(45+tc*4)*sm);
+  let slx=Math.round(sl.need*Math.max(12,Math.round(tc*0.22))*sm);
+  const _cxRaw=Math.max(10,Math.round(sl.need*tc*0.09*sm));   /* work-based: task size x target difficulty x streak */
+  if(milestone){gold=Math.round(gold*2);slx=Math.round(slx*1.8);}
+  const _cxFor=(sk)=>{const L=lvl(sk);if(L>=99)return 5;
+    const _lc=XP_TABLE[L+1]-XP_TABLE[L];
+    let v=Math.min(_cxRaw,Math.max(5,Math.round(_lc*0.20)));   /* never more than 20% of that skill's next level */
+    if(milestone)v=Math.round(v*1.5);                          /* milestones may reach 30% */
+    return v;};
+  const _cxa=_cxFor('attack'),_cxs=_cxFor('strength'),_cxd=_cxFor('defense'),_cxh=_cxFor('hitpoints');
   qCoins(gold);addXp('slayer',slx);
-  addXp('attack',cx);addXp('strength',cx);addXp('defense',cx);addXp('hitpoints',cx);
+  addXp('attack',_cxa);addXp('strength',_cxs);addXp('defense',_cxd);addXp('hitpoints',_cxh);
+  const cx=Math.round((_cxa+_cxs+_cxd+_cxh)/4);
   {let _sp=Math.round((6+sl.need)*Math.min(2.5,1+(sl.streak-1)*0.09));if(milestone)_sp+=50;sl.points=(sl.points||0)+_sp;msg('You earn '+_sp+' Slayer points (you now hold '+sl.points+').','#9a6fb0');}
   sl.task=null;sl.need=0;sl.done=0;
   if(sfx.level)sfx.level();
@@ -15507,6 +15584,7 @@ function slayerShopRows(){const sl=player.slayer,u=sl.unlocks||{},rows=[];
   if(!u.basilisk)rows.push({id:'unlock_basilisk',icon:'mirror_shield',name:'Contract: Basilisk',price:SLAYER_PRICES.unlock_basilisk,desc:'Adds basilisks to your pool. Comes with a Mirror Shield to deflect their petrifying gaze.'});
   if(!u.gargoyle)rows.push({id:'unlock_gargoyle',icon:'rock_hammer',name:'Contract: Gargoyle',price:SLAYER_PRICES.unlock_gargoyle,desc:'Adds gargoyles to your pool. Comes with a Rock Hammer \u2014 needed to shatter them once beaten.'});
   if(!u.wyvern)rows.push({id:'unlock_wyvern',icon:'elemental_shield',name:'Contract: Skeletal Wyvern',price:SLAYER_PRICES.unlock_wyvern,desc:'Adds skeletal wyverns to your pool. Comes with an Elemental Shield \u2014 it (or a Dragon Slayer shield) turns their frost breath.'});
+  if(!u.kurask)rows.push({id:'unlock_kurask',icon:'leaf_sword',name:'Contract: Kurask',price:SLAYER_PRICES.unlock_kurask,desc:'Adds kurasks to your pool (Slayer 65 to harm them). Comes with a Leaf-bladed sword \u2014 the only steel that cuts their rubbery hide. They hoard the rarer Leaf-bladed battleaxe.'});
   return rows;}
 function slDrawIcon(cv,icon){const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
   if(icon==='_skull'){g.save();g.translate(16,16);g.fillStyle='#d8d2c0';g.beginPath();g.arc(0,-2,8.5,Math.PI,0);g.fill();g.fillRect(-8.5,-2,17,7);g.fillStyle='#b6291f';g.beginPath();g.arc(-3.8,-1,2.5,0,7);g.arc(3.8,-1,2.5,0,7);g.fill();g.fillStyle='#1c1813';g.fillRect(-1.3,3,2.6,4);g.fillRect(-5,5,3,2);g.fillRect(2,5,3,2);g.restore();return;}
@@ -15646,10 +15724,10 @@ function renderAdventurerLog(){
 }
 function openLog(){const el=document.getElementById('logui');if(el)el.classList.add('on');renderAdventurerLog();}
 function closeLog(){const el=document.getElementById('logui');if(el)el.classList.remove('on');}
-const EXPAND_KINDS=['banshee','gargoyle','basilisk','wyvern'];
-const UNLOCK_GIFT={banshee:'earmuffs',gargoyle:'rock_hammer',basilisk:'mirror_shield',wyvern:'elemental_shield'};
+const EXPAND_KINDS=['banshee','gargoyle','basilisk','wyvern','kurask'];
+const UNLOCK_GIFT={banshee:'earmuffs',gargoyle:'rock_hammer',basilisk:'mirror_shield',wyvern:'elemental_shield',kurask:'leaf_sword'};
 function blockablePool(){const u=(player.slayer&&player.slayer.unlocks)||{};return SLAYER_POOL.concat(EXPAND_KINDS.filter(k=>u[k]));}
-function assignablePool(){const sl=player.slayer;const b=(sl&&sl.blocked)||{};const pc=cmbLvl();const lo=Math.max(1,pc*0.4),hi=pc+40;const full=blockablePool();let open=full.filter(k=>!b[k]&&!MOB_KINDS[k].boss&&MOB_KINDS[k].cmb>=lo&&MOB_KINDS[k].cmb<=hi);if(!open.length)open=full.filter(k=>!b[k]&&!MOB_KINDS[k].boss);if(!open.length)open=full.filter(k=>!MOB_KINDS[k].boss);return open.length?open:full;}
+function assignablePool(){const sl=player.slayer;const b=(sl&&sl.blocked)||{};const pc=cmbLvl();const lo=Math.max(1,pc*0.4),hi=pc+40;const full=blockablePool();let open=full.filter(k=>!b[k]&&!MOB_KINDS[k].boss&&MOB_KINDS[k].cmb>=lo&&MOB_KINDS[k].cmb<=hi&&(!MOB_KINDS[k].slayReq||lvl('slayer')>=MOB_KINDS[k].slayReq));if(!open.length)open=full.filter(k=>!b[k]&&!MOB_KINDS[k].boss);if(!open.length)open=full.filter(k=>!MOB_KINDS[k].boss);return open.length?open:full;}
 function unlockMonster(kind){const sl=player.slayer;sl.unlocks=sl.unlocks||{};sl.unlocks[kind]=true;const gift=UNLOCK_GIFT[kind];if(gift&&countItem(gift)<1){if(!addItem(gift))dropGround(player.x,player.y,gift,1);}for(const r of rats){if(r.kind===kind&&r.locked){r.locked=false;r.alive=true;r.maxhp=mobMaxHp(r);r.hp=r.maxhp;}}msg('Unlocked '+MOB_KINDS[kind].name+' contracts'+(gift?' \u2014 you receive a '+ITEMS[gift].name+'.':' \u2014 equip a Dragon Slayer shield before you face it!'),'#9a6fb0');}
 function syncSlayerUnlocks(){
   const u=(player.slayer&&player.slayer.unlocks)||{};
@@ -15660,15 +15738,15 @@ function syncSlayerUnlocks(){
     }
   }
 }
-function ownProctorAny(){const ids=['proctor_helm','crimson_proctor_helm','gilded_warden_helm'];for(const id of ids){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;}return false;}
+function ownProctorAny(){return ownsHelmAnywhere('proctor_helm')||ownsHelmAnywhere('crimson_proctor_helm')||ownsHelmAnywhere('gilded_warden_helm');}
 function ownsHelmAnywhere(id){if(countItem(id)>0)return true;if(player.equip.head&&player.equip.head.id===id)return true;return bank.some(b=>b&&b.id===id&&(b.qty||1)>0);}
 function crimsonDyeSpent(){return ownsHelmAnywhere('crimson_proctor_helm')||ownsHelmAnywhere('gilded_warden_helm');}
 function giltDyeSpent(){return ownsHelmAnywhere('gilded_warden_helm');}
 function neededHelmPiece(){const have=id=>countItem(id)>0||(typeof bank!=='undefined'&&bank.some(b=>b.id===id&&(b.qty||0)>0))||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&!have('sentinel_visor'))return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&!have('scholar_crest'))return 'scholar_crest';return null;}
-const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150,skip:30,block:100};
-const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks, with a bonus every tenth task. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, and a Dragon Slayer shield or an Elemental Shield against the wyvern\u2019s frost \u2014 either turns its freezing breath. Keep the right gear equipped or these creatures tear straight through armour.';
+const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150,unlock_kurask:130,skip:30,block:100};
+const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks and tougher targets, with a bonus every tenth task. Contracts grow with your Slayer level, and harder creatures pay far more per kill. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, a Dragon Slayer shield or an Elemental Shield against the wyvern\u2019s frost \u2014 either turns its freezing breath \u2014 and a Leaf-bladed sword for kurasks, whose rubbery hide shrugs off all other steel (Slayer 65 required). Keep the right gear equipped or these creatures tear straight through armour.';
 function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else if(id==='block'){sl.unlocks=sl.unlocks||{};sl.unlocks.block=true;msg('Task blocking unlocked \u2014 toggle blocks in the rewards shop.','#9a6fb0');}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
-function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});if(!crimsonDyeSpent())O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});if(!giltDyeSpent())O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
+function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});if(!crimsonDyeSpent())O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});if(!giltDyeSpent())O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});if(!u.kurask)E.push({label:'Unlock Kurask contracts ('+SLAYER_PRICES.unlock_kurask+' pts)',next:()=>buySlayer('unlock_kurask')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
 function applyHelmDye(dyeId){const m=({crimson_dye:['proctor_helm','scholar_crest','crimson_proctor_helm'],gilt_dye:['crimson_proctor_helm','sentinel_visor','gilded_warden_helm']})[dyeId];if(!m)return;const baseId=m[0],pieceId=m[1],outId=m[2];const inInv=findItem(baseId)>=0;const equipped=player.equip.head&&player.equip.head.id===baseId;if(!inInv&&!equipped){msg('You need a '+ITEMS[baseId].name+' to apply this dye.','#9a6fb0');return;}if(findItem(pieceId)<0){msg('You also need a '+ITEMS[pieceId].name+' \u2014 a rare drop from your task monsters.','#9a6fb0');return;}if(inInv)removeSlot(findItem(baseId));else{player.equip.head=null;renderEquip&&renderEquip();}removeSlot(findItem(pieceId));removeSlot(findItem(dyeId));if(!addItem(outId))dropGround(player.x,player.y,outId,1);sfx.level&&sfx.level();dirty=true;msg('You fuse the '+ITEMS[pieceId].name.toLowerCase()+' onto the helm with '+ITEMS[dyeId].name.toLowerCase()+' \u2014 behold, the '+ITEMS[outId].name+'!','#e8b020');renderInv&&renderInv();}
 function signetCheckTask(){const sl=player.slayer;if(!sl.task)msg('No active contract. Seek the Slayer Master at the wild\u2019s edge.','#9a6fb0');else if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');else msg('Contract: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath. You hold '+(sl.points||0)+' Slayer points.','#9a6fb0');}
 function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}const tx=26+WX,ty=37;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you to the chaos temple, deep in the wild.','#9a6fb0');dirty=true;}
@@ -20590,10 +20668,10 @@ function render(now){
   const swing=Math.sin(now*0.012)*0.7*walkBlend;
   pm.lLeg.rotation.x=swing;pm.rLeg.rotation.x=-swing;
   let armL=-swing*0.5,armR=swing*0.5;
-  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
+  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
-  const act=player.action;let _swRest=true,_swT=-1.5;
+  const act=player.action;let _swRest=true,_swT=-1.5,_wpT=-0.6;
   if(act&&acting){
     if(act.type==='gather'){
       const sk=OBJ_DEFS[act.obj.def].skill;
@@ -20622,6 +20700,14 @@ function render(now){
         armR=-0.55;armL=-0.22;
         if(swA<480){const lift=Math.sin(Math.PI*(swA/480));
           armR=-0.55-1.95*lift;armL=-0.22-0.30*lift;}
+      }else if(wEq==='whip'){
+        /* whip: coil back then a fast forward crack */
+        armR=-0.45;_wpT=-0.6;
+        if(swA<460){const t=swA/460;_swRest=false;const ss=x=>x*x*(3-2*x);
+          if(t<0.3){const u=ss(t/0.3);armR=-0.45-1.45*u;_wpT=-0.6-1.5*u;}
+          else if(t<0.52){const u=ss((t-0.3)/0.22);armR=-1.9+2.05*u;_wpT=-2.1+2.9*u;}
+          else{const u=ss((t-0.52)/0.48);armR=0.15-0.6*u;_wpT=0.8-1.4*u;}
+        }
       }else{
         /* melee: OSRS-style overhead raise then slash down - smooth + tick-timed */
         armR=-0.45;_swT=-1.5;
@@ -20640,9 +20726,12 @@ function render(now){
   else if(showTool==='sword'){sword.visible=true;sword.rotation.x=_swRest?-1.5:_swT;}   /* -1.5 ~= held out front; 0 = down for the chop (tunable) */
   else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?-1.5:_swT;}
   else if(showTool==='maul'){const _fm=(player.equip.weapon&&player.equip.weapon.id==='frostmaul')?fmaul:maul;_fm.visible=true;_fm.rotation.x=_swRest?-1.5:0;}
+  else if(showTool==='whip'){whipM.visible=true;whipM.rotation.x=_swRest?-0.6:_wpT;}
   else if(showTool==='bow')bowM.visible=true;
   else if(showTool==='staff')staffM.visible=true;
-  shieldM.visible=!!player.equip.shield;
+  {const _shId=player.equip.shield&&player.equip.shield.id;
+   shieldM.visible=!!player.equip.shield&&_shId!=='leaf_dagger';
+   leafDagM.visible=_shId==='leaf_dagger';}
   capeM.visible=!!player.equip.cape;
   const tintG=(grp,t9,r9)=>{grp.traverse(o9=>{
     if(!o9.isMesh)return;
@@ -20731,8 +20820,8 @@ function render(now){
   }
   {const _ce=player.emote&&EMOTES_BY_ID[player.emote];   /* costume emotes (jack/xmas/chef) strip worn gear so the costume isn't covered */
    if(_ce&&_ce.build){
-     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
-     shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;
+     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;
+     shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;leafDagM.visible=false;
      bodyM.visible=armPL.visible=armPR.visible=hideBodyM.visible=robeBodyM.visible=chainM.visible=false;
      legL.visible=legR.visible=hideLegL.visible=hideLegR.visible=robeSkirtM.visible=false;
      bootL.visible=bootR.visible=false;
@@ -21899,6 +21988,19 @@ const fmaul=new THREE.Group();{
    _sh.position.set(_q[0],_q[1],_q[2]);_sh.rotation.x=_q[3];_sh.rotation.z=_q[4];fmaul.add(_sh);}
  const _rg=new THREE.Mesh(new THREE.TorusGeometry(0.19,0.012,5,10),new THREE.MeshBasicMaterial({color:0x9fe6ff}));_rg.position.y=-0.6;_rg.rotation.x=Math.PI/2;fmaul.add(_rg);
 }tool.add(fmaul);
+const whipM=new THREE.Group();
+{const _wg=gmesh(new THREE.CylinderGeometry(0.021,0.026,0.16,7),0x1a0e10);_wg.position.y=-0.08;whipM.add(_wg);
+ for(const _yy of [-0.03,-0.09,-0.14]){const _wb=gmesh(new THREE.TorusGeometry(0.027,0.006,5,8),0x7a2030);_wb.position.y=_yy;_wb.rotation.x=Math.PI/2;whipM.add(_wb);}
+ const _pm3=gmesh(new THREE.SphereGeometry(0.027,7,6),0x3a1d22);_pm3.position.y=0.01;whipM.add(_pm3);
+ let _px=0,_py=-0.17,_pz=0;
+ for(let _si=0;_si<9;_si++){
+   const _rr=0.030-_si*0.0026;
+   const _sg=gmesh(new THREE.SphereGeometry(Math.max(0.009,_rr),6,5),_si%2?0x2a1418:0x3a1d22);
+   _py-=0.062-_si*0.002;_pz+=0.012+_si*0.006;
+   _sg.position.set(_px,_py,_pz);_sg.scale.y=1.55;whipM.add(_sg);}
+ const _tp=new THREE.Mesh(new THREE.ConeGeometry(0.016,0.1,5),new THREE.MeshBasicMaterial({color:0xc0242a}));
+ _tp.position.set(_px,_py-0.08,_pz+0.02);_tp.rotation.x=Math.PI-0.5;whipM.add(_tp);}
+tool.add(whipM);
 const bowM=new THREE.Group();
 {/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
  const R=0.5,A=1.9,t2=A/2;
@@ -21922,7 +22024,7 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -21947,6 +22049,17 @@ const shieldM=new THREE.Group();
 rig.lArm.add(shieldM);
 shieldM.position.set(-0.075,-0.34,0.03);
 shieldM.visible=false;
+const leafDagM=new THREE.Group();
+{const _hg=gmesh(new THREE.CylinderGeometry(0.02,0.024,0.13,6),0x6b4a2e);_hg.position.y=0.06;leafDagM.add(_hg);
+ for(const _vy of [0.02,0.07,0.11]){const _vr=gmesh(new THREE.TorusGeometry(0.026,0.006,5,8),0x8fc46a);_vr.position.y=_vy;_vr.rotation.x=Math.PI/2;leafDagM.add(_vr);}
+ const _pm2=gmesh(new THREE.SphereGeometry(0.026,7,6),0xd8c46a);_pm2.position.y=0.14;leafDagM.add(_pm2);
+ const _gd=gmesh(new THREE.BoxGeometry(0.11,0.02,0.03),0x3f6b2e);_gd.position.y=-0.01;leafDagM.add(_gd);
+ for(const _gx of [-1,1]){const _gl=gmesh(new THREE.ConeGeometry(0.016,0.05,4),0x8fc46a);_gl.position.set(_gx*0.065,-0.02,0);_gl.rotation.z=_gx*1.2;leafDagM.add(_gl);}
+ const _bl=gmesh(new THREE.ConeGeometry(0.052,0.34,6),0x3f6b2e);_bl.scale.z=0.42;_bl.position.y=-0.2;_bl.rotation.x=Math.PI;leafDagM.add(_bl);
+ const _ed=new THREE.Mesh(new THREE.ConeGeometry(0.042,0.3,6),new THREE.MeshBasicMaterial({color:0x9fd47a}));_ed.scale.z=0.3;_ed.position.set(0,-0.19,0.006);_ed.rotation.x=Math.PI;leafDagM.add(_ed);
+ const _rb=gmesh(new THREE.BoxGeometry(0.012,0.26,0.02),0xd8c46a);_rb.position.set(0,-0.18,0.012);leafDagM.add(_rb);}
+leafDagM.rotation.z=0.25;leafDagM.position.set(-0.075,-0.5,0.05);leafDagM.visible=false;
+rig.lArm.add(leafDagM);
 const helmM=new THREE.Group();
 {const helmPts=[new THREE.Vector2(0.13,-0.14),new THREE.Vector2(0.185,-0.02),new THREE.Vector2(0.215,0.07),new THREE.Vector2(0.215,0.15),new THREE.Vector2(0.185,0.24),new THREE.Vector2(0.12,0.31),new THREE.Vector2(0.05,0.35),new THREE.Vector2(0.0,0.36)];
  const shell=TT(gmesh(new THREE.LatheGeometry(helmPts,18),0xb9bdc4),'tint');shell.material.side=THREE.DoubleSide;shell.scale.z=1.06;shell.position.y=1.52;helmM.add(shell);
@@ -22120,7 +22233,7 @@ const santaHatM=new THREE.Group();
  const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
  pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
 santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
-    return {tool,axe,pick,sword,scim,maul,fmaul,bowM,staffM,capeM,capeEmblem,shieldM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM};
+    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,bowM,staffM,capeM,capeEmblem,shieldM,leafDagM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM};
   }
   function applyRemoteGear(G, rig, gear, act, shirtHex) {
     if (!G || !gear) return;
@@ -22132,6 +22245,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     const EQ = id => (id && ITEMS[id] && ITEMS[id].equip) ? ITEMS[id].equip : null;
     G.axe.visible = G.pick.visible = G.sword.visible = G.scim.visible = G.bowM.visible = G.staffM.visible = false;
     G.maul.visible = G.fmaul.visible = false;
+    G.whipM.visible = false;
     const we = EQ(gear.weapon), wmod = we ? we.model : null;
     if (wmod === 'axe') G.axe.visible = true;
     else if (wmod === 'pick') G.pick.visible = true;
@@ -22141,7 +22255,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     else if (wmod === 'staff') G.staffM.visible = true;
     else if (wmod === 'maul') { if (gear.weapon === 'frostmaul') G.fmaul.visible = true; else G.maul.visible = true; }
     if ((wmod === 'sword' || wmod === 'scim') && we) tintG(wmod === 'scim' ? G.scim : G.sword, we.tint !== undefined ? we.tint : 0xc7ccd4, we.trim !== undefined ? we.trim : 0x8a6a2a);
-    G.shieldM.visible = !!gear.shield;
+    G.shieldM.visible = !!gear.shield && gear.shield !== 'leaf_dagger';
+    G.leafDagM.visible = gear.shield === 'leaf_dagger';
     if (gear.shield) { const se = EQ(gear.shield); tintG(G.shieldM, se && se.tint !== undefined ? se.tint : 0x7a5a36, se && se.trim !== undefined ? se.trim : 0x4f3a22); }
     G.capeM.visible = !!gear.cape;
     const he = EQ(gear.head), hmod = he ? he.model : null;
@@ -22314,6 +22429,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (Array.isArray(m.nodes)) for (const e of m.nodes) _applyDepletedNode(e.x | 0, e.y | 0, e.rs | 0);
         break;
       }
+      case 'sw': { const _rp = RP.get(m.uid); if (_rp) _rp.swingT = now(); break; }
       case 'frz': {
         if (m.uid === player.uid) break;
         const _fr = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
@@ -22654,11 +22770,15 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       rig.lLeg.rotation.x = sw; rig.rLeg.rotation.x = -sw;
       armL = -sw * 0.5; armR = sw * 0.5;
     }
-    /* combat swing — mirrors the local melee / ranged / magic arm motion */
+    /* combat swing — mirrors the local melee / ranged / magic arm motion, driven by
+       real per-hit 'sw' timestamps (falls back to a synthesized cycle if none seen) */
+    let _rRest = true, _rSwT = -1.5, _rWpT = -0.6;
     if (r.act && r.act.k === 'attack') {
       const we = r.gear && r.gear.weapon && typeof ITEMS !== 'undefined' && ITEMS[r.gear.weapon] && ITEMS[r.gear.weapon].equip;
       const style = (typeof weaponStyle === 'function') ? weaponStyle(we) : 'melee';
-      const swA = t % 900; /* synthesized repeating swing (remote sends no per-hit timestamp) */
+      const swA = (r.swingT !== undefined) ? (t - r.swingT) : (t % 2400);
+      const _wm0 = we ? we.model : null;
+      const ss = x => x * x * (3 - 2 * x);
       if (style === 'ranged') {
         armR = -1.28;
         if (swA < 480) { const tt = swA / 480, snap = Math.exp(-tt * 7.5); armL = -1.02 + 0.9 * snap; if (swA < 110) armR = -1.28 - 0.20 * Math.sin(Math.PI * (swA / 110)); }
@@ -22666,9 +22786,20 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       } else if (style === 'magic') {
         armR = -0.55; armL = -0.22;
         if (swA < 480) { const lift = Math.sin(Math.PI * (swA / 480)); armR = -0.55 - 1.95 * lift; armL = -0.22 - 0.30 * lift; }
+      } else if (_wm0 === 'whip') {
+        armR = -0.45;
+        if (swA < 460) { const tt = swA / 460; _rRest = false;
+          if (tt < 0.3) { const u = ss(tt / 0.3); armR = -0.45 - 1.45 * u; _rWpT = -0.6 - 1.5 * u; }
+          else if (tt < 0.52) { const u = ss((tt - 0.3) / 0.22); armR = -1.9 + 2.05 * u; _rWpT = -2.1 + 2.9 * u; }
+          else { const u = ss((tt - 0.52) / 0.48); armR = 0.15 - 0.6 * u; _rWpT = 0.8 - 1.4 * u; }
+        }
       } else {
         armR = -0.45;
-        if (swA < 480) { const k2 = Math.sin(Math.PI * (swA / 480)); armR = -0.35 - 2.0 * k2; }
+        if (swA < 720) { const tt = swA / 720; _rRest = false;
+          if (tt < 0.4) { const u = ss(tt / 0.4); armR = -0.45 - 2.35 * u; _rSwT = -1.5 - 0.8 * u; }
+          else if (tt < 0.66) { const u = ss((tt - 0.4) / 0.26); armR = -2.8 + 3.25 * u; _rSwT = -2.3 + 2.1 * u; }
+          else { const u = ss((tt - 0.66) / 0.34); armR = 0.45 - 0.9 * u; _rSwT = -0.2 - 1.3 * u; }
+        }
       }
     }
     /* gather — woodcutting/mining chop swing; fishing/cook gentle motion (mirrors local) */
@@ -22690,9 +22821,14 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       _G.sword.visible = _wm === 'sword'; _G.scim.visible = _wm === 'scim';
       _G.bowM.visible = _wm === 'bow'; _G.staffM.visible = _wm === 'staff';
       _G.maul.visible = _wm === 'maul' && r.gear.weapon !== 'frostmaul'; _G.fmaul.visible = _wm === 'maul' && r.gear.weapon === 'frostmaul';
+      _G.whipM.visible = _wm === 'whip';
+      if (_wm === 'sword') _G.sword.rotation.x = _rRest ? -1.5 : _rSwT;
+      else if (_wm === 'scim') _G.scim.rotation.x = _rRest ? -1.5 : _rSwT;
+      else if (_wm === 'maul') { (r.gear.weapon === 'frostmaul' ? _G.fmaul : _G.maul).rotation.x = _rRest ? -1.5 : 0; }
+      else if (_wm === 'whip') _G.whipM.rotation.x = _rRest ? -0.6 : _rWpT;
     }
     /* emote — mirrors the LOCAL application exactly: seeded pose + 4-arg fn(pose, tNorm, eMs, now). Overrides walk/combat like the local player. (themed props deferred to a later layer) */
-    if (r.emote && r.moving) r.emote = null;
+    if (r.emote && r.moving) { r.emote = null; if (r._emFx) { try { r._emFx.dispose && r._emFx.dispose(); } catch (e) {} r._emFx = null; } }
     if (r.emote && typeof EMOTES_BY_ID !== 'undefined') {
       const _E = EMOTES_BY_ID[r.emote], _e = t - (r.emoteT || 0);
       if (_E && _E.fn && _e < _E.dur) {
@@ -22704,7 +22840,14 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (rig.upper) rig.upper.rotation.x = pz.bodyRx;
         rig.g.position.y = gy + (pz.jump || 0);
         rig.g.rotation.y = r.h + (pz.spin || 0);
-      } else { r.emote = null; }
+        /* themed props: build once on THIS avatar's rig, animate via fx at THEIR position */
+        if (_E.build && !r._emFx) { _emoteRig = rig; _emotePos = { x: r.x, y: r.y };
+          try { r._emFx = _E.build() || null; } catch (e) { r._emFx = null; }
+          _emoteRig = null; _emotePos = null; }
+        if (_E.fx && r._emFx) { _emotePos = { x: r.x, y: r.y };
+          try { _E.fx(r._emFx, _e / _E.dur, _e, t); } catch (e) {}
+          _emotePos = null; }
+      } else { r.emote = null; if (r._emFx) { try { r._emFx.dispose && r._emFx.dispose(); } catch (e) {} r._emFx = null; } }
     }
     rig.lArm.rotation.x = armL; rig.rArm.rotation.x = armR;
   }
@@ -22915,6 +23058,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   /* boss-mechanic sync: freeze procs + the Snow King's Snowfall (warn/fire/enrage) */
   const _rbliz = [];
   function sendFreeze(mi, ms) { if (active() && conn) send({ t: 'frz', m: mi | 0, ms: ms | 0 }); }
+  let _swSentT = 0;
+  function sendSwing() { if (!active() || !conn) return; const _n = now(); if (_n - _swSentT < 350) return; _swSentT = _n; send({ t: 'sw' }); }
   function skSpec(ph, x, y, ms, en) { if (active() && conn) send({ t: 'sksp', ph: ph, x: x | 0, y: y | 0, ms: ms | 0, en: en ? 1 : 0 }); }
   /* shared boss minions: the King's owner activates the fixed-index icefiends on every client */
   function groupIcefiends(ki, list) { if (active() && conn) send({ t: 'ifsp', k: ki, f: list }); }
@@ -23039,7 +23184,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
@@ -23245,6 +23390,7 @@ const LB = (function(){
     {id:'maxhit', label:'Top Melee Hit', fmt:function(v){return ''+v;}},
     {id:'kills',  label:'Kills',   fmt:function(v){return ''+v;}},
     {id:'boss_kills', label:'Boss Kills', fmt:function(v){return ''+v;}},
+    {id:'brat_kills', label:'Fac Brats Slain', fmt:function(v){return ''+v;}},
     {id:'gold',   label:'Gold',    fmt:function(v){return _comma(v);}},
     {id:'pvp_wins', label:'PvP wins',  fmt:function(v){return ''+v;}},
     {id:'deaths',   label:'Deaths',    fmt:function(v){return ''+v;}},
@@ -23263,14 +23409,14 @@ const LB = (function(){
       cmb:(typeof cmbLvl==='function')?cmbLvl():((player&&player.cmb)||3),
       total:(typeof totalLevel==='function')?totalLevel():0,
       maxhit:(player&&player.maxHit)||0, kills:(player&&player.kills)||0, gold:_gold(),
-      pvp_wins:(player&&player.pvpWins)||0, boss_kills:(player&&player.bossKills)||0, deaths:(player&&player.deaths)||0, magic_hit:(player&&player.maxMagicHit)||0, range_hit:(player&&player.maxRangeHit)||0,
+      pvp_wins:(player&&player.pvpWins)||0, boss_kills:(player&&player.bossKills)||0, brat_kills:(player&&player.bratKills)||0, deaths:(player&&player.deaths)||0, magic_hit:(player&&player.maxMagicHit)||0, range_hit:(player&&player.maxRangeHit)||0,
       title:(player&&player.title)||null };
   }
   var _lastKey='', _lastT=0;
   function submit(force){
     var u=_url(); if(!u||!player||!player.uid)return;
     var st=_stats();
-    var key=[st.cmb,st.total,st.maxhit,st.kills,st.gold,st.pvp_wins,st.boss_kills,st.deaths,st.magic_hit,st.range_hit,st.name,st.title].join('|');
+    var key=[st.cmb,st.total,st.maxhit,st.kills,st.gold,st.pvp_wins,st.boss_kills,st.brat_kills,st.deaths,st.magic_hit,st.range_hit,st.name,st.title].join('|');
     var now=Date.now();
     if(!force && key===_lastKey && (now-_lastT)<60000)return;
     _lastKey=key; _lastT=now;
