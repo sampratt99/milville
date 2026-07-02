@@ -1236,7 +1236,7 @@ const RARE_SET=Object.fromEntries(RARE_ITEMS.map(i=>[i,true]));
 function markCollected(id){if(typeof player!=='undefined'&&player.collected&&RARE_SET[id])player.collected[id]=true;}
 function backfillCollected(){if(!player.collected)player.collected={};const scan=arr=>{if(!arr)return;for(const it of arr)if(it&&RARE_SET[it.id])player.collected[it.id]=true;};scan(player.inv);if(typeof bank!=='undefined')scan(bank);for(const sl in player.equip){const e=player.equip[sl];if(e&&RARE_SET[e.id])player.collected[e.id]=true;}}
 ITEMS.dragon_scimitar={name:'Dragon scimitar',ex:'A wickedly curved blade of red dragon-metal, chased with gold.',val:130000,equip:{slot:'weapon',atk:67,str:66,model:'scim',verb:'Wield',req:60,tint:0x9c1818,trim:0xd4af37}};
-ITEMS.dragon_sword={name:'Dragon sword',ex:'A straight dragon-metal blade, gold-fullered and keen.',val:110000,equip:{slot:'weapon',atk:69,str:71,spd:3000,model:'sword',verb:'Wield',req:60,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_sword={name:'Dragon sword',ex:'A straight dragon-metal blade, gold-fullered and keen.',val:110000,equip:{slot:'weapon',atk:69,str:80,spd:3000,model:'sword',verb:'Wield',req:60,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_full_helm={name:'Dragon full helm',ex:'A snarling dragon-head helm of red and gold.',val:90000,equip:{slot:'head',def:48,model:'helm',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with gold dragon-work.',val:160000,equip:{slot:'body',def:107,model:'plate',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_platelegs={name:'Dragon platelegs',ex:'Red dragon-plate greaves trimmed in gold.',val:130000,equip:{slot:'legs',def:66,model:'legs',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
@@ -2147,7 +2147,7 @@ const SPELL_LIST=Object.keys(SPELLS).sort(function(a,b){return SPELLS[a].req-SPE
  ['earth_staff','Staff of earth',10,12,0,'earth_rune',500,0x5a9a3a],
  ['fire_staff','Staff of fire',15,14,0,'fire_rune',800,0xff5a22],
  ['battlestaff','Battlestaff',30,26,0,null,7000,0x6a5ad0],
- ['mystic_staff','Mystic staff',40,38,4,null,30000,0xc56af0]
+ ['mystic_staff','Mystic staff',40,38,8,null,30000,0xc56af0]
 ].forEach(function(a){ITEMS[a[0]]={name:a[1],ex:'A magical staff for casting spells.',val:a[6],
   equip:{slot:'weapon',model:'staff',verb:'Wield',spd:3000,matk:a[3],mdmg:a[4],req:a[2],infRune:a[5],orb:a[7]}};GE_STOCK.push(a[0]);});
 
@@ -2213,7 +2213,7 @@ const MOB_KINDS={
   bluedragon:{name:'Blue dragon',ex:'Frost-scaled but fire-breathing; larger and deadlier than its green kin.',hp:105,acc:0.76,maxhit:10,resp:34000,bigbones:1,coinP:1,coins:[90,240],aggro:0,cmb:111,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   reddragon:{name:'Red dragon',ex:'Crimson and vast, with a furnace in its chest.',hp:140,acc:0.80,maxhit:12,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:0,cmb:152,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   blackdragon:{name:'Black dragon',ex:'The apex of the chromatic brood; its dragonfire melts stone.',hp:180,acc:0.86,maxhit:16,resp:1800000,bigbones:1,coinP:1,coins:[30000,45000],aggro:0,boss:1,cmb:227,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
-  snowking:{name:'The Snow King',ex:'A colossus of living ice and frost-matted fur that rules the summit of Pat\u2019s Peak. Its fists fall like avalanches, and the air around it bites with cold.',hp:400,acc:0.88,maxhit:24,resp:1800000,bigbones:1,coinP:1,coins:[40000,70000],aggro:0,boss:1,cmb:301},
+  snowking:{name:'The Snow King',ex:'A colossus of living ice and frost-matted fur that rules the summit of Pat\u2019s Peak. Its fists fall like avalanches, and the air around it bites with cold.',hp:400,acc:0.88,maxhit:24,resp:3600000,bigbones:1,coinP:1,coins:[40000,70000],aggro:0,boss:1,cmb:301},
   icefiend:{name:'Icefiend',ex:'A shard-toothed sprite of the blizzard, conjured from the Snow King\u2019s frost to harry intruders.',hp:40,acc:0.7,maxhit:8,resp:9999999,coinP:0,coins:[0,0],aggro:1,cmb:70,minion:1},
   goblin:{name:'Goblin',ex:'Small, green and spoiling for a scrap. Smells of wet dog and ambition.',hp:5,acc:0.42,maxhit:1,resp:12000,bones:1,coinP:.6,coins:[2,14],aggro:0,cmb:3,weak:'melee',resist:'magic'},
   biggoblin:{name:'Goblin brute',ex:'A head taller than its kin and twice as mean. War-paint, bad attitude.',hp:14,acc:0.5,maxhit:2,resp:14000,bones:1,coinP:.7,coins:[6,26],aggro:0,cmb:6,weak:'melee',resist:'magic'},
@@ -3031,9 +3031,10 @@ const MOB_DROPS={
     {wpool:[['wizard_hat',24],['wizard_robe_top',24],['wizard_robe_skirt',24],['staff',24],['air_staff',12],['water_staff',8],['earth_staff',6],['fire_staff',4],['mystic_hat',2],['mystic_robe_bottom',1.5],['mystic_robe_top',1],['battlestaff',0.6],['enchanted_hat',0.4],['enchanted_top',0.12],['mystic_staff',0.1]],c:1/24}],
   wyvern:[{note:['rune_bar','mithril_bar','uncut_diamond'],c:0.1},
           {i:'draconic_visage',c:1/200,inv:1,m:'The skeletal wyvern yields a Draconic visage \u2014 an extraordinary find!'},
-          {i:'abyssal_whip',c:1/50,inv:1,m:'The skeletal wyvern drops an Abyssal whip!'},{dgear:1/150}],
+          {i:'abyssal_whip',c:1/75,inv:1,m:'The skeletal wyvern drops an Abyssal whip!'},
+          {i:'dragon_arrow',c:1/3,inv:1,q:[5,12]},{dgear:1/150}],
   basilisk:[{note:['mithril_bar','steel_bar'],c:0.1},
-            {i:'abyssal_whip',c:1/100,inv:1,m:'The basilisk drops an Abyssal whip!'},
+            {i:'abyssal_whip',c:1/200,inv:1,m:'The basilisk drops an Abyssal whip!'},
             {i:'basilisk_jaw',c:1/30,inv:1,m:'The basilisk drops a Basilisk jaw.'},{dgear:1/150}],
   gargoyle:[{note:['steel_bar','iron_bar'],c:0.1},
             {i:'granite_maul',c:1/100,inv:1,m:'The gargoyle drops a Granite maul!'},{dgear:1/150}],
@@ -3044,6 +3045,7 @@ const MOB_DROPS={
   bluedragon:[{dhide:'blue'},{dgear:1/72}],
   reddragon:[{dhide:'red'},{dgear:1/48}],
   blackdragon:[{dhide:'black'},{dgear:1/6},
+               {i:'dragon_arrow',c:1,inv:1,q:[6,14]},
                {pool:['rune_bar','runite_ore','uncut_diamond'],q:[3,8],c:0.6},
                {i:'draconic_visage',c:1/50,inv:1,m:'The Black dragon yields a Draconic visage \u2014 an extraordinary find!'}],
 };
@@ -3306,7 +3308,7 @@ let encQuery='';
 /* authored sources for rare drops / quests / clues / specials (the rest are derived live) */
 const ENCY_SRC={
   draconic_visage:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/200 · Black Dragon — 1/50'}],
-  abyssal_whip:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/50 · Basilisk — 1/100'}],
+  abyssal_whip:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/75 · Basilisk — 1/200'}],
   granite_maul:[{label:'Monster drop',sub:'Gargoyle — 1/100'}],
   frostmaul:[{label:'Monster drop',sub:'The Snow King — 1/10'}],
   glacial_full_helm:[{label:'Monster drop',sub:'The Snow King — 1/18'}],
@@ -3317,17 +3319,12 @@ const ENCY_SRC={
   frost_shard:[{label:'Monster drop',sub:'The Snow King — every kill (15–35)'}],
   red_spider_eggs:[{label:'Monster drop',sub:'Deadly red spider — ~1/6'}],
   rune_arrow:[{label:'Monster drop',sub:'Skeleton archer — ~1/15 (5—12)'},{label:'Shop',sub:'Grand Exchange'}],
+  dragon_arrow:[{label:'Monster drop',sub:'Black Dragon — every kill (6–14) · Skeletal Wyvern — 1/3 (5–12)'}],
   basilisk_jaw:[{label:'Monster drop',sub:'Basilisk — 1/30'}],
   wailing_relic:[{label:'Monster drop',sub:'Banshee — 1/30'}],
   scholar_crest:[{label:'Slayer task drop',sub:'A task monster — 2.2% (34% if superior), once you own a Proctor’s Helm'}],
   sentinel_visor:[{label:'Slayer task drop',sub:'A task monster — 2.2% (34% if superior), once you own a Crimson Proctor’s Helm'}],
   dragon_shield:[{label:'Quest reward',sub:'Dragon Slayer'}],
-  dragon_scimitar:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
-  dragon_sword:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
-  dragon_full_helm:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
-  dragon_platebody:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
-  dragon_platelegs:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
-  dragon_kiteshield:[{label:'Monster drop',sub:'Dragons — 1/120 to 1/6 · wilderness monsters cmb 60+ — 1/150 (1 of 6 pieces)'}],
   clue_easy:[{label:'Monster drop',sub:'Combat 1–9 monsters — 1/35'}],
   clue_medium:[{label:'Monster drop',sub:'Combat 10+ monsters — 1/55'}],
   clue_hard:[{label:'Monster drop',sub:'Combat 19+ monsters — 1/85'}],
@@ -3421,7 +3418,7 @@ function itemSources(id){
     out.push({label:'Monster drop',sub:'Rare gem drop from '+t+'; the chance rises with combat level'});}
   if(ENCY_RAREGEAR.indexOf(id)>=0)out.push({label:'Monster drop',sub:'Rare drop from combat 13+ monsters — ~3.5%'});
   if(ENCY_PHATS.indexOf(id)>=0)out.push({label:'Clue reward',sub:'A random party hat — Easy 1/500 → Elite 1/64'});
-  if(ENCY_DRAGON.indexOf(id)>=0){out.push({label:'Boss drop',sub:'Black dragon \u2014 1/12 (one of six dragon items)'});out.push({label:'Slayer task drop',sub:'A high-level (cmb 60+) Wilderness task monster \u2014 1/150'});
+  if(ENCY_DRAGON.indexOf(id)>=0){out.push({label:'Monster drop',sub:'Dragons \u2014 1/120 (green) up to 1/6 (Black Dragon), one of six dragon items'});out.push({label:'Monster drop',sub:'Wilderness monsters cmb 60+ \u2014 1/150 (one of six) \u2014 no contract needed'});
     out.push({label:'Clue reward',sub:'Hard 1/256 · Elite 1/96 (one of six dragon items)'});}
   const ex=ENCY_SRC[id];if(ex)for(const e of ex)out.push(e);
   return out;
@@ -22295,6 +22292,24 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (typeof rats !== 'undefined') for (const _r2 of rats) if (_r2 && _r2.kind === 'icefiend' && _r2.minionOf === _ki2 && _r2.alive) { _r2.alive = false; _r2.target = null; if (_r2._m) _r2._m.group.visible = false; }
         break;
       }
+      case 'bdb': {
+        if (m.uid === player.uid) break;
+        const _dd2 = Array.isArray(m.d) ? m.d : [];
+        const _n3 = now();
+        for (const _e3 of _dd2) {
+          const _r3 = (typeof rats !== 'undefined') ? rats[_e3[0] | 0] : null;
+          if (!_r3 || !MOB_KINDS[_r3.kind] || !MOB_KINDS[_r3.kind].boss || _r3.locked) continue;
+          if (_r3.alive && _r3.target) continue; /* I'm actively fighting a live one -- don't yank it */
+          const _rem = Math.max(0, Math.min(_e3[1] | 0, MAX_RS));
+          if (_rem <= 0) continue;
+          if (_r3.alive || _r3.respawnAt < _n3 + _rem - 2000) {
+            if (_r3.alive && _r3.kind === 'snowking' && typeof despawnIcefiends === 'function') despawnIcefiends(_r3, true);
+            _r3.alive = false; _r3.target = null; _r3.respawnAt = _n3 + _rem;
+            remoteMobs.delete(_e3[0] | 0);
+          }
+        }
+        break;
+      }
       case 'mobdead': {
         if (m.uid === player.uid) break;
         _maybeGroupDrop(m.m | 0);
@@ -22460,6 +22475,13 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     manageClaims();
     if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
     if (groupInGroup() && t - (group._hbT || 0) > 4000) { group._hbT = t; send({ t: 'gsync', roster: group.roster.map(m2 => ({ uid: m2.uid, name: m2.name })) }); }
+    if (t - (group._bdbT || 0) > 5000) { group._bdbT = t;
+      const _dd = []; const _n2 = now();
+      if (typeof rats !== 'undefined') for (const r2 of rats)
+        if (r2 && MOB_KINDS[r2.kind] && MOB_KINDS[r2.kind].boss && !r2.locked && !r2.alive && r2.respawnAt > _n2 && r2.respawnAt < 9e14)
+          _dd.push([r2.i, Math.min(Math.round(r2.respawnAt - _n2), MAX_RS)]);
+      if (_dd.length) send({ t: 'bdb', d: _dd });
+    }
     {
       /* 1) Mirror new hitsplats to peers AND record which mob I'm actually damaging.
             This damage signal — not player.action — is the robust "what am I fighting"
@@ -22993,6 +23015,7 @@ function openDragonInfo(){
         '\u2022 Coins: <b>30,000\u201345,000</b> &mdash; every kill<br>'+
         '\u2022 Dragon equipment &mdash; ~1/12<br>'+
         '\u2022 Draconic visage &mdash; ~1/50<br>'+
+        '\u2022 Dragon arrows \u00d76\u201314 &mdash; every kill<br>'+
         '\u2022 Runite ore, rune bars &amp; diamonds &mdash; common<br>'+
         '\u2022 Black dragonhide &amp; big bones'+
       '</div></div>'+
@@ -23089,7 +23112,7 @@ function openSnowKingInfo(){
         '\u2022 <b>Enrage</b> &mdash; below 15% health he strikes faster and his blizzards hit harder.<br>'+
         '\u2022 <b>The cold</b> &mdash; the summit saps your health unless you wear the <b>full Glacial set</b> or stand by a <b>lit brazier</b>.'+
       '</div></div>'+
-    '<div style="border-top:1px solid #2f4a5e;margin-top:8px;padding-top:8px;font-size:12px;color:#8fb4cc;text-align:center;">Respawns about 30 minutes after it is slain.</div>'+
+    '<div style="border-top:1px solid #2f4a5e;margin-top:8px;padding-top:8px;font-size:12px;color:#8fb4cc;text-align:center;">Respawns about an hour after it is slain.</div>'+
     '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="skClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #6fb8e6;background:#1f3a52;color:#fff;cursor:pointer;">Close</button></div>';
   ov.appendChild(box); document.body.appendChild(ov);
   var raf=0, ren=null;
