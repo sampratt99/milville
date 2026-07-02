@@ -2069,8 +2069,8 @@ const guide={x:70,y:48,px:70,py:48,id:'guide',name:'Guide',heading:Math.PI*.75,
 /* ===================== Ranged gear (Phase 2) ===================== */
 [ /* arrows: name, rangedReq, rstr, value, tier, tint */
  ['bronze',1,7,2,0,0xb07a3e],['iron',1,10,4,1,0x7a766f],['steel',5,16,8,2,0xaab2ba],
- ['mithril',10,22,16,3,0x6b6bb0],['adamant',14,31,32,4,0x468852],['rune',18,49,55,5,0x5a8ab0],
- ['dragon',28,60,250,6,0xc23a2a]
+ ['mithril',20,22,16,3,0x6b6bb0],['adamant',30,31,32,4,0x468852],['rune',40,49,55,5,0x5a8ab0],
+ ['dragon',60,60,250,6,0xc23a2a]
 ].forEach(function(a){var n=a[0],N=n[0].toUpperCase()+n.slice(1);
   ITEMS[n+'_arrow']={name:N+' arrow',ex:'A quiver of '+n+' arrows for use with a bow.',val:a[3],stack:true,
     equip:{slot:'ammo',model:'arrow',verb:'Wield',rstr:a[2],req:a[1],arrowTier:a[4],tint:a[5]}};
@@ -2902,7 +2902,7 @@ function snowKingSpecialTick(r,nowM){
   if(player.hp<=0){r.spec=null;return;}
   const hpf=r.hp/r.maxhp;
   if(!r.blizzardDone&&hpf<=0.4){r.blizzardDone=true;spawnIcefiends(r,2);msg('The Snow King bellows \u2014 shards of the blizzard tear loose as living Icefiends!','#1d5d8f');}
-  if(!r.enrageDone&&hpf<=0.15){r.enrageDone=true;r.enraged=true;msg('The Snow King enters a frostbitten fury \u2014 faster, colder, merciless!','#3f7fa8');}
+  if(!r.enrageDone&&hpf<=0.15){r.enrageDone=true;r.enraged=true;msg('The Snow King enters a frostbitten fury \u2014 faster, colder, merciless!','#3f7fa8');if(typeof MP!=='undefined'&&MP.skSpec)MP.skSpec('enrage',r.x,r.y,0,1);}
   const near=dist1(r.x,r.y,player.x,player.y)<=7;
   if(!r.spec){
     if(!near){r.specCd=nowM+6000;return;}
@@ -2912,6 +2912,7 @@ function snowKingSpecialTick(r,nowM){
       for(let ddx=-1;ddx<=1;ddx++)for(let ddy=-1;ddy<=1;ddy++)tiles.push([cx+ddx,cy+ddy]);
       r.spec={phase:'windup',t:nowM,fireAt:nowM+(r.enraged?1250:1700),tiles:tiles,lastWarn:0};
       r.nextAtk=nowM+3400;
+      if(typeof MP!=='undefined'&&MP.skSpec)MP.skSpec('warn',cx,cy,r.spec.fireAt-nowM,r.enraged?1:0);
       msg('The Snow King heaves the Frostmaul overhead \u2014 a blizzard gathers above you! Move!','#1d5d8f');
     }
     return;
@@ -2921,6 +2922,7 @@ function snowKingSpecialTick(r,nowM){
     if(!r.spec.lastWarn||nowM-r.spec.lastWarn>360){r.spec.lastWarn=nowM;for(const tl of r.spec.tiles)groundFrost(tl[0],tl[1],true);}
     if(nowM>=r.spec.fireAt){
       r.spec.phase='fire';r.spec.fireT=nowM;r.spec.endAt=nowM+520;
+      if(typeof MP!=='undefined'&&MP.skSpec)MP.skSpec('fire',r.spec.tiles[4][0],r.spec.tiles[4][1],0,r.enraged?1:0);
       for(const tl of r.spec.tiles)groundFrost(tl[0],tl[1],false);
       const hit=r.spec.tiles.some(function(tl){return tl[0]===player.x&&tl[1]===player.y;});
       if(!hit){msg('You dive clear of the avalanche!','#86c56a');sfx.miss&&sfx.miss();}
@@ -3068,7 +3070,10 @@ function rollMobDrops(r){
           if(g.inv){ if(!addItem(gid,1))dropGround(r.x,r.y,gid,1); } else dropGround(r.x,r.y,gid,1);
           msg(g.m||('The '+r.name.toLowerCase()+' yields '+ITEMS[gid].name+'!'),'#8a5e0a'); sfx.pickup&&sfx.pickup(); break; } }
       continue; }
-    if(d.note){ if(Math.random()<(d.c||1)){ const nid=d.note[rndi(0,d.note.length-1)],nq=rndi(5,15); if(!addNote(nid,nq))dropGround(r.x,r.y,nid,nq); msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a'); sfx.pickup&&sfx.pickup(); } continue; }
+    if(d.note){ if(Math.random()<(d.c||1)){ const nid=d.note[rndi(0,d.note.length-1)],nq=rndi(5,15);
+      if(addNote(nid,nq))msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a');
+      else{dropGround(r.x,r.y,nid,nq);msg('The '+r.name.toLowerCase()+' drops '+nq+' \u00d7 '+ITEMS[nid].name+' \u2014 no room for the banknote, so they fall to the ground.','#caa23a');}
+      sfx.pickup&&sfx.pickup(); } continue; }
     if(d.dhide){ if(d.c!==undefined&&Math.random()>=d.c)continue;
       if(d.dhide==='sx'){ const _dc=['red','green','blue'][r.sx<170?0:(r.sx<174?1:2)]; dropGround(r.x,r.y,_dc+'_dhide_'+['coif','body','chaps'][rndi(0,2)],1); msg('The '+r.name.toLowerCase()+' sheds a slab of '+_dc+' dragonhide.','#caa23a'); }
       else dropGround(r.x,r.y,d.dhide+'_dhide_'+['coif','body','chaps','vambraces'][rndi(0,3)],1);
@@ -4314,6 +4319,7 @@ function playerTick(){
     { const _fw=player.equip.weapon; const _fz=_fw&&ITEMS[_fw.id]&&ITEMS[_fw.id].equip&&ITEMS[_fw.id].equip.freeze;
       if(_fz&&dmg>0&&!MOB_KINDS[r.kind].boss&&!(r.frozen&&r.frozen>performance.now())&&Math.random()<_fz){
         r.frozen=performance.now()+4000; if(typeof groundFrost==='function')groundFrost(r.x,r.y,false);
+        if(typeof MP!=='undefined'&&MP.sendFreeze)MP.sendFreeze(r.i,4000);
         msg('Your Frostmaul freezes the '+((MOB_KINDS[r.kind].name||'foe').toLowerCase())+' solid!','#1d5d8f');
       } }
     r.braceT=performance.now();
@@ -4810,9 +4816,21 @@ function playerTick(){
     const g=a.g;
     if(ground.indexOf(g)<0){cancelAction();return;}
     if(player.x!==g.x||player.y!==g.y){if(!player.path.length)walkTo(g.x,g.y,true);return;}
-    if(ITEMS[g.id].stack||!invFull()){
-      addItem(g.id,g.qty);ground.splice(ground.indexOf(g),1);sfx.pickup();
-    }else msg("You don't have enough room in your pack.");
+    if(ITEMS[g.id].stack){
+      if(addItem(g.id,g.qty)){ground.splice(ground.indexOf(g),1);sfx.pickup();}
+      else msg("You don't have enough room in your pack.");
+    }else{
+      let _free=0;for(const _s of player.inv)if(!_s)_free++;
+      const _take=Math.min(_free,g.qty||1);
+      if(_take<=0)msg("You don't have enough room in your pack.");
+      else{
+        addItem(g.id,_take);
+        g.qty=(g.qty||1)-_take;
+        if(g.qty<=0)ground.splice(ground.indexOf(g),1);
+        else msg('You take '+_take+' \u2014 the rest is still on the ground.','#caa23a');
+        sfx.pickup();
+      }
+    }
     cancelAction();
   }
 }
@@ -11405,6 +11423,17 @@ const scim=new THREE.Group();
  spm.position.y=-0.01;scim.add(spm);}
 scim.children.forEach(function(c){c.position.y+=0.085;});
 tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);const maul=new THREE.Group();{const haft=gmesh(new THREE.CylinderGeometry(0.025,0.03,0.6,7),0x5a3d22);haft.position.y=-0.33;maul.add(haft);const head=gmesh(new THREE.BoxGeometry(0.19,0.22,0.17),0x6e6f73);head.position.y=-0.6;maul.add(head);const band=gmesh(new THREE.BoxGeometry(0.21,0.06,0.18),0x9a9ca0);band.position.y=-0.52;maul.add(band);const grip=gmesh(new THREE.BoxGeometry(0.038,0.14,0.038),0x3a2a18);grip.position.y=-0.06;maul.add(grip);}tool.add(maul);
+const fmaul=new THREE.Group();{
+ const fh=gmesh(new THREE.CylinderGeometry(0.024,0.03,0.6,7),0x3a5a72);fh.position.y=-0.33;fmaul.add(fh);
+ for(const _wy of [-0.16,-0.3,-0.44]){const _wr=gmesh(new THREE.TorusGeometry(0.036,0.009,5,8),0xbfe9ff);_wr.position.y=_wy;_wr.rotation.x=Math.PI/2;fmaul.add(_wr);}
+ const fhead=gmesh(new THREE.IcosahedronGeometry(0.15,0),0x6fc0e8);fhead.position.y=-0.6;fmaul.add(fhead);
+ const fcore=new THREE.Mesh(new THREE.IcosahedronGeometry(0.09,0),new THREE.MeshBasicMaterial({color:0xdff2ff}));fcore.position.y=-0.6;fmaul.add(fcore);
+ const _fsh=[[0,-0.38,0,0,0],[0,-0.82,0,Math.PI,0],[0,-0.6,0.21,Math.PI/2,0],[0,-0.6,-0.21,-Math.PI/2,0],[0.21,-0.6,0,0,-Math.PI/2],[-0.21,-0.6,0,0,Math.PI/2]];
+ for(let _fi=0;_fi<_fsh.length;_fi++){const _q=_fsh[_fi];
+   const _sh=gmesh(new THREE.ConeGeometry(0.032,0.15+(_fi%2)*0.05,4),_fi%2?0xe6f6ff:0xbfe9ff);
+   _sh.position.set(_q[0],_q[1],_q[2]);_sh.rotation.x=_q[3];_sh.rotation.z=_q[4];fmaul.add(_sh);}
+ const _rg=new THREE.Mesh(new THREE.TorusGeometry(0.19,0.012,5,10),new THREE.MeshBasicMaterial({color:0x9fe6ff}));_rg.position.y=-0.6;_rg.rotation.x=Math.PI/2;fmaul.add(_rg);
+}tool.add(fmaul);
 const bowM=new THREE.Group();
 {/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
  const R=0.5,A=1.9,t2=A/2;
@@ -11428,7 +11457,7 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -17204,12 +17233,12 @@ const SKILL_GUIDE={
     [80,'Prayer points drain 40% slower'],
     [90,'Prayer points drain 45% slower']],
   ranged:[[1,'Wield a Shortbow; fire bronze/iron arrows; wear Leather armour and vambraces'],
-    [5,'Use an Oak shortbow; fire steel arrows'],[10,'Fire mithril arrows; wear a Hard leather body'],
-    [14,'Fire adamant arrows'],[18,'Fire rune arrows'],[20,'Use a Willow shortbow; wear Studded leather'],
-    [28,'Fire dragon arrows'],[30,'Use a Birch longbow'],
-    [40,'Use a Yew shortbow; wear Green dragonhide body, chaps and vambraces'],
+    [5,'Use an Oak shortbow; fire steel arrows'],[10,'Wear a Hard leather body'],
+    [20,'Use a Willow shortbow; fire mithril arrows; wear Studded leather'],
+    [30,'Use a Birch longbow; fire adamant arrows'],
+    [40,'Use a Yew shortbow; fire rune arrows; wear Green dragonhide body, chaps and vambraces'],
     [50,'Use a Composite bow; wear Blue dragonhide armour'],
-    [60,'Wear Red dragonhide armour'],[70,'Wear Black dragonhide armour']],
+    [60,'Wear Red dragonhide armour; fire dragon arrows'],[70,'Wear Black dragonhide armour']],
   magic:[[1,'Cast Strike spells; wield a Staff; wear Wizard robes'],[13,'Cast Fire Strike'],
     [17,'Cast Bolt spells'],[20,'Wear Mystic robes'],[30,'Wield a Battlestaff'],[35,'Cast Fire Bolt'],
     [40,'Wield a Mystic staff; wear Enchanted robes'],[41,'Cast Blast spells'],[59,'Cast Fire Blast'],
@@ -20561,7 +20590,7 @@ function render(now){
   const swing=Math.sin(now*0.012)*0.7*walkBlend;
   pm.lLeg.rotation.x=swing;pm.rLeg.rotation.x=-swing;
   let armL=-swing*0.5,armR=swing*0.5;
-  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
+  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
   const act=player.action;let _swRest=true,_swT=-1.5;
@@ -20610,7 +20639,7 @@ function render(now){
   else if(showTool==='pick'){pick.visible=true;_tintTool(pick,'mining');}
   else if(showTool==='sword'){sword.visible=true;sword.rotation.x=_swRest?-1.5:_swT;}   /* -1.5 ~= held out front; 0 = down for the chop (tunable) */
   else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?-1.5:_swT;}
-  else if(showTool==='maul'){maul.visible=true;maul.rotation.x=_swRest?-1.5:0;}
+  else if(showTool==='maul'){const _fm=(player.equip.weapon&&player.equip.weapon.id==='frostmaul')?fmaul:maul;_fm.visible=true;_fm.rotation.x=_swRest?-1.5:0;}
   else if(showTool==='bow')bowM.visible=true;
   else if(showTool==='staff')staffM.visible=true;
   shieldM.visible=!!player.equip.shield;
@@ -20702,7 +20731,7 @@ function render(now){
   }
   {const _ce=player.emote&&EMOTES_BY_ID[player.emote];   /* costume emotes (jack/xmas/chef) strip worn gear so the costume isn't covered */
    if(_ce&&_ce.build){
-     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
+     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
      shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;
      bodyM.visible=armPL.visible=armPR.visible=hideBodyM.visible=robeBodyM.visible=chainM.visible=false;
      legL.visible=legR.visible=hideLegL.visible=hideLegR.visible=robeSkirtM.visible=false;
@@ -21859,6 +21888,17 @@ const scim=new THREE.Group();
  spm.position.y=-0.01;scim.add(spm);}
 scim.children.forEach(function(c){c.position.y+=0.085;});
 tool.add(axe);tool.add(pick);tool.add(sword);tool.add(scim);const maul=new THREE.Group();{const haft=gmesh(new THREE.CylinderGeometry(0.025,0.03,0.6,7),0x5a3d22);haft.position.y=-0.33;maul.add(haft);const head=gmesh(new THREE.BoxGeometry(0.19,0.22,0.17),0x6e6f73);head.position.y=-0.6;maul.add(head);const band=gmesh(new THREE.BoxGeometry(0.21,0.06,0.18),0x9a9ca0);band.position.y=-0.52;maul.add(band);const grip=gmesh(new THREE.BoxGeometry(0.038,0.14,0.038),0x3a2a18);grip.position.y=-0.06;maul.add(grip);}tool.add(maul);
+const fmaul=new THREE.Group();{
+ const fh=gmesh(new THREE.CylinderGeometry(0.024,0.03,0.6,7),0x3a5a72);fh.position.y=-0.33;fmaul.add(fh);
+ for(const _wy of [-0.16,-0.3,-0.44]){const _wr=gmesh(new THREE.TorusGeometry(0.036,0.009,5,8),0xbfe9ff);_wr.position.y=_wy;_wr.rotation.x=Math.PI/2;fmaul.add(_wr);}
+ const fhead=gmesh(new THREE.IcosahedronGeometry(0.15,0),0x6fc0e8);fhead.position.y=-0.6;fmaul.add(fhead);
+ const fcore=new THREE.Mesh(new THREE.IcosahedronGeometry(0.09,0),new THREE.MeshBasicMaterial({color:0xdff2ff}));fcore.position.y=-0.6;fmaul.add(fcore);
+ const _fsh=[[0,-0.38,0,0,0],[0,-0.82,0,Math.PI,0],[0,-0.6,0.21,Math.PI/2,0],[0,-0.6,-0.21,-Math.PI/2,0],[0.21,-0.6,0,0,-Math.PI/2],[-0.21,-0.6,0,0,Math.PI/2]];
+ for(let _fi=0;_fi<_fsh.length;_fi++){const _q=_fsh[_fi];
+   const _sh=gmesh(new THREE.ConeGeometry(0.032,0.15+(_fi%2)*0.05,4),_fi%2?0xe6f6ff:0xbfe9ff);
+   _sh.position.set(_q[0],_q[1],_q[2]);_sh.rotation.x=_q[3];_sh.rotation.z=_q[4];fmaul.add(_sh);}
+ const _rg=new THREE.Mesh(new THREE.TorusGeometry(0.19,0.012,5,10),new THREE.MeshBasicMaterial({color:0x9fe6ff}));_rg.position.y=-0.6;_rg.rotation.x=Math.PI/2;fmaul.add(_rg);
+}tool.add(fmaul);
 const bowM=new THREE.Group();
 {/* one continuous curved stave (torus arc), bulging forward with the string as a chord behind it */
  const R=0.5,A=1.9,t2=A/2;
@@ -21882,7 +21922,7 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -22080,7 +22120,7 @@ const santaHatM=new THREE.Group();
  const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
  pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
 santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
-    return {tool,axe,pick,sword,scim,bowM,staffM,capeM,capeEmblem,shieldM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM};
+    return {tool,axe,pick,sword,scim,maul,fmaul,bowM,staffM,capeM,capeEmblem,shieldM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM};
   }
   function applyRemoteGear(G, rig, gear, act, shirtHex) {
     if (!G || !gear) return;
@@ -22091,6 +22131,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     }); };
     const EQ = id => (id && ITEMS[id] && ITEMS[id].equip) ? ITEMS[id].equip : null;
     G.axe.visible = G.pick.visible = G.sword.visible = G.scim.visible = G.bowM.visible = G.staffM.visible = false;
+    G.maul.visible = G.fmaul.visible = false;
     const we = EQ(gear.weapon), wmod = we ? we.model : null;
     if (wmod === 'axe') G.axe.visible = true;
     else if (wmod === 'pick') G.pick.visible = true;
@@ -22098,6 +22139,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     else if (wmod === 'scim') G.scim.visible = true;
     else if (wmod === 'bow') G.bowM.visible = true;
     else if (wmod === 'staff') G.staffM.visible = true;
+    else if (wmod === 'maul') { if (gear.weapon === 'frostmaul') G.fmaul.visible = true; else G.maul.visible = true; }
     if ((wmod === 'sword' || wmod === 'scim') && we) tintG(wmod === 'scim' ? G.scim : G.sword, we.tint !== undefined ? we.tint : 0xc7ccd4, we.trim !== undefined ? we.trim : 0x8a6a2a);
     G.shieldM.visible = !!gear.shield;
     if (gear.shield) { const se = EQ(gear.shield); tintG(G.shieldM, se && se.tint !== undefined ? se.tint : 0x7a5a36, se && se.trim !== undefined ? se.trim : 0x4f3a22); }
@@ -22272,8 +22314,41 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (Array.isArray(m.nodes)) for (const e of m.nodes) _applyDepletedNode(e.x | 0, e.y | 0, e.rs | 0);
         break;
       }
+      case 'frz': {
+        if (m.uid === player.uid) break;
+        const _fr = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
+        if (_fr && _fr.alive && MOB_KINDS[_fr.kind] && !MOB_KINDS[_fr.kind].boss) _fr.frozen = performance.now() + Math.min(Math.max(m.ms | 0, 0), 10000);
+        break;
+      }
+      case 'sksp': {
+        if (m.uid === player.uid) break;
+        const _sx = m.x | 0, _sy = m.y | 0, _en = !!m.en;
+        if (m.ph === 'warn') { _rbliz.push({ x: _sx, y: _sy, fireAt: now() + Math.max(0, m.ms | 0), lastWarn: 0, en: _en }); break; }
+        if (m.ph === 'enrage') {
+          msg('The Snow King enters a frostbitten fury \u2014 faster, colder, merciless!', '#3f7fa8');
+          if (typeof rats !== 'undefined') { const _k = rats.find(rr => rr.kind === 'snowking'); if (_k) _k.enraged = true; }
+          break;
+        }
+        if (m.ph === 'fire') {
+          for (let _i = _rbliz.length - 1; _i >= 0; _i--) if (_rbliz[_i].x === _sx && _rbliz[_i].y === _sy) _rbliz.splice(_i, 1);
+          if (typeof groundFrost === 'function') for (let _dx = -1; _dx <= 1; _dx++) for (let _dy = -1; _dy <= 1; _dy++) groundFrost(_sx + _dx, _sy + _dy, false);
+          const _pd = Math.max(Math.abs(player.x - _sx), Math.abs(player.y - _sy));
+          if (player.hp > 0 && _pd <= 1) {
+            const _dmg = _en ? rndi(26, 46) : rndi(18, 34);
+            player.braceT = performance.now();
+            splats.push({ ent: 'player', dmg: _dmg, t: performance.now() });
+            playerLastHit = performance.now();
+            msg('The avalanche crashes down and buries you in ice!', '#3f7fa8');
+            sfx.hit && sfx.hit();
+            player.hp -= _dmg; player.combatT = performance.now(); updateOrb(); if (player.hp <= 0) die();
+          } else if (player.hp > 0 && _pd <= 5) { msg('You dive clear of the avalanche!', '#86c56a'); }
+          break;
+        }
+        break;
+      }
       case 'ifsp': {
         if (m.uid === player.uid) break;
+        msg('The Snow King bellows \u2014 shards of the blizzard tear loose as living Icefiends!', '#1d5d8f');
         const _f = Array.isArray(m.f) ? m.f : [];
         for (const _e of _f) {
           const _r = (typeof rats !== 'undefined') ? rats[_e[0] | 0] : null;
@@ -22476,6 +22551,10 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     manageClaims();
     if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
     if (groupInGroup() && t - (group._hbT || 0) > 4000) { group._hbT = t; send({ t: 'gsync', roster: group.roster.map(m2 => ({ uid: m2.uid, name: m2.name })) }); }
+    for (let _bi = _rbliz.length - 1; _bi >= 0; _bi--) { const _B = _rbliz[_bi];
+      if (t - _B.lastWarn > 360 && t < _B.fireAt) { _B.lastWarn = t; if (typeof groundFrost === 'function') for (let _dx = -1; _dx <= 1; _dx++) for (let _dy = -1; _dy <= 1; _dy++) groundFrost(_B.x + _dx, _B.y + _dy, true); }
+      if (t > _B.fireAt + 2500) _rbliz.splice(_bi, 1);
+    }
     if (t - (group._bdbT || 0) > 5000) { group._bdbT = t;
       const _dd = []; const _n2 = now();
       if (typeof rats !== 'undefined') for (const r2 of rats)
@@ -22610,6 +22689,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       _G.axe.visible = _wm === 'axe'; _G.pick.visible = _wm === 'pick';
       _G.sword.visible = _wm === 'sword'; _G.scim.visible = _wm === 'scim';
       _G.bowM.visible = _wm === 'bow'; _G.staffM.visible = _wm === 'staff';
+      _G.maul.visible = _wm === 'maul' && r.gear.weapon !== 'frostmaul'; _G.fmaul.visible = _wm === 'maul' && r.gear.weapon === 'frostmaul';
     }
     /* emote — mirrors the LOCAL application exactly: seeded pose + 4-arg fn(pose, tNorm, eMs, now). Overrides walk/combat like the local player. (themed props deferred to a later layer) */
     if (r.emote && r.moving) r.emote = null;
@@ -22832,6 +22912,10 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     return tgt;
   }
   function sendMobAtk(mi, toUid) { if (active() && conn) send({ t: 'mobatk', m: mi, to: toUid }); }
+  /* boss-mechanic sync: freeze procs + the Snow King's Snowfall (warn/fire/enrage) */
+  const _rbliz = [];
+  function sendFreeze(mi, ms) { if (active() && conn) send({ t: 'frz', m: mi | 0, ms: ms | 0 }); }
+  function skSpec(ph, x, y, ms, en) { if (active() && conn) send({ t: 'sksp', ph: ph, x: x | 0, y: y | 0, ms: ms | 0, en: en ? 1 : 0 }); }
   /* shared boss minions: the King's owner activates the fixed-index icefiends on every client */
   function groupIcefiends(ki, list) { if (active() && conn) send({ t: 'ifsp', k: ki, f: list }); }
   function groupIcefiendsGone(ki) { if (active() && conn) send({ t: 'ifgn', k: ki }); }
@@ -22955,7 +23039,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
