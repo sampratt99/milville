@@ -2877,7 +2877,7 @@ function groundFrost(tx,ty,warn){
   for(let k=0;k<4;k++){parts.push({wx:gx+rnd(-0.3,0.3),wy:gy,wz:gz+rnd(-0.3,0.3),smoke:true,r0:rnd(5,9),grow:rnd(8,16),a0:rnd(0.2,0.4),
     vx:rnd(-0.3,0.3),vy:-rnd(0.6,1.4),t:now+k*22,life:460+rnd(0,200),col:'#cfe8f5'});}
 }
-function despawnIcefiends(king,_noMp){for(const m of rats)if(m.kind==='icefiend'&&m.minionOf===king.i&&m.alive){m.alive=false;m.target=null;if(m._m)m._m.group.visible=false;}
+function despawnIcefiends(king,_noMp){for(const m of rats)if(m.kind==='icefiend'&&m.minionOf===king.i){m.alive=false;m.target=null;m.respawnAt=9e15;if(m._m)m._m.group.visible=false;}
   if(!_noMp&&typeof MP!=='undefined'&&MP.groupIcefiendsGone)MP.groupIcefiendsGone(king.i);}
 function spawnIcefiends(king,n){
   let done=0;const _mpf=[];
@@ -2885,7 +2885,7 @@ function spawnIcefiends(king,n){
     if(m.kind==='icefiend'&&m.minionOf===king.i&&!m.alive){
       const sx=king.x+rndi(-2,2),sy=king.y+rndi(-2,2);
       m.x=m.px=m.sx=sx;m.y=m.py=m.sy=sy;m.hp=m.maxhp=MOB_KINDS.icefiend.hp;
-      m.alive=true;m.target=player;m.respawnAt=0;m.lastHit=0;
+      m.alive=true;m.target=player;m.respawnAt=9e15;m.lastHit=0;
       if(m._m)m._m.group.visible=true;
       _mpf.push([m.i,sx,sy]);
       done++;
@@ -2958,6 +2958,7 @@ function bossSpecialTick(r,nowM){
       const tiles=[];for(let k=1;k<=5;k++)tiles.push([r.x+cdx*k,r.y+cdy*k]);
       r.spec={phase:'windup',t:nowM,fireAt:nowM+2600,dir:[cdx,cdy],tiles:tiles};
       r.nextAtk=nowM+5400;
+      if(typeof MP!=='undefined'&&MP.dbSpec)MP.dbSpec('warn',r.i,tiles,2600);
       msg('The Black Dragon rears back, drawing a furnace-breath — step out of the line of fire!','#e8801f');
     }
     return;
@@ -2967,6 +2968,7 @@ function bossSpecialTick(r,nowM){
     if(nowM>=r.spec.fireAt){
       r.spec.phase='fire';r.spec.fireT=nowM;r.spec.endAt=nowM+650;
       dragonFireBreath(r,r.spec.dir);
+      if(typeof MP!=='undefined'&&MP.dbSpec)MP.dbSpec('fire',r.i,r.spec.tiles,0);
       for(const tl of r.spec.tiles)groundFire(tl[0],tl[1]);
       const onLine=r.spec.tiles.some(function(tl){return tl[0]===player.x&&tl[1]===player.y;});
       const sid=player.equip.shield&&player.equip.shield.id;
@@ -3113,7 +3115,7 @@ function dropMobLoot(r){
 
 function mobDie(r,groupKill){
   const mk3=MOB_KINDS[r.kind];
-  r.alive=false;r.respawnAt=performance.now()+mk3.resp;r.target=null;player.kills=(player.kills||0)+1;if(mk3.boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}if(r.kind==='brat')player.bratKills=(player.bratKills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
+  r.alive=false;r.respawnAt=(r.minionOf!==undefined)?9e15:(performance.now()+mk3.resp);r.target=null;player.kills=(player.kills||0)+1;if(mk3.boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}if(r.kind==='brat')player.bratKills=(player.bratKills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   if(engagedMob===r)engagedMob=null;
   if(typeof MP!=='undefined')MP.onMobKilled(r);
   msg((groupKill?'Your group has defeated the ':'You have defeated the ')+r.name.toLowerCase()+'.');
@@ -4392,7 +4394,8 @@ function playerTick(){
     const nowC=performance.now();
     if(!player.nextAtk||nowC>=player.nextAtk+4000)player.nextAtk=nowC;
     if(nowC<player.nextAtk)return;
-    player.nextAtk=nowC+2400;player.swingT=nowC;
+    const _dw=(!(duel.rules&&duel.rules.noWeapons))&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+    player.nextAtk=nowC+((_dw&&_dw.spd)||2400);player.swingT=nowC;
     if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
     let dmg=0;if(Math.random()<_duelAcc())dmg=rndi(0,_duelMaxhit());
     if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;}
@@ -4896,8 +4899,8 @@ function ratsTick(){
       &&dist1(r.x,r.y,player.x,player.y)<=4
       &&dist1(r.x,r.y,r.sx,r.sy)<=8
       &&(!_ct||_ct===r||MOB_KINDS[r.kind].minion))r.target=player;
-    if(MOB_KINDS[r.kind].boss&&r.kind!=='snowking'&&r.target)bossSpecialTick(r,performance.now());
-    if(r.kind==='snowking'&&r.target)snowKingSpecialTick(r,performance.now());
+    if(MOB_KINDS[r.kind].boss&&r.kind!=='snowking'&&(r.target||r.spec))bossSpecialTick(r,performance.now());
+    if(r.kind==='snowking'&&(r.target||r.spec))snowKingSpecialTick(r,performance.now());
     if(r.kind==='zombie'&&(tick&1)
       &&!(r.target&&dist1(r.x,r.y,player.x,player.y)===1))continue;
     if(r.target){
@@ -5052,10 +5055,11 @@ function worldTick(){
   {const _m5=player.quests.m5,_mAct=_m5.s===1&&!_m5.d,_mr=rats.find(r=>r.kind==='master');
    if(_mr){if(!_mAct&&_mr.alive)_mr.alive=false;
     else if(_mAct&&!_mr.alive&&now>=_mr.respawnAt){_mr.alive=true;_mr.maxhp=mobMaxHp(_mr);_mr.hp=_mr.maxhp;_mr.x=_mr.sx;_mr.y=_mr.sy;_mr.px=_mr.sx;_mr.py=_mr.sy;_mr.target=null;}}}
-  for(const r of rats)if(!r.alive&&now>=r.respawnAt){
+  for(const r of rats)if(!r.alive&&r.minionOf===undefined&&now>=r.respawnAt){
     if(r.superior){r.superior=false;if(r._m&&r._m.group&&r._supScale!==undefined)r._m.group.scale.setScalar(r._supScale);}r.superiorRolled=false;
     if(r.kind==='master')continue;
     if(r.locked)continue;
+    if(MOB_KINDS[r.kind].boss){r.spec=null;r.specCd=undefined;r.enraged=false;r.enrageDone=false;r.blizzardDone=false;}
     if(r.kind==='boar'){if(player.quests.chef.s!==5){r.respawnAt=now+4000;continue;}r.lvl=cmbLvl()+rndi(1,2);}
     if(MOB_KINDS[r.kind].roam){
       for(let t2=0;t2<60;t2++){
@@ -7059,6 +7063,36 @@ const EMOTES_BY_ID={};for(const E of EMOTES)EMOTES_BY_ID[E.id]=E;
 /* ============ special unlockable emotes (detailed props + themed fade) ============ */
 const PILOT_EMOTES=false; /* gated for launch. set true to pilot (every special emote playable). */
 let _emoteRig=null,_emotePos=null; /* when set, special-emote props build on / emit at a REMOTE avatar instead of the local player */
+function poseWhip(w,swA,tms){
+  /* re-poses the abyssal whip's tendril along a parametric curve every frame.
+     rest: falls from the hand, drooping to vertical, tail curling under, with a slow idle sway.
+     lash (0-460ms): trails behind the rising hand, then streams out with a wave that chases the
+     tip through the crack, then re-hangs with a damped wobble. */
+  const S=w._segs;if(!S)return;
+  const N=S.length,SEG=0.058;
+  const idle=Math.sin((tms||0)*0.0016)*0.05;
+  let py=-0.16,pz=0.0,ph=0;
+  const lash=(swA>=0&&swA<460);
+  for(let i=0;i<N;i++){
+    const u=(i+0.5)/N;
+    const rest=0.62*(1-u*1.35)+((u>0.68)?-(u-0.68)*(u-0.68)*9.5:0)+idle*(0.3+u);
+    if(!lash){ph=rest;}
+    else{
+      const T=swA/460,back=1.35+1.05*u;
+      if(T<0.3){const p2=T/0.3;ph=rest*(1-p2)+back*p2;}
+      else if(T<0.52){const p2=(T-0.3)/0.22;
+        const os=1.1*u*Math.sin(Math.PI*Math.min(1,Math.max(0,p2*1.9-u*0.9)));
+        ph=back*(1-p2)-os;}
+      else{const p2=(T-0.52)/0.48;
+        ph=rest+(1-p2)*(-0.5*u)+Math.exp(-3.2*p2)*Math.sin(10*p2-u*5)*0.55*u;}
+    }
+    const _dy=-Math.cos(ph)*SEG,_dz=Math.sin(ph)*SEG;
+    S[i].position.set(0,py+_dy*0.5,pz+_dz*0.5);
+    S[i].rotation.x=ph;
+    py+=_dy;pz+=_dz;
+  }
+  if(w._tip){w._tip.position.set(0,py-Math.cos(ph)*0.05,pz+Math.sin(ph)*0.05);w._tip.rotation.x=ph+Math.PI;}
+}
 function _emoteUnlocked(id){const E=EMOTES_BY_ID[id];if(!E||!E.locked)return true;return PILOT_EMOTES||!!(player.emoteUnlocks&&player.emoteUnlocks[id]);}
 function _glow(geo,hex){const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex}));m.castShadow=false;return m;}
 function _addGlow(geo,hex,op){const m=new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex,transparent:true,opacity:op,blending:THREE.AdditiveBlending,depthWrite:false}));m.castShadow=false;return m;}
@@ -11504,17 +11538,17 @@ const fmaul=new THREE.Group();{
  const _rg=new THREE.Mesh(new THREE.TorusGeometry(0.19,0.012,5,10),new THREE.MeshBasicMaterial({color:0x9fe6ff}));_rg.position.y=-0.6;_rg.rotation.x=Math.PI/2;fmaul.add(_rg);
 }tool.add(fmaul);
 const whipM=new THREE.Group();
-{const _wg=gmesh(new THREE.CylinderGeometry(0.021,0.026,0.16,7),0x1a0e10);_wg.position.y=-0.08;whipM.add(_wg);
+{const _wg=gmesh(new THREE.CylinderGeometry(0.021,0.026,0.16,7),0x14090c);_wg.position.y=-0.08;whipM.add(_wg);
  for(const _yy of [-0.03,-0.09,-0.14]){const _wb=gmesh(new THREE.TorusGeometry(0.027,0.006,5,8),0x7a2030);_wb.position.y=_yy;_wb.rotation.x=Math.PI/2;whipM.add(_wb);}
  const _pm3=gmesh(new THREE.SphereGeometry(0.027,7,6),0x3a1d22);_pm3.position.y=0.01;whipM.add(_pm3);
- let _px=0,_py=-0.17,_pz=0;
- for(let _si=0;_si<9;_si++){
-   const _rr=0.030-_si*0.0026;
-   const _sg=gmesh(new THREE.SphereGeometry(Math.max(0.009,_rr),6,5),_si%2?0x2a1418:0x3a1d22);
-   _py-=0.062-_si*0.002;_pz+=0.012+_si*0.006;
-   _sg.position.set(_px,_py,_pz);_sg.scale.y=1.55;whipM.add(_sg);}
- const _tp=new THREE.Mesh(new THREE.ConeGeometry(0.016,0.1,5),new THREE.MeshBasicMaterial({color:0xc0242a}));
- _tp.position.set(_px,_py-0.08,_pz+0.02);_tp.rotation.x=Math.PI-0.5;whipM.add(_tp);}
+ whipM._segs=[];
+ for(let _si=0;_si<12;_si++){
+   const _rr=Math.max(0.011,0.030-_si*0.00165);
+   const _sg=gmesh(new THREE.SphereGeometry(_rr,6,5),(_si%4===1)?0x9a2838:(_si%2?0x7a2030:0x14090c));
+   _sg.scale.y=(0.058*1.3)/(2*_rr);        /* constant world length + 30% overlap: no gaps */
+   whipM.add(_sg);whipM._segs.push(_sg);}
+ whipM._tip=new THREE.Mesh(new THREE.ConeGeometry(0.014,0.085,5),new THREE.MeshBasicMaterial({color:0xc0242a}));
+ whipM.add(whipM._tip);}
 tool.add(whipM);
 const leafSwM=new THREE.Group();
 {const _g1=gmesh(new THREE.CylinderGeometry(0.021,0.025,0.14,6),0x5a3d22);_g1.position.y=-0.07;leafSwM.add(_g1);
@@ -15645,11 +15679,11 @@ function slayerShopRows(){const sl=player.slayer,u=sl.unlocks||{},rows=[];
   if(!ownsItemAnywhere('hunter_signet'))rows.push({id:'hunter_signet',icon:'hunter_signet',name:'Hunter\u2019s Signet',price:SLAYER_PRICES.hunter_signet,desc:'A ring (right-click it) that reports your active contract and teleports you to the Slayer Master or your current task. You only ever need one.'});
   if(!crimsonDyeSpent())rows.push({id:'crimson_dye',icon:'crimson_dye',name:'Crimson Dye',price:SLAYER_PRICES.crimson_dye,desc:'Fuse onto a Proctor\u2019s Helm with a Scholar\u2019s Crest (a task drop) to forge the Crimson Proctor\u2019s Helm.'});
   if(!giltDyeSpent())rows.push({id:'gilt_dye',icon:'gilt_dye',name:'Gilt Dye',price:SLAYER_PRICES.gilt_dye,desc:'Fuse onto a Crimson Proctor\u2019s Helm with a Sentinel Visor (a task drop) to forge the Gilded Warden Helm.'});
-  if(!u.banshee)rows.push({id:'unlock_banshee',icon:'earmuffs',name:'Contract: Banshee',price:SLAYER_PRICES.unlock_banshee,desc:'Adds banshees to your contract pool. Comes with Earmuffs to silence their deadly wail.'});
-  if(!u.basilisk)rows.push({id:'unlock_basilisk',icon:'mirror_shield',name:'Contract: Basilisk',price:SLAYER_PRICES.unlock_basilisk,desc:'Adds basilisks to your pool. Comes with a Mirror Shield to deflect their petrifying gaze.'});
-  if(!u.gargoyle)rows.push({id:'unlock_gargoyle',icon:'rock_hammer',name:'Contract: Gargoyle',price:SLAYER_PRICES.unlock_gargoyle,desc:'Adds gargoyles to your pool. Comes with a Rock Hammer \u2014 needed to shatter them once beaten.'});
-  if(!u.wyvern)rows.push({id:'unlock_wyvern',icon:'elemental_shield',name:'Contract: Skeletal Wyvern',price:SLAYER_PRICES.unlock_wyvern,desc:'Adds skeletal wyverns to your pool. Comes with an Elemental Shield \u2014 it (or a Dragon Slayer shield) turns their frost breath.'});
-  if(!u.kurask)rows.push({id:'unlock_kurask',icon:'leaf_sword',name:'Contract: Kurask',price:SLAYER_PRICES.unlock_kurask,desc:'Adds kurasks to your pool (Slayer 65 to harm them). Comes with a Leaf-bladed sword \u2014 the only steel that cuts their rubbery hide. They hoard the rarer Leaf-bladed battleaxe.'});
+  if(!u.banshee)rows.push({id:'unlock_banshee',icon:'earmuffs',name:'Contract: Banshee',price:SLAYER_PRICES.unlock_banshee,slayReq:MOB_KINDS.banshee.slayReq,desc:'Adds banshees to your contract pool. Comes with Earmuffs to silence their deadly wail.'});
+  if(!u.basilisk)rows.push({id:'unlock_basilisk',icon:'mirror_shield',name:'Contract: Basilisk',price:SLAYER_PRICES.unlock_basilisk,slayReq:MOB_KINDS.basilisk.slayReq,desc:'Adds basilisks to your pool. Comes with a Mirror Shield to deflect their petrifying gaze.'});
+  if(!u.gargoyle)rows.push({id:'unlock_gargoyle',icon:'rock_hammer',name:'Contract: Gargoyle',price:SLAYER_PRICES.unlock_gargoyle,slayReq:MOB_KINDS.gargoyle.slayReq,desc:'Adds gargoyles to your pool. Comes with a Rock Hammer \u2014 needed to shatter them once beaten.'});
+  if(!u.wyvern)rows.push({id:'unlock_wyvern',icon:'elemental_shield',name:'Contract: Skeletal Wyvern',price:SLAYER_PRICES.unlock_wyvern,slayReq:MOB_KINDS.wyvern.slayReq,desc:'Adds skeletal wyverns to your pool. Comes with an Elemental Shield \u2014 it (or a Dragon Slayer shield) turns their frost breath.'});
+  if(!u.kurask)rows.push({id:'unlock_kurask',icon:'leaf_sword',name:'Contract: Kurask',price:SLAYER_PRICES.unlock_kurask,slayReq:MOB_KINDS.kurask.slayReq,desc:'Adds kurasks to your pool (Slayer 65 to harm them). Comes with a Leaf-bladed sword \u2014 the only steel that cuts their rubbery hide. They hoard the rarer Leaf-bladed battleaxe.'});
   return rows;}
 function slDrawIcon(cv,icon){const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
   if(icon==='_skull'){g.save();g.translate(16,16);g.fillStyle='#d8d2c0';g.beginPath();g.arc(0,-2,8.5,Math.PI,0);g.fill();g.fillRect(-8.5,-2,17,7);g.fillStyle='#b6291f';g.beginPath();g.arc(-3.8,-1,2.5,0,7);g.arc(3.8,-1,2.5,0,7);g.fill();g.fillStyle='#1c1813';g.fillRect(-1.3,3,2.6,4);g.fillRect(-5,5,3,2);g.fillRect(2,5,3,2);g.restore();return;}
@@ -15680,7 +15714,10 @@ function slToggleRow(kind){const blocked=!!((player.slayer.blocked||{})[kind]);
   bwrap.appendChild(btn);row.appendChild(bwrap);return row;}
 function renderSlayerShop(){const sl=player.slayer;const pe=document.getElementById('slpts');if(pe)pe.textContent=(sl.points||0)+' pts';
   const list=document.getElementById('sllist');if(!list)return;list.innerHTML='';
-  for(const r of slayerShopRows()){r.afford=(sl.points||0)>=r.price;
+  for(const r of slayerShopRows()){
+    const _lvOk=!r.slayReq||lvl('slayer')>=r.slayReq;
+    if(r.slayReq)r.desc=r.desc+' Requires Slayer '+r.slayReq+(_lvOk?'.':' \u2014 yours is '+lvl('slayer')+'.');
+    r.afford=((sl.points||0)>=r.price)&&_lvOk;
     list.appendChild(slMakeRow(r,()=>{const res=buySlayer(r.id);renderSlayerShop();renderSkills&&renderSkills();renderInv&&renderInv();renderEquip&&renderEquip();},r.id,'Buy \u00b7 '+r.price+' pts','Confirm? '+r.price+' pts'));}
   if(sl.task&&sl.done<sl.need){
     list.appendChild(slMakeRow({icon:'_coin',name:'Trade contract (keep streak)',desc:'Swap your current contract for a fresh one WITHOUT breaking your Slayer streak. (Trading for free at the Slayer Master resets your streak; this does not.)',afford:(sl.points||0)>=SLAYER_PRICES.skip},
@@ -15810,8 +15847,8 @@ function giltDyeSpent(){return ownsHelmAnywhere('gilded_warden_helm');}
 function neededHelmPiece(){const have=id=>countItem(id)>0||(typeof bank!=='undefined'&&bank.some(b=>b.id===id&&(b.qty||0)>0))||(player.equip.head&&player.equip.head.id===id);if(have('crimson_proctor_helm')&&!have('gilded_warden_helm')&&!have('sentinel_visor'))return 'sentinel_visor';if(have('proctor_helm')&&!have('crimson_proctor_helm')&&!have('scholar_crest'))return 'scholar_crest';return null;}
 const SLAYER_PRICES={bigger:150,proctor_helm:250,hunter_signet:200,crimson_dye:180,gilt_dye:320,unlock_banshee:70,unlock_gargoyle:120,unlock_basilisk:100,unlock_wyvern:150,unlock_kurask:130,skip:30,block:100};
 const SLAYER_STORE_INFO='Complete contracts to earn Slayer points \u2014 more for longer streaks and tougher targets, with a bonus every tenth task. Contracts grow with your Slayer level, and harder creatures pay far more per kill. Spend them here. The Proctor\u2019s Helm strikes harder against the creature of your current contract; upgrade it by fusing a helm piece \u2014 a rare drop from your task monsters \u2014 with a dye bought here: a Scholar\u2019s Crest with a Crimson Dye, then a Sentinel Visor with a Gilt Dye, each adding to its menace and its bite. Unlock Bigger and Badder and your contract creatures may turn superior: far tougher, but flush with points and helm pieces. Expand your contracts to hunt deep-wilderness creatures \u2014 each unlock comes with the gear that beats its trick: Earmuffs for banshees (or any Proctor\u2019s Helm), a Mirror Shield for basilisks, a Rock Hammer to crush gargoyles, a Dragon Slayer shield or an Elemental Shield against the wyvern\u2019s frost \u2014 either turns its freezing breath \u2014 and a Leaf-bladed sword for kurasks, whose rubbery hide shrugs off all other steel (Slayer 65 required). Keep the right gear equipped or these creatures tear straight through armour.';
-function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else if(id==='block'){sl.unlocks=sl.unlocks||{};sl.unlocks.block=true;msg('Task blocking unlocked \u2014 toggle blocks in the rewards shop.','#9a6fb0');}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
-function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});if(!crimsonDyeSpent())O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});if(!giltDyeSpent())O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts)',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts)',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts)',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts)',next:()=>buySlayer('unlock_wyvern')});if(!u.kurask)E.push({label:'Unlock Kurask contracts ('+SLAYER_PRICES.unlock_kurask+' pts)',next:()=>buySlayer('unlock_kurask')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
+function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if(id.slice(0,7)==='unlock_'){const _uk=id.slice(7),_rq=MOB_KINDS[_uk]&&MOB_KINDS[_uk].slayReq;if(_rq&&lvl('slayer')<_rq){msg('You need Slayer level '+_rq+' before the Master will sell '+MOB_KINDS[_uk].name+' contracts.','#9a6fb0');return 'lowlvl';}}if((sl.points||0)<cost)return 'cant';if(id==='bigger'){sl.unlocks=sl.unlocks||{};sl.unlocks.bigger=true;msg('Bigger and Badder unlocked \u2014 superior creatures now stalk your contracts.','#9a6fb0');}else if(id.slice(0,7)==='unlock_'){unlockMonster(id.slice(7));}else if(id==='block'){sl.unlocks=sl.unlocks||{};sl.unlocks.block=true;msg('Task blocking unlocked \u2014 toggle blocks in the rewards shop.','#9a6fb0');}else{if(!addItem(id)){msg('Your pack is full.');return 'wares';}msg('You receive '+ITEMS[id].name+'.','#9a6fb0');}sl.points-=cost;sfx.pickup&&sfx.pickup();dirty=true;dlg.tree=slayerStore();return 'shop';}
+function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},lowlvl:{who:'npc',text:'Your Slayer craft runs too shallow for that quarry yet. Train, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});if(!crimsonDyeSpent())O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});if(!giltDyeSpent())O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts, Slayer '+MOB_KINDS.banshee.slayReq+')',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts, Slayer '+MOB_KINDS.basilisk.slayReq+')',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts, Slayer '+MOB_KINDS.gargoyle.slayReq+')',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts, Slayer '+MOB_KINDS.wyvern.slayReq+')',next:()=>buySlayer('unlock_wyvern')});if(!u.kurask)E.push({label:'Unlock Kurask contracts ('+SLAYER_PRICES.unlock_kurask+' pts, Slayer '+MOB_KINDS.kurask.slayReq+')',next:()=>buySlayer('unlock_kurask')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
 function applyHelmDye(dyeId){const m=({crimson_dye:['proctor_helm','scholar_crest','crimson_proctor_helm'],gilt_dye:['crimson_proctor_helm','sentinel_visor','gilded_warden_helm']})[dyeId];if(!m)return;const baseId=m[0],pieceId=m[1],outId=m[2];const inInv=findItem(baseId)>=0;const equipped=player.equip.head&&player.equip.head.id===baseId;if(!inInv&&!equipped){msg('You need a '+ITEMS[baseId].name+' to apply this dye.','#9a6fb0');return;}if(findItem(pieceId)<0){msg('You also need a '+ITEMS[pieceId].name+' \u2014 a rare drop from your task monsters.','#9a6fb0');return;}if(inInv)removeSlot(findItem(baseId));else{player.equip.head=null;renderEquip&&renderEquip();}removeSlot(findItem(pieceId));removeSlot(findItem(dyeId));if(!addItem(outId))dropGround(player.x,player.y,outId,1);sfx.level&&sfx.level();dirty=true;msg('You fuse the '+ITEMS[pieceId].name.toLowerCase()+' onto the helm with '+ITEMS[dyeId].name.toLowerCase()+' \u2014 behold, the '+ITEMS[outId].name+'!','#e8b020');renderInv&&renderInv();}
 function signetCheckTask(){const sl=player.slayer;if(!sl.task)msg('No active contract. Seek the Slayer Master at the wild\u2019s edge.','#9a6fb0');else if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');else msg('Contract: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath. You hold '+(sl.points||0)+' Slayer points.','#9a6fb0');}
 function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}const tx=26+WX,ty=37;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you to the chaos temple, deep in the wild.','#9a6fb0');dirty=true;}
@@ -17382,6 +17419,13 @@ const SKILL_GUIDE={
     [40,'Use a Yew shortbow; fire rune arrows; wear Green dragonhide body, chaps and vambraces'],
     [50,'Use a Composite bow; wear Blue dragonhide armour'],
     [60,'Wear Red dragonhide armour; fire dragon arrows'],[70,'Wear Black dragonhide armour']],
+  slayer:[[1,'Take contracts from the Slayer Master \u2014 gold, points and combat xp on completion'],
+    [10,'Banshee contracts (rewards-shop unlock; Earmuffs or a Proctor\u2019s Helm block the wail)'],
+    [20,'Contracts grow larger \u2014 and pay more \u2014 as your Slayer level rises'],
+    [35,'Basilisk contracts (Mirror Shield deflects the gaze)'],
+    [65,'Kurask contracts (only leaf-bladed weapons wound them)'],
+    [68,'Skeletal Wyvern contracts (Elemental or Dragon Slayer shield turns the breath)'],
+    [70,'Gargoyle contracts (Rock Hammer shatters them)']],
   magic:[[1,'Cast Strike spells; wield a Staff; wear Wizard robes'],[13,'Cast Fire Strike'],
     [17,'Cast Bolt spells'],[20,'Wear Mystic robes'],[30,'Wield a Battlestaff'],[35,'Cast Fire Bolt'],
     [40,'Wield a Mystic staff; wear Enchanted robes'],[41,'Cast Blast spells'],[59,'Cast Fire Blast'],
@@ -18904,19 +18948,28 @@ function _duelPitSeal(){   /* re-seal the pit (tiles always; heights only while 
   for(let y=MPIT.y0;y<=MPIT.y1;y++)for(let x=MPIT.x0;x<=MPIT.x1;x++){mathesTiles[y][x]=T_WALL;if(inMathes)hts[y][x]=_mFY;}
   if(_duelRingSnap){for(const t of _duelRingSnap)mathesTiles[t[1]][t[0]]=t[2];_duelRingSnap=null;}   /* restore the ring */
 }
+function _duelOppDef(){                    /* opponent's total armour bonus, derived from their synced gear ids */
+  const o=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;let d=0;
+  if(o&&o.gear)for(const k2 in o.gear){const g2=o.gear[k2];const it=g2&&ITEMS[g2];if(it&&it.equip&&it.equip.def)d+=it.equip.def;}
+  return d;
+}
 function _duelMaxhit(){
+  /* the real OSRS melee max-hit formula (same as overworld combat), noWeapons-aware */
   const noW=duel.rules&&duel.rules.noWeapons;
-  const w=(!noW)&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
-  return Math.max(1,Math.floor((lvl('strength')+((w&&w.atk)||0)*2)/7)+1);
+  const _sty=player.style==='slash'?3:player.style==='controlled'?1:0;
+  const effS=Math.floor(lvl('strength')*(prayers.gordon?1.18:1));
+  const strB=noW?0:eqStat('str');
+  return Math.max(1,Math.floor(0.5+(effS+_sty+8)*(strB+64)/640));
 }
 function _duelAcc(){
+  /* attacker's level + weapon accuracy vs the DEFENDER'S ARMOUR (armour now matters in the arena) */
   const noW=duel.rules&&duel.rules.noWeapons;
-  const w=(!noW)&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
-  return clamp(0.5+(lvl('attack')+((w&&w.atk)||0)*1.5)*0.01,0.35,0.92);
+  const atkB=noW?0:eqStat('atk');
+  return clamp(0.30+lvl('attack')*0.006+atkB*0.0022-_duelOppDef()*0.0016,0.15,0.92);
 }
 function startDuel(uid,name,rules,myStake,theirStake){
   if(!inMathes||duel.state!=='none')return;
-  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};duel.oppHp=null;duel.oppMhp=null;duel._hpSendT=0;
+  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};duel.oppHp=null;duel.oppMhp=null;duel._hpSendT=0;duel._lastPhitN=0;
   if(duel.rules.noWeapons&&player.equip.weapon){const _dw=player.equip.weapon;player.equip.weapon=null;if(!invFull())addItem(_dw.id,_dw.qty||1);else bankAdd(_dw.id,_dw.qty||1);if(typeof renderEquip==='function')renderEquip();if(typeof renderInv==='function')renderInv();if(typeof renderStyleBar==='function')renderStyleBar();msg('No weapons this bout \u2014 you set your weapon aside.','#caa23a');}
   duel.stakeMine=(myStake&&myStake.length)?_duelTakeItems(myStake):[];                        /* lock my stake out of inventory */
   duel.stakeTheirs=_duelEscrowIn[uid]||((theirStake||[]).map(o=>({id:o.id,qty:o.qty})));       /* what I win: their confirmed escrow if it arrived, else their claim */
@@ -20736,7 +20789,7 @@ function render(now){
   axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
-  const act=player.action;let _swRest=true,_swT=-1.5,_wpT=-0.6;
+  const act=player.action;let _swRest=true,_swT=-1.5,_wpT=-0.6,_wpSwA=-1;
   if(act&&acting){
     if(act.type==='gather'){
       const sk=OBJ_DEFS[act.obj.def].skill;
@@ -20766,7 +20819,8 @@ function render(now){
         if(swA<480){const lift=Math.sin(Math.PI*(swA/480));
           armR=-0.55-1.95*lift;armL=-0.22-0.30*lift;}
       }else if(wEq==='whip'){
-        /* whip: coil back then a fast forward crack */
+        /* whip: coil back then a fast forward crack (tendril solved per-frame in poseWhip) */
+        _wpSwA=swA;
         armR=-0.45;_wpT=-0.6;
         if(swA<460){const t=swA/460;_swRest=false;const ss=x=>x*x*(3-2*x);
           if(t<0.3){const u=ss(t/0.3);armR=-0.45-1.45*u;_wpT=-0.6-1.5*u;}
@@ -20791,7 +20845,7 @@ function render(now){
   else if(showTool==='sword'){sword.visible=true;sword.rotation.x=_swRest?-1.5:_swT;}   /* -1.5 ~= held out front; 0 = down for the chop (tunable) */
   else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?-1.5:_swT;}
   else if(showTool==='maul'){const _fm=(player.equip.weapon&&player.equip.weapon.id==='frostmaul')?fmaul:maul;_fm.visible=true;_fm.rotation.x=_swRest?-1.5:0;}
-  else if(showTool==='whip'){whipM.visible=true;whipM.rotation.x=_swRest?-0.6:_wpT;}
+  else if(showTool==='whip'){whipM.visible=true;whipM.rotation.x=0;poseWhip(whipM,_wpSwA,performance.now());}
   else if(showTool==='leafsw'){leafSwM.visible=true;leafSwM.rotation.x=_swRest?-1.5:_swT;}
   else if(showTool==='leafax'){leafAxM.visible=true;leafAxM.rotation.x=_swRest?-1.5:_swT;}
   else if(showTool==='bow')bowM.visible=true;
@@ -21835,7 +21889,8 @@ const MP = (function () {
   function duelSetAccept() { if (!duelSetup.active) return; duelSetup.myAccept=true; if (conn) send({ t:'dsaccept', to:duelSetup.withUid, rules:duelSetup.rules }); if (duelSetup.theirAccept) _duelSetupStart(); else if (typeof renderDuelSetup==='function') renderDuelSetup(); }
   function duelSetDecline() { if (!duelSetup.active) return; if (conn) send({ t:'dsdecline', to:duelSetup.withUid }); _duelSetupClose(); }
   function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myStake:duelSetup.myStake.map(o=>({id:o.id,qty:o.qty})), theirStake:duelSetup.theirStake.map(o=>({id:o.id,qty:o.qty})), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
-  function duelSwing(dmg) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0 }); }
+  let _phitSeq = 0;
+  function duelSwing(dmg) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0, n: ++_phitSeq }); }
   function duelHp(hp,mhp) { if (duel.oppUid && conn) send({ t: 'dhp', to: duel.oppUid, hp: hp | 0, mhp: mhp | 0 }); }
   function duelConcede() { if (duel.oppUid && conn) send({ t: 'dend', to: duel.oppUid }); }
   function partySnap(arr, ms) { if (conn) send({ t: 'pset', b: arr, ms: ms }); }    /* host -> all: authoritative balloon set + remaining ms */
@@ -21873,8 +21928,15 @@ const MP = (function () {
   function disconnect() { want = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } try { ws && ws.close(); } catch (e) {} group.roster = []; group.invitesIn.clear(); group.invitesOut.clear(); mobAggro.clear(); _coAttacked.clear(); _tradeReset(); tradeReqIn.clear(); tradeReqOut.clear(); duelReqIn.clear(); duelReqOut.clear(); _duelSetupReset(); if (typeof renderFriends === 'function') renderFriends(); if (typeof renderTrade === 'function') renderTrade(); }
   function open() {
     if (!active() || !want) return;
-    try { ws = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
-    ws.onopen = function () {
+    /* kill any previous socket first: an orphaned live socket receives every broadcast too,
+       which double-applies duel hits, group hits, chat... (identity guards below make any
+       straggler inert even if close() is slow). */
+    if (ws) { try { ws.onclose = null; ws.onmessage = null; ws.onerror = null; ws.close(); } catch (e) {} }
+    let sock;
+    try { sock = new WebSocket(wsURL()); } catch (e) { return reconnect(); }
+    ws = sock;
+    sock.onopen = function () {
+      if (ws !== sock) { try { sock.close(); } catch (e) {} return; }
       conn = true; backoff = 1000;
       send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: selfApp(), gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), snap: 1 });
       lastGear = ''; lastAct = ''; /* force a state push next frame */
@@ -21887,9 +21949,9 @@ const MP = (function () {
       if (typeof console !== 'undefined') console.log('[Milville MP]', MP_VERSION, 'connected to', wsURL());
       if (!_announced) { _announced = true; if (typeof logSystem === 'function') logSystem('Multiplayer connected (' + MP_VERSION + ').'); }
     };
-    ws.onmessage = function (ev) { let m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
-    ws.onclose = function () { conn = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } if (want) reconnect(); };
-    ws.onerror = function () { try { ws.close(); } catch (e) {} };
+    sock.onmessage = function (ev) { if (ws !== sock) return; let m; try { m = JSON.parse(ev.data); } catch (e) { return; } handle(m); };
+    sock.onclose = function () { if (ws !== sock) return; conn = false; if (keepAlive) { clearInterval(keepAlive); keepAlive = null; } if (want) reconnect(); };
+    sock.onerror = function () { try { sock.close(); } catch (e) {} };
   }
   function reconnect() { setTimeout(function () { if (want) open(); }, backoff); backoff = Math.min(Math.round(backoff * 1.8), 15000); }
 
@@ -22056,17 +22118,17 @@ const fmaul=new THREE.Group();{
  const _rg=new THREE.Mesh(new THREE.TorusGeometry(0.19,0.012,5,10),new THREE.MeshBasicMaterial({color:0x9fe6ff}));_rg.position.y=-0.6;_rg.rotation.x=Math.PI/2;fmaul.add(_rg);
 }tool.add(fmaul);
 const whipM=new THREE.Group();
-{const _wg=gmesh(new THREE.CylinderGeometry(0.021,0.026,0.16,7),0x1a0e10);_wg.position.y=-0.08;whipM.add(_wg);
+{const _wg=gmesh(new THREE.CylinderGeometry(0.021,0.026,0.16,7),0x14090c);_wg.position.y=-0.08;whipM.add(_wg);
  for(const _yy of [-0.03,-0.09,-0.14]){const _wb=gmesh(new THREE.TorusGeometry(0.027,0.006,5,8),0x7a2030);_wb.position.y=_yy;_wb.rotation.x=Math.PI/2;whipM.add(_wb);}
  const _pm3=gmesh(new THREE.SphereGeometry(0.027,7,6),0x3a1d22);_pm3.position.y=0.01;whipM.add(_pm3);
- let _px=0,_py=-0.17,_pz=0;
- for(let _si=0;_si<9;_si++){
-   const _rr=0.030-_si*0.0026;
-   const _sg=gmesh(new THREE.SphereGeometry(Math.max(0.009,_rr),6,5),_si%2?0x2a1418:0x3a1d22);
-   _py-=0.062-_si*0.002;_pz+=0.012+_si*0.006;
-   _sg.position.set(_px,_py,_pz);_sg.scale.y=1.55;whipM.add(_sg);}
- const _tp=new THREE.Mesh(new THREE.ConeGeometry(0.016,0.1,5),new THREE.MeshBasicMaterial({color:0xc0242a}));
- _tp.position.set(_px,_py-0.08,_pz+0.02);_tp.rotation.x=Math.PI-0.5;whipM.add(_tp);}
+ whipM._segs=[];
+ for(let _si=0;_si<12;_si++){
+   const _rr=Math.max(0.011,0.030-_si*0.00165);
+   const _sg=gmesh(new THREE.SphereGeometry(_rr,6,5),(_si%4===1)?0x9a2838:(_si%2?0x7a2030:0x14090c));
+   _sg.scale.y=(0.058*1.3)/(2*_rr);        /* constant world length + 30% overlap: no gaps */
+   whipM.add(_sg);whipM._segs.push(_sg);}
+ whipM._tip=new THREE.Mesh(new THREE.ConeGeometry(0.014,0.085,5),new THREE.MeshBasicMaterial({color:0xc0242a}));
+ whipM.add(whipM._tip);}
 tool.add(whipM);
 const leafSwM=new THREE.Group();
 {const _g1=gmesh(new THREE.CylinderGeometry(0.021,0.025,0.14,6),0x5a3d22);_g1.position.y=-0.07;leafSwM.add(_g1);
@@ -22523,6 +22585,35 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (_fr && _fr.alive && MOB_KINDS[_fr.kind] && !MOB_KINDS[_fr.kind].boss) _fr.frozen = performance.now() + Math.min(Math.max(m.ms | 0, 0), 10000);
         break;
       }
+      case 'dbs': {
+        if (m.uid === player.uid) break;
+        const _dr = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
+        const _tl = Array.isArray(m.d) ? m.d : [];
+        if (m.ph === 'warn') {
+          msg('The Black Dragon rears back, drawing a furnace-breath \u2014 step out of the line of fire!', '#e8801f');
+          if (_dr) { _dr.spec = { phase: 'windup', t: now(), fireAt: now() + Math.max(0, m.ms | 0), dir: [0, 0], tiles: _tl }; _rdspecGC.push({ r: _dr, at: now() + (m.ms | 0) + 1500 }); }
+          break;
+        }
+        if (m.ph === 'fire') {
+          if (typeof groundFire === 'function') for (const _t2 of _tl) groundFire(_t2[0] | 0, _t2[1] | 0);
+          if (_dr) { _dr.spec = { phase: 'fire', fireT: now(), endAt: now() + 650, dir: [0, 0], tiles: _tl }; _rdspecGC.push({ r: _dr, at: now() + 700 }); }
+          const _on = _tl.some(_t2 => (_t2[0] | 0) === player.x && (_t2[1] | 0) === player.y);
+          if (player.hp > 0 && _on) {
+            const _sid = player.equip.shield && player.equip.shield.id;
+            const _sh = (_sid === 'dragon_shield' || _sid === 'elemental_shield');
+            let _dmg;
+            if (_sh) { _dmg = rndi(0, Math.ceil((_dr ? mobMaxhit(_dr) : 24) * 1.6)); msg('Your Dragon Slayer shield turns the worst of the dragonfire aside.', '#caa23a'); }
+            else { _dmg = rndi(45, 72); msg('The dragonfire engulfs you!', '#ff5a1e'); }
+            player.braceT = performance.now();
+            splats.push({ ent: 'player', dmg: _dmg, t: performance.now() });
+            playerLastHit = performance.now();
+            sfx.hit && sfx.hit();
+            player.hp -= _dmg; player.combatT = performance.now(); updateOrb(); if (player.hp <= 0) die();
+          } else if (player.hp > 0 && _tl.length && (Math.abs(player.x - _tl[0][0]) + Math.abs(player.y - _tl[0][1])) <= 8) { msg('You sidestep the dragonfire!', '#86c56a'); }
+          break;
+        }
+        break;
+      }
       case 'sksp': {
         if (m.uid === player.uid) break;
         const _sx = m.x | 0, _sy = m.y | 0, _en = !!m.en;
@@ -22711,6 +22802,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       }
       case 'phit': {
         if (m.to !== player.uid) break;
+        if (m.n !== undefined) { if (m.n <= (duel._lastPhitN || 0)) break; duel._lastPhitN = m.n; }
         if (duel.state === 'fight' && m.uid === duel.oppUid && typeof applyDuelHit === 'function') applyDuelHit(m.dmg | 0);
         break;
       }
@@ -22754,6 +22846,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     manageClaims();
     if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
     if (groupInGroup() && t - (group._hbT || 0) > 4000) { group._hbT = t; send({ t: 'gsync', roster: group.roster.map(m2 => ({ uid: m2.uid, name: m2.name })) }); }
+    for (let _gi = _rdspecGC.length - 1; _gi >= 0; _gi--) if (t > _rdspecGC[_gi].at) { const _e4 = _rdspecGC.splice(_gi, 1)[0]; if (_e4.r && _e4.r.spec) _e4.r.spec = null; }
     for (let _bi = _rbliz.length - 1; _bi >= 0; _bi--) { const _B = _rbliz[_bi];
       if (t - _B.lastWarn > 360 && t < _B.fireAt) { _B.lastWarn = t; if (typeof groundFrost === 'function') for (let _dx = -1; _dx <= 1; _dx++) for (let _dy = -1; _dy <= 1; _dy++) groundFrost(_B.x + _dx, _B.y + _dy, true); }
       if (t > _B.fireAt + 2500) _rbliz.splice(_bi, 1);
@@ -22859,7 +22952,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     }
     /* combat swing — mirrors the local melee / ranged / magic arm motion, driven by
        real per-hit 'sw' timestamps (falls back to a synthesized cycle if none seen) */
-    let _rRest = true, _rSwT = -1.5, _rWpT = -0.6;
+    let _rRest = true, _rSwT = -1.5, _rWpT = -0.6, _rSwA = -1;
     if (r.act && r.act.k === 'attack') {
       const we = r.gear && r.gear.weapon && typeof ITEMS !== 'undefined' && ITEMS[r.gear.weapon] && ITEMS[r.gear.weapon].equip;
       const style = (typeof weaponStyle === 'function') ? weaponStyle(we) : 'melee';
@@ -22874,6 +22967,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         armR = -0.55; armL = -0.22;
         if (swA < 480) { const lift = Math.sin(Math.PI * (swA / 480)); armR = -0.55 - 1.95 * lift; armL = -0.22 - 0.30 * lift; }
       } else if (_wm0 === 'whip') {
+        _rSwA = swA;
         armR = -0.45;
         if (swA < 460) { const tt = swA / 460; _rRest = false;
           if (tt < 0.3) { const u = ss(tt / 0.3); armR = -0.45 - 1.45 * u; _rWpT = -0.6 - 1.5 * u; }
@@ -22913,7 +23007,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       if (_wm === 'sword') _G.sword.rotation.x = _rRest ? -1.5 : _rSwT;
       else if (_wm === 'scim') _G.scim.rotation.x = _rRest ? -1.5 : _rSwT;
       else if (_wm === 'maul') { (r.gear.weapon === 'frostmaul' ? _G.fmaul : _G.maul).rotation.x = _rRest ? -1.5 : 0; }
-      else if (_wm === 'whip') _G.whipM.rotation.x = _rRest ? -0.6 : _rWpT;
+      else if (_wm === 'whip') { _G.whipM.rotation.x = 0; poseWhip(_G.whipM, _rSwA, t); }
       else if (_wm === 'leafsw') _G.leafSwM.rotation.x = _rRest ? -1.5 : _rSwT;
       else if (_wm === 'leafax') _G.leafAxM.rotation.x = _rRest ? -1.5 : _rSwT;
     }
@@ -23151,6 +23245,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   let _swSentT = 0;
   function sendSwing() { if (!active() || !conn) return; const _n = now(); if (_n - _swSentT < 350) return; _swSentT = _n; send({ t: 'sw' }); }
   function skSpec(ph, x, y, ms, en) { if (active() && conn) send({ t: 'sksp', ph: ph, x: x | 0, y: y | 0, ms: ms | 0, en: en ? 1 : 0 }); }
+  const _rdspecGC = [];
+  function dbSpec(ph, mi, tiles, ms) { if (active() && conn) send({ t: 'dbs', ph: ph, m: mi | 0, d: tiles, ms: ms | 0 }); }
   /* shared boss minions: the King's owner activates the fixed-index icefiends on every client */
   function groupIcefiends(ki, list) { if (active() && conn) send({ t: 'ifsp', k: ki, f: list }); }
   function groupIcefiendsGone(ki) { if (active() && conn) send({ t: 'ifgn', k: ki }); }
@@ -23179,8 +23275,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function _maybeGroupDrop(mi) {
     if (!_coAttacked.has(mi)) return;
     const tStamp = _coAttacked.get(mi); _coAttacked.delete(mi);
-    if (now() - tStamp > 12000) return;                /* stale: I stopped fighting it long ago */
     const r = (typeof rats !== 'undefined') ? rats[mi] : null;
+    const _stale = (r && MOB_KINDS[r.kind] && MOB_KINDS[r.kind].boss) ? 60000 : 12000;
+    if (now() - tStamp > _stale) return;               /* stale: I stopped fighting it long ago */
     if (r && typeof groupCoLoot === 'function') groupCoLoot(r);
   }
 
@@ -23274,7 +23371,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
@@ -23333,7 +23430,7 @@ function openDragonInfo(){
       '<div style="color:#ff9a3a;font-weight:bold;font-size:13px;margin-bottom:4px;">Notable drops</div>'+
       '<div style="font-size:12.5px;line-height:1.55;color:#e8dcc0;">'+
         '\u2022 Coins: <b>30,000\u201345,000</b> &mdash; every kill<br>'+
-        '\u2022 Dragon equipment &mdash; ~1/12<br>'+
+        '\u2022 Dragon equipment &mdash; ~1/6<br>'+
         '\u2022 Draconic visage &mdash; ~1/50<br>'+
         '\u2022 Dragon arrows \u00d76\u201314 &mdash; every kill<br>'+
         '\u2022 Runite ore, rune bars &amp; diamonds &mdash; common<br>'+
