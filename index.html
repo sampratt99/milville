@@ -1086,11 +1086,11 @@ const ITEMS={
   birch_logs:{name:'White birch logs',ex:'Pale, papery bark still clings to them. They take a flame in a heartbeat.',prim:'Light',val:90},
   copper_ore:{name:'Copper ore',ex:'It glints faintly orange.',val:12},
   tin_ore:{name:'Tin ore',ex:'Flecked with silvery tin.',val:12},
-  iron_ore:{name:'Iron ore',ex:'A rusty-red lump of iron.',val:35},
-  mithril_ore:{name:'Mithril ore',ex:'A dense, blue-tinged ore.',val:150},
-  adamant_ore:{name:'Adamant ore',ex:'A heavy green-black ore.',val:400},
-  runite_ore:{name:'Runite ore',ex:'It faintly hums with old magic.',val:1500},
-  berrite_ore:{name:'Berrite ore',ex:'A rosy-pink crystal ore with a soft blush sheen.',val:75},
+  iron_ore:{name:'Iron ore',ex:'A rusty-red lump of iron.',val:85},
+  mithril_ore:{name:'Mithril ore',ex:'A dense, blue-tinged ore.',val:500},
+  adamant_ore:{name:'Adamant ore',ex:'A heavy green-black ore.',val:1300},
+  runite_ore:{name:'Runite ore',ex:'It faintly hums with old magic.',val:6750},
+  berrite_ore:{name:'Berrite ore',ex:'A rosy-pink crystal ore with a soft blush sheen.',val:380},
   raw_shrimps:{name:'Raw shrimps',ex:'I should cook these at the campfire.',prim:'CookHint',val:5},
   shrimps:{name:'Shrimps',ex:'Some nicely cooked shrimps.',prim:'Eat',val:15},
   burnt_shrimps:{name:'Burnt shrimps',ex:'Oops. Charred beyond rescue.',prim:'Yuck',val:1},
@@ -1143,10 +1143,14 @@ const ITEMS={
 /* the Grand Exchange armoury: bronze through rune */
 const GE_STOCK=[];
 {
-  const T=[['bronze',0xb07a3e,0xdba968,2,30,1],['iron',0x7a766f,0xa8a49c,4,90,1],
-    ['steel',0xaab2ba,0xe2e8ee,7,380,5],['black',0x33333a,0x55555e,8,850,10],['berrite',0xec71a1,0xf5a8c8,8,850,11],
-    ['mithril',0x6b6bb0,0x9a9ade,10,1500,20],
-    ['adamant',0x468852,0x7cba8a,13,3500,30],['rune',0x5a8ab0,0x94c8ea,17,16000,40]];
+  /* economy: gear prices held AT/ABOVE their original values; bars = tier v / 2 and ores are
+     scaled so barVal < 1.25 x oreCost at every tier -- selling smithed gear (40% of val) returns
+     0.8x bar cost and just UNDER the ore cost, so every buy-materials->craft->sell chain loses
+     money (you pay for the xp, OSRS-style), while smithing doubles what self-mined bars sell for. */
+  const T=[['bronze',0xb07a3e,0xdba968,2,40,1],['iron',0x7a766f,0xa8a49c,4,100,1],
+    ['steel',0xaab2ba,0xe2e8ee,7,420,5],['black',0x33333a,0x55555e,8,850,10],['berrite',0xec71a1,0xf5a8c8,8,940,11],
+    ['mithril',0x6b6bb0,0x9a9ade,10,1650,20],
+    ['adamant',0x468852,0x7cba8a,13,3850,30],['rune',0x5a8ab0,0x94c8ea,17,17600,40]];
   /* OSRS-exact melee bonuses, tier-indexed [bronze,iron,steel,black,mithril,adamant,rune].
      Single-stat collapse: weapon atk = OSRS slash bonus, str = OSRS strength bonus,
      armour def = OSRS slash defence. (Verified vs oldschool.runescape.wiki type pages.) */
@@ -1164,26 +1168,26 @@ const GE_STOCK=[];
       ex:'A well-balanced '+n+' blade.',val:v,
       equip:{slot:'weapon',atk:_SWD_A[ix],str:_SWD_S[ix],spd:3000,model:'sword',verb:'Wield',req:rq,tint:tint,trim:trim}};
     ITEMS[n+'_scimitar']={name:N+' scimitar',
-      ex:'A swift, curved '+n+' blade.',val:Math.round(v*1.45),
+      ex:'A swift, curved '+n+' blade.',val:v*2,
       equip:{slot:'weapon',atk:_SCIM_A[ix],str:_SCIM_S[ix],model:'scim',verb:'Wield',req:rq,tint:tint,trim:trim}};
     ITEMS[n+'_kiteshield']={name:N+' kiteshield',
-      ex:'A sturdy '+n+' kiteshield.',val:Math.round(v*1.7),
+      ex:'A sturdy '+n+' kiteshield.',val:v*3,
       equip:{slot:'shield',model:'shieldM',verb:'Wear',def:_KITE_D[ix],
         req:rq,tint:tint,trim:trim}};
     ITEMS[n+'_full_helm']={name:N+' full helm',
-      ex:'A solid '+n+' helmet.',val:Math.round(v*1.1),
+      ex:'A solid '+n+' helmet.',val:v,
       equip:{slot:'head',def:_HELM_D[ix],model:'helm',verb:'Wear',req:rq,
         tint:tint,trim:trim}};
     ITEMS[n+'_chainbody']={name:N+' chainbody',
-      ex:'Linked '+n+' rings, light and strong.',val:Math.round(v*2.1),
+      ex:'Linked '+n+' rings, light and strong.',val:v*3,
       equip:{slot:'body',def:_CHAIN_D[ix],model:'chain',verb:'Wear',req:rq,
         tint:tint,trim:trim}};
     ITEMS[n+'_platebody']={name:N+' platebody',
-      ex:'Heavy '+n+' plate. The good stuff.',val:Math.round(v*3.3),
+      ex:'Heavy '+n+' plate. The good stuff.',val:v*5,
       equip:{slot:'body',def:_PLATE_D[ix],model:'plate',verb:'Wear',req:rq,
         tint:tint,trim:trim}};
     ITEMS[n+'_platelegs']={name:n[0].toUpperCase()+n.slice(1)+' platelegs',
-      ex:'Sturdy '+n+' legplates.',val:Math.round(v*2.4),
+      ex:'Sturdy '+n+' legplates.',val:v*3,
       equip:{slot:'legs',def:_LEGS_D[ix],model:'legs',verb:'Wear',req:rq,
         tint:tint,trim:trim}};
     GE_STOCK.push(n+'_platelegs');
@@ -1266,29 +1270,29 @@ ITEMS.uncut_emerald={name:'Uncut emerald',ex:'A rough green gem, flecked with li
 ITEMS.uncut_ruby={name:'Uncut ruby',ex:'A deep red gem, warm to the touch.',val:1400,prim:'Examine'};
 ITEMS.uncut_diamond={name:'Uncut diamond',ex:'A brilliant rough diamond. A small fortune.',val:3500,prim:'Examine'};
 ITEMS.amulet_attack={name:'Amulet of Attack',
-  ex:'A polished pendant. Your blows land truer.',val:120,
+  ex:'A polished pendant. Your blows land truer.',val:45,
   equip:{slot:'neck',atk:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0xc23b2e}};
 ITEMS.amulet_strength={name:'Amulet of Strength',
-  ex:'A heavy pendant. Your blows land harder.',val:160,
+  ex:'A heavy pendant. Your blows land harder.',val:45,
   equip:{slot:'neck',str:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x2f8a3c}};
 ITEMS.amulet_defence={name:'Amulet of Defence',
-  ex:'A warding pendant. Blows land softer on you.',val:140,
+  ex:'A warding pendant. Blows land softer on you.',val:45,
   equip:{slot:'neck',def:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x2f5dc9}};
 ITEMS.amulet_magic={name:'Amulet of Magic',
-  ex:'An enchanted pendant set with polished lapis. Your spells strike surer.',val:150,
+  ex:'An enchanted pendant set with polished lapis. Your spells strike surer.',val:45,
   equip:{slot:'neck',matk:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x8a4fd0}};
 ITEMS.amulet_archery={name:'Amulet of Archery',
-  ex:'A sinew-strung pendant carved from yew. Your aim flies truer.',val:150,
+  ex:'A sinew-strung pendant carved from yew. Your aim flies truer.',val:45,
   equip:{slot:'neck',ratk:3,model:'amulet',verb:'Wear',tint:0xd9a531,trim:0x2aa07a}};
 GE_STOCK.push('amulet_attack','amulet_strength','amulet_defence','amulet_magic','amulet_archery');
 ITEMS.bronze_bar={name:'Bronze bar',
   ex:'Copper and tin, married in fire.',val:20};
-ITEMS.iron_bar={name:'Iron bar',ex:'A solid bar of iron.',val:60};
-ITEMS.steel_bar={name:'Steel bar',ex:'Iron, refined and hardened.',val:140};
-ITEMS.mithril_bar={name:'Mithril bar',ex:'A bar of blue-tinged mithril.',val:320};
-ITEMS.berrite_bar={name:'Berrite bar',ex:'A bar of pink-tinged berrite.',val:100};
-ITEMS.adamant_bar={name:'Adamant bar',ex:'A bar of dark adamantite.',val:800};
-ITEMS.rune_bar={name:'Runite bar',ex:'A humming bar of pure runite.',val:2400};
+ITEMS.iron_bar={name:'Iron bar',ex:'A solid bar of iron.',val:50};
+ITEMS.steel_bar={name:'Steel bar',ex:'Iron, refined and hardened.',val:210};
+ITEMS.mithril_bar={name:'Mithril bar',ex:'A bar of blue-tinged mithril.',val:825};
+ITEMS.berrite_bar={name:'Berrite bar',ex:'A bar of pink-tinged berrite.',val:470};
+ITEMS.adamant_bar={name:'Adamant bar',ex:'A bar of dark adamantite.',val:1925};
+ITEMS.rune_bar={name:'Runite bar',ex:'A humming bar of pure runite.',val:8800};
 ITEMS.lost_crate={name:'Supply crate',
   ex:'Stamped COIT. Heavy with flour, salt pork and the good butter.',val:0};
 ITEMS.spice_pouch={name:'Spice pouch',ex:'Larry\u2019s secret blend. Fill it, then Use it on an unseasoned platter.',prim:'Season',val:0};
@@ -3016,7 +3020,7 @@ const MOB_DROPS={
   snowking:[
     {gearroll:[
       {i:'frostmaul',c:1/10,inv:1,m:'The Snow King yields the Frostmaul!'},
-      {pool:['glacial_full_helm','glacial_platebody','glacial_platelegs'],c:1/6},
+      {pool:['glacial_full_helm','glacial_platebody','glacial_platelegs'],c:1/6,inv:1},
       {i:'aurora_cape',c:1/10,inv:1,m:'An Aurora cape drifts down on the frost-wind!'}
     ]},
     {i:'frost_shard',c:1,inv:1,q:[15,35]},
@@ -3083,7 +3087,9 @@ function rollMobDrops(r){
           if(g.inv){ if(!addItem(gid,1))dropGround(r.x,r.y,gid,1); } else dropGround(r.x,r.y,gid,1);
           msg(g.m||('The '+r.name.toLowerCase()+' yields '+ITEMS[gid].name+'!'),'#8a5e0a'); sfx.pickup&&sfx.pickup(); break; } }
       continue; }
-    if(d.note){ if(Math.random()<(d.c||1)){ const nid=d.note[rndi(0,d.note.length-1)],nq=rndi(5,15);
+    if(d.note){ if(Math.random()<(d.c||1)){ const nid=d.note[rndi(0,d.note.length-1)];
+      const _vcap=(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss)?24000:6000;
+      const nq=Math.max(1,Math.min(rndi(5,15),Math.floor(_vcap/Math.max(1,(ITEMS[nid]&&ITEMS[nid].val)||1))));
       if(addNote(nid,nq))msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a');
       else{dropGround(r.x,r.y,nid,nq);msg('The '+r.name.toLowerCase()+' drops '+nq+' \u00d7 '+ITEMS[nid].name+' \u2014 no room for the banknote, so they fall to the ground.','#caa23a');}
       sfx.pickup&&sfx.pickup(); } continue; }
@@ -3093,7 +3099,10 @@ function rollMobDrops(r){
       continue; }
     if(d.dgear!==undefined){ if(Math.random()<d.dgear){ const _DGp=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield']; const _dd=_DGp[rndi(0,_DGp.length-1)]; if(invFull())dropGround(r.x,r.y,_dd,1);else addItem(_dd,1); msg('The '+r.name.toLowerCase()+' yields a '+ITEMS[_dd].name+' \u2014 dragon equipment!','#7a4a0a'); sfx.pickup&&sfx.pickup(); } continue; }
     if(d.wpool){ if(d.c!==undefined&&Math.random()>=d.c)continue; let tw=0;for(const e of d.wpool)tw+=e[1]; let rr=Math.random()*tw,p=d.wpool[0]; for(const e of d.wpool){rr-=e[1];if(rr<=0){p=e;break;}} dropGround(r.x,r.y,p[0],p.length>=4?rndi(p[2],p[3]):1); continue; }
-    if(d.pool){ if(d.c!==undefined&&Math.random()>=d.c)continue; const _pid=d.pool[rndi(0,d.pool.length-1)],_pq=_q(d); if(!_dropOrNote(r,_pid,_pq))dropGround(r.x,r.y,_pid,_pq); continue; }
+    if(d.pool){ if(d.c!==undefined&&Math.random()>=d.c)continue; const _pid=d.pool[rndi(0,d.pool.length-1)];
+      const _vc2=(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss)?24000:6000;
+      const _pq=Math.max(1,Math.min(_q(d),Math.floor(_vc2/Math.max(1,(ITEMS[_pid]&&ITEMS[_pid].val)||1))));
+      if(!_dropOrNote(r,_pid,_pq))dropGround(r.x,r.y,_pid,_pq); continue; }
     if(d.i){ if(d.c!==undefined&&Math.random()>=d.c)continue; const q=_q(d); if(_dropOrNote(r,d.i,q)){continue;} if(d.inv){ if(!addItem(d.i,q))dropGround(r.x,r.y,d.i,q); } else dropGround(r.x,r.y,d.i,q); if(d.m){msg(d.m,'#8a5e0a');sfx.pickup&&sfx.pickup();} continue; }
   }
 }
@@ -3994,6 +4003,9 @@ function adjTargets(x,y){
   return out;
 }
 function walkTo(tx,ty,exact){
+  if(player.frozenUntil&&performance.now()<player.frozenUntil){
+    if(!player._fzMsgT||performance.now()-player._fzMsgT>1500){player._fzMsgT=performance.now();msg('You are frozen solid!','#7fd4f0');}
+    return;}
   let targets;
   if(exact==='adj')targets=adjTargets(tx,ty);
   else if(exact===true&&!blockedStrict(tx,ty))targets=[[tx,ty]];
@@ -4394,15 +4406,55 @@ function playerTick(){
     const nowC=performance.now();
     if(!player.nextAtk||nowC>=player.nextAtk+4000)player.nextAtk=nowC;
     if(nowC<player.nextAtk)return;
-    const _dw=(!(duel.rules&&duel.rules.noWeapons))&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
-    player.nextAtk=nowC+((_dw&&_dw.spd)||2400);player.swingT=nowC;
+    const _noW=duel.rules&&duel.rules.noWeapons;
+    const _dw=(!_noW)&&player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+    const _dst=(typeof weaponStyle==='function')?weaponStyle(_dw):'melee';
+    let _itv=2400,_max=1,_acc=0.15,_spell=null;
+    if(_dst==='ranged'){
+      const _am=player.equip.ammo;
+      if(!_am||!(_am.qty>0)){player.nextAtk=nowC+1200;msg('You have no arrows left.','#9c1f1f');cancelAction();return;}
+      const _bt=(_dw&&_dw.bowTier)||0,_at=(ITEMS[_am.id]&&ITEMS[_am.id].equip&&ITEMS[_am.id].equip.arrowTier)||0;
+      if(_at>_bt){player.nextAtk=nowC+1200;msg('Your bow cannot fire arrows of that make.','#9c1f1f');cancelAction();return;}
+      _itv=(player.style==='rapid')?2200:((_dw&&_dw.slow)?3000:2400);
+      const _styR=player.style==='accurate'?3:0;
+      const _effR=Math.floor(lvl('ranged')*(prayers.pelicans_eye?1.18:1));
+      _max=Math.max(1,Math.floor(0.5+(_effR+_styR+8)*(eqStat('rstr')+64)/640));
+      _acc=_duelAcc(_effR,eqStat('ratk'));
+      const _amTint=(ITEMS[_am.id].equip.tint!==undefined)?('#'+ITEMS[_am.id].equip.tint.toString(16).padStart(6,'0')):'#cfd6da';
+      _am.qty--;if(_am.qty<=0){player.equip.ammo=null;msg('You loose your last arrow.','#caa23a');}
+      if(typeof renderEquip==='function')renderEquip();
+      if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,opp,'arrow',_amTint,300);
+    }else if(_dst==='magic'){
+      _spell=player.autocast&&SPELLS[player.autocast];
+      if(!_spell){player.nextAtk=nowC+1200;msg('Choose a spell to autocast in your spellbook.','#9c1f1f');cancelAction();return;}
+      if(lvl('magic')<_spell.req){player.nextAtk=nowC+1200;msg('You need Magic level '+_spell.req+' to cast '+_spell.name+'.','#9c1f1f');cancelAction();return;}
+      const _inf=(_dw&&_dw.infRune)||null;let _hv=true;
+      for(const rid in _spell.runes){if(rid===_inf)continue;if(countItem(rid)<_spell.runes[rid]){_hv=false;break;}}
+      if(!_hv){player.nextAtk=nowC+1200;msg('You do not have enough runes to cast '+_spell.name+'.','#9c1f1f');cancelAction();return;}
+      for(const rid in _spell.runes){if(rid===_inf)continue;takeItems(rid,_spell.runes[rid]);}
+      _itv=(_dw&&_dw.spd)||3000;
+      if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,opp,'magic',_spell.col,320);
+      _max=Math.max(1,Math.floor(_spell.pow*(1+eqStat('mdmg')/100)));
+      _acc=_duelAcc(Math.floor(lvl('magic')*(prayers.sheldons_insight?1.18:1)),eqStat('matk'));
+    }else{
+      _itv=(_dw&&_dw.spd)||2400;
+      _max=_duelMaxhit();
+      _acc=_duelAcc(Math.floor(lvl('attack')*(prayers.halcyon?1.18:1)),_noW?0:eqStat('atk'));
+    }
+    player.nextAtk=nowC+_itv;player.swingT=nowC;
     if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
-    let dmg=0;if(Math.random()<_duelAcc())dmg=rndi(0,_duelMaxhit());
-    if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;}
-    splats.push({ent:opp,dmg,t:performance.now()});
+    let dmg=0;if(Math.random()<_acc)dmg=rndi(0,_max);
+    let _fz=0;
+    if(_dst==='melee'&&dmg>0&&_dw&&_dw.freeze&&Math.random()<_dw.freeze){_fz=1;
+      msg('Your Frostmaul freezes '+(duel.oppName||'your opponent')+' solid!','#7fd4f0');
+      if(typeof groundFrost==='function')groundFrost(Math.round(opp.px),Math.round(opp.py),false);}
+    if(_dst==='ranged'){if(dmg>(player.maxRangeHit||0)){player.maxRangeHit=dmg;dirty=true;}}
+    else if(_dst==='magic'){if(dmg>(player.maxMagicHit||0)){player.maxMagicHit=dmg;dirty=true;}}
+    else if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;}
+    splats.push({ent:opp,dmg,t:performance.now()+(_dst!=='melee'?300:0)});
     player.combatT=performance.now();
     (dmg>0?sfx.hit:sfx.miss)();
-    if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dmg);
+    if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dmg,_dst,_spell?_spell.col:null,_fz);
   }
 
   else if(a.type==='takerelic'){
@@ -5227,7 +5279,8 @@ async function loadSlot(id, preObj){
       player.titleUnlocks=(s.titleUnlocks&&typeof s.titleUnlocks==='object')?s.titleUnlocks:{};
       player.title=s.title||null;
       player.winterUnlocked=!!s.winterUnlocked;
-      player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;player.bossKills=s.bossKills||0;player.bratKills=s.bratKills||0;player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
+      player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;player.bossKills=s.bossKills||0;player.bratKills=s.bratKills||0;
+  if(player.pouch&&player.pouch.ore){const _po=player.pouch.ore;for(const _k3 in _po){if(!ITEMS[_k3]||(_po[_k3]|0)<=0)delete _po[_k3];else _po[_k3]=_po[_k3]|0;}}player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
       player.cosmetic=normCos(s.cosmetic);if(typeof pm!=='undefined'&&typeof applyCosmetic==='function')applyCosmetic(pm,player.cosmetic);
       player.winter=!!s.winter; player.fall=!!s.fall; player.fallUnlocked=!!s.fallUnlocked;
       if(s.name)player.name=s.name;
@@ -6776,6 +6829,15 @@ function drawItemIcon(g,id,S){
     g.strokeStyle='#3a1d22';g.lineWidth=1.6;
     g.beginPath();g.moveTo(-5,5);g.bezierCurveTo(4,-8,14,-2,8,5);g.stroke();
     g.fillStyle='#c0242a';g.beginPath();g.arc(1.6,0.6,1.9,0,6.28);g.fill();
+    g.restore();return;
+  }
+  if(id==='elemental_shield'){
+    g.fillStyle='#4a5568';g.beginPath();g.arc(0,0,12,0,6.28);g.fill();
+    g.strokeStyle='#9fd4e8';g.lineWidth=2.4;g.beginPath();g.arc(0,0,12,0,6.28);g.stroke();
+    const _ec=['#d0452a','#2a6fd0','#3f8a3a','#e8e8f0'];
+    for(let i=0;i<4;i++){const a=i*Math.PI/2;g.fillStyle=_ec[i];g.beginPath();g.arc(Math.cos(a)*7.2,Math.sin(a)*7.2,2.5,0,6.28);g.fill();}
+    g.fillStyle='#d8c46a';g.beginPath();g.arc(0,0,3.4,0,6.28);g.fill();
+    g.strokeStyle='#2e3542';g.lineWidth=1;g.beginPath();g.arc(0,0,3.4,0,6.28);g.stroke();
     g.restore();return;
   }
   if(id==='leaf_dagger'){
@@ -11629,6 +11691,16 @@ const leafDagM=new THREE.Group();
  const _rb=gmesh(new THREE.BoxGeometry(0.012,0.26,0.02),0xd8c46a);_rb.position.set(0,-0.18,0.012);leafDagM.add(_rb);}
 leafDagM.rotation.z=0.25;leafDagM.position.set(-0.075,-0.5,0.05);leafDagM.visible=false;
 pm.lArm.add(leafDagM);
+const elemM=new THREE.Group();
+{const _d1=gmesh(new THREE.CylinderGeometry(0.16,0.16,0.03,10),0x4a5568);_d1.rotation.x=Math.PI/2;elemM.add(_d1);
+ const _rim=new THREE.Mesh(new THREE.TorusGeometry(0.155,0.014,6,14),new THREE.MeshBasicMaterial({color:0x9fd4e8}));elemM.add(_rim);
+ const _bs=gmesh(new THREE.SphereGeometry(0.045,8,6),0xd8c46a);_bs.position.z=0.03;elemM.add(_bs);
+ const _cols=[0xd0452a,0x2a6fd0,0x3f8a3a,0xe8e8f0];
+ for(let _ei=0;_ei<4;_ei++){const _aa=_ei*Math.PI/2;
+   const _gm=new THREE.Mesh(new THREE.SphereGeometry(0.028,7,5),new THREE.MeshBasicMaterial({color:_cols[_ei]}));
+   _gm.position.set(Math.cos(_aa)*0.1,Math.sin(_aa)*0.1,0.028);elemM.add(_gm);}}
+elemM.position.set(-0.075,-0.34,0.05);elemM.visible=false;
+pm.lArm.add(elemM);
 const helmM=new THREE.Group();
 {const helmPts=[new THREE.Vector2(0.13,-0.14),new THREE.Vector2(0.185,-0.02),new THREE.Vector2(0.215,0.07),new THREE.Vector2(0.215,0.15),new THREE.Vector2(0.185,0.24),new THREE.Vector2(0.12,0.31),new THREE.Vector2(0.05,0.35),new THREE.Vector2(0.0,0.36)];
  const shell=TT(gmesh(new THREE.LatheGeometry(helmPts,18),0xb9bdc4),'tint');shell.material.side=THREE.DoubleSide;shell.scale.z=1.06;shell.position.y=1.52;helmM.add(shell);
@@ -13789,6 +13861,13 @@ function makeGroundItem(id){
     const _hd2=add(new THREE.ConeGeometry(0.1,0.26,7),0x3f6b2e);_hd2.scale.y=0.32;_hd2.position.set(-0.22,0.06,0.14);_hd2.rotation.x=Math.PI/2;
     const _he2=add(new THREE.ConeGeometry(0.08,0.22,7),0x9fd47a);_he2.scale.y=0.24;_he2.position.set(-0.22,0.066,0.15);_he2.rotation.x=Math.PI/2;
     const _cp2=add(new THREE.SphereGeometry(0.026,6,5),0xd8c46a);_cp2.position.set(0.29,0.045,0);
+  }
+  else if(id==='elemental_shield'){
+    const _dd=add(new THREE.CylinderGeometry(0.16,0.16,0.03,10),0x4a5568);_dd.position.y=0.04;
+    const _rr2=add(new THREE.TorusGeometry(0.155,0.014,6,14),0x9fd4e8);_rr2.position.y=0.06;_rr2.rotation.x=Math.PI/2;
+    const _cc=[0xd0452a,0x2a6fd0,0x3f8a3a,0xe8e8f0];
+    for(let _gi2=0;_gi2<4;_gi2++){const _aa2=_gi2*Math.PI/2;const _g3=add(new THREE.SphereGeometry(0.026,6,5),_cc[_gi2]);_g3.position.set(Math.cos(_aa2)*0.1,0.065,Math.sin(_aa2)*0.1);}
+    const _b3=add(new THREE.SphereGeometry(0.04,8,6),0xd8c46a);_b3.position.y=0.07;
   }
   else if(id==='leaf_dagger'){
     const _b1=add(new THREE.ConeGeometry(0.06,0.3,6),0x3f6b2e);_b1.scale.z=0.4;_b1.position.set(0,0.05,0);_b1.rotation.z=Math.PI/2;
@@ -15975,13 +16054,23 @@ function emptyPouchToInv(){
   else if(pouchTotal()>0)msg('Your pack is full.');
   else msg('Your mining pouch is already empty.');
 }
+function syncLarder(){
+  if(typeof objects==='undefined'||typeof scene==='undefined')return;
+  const q=player.quests&&player.quests.chef;if(!q)return;
+  if(!(q.done||q.s>5))return;
+  for(let i=objects.length-1;i>=0;i--){const o=objects[i];
+    if(o.def==='larder'){if(player.action&&player.action.o===o)cancelAction();if(o._m&&o._m.group)scene.remove(o._m.group);objects.splice(i,1);}}
+}
 function emptyPouchToBank(){
   if(!pouchOK()){msg('You do not have a mining pouch yet.');return;}
   if(!bankOpen){msg('Open a bank to empty your mining pouch into it.');return;}
-  const o=player.pouch.ore;let moved=0;
-  for(const id in o){if(o[id]>0){bankAdd(id,o[id]);moved+=o[id];}}
-  player.pouch.ore={};dirty=true;renderBank();
-  if(moved>0){if(sfx.pickup)sfx.pickup();msg('You empty '+moved+' ore from your pouch into the bank.','#caa23a');}
+  const o=player.pouch.ore;let moved=0;const parts=[];
+  for(const id of Object.keys(o)){const q=o[id]|0;
+    if(q<=0){delete o[id];continue;}
+    if(!ITEMS[id]){msg('Your pouch held '+q+' of an unknown ore ('+id+') \u2014 discarded.','#9c1f1f');delete o[id];continue;}
+    bankAdd(id,q);moved+=q;parts.push(q+' \u00d7 '+ITEMS[id].name);delete o[id];}
+  dirty=true;renderBank();
+  if(moved>0){if(sfx.pickup)sfx.pickup();msg('You empty your pouch into the bank: '+parts.join(', ')+'.','#caa23a');}
   else msg('Your mining pouch is already empty.');
 }
 function checkPouch(){
@@ -16009,7 +16098,9 @@ function swenTurnIn(){
   if(countItem(oreId)+pouchCount(oreId)<o.qty)return false;
   let need=o.qty;const fromInv=Math.min(need,countItem(oreId));
   if(fromInv>0){takeItems(oreId,fromInv);need-=fromInv;}
-  if(need>0&&player.pouch&&player.pouch.ore){player.pouch.ore[oreId]=(player.pouch.ore[oreId]||0)-need;if(player.pouch.ore[oreId]<=0)delete player.pouch.ore[oreId];need=0;}
+  if(need>0&&player.pouch&&player.pouch.ore){const _av=player.pouch.ore[oreId]|0;const _dr=Math.min(need,_av);
+    if(_dr>0){player.pouch.ore[oreId]=_av-_dr;if(player.pouch.ore[oreId]<=0)delete player.pouch.ore[oreId];need-=_dr;dirty=true;
+      if(!player._pouchDrawT||performance.now()-player._pouchDrawT>4000){player._pouchDrawT=performance.now();msg('(Your mining pouch feeds ore to the furnace.)','#caa23a');}}}
   const bonus=Math.round(o.qty*(SWEN_OREXP[o.tier]||18)*0.5);
   const coins=Math.round(o.qty*swenOreVal(o.tier)*1.3);
   addXp('mining',bonus);qCoins(coins);
@@ -17320,6 +17411,7 @@ const QUESTS=[
   }]
 ];
 function renderQuests(){
+  if(typeof syncLarder==='function')syncLarder();
   const box=document.getElementById('qlist');
   if(!box)return;
   box.innerHTML='';
@@ -18102,6 +18194,7 @@ function togglePrayer(id){
   if(!prayers[id]&&typeof duel!=='undefined'&&duel.state!=='none'&&duel.rules&&duel.rules.noPrayer){msg('No prayer is allowed in this duel!','#9c1f1f');return;}
   if(!prayers[id]&&player.pray<=0){
     msg('You have no prayer points left. Pray at an altar to restore them.');return;}
+  if((id==='rectory_tele'||id==='wild_tele')&&typeof duel!=='undefined'&&duel.state!=='none'){msg('You cannot invoke travel prayers during a duel!','#9c1f1f');return;}
   prayers[id]=!prayers[id];
   sfx.bury();
   msg(prayers[id]?('You activate '+PRAYER_META[id].name+'.')
@@ -18961,15 +19054,15 @@ function _duelMaxhit(){
   const strB=noW?0:eqStat('str');
   return Math.max(1,Math.floor(0.5+(effS+_sty+8)*(strB+64)/640));
 }
-function _duelAcc(){
-  /* attacker's level + weapon accuracy vs the DEFENDER'S ARMOUR (armour now matters in the arena) */
-  const noW=duel.rules&&duel.rules.noWeapons;
-  const atkB=noW?0:eqStat('atk');
-  return clamp(0.30+lvl('attack')*0.006+atkB*0.0022-_duelOppDef()*0.0016,0.15,0.92);
+function _duelAcc(sk,ab){
+  /* attacker's skill level + style attack bonus vs the DEFENDER'S armour AND Defence level */
+  const _dl=(((duel.oppLvls&&duel.oppLvls.def)||1)*(duel.oppDefPray?1.18:1));
+  return clamp(0.30+sk*0.006+(ab||0)*0.0022-_duelOppDef()*0.0016-_dl*0.003,0.12,0.92);
 }
 function startDuel(uid,name,rules,myStake,theirStake){
   if(!inMathes||duel.state!=='none')return;
-  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};duel.oppHp=null;duel.oppMhp=null;duel._hpSendT=0;duel._lastPhitN=0;
+  duel.state='count';duel.oppUid=uid;duel.oppName=name||'your opponent';duel.rules=rules||{};duel.oppHp=null;duel.oppMhp=null;duel._hpSendT=0;duel._lastPhitN=0;duel.oppLvls=null;
+  if(typeof MP!=='undefined'&&MP.duelStats)MP.duelStats({att:lvl('attack'),str:lvl('strength'),def:lvl('defense'),rng:lvl('ranged'),mag:lvl('magic')});
   if(duel.rules.noWeapons&&player.equip.weapon){const _dw=player.equip.weapon;player.equip.weapon=null;if(!invFull())addItem(_dw.id,_dw.qty||1);else bankAdd(_dw.id,_dw.qty||1);if(typeof renderEquip==='function')renderEquip();if(typeof renderInv==='function')renderInv();if(typeof renderStyleBar==='function')renderStyleBar();msg('No weapons this bout \u2014 you set your weapon aside.','#caa23a');}
   duel.stakeMine=(myStake&&myStake.length)?_duelTakeItems(myStake):[];                        /* lock my stake out of inventory */
   duel.stakeTheirs=_duelEscrowIn[uid]||((theirStake||[]).map(o=>({id:o.id,qty:o.qty})));       /* what I win: their confirmed escrow if it arrived, else their claim */
@@ -19009,11 +19102,17 @@ function duelTick(){
     }
   }
 }
-function applyDuelHit(dmg){     /* a blow landed on ME by my opponent */
+function applyDuelHit(dmg,st,col,fz){     /* a blow landed on ME by my opponent */
   if(duel.state!=='fight')return;
   dmg=Math.max(0,dmg|0);
+  const _o2=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
+  if((st==='ranged'||st==='magic')&&_o2&&typeof spawnProjectile==='function')
+    spawnProjectile(_o2.px+0.5,_o2.py+0.5,{px:player.x,py:player.y},st==='ranged'?'arrow':'magic',col,300);
+  if(fz){player.frozenUntil=performance.now()+3000;
+    msg('You are frozen solid \u2014 you cannot move!','#7fd4f0');
+    if(typeof groundFrost==='function')groundFrost(player.x,player.y,false);}
   player.braceT=performance.now();
-  splats.push({ent:'player',dmg,t:performance.now()});
+  splats.push({ent:'player',dmg,t:performance.now()+((st==='ranged'||st==='magic')?300:0)});
   (dmg>0?sfx.hit:sfx.miss)();
   if(dmg>0){player.hp-=dmg;player.combatT=performance.now();updateOrb();
     if(player.hp<=0){player.hp=0;updateOrb();
@@ -20851,8 +20950,9 @@ function render(now){
   else if(showTool==='bow')bowM.visible=true;
   else if(showTool==='staff')staffM.visible=true;
   {const _shId=player.equip.shield&&player.equip.shield.id;
-   shieldM.visible=!!player.equip.shield&&_shId!=='leaf_dagger';
-   leafDagM.visible=_shId==='leaf_dagger';}
+   shieldM.visible=!!player.equip.shield&&_shId!=='leaf_dagger'&&_shId!=='elemental_shield';
+   leafDagM.visible=_shId==='leaf_dagger';
+   elemM.visible=_shId==='elemental_shield';}
   capeM.visible=!!player.equip.cape;
   const tintG=(grp,t9,r9)=>{grp.traverse(o9=>{
     if(!o9.isMesh)return;
@@ -20942,7 +21042,7 @@ function render(now){
   {const _ce=player.emote&&EMOTES_BY_ID[player.emote];   /* costume emotes (jack/xmas/chef) strip worn gear so the costume isn't covered */
    if(_ce&&_ce.build){
      axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;
-     shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;leafDagM.visible=false;
+     shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;leafDagM.visible=false;elemM.visible=false;
      bodyM.visible=armPL.visible=armPR.visible=hideBodyM.visible=robeBodyM.visible=chainM.visible=false;
      legL.visible=legR.visible=hideLegL.visible=hideLegR.visible=robeSkirtM.visible=false;
      bootL.visible=bootR.visible=false;
@@ -21570,6 +21670,7 @@ setInterval(()=>{
   let _ranThisBeat=false;
   const _canRun=player.run&&player.stamina>0&&!inParty&&duel.state==='none';
   if((beat%2===0||_canRun)&&player.path.length){
+    if(player.frozenUntil&&performance.now()<player.frozenUntil)return;
     const nxt=player.path.shift();
     if(!blocked(nxt[0],nxt[1])){
       const _pX=player.x,_pY=player.y;
@@ -21890,8 +21991,9 @@ const MP = (function () {
   function duelSetDecline() { if (!duelSetup.active) return; if (conn) send({ t:'dsdecline', to:duelSetup.withUid }); _duelSetupClose(); }
   function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myStake:duelSetup.myStake.map(o=>({id:o.id,qty:o.qty})), theirStake:duelSetup.theirStake.map(o=>({id:o.id,qty:o.qty})), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
   let _phitSeq = 0;
-  function duelSwing(dmg) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0, n: ++_phitSeq }); }
-  function duelHp(hp,mhp) { if (duel.oppUid && conn) send({ t: 'dhp', to: duel.oppUid, hp: hp | 0, mhp: mhp | 0 }); }
+  function duelSwing(dmg, st, col, fz) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0, st: st || 'melee', col: col || null, fz: fz ? 1 : 0, n: ++_phitSeq }); }
+  function duelHp(hp,mhp) { if (duel.oppUid && conn) send({ t: 'dhp', to: duel.oppUid, hp: hp | 0, mhp: mhp | 0, pr: (typeof prayers !== 'undefined' && prayers.love) ? 1 : 0 }); }
+  function duelStats(o) { if (duel.oppUid && conn) send({ t: 'dlv', to: duel.oppUid, l: o }); }
   function duelConcede() { if (duel.oppUid && conn) send({ t: 'dend', to: duel.oppUid }); }
   function partySnap(arr, ms) { if (conn) send({ t: 'pset', b: arr, ms: ms }); }    /* host -> all: authoritative balloon set + remaining ms */
   function partyPop(bid) { if (conn) send({ t: 'ppop', id: bid }); }                /* popper -> all: this balloon was popped */
@@ -21964,6 +22066,7 @@ const MP = (function () {
   function selfAct() {
     const a = player.action;
     if (a && a.type === 'attack' && a.rat) return { k: 'attack', m: a.rat.i };
+    if (a && a.type === 'datk') return { k: 'attack', m: -1 };
     if (a && a.type === 'gather' && a.obj && typeof OBJ_DEFS !== 'undefined' && OBJ_DEFS[a.obj.def]) return { k: 'gather', sk: OBJ_DEFS[a.obj.def].skill };
     if (a && a.type === 'cook') return { k: 'cook' };
     if (player.emote) return { k: 'emote', e: player.emote };
@@ -22209,6 +22312,16 @@ const leafDagM=new THREE.Group();
  const _rb=gmesh(new THREE.BoxGeometry(0.012,0.26,0.02),0xd8c46a);_rb.position.set(0,-0.18,0.012);leafDagM.add(_rb);}
 leafDagM.rotation.z=0.25;leafDagM.position.set(-0.075,-0.5,0.05);leafDagM.visible=false;
 rig.lArm.add(leafDagM);
+const elemM=new THREE.Group();
+{const _d1=gmesh(new THREE.CylinderGeometry(0.16,0.16,0.03,10),0x4a5568);_d1.rotation.x=Math.PI/2;elemM.add(_d1);
+ const _rim=new THREE.Mesh(new THREE.TorusGeometry(0.155,0.014,6,14),new THREE.MeshBasicMaterial({color:0x9fd4e8}));elemM.add(_rim);
+ const _bs=gmesh(new THREE.SphereGeometry(0.045,8,6),0xd8c46a);_bs.position.z=0.03;elemM.add(_bs);
+ const _cols=[0xd0452a,0x2a6fd0,0x3f8a3a,0xe8e8f0];
+ for(let _ei=0;_ei<4;_ei++){const _aa=_ei*Math.PI/2;
+   const _gm=new THREE.Mesh(new THREE.SphereGeometry(0.028,7,5),new THREE.MeshBasicMaterial({color:_cols[_ei]}));
+   _gm.position.set(Math.cos(_aa)*0.1,Math.sin(_aa)*0.1,0.028);elemM.add(_gm);}}
+elemM.position.set(-0.075,-0.34,0.05);elemM.visible=false;
+rig.lArm.add(elemM);
 const helmM=new THREE.Group();
 {const helmPts=[new THREE.Vector2(0.13,-0.14),new THREE.Vector2(0.185,-0.02),new THREE.Vector2(0.215,0.07),new THREE.Vector2(0.215,0.15),new THREE.Vector2(0.185,0.24),new THREE.Vector2(0.12,0.31),new THREE.Vector2(0.05,0.35),new THREE.Vector2(0.0,0.36)];
  const shell=TT(gmesh(new THREE.LatheGeometry(helmPts,18),0xb9bdc4),'tint');shell.material.side=THREE.DoubleSide;shell.scale.z=1.06;shell.position.y=1.52;helmM.add(shell);
@@ -22382,7 +22495,7 @@ const santaHatM=new THREE.Group();
  const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
  pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
 santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
-    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,bowM,staffM,capeM,capeEmblem,shieldM,leafDagM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM};
+    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,bowM,staffM,capeM,capeEmblem,shieldM,leafDagM,elemM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM};
   }
   function applyRemoteGear(G, rig, gear, act, shirtHex) {
     if (!G || !gear) return;
@@ -22404,8 +22517,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     else if (wmod === 'staff') G.staffM.visible = true;
     else if (wmod === 'maul') { if (gear.weapon === 'frostmaul') G.fmaul.visible = true; else G.maul.visible = true; }
     if ((wmod === 'sword' || wmod === 'scim') && we) tintG(wmod === 'scim' ? G.scim : G.sword, we.tint !== undefined ? we.tint : 0xc7ccd4, we.trim !== undefined ? we.trim : 0x8a6a2a);
-    G.shieldM.visible = !!gear.shield && gear.shield !== 'leaf_dagger';
+    G.shieldM.visible = !!gear.shield && gear.shield !== 'leaf_dagger' && gear.shield !== 'elemental_shield';
     G.leafDagM.visible = gear.shield === 'leaf_dagger';
+    G.elemM.visible = gear.shield === 'elemental_shield';
     if (gear.shield) { const se = EQ(gear.shield); tintG(G.shieldM, se && se.tint !== undefined ? se.tint : 0x7a5a36, se && se.trim !== undefined ? se.trim : 0x4f3a22); }
     G.capeM.visible = !!gear.cape;
     const he = EQ(gear.head), hmod = he ? he.model : null;
@@ -22803,12 +22917,17 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'phit': {
         if (m.to !== player.uid) break;
         if (m.n !== undefined) { if (m.n <= (duel._lastPhitN || 0)) break; duel._lastPhitN = m.n; }
-        if (duel.state === 'fight' && m.uid === duel.oppUid && typeof applyDuelHit === 'function') applyDuelHit(m.dmg | 0);
+        if (duel.state === 'fight' && m.uid === duel.oppUid && typeof applyDuelHit === 'function') applyDuelHit(m.dmg | 0, m.st || 'melee', m.col || null, !!m.fz);
+        break;
+      }
+      case 'dlv': {
+        if (m.to !== player.uid) break;
+        if (m.uid === duel.oppUid) duel.oppLvls = m.l || null;
         break;
       }
       case 'dhp': {
         if (m.to !== player.uid) break;
-        if (duel.state !== 'none' && m.uid === duel.oppUid) { duel.oppHp = m.hp | 0; duel.oppMhp = m.mhp | 0; }
+        if (duel.state !== 'none' && m.uid === duel.oppUid) { duel.oppHp = m.hp | 0; duel.oppMhp = m.mhp | 0; duel.oppDefPray = !!m.pr; }
         break;
       }
       case 'dend': {
@@ -23373,7 +23492,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
-    duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelHp, duelConcede, duelClear,
+    duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
     active, get connected() { return conn; },
     /* test/debug seams */
