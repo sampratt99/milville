@@ -1470,6 +1470,7 @@ const OBJ_DEFS={
   wildsign:{name:'Warning sign',ex:'A skull and crossbones. It needs no words.'},
   dragon_sign:{name:'Dragon-warning signpost',action:'Read',ex:'A heavy iron-bound notice board, scorched black at the edges. It warns travellers of the Black Dragon that lairs just to the west.'},
   frost_sign:{name:'Frost-warning signpost',action:'Read',ex:'A rime-caked notice board, its post sheathed in ice. It warns climbers of the Snow King that rules the summit above.',noBlock:1},
+  volcano_sign:{name:'Ember-warning signpost',action:'Read',ex:'A scorched notice board wreathed in ash. It warns climbers of Cinderwing, the Ash Roc, that nests in the crater above \u2014 bring food, and expect molten death from the sky.',noBlock:1},
   banker:{name:'Banker',ex:'He keeps the vault keys very close.'},
   bankchest:{name:'Bank chest',action:'Bank',ex:'A strongbox bound to the Bank of Milville. Open it to reach your vault.'},
   clerk:{name:'Grand Exchange clerk',
@@ -2082,6 +2083,18 @@ addObj('paltar',98,104,true);
   }
 }
 const signTextAt=(x,y)=>{const sp=SIGNS.find(sp=>sp[0]===x&&sp[1]===y);return sp?sp[2]:null;};
+function bossStatusLine(kind){
+  const r=(typeof rats!=='undefined')?rats.find(_r=>_r.kind===kind):null;
+  if(!r)return '';
+  const nm=(MOB_KINDS[kind]&&MOB_KINDS[kind].name)||'The boss';
+  if(r.alive)return nm+' is ALIVE and prowling its lair.';
+  const rem=Math.max(0,(r.respawnAt||0)-performance.now());
+  if(rem<=0)return nm+' has respawned \u2014 it lurks again.';
+  const mins=Math.floor(rem/60000),secs=Math.floor((rem%60000)/1000);
+  const full=(MOB_KINDS[kind]&&MOB_KINDS[kind].resp)||0;
+  const since=full-rem;const sm=Math.floor(since/60000);
+  return nm+' was last slain '+(sm<1?'moments':sm+' min')+' ago \u2014 returns in '+(mins>0?mins+'m ':'')+secs+'s.';
+}
 const objAt=(x,y)=>objects.find(o=>o.x===x&&o.y===y);
 
 /* npcs */
@@ -3179,25 +3192,25 @@ function rollMobDrops(r){
       for(const g of d.gearroll){ acc+=(g.c||0);
         if(rr<acc){ const gid=g.pool?g.pool[rndi(0,g.pool.length-1)]:g.i;
           if(g.inv){ if(!addItem(gid,1))dropGround(r.x,r.y,gid,1); } else dropGround(r.x,r.y,gid,1);
-          msg(g.m||('The '+r.name.toLowerCase()+' yields '+ITEMS[gid].name+'!'),'#8a5e0a'); sfx.pickup&&sfx.pickup(); break; } }
+          _logLoot(gid,1); if(!_lootLog)msg(g.m||('The '+r.name.toLowerCase()+' yields '+ITEMS[gid].name+'!'),'#8a5e0a'); sfx.pickup&&sfx.pickup(); break; } }
       continue; }
     if(d.note){ if(Math.random()<(d.c||1)){ const nid=d.note[rndi(0,d.note.length-1)];
       const _vcap=(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss)?24000:6000;
       const nq=Math.max(1,Math.min(rndi(5,15),Math.floor(_vcap/Math.max(1,(ITEMS[nid]&&ITEMS[nid].val)||1))));
-      if(addNote(nid,nq))msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a');
-      else{dropGround(r.x,r.y,nid,nq);msg('The '+r.name.toLowerCase()+' drops '+nq+' \u00d7 '+ITEMS[nid].name+' \u2014 no room for the banknote, so they fall to the ground.','#caa23a');}
+      if(addNote(nid,nq)){_logLoot(nid,nq,true);if(!_lootLog)msg('The '+r.name.toLowerCase()+' drops a banknote: '+nq+' \u00d7 '+ITEMS[nid].name+'.','#caa23a');}
+      else{dropGround(r.x,r.y,nid,nq);_logLoot(nid,nq,true);if(!_lootLog)msg('The '+r.name.toLowerCase()+' drops '+nq+' \u00d7 '+ITEMS[nid].name+' \u2014 no room for the banknote, so they fall to the ground.','#caa23a');}
       sfx.pickup&&sfx.pickup(); } continue; }
     if(d.dhide){ if(d.c!==undefined&&Math.random()>=d.c)continue;
       if(d.dhide==='sx'){ const _dc=['red','green','blue'][r.sx<170?0:(r.sx<174?1:2)]; dropGround(r.x,r.y,_dc+'_dhide_'+['coif','body','chaps'][rndi(0,2)],1); msg('The '+r.name.toLowerCase()+' sheds a slab of '+_dc+' dragonhide.','#caa23a'); }
       else dropGround(r.x,r.y,d.dhide+'_dhide_'+['coif','body','chaps','vambraces'][rndi(0,3)],1);
       continue; }
-    if(d.dgear!==undefined){ if(Math.random()<d.dgear){ const _DGp=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield']; const _dd=_DGp[rndi(0,_DGp.length-1)]; if(invFull())dropGround(r.x,r.y,_dd,1);else addItem(_dd,1); msg('The '+r.name.toLowerCase()+' yields a '+ITEMS[_dd].name+' \u2014 dragon equipment!','#7a4a0a'); sfx.pickup&&sfx.pickup(); } continue; }
+    if(d.dgear!==undefined){ if(Math.random()<d.dgear){ const _DGp=['dragon_scimitar','dragon_sword','dragon_full_helm','dragon_platebody','dragon_platelegs','dragon_kiteshield']; const _dd=_DGp[rndi(0,_DGp.length-1)]; if(invFull())dropGround(r.x,r.y,_dd,1);else addItem(_dd,1); _logLoot(_dd,1); if(!_lootLog)msg('The '+r.name.toLowerCase()+' yields a '+ITEMS[_dd].name+' \u2014 dragon equipment!','#7a4a0a'); sfx.pickup&&sfx.pickup(); } continue; }
     if(d.wpool){ if(d.c!==undefined&&Math.random()>=d.c)continue; let tw=0;for(const e of d.wpool)tw+=e[1]; let rr=Math.random()*tw,p=d.wpool[0]; for(const e of d.wpool){rr-=e[1];if(rr<=0){p=e;break;}} dropGround(r.x,r.y,p[0],p.length>=4?rndi(p[2],p[3]):1); continue; }
     if(d.pool){ if(d.c!==undefined&&Math.random()>=d.c)continue; const _pid=d.pool[rndi(0,d.pool.length-1)];
       const _vc2=(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss)?24000:6000;
       const _pq=Math.max(1,Math.min(_q(d),Math.floor(_vc2/Math.max(1,(ITEMS[_pid]&&ITEMS[_pid].val)||1))));
-      if(!_dropOrNote(r,_pid,_pq))dropGround(r.x,r.y,_pid,_pq); continue; }
-    if(d.i){ if(d.c!==undefined&&Math.random()>=d.c)continue; const q=_q(d); if(_dropOrNote(r,d.i,q)){continue;} if(d.inv){ if(!addItem(d.i,q))dropGround(r.x,r.y,d.i,q); } else dropGround(r.x,r.y,d.i,q); if(d.m){msg(d.m,'#8a5e0a');sfx.pickup&&sfx.pickup();} continue; }
+      if(!_dropOrNote(r,_pid,_pq))dropGround(r.x,r.y,_pid,_pq); _logLoot(_pid,_pq); continue; }
+    if(d.i){ if(d.c!==undefined&&Math.random()>=d.c)continue; const q=_q(d); if(_dropOrNote(r,d.i,q)){_logLoot(d.i,q);continue;} if(d.inv){ if(!addItem(d.i,q))dropGround(r.x,r.y,d.i,q); } else dropGround(r.x,r.y,d.i,q); _logLoot(d.i,q); if(d.m&&!_lootLog){msg(d.m,'#8a5e0a');sfx.pickup&&sfx.pickup();} else if(d.m)sfx.pickup&&sfx.pickup(); continue; }
   }
 }
 function bestToolBoost(skill){
@@ -3207,13 +3220,29 @@ function bestToolBoost(skill){
   for(const s of player.inv){if(!s)continue;const e=ITEMS[s.id]&&ITEMS[s.id].equip;if(e&&e.tool===skill&&lvl(skill)>=(e.treq||0))gb=Math.max(gb,e.gb||0);}
   return gb;
 }
+let _lootLog=null;   /* when an array, drop routines push {id,q,noted} here instead of announcing individually */
+function _logLoot(id,q,noted){ if(_lootLog)_lootLog.push({id:id,q:q||1,noted:!!noted}); }
 function dropMobLoot(r){
   const mk=MOB_KINDS[r.kind];
+  const _boss=!!mk.boss;
+  const _prevLog=_lootLog;
+  if(_boss)_lootLog=[];
   const _bd=mobBoneDrop(r.kind);
-  if(_bd)dropGround(r.x,r.y,_bd,1);
-  if(Math.random()<mk.coinP)dropGround(r.x,r.y,'coins',rndi(mk.coins[0],mk.coins[1]));
+  if(_bd){dropGround(r.x,r.y,_bd,1);_logLoot(_bd,1);}
+  if(Math.random()<mk.coinP){const _cn=rndi(mk.coins[0],mk.coins[1]);dropGround(r.x,r.y,'coins',_cn);_logLoot('coins',_cn);}
   rollMobDrops(r);
   rollRareDrop(r);
+  if(_boss){
+    const log=_lootLog;_lootLog=_prevLog;
+    if(log&&log.length){
+      const parts=log.map(function(e){
+        const nm=(ITEMS[e.id]&&ITEMS[e.id].name)||e.id;
+        if(e.id==='coins')return e.q.toLocaleString()+' coins';
+        return (e.q>1?e.q+' \u00d7 ':'')+nm+(e.noted?' (noted)':'');
+      });
+      if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))<=18)msg(r.name+' dropped: '+parts.join(', ')+'.','#caa23a');
+    }
+  }
 }
 
 function mobDie(r,groupKill){
@@ -3221,7 +3250,7 @@ function mobDie(r,groupKill){
   r.alive=false;r.respawnAt=(r.minionOf!==undefined)?9e15:(performance.now()+mk3.resp);r.target=null;if(mk3.boss){r.spec=null;r.flying=false;r.flightDone=false;r._hopT=0;r.hopCd=undefined;}player.kills=(player.kills||0)+1;if(mk3.boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}if(r.kind==='brat')player.bratKills=(player.bratKills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   if(engagedMob===r)engagedMob=null;
   if(typeof MP!=='undefined')MP.onMobKilled(r);
-  msg((groupKill?'Your group has defeated the ':'You have defeated the ')+r.name.toLowerCase()+'.');
+  if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))<=18)msg((groupKill?'Your group has defeated the ':'You have defeated the ')+r.name.toLowerCase()+'.');
   if(r.kind==='snowking'){r.blizzardDone=false;r.enrageDone=false;r.enraged=false;despawnIcefiends(r);}
   questKill(r);
   if(r.interior==='sos')sosCaveKill(r);
@@ -3234,7 +3263,7 @@ function groupCoLoot(r){
   if(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}
   if(r.kind==='brat')player.bratKills=(player.bratKills||0)+1;
   if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
-  msg('Your group has defeated the '+r.name.toLowerCase()+'.');
+  if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))<=18)msg('Your group has defeated the '+r.name.toLowerCase()+'.');
   questKill(r);
   if(r.interior==='sos')sosCaveKill(r);
   dropMobLoot(r);
@@ -6041,12 +6070,14 @@ function optionsAt(tx,ty){
         {html:'Examine <span class="t">Signpost</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='dragon_sign'){
       opts.push({html:'Read <span class="t">Dragon notice</span>',
-        label:'Read Dragon notice',fn:()=>{if(typeof openDragonInfo==='function')openDragonInfo();else msg(def.ex);}},
-        {html:'Examine <span class="t">Dragon notice</span>',fn:()=>msg(def.ex)});
+        label:'Read Dragon notice',fn:()=>{if(typeof openDragonInfo==='function')openDragonInfo();else msg(def.ex);const _st=bossStatusLine('blackdragon');if(_st)msg(_st,'#e8801f');}},
+        {html:'Examine <span class="t">Dragon notice</span>',fn:()=>{msg(def.ex);const _st=bossStatusLine('blackdragon');if(_st)msg(_st,'#e8801f');}});
     }else if(o.def==='frost_sign'){
       opts.push({html:'Read <span class="t">Frost notice</span>',
-        label:'Read Frost notice',fn:()=>{if(typeof openSnowKingInfo==='function')openSnowKingInfo();else msg(def.ex);}},
-        {html:'Examine <span class="t">Frost notice</span>',fn:()=>msg(def.ex)});
+        label:'Read Frost notice',fn:()=>{if(typeof openSnowKingInfo==='function')openSnowKingInfo();else msg(def.ex);const _st=bossStatusLine('snowking');if(_st)msg(_st,'#7fd4f0');}},{html:'Examine',fn:()=>msg(def.ex)});
+    }else if(o.def==='volcano_sign'){
+      opts.push({html:'Read <span class="t">Ember notice</span>',
+        label:'Read Ember notice',fn:()=>{if(typeof openCinderwingInfo==='function')openCinderwingInfo();else msg(def.ex,'#e8801f');const _st=bossStatusLine('cinderwing');if(_st)msg(_st,'#ff6a2a');}},{html:'Examine',fn:()=>msg(def.ex)});
     }else if(o.def==='relic'){
       if(player.quests.m2.s===1&&!player.quests.m2.relic)
         opts.push({html:'Take <span class="t">Blessed Censer</span>',
@@ -9705,6 +9736,15 @@ function buildObjModel(o){
     g.rotation.y=Math.PI/2;
     addBlob(g,0.24);
     addProxy(g,0.34,1.8,0,{kind:'obj',o});
+  }else if(def==='volcano_sign'){
+    const post=mesh(new THREE.CylinderGeometry(0.055,0.07,1.2,6),0x2a1d16);post.position.y=0.6;g.add(post);
+    const board=mesh(new THREE.BoxGeometry(0.92,0.58,0.07),0x241512);board.position.y=1.32;g.add(board);
+    const fr1=mesh(new THREE.BoxGeometry(1.0,0.08,0.09),0xff6a2a);fr1.position.y=1.61;g.add(fr1);
+    const fr2=mesh(new THREE.BoxGeometry(1.0,0.08,0.09),0xff6a2a);fr2.position.y=1.03;g.add(fr2);
+    const glow=new THREE.Mesh(new THREE.SphereGeometry(0.05,7,6),new THREE.MeshBasicMaterial({color:0xffa24a}));glow.position.set(0.24,1.4,0.08);g.add(glow);
+    const glow2=new THREE.Mesh(new THREE.SphereGeometry(0.04,7,6),new THREE.MeshBasicMaterial({color:0xff6a2a}));glow2.position.set(-0.2,1.28,0.08);g.add(glow2);
+    for(let fx=-1;fx<=1;fx+=2){const fl=new THREE.Mesh(new THREE.ConeGeometry(0.05,0.2,5),new THREE.MeshBasicMaterial({color:fx>0?0xff6a2a:0xffa24a}));fl.position.set(fx*0.28,1.7,0.04);g.add(fl);}
+    addBlob(g,0.3);addProxy(g,0.55,1.8,0,{kind:'obj',o});
   }else if(def==='frost_sign'){
     const post=mesh(new THREE.CylinderGeometry(0.055,0.07,1.2,6),0x5a7488);post.position.y=0.6;g.add(post);
     const board=mesh(new THREE.BoxGeometry(0.92,0.58,0.07),0x24506a);board.position.y=1.32;g.add(board);
@@ -9784,6 +9824,7 @@ function buildObjModel(o){
 }
 for(const _bp of [[7,4],[15,4],[7,10],[15,10]]){const _bo=addObj('brazier',_bp[0],_bp[1],true);if(_bo){_bo.lit=false;_bo.litUntil=0;}}
 addObj('frost_sign',20,13,true);
+addObj('volcano_sign',21,114,true);
 objects.forEach(buildObjModel);
 objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
 
@@ -21461,6 +21502,7 @@ function render(now){
     if(moving)tht=Math.atan2(r.x-r.px,r.y-r.py);
     else if(r.target)
       tht=Math.atan2(player.px-r.px,player.py-r.py);
+    if(tht===null&&r.kind==='cinderwing'&&!r.flying&&!(r._hopT&&r._hopT>performance.now()))tht=2.356194;   /* face NE at rest */
     if(tht!==null)r.heading=lerpAngle(r.heading,tht,Math.min(1,dt*0.012));
     m.group.rotation.y=r.heading;
     if(MOB_KINDS[r.kind].boss&&m.dhead){
@@ -24002,6 +24044,79 @@ function buildShowcaseSnowKing(){
   for(var k=0;k<6;k++){var a3=k/6*6.28;var mm2=m(new THREE.ConeGeometry(0.06,0.2,4),ICE2);mm2.position.set(1.08+Math.cos(a3)*0.28,1.34+Math.sin(a3)*0.28,0.2);mm2.rotation.z=a3-1.57;}
   g.position.y=-0.9;
   return g;
+}
+function openCinderwingInfo(){
+  if(document.getElementById('cwModal'))return;
+  var ov=document.createElement('div'); ov.id='cwModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(18,8,4,0.66);display:flex;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
+  var box=document.createElement('div');
+  box.style.cssText='background:#180f0a;border:3px solid #ff6a2a;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:Georgia,serif;color:#f4e3d2;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
+  box.innerHTML=
+    '<div style="font-size:20px;font-weight:bold;color:#ffa24a;text-align:center;margin-bottom:2px;">Cinderwing, the Ash Roc</div>'+
+    '<div style="text-align:center;color:#c8a488;font-size:12px;margin-bottom:8px;font-style:italic;">A colossal ember roc whose molten quills punch through plate \u2014 bring food, not just armour.</div>'+
+    '<canvas id="cwCanvas" width="380" height="200" style="width:100%;height:auto;display:block;background:radial-gradient(circle at 50% 40%,#3a1c10,#0e0806);border-radius:8px;border:1px solid #5a2e1a;"></canvas>'+
+    '<div style="text-align:center;color:#8a6a55;font-size:10.5px;margin:3px 0 0;">drag to rotate</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:8px 2px;font-size:13px;">'+
+      '<div>Combat level: <b style="color:#ffd24a;">330</b></div>'+
+      '<div>Hitpoints: <b style="color:#ffd24a;">420</b></div>'+
+      '<div>Attack style: <b style="color:#ff9a3a;">Ranged</b></div>'+
+      '<div>Weakness: <b style="color:#6fb8e6;">Water spells</b></div>'+
+    '</div>'+
+    '<div style="border-top:1px solid #5a2e1a;margin-top:6px;padding-top:8px;">'+
+      '<div style="color:#ffa24a;font-weight:bold;font-size:13px;margin-bottom:4px;">Notable drops</div>'+
+      '<div style="font-size:12.5px;line-height:1.55;color:#f0dcc4;">'+
+        '\u2022 Coins: <b>45,000\u201380,000</b> &mdash; every kill<br>'+
+        '\u2022 <b>Ashfang</b> (ember bow, fires its own dragon arrows) &mdash; ~1/10<br>'+
+        '\u2022 <b>Emberbrand</b> (finest sword; Volcanic Rend special) &mdash; ~1/20<br>'+
+        '\u2022 <b>Ember cape</b> &mdash; ~1/8<br>'+
+        '\u2022 <b>Molten Crown</b> &mdash; ~1/25<br>'+
+        '\u2022 Rune bars (noted) &mdash; ~1/2<br>'+
+        '\u2022 Ember feathers \u00d712\u201330 &amp; big bones &mdash; every kill'+
+      '</div></div>'+
+    '<div style="border-top:1px solid #5a2e1a;margin-top:8px;padding-top:8px;">'+
+      '<div style="color:#ff5a1e;font-weight:bold;font-size:13px;margin-bottom:4px;">Special attacks</div>'+
+      '<div style="font-size:12.5px;line-height:1.55;color:#f0dcc4;">'+
+        '\u2022 <b>Skyshatter Barrage</b> &mdash; tiles glow, then molten shards rain down for heavy damage. <b>Step off the marked tiles</b> before they land.<br>'+
+        '\u2022 <b>Crater Vault</b> &mdash; she leaps to the far rim on a blast of embers and shoots while you close the distance.<br>'+
+        '\u2022 <b>Flight (50% HP)</b> &mdash; she takes wing, untargetable, raining barrages \u2014 pure dodge-and-eat.<br>'+
+        '\u2022 <b>Enrage (20% HP)</b> &mdash; her quills ignite white-hot; faster shots, wider barrages.<br>'+
+        '<span style="color:#9fc8e6;">Her molten quills pierce armour \u2014 defence helps far less than usual. Water spells strike her hardest.</span>'+
+      '</div></div>'+
+    '<div style="border-top:1px solid #5a2e1a;margin-top:8px;padding-top:8px;font-size:12px;color:#c8a488;text-align:center;">Respawns about two hours after she is slain.</div>'+
+    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="cwClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #ff6a2a;background:#5a2e1a;color:#fff;cursor:pointer;">Close</button></div>';
+  ov.appendChild(box); document.body.appendChild(ov);
+  var raf=0, ren=null;
+  function cleanup(){ if(raf)cancelAnimationFrame(raf); if(ren){try{ren.forceContextLoss&&ren.forceContextLoss();ren.dispose();}catch(e){}} if(ov.parentNode)ov.parentNode.removeChild(ov); }
+  ov.addEventListener('click',function(e){ if(e.target===ov)cleanup(); });
+  box.querySelector('#cwClose').onclick=cleanup;
+  try{
+    var cv=box.querySelector('#cwCanvas');
+    ren=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true});
+    ren.setSize(380,200,false);
+    var scn=new THREE.Scene();
+    var cam=new THREE.PerspectiveCamera(42,380/200,0.1,100);
+    scn.add(new THREE.AmbientLight(0xffffff,0.82));
+    var dl=new THREE.DirectionalLight(0xffe0c0,1.0); dl.position.set(3,6,4); scn.add(dl);
+    var dl2=new THREE.DirectionalLight(0xff6a2a,0.5); dl2.position.set(-4,2,3); scn.add(dl2);
+    var roc=null; try{ roc=buildBestiaryMesh('cinderwing'); }catch(_){}
+    if(roc){
+      var wrap=new THREE.Group(); wrap.add(roc);
+      var _bx=new THREE.Box3().setFromObject(roc),_sz=new THREE.Vector3(),_ct=new THREE.Vector3();
+      _bx.getSize(_sz);_bx.getCenter(_ct);
+      roc.position.set(-_ct.x,-_bx.min.y,-_ct.z);
+      var _span=Math.max(_sz.x,_sz.y,_sz.z)||1;
+      cam.position.set(0,_sz.y*0.55,_span*1.15+1.2); cam.lookAt(0,_sz.y*0.45,0);
+      scn.add(wrap); wrap.rotation.y=0.7;
+      cv.style.touchAction='none'; cv.style.cursor='grab';
+      function _cren(){ try{ ren.render(scn,cam); }catch(_){} } _cren();
+      var _cg=false,_lx=0;
+      cv.addEventListener('pointerdown',function(e){ _cg=true; _lx=e.clientX; try{cv.setPointerCapture(e.pointerId);}catch(_){} });
+      cv.addEventListener('pointermove',function(e){ if(!_cg)return; var dx=e.clientX-_lx; _lx=e.clientX; wrap.rotation.y+=dx*0.012; _cren(); });
+      var _ce=function(e){ _cg=false; try{cv.releasePointerCapture(e.pointerId);}catch(_){} };
+      cv.addEventListener('pointerup',_ce); cv.addEventListener('pointercancel',_ce); cv.addEventListener('pointerleave',function(){ _cg=false; });
+      var _spin=function(){ if(!document.getElementById('cwModal')){return;} if(!_cg){wrap.rotation.y+=0.004; _cren();} raf=requestAnimationFrame(_spin); }; raf=requestAnimationFrame(_spin);
+    } else { cv.style.display='none'; }
+  }catch(e){ var c2=box.querySelector('#cwCanvas'); if(c2)c2.style.display='none'; }
 }
 function openSnowKingInfo(){
   if(document.getElementById('skModal'))return;
