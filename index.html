@@ -11948,7 +11948,7 @@ function applyCapeDecor(capeGrp,capeId){
 }
 function buildCapeDecor(capeGrp){
   const bm=(geo,col,op)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial(op!==undefined?{color:col,transparent:true,opacity:op,side:THREE.DoubleSide,depthWrite:false}:{color:col,side:THREE.DoubleSide}));
-  const sm=(geo,col,ro)=>new THREE.Mesh(geo,new THREE.MeshStandardMaterial({color:col,roughness:ro==null?0.7:ro,metalness:0.15}));
+  const sm=(geo,col,ro)=>{const m=new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:col}));m.castShadow=true;return m;};
   const out={};
   /* ---------- EMBER CAPE: charred cloth, molten cracks, ember-tipped ragged hem, drifting sparks ---------- */
   {const G=new THREE.Group();
