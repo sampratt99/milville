@@ -11971,21 +11971,25 @@ function buildCapeDecor(capeGrp){
    G.userData.sparks=[s1,s2];G.visible=false;capeGrp.add(G);out.ember=G;}
   /* ---------- AURORA CAPE: layered translucent light-veils (teal/violet/rose), starfield, frost-crystal clasp ---------- */
   {const G=new THREE.Group();
-   const back=sm(new THREE.BoxGeometry(0.4,0.62,0.03),0x0e1430,0.6);back.position.set(0,1.02,-0.2);back.rotation.x=0.1;G.add(back);
-   const back2=sm(new THREE.BoxGeometry(0.34,0.2,0.03),0x0a0f24,0.6);back2.position.set(0,0.72,-0.208);back2.rotation.x=0.16;G.add(back2);
+   /* faint translucent base sheet (no black panel) so the cape reads as woven light */
+   const base=bm(new THREE.PlaneGeometry(0.4,0.62),0x2a6a8c,0.32);base.position.set(0,1.02,-0.206);base.rotation.x=0.1;G.add(base);
+   const base2=bm(new THREE.PlaneGeometry(0.34,0.2),0x2a6a8c,0.34);base2.position.set(0,0.72,-0.214);base2.rotation.x=0.16;G.add(base2);
+   /* 4 shifting colored light-veils, layered front of the base */
    const veilCols=[0x3fd0c8,0x4aa0e0,0x9a7fe0,0xe07fc8];
    const _veils=[];
-   for(let i=0;i<4;i++){const v=bm(new THREE.PlaneGeometry(0.38-i*0.02,0.6-i*0.02),veilCols[i],0.5);
-     v.position.set(0,1.02,-0.185-i*0.014);v.rotation.x=0.1;G.add(v);_veils.push(v);}
-   const rail=sm(new THREE.BoxGeometry(0.44,0.07,0.07),0xdfe9ff,0.15);rail.position.set(0,1.33,-0.172);G.add(rail);
-   const rib=bm(new THREE.PlaneGeometry(0.34,0.18),0xbfe9ff,0.5);rib.position.set(0,0.71,-0.2);rib.rotation.x=0.16;G.add(rib);
-   for(let i=0;i<12;i++){const st=bm(new THREE.SphereGeometry(0.011+Math.random()*0.007,5,4),0xffffff,0.95);
-     st.position.set(-0.15+Math.random()*0.3,0.74+Math.random()*0.52,-0.17);G.add(st);}
+   for(let i=0;i<4;i++){const v=bm(new THREE.PlaneGeometry(0.38-i*0.02,0.6-i*0.02),veilCols[i],0.4);
+     v.position.set(0,1.02,-0.19-i*0.012);v.rotation.x=0.1;G.add(v);_veils.push(v);}
+   /* metallic frost collar rail (solid, lit) + 3 crystals */
+   const rail=sm(new THREE.BoxGeometry(0.44,0.07,0.07),0xcfe6f4);rail.position.set(0,1.33,-0.172);G.add(rail);
    for(let c=-1;c<=1;c++){const cr=bm(new THREE.OctahedronGeometry(0.04,0),0xeafcff,0.95);cr.position.set(c*0.12,1.35,-0.14);G.add(cr);}
+   /* lower flowing light-ribbon + starfield */
+   const rib=bm(new THREE.PlaneGeometry(0.34,0.18),0xbfe9ff,0.42);rib.position.set(0,0.71,-0.198);rib.rotation.x=0.16;G.add(rib);
+   for(let i=0;i<12;i++){const st=bm(new THREE.SphereGeometry(0.011+Math.random()*0.007,5,4),0xffffff,0.92);
+     st.position.set(-0.15+Math.random()*0.3,0.74+Math.random()*0.52,-0.17);G.add(st);}
    G.userData.veils=_veils;G.visible=false;capeGrp.add(G);out.aurora=G;}
   /* ---------- PELICAN CAPE: heraldic gold-on-crimson, embroidered border, pelican crest medallion, tassels ---------- */
   {const G=new THREE.Group();
-   const field=sm(new THREE.PlaneGeometry(0.4,0.62),0xb01f22,0.75);field.position.set(0,1.02,-0.196);field.rotation.x=0.1;G.add(field);
+   const field=sm(new THREE.BoxGeometry(0.4,0.62,0.03),0xb01f22);field.position.set(0,1.02,-0.198);field.rotation.x=0.1;G.add(field);
    /* gold embroidered border frame */
    const bt=(w,h,x,y)=>{const b=sm(new THREE.BoxGeometry(w,h,0.012),0xd8b24a,0.35);b.position.set(x,y,-0.188);b.rotation.x=0.1;G.add(b);};
    bt(0.4,0.03,0,1.31);bt(0.4,0.03,0,0.73);bt(0.03,0.6,-0.185,1.02);bt(0.03,0.6,0.185,1.02);
