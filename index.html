@@ -11938,12 +11938,12 @@ function applyCapeDecor(capeGrp,capeId){
   const t=performance.now();
   if(which==='ember'&&d.ember.userData.sparks){
     for(let i=0;i<d.ember.userData.sparks.length;i++){const sp=d.ember.userData.sparks[i];
-      const ph=t*0.001+i*2.1;sp.position.y=0.86+((ph*0.18)%0.4);sp.position.x=(i?0.12:-0.1)+Math.sin(ph*1.7)*0.03;
-      sp.material.opacity=0.5+0.5*Math.sin(ph*3);}
+      const ph=t*0.001+i*2.1;const _by=[1.05,0.95,1.2][i]||1.0,_bx=[-0.12,0.13,0.0][i]||0;sp.position.y=_by+Math.sin(ph*1.3)*0.05;sp.position.x=_bx+Math.sin(ph*1.7)*0.03;
+      sp.material.opacity=0.6+0.4*Math.sin(ph*3);}
   }
   if(which==='aurora'&&d.aurora.userData.veils){
     for(let i=0;i<d.aurora.userData.veils.length;i++){const v=d.aurora.userData.veils[i];
-      v.material.opacity=0.24+0.16*Math.sin(t*0.0016+i*1.3);v.position.x=Math.sin(t*0.0011+i*0.9)*0.015;}
+      v.material.opacity=0.62+0.16*Math.sin(t*0.0016+i*1.3);v.position.x=Math.sin(t*0.0011+i*0.9)*0.02;}
   }
 }
 function buildCapeDecor(capeGrp){
@@ -11952,40 +11952,40 @@ function buildCapeDecor(capeGrp){
   const out={};
   /* ---------- EMBER CAPE: charred cloth, molten cracks, ember-tipped ragged hem, drifting sparks ---------- */
   {const G=new THREE.Group();
-   const cloth=sm(new THREE.BoxGeometry(0.4,0.62,0.03),0x2a1410,0.85);cloth.position.set(0,1.02,-0.198);cloth.rotation.x=0.1;G.add(cloth);
-   const cloth2=sm(new THREE.BoxGeometry(0.34,0.2,0.03),0x1c0d0a,0.9);cloth2.position.set(0,0.72,-0.214);cloth2.rotation.x=0.16;G.add(cloth2);
-   /* molten cracks (glowing thin bars snaking down) */
-   for(const cr of [[-0.08,1.14,0.5],[0.06,1.05,-0.4],[-0.02,0.9,0.2],[0.1,0.82,0.6]]){
-     const c=bm(new THREE.BoxGeometry(0.02,0.16,0.01),0xff6a2a);c.position.set(cr[0],cr[1],-0.2);c.rotation.z=cr[2];G.add(c);
-     const c2=bm(new THREE.BoxGeometry(0.01,0.1,0.008),0xffd24a);c2.position.set(cr[0],cr[1],-0.198);c2.rotation.z=cr[2];G.add(c2);}
-   /* ragged ember-tipped hem */
-   for(let i=0;i<7;i++){const hx=-0.16+i*0.053;
-     const tri=bm(new THREE.ConeGeometry(0.03,0.1,3),i%2?0xff6a2a:0x3a1c14);tri.position.set(hx,0.66,-0.216);tri.rotation.x=Math.PI+0.16;G.add(tri);
-     const tip=bm(new THREE.ConeGeometry(0.014,0.05,3),0xffd24a);tip.position.set(hx,0.62,-0.216);tip.rotation.x=Math.PI+0.16;G.add(tip);}
-   /* gold-clasp shoulder yoke w/ ember gem */
-   const yoke=sm(new THREE.BoxGeometry(0.42,0.08,0.06),0xd8a03a,0.4);yoke.position.set(0,1.33,-0.178);G.add(yoke);
-   const gem=bm(new THREE.OctahedronGeometry(0.04,0),0xff8a3a);gem.position.set(0,1.33,-0.14);G.add(gem);
-   /* two drifting sparks (animated in dispatch via .userData) */
-   const s1=bm(new THREE.SphereGeometry(0.014,6,5),0xffd24a);s1.position.set(-0.1,1.0,-0.16);G.add(s1);
-   const s2=bm(new THREE.SphereGeometry(0.011,6,5),0xff6a2a);s2.position.set(0.12,0.92,-0.16);G.add(s2);
-   G.userData.sparks=[s1,s2];G.visible=false;capeGrp.add(G);out.ember=G;}
+   /* charred cloth (back-most). z here: viewer sees the cape's back; more-negative z = toward viewer = in front. */
+   const cloth=sm(new THREE.BoxGeometry(0.4,0.62,0.03),0x2a1410);cloth.position.set(0,1.02,-0.17);cloth.rotation.x=0.1;G.add(cloth);
+   const cloth2=sm(new THREE.BoxGeometry(0.34,0.2,0.03),0x1c0d0a);cloth2.position.set(0,0.72,-0.184);cloth2.rotation.x=0.16;G.add(cloth2);
+   /* big bright molten cracks, clearly IN FRONT of the cloth face */
+   for(const cr of [[-0.1,1.15,0.35],[0.08,1.08,-0.3],[-0.04,0.95,0.15],[0.11,0.86,0.5],[-0.13,1.0,-0.2]]){
+     const c=bm(new THREE.BoxGeometry(0.035,0.26,0.012),0xff6a2a);c.position.set(cr[0],cr[1],-0.205);c.rotation.z=cr[2];G.add(c);
+     const c2=bm(new THREE.BoxGeometry(0.016,0.2,0.012),0xffd24a);c2.position.set(cr[0],cr[1],-0.212);c2.rotation.z=cr[2];G.add(c2);}
+   /* ember-tipped ragged hem across the bottom */
+   for(let i=0;i<8;i++){const hx=-0.16+i*0.046;
+     const tri=bm(new THREE.ConeGeometry(0.032,0.12,3),i%2?0xff6a2a:0xffd24a);tri.position.set(hx,0.66,-0.205);tri.rotation.x=Math.PI+0.16;G.add(tri);}
+   /* gold shoulder yoke + big ember gem */
+   const yoke=sm(new THREE.BoxGeometry(0.42,0.08,0.06),0xd8a03a);yoke.position.set(0,1.35,-0.19);G.add(yoke);
+   const gem=bm(new THREE.OctahedronGeometry(0.05,0),0xffaa3a);gem.position.set(0,1.36,-0.24);G.add(gem);
+   /* glowing drifting sparks IN FRONT (animated) */
+   const s1=bm(new THREE.SphereGeometry(0.022,6,5),0xffd24a);s1.position.set(-0.12,1.05,-0.24);G.add(s1);
+   const s2=bm(new THREE.SphereGeometry(0.02,6,5),0xff8a3a);s2.position.set(0.13,0.95,-0.24);G.add(s2);
+   const s3=bm(new THREE.SphereGeometry(0.018,6,5),0xffd24a);s3.position.set(0.0,1.2,-0.24);G.add(s3);
+   G.userData.sparks=[s1,s2,s3];G.visible=false;capeGrp.add(G);out.ember=G;}
   /* ---------- AURORA CAPE: layered translucent light-veils (teal/violet/rose), starfield, frost-crystal clasp ---------- */
   {const G=new THREE.Group();
-   /* faint translucent base sheet (no black panel) so the cape reads as woven light */
-   const base=bm(new THREE.PlaneGeometry(0.4,0.62),0x2a6a8c,0.32);base.position.set(0,1.02,-0.206);base.rotation.x=0.1;G.add(base);
-   const base2=bm(new THREE.PlaneGeometry(0.34,0.2),0x2a6a8c,0.34);base2.position.set(0,0.72,-0.214);base2.rotation.x=0.16;G.add(base2);
-   /* 4 shifting colored light-veils, layered front of the base */
-   const veilCols=[0x3fd0c8,0x4aa0e0,0x9a7fe0,0xe07fc8];
+   /* deep-indigo cape body (not black) so the colored light-bands POP against it */
+   const base=bm(new THREE.PlaneGeometry(0.42,0.64),0x1a2a5a,0.72);base.position.set(0,1.02,-0.18);base.rotation.x=0.1;G.add(base);
+   /* 4 distinct bright aurora bands stacked down the cape (teal/blue/violet/rose), each proud of the base */
+   const veilCols=[0x3fd0c8,0x4ab0ff,0xa86ff0,0xff7ad0];
    const _veils=[];
-   for(let i=0;i<4;i++){const v=bm(new THREE.PlaneGeometry(0.38-i*0.02,0.6-i*0.02),veilCols[i],0.4);
-     v.position.set(0,1.02,-0.19-i*0.012);v.rotation.x=0.1;G.add(v);_veils.push(v);}
-   /* metallic frost collar rail (solid, lit) + 3 crystals */
-   const rail=sm(new THREE.BoxGeometry(0.44,0.07,0.07),0xcfe6f4);rail.position.set(0,1.33,-0.172);G.add(rail);
-   for(let c=-1;c<=1;c++){const cr=bm(new THREE.OctahedronGeometry(0.04,0),0xeafcff,0.95);cr.position.set(c*0.12,1.35,-0.14);G.add(cr);}
-   /* lower flowing light-ribbon + starfield */
-   const rib=bm(new THREE.PlaneGeometry(0.34,0.18),0xbfe9ff,0.42);rib.position.set(0,0.71,-0.198);rib.rotation.x=0.16;G.add(rib);
-   for(let i=0;i<12;i++){const st=bm(new THREE.SphereGeometry(0.011+Math.random()*0.007,5,4),0xffffff,0.92);
-     st.position.set(-0.15+Math.random()*0.3,0.74+Math.random()*0.52,-0.17);G.add(st);}
+   for(let i=0;i<4;i++){const v=bm(new THREE.PlaneGeometry(0.36,0.16),veilCols[i],0.72);
+     v.position.set(0,1.26-i*0.15,-0.2-i*0.004);v.rotation.x=0.1;G.add(v);_veils.push(v);}
+   /* metallic frost collar rail + 3 crystals in front */
+   const rail=sm(new THREE.BoxGeometry(0.44,0.07,0.07),0xdfeeff);rail.position.set(0,1.36,-0.2);G.add(rail);
+   for(let c=-1;c<=1;c++){const cr=bm(new THREE.OctahedronGeometry(0.045,0),0xeafcff);cr.position.set(c*0.13,1.37,-0.24);G.add(cr);}
+   /* bright star specks in front (leave the ribbon out; the bands are the feature) */
+   {
+   for(let i=0;i<14;i++){const st=bm(new THREE.SphereGeometry(0.014,5,4),0xffffff);
+     st.position.set(-0.16+((i*7)%10)/10*0.32,0.76+((i*13)%9)/9*0.5,-0.23);G.add(st);}}
    G.userData.veils=_veils;G.visible=false;capeGrp.add(G);out.aurora=G;}
   /* ---------- PELICAN CAPE: heraldic gold-on-crimson, embroidered border, pelican crest medallion, tassels ---------- */
   {const G=new THREE.Group();
