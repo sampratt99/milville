@@ -4036,6 +4036,19 @@ let encFilter='All';
 let encQuery='';
 /* authored sources for rare drops / quests / clues / specials (the rest are derived live) */
 const ENCY_SRC={
+  party_token:[{label:'Party Room',sub:'Buy for 30,000 coins'}],
+  infernal_ashes:[{label:'Monster drop',sub:'Scattered from slain greater demons for Prayer XP'}],
+  ectoplasm:[{label:'Monster drop',sub:'Dropped by ghosts and spectres; scatter for Prayer XP'}],
+  blessed_censer:[{label:'Prayer',sub:'A consecrated censer used in Prayer training'}],
+  mining_pouch:[{label:'Mining',sub:'A one-off gem pouch from the mining trainer'}],
+  cape_black:[{label:'Cape Seller',sub:'Buy for 25 gp'}],
+  forgemaster_cape:[{label:'The Siphon Vault',sub:'Claimed from the sealed vault at the Heart of the Emberdeep'}],
+  embercarp:[{label:'Fishing',sub:'Level 1+ at the Cinderworks molten shoals'}],
+  key_slag:[{label:'The Molten Gauntlet',sub:'Fished from the Slag Warden\u2019s doused vents'}],
+  key_choir:[{label:'The Molten Gauntlet',sub:'Fished from the Ember Choir\u2019s doused vents'}],
+  key_tyrant:[{label:'The Molten Gauntlet',sub:'Fished from the Forge Tyrant\u2019s doused vents'}],
+  rector_signet:[{label:'Boss drop',sub:'The First Rector, Reforged \u2014 always (exactly one per kill, to one random group member)'}],
+  warrant:[{label:'Emberdeep quests',sub:'Draining conduits + completing the Cinderworks, Gauntlet and Vault rooms'},{label:'Bounties',sub:'Hirschfeld\u2019s repeatable warden bounties in the Gauntlet'},{label:'Boss drop',sub:'The First Rector, Reforged \u2014 25 per kill'}],
   draconic_visage:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/200 · Black Dragon — 1/50'}],
   abyssal_whip:[{label:'Monster drop',sub:'Skeletal Wyvern — 1/75 · Basilisk — 1/200'}],
   granite_maul:[{label:'Monster drop',sub:'Gargoyle — 1/100'}],
@@ -4157,7 +4170,20 @@ function itemSources(id){
   if(ENCY_PHATS.indexOf(id)>=0)out.push({label:'Clue reward',sub:'A random party hat — Easy 1/500 → Elite 1/64'});
   if(ENCY_DRAGON.indexOf(id)>=0){out.push({label:'Monster drop',sub:'Dragons \u2014 1/120 (green) up to 1/6 (Black Dragon), one of six dragon items'});out.push({label:'Monster drop',sub:'Wilderness monsters cmb 60+ \u2014 1/150 (one of six) \u2014 no contract needed'});
     out.push({label:'Clue reward',sub:'Hard 1/256 · Elite 1/96 (one of six dragon items)'});}
+  if(/^mastercape_/.test(id)||/^grandcape_/.test(id)){ const sk=id.replace(/^(master|grand)cape_/,''); const nm=(typeof SKILL_META!=='undefined'&&SKILL_META[sk])?SKILL_META[sk].name:sk; out.push({label:'Cape of Accomplishment',sub:'Claim from the '+nm+' Master at level '+(/^master/.test(id)?'99':'120')}); }
+  if(typeof CAGE_SHOP!=='undefined')for(const r of CAGE_SHOP)if(r.id===id)out.push({label:'Matthes Cage shop',sub:r.price+' cage tokens'});
+  if(id==='cage_token')out.push({label:'Matthes Cage',sub:'Won by defeating opponents in the pit'});
+  if(/^xmas_/.test(id)||id==='nativity_figure'||id==='jellybean')out.push({label:'Festive event',sub:'From the seasonal Christmas event'});
+  if(typeof EMBER_SHOP!=='undefined')for(const e of EMBER_SHOP)if(e.id===id){ const pp=[]; if(e.coins)pp.push(fmt(e.coins)+' gp'); if(e.warrants)pp.push(e.warrants+' warrants'); if(e.cinders)pp.push(fmt(e.cinders)+' cinders'); out.push({label:'Emberdeep luxury shop',sub:'Mr. Hirschfeld \u2014 '+pp.join(' + ')}); }
+  if(typeof FORGE_RECIPES!=='undefined')for(const e of FORGE_RECIPES)if(e.out===id)out.push({label:'Cinder Forge',sub:'Reforge '+((ITEMS[e.base]&&ITEMS[e.base].name)||e.base)+' \u2014 '+e.signets+' signets + '+fmt(e.cinders)+' cinders + '+e.warrants+' warrants'});
+  if(typeof EMBER_ARMOUR!=='undefined')for(const e of EMBER_ARMOUR)if(e.out===id)out.push({label:'Cinder Forge',sub:'Forge \u2014 '+e.signets+' signets + '+fmt(e.cinders)+' cinders + '+e.warrants+' warrants'});
   const ex=ENCY_SRC[id];if(ex)for(const e of ex)out.push(e);
+  if(!out.length&&typeof MOB_DROPS!=='undefined'){
+    for(const mk in MOB_DROPS){ const nm=(typeof MOB_KINDS!=='undefined'&&MOB_KINDS[mk]&&MOB_KINDS[mk].name)||mk; const boss=!!(typeof MOB_KINDS!=='undefined'&&MOB_KINDS[mk]&&MOB_KINDS[mk].boss);
+      for(const en of MOB_DROPS[mk]){ let c=null;
+        if(en.i===id)c=en.c; else if(en.pool&&en.pool.indexOf(id)>=0)c=en.c;
+        else if(en.gearroll){for(const g of en.gearroll){if(g.i===id||(g.pool&&g.pool.indexOf(id)>=0)){c=g.c;break;}}}
+        if(c!==null){out.push({label:boss?'Boss drop':'Monster drop',sub:nm+'  '+_dropChance(c)});break;} } } }
   return out;
 }
 
@@ -5837,9 +5863,7 @@ function playerTick(){
     player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;
     const k2=a.type;cancelAction();
     if(k2==='bank'){
-      if(a.o&&a.o.def==='ember_bankchest'&&inVolcano&&_lastVolcFloor===4&&typeof rectorFightActive==='function'&&rectorFightActive()){
-        msg('The strongbox is sealed while the First Rector\u2019s wards blaze \u2014 you can bank once the fight is done.','#9c1f1f');
-      } else openBank();
+      openBank();
     } else openShop();
   }
 
@@ -5982,7 +6006,7 @@ function ratsTick(){
     if(r.kind==='zombie'&&(tick&1)
       &&!(r.target&&dist1(r.x,r.y,player.x,player.y)===1))continue;
     if(r.target){
-      if(player.hp<=0||(dist1(r.x,r.y,r.sx,r.sy)>(MOB_KINDS[r.kind].boss?16:8)&&!(player.action&&player.action.type==='attack'&&player.action.rat===r))){
+      if(player.hp<=0||(dist1(r.x,r.y,r.sx,r.sy)>(r.leash||(MOB_KINDS[r.kind].boss?16:8))&&!(player.action&&player.action.type==='attack'&&player.action.rat===r))){
         if(MOB_KINDS[r.kind].boss&&typeof MP!=='undefined'&&MP.groupBossHandoff&&MP.groupBossHandoff(r)){
           if(engagedMob===r)engagedMob=null;
           r.target=null;r._chaseStart=undefined;continue;}
@@ -6096,6 +6120,14 @@ function isRecoverable(id){
 function die(){
   sfx.die();
   if(typeof gauntlet!=='undefined'&&gauntlet.active)gauntletAbort('death');
+  if(inVolcano&&_lastVolcFloor===4){
+    player.deaths=(player.deaths||0)+1;dirty=true;
+    msg('The Heart\u2019s chaos overwhelms you \u2014 you come to beside Mr. Hirschfeld.','#9c1f1f');
+    player.hp=maxHp();player.pray=maxPray();deactivateAllPrayers();updatePrayOrb();
+    player.x=218;player.y=108;player.px=218;player.py=108;player.path.length=0;cancelAction();
+    if(_rectorBoss){ if(typeof MP!=='undefined'&&MP.groupBossHandoff&&MP.groupBossHandoff(_rectorBoss)){_rectorBoss.target=null;_rectorBoss._chaseStart=undefined;} else if(typeof rectorResetEncounter==='function')rectorResetEncounter(); }
+    updateOrb();return;
+  }
   if(inVolcano&&_lastVolcFloor===3){
     player.deaths=(player.deaths||0)+1;dirty=true;
     msg('The vault\u2019s security discharges through you \u2014 you come to at the last checkpoint pad.','#9c1f1f');
@@ -11638,15 +11670,14 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   /* --- The Heart arena (Chamber V / floor 4): throne + 4 siphon pillars --- */
   addObj('rector_throne',219,83,true);
   for(const pp of [[213,93],[225,93],[213,103],[225,103]]){const pl=addObj('siphon_pillar',pp[0],pp[1],true);if(pl)pl.active=false;}
-  addObj('ember_bankchest',224,110,true);
-  {const _rs=addObj('rector_sign',221,111,true);if(_rs){_rs.faceX=219;_rs.faceY=110;}}   /* boss signpost, facing the Heart door */
+  {const _rs=addObj('rector_sign',221,107,true);if(_rs){_rs.faceX=219;_rs.faceY=110;}}   /* boss signpost, facing the Heart door */
   addObj('ember_bankchest',215,108,true);          /* bank chest beside Hirschfeld (gated during the fight) */
   {const h=addObj('hirschfeld',216,108,true);if(h){h.faceX=219;h.faceY=110;h.heartBoss=true;}}   /* Heart entrance -- Rector Hirschfeld */
   L(214,110,3,null,214,107);                          /* Heart entrance: up -> the Siphon Vault */
   {const h=addObj('hirschfeld',216,71,true);if(h){h.faceX=219;h.faceY=68;}}
   /* Segment 2 -- Lockout Grid: 5x5 floor nodes (2-tile spacing), centred on 219,50 */
   for(let gr=0;gr<5;gr++)for(let gc=0;gc<5;gc++){const n=addObj('lock_node',215+gc*2,46+gr*2,true);if(n){n.gr=gr;n.gc=gc;n.lit=true;}}
-  addObj('lock_reset',210,50,true);
+  addObj('lock_reset',213,50,true);
   /* Segment 3 -- Cell Bank (Sokoban + conductive-rail slide). Rail lane y36 x212-226. */
   _cellRails=new Set(); for(let x=212;x<=226;x++)_cellRails.add(x+',36');
   for(const sc of [[211,36],[227,36],[219,39]])addObj('cell_socket',sc[0],sc[1],true);
@@ -22976,14 +23007,13 @@ var _rectorLavaBands=null,_rectorLavaSea=null,_rectorLavaMsgT=0;
   L(new THREE.BoxGeometry(5.4,9.2,1.7),0x110f0e,TX,FY+4.6,TZ-0.4);
   L(new THREE.BoxGeometry(6.2,0.7,2.2),0x1c1714,TX,FY+0.35,TZ-0.4);
   L(new THREE.BoxGeometry(5.9,0.6,2.0),0x1c1714,TX,FY+9.2,TZ-0.4);
-  for(const cxo of [-1.8,-0.7,0.7,1.8]){ G(new THREE.BoxGeometry(0.16,7.8,0.08),(cxo<0?0x2fe0d6:0xff3b2f),TX+cxo,FY+4.7,TZ-1.28,0.72); }
-  G(new THREE.BoxGeometry(2.6,4.8,0.1),0xff3b2f,TX,FY+5.0,TZ-1.24,0.34);
-  G(new THREE.BoxGeometry(1.4,3.2,0.1),0xffd36a,TX,FY+5.0,TZ-1.22,0.45);
-  const seal=L(new THREE.CylinderGeometry(0.7,0.7,0.18,22),0xd9a531,TX,FY+7.4,TZ-1.32); seal.rotation.x=Math.PI/2;
-  G(new THREE.TorusGeometry(0.72,0.07,8,28),0xffe9a8,TX,FY+7.4,TZ-1.3,0.9);
+  for(const cxo of [-1.8,-0.7,0.7,1.8]){ G(new THREE.BoxGeometry(0.16,7.8,0.08),(cxo<0?0x2fe0d6:0xff3b2f),TX+cxo,FY+4.7,TZ+0.52,0.72); }
+  G(new THREE.BoxGeometry(2.6,4.8,0.1),0xff3b2f,TX,FY+5.0,TZ+0.55,0.34);
+  G(new THREE.BoxGeometry(1.4,3.2,0.1),0xffd36a,TX,FY+5.0,TZ+0.58,0.45);
+  const seal=L(new THREE.CylinderGeometry(0.7,0.7,0.18,22),0xd9a531,TX,FY+7.4,TZ+0.6); seal.rotation.x=Math.PI/2;
+  G(new THREE.TorusGeometry(0.72,0.07,8,28),0xffe9a8,TX,FY+7.4,TZ+0.62,0.9);
   for(const sx of [-2.4,-1.2,1.2,2.4]){ const cbl=L(new THREE.CylinderGeometry(0.12,0.12,5.5,6),0x1a1512,TX+sx,FY+10.5,TZ-0.3); cbl.rotation.z=sx*0.05; }
-  /* SIPHON CONDUITS: cable from each pillar to the core */
-  for(const pp of [[209,89],[229,89],[209,101],[229,101]]){ const px=pp[0]+0.5,pz=pp[1]+0.5, dx=TX-px, dz=TZ-pz, len=Math.hypot(dx,dz), mx=(px+TX)/2, mz=(pz+TZ)/2; const cbl=L(new THREE.CylinderGeometry(0.08,0.08,len,6),0x241c1a,mx,FY+3.8,mz); cbl.rotation.y=Math.atan2(dx,dz); cbl.rotation.x=Math.PI/2; }
+  /* (overhead siphon-conduit cables removed \u2014 they read as a mistake over the pillars) */
   /* BANNERS: inverted-pelican, flanking the throne */
   for(const bx of [214.5,224.5]){ L(new THREE.BoxGeometry(1.8,4.0,0.1),0x1a0f0e,bx,FY+3.8,81.0); const r=G(new THREE.RingGeometry(0.5,0.64,20),0xb3241f,bx,FY+4.4,81.08,0.9); const bk=G(new THREE.ConeGeometry(0.26,0.95,4),0xff3b2f,bx,FY+4.1,81.09,0.85); bk.rotation.z=Math.PI; bk.rotation.y=Math.PI/4; }
   /* BROKEN CHAPEL PEWS (half-sunk, tilted) */
@@ -23003,10 +23033,7 @@ var _rectorLavaBands=null,_rectorLavaSea=null,_rectorLavaMsgT=0;
   /* WALL BRAZIERS */
   for(const bz of [Z0+6,Z0+15,Z0+24]){ for(const bx of [X0+2.2,X1-1.2]){ L(new THREE.CylinderGeometry(0.28,0.18,0.9,8),0x2a201c,bx,FY+0.45,bz+0.5); L(new THREE.CylinderGeometry(0.42,0.3,0.3,8),0x1c1613,bx,FY+0.95,bz+0.5); G(new THREE.ConeGeometry(0.34,1.0,7),0xff7a2a,bx,FY+1.5,bz+0.5,0.85); G(new THREE.ConeGeometry(0.2,0.7,6),0xffd36a,bx,FY+1.6,bz+0.5,0.9); PL(bx,bz+0.5,0xff7a2a,0.7,9,1.6); } }
   /* OVERHEAD CRATER: open throat, molten glow, jagged dome ring, drifting embers */
-  const gd=G(new THREE.CircleGeometry(11,50),0x8a1e0a,DCX,FY+15.5,DCZ,0.32); gd.rotation.x=-Math.PI/2;
-  const gd2=G(new THREE.CircleGeometry(6.5,42),0xff5a1e,DCX,FY+15.3,DCZ,0.38); gd2.rotation.x=-Math.PI/2;
-  const gd3=G(new THREE.CircleGeometry(3.2,32),0xffd36a,DCX,FY+15.1,DCZ,0.42); gd3.rotation.x=-Math.PI/2;
-  for(let i=0;i<24;i++){ const a=i/24*Math.PI*2, rr=12, x=DCX+Math.cos(a)*rr, z=DCZ+Math.sin(a)*rr*0.78, h=1.8+((i*7)%5)*0.5; const sp=L(new THREE.ConeGeometry(0.85,h,5),0x241a15,x,FY+13,z); sp.rotation.z=Math.cos(a)*0.25; }
+  /* overhead crater glow discs + jagged dome ring removed \u2014 they obstructed the overhead camera */
   for(let i=0;i<36;i++){ const a=i*0.79, rr=1+((i*13)%90)/8, x=DCX+Math.cos(a)*rr, z=DCZ+Math.sin(a)*rr*0.7, y=FY+2+((i*17)%110)/9; G(new THREE.SphereGeometry(0.055,5,4),(i&1)?0xff8a2e:0xffc258,x,y,z,0.8); }
   /* LIGHTING */
   PL(TX,TZ+0.6,0xff3b2f,1.3,20,5);
@@ -23166,6 +23193,7 @@ let _rectorBoss=null, _rectorGuards=[];
   let bi=rats.length;
   const mk=(kind,x,y,extra)=>{const r={i:bi++,kind:kind,sx:x,sy:y,x:x,y:y,px:x,py:y,hp:MOB_KINDS[kind].hp,maxhp:MOB_KINDS[kind].hp,alive:true,locked:false,respawnAt:0,lastHit:0,heading:rnd(0,6.2),target:null,phase:bi%2,name:MOB_KINDS[kind].name,ex:MOB_KINDS[kind].ex,interior:'volcano',volcFloor:4};if(extra)Object.assign(r,extra);rats.push(r);makeRat(r);if(r._m&&r._m.group)r._m.group.visible=false;return r;};
   _rectorBoss=mk('master_reforged',219,88,{dormant:true});
+  if(_rectorBoss){_rectorBoss.heading=0;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.rotation.y=0;_rectorBoss.leash=70;}
   if(_rectorBoss._m&&_rectorBoss._m.group){const g=_rectorBoss._m.group;g.scale.setScalar(2.0);g.traverse(ob=>{if(ob.isMesh&&ob.material&&ob.material!==PROXY_MAT){ob.material=ob.material.clone();ob.material.transparent=false;ob.material.opacity=1;if(ob.material.emissive)ob.material.emissive.setHex(0x7a1e10);}});}
   PROXY_MAT.transparent=true;PROXY_MAT.opacity=0;   /* safety: never let the shared click-proxy material go opaque */
   _rectorGuards=[mk('committee_guard',214,102),mk('committee_guard',224,102)];
@@ -28544,7 +28572,7 @@ function openRectorInfo(){
     '<div style="text-align:center;color:#c8a488;font-size:12px;margin-bottom:8px;font-style:italic;">Knit back together and overcharged by the machine \u2014 bigger, faster, and wrong.</div>'+
     '<canvas id="rcCanvas" width="380" height="200" style="width:100%;height:auto;display:block;background:radial-gradient(circle at 50% 40%,#3a1c10,#0e0806);border-radius:8px;border:1px solid #5a2e1a;"></canvas>'+
     '<div style="text-align:center;color:#8a6a55;font-size:10.5px;margin:3px 0 0;">drag to rotate</div>'+
-    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:8px 2px;font-size:13px;">'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;margin:8px 2px;font-size:13px;color:#e8d4c0;">'+
       '<div>Combat level: <b style="color:#ffd24a;">360</b></div>'+
       '<div>Hitpoints: <b style="color:#ffd24a;">720</b></div>'+
       '<div>Attack style: <b style="color:#ff9a3a;">Magic (chaos)</b></div>'+
