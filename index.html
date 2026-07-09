@@ -1768,7 +1768,7 @@ const OBJ_DEFS={
   ember_conduit:{name:'Cinder Conduit',ex:'A great molten pylon pumping the volcano\u2019s chaos toward the surface. Draining it will take more than a blade \u2014 a warden guards it, and it cannot be touched until its vents run cold.'},
   ember_vent:{name:'Cinder Vent',ex:'A grate in the flagstones venting fire up into a conduit. Smother all four of a conduit\u2019s vents to drop its shield and expose the core.'},
   ember_gate:{name:'Iron Gate',action:'Heave-open',noBlock:true,ex:'A wall of cast-iron prison bars sealing off a warden\u2019s cell, with a heavy barred door. You can see the conduit glowering beyond. It is locked \u2014 you will need the warden\u2019s key.'},
-  ember_keyspot:{name:'Molten Shoal',action:'Fish',skill:'fishing',req:1,xp:38,item:'embercarp',base:.55,fall:0,noBlock:true,ex:'A roil of glowing shapes just under the surface of the molten pool. Fish it for embercarp \u2014 and, rarely, a warden\u2019s key lost to the lava long ago.'},
+  ember_keyspot:{name:'Molten Shoal',action:'Fish',skill:'fishing',req:1,xp:38,item:'embercarp',base:.55,fall:0,cap:[15,20],respawn:[10,16],depName:'Stilled shoal',depEx:'Fished out \u2014 the shoal will churn back up shortly.',noBlock:true,ex:'A roil of glowing shapes just under the surface of the molten pool. Fish it for embercarp \u2014 and, rarely, a warden\u2019s key lost to the lava long ago.'},
   ember_dock:{name:'Fishing dock',action:'Walk-here',noBlock:true,ex:'A rough timber jetty running out over the molten pool. Walk to the end to cast into the shoal beyond.'},
   glow_ore:{name:'Glowing ore',action:'Mine',skill:'mining',req:50,xp:42,item:'emberore',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Spent seam',depEx:'Mined clean \u2014 the cyan crystal will re-form shortly.',ex:'A dark seam threaded with cyan crystal that pulses with a buried heat. Mine it for ember ore.'},
   frost_pool:{name:'Shimmering shoal',action:'Fish',skill:'fishing',req:50,xp:42,item:'embercarp',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Stilled shoal',depEx:'Fished out \u2014 the shoal will gather again shortly.',ex:'Turquoise water dimples where something bright darts beneath. Fish it for embercarp.'},
@@ -2865,7 +2865,7 @@ const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   for(let y=3;y<H-3;y++)for(let x=OFF;x<OFF+3;x++)
     if(tiles[y][x]===T_FOREST)tiles[y][x]=T_GRASS;
   W=NW;
-  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step']);
+  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step']);
   for(const o of objects)if(!INT_DEFS.has(o.def))o.x+=WX;  /* interior objects stay at their (unshifted) interior coords */
   for(const b of BUILDINGS)b.x+=WX;
   for(const n of npcs){n.x+=WX;if(n.sx!=null)n.sx+=WX;if(n.px!=null)n.px+=WX;}
@@ -5795,6 +5795,7 @@ function playerTick(){
     else if(a.bank)openBank();
     else if(a.cageshop)openCageShop();
     else if(a.embershop){if(typeof openEmberShop==='function')openEmberShop();}
+    else if(a.embernode)openDialogue(n2,a.embernode);
     else openDialogue(n2);
   }
 
@@ -6166,7 +6167,7 @@ function genUid(){return 'u'+Date.now().toString(36)+Math.random().toString(36).
 function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:(inChapel?CHAPEL_RETURN.x:inRectory?RECT_RETURN.x:inStPaul?STPAUL_RETURN.x:inMathes?MATHES_RETURN.x:inSos?SOS_RETURN.x:inVolcano?VOLC_RETURN.x:inParty?partyReturn.x:player.x),y:(inChapel?CHAPEL_RETURN.y:inRectory?RECT_RETURN.y:inStPaul?STPAUL_RETURN.y:inMathes?MATHES_RETURN.y:inSos?SOS_RETURN.y:inVolcano?VOLC_RETURN.y:inParty?partyReturn.y:player.y),
-    playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,
+    playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,volc:(inVolcano?{fl:_lastVolcFloor,x:player.x,y:player.y}:null),
     equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
@@ -6359,6 +6360,7 @@ async function loadSlot(id, preObj){
       if((s.mapv!=='sps3'&&s.mapv!=='sps4')||!inb(player.x,player.y)||blockedStrict(player.x,player.y)){
         player.x=89+WX;player.y=88;player.px=89+WX;player.py=88;
       }
+      if(s.volc&&s.volc.fl!=null&&typeof restoreVolcano==='function')restoreVolcano(s.volc.fl,s.volc.x,s.volc.y);
       return true;
     }
   }catch(e){}
@@ -6440,9 +6442,10 @@ let _skTip=null;
 function showSkillTip(skill){
   if(!_skTip){_skTip=document.createElement('div');_skTip.id='skilltip';document.body.appendChild(_skTip);}
   const xp=Math.floor(player.skills[skill]),l=levelFor(xp),nm=SKILL_META[skill].name;
-  if(l>=99){_skTip.innerHTML='<b>'+nm+'</b> &mdash; Level 99<br>'+fmt(xp)+' xp &middot; <span style="color:#c9a23a">Mastered</span>';}
+  if(l>=MAX_LEVEL){_skTip.innerHTML='<b>'+nm+'</b> &mdash; Level '+l+'<br>'+fmt(xp)+' xp &middot; <span style="color:#c9a23a">Max level</span>';}
   else{const base=XP_TABLE[l],nx=XP_TABLE[l+1],pct=Math.max(0,Math.min(100,Math.round((xp-base)/(nx-base)*100)));
-    _skTip.innerHTML='<b>'+nm+'</b> &mdash; Level '+l+'<br>'+fmt(xp)+' xp<br><span style="color:#e8c93f">'+fmt(nx-xp)+' xp to level '+(l+1)+'</span><div class="stipbar"><div class="stipfill" style="width:'+pct+'%"></div></div>';}
+    const _mast=(l>=99)?' &middot; <span style="color:#c9a23a">Mastered</span>':'';
+    _skTip.innerHTML='<b>'+nm+'</b> &mdash; Level '+l+_mast+'<br>'+fmt(xp)+' xp<br><span style="color:#e8c93f">'+fmt(nx-xp)+' xp to level '+(l+1)+'</span><div class="stipbar"><div class="stipfill" style="width:'+pct+'%"></div></div>';}
   _skTip.style.display='block';
 }
 function moveSkillTip(e){if(!_skTip)return;const r=_skTip.getBoundingClientRect();let x=e.clientX+14,y=e.clientY+14;if(x+r.width>innerWidth-6)x=e.clientX-r.width-14;if(y+r.height>innerHeight-6)y=e.clientY-r.height-14;_skTip.style.left=x+'px';_skTip.style.top=y+'px';}
@@ -7021,8 +7024,12 @@ function optionsAt(tx,ty){
         label:'Forge-at the Cinder Forge',fn:()=>setAction({type:'forgeat',o},o.x,o.y)},
         {html:'Examine <span class="t">the Cinder Forge</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='hirschfeld'){
-      opts.push({html:'Talk-to <span class="t">Mr. Hirschfeld</span>',label:'Talk-to Mr. Hirschfeld',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'}},o.x,o.y)},
-        {html:'Shop <span class="t">Luxury Items</span>',label:'Shop Luxury Items',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'},embershop:1},o.x,o.y)},
+      opts.push({html:'Talk-to <span class="t">Mr. Hirschfeld</span>',label:'Talk-to Mr. Hirschfeld',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'}},o.x,o.y)});
+      if(inVolcano&&_lastVolcFloor===1&&(EMBER_DEV_BYPASS||emberPipesAllDone()))
+        opts.push({html:(player.emberOrder?'Check':'Start')+' <span class="t">Order</span>',label:(player.emberOrder?'Check':'Start')+' Order',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'},embernode:'order'},o.x,o.y)});
+      if(inVolcano&&_lastVolcFloor===2&&(EMBER_DEV_BYPASS||emberConduitsAllDrained()))
+        opts.push({html:(player.emberBounty?'Check':'Start')+' <span class="t">Bounty</span>',label:(player.emberBounty?'Check':'Start')+' Bounty',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'},embernode:'bounty'},o.x,o.y)});
+      opts.push({html:'Shop <span class="t">Luxury Items</span>',label:'Shop Luxury Items',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'},embershop:1},o.x,o.y)},
         {html:'Examine <span class="t">Mr. Hirschfeld</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='ember_bridge'){
       opts.push({html:'Cross <span class="t">the rickety bridge</span>',label:'Cross the rickety bridge',fn:()=>setAction({type:'bridgecross',o},o.x,o.y)},
@@ -11168,8 +11175,8 @@ function buildObjModel(o){
   }else if(EMBER_PIPES[def]){
     const D=OBJ_DEFS[def],IRON=0x33302b,BRASS=0xba8a2c,GLASS=0xaac2cc,H=2.3;
     const base=mesh(new THREE.CylinderGeometry(0.33,0.4,0.32,14),IRON);base.position.y=0.16;g.add(base);
-    const tube=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,H,18,1,true),new THREE.MeshPhongMaterial({color:GLASS,transparent:true,opacity:0.24,side:THREE.DoubleSide,shininess:100,specular:0xffffff}));tube.position.y=0.32+H/2;g.add(tube);
-    const fluid=new THREE.Mesh(new THREE.CylinderGeometry(0.22,0.22,1,16),new THREE.MeshBasicMaterial({color:D.fcol,transparent:true,opacity:0.92}));fluid.position.y=0.34;fluid.scale.y=0.001;g.add(fluid);
+    const tube=new THREE.Mesh(new THREE.CylinderGeometry(0.25,0.25,H,18,1,true),new THREE.MeshPhongMaterial({color:GLASS,transparent:true,opacity:0.24,side:THREE.DoubleSide,shininess:100,specular:0xffffff,depthWrite:false}));tube.position.y=0.32+H/2;g.add(tube);
+    const fluid=new THREE.Mesh(new THREE.CylinderGeometry(0.225,0.225,1,16),new THREE.MeshBasicMaterial({color:D.fcol}));fluid.position.y=0.34;fluid.scale.y=0.001;fluid.renderOrder=2;g.add(fluid);
     for(const by of [0.55,1.32,2.1]){const band=mesh(new THREE.TorusGeometry(0.26,0.035,6,16),IRON);band.rotation.x=Math.PI/2;band.position.y=by;g.add(band);}
     const cap=mesh(new THREE.CylinderGeometry(0.33,0.3,0.3,14),IRON);cap.position.y=0.32+H+0.12;g.add(cap);
     const collar=mesh(new THREE.CylinderGeometry(0.16,0.16,0.4,10),D.pcol);collar.position.y=0.32+H+0.4;g.add(collar);
@@ -19249,7 +19256,7 @@ function swensonTree(){
 }
 /* ---- Repeatable Emberdeep warrant quests (post-questline grind) ---- */
 const EMBER_ORDER_ITEMS=['embercarp','emberore','ember_log'];
-const EMBER_ORDER_N=80, EMBER_ORDER_REWARD=12;
+const EMBER_ORDER_N=150, EMBER_ORDER_REWARD=12;
 const EMBER_BOUNTY_WARDENS=['slag','choir','tyrant'];
 const EMBER_BOUNTY_REWARD=15;
 function emberWardenName(w){return ({slag:'Slag Warden',choir:'Ember Choir',tyrant:'Forge-Tyrant'})[w]||w;}
@@ -23019,6 +23026,7 @@ function _volcApplyFloor(idx){
     o._m.group.visible=(ch===idx);
   }
 }
+let _volcSilentRestore=false;
 function enterVolcano(){
   inVolcano=true; tiles=volcTiles; _volcFlatten();
   worldGroup.visible=false; volcGroup.visible=true;
@@ -23029,8 +23037,8 @@ function enterVolcano(){
   player.x=e.x;player.y=e.y;player.px=e.x;player.py=e.y;
   camYaw=0; player.path.length=0; cancelAction();
   stopMusic();
-  msg('You squeeze down through the fissure into '+EMBER_CHAMBERS[0].name+'. Heat presses in from every side.','#e0801f');
-  msg('Five chambers fall away below you, each stranger than the last.','#8a6a4a');
+  if(!_volcSilentRestore){msg('You squeeze down through the fissure into '+EMBER_CHAMBERS[0].name+'. Heat presses in from every side.','#e0801f');
+  msg('Five chambers fall away below you, each stranger than the last.','#8a6a4a');}
   if(typeof emberQuestReconcile==='function')emberQuestReconcile();
   if(typeof renderQuests==='function')renderQuests();
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
@@ -23083,12 +23091,23 @@ function gotoVolcFloor(idx){
   player.x=e.x;player.y=e.y;player.px=e.x;player.py=e.y;
   camYaw=0; player.path.length=0;
   if(idx===4&&typeof rectorResetEncounter==='function'){ rectorResetEncounter();
-    if(!_rectorSeen){_rectorSeen=true; msg('Hirschfeld\u2019s voice crackles in your ear: \u201cThis is the man himself. He crawled down here to heal \u2014 and the machine gave him back more than he lost. Put him down.\u201d','#caa23a');}
-    msg('Two Committee Enforcers flank the throne. The First Rector will not stir until they fall.','#e0801f'); }
+    if(!_volcSilentRestore&&!_rectorSeen){_rectorSeen=true; msg('Hirschfeld\u2019s voice crackles in your ear: \u201cThis is the man himself. He crawled down here to heal \u2014 and the machine gave him back more than he lost. Put him down.\u201d','#caa23a');}
+    if(!_volcSilentRestore)msg('Two Committee Enforcers flank the throne. The First Rector will not stir until they fall.','#e0801f'); }
   if(idx===3){_vaultCPIdx=0;_vaultCheckpoint={x:c.entry.x,y:c.entry.y};if(goingDown&&!_vaultSolved.memory&&typeof memGenPath==='function')memGenPath();if(goingDown&&!_vaultSolved.lockout&&typeof lockScramble==='function')lockScramble();if(typeof vaultApplyProgress==='function')vaultApplyProgress();}
-  msg((goingDown?'You descend into ':'You climb up into ')+c.name+'.','#e0801f');
-  if(typeof emberAutoBrief==='function')emberAutoBrief(idx);
+  if(!_volcSilentRestore)msg((goingDown?'You descend into ':'You climb up into ')+c.name+'.','#e0801f');
+  if(!_volcSilentRestore&&typeof emberAutoBrief==='function')emberAutoBrief(idx);
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
+}
+function restoreVolcano(fl,x,y){
+  fl=fl|0; if(fl<0||fl>=EMBER_CHAMBERS.length)fl=0;
+  _volcSilentRestore=true;
+  try{
+    enterVolcano();
+    if(fl>0)gotoVolcFloor(fl);
+    if(typeof x==='number'&&typeof y==='number'&&inb(x,y)&&!blockedStrict(x,y)){player.x=x;player.y=y;player.px=x;player.py=y;}
+    player.path.length=0;
+  }catch(e){}
+  _volcSilentRestore=false;
 }
 function exitVolcano(){
   if(typeof gauntlet!=='undefined'&&gauntlet.active)gauntletAbort('leave');
