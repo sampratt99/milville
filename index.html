@@ -4941,7 +4941,7 @@ function adjacentTo(x,y){return dist1(player.x,player.y,x,y)===1;}
 function playerTick(){
   player.regen++;
   if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.alive&&!_rectorBoss.dormant&&typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4){ if(typeof rectorLavaTick==='function')rectorLavaTick(_rectorBoss,performance.now()); }
-  if(typeof rectorNovaTick==='function')rectorNovaTick();
+  if(typeof rectorChainTick==='function')rectorChainTick();
   if(player.regen>=50){player.regen=0;
     if(player.hp<maxHp()&&performance.now()-player.combatT>3000){player.hp++;updateOrb();}}
   { const _hpr=(typeof eqStat==='function')?eqStat('hpregen'):0; if(_hpr>0){ if(player.hp<maxHp()){ player._hpAcc=(player._hpAcc||0)+_hpr*HP_REGEN_PER_PT; if(player._hpAcc>=1){const _g=Math.floor(player._hpAcc);player._hpAcc-=_g;player.hp=Math.min(maxHp(),player.hp+_g);updateOrb();} } else player._hpAcc=0; } else player._hpAcc=0; }
@@ -6141,7 +6141,9 @@ function die(){
     msg('The Heart\u2019s chaos overwhelms you \u2014 you come to beside Mr. Hirschfeld.','#9c1f1f');
     player.hp=maxHp();player.pray=maxPray();deactivateAllPrayers();updatePrayOrb();
     player.x=218;player.y=108;player.px=218;player.py=108;player.path.length=0;cancelAction();
-    if(_rectorBoss){ if(typeof MP!=='undefined'&&MP.groupBossHandoff&&MP.groupBossHandoff(_rectorBoss)){_rectorBoss.target=null;_rectorBoss._chaseStart=undefined;} else if(typeof rectorResetEncounter==='function')rectorResetEncounter(); }
+    if(_rectorBoss){ const _others=(typeof MP!=='undefined'&&MP.rectorArenaPlayers)?MP.rectorArenaPlayers().length:0;
+      if(_others>0){ if(typeof MP!=='undefined'&&MP.rectorHandoff)MP.rectorHandoff(); _rectorBoss.target=null; _rectorBoss._chaseStart=undefined; }
+      else if(typeof rectorResetEncounter==='function')rectorResetEncounter(); }
     updateOrb();return;
   }
   if(inVolcano&&_lastVolcFloor===3){
@@ -23206,31 +23208,76 @@ function rectorSpecialTick(r,nowM){
   /* ENCROACHING LAVA */
   /* encroaching lava now ticks per-client from playerTick (shared via the synced boss HP) */
   /* SIGNATURE: Chaos Nova -- the owner picks the safe pillar + fire time and broadcasts it; every client resolves it on their own player */
-  if(!_rectorNova){
-    if(r._novaCd===undefined)r._novaCd=nowM+9000;
-    if(nowM>=r._novaCd){
-      const pl=pillars.length?pillars[Math.floor(Math.random()*pillars.length)]:null;
-      const safe=pl?[pl.x,pl.y]:[219,96], fireIn=(r.enraged?1600:2300), enr=r.enraged?1:0;
-      _rectorNova={safe:safe,fireAt:performance.now()+fireIn,enr:enr};
-      msg('The First Rector rears back, gathering a Chaos Nova \u2014 get behind a pillar!','#ff3b2f');
-      if(typeof MP!=='undefined'&&MP.rectorNovaSync)MP.rectorNovaSync(safe,fireIn,enr);
-      r._novaCd=nowM+(r.enraged?9000:14000);
+  /* SIGNATURE: Chain Lightning -- owner warns everyone to scatter, then (post-scatter) floods a chain
+     through every clustered arena player. One unlucky player always eats it; bunching = everyone eats it. */
+  if(!_rectorChain){
+    if(r._chainCd===undefined)r._chainCd=nowM+14000;
+    if(nowM>=r._chainCd){
+      const fireIn=(r.enraged?1500:2100), enr=r.enraged?1:0;
+      _rectorChain={phase:'warn',fireAt:performance.now()+fireIn,enr:enr};
+      msg('The First Rector crackles with chaos-lightning \u2014 SCATTER, don\u2019t bunch up!','#ffe24a');
+      if(typeof MP!=='undefined'&&MP.rectorChainWarn)MP.rectorChainWarn(fireIn,enr);
+      r._chainCd=nowM+(r.enraged?17000:25000);
     }
   }
 }
-function rectorNovaTick(){   /* runs on EVERY client: resolves a pending Chaos Nova against the local player */
-  if(!_rectorNova)return; if(performance.now()<_rectorNova.fireAt)return;
-  const sx=_rectorNova.safe[0],sy=_rectorNova.safe[1],enr=_rectorNova.enr; _rectorNova=null;
-  if(typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4&&player.hp>0){
-    const d=Math.max(Math.abs(player.x-sx),Math.abs(player.y-sy));
-    if(d>2){ let dmg=rndi(enr?28:20,enr?40:32); if(typeof hasEmberSet==='function'&&hasEmberSet())dmg=Math.round(dmg*0.75);
-      player.hp=Math.max(0,player.hp-dmg);splats.push({ent:'player',dmg:dmg,t:performance.now()});player.combatT=performance.now();if(typeof updateOrb==='function')updateOrb();
-      msg('The Chaos Nova catches you in the open! '+dmg+' damage.','#c0392b'); if(player.hp<=0&&typeof die==='function')die();
-    } else msg('You weather the nova in the pillar\u2019s shadow.','#39d97a');
+function rectorChainTick(){   /* runs on EVERY client: hold during the warn, then resolve the chain */
+  if(!_rectorChain)return;
+  const nowP=performance.now();
+  if(_rectorChain.phase==='warn'){
+    if(nowP<_rectorChain.fireAt)return;
+    if(typeof MP==='undefined'||!MP.iOwnRector||MP.iOwnRector()){
+      const res=_computeRectorChain(_rectorChain.enr);
+      _rectorChain={phase:'strike',segs:res.segs,hits:res.hits,dmg:res.dmg,until:nowP+700};
+      if(typeof MP!=='undefined'&&MP.rectorChainFire)MP.rectorChainFire(res.segs,res.hits,res.dmg);
+      _applyRectorChainSelf(res.hits,res.dmg);
+    } else if(nowP>_rectorChain.fireAt+2600){ _rectorChain=null; }
+    return;
   }
+  if(_rectorChain.phase==='strike'&&nowP>=_rectorChain.until)_rectorChain=null;
+}
+function _computeRectorChain(enr){   /* owner-only: flood a chain through every arena player within N tiles of a hit one */
+  const N=4;
+  const parts=[{uid:player.uid,x:Math.round(player.px),y:Math.round(player.py)}];
+  if(typeof MP!=='undefined'&&MP.rectorArenaPlayers)for(const rp of MP.rectorArenaPlayers())parts.push(rp);
+  const start=Math.floor(Math.random()*parts.length);
+  const seen=new Set([start]); const segs=[]; const q=[start];
+  while(q.length){ const i=q.shift(), a=parts[i];
+    for(let j=0;j<parts.length;j++){ if(seen.has(j))continue; const b=parts[j];
+      if(Math.max(Math.abs(a.x-b.x),Math.abs(a.y-b.y))<=N){ seen.add(j); q.push(j); segs.push([a.x+0.5,a.y+0.5,b.x+0.5,b.y+0.5]); } } }
+  const hits=[]; for(const i of seen)hits.push(parts[i].uid);
+  return {segs:segs,hits:hits,dmg:rndi(enr?26:18,enr?38:28)};
+}
+function _applyRectorChainSelf(hits,dmg){   /* every client applies the chain to its OWN player */
+  if(!(typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4&&player.hp>0))return;
+  if(hits&&hits.indexOf&&hits.indexOf(player.uid)>=0){
+    let d=dmg; if(typeof hasEmberSet==='function'&&hasEmberSet())d=Math.round(d*0.75);
+    player.hp=Math.max(0,player.hp-d);splats.push({ent:'player',dmg:d,t:performance.now()});player.combatT=performance.now();if(typeof updateOrb==='function')updateOrb();
+    msg('The chain-lightning arcs through you! '+d+' damage.','#c0392b'); if(player.hp<=0&&typeof die==='function')die();
+  } else msg('You scatter clear of the chain-lightning.','#39d97a');
+}
+function _drawRectorChain(){   /* overlay: jagged bolts arcing between chained players, fading over the strike window */
+  if(!_rectorChain||_rectorChain.phase!=='strike'||!_rectorChain.segs)return;
+  if(!(typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4))return;
+  const a=clamp((_rectorChain.until-performance.now())/700,0,1);
+  for(const s of _rectorChain.segs)_drawLightning(s[0],s[1],s[2],s[3],a);
+}
+function _drawLightning(wx1,wz1,wx2,wz2,alpha){
+  const p1=proj(wx1,groundH(wx1,wz1)+1.0,wz1), p2=proj(wx2,groundH(wx2,wz2)+1.0,wz2);
+  if(!p1||!p2)return;
+  const N=9, nx=-(p2.y-p1.y), ny=(p2.x-p1.x), nl=Math.hypot(nx,ny)||1;
+  const pts=[[p1.x,p1.y]];
+  for(let i=1;i<N;i++){ const t=i/N, mx=p1.x+(p2.x-p1.x)*t, my=p1.y+(p2.y-p1.y)*t, off=(Math.random()-0.5)*22*Math.sin(t*Math.PI); pts.push([mx+nx/nl*off,my+ny/nl*off]); }
+  pts.push([p2.x,p2.y]);
+  octx.save(); octx.globalAlpha=clamp(alpha,0,1); octx.lineJoin='round';
+  octx.strokeStyle='#4ac8ff'; octx.lineWidth=6; octx.shadowColor='#4ac8ff'; octx.shadowBlur=14;
+  octx.beginPath(); octx.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++)octx.lineTo(pts[i][0],pts[i][1]); octx.stroke();
+  octx.strokeStyle='#ffffff'; octx.lineWidth=2; octx.shadowBlur=6;
+  octx.beginPath(); octx.moveTo(pts[0][0],pts[0][1]); for(let i=1;i<pts.length;i++)octx.lineTo(pts[i][0],pts[i][1]); octx.stroke();
+  octx.restore();
 }
 /* The First Rector, Reforged -- the Heart boss + his two Committee Enforcer guards (Chamber V / floor 4) */
-let _rectorBoss=null, _rectorGuards=[], _rectorNova=null;
+let _rectorBoss=null, _rectorGuards=[], _rectorChain=null;
 (function spawnRectorBoss(){
   let bi=rats.length;
   const mk=(kind,x,y,extra)=>{const r={i:bi++,kind:kind,sx:x,sy:y,x:x,y:y,px:x,py:y,hp:MOB_KINDS[kind].hp,maxhp:MOB_KINDS[kind].hp,alive:true,locked:false,respawnAt:0,lastHit:0,heading:rnd(0,6.2),target:null,phase:bi%2,name:MOB_KINDS[kind].name,ex:MOB_KINDS[kind].ex,interior:'volcano',volcFloor:4};if(extra)Object.assign(r,extra);rats.push(r);makeRat(r);if(r._m&&r._m.group)r._m.group.visible=false;return r;};
@@ -23344,9 +23391,16 @@ function gotoVolcFloor(idx){
   const c=EMBER_CHAMBERS[idx], e=c.entry;
   player.x=e.x;player.y=e.y;player.px=e.x;player.py=e.y;
   camYaw=0; player.path.length=0;
-  if(idx===4&&typeof rectorResetEncounter==='function'){ rectorResetEncounter();
-    if(!_volcSilentRestore&&!_rectorSeen){_rectorSeen=true; msg('Hirschfeld\u2019s voice crackles in your ear: \u201cThis is the man himself. He crawled down here to heal \u2014 and the machine gave him back more than he lost. Put him down.\u201d','#caa23a');}
-    if(!_volcSilentRestore)msg('Two Committee Enforcers flank the throne. The First Rector will not stir until they fall.','#e0801f'); }
+  if(idx===4){
+    if(typeof MP!=='undefined'&&MP.rectorOwnedByGroupmate&&MP.rectorOwnedByGroupmate()){
+      /* a groupmate is already fighting the Rector -- drop into the LIVE fight; do NOT re-arm/reset it */
+      if(_rectorBoss){_rectorBoss.alive=true;_rectorBoss.dormant=false;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true;}
+      for(const gd of _rectorGuards){if(gd){gd.alive=false;if(gd._m&&gd._m.group)gd._m.group.visible=false;}}
+      if(!_volcSilentRestore)msg('You drop into the fray \u2014 the First Rector is already unbound. Help bring him down!','#ff6a2a');
+    } else if(typeof rectorResetEncounter==='function'){ rectorResetEncounter();
+      if(!_volcSilentRestore&&!_rectorSeen){_rectorSeen=true; msg('Hirschfeld\u2019s voice crackles in your ear: \u201cThis is the man himself. He crawled down here to heal \u2014 and the machine gave him back more than he lost. Put him down.\u201d','#caa23a');}
+      if(!_volcSilentRestore)msg('Two Committee Enforcers flank the throne. The First Rector will not stir until they fall.','#e0801f'); }
+  }
   if(idx===3){_vaultCPIdx=0;_vaultCheckpoint={x:c.entry.x,y:c.entry.y};if(goingDown&&!_vaultSolved.memory&&typeof memGenPath==='function')memGenPath();if(goingDown&&!_vaultSolved.lockout&&typeof lockScramble==='function')lockScramble();if(typeof vaultApplyProgress==='function')vaultApplyProgress();}
   if(!_volcSilentRestore)msg((goingDown?'You descend into ':'You climb up into ')+c.name+'.','#e0801f');
   if(!_volcSilentRestore&&typeof emberAutoBrief==='function')emberAutoBrief(idx);
@@ -24052,6 +24106,7 @@ function drawOverlay(now){
   if(now-playerLastHit<3500)
     drawBar(player.px+0.5,player.py+0.5,2.05,player.hp/maxHp());
   if(inVolcano&&_lastVolcFloor===4)for(const o of objects)if(o.def==='siphon_pillar'&&o.active&&o.maxhp)drawBar(o.x+0.5,o.y+0.5,4.0,clamp((o.hp||0)/o.maxhp,0,1));
+  if(typeof _drawRectorChain==='function')_drawRectorChain();
   for(const r of rats)
     if(r.alive&&now-r.lastHit<3500&&_mobOnCurFloor(r)){
       drawBar(r.px+0.5,r.py+0.5,0.95,clamp(r.hp/r.maxhp,0,1));
@@ -26924,7 +26979,12 @@ const MP = (function () {
     if (ps.length) send({ t: 'rpil', uid: player.uid, p: ps });
   }
   /* a hit on a siphon pillar: if a groupmate owns the Rector, forward the damage to them (shared hp) and skip the local hp path */
-  function rectorNovaSync(safe, fireIn, enr) { if (active() && conn && groupInGroup()) send({ t: 'rnova', uid: player.uid, s: safe, f: fireIn | 0, e: enr | 0 }); }
+  function iOwnRector() { const o = _rectorOwnerUid(); return !o || o === player.uid; }
+  function rectorOwnedByGroupmate() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return false; const c = claims.get(_rectorBoss.i); return !!(c && c.uid && c.uid !== player.uid && isGroupmate(c.uid)); }
+  function rectorArenaPlayers() { const out = []; if (typeof RP !== 'undefined') for (const r of RP.values()) if (_remoteHere(r) && r.px >= 192 && r.px <= 247 && r.py >= 78 && r.py <= 114) out.push({ uid: r.uid, x: Math.round(r.px), y: Math.round(r.py) }); return out; }
+  function rectorChainWarn(fireIn, enr) { if (active() && conn && groupInGroup()) send({ t: 'rchainwarn', uid: player.uid, f: fireIn | 0, e: enr | 0 }); }
+  function rectorChainFire(segs, hits, dmg) { if (active() && conn && groupInGroup()) send({ t: 'rchain', uid: player.uid, s: segs, h: hits, d: dmg | 0 }); }
+  function rectorHandoff() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return; const c = claims.get(_rectorBoss.i); if (c && c.uid === player.uid) { claims.delete(_rectorBoss.i); if (active() && conn) send({ t: 'release', m: _rectorBoss.i }); } const ag = mobAggro.get(_rectorBoss.i); if (ag) ag.acc.delete(player.uid); }
   function forwardPillarHit(o, dmg) {
     if (!active() || !conn || !groupInGroup() || !o || !(dmg > 0)) return false;
     const owner = _rectorOwnerUid();
@@ -27661,10 +27721,16 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         }
         break;
       }
-      case 'rnova': {
+      case 'rchainwarn': {
         if (m.uid === player.uid) break;
-        _rectorNova = { safe: m.s, fireAt: performance.now() + (m.f | 0), enr: m.e | 0 };
-        if (typeof msg === 'function') msg('The First Rector rears back, gathering a Chaos Nova \u2014 get behind a pillar!', '#ff3b2f');
+        if (typeof _rectorChain !== 'undefined') { _rectorChain = { phase: 'warn', fireAt: performance.now() + (m.f | 0), enr: m.e | 0 };
+          if (typeof msg === 'function') msg('The First Rector crackles with chaos-lightning \u2014 SCATTER, don\u2019t bunch up!', '#ffe24a'); }
+        break;
+      }
+      case 'rchain': {
+        if (m.uid === player.uid) break;
+        if (typeof _rectorChain !== 'undefined') { _rectorChain = { phase: 'strike', segs: m.s, hits: m.h, dmg: m.d | 0, until: performance.now() + 700 };
+          if (typeof _applyRectorChainSelf === 'function') _applyRectorChainSelf(m.h, m.d | 0); }
         break;
       }
       case 'rpil': {
@@ -28604,7 +28670,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, rectorNovaSync, groupMobSwingTarget, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
