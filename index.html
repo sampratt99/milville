@@ -1533,6 +1533,7 @@ function depositPipe(o){
   if(have<=0){msg('You have no '+ITEMS[res].name.toLowerCase()+' to deposit.','#ff8a5a');return;}
   const amt=Math.min(have,EMBER_PIPE_REQ-(player.emberPipes[sk]||0));
   takeItems(res,amt); player.emberPipes[sk]=(player.emberPipes[sk]||0)+amt;
+  if(typeof updateObjVisual==='function')try{updateObjVisual(o);}catch(e){}
   const _cur=player.emberPipes[sk], _rem=EMBER_PIPE_REQ-_cur, pct=Math.floor(_cur/EMBER_PIPE_REQ*100);
   msg('You feed '+amt+' '+ITEMS[res].name.toLowerCase()+' into the '+sk+' pipe \u2014 '+_cur+' / '+EMBER_PIPE_REQ+' ('+(_rem>0?(_rem+' more needed to fill it'):'full')+', '+pct+'%).','#1ec2b0');
   if(player.emberPipes[sk]>=EMBER_PIPE_REQ&&!player.emberPipesDone[sk]){
@@ -3834,7 +3835,7 @@ function groupCoLoot(r){
   if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))<=18)msg('Your group has defeated the '+r.name.toLowerCase()+'.');
   questKill(r);
   if(r.interior==='sos')sosCaveKill(r);
-  if(r.kind==='master_reforged'){ player.rectorKilledAt=Date.now(); if(typeof addItem==='function')addItem('warrant',EMBER_RECTOR_WARRANTS); if(typeof msg==='function')msg('The First Rector falls to your group \u2014 Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants to your name.','#caa23a'); }
+  if(r.kind==='master_reforged'){ player.rectorKilledAt=Date.now(); if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS);} if(typeof msg==='function')msg('The First Rector falls to your group \u2014 Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants and '+EMBER_RECTOR_CINDERS+' cinders to your name.','#caa23a'); }
   else dropMobLoot(r);
   dirty=true;
 }
@@ -4955,7 +4956,7 @@ function playerTick(){
         if(countItem(o.keyId)<1&&Math.random()<0.04){addItem(o.keyId,1);addXp('fishing',def.xp);msg('Your line snags something heavy \u2014 you haul a '+ITEMS[o.keyId].name+' from the molten pool!','#9a6a10');if(sfx.coins)sfx.coins();}
         else{addItem('embercarp',1);addXp('fishing',def.xp);msg('You catch an embercarp from the molten shoal.','#16607f');}
       }
-      else if(o.cinders){addItem(def.item,1);addItem('cinders',o.cinders);addXp(def.skill,o.xp||def.xp);msg('You gather '+ITEMS[def.item].name.toLowerCase()+' (+'+o.cinders+' cinders).','#1ec2b0');}
+      else if(o.cinders){addItem(def.item,1);addItem('cinders',o.cinders);addXp(def.skill,o.xp||def.xp);}
       else{
       let gid=def.item,gxp=def.xp;
       if(def.skill==='fishing'){
@@ -5793,6 +5794,7 @@ function playerTick(){
     if(a.trade)openCapeShop();
     else if(a.bank)openBank();
     else if(a.cageshop)openCageShop();
+    else if(a.embershop){if(typeof openEmberShop==='function')openEmberShop();}
     else openDialogue(n2);
   }
 
@@ -7020,7 +7022,7 @@ function optionsAt(tx,ty){
         {html:'Examine <span class="t">the Cinder Forge</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='hirschfeld'){
       opts.push({html:'Talk-to <span class="t">Mr. Hirschfeld</span>',label:'Talk-to Mr. Hirschfeld',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'}},o.x,o.y)},
-        {html:'Shop <span class="t">Luxury Items</span>',label:'Shop Luxury Items',fn:()=>{if(typeof openEmberShop==='function')openEmberShop();}},
+        {html:'Shop <span class="t">Luxury Items</span>',label:'Shop Luxury Items',fn:()=>setAction({type:'talkn',n:{x:o.x,y:o.y,id:'hirschfeld',name:'Mr. Hirschfeld'},embershop:1},o.x,o.y)},
         {html:'Examine <span class="t">Mr. Hirschfeld</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='ember_bridge'){
       opts.push({html:'Cross <span class="t">the rickety bridge</span>',label:'Cross the rickety bridge',fn:()=>setAction({type:'bridgecross',o},o.x,o.y)},
@@ -11646,7 +11648,7 @@ function updateObjVisual(o){
     m.mins.visible=o.alive;
   }
   if(m.rings){for(const r of m.rings)r.visible=o.alive;}
-  if(m.fluid){const sk=OBJ_DEFS[o.def].skill;const dep=(player.emberPipes&&player.emberPipes[sk])||0;const f=Math.max(0,Math.min(1,dep/EMBER_PIPE_REQ));const h=Math.max(0.001,f*m.fluidH);m.fluid.scale.y=h;m.fluid.position.y=m.fluidBaseY+h/2;}
+  if(m.fluid){const sk=OBJ_DEFS[o.def].skill;const _done=!!(player.emberPipesDone&&player.emberPipesDone[sk]);const dep=(player.emberPipes&&player.emberPipes[sk])||0;const f=_done?1:Math.max(0,Math.min(1,dep/EMBER_PIPE_REQ));const h=Math.max(0.001,f*m.fluidH);m.fluid.scale.y=h;m.fluid.position.y=m.fluidBaseY+h/2;}
   if(m.gauge){m.gauge.material.color.setHex(emberPipesAllDone()?0x39ff6a:0xff4422);}
   if(o.def==='siphon_pillar'&&m.core){ const on=o.active; const t=performance.now(); const pulse=0.55+Math.sin(t*0.006+o.x)*0.35;
     m.core.material.color.setHex(on?0xff8a2e:0x3a2018); m.core.material.opacity=on?pulse:0.32;
@@ -19354,6 +19356,8 @@ const DIALOGUES={
     if(fl===2)return emberInjectBounty(HIRSCH_GAUNTLET());
     if(fl===3)return HIRSCH_VAULT();
     if(fl===4)return HIRSCH_HEART();
+    if(typeof emberQuestReconcile==='function')emberQuestReconcile();
+    if(player.quests&&player.quests.ember&&player.quests.ember.s===0){player.quests.ember.s=1;msg('Quest started \u2014 The Cinderworks. Hirschfeld sets you on the First Rector\u2019s trail.','#9a6a10');if(typeof renderQuests==='function')renderQuests();}
     return ({
     start:{who:'npc',text:"Another soul dropped down the fissure. Good - I had near given up hope. Hirschfeld. MISTER Hirschfeld; I was Rector of St. Paul's, briefly, before all this. Mind that bridge, {name} - it is the only way off my little island, and it has pitched better climbers than you into the fire.",opts:[
       {label:"How did you end up down here?",next:'how'},
@@ -22872,10 +22876,11 @@ let _emberWardens=[];
 })();
 function emberWardenOf(w){return _emberWardens.find(r=>r.warden===w);}
 const EMBER_RECTOR_WARRANTS=25;
+const EMBER_RECTOR_CINDERS=1000;
 function rectorRewards(r){
   player.rectorKilledAt=Date.now();
-  if(typeof addItem==='function')addItem('warrant',EMBER_RECTOR_WARRANTS);
-  msg('The First Rector is undone at last. Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants to your name.','#caa23a');
+  if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS);}
+  msg('The First Rector is undone at last. Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants and '+EMBER_RECTOR_CINDERS+' cinders to your name.','#caa23a');
   /* exactly ONE signet per kill -> solo: it's yours. (group: random member -- wired with the full reward system) */
   if(!(typeof MP!=='undefined'&&MP.groupRectorSignet&&MP.groupRectorSignet(r.i))){ if(!addItem('rector_signet',1))dropGround(r.x,r.y,'rector_signet',1); msg('A First Rector\u2019s signet clatters loose from the wreck \u2014 one, and only one.','#e8b020'); }
 }
@@ -23026,6 +23031,8 @@ function enterVolcano(){
   stopMusic();
   msg('You squeeze down through the fissure into '+EMBER_CHAMBERS[0].name+'. Heat presses in from every side.','#e0801f');
   msg('Five chambers fall away below you, each stranger than the last.','#8a6a4a');
+  if(typeof emberQuestReconcile==='function')emberQuestReconcile();
+  if(typeof renderQuests==='function')renderQuests();
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
 }
 let _lastVolcFloor=0;
@@ -23036,6 +23043,14 @@ function _mobOnCurFloor(r){
   return true;
 }
 const EMBER_Q_XP={skill:1500, combat:1500, prayer:3000};
+function emberQuestReconcile(){
+  const q=player.quests&&player.quests.ember; if(!q)return; q.seen=q.seen||{};
+  if(q.s===0){
+    if(typeof vaultPuzzlesAllSolved==='function'&&vaultPuzzlesAllSolved())q.s=4;
+    else if(typeof emberConduitsAllDrained==='function'&&emberConduitsAllDrained())q.s=3;
+    else if(typeof emberPipesAllDone==='function'&&emberPipesAllDone())q.s=2;
+  }
+}
 function emberQuestComplete(room){
   const q=player.quests&&player.quests.ember; if(!q)return; q.seen=q.seen||{};
   if(room==='skill'){ if(q.s>=2)return; q.s=2;
