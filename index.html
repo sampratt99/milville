@@ -6859,7 +6859,7 @@ function pushPeerOpts(opts,tx,ty){
   if(typeof MP==='undefined'||!MP.active())return;
   const _rp=MP.remoteAt(tx,ty);
   if(!_rp)return;
-  opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=MP.examineInfo?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' -- a fellow adventurer of Millville.','#103a8c');return;}let s=info.name+((typeof titleSuffix==='function')?titleSuffix(info.title):'');if(info.cmb!=null)s+=' -- Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}});
+  opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{if(typeof openExaminePlayer==='function'){openExaminePlayer(_rp);return;}const info=MP.examineInfo?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' -- a fellow adventurer of Millville.','#103a8c');return;}let s=info.name+((typeof titleSuffix==='function')?titleSuffix(info.title):'');if(info.cmb!=null)s+=' -- Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}});
   opts.push({html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
   opts.push({html:'Follow <span class="t">'+_rp.name+'</span>',label:'Follow '+_rp.name,fn:()=>{cancelAction();followUid=_rp.uid;player._flx=null;player._fly=null;msg('You start following '+_rp.name+'. Click anywhere to stop.','#103a8c');}});
   if(MP.groupCanInvite&&MP.groupCanInvite(_rp.uid)){
@@ -6903,11 +6903,11 @@ function optionsAt(tx,ty){
         else if(r==='busy')msg('You are already in a duel.','#9c1f1f');
         else if(r==='offline')msg(_rp.name+' is not available to duel.','#9c1f1f');
       }});
-      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+titleSuffix(_rp.title)+' - a fellow contender in the Cage.','#103a8c')});
+      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{if(typeof openExaminePlayer==='function'){openExaminePlayer(_rp);return;}msg(_rp.name+titleSuffix(_rp.title)+' - a fellow contender in the Cage.','#103a8c');}});
     }
     else if(_rp&&duel.state==='fight'&&_rp.uid===duel.oppUid){
       opts.push({html:'Attack <span class="t">'+_rp.name+'</span>',label:'Attack '+_rp.name,fn:()=>{setAction({type:'datk'},Math.round(_rp.px),Math.round(_rp.py));if(typeof clickFx==='function')clickFx(Math.round(_rp.px),Math.round(_rp.py),'#ff4d3d');}});
-      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>msg(_rp.name+titleSuffix(_rp.title)+' - your opponent in the pit.','#103a8c')});
+      opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{if(typeof openExaminePlayer==='function'){openExaminePlayer(_rp);return;}msg(_rp.name+titleSuffix(_rp.title)+' - your opponent in the pit.','#103a8c');}});
     }
     return opts;
   }
@@ -7270,7 +7270,7 @@ function optionsAt(tx,ty){
       fn:()=>msg('The woods are too thick to pass.')});
   const _rp=(typeof MP!=='undefined'&&MP.active())?MP.remoteAt(tx,ty):null;
   if(_rp){
-    opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{const info=(typeof MP!=='undefined'&&MP.examineInfo)?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' \u2014 a fellow adventurer of Millville.','#103a8c');return;}let s=info.name+((typeof titleSuffix==='function')?titleSuffix(info.title):'');if(info.cmb!=null)s+=' \u2014 Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}},
+    opts.push({html:'Examine <span class="t">'+_rp.name+'</span>',label:'Examine '+_rp.name,fn:()=>{if(typeof openExaminePlayer==='function'){openExaminePlayer(_rp);return;}const info=(typeof MP!=='undefined'&&MP.examineInfo)?MP.examineInfo(_rp):null;if(!info){msg(_rp.name+' \u2014 a fellow adventurer of Millville.','#103a8c');return;}let s=info.name+((typeof titleSuffix==='function')?titleSuffix(info.title):'');if(info.cmb!=null)s+=' \u2014 Combat '+info.cmb;if(info.mhp)s+=' ('+info.hp+'/'+info.mhp+' hp)';msg(s+'.','#103a8c');if(info.worn&&info.worn.length)msg('Wearing: '+info.worn.join(', ')+'.','#103a8c');}},
       {html:'Add friend <span class="t">'+_rp.name+'</span>',label:'Add friend '+_rp.name,fn:()=>{if(MP.addFriendByName(_rp.name))msg('Added '+_rp.name+' to your Friends list.','#103a8c');else msg(_rp.name+' is already on your Friends list.','#103a8c');}});
     opts.push({html:'Follow <span class="t">'+_rp.name+'</span>',label:'Follow '+_rp.name,fn:()=>{cancelAction();followUid=_rp.uid;player._flx=null;player._fly=null;if(typeof msg==='function')msg('You start following '+_rp.name+'. Click anywhere to stop.','#103a8c');}});
     if(typeof MP!=='undefined'&&MP.groupCanInvite&&MP.groupCanInvite(_rp.uid)){
@@ -18884,12 +18884,133 @@ const LUX_LORE={
 };
 
 let _luxRen=null, _luxRAF=0;
+let _explRen=null,_explRAF=0;
+function closeExaminePlayer(){
+  if(_explRAF){cancelAnimationFrame(_explRAF);_explRAF=0;}
+  if(_explRen){try{_explRen.forceContextLoss&&_explRen.forceContextLoss();}catch(e){} try{_explRen.dispose&&_explRen.dispose();}catch(e){} _explRen=null;}
+  const el=document.getElementById('explModal'); if(el&&el.parentNode)el.parentNode.removeChild(el);
+}
+function openExaminePlayer(rec){
+  if(!rec)return;
+  closeExaminePlayer();
+  const _esc=s=>String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+  const gg=rec.gear||{};
+  const name=rec.name||'Adventurer';
+  const title=(typeof titleSuffix==='function')?titleSuffix(rec.title):'';
+  const cmb=(typeof gg.cmb==='number'&&gg.cmb>0)?gg.cmb:null;
+  const lvls=Array.isArray(gg.lvls)?gg.lvls:null;
+  const SLOTS=[['head','Head'],['cape','Cape'],['neck','Neck'],['ammo','Ammo'],['weapon','Weapon'],['body','Body'],['shield','Shield'],['legs','Legs'],['hands','Hands'],['feet','Feet']];
+  const ov=document.createElement('div'); ov.id='explModal';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(10,8,12,0.62);display:flex;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
+  const box=document.createElement('div');
+  box.style.cssText='background:#17131c;border:3px solid #6a4fb0;border-radius:12px;padding:12px 14px;max-width:470px;width:96%;max-height:90vh;overflow-y:auto;box-shadow:0 12px 44px rgba(0,0,0,0.65);';
+  box.innerHTML=
+    '<div style="font-size:19px;font-weight:bold;color:#c7b0ff;text-align:center;">'+_esc(name)+_esc(title)+'</div>'+
+    '<div style="text-align:center;color:#9a8ac0;font-size:12px;margin:2px 0 9px;">'+(cmb!=null?('Combat level '+cmb):'A fellow adventurer of Millville')+'</div>'+
+    '<div style="display:flex;gap:6px;margin-bottom:9px;">'+
+      '<div id="explTabG" style="flex:1;text-align:center;padding:6px;border-radius:6px;cursor:pointer;font:bold 13px Georgia,serif;background:#2c2246;color:#e0d4ff;">Equipment</div>'+
+      '<div id="explTabS" style="flex:1;text-align:center;padding:6px;border-radius:6px;cursor:pointer;font:bold 13px Georgia,serif;background:#1d1830;color:#9a8ac0;">Skills</div>'+
+    '</div>'+
+    '<div id="explPageG"></div>'+
+    '<div id="explPageS" style="display:none;"></div>'+
+    '<div style="display:flex;justify-content:center;margin-top:11px;"><button id="explClose" style="font:bold 13px Georgia,serif;padding:7px 18px;border-radius:7px;border:1px solid #6a4fb0;background:#241c38;color:#c7b0ff;cursor:pointer;">Close</button></div>';
+  ov.appendChild(box); document.body.appendChild(ov);
+  ov.addEventListener('click',e=>{if(e.target===ov)closeExaminePlayer();});
+  box.querySelector('#explClose').onclick=closeExaminePlayer;
+
+  /* ---- Equipment page: rotating character + worn-slot icons ---- */
+  const pageG=box.querySelector('#explPageG');
+  const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:10px;align-items:flex-start;';
+  const cvWrap=document.createElement('div'); cvWrap.style.cssText='flex:0 0 180px;';
+  const cv=document.createElement('canvas'); cv.width=180; cv.height=248;
+  cv.style.cssText='width:180px;height:248px;display:block;background:radial-gradient(ellipse at 50% 42%,#241d33,#120e1a);border-radius:8px;border:1px solid #3a2f5a;cursor:grab;touch-action:none;';
+  cvWrap.appendChild(cv);
+  const cvHint=document.createElement('div'); cvHint.textContent='drag to rotate'; cvHint.style.cssText='text-align:center;color:#6a5f88;font-size:10px;margin-top:3px;';
+  cvWrap.appendChild(cvHint);
+  wrap.appendChild(cvWrap);
+  const slotGrid=document.createElement('div'); slotGrid.style.cssText='flex:1;display:grid;grid-template-columns:1fr 1fr;gap:5px;align-content:start;';
+  for(const pair of SLOTS){
+    const sl=pair[0], label=pair[1], id=gg[sl];
+    const worn=(id&&typeof ITEMS!=='undefined'&&ITEMS[id])?id:null;
+    const cell=document.createElement('div');
+    cell.style.cssText='display:flex;align-items:center;gap:6px;background:#201a30;border:1px solid #352a52;border-radius:6px;padding:4px 6px;min-height:40px;'+(worn?'cursor:pointer;':'opacity:0.5;');
+    const ic=document.createElement('canvas'); ic.width=34; ic.height=34; ic.style.cssText='width:34px;height:34px;flex:0 0 34px;';
+    if(worn){ try{drawItemIcon(ic.getContext('2d'),worn,34);}catch(e){} }
+    const nm=document.createElement('div'); nm.style.cssText='font:11px Georgia,serif;color:'+(worn?'#e0d4ff':'#6a5f88')+';line-height:1.15;overflow:hidden;';
+    nm.textContent=worn?ITEMS[worn].name:label;
+    cell.appendChild(ic); cell.appendChild(nm);
+    if(worn){ cell.title='Examine '+ITEMS[worn].name; cell.onclick=()=>{ if(typeof openLuxExamine==='function')openLuxExamine(worn,true); else if(typeof examineItem==='function')examineItem(worn); else if(typeof msg==='function')msg(ITEMS[worn].name+' \u2014 '+(ITEMS[worn].ex||''),'#c7b0ff'); }; }
+    slotGrid.appendChild(cell);
+  }
+  wrap.appendChild(slotGrid);
+  pageG.appendChild(wrap);
+
+  /* ---- Skills page: every level ---- */
+  const pageS=box.querySelector('#explPageS');
+  if(lvls&&typeof SKILLS!=='undefined'&&lvls.length){
+    const SKN={attack:'Attack',strength:'Strength',defense:'Defence',hitpoints:'Hitpoints',woodcutting:'Woodcut',mining:'Mining',smithing:'Smithing',fishing:'Fishing',cooking:'Cooking',firemaking:'Firemaking',prayer:'Prayer',slayer:'Slayer',ranged:'Ranged',magic:'Magic',agility:'Agility'};
+    let total=0;
+    const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;';
+    for(let i=0;i<SKILLS.length;i++){
+      const lv=lvls[i]||1; total+=lv;
+      const c=document.createElement('div'); c.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#201a30;border:1px solid #352a52;border-radius:5px;padding:4px 7px;font:12px Georgia,serif;';
+      c.innerHTML='<span style="color:#b7a8d8;">'+(SKN[SKILLS[i]]||SKILLS[i])+'</span><span style="color:'+(lv>=99?'#ffd24a':'#e0d4ff')+';font-weight:bold;">'+lv+'</span>';
+      grid.appendChild(c);
+    }
+    pageS.appendChild(grid);
+    const tot=document.createElement('div'); tot.style.cssText='text-align:center;color:#c7b0ff;font:bold 13px Georgia,serif;margin-top:9px;border-top:1px solid #352a52;padding-top:8px;';
+    tot.textContent=(cmb!=null?('Combat level '+cmb+'  \u00b7  '):'')+'Total level '+total;
+    pageS.appendChild(tot);
+  } else {
+    const nf=document.createElement('div'); nf.style.cssText='text-align:center;color:#9a8ac0;font:italic 12px/1.5 Georgia,serif;padding:26px 10px;';
+    nf.textContent=_esc(name)+"\u2019s skill levels aren\u2019t visible right now \u2014 they may be out of range or on an older version.";
+    pageS.appendChild(nf);
+  }
+
+  /* ---- tabs ---- */
+  const tabG=box.querySelector('#explTabG'), tabS=box.querySelector('#explTabS');
+  function setTab(g){
+    pageG.style.display=g?'':'none'; pageS.style.display=g?'none':'';
+    tabG.style.background=g?'#2c2246':'#1d1830'; tabG.style.color=g?'#e0d4ff':'#9a8ac0';
+    tabS.style.background=g?'#1d1830':'#2c2246'; tabS.style.color=g?'#9a8ac0':'#e0d4ff';
+  }
+  tabG.onclick=()=>setTab(true); tabS.onclick=()=>setTab(false);
+
+  /* ---- 3D character: clone the live geared rig ---- */
+  try{
+    let model=null;
+    if(rec.rig&&rec.rig.g&&typeof rec.rig.g.clone==='function'){ model=rec.rig.g.clone(true); model.position.set(0,0,0); model.rotation.set(0,0,0); model.scale.set(1,1,1); model.visible=true; }
+    if(model){
+      const ren=new THREE.WebGLRenderer({canvas:cv,alpha:true,antialias:true}); ren.setSize(180,248,false); _explRen=ren;
+      const scn=new THREE.Scene();
+      const cam=new THREE.PerspectiveCamera(36,180/248,0.1,100);
+      scn.add(new THREE.AmbientLight(0xffffff,0.92));
+      const dl=new THREE.DirectionalLight(0xfff0ff,0.9); dl.position.set(3,6,5); scn.add(dl);
+      const dl2=new THREE.DirectionalLight(0x8a6aff,0.4); dl2.position.set(-4,2,3); scn.add(dl2);
+      const spin=new THREE.Group(); spin.add(model); scn.add(spin);
+      const box3=new THREE.Box3().setFromObject(model), sz=new THREE.Vector3(), ctr=new THREE.Vector3();
+      box3.getSize(sz); box3.getCenter(ctr);
+      model.position.set(-ctr.x,-ctr.y,-ctr.z);
+      const span=Math.max(sz.x,sz.y,sz.z)||2;
+      cam.position.set(0,0,span*1.7+0.6); cam.lookAt(0,0,0);
+      let drag=false,lx=0;const vel=0.006;
+      const draw=()=>{try{ren.render(scn,cam);}catch(e){}};
+      const loop=()=>{ if(!document.getElementById('explModal')){return;} if(!drag)spin.rotation.y+=vel; draw(); _explRAF=requestAnimationFrame(loop); };
+      cv.addEventListener('pointerdown',e=>{drag=true;lx=e.clientX;cv.style.cursor='grabbing';try{cv.setPointerCapture(e.pointerId);}catch(_){}});
+      cv.addEventListener('pointermove',e=>{if(!drag)return;const dx=e.clientX-lx;lx=e.clientX;spin.rotation.y+=dx*0.012;});
+      const end=e=>{drag=false;cv.style.cursor='grab';try{cv.releasePointerCapture(e.pointerId);}catch(_){}};
+      cv.addEventListener('pointerup',end); cv.addEventListener('pointercancel',end); cv.addEventListener('pointerleave',()=>{drag=false;});
+      loop();
+    } else { cv.style.display='none'; cvHint.style.display='none'; }
+  }catch(e){ try{cv.style.display='none';cvHint.style.display='none';}catch(_){} }
+}
+
 function closeLuxExamine(){
   if(_luxRAF){cancelAnimationFrame(_luxRAF);_luxRAF=0;}
   if(_luxRen){try{_luxRen.dispose&&_luxRen.dispose();}catch(_){}_luxRen=null;}
   const el=document.getElementById('luxexamine'); if(el)el.classList.remove('on');
 }
-function openLuxExamine(id){
+function openLuxExamine(id,hideBuy){
   const it=ITEMS[id]; if(!it)return;
   const entry=EMBER_SHOP.find(x=>x.id===id)||{id:id};
   let el=document.getElementById('luxexamine');
@@ -18931,6 +19052,7 @@ function openLuxExamine(id){
     else msg('You cannot afford that yet.','#9c1f1f');
   };
   el.classList.add('on');
+  {const _bw=el.querySelector('#luxexbuywrap'); if(_bw)_bw.style.display=hideBuy?'none':'';}
   /* 3D showcase: auto-rotate */
   const cv=el.querySelector('#luxexcv');
   if(_luxRAF){cancelAnimationFrame(_luxRAF);_luxRAF=0;}
@@ -20809,7 +20931,7 @@ const SKILL_GUIDE={
     [25,'Run energy recovers 25% faster'],
     [30,'Max run energy raised to 145'],
     [35,'Run energy recovers 40% faster'],
-    [45,'Enter the Lava Volcano \u2014 endgame content deep in the crater'],
+    [35,'Enter the Lava Volcano \u2014 endgame content deep in the crater'],
     [40,'Max run energy raised to 160'],
     [45,'Run energy recovers 50% faster'],
     [50,'Max run energy raised to 170'],
@@ -26645,7 +26767,7 @@ const MP = (function () {
   function selfGear() {
     const e = player.equip || {};
     const id = s => (e[s] && e[s].id) || null;
-    return { weapon: id('weapon'), shield: id('shield'), cape: id('cape'), head: id('head'), body: id('body'), legs: id('legs'), feet: id('feet'), neck: id('neck'), hands: id('hands'), ammo: id('ammo'), cmb: (typeof player.cmb === 'number' ? player.cmb : 0) };
+    return { weapon: id('weapon'), shield: id('shield'), cape: id('cape'), head: id('head'), body: id('body'), legs: id('legs'), feet: id('feet'), neck: id('neck'), hands: id('hands'), ammo: id('ammo'), cmb: (typeof player.cmb === 'number' ? player.cmb : 0), lvls: (typeof SKILLS!=='undefined'&&typeof levelFor==='function') ? SKILLS.map(k=>levelFor(player.skills[k]||0)) : null };
   }
   function selfAct() {
     const a = player.action;
