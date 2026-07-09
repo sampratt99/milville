@@ -1747,7 +1747,7 @@ const OBJ_DEFS={
   ember_ladder:{name:'Rungs',action:'Climb',ex:'A great stone-framed ladder bolted into the rock \u2014 the rungs run up toward the cooler dark and down toward the heat.'},
   hirschfeld:{name:'Mr. Hirschfeld',action:'Talk-to',noBlock:true,ex:'A gaunt, soot-streaked man in the ruin of a rector\u2019s collar. He has been trapped on this island a long time \u2014 and he has a great deal to say.'},
   ember_bridge:{name:'Rickety bridge',action:'Cross',noBlock:true,ex:'A sagging span of charred rope and half-burnt planks over the lava. It does not inspire confidence.'},
-  ember_vine:{name:'Embervine',action:'Chop',skill:'woodcutting',req:50,xp:42,item:'ember_log',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Cut embervine',depEx:'Chopped back to the root \u2014 the embervine will regrow shortly.',ex:'A thick, luminous green vine coiling up the cold rock \u2014 improbably alive down here. Cut it for ember logs.'},
+  ember_vine:{name:'Embervine',action:'Chop',skill:'woodcutting',req:50,xp:31,item:'ember_log',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Cut embervine',depEx:'Chopped back to the root \u2014 the embervine will regrow shortly.',ex:'A thick, luminous green vine coiling up the cold rock \u2014 improbably alive down here. Cut it for ember logs.'},
   ember_vault_door:{name:'Vault Door',ex:'A colossal iron vault door sunk into the cavern wall, fed by three hydraulic pipes. It stays sealed until all three run full.'},
   ember_pipe_fishing:{name:'Fishing Pipe',skill:'fishing',resource:'embercarp',pcol:0x1f7fd6,fcol:0x34b6ff,ex:'A glass-and-iron hydraulic pipe. Deposit embercarp to charge it toward opening the vault.'},
   ember_pipe_mining:{name:'Mining Pipe',skill:'mining',resource:'emberore',pcol:0xe06a1e,fcol:0xff8a3a,ex:'A glass-and-iron hydraulic pipe. Deposit ember ore to charge it toward opening the vault.'},
@@ -1755,6 +1755,7 @@ const OBJ_DEFS={
   siphon_pillar:{name:'Siphon Pillar',action:'Strike',noBlock:true,ex:'A conduit-column feeding the Rector\u2019s wounds. When it flares, strike it dark \u2014 leave it lit and it knits him whole.'},
   rector_throne:{name:'the Rector\u2019s throne',noBlock:true,ex:'A throne of fused slag and chapel iron, wired straight into the volcano\u2019s heart.'},
   ember_bankchest:{name:'Bank chest',action:'Bank',ex:'A strongbox bound to the Bank of Millville, hauled down to the Heart for those who mean to make their stand here.'},
+  heart_door:{name:'the Heart Door',action:'Open',ex:'A colossal door of black meteoric iron banded in gold, the First Rector\u2019s inverted crest ablaze at its heart. It seals the only way back up to the Siphon Vault.'},
   boss_door:{name:'the Rector\u2019s Door',action:'Enter',ex:'A slab of black meteoric iron sunk into the shaft\u2019s end, crowned with the First Rector\u2019s inverted crest. Heat bleeds red through its seams. Whatever waits below is awake \u2014 and it knows you are coming.'},
   vault_zipline:{name:'the Current-Rail',action:'Use',noBlock:true,ex:'A maglev current-rail running the length of the shaft. It charges once the vault is powered, letting you skip straight from the entrance to the blast door.'},
   puzzle_sign:{name:'the instructions',action:'Read',noBlock:true,ex:'A back-lit instruction panel for the mechanism ahead.'},
@@ -1771,10 +1772,10 @@ const OBJ_DEFS={
   ember_conduit:{name:'Cinder Conduit',ex:'A great molten pylon pumping the volcano\u2019s chaos toward the surface. Draining it will take more than a blade \u2014 a warden guards it, and it cannot be touched until its vents run cold.'},
   ember_vent:{name:'Cinder Vent',ex:'A grate in the flagstones venting fire up into a conduit. Smother all four of a conduit\u2019s vents to drop its shield and expose the core.'},
   ember_gate:{name:'Iron Gate',action:'Heave-open',noBlock:true,ex:'A wall of cast-iron prison bars sealing off a warden\u2019s cell, with a heavy barred door. You can see the conduit glowering beyond. It is locked \u2014 you will need the warden\u2019s key.'},
-  ember_keyspot:{name:'Molten Shoal',action:'Fish',skill:'fishing',req:1,xp:38,item:'embercarp',base:.55,fall:0,cap:[15,20],respawn:[10,16],depName:'Stilled shoal',depEx:'Fished out \u2014 the shoal will churn back up shortly.',noBlock:true,ex:'A roil of glowing shapes just under the surface of the molten pool. Fish it for embercarp \u2014 and, rarely, a warden\u2019s key lost to the lava long ago.'},
+  ember_keyspot:{name:'Molten Shoal',action:'Fish',skill:'fishing',req:1,xp:28,item:'embercarp',base:.55,fall:0,cap:[15,20],respawn:[10,16],depName:'Stilled shoal',depEx:'Fished out \u2014 the shoal will churn back up shortly.',noBlock:true,ex:'A roil of glowing shapes just under the surface of the molten pool. Fish it for embercarp \u2014 and, rarely, a warden\u2019s key lost to the lava long ago.'},
   ember_dock:{name:'Fishing dock',action:'Walk-here',noBlock:true,ex:'A rough timber jetty running out over the molten pool. Walk to the end to cast into the shoal beyond.'},
-  glow_ore:{name:'Glowing ore',action:'Mine',skill:'mining',req:50,xp:42,item:'emberore',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Spent seam',depEx:'Mined clean \u2014 the cyan crystal will re-form shortly.',ex:'A dark seam threaded with cyan crystal that pulses with a buried heat. Mine it for ember ore.'},
-  frost_pool:{name:'Shimmering shoal',action:'Fish',skill:'fishing',req:50,xp:42,item:'embercarp',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Stilled shoal',depEx:'Fished out \u2014 the shoal will gather again shortly.',ex:'Turquoise water dimples where something bright darts beneath. Fish it for embercarp.'},
+  glow_ore:{name:'Glowing ore',action:'Mine',skill:'mining',req:50,xp:31,item:'emberore',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Spent seam',depEx:'Mined clean \u2014 the cyan crystal will re-form shortly.',ex:'A dark seam threaded with cyan crystal that pulses with a buried heat. Mine it for ember ore.'},
+  frost_pool:{name:'Shimmering shoal',action:'Fish',skill:'fishing',req:50,xp:31,item:'embercarp',base:.5,fall:0,cap:[15,20],respawn:[12,20],depName:'Stilled shoal',depEx:'Fished out \u2014 the shoal will gather again shortly.',ex:'Turquoise water dimples where something bright darts beneath. Fish it for embercarp.'},
   fire_altar:{name:'Fire Altar',action:'Pray-at',ex:'A basin of everliving flame at the Heart of the Emberdeep. Kneel and the fire restores your spirit and cloaks you against the molten crust \u2014 for a time.'},
   emberdeep_vault:{name:'Sealed Vault',action:'Open',ex:'A vault of black meteoric iron, sealed since Cinderwing\u2019s fall. Only those who can cross the molten crust will ever prise it open.'},
   cinder_forge:{name:'The Cinder Forge',action:'Forge-at',noBlock:true,ex:'An anvil of black meteoric iron set into a font of living magma, wreathed in flame that never dies. Here Cinderwing\u2019s own relics can be rekindled into something greater \u2014 for a price in ember feathers.'},
@@ -2434,7 +2435,7 @@ addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('sos_hol
   {const vd=addObj('ember_vault_door',170,30,true);if(vd){vd.downFloor=2;vd.faceX=170;vd.faceY=27;}}
   for(const pr of [['ember_pipe_fishing',166],['ember_pipe_mining',168],['ember_pipe_woodcutting',172]]){const pp=addObj(pr[0],pr[1],30,true);if(pp){pp.faceX=pr[1];pp.faceY=27;}}
   /* Cinderworks skilling nodes: 7 per skill, gated 30/40/50/60/70/80/90 (a guild to 99, no depletion) */
-  {const TIERS=[[30,28,2],[40,40,2],[50,55,3],[60,75,4],[70,98,6],[80,125,8],[90,155,11]];
+  {const TIERS=[[30,21,2],[40,30,2],[50,41,3],[60,56,4],[70,74,6],[80,94,8],[90,116,11]];
    const mkNode=(def,x,y,i)=>{const k=objects.length;addObj(def,x,y,true);const o=objects[k];if(o){o.req=TIERS[i][0];o.xp=TIERS[i][1];o.cinders=TIERS[i][2];o.alive=true;}};
    [[164,7],[170,6],[176,7],[162,10],[170,10],[177,10],[170,13]].forEach((pt,i)=>mkNode('glow_ore',pt[0],pt[1],i));
    [[179,15],[184,15],[178,19],[186,19],[179,23],[184,23],[182,17]].forEach((pt,i)=>mkNode('ember_vine',pt[0],pt[1],i));
@@ -2869,7 +2870,7 @@ const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   for(let y=3;y<H-3;y++)for(let x=OFF;x<OFF+3;x++)
     if(tiles[y][x]===T_FOREST)tiles[y][x]=T_GRASS;
   W=NW;
-  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step']);
+  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','heart_door','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step']);
   for(const o of objects)if(!INT_DEFS.has(o.def))o.x+=WX;  /* interior objects stay at their (unshifted) interior coords */
   for(const b of BUILDINGS)b.x+=WX;
   for(const n of npcs){n.x+=WX;if(n.sx!=null)n.sx+=WX;if(n.px!=null)n.px+=WX;}
@@ -4939,6 +4940,8 @@ function adjacentTo(x,y){return dist1(player.x,player.y,x,y)===1;}
 
 function playerTick(){
   player.regen++;
+  if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.alive&&!_rectorBoss.dormant&&typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4){ if(typeof rectorLavaTick==='function')rectorLavaTick(_rectorBoss,performance.now()); }
+  if(typeof rectorNovaTick==='function')rectorNovaTick();
   if(player.regen>=50){player.regen=0;
     if(player.hp<maxHp()&&performance.now()-player.combatT>3000){player.hp++;updateOrb();}}
   { const _hpr=(typeof eqStat==='function')?eqStat('hpregen'):0; if(_hpr>0){ if(player.hp<maxHp()){ player._hpAcc=(player._hpAcc||0)+_hpr*HP_REGEN_PER_PT; if(player._hpAcc>=1){const _g=Math.floor(player._hpAcc);player._hpAcc-=_g;player.hp=Math.min(maxHp(),player.hp+_g);updateOrb();} } else player._hpAcc=0; } else player._hpAcc=0; }
@@ -5517,10 +5520,23 @@ function playerTick(){
     player._agiAnim=null; cancelAction();
     msg('\u2026 and step off by the '+(to[1]<40?'blast door':'entrance')+'.','#4aa3b0');
   }
-  else if(a.type==='pillarstrike'){ const o=a.o; if(!adjacentTo(o.x,o.y)){if(!player.path.length)walkTo(o.x,o.y,'adj');return;} player.path.length=0; player.face=Math.sign(o.x-player.x)||player.face;
-    if(o.active){ o.active=false; o.hotUntil=0; msg('You strike the pillar dark \u2014 the feed to the Rector cuts out.','#39d97a'); splats.push({ent:'obj',o,dmg:0,t:performance.now()}); if(typeof sfx!=='undefined'&&sfx.hit){try{sfx.hit();}catch(e){}} }
-    else msg('The pillar is cold \u2014 nothing to strike.','#7a5f2e');
-    cancelAction(); }
+  else if(a.type==='pillarstrike'){ const o=a.o;
+    if(!o.active){ cancelAction(); return; }
+    if(!adjacentTo(o.x,o.y)){if(!player.path.length)walkTo(o.x,o.y,'adj');return;}
+    player.path.length=0; player.face=Math.sign(o.x-player.x)||player.face;
+    const nowC=performance.now();
+    if(!player.nextAtk||nowC>=player.nextAtk+4000)player.nextAtk=nowC;
+    if(nowC<player.nextAtk)return;
+    const _dw=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
+    player.nextAtk=nowC+((_dw&&_dw.spd)||2400); player.swingT=nowC;
+    const _mx=(typeof _duelMaxhit==='function')?_duelMaxhit():8;
+    const dmg=rndi(1,Math.max(2,_mx));
+    splats.push({ent:'obj',o,dmg,t:nowC}); player.combatT=nowC;
+    if(typeof sfx!=='undefined'&&sfx.hit){try{sfx.hit();}catch(e){}}
+    if(typeof MP!=='undefined'&&MP.forwardPillarHit&&MP.forwardPillarHit(o,dmg)){ if(!o.active)cancelAction(); }
+    else { o.hp=Math.max(0,(o.hp!==undefined?o.hp:SIPHON_HP)-dmg); if(typeof MP!=='undefined'&&MP.emberPillarSync)MP.emberPillarSync();
+      if(o.hp<=0){ o.active=false; o.hotUntil=0; msg('You batter the pillar dark \u2014 the feed to the Rector cuts out.','#39d97a'); if(typeof MP!=='undefined'&&MP.emberPillarSync)MP.emberPillarSync(); cancelAction(); } }
+  }
   else if(a.type==='readsign'){ const o=a.o; if(!adjacentTo(o.x,o.y)){if(!player.path.length)walkTo(o.x,o.y,'adj');return;} if(typeof showVaultSign==='function')showVaultSign(o.sign); cancelAction(); }
   else if(a.type==='pushcell'){
     const o=a.o;
@@ -7096,6 +7112,9 @@ function optionsAt(tx,ty){
       opts.push({html:'Examine <span class="t">the throne</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='boss_door'){
       opts.push({html:'Enter <span class="t">the Rector\u2019s Door</span>',label:'Enter the door',fn:()=>setAction({type:'embermove',o,floor:o.downFloor},o.x,o.y)},
+        {html:'Examine <span class="t">the door</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='heart_door'){
+      opts.push({html:'Open <span class="t">the Heart Door</span>',label:'Open the door',fn:()=>setAction({type:'embermove',o,floor:(o.upFloor!==undefined&&o.upFloor!==null?o.upFloor:3)},o.x,o.y)},
         {html:'Examine <span class="t">the door</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='vault_zipline'){
       opts.push({html:'Use <span class="t">the current-rail</span>',label:'Use current-rail',fn:()=>setAction({type:'vaultzip',o},o.x,o.y)},
@@ -11045,6 +11064,23 @@ function buildObjModel(o){
     for(const sx of [-1,1]){const wing=new THREE.Mesh(new THREE.TorusGeometry(0.3,0.05,6,10,1.9),new THREE.MeshBasicMaterial({color:RED}));wing.position.set(0,3.06,0.23);wing.rotation.z=(sx>0?2.4:0.74);g.add(wing);}
     const eye=new THREE.Mesh(new THREE.SphereGeometry(0.08,8,6),new THREE.MeshBasicMaterial({color:0xffd24a}));eye.position.set(0,3.06,0.25);g.add(eye);o._m.eye=eye;
     addProxy(g,1.1,4.9,0,{kind:'obj',o});
+  }else if(def==='heart_door'){
+    const IRON=0x171314, IRON3=0x332724, IRON2=0x261d1b, RED=0xff2a18, RED2=0xd8401a, GOLD=0xcaa23a, EMBER=0xff7a2a;
+    for(const side of [-1,1]){ const cx=side*1.19;
+      const leaf=mesh(new THREE.BoxGeometry(2.3,6.32,0.3),IRON2); leaf.position.set(cx,3.26,0); g.add(leaf);
+      const bord=mesh(new THREE.BoxGeometry(2.02,6.04,0.1),IRON3); bord.position.set(cx,3.26,-0.16); g.add(bord);
+      for(const py of [4.66,1.9]){ const pan=mesh(new THREE.BoxGeometry(1.5,2.2,0.06),IRON); pan.position.set(cx,py,-0.2); g.add(pan);
+        const inl=new THREE.Mesh(new THREE.BoxGeometry(1.14,1.84,0.03),new THREE.MeshBasicMaterial({color:RED2,transparent:true,opacity:0.25})); inl.position.set(cx,py,-0.23); g.add(inl); }
+      for(const sx of [-0.86,0.86]) for(const sy of [0.62,3.26,5.9]){ const st=mesh(new THREE.ConeGeometry(0.085,0.2,5),GOLD); st.rotation.x=-Math.PI/2; st.position.set(cx+sx,sy,-0.22); g.add(st); }
+      for(const hy of [1.3,5.2]){ const hb=mesh(new THREE.BoxGeometry(0.5,0.34,0.34),IRON); hb.position.set(cx+side*1.0,hy,0); g.add(hb); } }
+    const seam=new THREE.Mesh(new THREE.BoxGeometry(0.12,6.1,0.34),new THREE.MeshBasicMaterial({color:RED,transparent:true,opacity:0.7})); seam.position.set(0,3.26,-0.04); g.add(seam); o._m.seam=seam;
+    const glow=new THREE.Mesh(new THREE.BoxGeometry(4.5,0.34,0.42),new THREE.MeshBasicMaterial({color:EMBER,transparent:true,opacity:0.5})); glow.position.set(0,0.25,-0.18); g.add(glow); o._m.glow=glow;
+    const disc=mesh(new THREE.CylinderGeometry(0.84,0.84,0.1,22),0x0b0909); disc.rotation.x=Math.PI/2; disc.position.set(0,3.75,-0.24); g.add(disc);
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(0.78,0.06,8,24),new THREE.MeshBasicMaterial({color:RED})); ring.position.set(0,3.75,-0.29); g.add(ring);
+    const beak=new THREE.Mesh(new THREE.ConeGeometry(0.2,0.62,3),new THREE.MeshBasicMaterial({color:RED})); beak.rotation.z=Math.PI; beak.position.set(0,3.36,-0.31); g.add(beak);
+    for(const sx of [-1,1]){ const wing=new THREE.Mesh(new THREE.TorusGeometry(0.34,0.05,6,12,1.9),new THREE.MeshBasicMaterial({color:RED})); wing.position.set(0,3.9,-0.31); wing.rotation.z=(sx>0?0.55:(Math.PI-0.55)); g.add(wing); }
+    const eye=new THREE.Mesh(new THREE.SphereGeometry(0.1,8,6),new THREE.MeshBasicMaterial({color:0xffd24a})); eye.position.set(0,3.9,-0.33); g.add(eye); o._m.eye=eye;
+    addProxy(g,2.55,6.4,0,{kind:'obj',o});
   }else if(def==='vault_zipline'){
     const pad=mesh(new THREE.CylinderGeometry(0.62,0.72,0.12,16),0x28323d);pad.position.y=0.06;g.add(pad);
     const ring=new THREE.Mesh(new THREE.TorusGeometry(0.56,0.05,8,20),new THREE.MeshBasicMaterial({color:0x555f68}));ring.rotation.x=Math.PI/2;ring.position.y=0.11;g.add(ring);o._m.ring=ring;
@@ -11673,7 +11709,7 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   {const _rs=addObj('rector_sign',221,107,true);if(_rs){_rs.faceX=219;_rs.faceY=110;}}   /* boss signpost, facing the Heart door */
   addObj('ember_bankchest',215,108,true);          /* bank chest beside Hirschfeld (gated during the fight) */
   {const h=addObj('hirschfeld',216,108,true);if(h){h.faceX=219;h.faceY=110;h.heartBoss=true;}}   /* Heart entrance -- Rector Hirschfeld */
-  L(214,110,3,null,214,107);                          /* Heart entrance: up -> the Siphon Vault */
+  {const _hd=addObj('heart_door',219,111,true);if(_hd){_hd.upFloor=3;}}   /* Heart exit: the ornate door fills the south doorframe -> up to the Siphon Vault */
   {const h=addObj('hirschfeld',216,71,true);if(h){h.faceX=219;h.faceY=68;}}
   /* Segment 2 -- Lockout Grid: 5x5 floor nodes (2-tile spacing), centred on 219,50 */
   for(let gr=0;gr<5;gr++)for(let gc=0;gc<5;gc++){const n=addObj('lock_node',215+gc*2,46+gr*2,true);if(n){n.gr=gr;n.gc=gc;n.lit=true;}}
@@ -11719,7 +11755,7 @@ function updateObjVisual(o){
     if(m.rings)for(const rg of m.rings)rg.material.color.setHex(on?0xff5a1e:0x3a2018);
     if(m.beam)m.beam.material.opacity=on?(0.24+Math.sin(t*0.01+o.x)*0.1):0;
     if(m.plight)m.plight.intensity=on?(1.1+Math.sin(t*0.006+o.x)*0.4):0; }
-  if(o.def==='boss_door'&&m.seam){ const t=0.5+Math.sin(performance.now()*0.003)*0.35; m.seam.material.opacity=0.42+t*0.4; if(m.glow)m.glow.material.opacity=0.32+t*0.32; if(m.eye)m.eye.material.color.setHex((performance.now()%1400<700)?0xffd24a:0xff2a18); }
+  if((o.def==='boss_door'||o.def==='heart_door')&&m.seam){ const t=0.5+Math.sin(performance.now()*0.003)*0.35; m.seam.material.opacity=0.42+t*0.4; if(m.glow)m.glow.material.opacity=0.32+t*0.32; if(m.eye)m.eye.material.color.setHex((performance.now()%1400<700)?0xffd24a:0xff2a18); }
   if(o.def==='vault_zipline'&&m.ring){ const on=(typeof _vaultCleared!=='undefined'&&_vaultCleared)||(typeof EMBER_DEV_BYPASS!=='undefined'&&EMBER_DEV_BYPASS);
     m.ring.material.color.setHex(on?0x39d97a:0x555f68); if(m.rail){m.rail.material.color.setHex(on?0x39d97a:0x2fe0d6); m.rail.material.opacity=on?(0.55+Math.sin(performance.now()*0.005)*0.35):0.14;} }
   if(o.def==='charge_prism'&&m.crystal){ m.crystal.material.color.setHex(o.lit?0x39d0ff:0x6a3ad6); m.crystal.material.opacity=o.lit?0.95:0.7; m.crystal.rotation.y=performance.now()*0.001; }
@@ -22376,7 +22412,7 @@ function exitSos(){
 const VOLC_AGI_GATE=false;   /* preview: Agility-45 gate disabled; set true to re-enable */
 const VOLC={x0:120,x1:248,y0:2,y1:118};          /* interior region (separate tile copy; overworld hidden inside, so it may overlap map space) */
 const VOLC_RETURN={x:10,y:125};                  /* return to the SW crater-rim fissure */
-const VOLC_CAVE_OBJS={volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,ember_vine:1,glow_ore:1,frost_pool:1,ember_vault_door:1,ember_pipe_fishing:1,ember_pipe_mining:1,ember_pipe_woodcutting:1,ember_conduit:1,ember_vent:1,ember_gate:1,ember_keyspot:1,ember_dock:1,lock_node:1,lock_reset:1,energy_cell:1,cell_socket:1,cell_reset:1,beam_emitter:1,redirector:1,charge_prism:1,dampener:1,beam_receiver:1,puzzle_sign:1,vault_zipline:1,boss_door:1,siphon_pillar:1,rector_throne:1,ember_bankchest:1,rector_sign:1};
+const VOLC_CAVE_OBJS={volcano_exit:1,ember_ladder:1,heart_door:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,ember_vine:1,glow_ore:1,frost_pool:1,ember_vault_door:1,ember_pipe_fishing:1,ember_pipe_mining:1,ember_pipe_woodcutting:1,ember_conduit:1,ember_vent:1,ember_gate:1,ember_keyspot:1,ember_dock:1,lock_node:1,lock_reset:1,energy_cell:1,cell_socket:1,cell_reset:1,beam_emitter:1,redirector:1,charge_prism:1,dampener:1,beam_receiver:1,puzzle_sign:1,vault_zipline:1,boss_door:1,siphon_pillar:1,rector_throne:1,ember_bankchest:1,rector_sign:1};
 /* ===== The Emberdeep: four tiered chambers, each hotter/deeper than the last ===== */
 /* floor 0..3 = Chamber I..IV. Each carves a room + has an entry tile you arrive on. */
 const EMBER_CHAMBERS=[
@@ -23149,6 +23185,7 @@ function rectorLavaTick(r,nowM){
     }
   }
 }
+const SIPHON_HP=75;   /* damage needed to batter an active siphon pillar dark */
 function rectorSpecialTick(r,nowM){
   if(!r.alive||r.dormant){r.spec=null;return;}
   const hpf=r.hp/r.maxhp;
@@ -23159,36 +23196,41 @@ function rectorSpecialTick(r,nowM){
   if(r._siphonCd===undefined)r._siphonCd=nowM+8000;
   if(!anyActive&&nowM>=r._siphonCd&&pillars.length){
     const pool=pillars.slice(), n=r.enraged?2:1;
-    for(let k=0;k<n&&pool.length;k++){const idx=Math.floor(Math.random()*pool.length);const pl=pool.splice(idx,1)[0];pl.active=true;pl.hotUntil=nowM+12000;}
+    for(let k=0;k<n&&pool.length;k++){const idx=Math.floor(Math.random()*pool.length);const pl=pool.splice(idx,1)[0];pl.active=true;pl.hotUntil=nowM+15000;pl.hp=SIPHON_HP;pl.maxhp=SIPHON_HP;}
     msg('The First Rector reaches for the siphon \u2014 a pillar flares! Strike it dark before he knits himself whole.','#ff6a2a');
     r._siphonCd=nowM+(r.enraged?15000:22000);
   }
   if(anyActive){ if(!r._healT||nowM-r._healT>900){r._healT=nowM; r.hp=Math.min(r.maxhp,r.hp+Math.round(r.maxhp*0.012)); } }
   for(const pl of pillars)if(pl.active&&pl.hotUntil&&nowM>pl.hotUntil)pl.active=false;
+  if(typeof MP!=='undefined'&&MP.emberPillarSync)MP.emberPillarSync();
   /* ENCROACHING LAVA */
-  rectorLavaTick(r,nowM);
-  /* SIGNATURE: Chaos Nova -- telegraph, then everything outside a pillar's shadow is hit hard */
-  if(!r.spec){
+  /* encroaching lava now ticks per-client from playerTick (shared via the synced boss HP) */
+  /* SIGNATURE: Chaos Nova -- the owner picks the safe pillar + fire time and broadcasts it; every client resolves it on their own player */
+  if(!_rectorNova){
     if(r._novaCd===undefined)r._novaCd=nowM+9000;
-    if(nowM>=r._novaCd&&r.target===player&&player.hp>0){
+    if(nowM>=r._novaCd){
       const pl=pillars.length?pillars[Math.floor(Math.random()*pillars.length)]:null;
-      r.spec={phase:'windup',fireAt:nowM+(r.enraged?1600:2300),safe:pl?[pl.x,pl.y]:[219,96]};
+      const safe=pl?[pl.x,pl.y]:[219,96], fireIn=(r.enraged?1600:2300), enr=r.enraged?1:0;
+      _rectorNova={safe:safe,fireAt:performance.now()+fireIn,enr:enr};
       msg('The First Rector rears back, gathering a Chaos Nova \u2014 get behind a pillar!','#ff3b2f');
+      if(typeof MP!=='undefined'&&MP.rectorNovaSync)MP.rectorNovaSync(safe,fireIn,enr);
+      r._novaCd=nowM+(r.enraged?9000:14000);
     }
-  } else if(r.spec.phase==='windup'&&nowM>=r.spec.fireAt){
-    const sx=r.spec.safe[0],sy=r.spec.safe[1];
+  }
+}
+function rectorNovaTick(){   /* runs on EVERY client: resolves a pending Chaos Nova against the local player */
+  if(!_rectorNova)return; if(performance.now()<_rectorNova.fireAt)return;
+  const sx=_rectorNova.safe[0],sy=_rectorNova.safe[1],enr=_rectorNova.enr; _rectorNova=null;
+  if(typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4&&player.hp>0){
     const d=Math.max(Math.abs(player.x-sx),Math.abs(player.y-sy));
-    if(inVolcano&&_lastVolcFloor===4&&player.hp>0){
-      if(d>2){ let dmg=rndi(r.enraged?28:20,r.enraged?40:32); if(typeof hasEmberSet==='function'&&hasEmberSet())dmg=Math.round(dmg*0.75);   /* Emberdeep set: -25% fire */
-        player.hp=Math.max(0,player.hp-dmg);splats.push({ent:'player',dmg:dmg,t:nowM});player.combatT=nowM;if(typeof updateOrb==='function')updateOrb();
-        msg('The Chaos Nova catches you in the open! '+dmg+' damage.','#c0392b'); if(player.hp<=0)die();
-      } else msg('You weather the nova in the pillar\u2019s shadow.','#39d97a');
-    }
-    r.spec=null; r._novaCd=nowM+(r.enraged?9000:14000);
+    if(d>2){ let dmg=rndi(enr?28:20,enr?40:32); if(typeof hasEmberSet==='function'&&hasEmberSet())dmg=Math.round(dmg*0.75);
+      player.hp=Math.max(0,player.hp-dmg);splats.push({ent:'player',dmg:dmg,t:performance.now()});player.combatT=performance.now();if(typeof updateOrb==='function')updateOrb();
+      msg('The Chaos Nova catches you in the open! '+dmg+' damage.','#c0392b'); if(player.hp<=0&&typeof die==='function')die();
+    } else msg('You weather the nova in the pillar\u2019s shadow.','#39d97a');
   }
 }
 /* The First Rector, Reforged -- the Heart boss + his two Committee Enforcer guards (Chamber V / floor 4) */
-let _rectorBoss=null, _rectorGuards=[];
+let _rectorBoss=null, _rectorGuards=[], _rectorNova=null;
 (function spawnRectorBoss(){
   let bi=rats.length;
   const mk=(kind,x,y,extra)=>{const r={i:bi++,kind:kind,sx:x,sy:y,x:x,y:y,px:x,py:y,hp:MOB_KINDS[kind].hp,maxhp:MOB_KINDS[kind].hp,alive:true,locked:false,respawnAt:0,lastHit:0,heading:rnd(0,6.2),target:null,phase:bi%2,name:MOB_KINDS[kind].name,ex:MOB_KINDS[kind].ex,interior:'volcano',volcFloor:4};if(extra)Object.assign(r,extra);rats.push(r);makeRat(r);if(r._m&&r._m.group)r._m.group.visible=false;return r;};
@@ -24009,6 +24051,7 @@ function drawOverlay(now){
   }
   if(now-playerLastHit<3500)
     drawBar(player.px+0.5,player.py+0.5,2.05,player.hp/maxHp());
+  if(inVolcano&&_lastVolcFloor===4)for(const o of objects)if(o.def==='siphon_pillar'&&o.active&&o.maxhp)drawBar(o.x+0.5,o.y+0.5,4.0,clamp((o.hp||0)/o.maxhp,0,1));
   for(const r of rats)
     if(r.alive&&now-r.lastHit<3500&&_mobOnCurFloor(r)){
       drawBar(r.px+0.5,r.py+0.5,0.95,clamp(r.hp/r.maxhp,0,1));
@@ -26871,6 +26914,23 @@ const MP = (function () {
       ch: Math.round(cd.charge || 0) });
   }
 
+  /* ---- Rector siphon pillars: owner-authoritative shared HP (mirrors group mob combat) ---- */
+  let _pilSyncT = 0;
+  function _rectorOwnerUid() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return null; const c = claims.get(_rectorBoss.i); return c ? c.uid : null; }
+  function emberPillarSync() {
+    if (!active() || !conn || !groupInGroup() || typeof objects === 'undefined') return;
+    const _n = now(); if (_n - _pilSyncT < 220) return; _pilSyncT = _n;
+    const ps = []; for (const o of objects) if (o.def === 'siphon_pillar') ps.push({ x: o.x, y: o.y, a: o.active ? 1 : 0, h: Math.round(o.hp || 0), m: Math.round(o.maxhp || 0) });
+    if (ps.length) send({ t: 'rpil', uid: player.uid, p: ps });
+  }
+  /* a hit on a siphon pillar: if a groupmate owns the Rector, forward the damage to them (shared hp) and skip the local hp path */
+  function rectorNovaSync(safe, fireIn, enr) { if (active() && conn && groupInGroup()) send({ t: 'rnova', uid: player.uid, s: safe, f: fireIn | 0, e: enr | 0 }); }
+  function forwardPillarHit(o, dmg) {
+    if (!active() || !conn || !groupInGroup() || !o || !(dmg > 0)) return false;
+    const owner = _rectorOwnerUid();
+    if (!owner || owner === player.uid || !isGroupmate(owner)) return false;
+    send({ t: 'rpdmg', to: owner, x: o.x, y: o.y, d: dmg | 0 }); return true;
+  }
   /* ---- shared-world reconciliation (Phase 1): dead mobs + depleted nodes ---- */
   const MAX_RS = 7200000;   /* must cover the longest boss respawn (Cinderwing: 2h); server world_state clamp matches */
   function _applyDeadMob(mi, rs) {
@@ -27599,6 +27659,28 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
           if (typeof msg === 'function') msg('Your group drains a conduit \u2014 +' + _wr2 + ' warrants.', '#9a6a10'); }
           if (typeof emberConduitsAllDrained === 'function' && emberConduitsAllDrained() && typeof emberQuestComplete === 'function') { try { emberQuestComplete('combat'); } catch (e) {} }
         }
+        break;
+      }
+      case 'rnova': {
+        if (m.uid === player.uid) break;
+        _rectorNova = { safe: m.s, fireAt: performance.now() + (m.f | 0), enr: m.e | 0 };
+        if (typeof msg === 'function') msg('The First Rector rears back, gathering a Chaos Nova \u2014 get behind a pillar!', '#ff3b2f');
+        break;
+      }
+      case 'rpil': {
+        if (m.uid === player.uid) break;
+        if (typeof objects === 'undefined' || !Array.isArray(m.p)) break;
+        for (const pp of m.p) { const o = objects.find(z => z.def === 'siphon_pillar' && z.x === pp.x && z.y === pp.y); if (!o) continue; o.active = !!pp.a; o.hp = pp.h | 0; o.maxhp = pp.m | 0; if (!o.active) o.hotUntil = 0; }
+        break;
+      }
+      case 'rpdmg': {
+        if (m.to !== player.uid) break;
+        if (typeof _rectorBoss === 'undefined' || !_rectorBoss || typeof objects === 'undefined') break;
+        const _c = claims.get(_rectorBoss.i); if (!(_c && _c.uid === player.uid)) break;
+        const o = objects.find(z => z.def === 'siphon_pillar' && z.x === (m.x | 0) && z.y === (m.y | 0)); if (!o || !o.active) break;
+        o.hp = Math.max(0, (o.hp !== undefined ? o.hp : (typeof SIPHON_HP !== 'undefined' ? SIPHON_HP : 75)) - (m.d | 0));
+        if (o.hp <= 0) { o.active = false; o.hotUntil = 0; if (typeof splats !== 'undefined') splats.push({ ent: 'obj', o, dmg: m.d | 0, t: performance.now() }); }
+        emberPillarSync();
         break;
       }
       case 'fire': {
@@ -28522,7 +28604,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, groupMobSwingTarget, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, rectorNovaSync, groupMobSwingTarget, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
