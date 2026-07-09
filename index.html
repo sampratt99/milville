@@ -225,6 +225,7 @@
     display:flex; align-items:center; gap:6px; padding:5px 6px;
     color:#ffd98c; cursor:default;
   }
+  .skill.maxed{ border-color:#e6b422; box-shadow:0 0 0 1px #ffcf5a inset, 0 0 7px rgba(255,205,80,0.62); }
   .skill canvas{flex:0 0 auto;}
   .lvls{
     margin-left:auto; position:relative; width:36px; height:26px;
@@ -1329,7 +1330,7 @@ let _vaultCheckpointRows=[70,54,42,30];   /* start of each segment: entry, past 
 let _vaultCheckpoint={x:219,y:70}, _vaultCPIdx=0;
 function dropVaultBarrier(seg){ if(_vaultSolved.hasOwnProperty(seg))_vaultSolved[seg]=true;
   const b=_vaultBarriers.find(z=>z.seg===seg); if(b&&!b.dropped){b.dropped=true; const m=_vaultBarrierMeshes[seg]; if(m)m.visible=false;
-    if(seg==='web'||( _vaultSolved.memory&&_vaultSolved.lockout&&_vaultSolved.cells&&_vaultSolved.web))_vaultCleared=true;
+    if(seg==='web'||( _vaultSolved.memory&&_vaultSolved.lockout&&_vaultSolved.cells&&_vaultSolved.web)){_vaultCleared=true;if(typeof emberQuestComplete==='function'&&vaultPuzzlesAllSolved())emberQuestComplete('puzzle');}
     msg('The '+seg+' barrier loses its charge and sinks into the floor.','#39d0ff'); if(typeof sfx!=='undefined'&&sfx.door)try{sfx.door();}catch(e){}}
 }
 function vaultBarrierBlocks(x,y){ if(!inVolcano||_lastVolcFloor!==3)return false; if(EMBER_DEV_BYPASS)return false;
@@ -1512,7 +1513,7 @@ function drainConduit(o){
   for(const v of emberVentsOf(o.warden)){v.lit=false;v.locked=true;}
   addItem('warrant',EMBER_CONDUIT_WARRANTS);
   msg('The conduit runs cold and dark. You wrest '+EMBER_CONDUIT_WARRANTS+' warrants from its collapse.','#9a6a10');
-  if(emberConduitsAllDrained())msg('All three conduits lie dead \u2014 the sealed stair to the Heart grinds open.','#9a6a10');
+  if(emberConduitsAllDrained()){msg('All three conduits lie dead \u2014 the sealed stair to the Heart grinds open.','#9a6a10');if(typeof emberQuestComplete==='function')emberQuestComplete('combat');}
   if(typeof MP!=='undefined'&&MP.emberSync)MP.emberSync(o.warden);
 }
 function emberConduitTick(){
@@ -1537,7 +1538,7 @@ function depositPipe(o){
   if(player.emberPipes[sk]>=EMBER_PIPE_REQ&&!player.emberPipesDone[sk]){
     player.emberPipesDone[sk]=true; addItem('warrant',EMBER_PIPE_WARRANTS);
     msg('The '+sk+' pipe seals full! You are credited '+EMBER_PIPE_WARRANTS+' warrants.','#9a6a10');
-    if(emberPipesAllDone())msg('All three pipes run full \u2014 the vault door is charged.','#9a6a10');
+    if(emberPipesAllDone()){msg('All three pipes run full \u2014 the vault door is charged.','#9a6a10');if(typeof emberQuestComplete==='function')emberQuestComplete('skill');}
   }
 }
 ITEMS.warrant={name:'Warrant',ex:'A rector\u2019s seal of commission, pressed in cooling slag. Mr. Hirschfeld issues them for tasks completed \u2014 spend them at his counter.',val:0,stack:1};
@@ -2421,6 +2422,7 @@ addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('sos_hol
     const ks=addObj('ember_keyspot',D.node[0],D.node[1],true);if(ks){ks.warden=D.w;ks.keyId=D.key;ks.dir=[0,0];ks.alive=true;}
   }
   addObj('cinder_forge',141,11,true);           /* the forge now lives on the hub island */
+  addObj('ember_bankchest',139,9,true);          /* bank chest on the hub island beside Hirschfeld */
   (function(){const b1=addObj('ember_bridge',137,16,true);if(b1){b1.to=[137,22];b1.xp=17;}
               const b2=addObj('ember_bridge',137,21,true);if(b2){b2.to=[137,15];b2.xp=17;}})();
   mk(175,28,0,null,170,26);        /* Cinderworks landing ladder: up -> hub only (down is the vault door) */
@@ -3234,7 +3236,7 @@ const player={
   quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
   m4:{s:0,b:0,k:0,d:0},m5:{s:0,d:0},sos:{s:0,k1:0,k2:0,k3:0,k4:0,o:0},
-  rxmas:{s:0,cab:0,prov:0},rxmas2:{s:0,figs:0,placed:0,wreath:0,spots:{}}},
+  rxmas:{s:0,cab:0,prov:0},rxmas2:{s:0,figs:0,placed:0,wreath:0,spots:{}},ember:{s:0,seen:{}}},
   lostStash:[],
   friends:[],
   uid:null,
@@ -6468,6 +6470,7 @@ function renderSkills(){
     lvEl.style.color='';
     e.querySelector('.lvb').textContent=l;
     e.title='';
+    e.classList.toggle('maxed', l>=99);
   }
   const cmb=cmbLvl();
   document.getElementById('totallevel').textContent='Combat level: '+cmb+'  \u00b7  Total level: '+total;
@@ -7061,6 +7064,7 @@ function optionsAt(tx,ty){
         {html:'Examine <span class="t">the lever</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='ember_gate'){
       if(!o.open)opts.push({html:'Heave-open <span class="t">the iron gate</span>',label:'Heave open',fn:()=>setAction({type:'gateheave',o},o.x,o.y)});
+      else opts.push({html:'Walk-through <span class="t">the open gate</span>',label:'Walk through',fn:()=>{cancelAction();walkTo(o.x,o.y,true);}});
       opts.push({html:'Examine <span class="t">the iron gate</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='ember_vent'){
       if(o.lit&&!o.locked)opts.push({html:'Douse <span class="t">the Cinder Vent</span>',label:'Douse',fn:()=>setAction({type:'ventdouse',o},o.x,o.y)});
@@ -19361,7 +19365,7 @@ const DIALOGUES={
     place:{who:'npc',text:"The volcano is his infirmary. He siphons chaotic energy up through the lava veins - conduit by conduit, floor by floor - and knits himself whole again. He is nearly there. And when he is whole, he will not linger down here. He will go back up.",next:'need'},
     need:{who:'npc',text:"I cannot fight him - look at me. But you can go where I cannot. Descend. Drain his conduits one by one - the workings below, the guardians, the old proving-vault - until the fire that revives him runs dry. Only then can he be killed for good. Do that, and I will teach this salvaged forge to make you a match for him.",opts:[
       {label:"And what is in it for me?",next:'reward'},
-      {label:"I will start down.",next:'bye2'},
+      {label:"I will start down.",next:()=>{if(player.quests.ember&&player.quests.ember.s<1){player.quests.ember.s=1;msg('Quest started \u2014 The Cinderworks.','#9a6a10');if(typeof renderQuests==='function')renderQuests();}return 'bye2';}},
       {label:"Back.",next:'start'}]},
     reward:{who:'npc',text:"Two things are worth having down here. CINDERS - raw chaotic energy - you tear from the rock and the beasts as you work and fight. And WARRANTS - my seal of commission - you earn by finishing the tasks I set you. Bring both to my counter and I will trade you gear, and rarer comforts besides. The finest armour also needs the First Rector's signets - and those you take only off his corpse, five to a chestpiece. So you see why we must reach him.",opts:[
       {label:"Understood.",next:'bye2'},
@@ -20404,6 +20408,26 @@ function trickOrTreat(bld,ck){
   renderInv();
 }
 const QUESTS=[
+ ['ember_skill','The Cinderworks','Mr. Hirschfeld \u2014 the Ashen Landing','1,500 XP each in Fishing, Mining & Woodcutting',null,
+  ()=>{ const q=player.quests.ember;
+   if(typeof emberPipesAllDone==='function'&&emberPipesAllDone())return{cls:2,text:'Complete \u2014 all three hydraulic pipes run full and the Cinderworks vault door is charged.'};
+   if(q.s>=1){ const _p=player.emberPipes||{}, _R=(typeof EMBER_PIPE_REQ!=='undefined')?EMBER_PIPE_REQ:500;
+     return{cls:1,text:'Charge the Cinderworks \u2014 fill all three hydraulic pipes. Fishing '+((_p.fishing||0))+'/'+_R+', Mining '+((_p.mining||0))+'/'+_R+', Woodcutting '+((_p.woodcutting||0))+'/'+_R+'. Gather embercarp, ember ore and ember logs from the skilling chamber and deposit them.'}; }
+   return{cls:0,text:'Descend into the Emberdeep and speak to Mr. Hirschfeld on the Ashen Landing to begin his campaign against the First Rector.'}; }],
+ ['ember_combat','The Molten Gauntlet','Mr. Hirschfeld \u2014 the Emberdeep','1,500 XP each in Attack, Strength, Defence & Hitpoints',null,
+  ()=>{ const q=player.quests.ember;
+   const _skillDone=(typeof emberPipesAllDone==='function'&&emberPipesAllDone());
+   if(!_skillDone&&q.s<2)return{hidden:true};
+   if(typeof emberConduitsAllDrained==='function'&&emberConduitsAllDrained())return{cls:2,text:'Complete \u2014 all three wardens lie slain and their conduits run cold. The sealed stair to the Heart stands open.'};
+   const _cs=(typeof emberConduits==='function')?emberConduits():[], _dn=_cs.filter(o=>o.drained).length;
+   return{cls:1,text:'Clear the Molten Gauntlet \u2014 fish out each warden\u2019s key, heave its gate, douse its four cinder vents, then cut the warden down. Conduits drained: '+_dn+'/3 (Slag, Choir and Forge-Tyrant).'}; }],
+ ['ember_puzzle','The Siphon Vault','Mr. Hirschfeld \u2014 the Emberdeep','3,000 Prayer XP',null,
+  ()=>{ const q=player.quests.ember;
+   const _combatDone=(typeof emberConduitsAllDrained==='function'&&emberConduitsAllDrained());
+   if(!_combatDone&&q.s<3)return{hidden:true};
+   if(typeof vaultPuzzlesAllSolved==='function'&&vaultPuzzlesAllSolved())return{cls:2,text:'Complete \u2014 all four locks are broken and the blast door to the Heart of the Emberdeep is open.'};
+   const _v=(typeof _vaultSolved!=='undefined')?_vaultSolved:{}, _done=[_v.memory,_v.lockout,_v.cells,_v.web].filter(Boolean).length;
+   return{cls:1,text:'Solve the Siphon Vault\u2019s four locks: the memory floor, the lockout grid, the cell bank and the current web. Solved: '+_done+'/4.'}; }],
  ['rxmas','A Rectory Christmas','Martha Matthews \u2014 the Rectory (outside)',
   'A festive Christmas sweater & 225 Cooking XP',
   null,
@@ -23001,7 +23025,7 @@ function enterVolcano(){
   camYaw=0; player.path.length=0; cancelAction();
   stopMusic();
   msg('You squeeze down through the fissure into '+EMBER_CHAMBERS[0].name+'. Heat presses in from every side.','#e0801f');
-  msg('Five chambers fall away below you, each stranger than the last. (Content coming soon \u2014 for now, explore.)','#8a6a4a');
+  msg('Five chambers fall away below you, each stranger than the last.','#8a6a4a');
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
 }
 let _lastVolcFloor=0;
@@ -23010,6 +23034,30 @@ function _mobOnCurFloor(r){
   if((r.interior||null)!==curInterior())return false;
   if(r.interior==='volcano'&&r.volcFloor!=null)return r.volcFloor===_lastVolcFloor;
   return true;
+}
+const EMBER_Q_XP={skill:1500, combat:1500, prayer:3000};
+function emberQuestComplete(room){
+  const q=player.quests&&player.quests.ember; if(!q)return; q.seen=q.seen||{};
+  if(room==='skill'){ if(q.s>=2)return; q.s=2;
+    addXp('fishing',EMBER_Q_XP.skill);addXp('mining',EMBER_Q_XP.skill);addXp('woodcutting',EMBER_Q_XP.skill);
+    msg('Quest complete \u2014 The Cinderworks. Hirschfeld credits you '+EMBER_Q_XP.skill.toLocaleString()+' XP in Fishing, Mining and Woodcutting.','#9a6a10'); }
+  else if(room==='combat'){ if(q.s>=3||q.s<2)return; q.s=3;
+    for(const _sk of ['attack','strength','defense','hitpoints'])addXp(_sk,EMBER_Q_XP.combat);
+    msg('Quest complete \u2014 The Molten Gauntlet. You are awarded '+EMBER_Q_XP.combat.toLocaleString()+' XP in Attack, Strength, Defence and Hitpoints.','#9a6a10'); }
+  else if(room==='puzzle'){ if(q.s>=4||q.s<3)return; q.s=4;
+    addXp('prayer',EMBER_Q_XP.prayer);
+    msg('Quest complete \u2014 The Siphon Vault. '+EMBER_Q_XP.prayer.toLocaleString()+' Prayer XP floods through you. The way to the Heart of the Emberdeep lies open.','#9a6a10'); }
+  else return;
+  if(typeof sfx!=='undefined'&&sfx.level)try{sfx.level();}catch(e){}
+  if(typeof renderQuests==='function')renderQuests();
+}
+function emberAutoBrief(idx){
+  const q=player.quests&&player.quests.ember; if(!q)return; q.seen=q.seen||{};
+  if(idx===1&&q.s<1){ q.s=1; if(typeof renderQuests==='function')renderQuests(); }
+  if(idx>=1&&idx<=3&&!q.seen[idx]){
+    q.seen[idx]=true;
+    setTimeout(function(){ try{ if(inVolcano&&_lastVolcFloor===idx&&(typeof dlg==='undefined'||!dlg)&&typeof openDialogue==='function') openDialogue({id:'hirschfeld',name:'Mr. Hirschfeld',x:player.x,y:player.y,heading:0}); }catch(e){} }, 350);
+  }
 }
 function gotoVolcFloor(idx){
   if(idx<0||idx>=EMBER_CHAMBERS.length)return;
@@ -23024,6 +23072,7 @@ function gotoVolcFloor(idx){
     msg('Two Committee Enforcers flank the throne. The First Rector will not stir until they fall.','#e0801f'); }
   if(idx===3){_vaultCPIdx=0;_vaultCheckpoint={x:c.entry.x,y:c.entry.y};if(goingDown&&!_vaultSolved.memory&&typeof memGenPath==='function')memGenPath();if(goingDown&&!_vaultSolved.lockout&&typeof lockScramble==='function')lockScramble();if(typeof vaultApplyProgress==='function')vaultApplyProgress();}
   msg((goingDown?'You descend into ':'You climb up into ')+c.name+'.','#e0801f');
+  if(typeof emberAutoBrief==='function')emberAutoBrief(idx);
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
 }
 function exitVolcano(){
@@ -27329,10 +27378,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (m.uid === player.uid) break;
         const _cw = (typeof rats !== 'undefined') ? rats.find(rr => rr.kind === 'cinderwing') : null;
         const _tl2 = Array.isArray(m.d) ? m.d : [];
-        if (m.ph === 'enrage') { msg('Cinderwing shrieks \u2014 her quills ignite white-hot!', '#ff6a2a'); if (_cw) _cw.enraged = true; break; }
-        if (m.ph === 'fly') { msg('Cinderwing takes wing \u2014 molten death rains from above!', '#ff6a2a'); if (_cw) { _cw.flying = true; if (typeof cwBurst === 'function') cwBurst(Math.round(_cw.px), Math.round(_cw.py)); } break; }
-        if (m.ph === 'land') { msg('Cinderwing crashes back onto the crater rim!', '#e8801f'); if (_cw) { _cw.flying = false; if (typeof cwBurst === 'function') cwBurst(Math.round(_cw.px), Math.round(_cw.py)); } break; }
-        if (m.ph === 'hop') { msg('Cinderwing vaults across the crater on a blast of embers!', '#e8801f');
+        const _cwSee = !!(_cw && typeof _mobOnCurFloor === 'function' && _mobOnCurFloor(_cw));
+        if (m.ph === 'enrage') { if(_cwSee)msg('Cinderwing shrieks \u2014 her quills ignite white-hot!', '#ff6a2a'); if (_cw) _cw.enraged = true; break; }
+        if (m.ph === 'fly') { if(_cwSee)msg('Cinderwing takes wing \u2014 molten death rains from above!', '#ff6a2a'); if (_cw) { _cw.flying = true; if (typeof cwBurst === 'function') cwBurst(Math.round(_cw.px), Math.round(_cw.py)); } break; }
+        if (m.ph === 'land') { if(_cwSee)msg('Cinderwing crashes back onto the crater rim!', '#e8801f'); if (_cw) { _cw.flying = false; if (typeof cwBurst === 'function') cwBurst(Math.round(_cw.px), Math.round(_cw.py)); } break; }
+        if (m.ph === 'hop') { if(_cwSee)msg('Cinderwing vaults across the crater on a blast of embers!', '#e8801f');
           if (_cw && _tl2.length) { if (typeof cwBurst === 'function') { cwBurst(Math.round(_cw.px), Math.round(_cw.py)); cwBurst(_tl2[0][0] | 0, _tl2[0][1] | 0); } _cw.x = _tl2[0][0] | 0; _cw.y = _tl2[0][1] | 0; _cw._hopT = now() + Math.max(600, m.ms | 0); } break; }
         if (m.ph === 'warn') { _rcw.push({ tiles: _tl2, fireAt: now() + Math.max(0, m.ms | 0), lastWarn: 0 }); break; }
         if (m.ph === 'fire') {
@@ -27358,7 +27408,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         const _dr = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
         const _tl = Array.isArray(m.d) ? m.d : [];
         if (m.ph === 'warn') {
-          msg('The Black Dragon rears back, drawing a furnace-breath \u2014 step out of the line of fire!', '#e8801f');
+          if (_dr && typeof _mobOnCurFloor === 'function' && _mobOnCurFloor(_dr)) msg('The Black Dragon rears back, drawing a furnace-breath \u2014 step out of the line of fire!', '#e8801f');
           if (_dr) { _dr.spec = { phase: 'windup', t: now(), fireAt: now() + Math.max(0, m.ms | 0), dir: [0, 0], tiles: _tl }; _rdspecGC.push({ r: _dr, at: now() + (m.ms | 0) + 1500 }); }
           break;
         }
@@ -27387,8 +27437,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         const _sx = m.x | 0, _sy = m.y | 0, _en = !!m.en;
         if (m.ph === 'warn') { _rbliz.push({ x: _sx, y: _sy, fireAt: now() + Math.max(0, m.ms | 0), lastWarn: 0, en: _en }); break; }
         if (m.ph === 'enrage') {
-          msg('The Snow King enters a frostbitten fury \u2014 faster, colder, merciless!', '#3f7fa8');
-          if (typeof rats !== 'undefined') { const _k = rats.find(rr => rr.kind === 'snowking'); if (_k) _k.enraged = true; }
+          const _skk = (typeof rats !== 'undefined') ? rats.find(rr => rr.kind === 'snowking') : null;
+          if (_skk && typeof _mobOnCurFloor === 'function' && _mobOnCurFloor(_skk)) msg('The Snow King enters a frostbitten fury \u2014 faster, colder, merciless!', '#3f7fa8');
+          if (_skk) _skk.enraged = true;
           break;
         }
         if (m.ph === 'fire') {
