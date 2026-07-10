@@ -10580,30 +10580,33 @@ const sway=[];
 let _heartBanTex=null;
 function _heartBannerTex(torn,seed){
   const sc=shieldTexture().image;
-  const c=document.createElement('canvas');c.width=128;c.height=210;const g=c.getContext('2d');
+  const c=document.createElement('canvas');c.width=150;c.height=320;const g=c.getContext('2d');
   const R=(a=>{let x=Math.sin((seed||1)*127.1+a*311.7)*43758.5;return x-Math.floor(x);});
-  g.fillStyle='#7f1119';g.fillRect(0,0,128,210);
-  g.fillStyle='#c01722';g.fillRect(6,0,116,196);
-  g.fillStyle='#efe9dc';g.fillRect(14,10,100,176);
-  g.drawImage(sc,34,15,60,76);
+  g.fillStyle='#7f1119';g.fillRect(0,0,150,320);
+  g.fillStyle='#c01722';g.fillRect(7,0,136,300);
+  g.fillStyle='#efe9dc';g.fillRect(16,12,118,272);
+  g.drawImage(sc,52,20,46,58);
   g.fillStyle='#1a1410';g.textAlign='center';
-  g.font='bold 21px Georgia';g.fillText("ST PAUL'S",64,120);
-  g.font='bold 15px Georgia';g.fillText('THE HEART',64,144);
-  g.font='italic 11px Georgia';g.fillText('fide et labore',64,166);
-  g.strokeStyle='#c9a23a';g.lineWidth=3;g.strokeRect(14,10,100,176);
-  g.fillStyle='#c01722';g.beginPath();g.moveTo(6,196);g.lineTo(122,196);
-  for(let i=0;i<4;i++){g.lineTo(122-i*29,210);g.lineTo(122-i*29-14.5,196);}
+  g.font='bold 23px Georgia';g.fillText("ST PAUL'S",75,110);
+  g.font='bold 16px Georgia';g.fillText('THE HEART',75,136);
+  g.strokeStyle='#c9a23a';g.lineWidth=1.5;g.beginPath();g.moveTo(32,150);g.lineTo(118,150);g.stroke();
+  g.fillStyle='#5a1418';g.font='italic bold 16px Georgia';
+  g.fillText('Freedom with',75,182);g.fillText('Responsibility',75,204);
+  g.drawImage(sc,57,224,36,46);
+  g.strokeStyle='#c9a23a';g.lineWidth=3;g.strokeRect(16,12,118,272);
+  g.fillStyle='#c01722';g.beginPath();g.moveTo(7,300);g.lineTo(143,300);
+  for(let i=0;i<4;i++){g.lineTo(143-i*34,320);g.lineTo(143-i*34-17,300);}
   g.closePath();g.fill();
   if(torn){
     g.globalCompositeOperation='destination-out';
-    g.beginPath();g.moveTo(0,210);let yy=120;
-    for(let x=0;x<=128;x+=14){yy=112+R(x)*80;g.lineTo(x,yy);}
-    g.lineTo(128,210);g.closePath();g.fill();
-    for(let k=0;k<6;k++){g.beginPath();g.arc(20+R(k)*88,34+R(k+9)*86,3+R(k+3)*8,0,7);g.fill();}
+    g.beginPath();g.moveTo(0,320);let yy=180;
+    for(let x=0;x<=150;x+=15){yy=170+R(x)*130;g.lineTo(x,yy);}
+    g.lineTo(150,320);g.closePath();g.fill();
+    for(let k=0;k<7;k++){g.beginPath();g.arc(24+R(k)*100,44+R(k+9)*150,4+R(k+3)*10,0,7);g.fill();}
     g.globalCompositeOperation='source-over';
     g.fillStyle='rgba(18,9,5,0.5)';
-    g.beginPath();g.moveTo(0,100);for(let x=0;x<=128;x+=14){g.lineTo(x,100+R(x+5)*34);}
-    g.lineTo(128,210);g.lineTo(0,210);g.closePath();g.fill();
+    g.beginPath();g.moveTo(0,150);for(let x=0;x<=150;x+=15){g.lineTo(x,150+R(x+5)*54);}
+    g.lineTo(150,320);g.lineTo(0,320);g.closePath();g.fill();
   }
   return new THREE.CanvasTexture(c);
 }
@@ -11108,12 +11111,12 @@ function buildObjModel(o){
     addProxy(g,1.5,5.8,0,{kind:'obj',o});
   }else if(def==='heart_banner'){
     const torn=!!o.torn;
-    const rod=mesh(new THREE.CylinderGeometry(0.05,0.05,1.32,6),0x2a2420);rod.rotation.z=Math.PI/2;rod.position.y=3.72;g.add(rod);
-    for(const sx of [-1,1]){const cap=mesh(new THREE.SphereGeometry(0.08,7,6),0xc9a23a);cap.position.set(sx*0.64,3.72,0);g.add(cap);}
-    const bh=torn?1.78:1.6;
-    const ban=new THREE.Mesh(new THREE.PlaneGeometry(1.02,bh),
+    const RW=3.0, RH=torn?6.7:6.3, TOP=7.4;   // big banners covering the tall walls
+    const rod=mesh(new THREE.CylinderGeometry(0.07,0.07,RW+0.4,6),0x2a2420);rod.rotation.z=Math.PI/2;rod.position.y=TOP;g.add(rod);
+    for(const sx of [-1,1]){const cap=mesh(new THREE.SphereGeometry(0.12,8,7),0xc9a23a);cap.position.set(sx*(RW/2+0.2),TOP,0);g.add(cap);}
+    const ban=new THREE.Mesh(new THREE.PlaneGeometry(RW,RH),
       new THREE.MeshLambertMaterial({map:_heartBannerTex(torn,(o.x*13.1+o.y*7.7)),transparent:true,alphaTest:0.3,side:THREE.DoubleSide,emissive:0x140a06,emissiveIntensity:0.22}));
-    ban.position.set(0,3.72-bh/2,0.03);g.add(ban);
+    ban.position.set(0,TOP-RH/2,0.05);g.add(ban);
     sway.push({obj:ban,ph:hsh*6.28});
     g.rotation.y=(o.ry!==undefined?o.ry:0);
   }else if(def==='boss_door'){
@@ -11772,9 +11775,14 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   L(219,71,2,null,219,68);                            /* entry: up -> the Molten Gauntlet */
   {const bd=addObj('boss_door',219,17,true);if(bd){bd.downFloor=4;bd.faceX=219;bd.faceY=20;bd.vaultBlastDoor=true;}}   /* the Rector's Door -> the Heart */
   /* --- The Heart arena (Chamber V / floor 4): throne + 4 siphon pillars --- */
-  addObj('rector_throne',219,83,true);
+  addObj('rector_throne',219,85,true);
   /* St Paul's banners ringing the Heart -- a mix of whole and battle-tattered [x,y,faceRy,torn] */
-  for(const _b of [[213,80,0,0],[225,80,0,1],[204,84,0.6,1],[234,84,-0.6,0],[196,94,1.5708,0],[242,94,-1.5708,1],[199,105,2.35,1],[239,105,-2.35,0]]){
+  for(const _b of [
+    [212,81,0,0],[227,81,0,1],               /* N wall, flanking the throne */
+    [242,90,-1.5708,1],[242,102,-1.5708,0],  /* E wall */
+    [196,90,1.5708,0],[196,102,1.5708,1],    /* W wall */
+    [206,112,3.14159,1],[232,112,3.14159,0]  /* S wall, either side of the door */
+  ]){
     const _bn=addObj('heart_banner',_b[0],_b[1],true); if(_bn){_bn.ry=_b[2];_bn.torn=!!_b[3];}
   }
   for(const pp of [[213,93],[225,93],[213,103],[225,103]]){const pl=addObj('siphon_pillar',pp[0],pp[1],true);if(pl)pl.active=false;}
@@ -23268,7 +23276,7 @@ function rectorResetEncounter(){
     if(typeof msg==='function')msg('The Heart lies quiet \u2014 the machine has not yet knit the Rector whole. He reforms in '+hh+'h '+mm+'m.','#caa23a');
     return;
   }
-  if(_rectorBoss){ _rectorBoss.alive=true; _rectorBoss.dormant=true; _rectorBoss.hp=_rectorBoss.maxhp; _rectorBoss.x=_rectorBoss.px=219; _rectorBoss.y=_rectorBoss.py=83; _rectorBoss.target=null; _rectorBoss.spec=null; _rectorBoss.enraged=false; _rectorBoss.enrageDone=false; _rectorBoss._sawDormant=false; _rectorBoss._risen=false; _rectorBoss._rising=null; _rectorBoss.phaseIdx=0; _rectorBoss.respawnAt=0; if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true; }
+  if(_rectorBoss){ _rectorBoss.alive=true; _rectorBoss.dormant=true; _rectorBoss.hp=_rectorBoss.maxhp; _rectorBoss.x=_rectorBoss.px=219; _rectorBoss.y=_rectorBoss.py=85; _rectorBoss.target=null; _rectorBoss.spec=null; _rectorBoss.enraged=false; _rectorBoss.enrageDone=false; _rectorBoss._sawDormant=false; _rectorBoss._risen=false; _rectorBoss._rising=null; _rectorBoss.phaseIdx=0; _rectorBoss.respawnAt=0; if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true; }
   for(let i=0;i<_rectorGuards.length;i++){ const gd=_rectorGuards[i]; if(!gd)continue; gd.alive=true; gd.hp=gd.maxhp; gd.x=gd.px=gd.sx; gd.y=gd.py=gd.sy; gd.target=null; gd.respawnAt=0; if(gd._m&&gd._m.group)gd._m.group.visible=true; }
   for(const o of objects)if(o.def==='siphon_pillar')o.active=false;
   _rectorFireRing=null; _rectorFireT=0;
@@ -23403,7 +23411,7 @@ let _rectorBoss=null, _rectorGuards=[], _rectorChain=null;
 (function spawnRectorBoss(){
   let bi=rats.length;
   const mk=(kind,x,y,extra)=>{const r={i:bi++,kind:kind,sx:x,sy:y,x:x,y:y,px:x,py:y,hp:MOB_KINDS[kind].hp,maxhp:MOB_KINDS[kind].hp,alive:true,locked:false,respawnAt:0,lastHit:0,heading:rnd(0,6.2),target:null,phase:bi%2,name:MOB_KINDS[kind].name,ex:MOB_KINDS[kind].ex,interior:'volcano',volcFloor:4};if(extra)Object.assign(r,extra);rats.push(r);makeRat(r);if(r._m&&r._m.group)r._m.group.visible=false;return r;};
-  _rectorBoss=mk('master_reforged',219,83,{dormant:true});
+  _rectorBoss=mk('master_reforged',219,85,{dormant:true});
   if(_rectorBoss){_rectorBoss.heading=0;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.rotation.y=0;_rectorBoss.leash=70;}
   if(_rectorBoss._m&&_rectorBoss._m.group){const g=_rectorBoss._m.group;g.scale.setScalar(2.0);g.traverse(ob=>{if(ob.isMesh&&ob.material&&ob.material!==PROXY_MAT){ob.material=ob.material.clone();ob.material.transparent=false;ob.material.opacity=1;if(ob.material.emissive)ob.material.emissive.setHex(0x7a1e10);}});}
   PROXY_MAT.transparent=true;PROXY_MAT.opacity=0;   /* safety: never let the shared click-proxy material go opaque */
@@ -26032,41 +26040,44 @@ function render(now){
     if(r.kind==='master_reforged'&&m.hm){
       const _now=performance.now(), _hm=m.hm;
       /* ---- TUNABLE seated-pose constants (nudge once seen in-game) ---- */
-      const SEAT_LIFT=0.55;   // how high he rides on the cushion
-      const LEG_BEND=1.30;    // thigh-forward angle while seated
-      const LAND_Y=86;        // arena tile he strides to after hopping off
-      const RISE_MS=1200;     // hop-off duration
+      const SEAT_LIFT=-0.10;  // vertical offset so his seat rests ON the cushion, not floating above
+      const LEG_FWD=1.35;     // thigh-forward angle (knees toward the room)
+      const LEG_SPREAD=0.14;  // knees apart
+      const TORSO_LEAN=0.06;  // slight forward brood, applied to the upper body only
+      const THRONE_Z=85.5;    // world-z of the throne seat
+      const LAND_Y=90;        // arena tile he strides onto after the hop-off
+      const RISE_MS=1300;
       if(r.dormant){
         r._sawDormant=true;
         m.group.position.y+=SEAT_LIFT;
-        r.heading=0; m.group.rotation.y=0;
-        _hm.lLeg.rotation.x=LEG_BEND; _hm.rLeg.rotation.x=LEG_BEND;
-        _hm.lArm.rotation.x=0.16; _hm.rArm.rotation.x=0.16;
-        _hm.lArm.rotation.z=0.14; _hm.rArm.rotation.z=-0.14;
+        r.heading=0; m.group.rotation.y=0; m.group.rotation.x=0;
+        _hm.lLeg.rotation.x=LEG_FWD; _hm.rLeg.rotation.x=LEG_FWD;
+        _hm.lLeg.rotation.z=LEG_SPREAD; _hm.rLeg.rotation.z=-LEG_SPREAD;
+        _hm.lArm.rotation.x=0.42; _hm.rArm.rotation.x=0.42;
+        _hm.lArm.rotation.z=0.20; _hm.rArm.rotation.z=-0.20;
         const _br=Math.sin(_now*0.0016+r.i)*0.5+0.5;
-        m.group.rotation.x=-0.03+_br*0.012;
-        if(_hm.upper)_hm.upper.rotation.x=0.02;
+        if(_hm.upper)_hm.upper.rotation.x=TORSO_LEAN+_br*0.02;
       }else{
         if(r._sawDormant&&!r._risen&&!r._rising){ r._rising=_now; }
         else if(!r._sawDormant&&!r._risen){ r._risen=true; }
         if(r._rising){
           let t=(_now-r._rising)/RISE_MS; if(t>1)t=1;
-          const e=t*t*(3-2*t);
-          const fromZ=83.5,toZ=LAND_Y+0.5, zz=fromZ+(toZ-fromZ)*e;
-          const gy=groundH(219.5,zz);
-          const lift=SEAT_LIFT*(1-e)+Math.sin(t*Math.PI)*0.5;   // ease down + hop arc
+          const e=t*t*(3-2*t), k=1-e;
+          const zz=THRONE_Z+((LAND_Y+0.5)-THRONE_Z)*e, gy=groundH(219.5,zz);
+          const lift=SEAT_LIFT*k+Math.sin(t*Math.PI)*0.55;   // ease off the seat + hop arc
           m.group.position.set(219.5,gy+lift,zz);
-          r.heading=0; m.group.rotation.y=0; m.group.rotation.x=-0.03*(1-e);
-          const lb=LEG_BEND*(1-e);
-          _hm.lLeg.rotation.x=lb; _hm.rLeg.rotation.x=lb;
-          _hm.lArm.rotation.x=0.16-0.62*e; _hm.rArm.rotation.x=0.16-0.5*e;
-          _hm.lArm.rotation.z=0.14*(1-e); _hm.rArm.rotation.z=-0.14*(1-e);
-          if(_hm.upper)_hm.upper.rotation.x=0.02*(1-e);
+          r.heading=0; m.group.rotation.y=0; m.group.rotation.x=0;
+          _hm.lLeg.rotation.x=LEG_FWD*k; _hm.rLeg.rotation.x=LEG_FWD*k;
+          _hm.lLeg.rotation.z=LEG_SPREAD*k; _hm.rLeg.rotation.z=-LEG_SPREAD*k;
+          _hm.lArm.rotation.x=0.42-0.9*e; _hm.rArm.rotation.x=0.42-0.8*e;
+          _hm.lArm.rotation.z=0.20*k; _hm.rArm.rotation.z=-0.20*k;
+          if(_hm.upper)_hm.upper.rotation.x=TORSO_LEAN*k;
           if(t>=1){ r._rising=null; r._risen=true; r.px=r.x=219; r.py=r.y=LAND_Y; }
         }else{
           const mv=Math.hypot(r.x-r.px,r.y-r.py)>0.01;
           const sw=mv?Math.sin(_now*0.008+r.i)*0.5:0;
           _hm.lLeg.rotation.x=sw; _hm.rLeg.rotation.x=-sw;
+          _hm.lLeg.rotation.z=0; _hm.rLeg.rotation.z=0;
           _hm.lArm.rotation.x=-0.16+Math.sin(_now*0.003+r.i)*0.06;
           _hm.rArm.rotation.x=-0.16+Math.sin(_now*0.003+r.i+2)*0.06;
           _hm.lArm.rotation.z=0.1; _hm.rArm.rotation.z=-0.1;
