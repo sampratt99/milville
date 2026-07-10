@@ -5288,7 +5288,7 @@ function playerTick(){
       _max=_duelMaxhit();
       _acc=_duelAcc(Math.floor(lvl('attack')*(prayers.halcyon?1.18:1)),_noW?0:eqStat('atk'));
     }
-    player.nextAtk=nowC+_itv;player.swingT=nowC;
+    player.nextAtk=nowC+Math.round(_itv*(1-Math.min(30,(typeof eqStat==='function'?eqStat('atkspeed'):0))/100));player.swingT=nowC;
     if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
     let dmg=0;if(Math.random()<_acc)dmg=rndi(0,_max);
     let _fz=0;
@@ -6761,7 +6761,7 @@ const EQUIP_LAYOUT=[
   [null,'legs',null],
   ['hands','feet','ring']
 ];
-const EQUIP_ACTIVE={weapon:1,shield:1,cape:1,head:1,body:1,neck:1,legs:1,feet:1,ammo:1,ring:1};
+const EQUIP_ACTIVE={weapon:1,shield:1,cape:1,head:1,body:1,neck:1,legs:1,feet:1,ammo:1,ring:1,hands:1};
 const EQUIP_GLYPH={head:'helm',cape:'cape',neck:'neck',ammo:'ammo',weapon:'sword',
   body:'body',shield:'shield',legs:'legs',hands:'hands',feet:'feet',ring:'ring'};
 const equipGrid=document.getElementById('equipgrid');
@@ -14177,7 +14177,7 @@ const mkArmA=()=>{const ag=new THREE.Group();
  const up=TT(gmesh(new THREE.CylinderGeometry(0.076,0.062,0.32,10),0xb9bdc4),'tint');up.position.y=-0.15;ag.add(up);
  const fo=TT(gmesh(new THREE.CylinderGeometry(0.06,0.05,0.3,10),0xb9bdc4),'tint');fo.position.y=-0.42;ag.add(fo);
  const cuff=TT(gmesh(new THREE.TorusGeometry(0.058,0.015,6,14),0xdba968),'trim');cuff.rotation.x=Math.PI/2;cuff.position.y=-0.52;ag.add(cuff);
- const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);
+ const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);ag.userData.gaunt=gaunt;
  ag.visible=false;return ag;};
 const armPL=mkArmA(),armPR=mkArmA();
 pm.lArm.add(armPL);pm.rArm.add(armPR);
@@ -25616,7 +25616,7 @@ function render(now){
     }else if(act.type==='attack'||act.type==='datk'){
       showTool=wEq;
       const _ws=currentWeaponStyle();
-      const swA=now-(player.swingT||-1e9);
+      const _hm=1/(1-Math.min(30,(typeof eqStat==='function'?eqStat('atkspeed'):0))/100); const swA=(now-(player.swingT||-1e9))*_hm;
       if(_ws==='ranged'){
         /* archery: bow arm holds the aim forward; off-hand draws the string and snaps on release */
         armR=-1.28;
@@ -25736,6 +25736,8 @@ function render(now){
   }
   {const _he=player.equip.hands&&ITEMS[player.equip.hands.id]&&ITEMS[player.equip.hands.id].equip; const _hasG=!!(_he&&(_he.emberset||/^gloves_haste/.test(player.equip.hands.id)));
    emberGauntL.visible=emberGauntR.visible=_hasG;
+   if(armPL.userData&&armPL.userData.gaunt)armPL.userData.gaunt.visible=!_hasG;
+   if(armPR.userData&&armPR.userData.gaunt)armPR.userData.gaunt.visible=!_hasG;
    if(_hasG){const _t=_he.tint!==undefined?_he.tint:0x8a2e1a,_r=_he.trim!==undefined?_he.trim:0xffa24a;tintG(emberGauntL,_t,_r);tintG(emberGauntR,_t,_r);}}
   neckM.visible=!!player.equip.neck;
   if(player.equip.neck){
@@ -27424,7 +27426,7 @@ const mkArmA=()=>{const ag=new THREE.Group();
  const up=TT(gmesh(new THREE.CylinderGeometry(0.076,0.062,0.32,10),0xb9bdc4),'tint');up.position.y=-0.15;ag.add(up);
  const fo=TT(gmesh(new THREE.CylinderGeometry(0.06,0.05,0.3,10),0xb9bdc4),'tint');fo.position.y=-0.42;ag.add(fo);
  const cuff=TT(gmesh(new THREE.TorusGeometry(0.058,0.015,6,14),0xdba968),'trim');cuff.rotation.x=Math.PI/2;cuff.position.y=-0.52;ag.add(cuff);
- const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);
+ const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);ag.userData.gaunt=gaunt;
  ag.visible=false;return ag;};
 const armPL=mkArmA(),armPR=mkArmA();
 rig.lArm.add(armPL);rig.rArm.add(armPR);
@@ -27625,7 +27627,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     G.bootL.visible = G.bootR.visible = !!gear.feet;
     if (G.emberBootL) G.emberBootL.visible = G.emberBootR.visible = !!(gear.feet && EQ(gear.feet) && EQ(gear.feet).emberset);
     if (gear.feet) { const fe = EQ(gear.feet); if (fe) { if(gear.feet==='fighting_boots'){rainbowBoot(G.bootL);rainbowBoot(G.bootR);}else{tintG(G.bootL, fe.tint, fe.trim); tintG(G.bootR, fe.tint, fe.trim);} } }
-    if (G.emberGauntL) G.emberGauntL.visible = G.emberGauntR.visible = !!(gear.hands && EQ(gear.hands) && EQ(gear.hands).emberset);
+    if (G.emberGauntL) { const _hh = gear.hands && EQ(gear.hands); const _hasG = !!(_hh && (_hh.emberset || /^gloves_haste/.test(gear.hands))); G.emberGauntL.visible = G.emberGauntR.visible = _hasG; if(_hasG){ const _t=_hh.tint!==undefined?_hh.tint:0x8a2e1a, _r=_hh.trim!==undefined?_hh.trim:0xffa24a; tintG(G.emberGauntL,_t,_r); tintG(G.emberGauntR,_t,_r); } if(G.armPL&&G.armPL.userData&&G.armPL.userData.gaunt)G.armPL.userData.gaunt.visible=!_hasG; if(G.armPR&&G.armPR.userData&&G.armPR.userData.gaunt)G.armPR.userData.gaunt.visible=!_hasG; }
     G.neckM.visible = !!gear.neck;
     if (gear.neck) { const ne = EQ(gear.neck); if (ne && G.neckM.children[1]){ G.neckM.children[1].material.color.setHex(ne.trim); const _gs=({amulet_health:[1.15,1.0,1.15],amulet_piety:[0.8,1.55,0.8],amulet_regen:[1.4,1.4,1.4]})[gear.neck]; if(_gs)G.neckM.children[1].scale.set(_gs[0],_gs[1],_gs[2]); else G.neckM.children[1].scale.set(1,1,1); } }
     if (gear.cape) {
@@ -28287,7 +28289,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (r.act && r.act.k === 'attack') {
       const we = r.gear && r.gear.weapon && typeof ITEMS !== 'undefined' && ITEMS[r.gear.weapon] && ITEMS[r.gear.weapon].equip;
       const style = (typeof weaponStyle === 'function') ? weaponStyle(we) : 'melee';
-      const swA = (r.swingT !== undefined) ? (t - r.swingT) : (t % 2400);
+      const _hh = r.gear && r.gear.hands && typeof ITEMS!=='undefined' && ITEMS[r.gear.hands] && ITEMS[r.gear.hands].equip; const _hm = 1/(1-Math.min(30,(_hh&&_hh.atkspeed)||0)/100); const swA = ((r.swingT !== undefined) ? (t - r.swingT) : (t % 2400))*_hm;
       const _wm0 = we ? we.model : null;
       const ss = x => x * x * (3 - 2 * x);
       if (style === 'ranged') {
