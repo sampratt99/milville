@@ -1318,7 +1318,7 @@ const EMBER_VAULT_WARRANTS=8;   /* per Siphon-Vault puzzle cleared */
 function emberConduits(){return objects.filter(o=>o.def==='ember_conduit');}
 function emberVentsOf(w){return objects.filter(o=>o.def==='ember_vent'&&o.warden===w);}
 function emberConduitOf(w){return objects.find(o=>o.def==='ember_conduit'&&o.warden===w);}
-function wardenVulnerable(r){const cd=r&&r.warden&&emberConduitOf(r.warden);if(!cd)return true;return cd.drained||!cd.shielded;}
+function wardenVulnerable(r){const cd=r&&r.warden&&emberConduitOf(r.warden);if(!cd)return true;return !cd.shielded;}
 function emberConduitsAllDrained(){const cs=emberConduits();return cs.length>0&&cs.every(o=>o.drained);}
 let _vaultSolved={memory:false,lockout:false,cells:false,web:false};
 function vaultPuzzlesAllSolved(){return _vaultSolved.memory&&_vaultSolved.lockout&&_vaultSolved.cells&&_vaultSolved.web;}
@@ -1490,7 +1490,7 @@ function douseVent(v){
   if(!v||v.lit===false||v.locked)return;
   v.lit=false;
   const cd=emberConduitOf(v.warden), vents=emberVentsOf(v.warden), n=vents.filter(x=>!x.lit).length;
-  if(cd&&!cd.drained&&vents.every(x=>!x.lit)){
+  if(cd&&cd.shielded&&vents.every(x=>!x.lit)){
     cd.shielded=false; cd.burnEnd=performance.now()+EMBER_BURN_MS;
     const _wr=(typeof emberWardenOf==='function')?emberWardenOf(v.warden):null;
     if(_wr&&_wr.alive)msg('All four vents smother \u2014 the Warden\u2019s molten hide cools. Strike it now, before the vents flare back!','#9a6a10');
@@ -1524,7 +1524,7 @@ function emberConduitTick(){
   if(!inVolcano||_lastVolcFloor!==2)return;
   const nn=performance.now();
   for(const o of emberConduits()){
-    if(o.drained||o.burnEnd<=0)continue;
+    if(o.burnEnd<=0)continue;
     if(nn>o.burnEnd){o.burnEnd=0;o.shielded=true;for(const v of emberVentsOf(o.warden))v.lit=true;msg('The vents flare back to life \u2014 the conduit re-seals.','#b34718');}
   }
 }
@@ -1560,11 +1560,11 @@ ITEMS.boots_speed_silver={name:'Silver Boots of Speed',ex:'Quicksilver-shod saba
 ITEMS.boots_speed_gold={name:'Gold Boots of Speed',ex:'Feather-light gilt sabatons. You move 20% faster.',val:1400000,cat:'Luxury',equip:{slot:'feet',def:7,runspeed:20,model:'boots',verb:'Wear',req:0,tint:0xf4d24a,trim:0xfff0b0}};
 ITEMS.gloves_haste_silver={name:'Silver Gloves of Haste',ex:'Deft silver-mesh gloves. You attack 10% faster.',val:900000,cat:'Luxury',equip:{slot:'hands',def:5,atkspeed:10,model:'gauntlets',verb:'Wear',req:0,tint:0xcfd6e0,trim:0xf4f7ff}};
 ITEMS.gloves_haste_gold={name:'Gold Gloves of Haste',ex:'Gilt gauntlets that blur the hand. You attack 20% faster.',val:2200000,cat:'Luxury',equip:{slot:'hands',def:7,atkspeed:20,model:'gauntlets',verb:'Wear',req:0,tint:0xf4d24a,trim:0xfff0b0}};
-ITEMS.amulet_health={name:'Amulet of Health',ex:'A ruby heart that beats with your own. Slowly regenerates health \u2014 even mid-battle.',val:1300000,cat:'Luxury',equip:{slot:'neck',def:3,str:2,hpregen:4,model:'amulet',verb:'Wear',req:0,tint:0xe0402a,trim:0xff8a6a}};
-ITEMS.amulet_piety={name:'Amulet of Piety',ex:'An amethyst reliquary. Slowly regenerates prayer.',val:1300000,cat:'Luxury',equip:{slot:'neck',def:3,prayregen:4,model:'amulet',verb:'Wear',req:0,tint:0x9a7fe0,trim:0xd0c0ff}};
+ITEMS.amulet_health={name:'Amulet of Health',ex:'A ruby heart that beats with your own. Slowly regenerates health \u2014 even mid-battle.',val:1300000,cat:'Luxury',equip:{slot:'neck',def:3,str:2,hpregen:3,model:'amulet',verb:'Wear',req:0,tint:0xe0402a,trim:0xff8a6a}};
+ITEMS.amulet_piety={name:'Amulet of Piety',ex:'An amethyst reliquary. Slowly regenerates prayer.',val:1300000,cat:'Luxury',equip:{slot:'neck',def:3,prayregen:3,model:'amulet',verb:'Wear',req:0,tint:0x9a7fe0,trim:0xd0c0ff}};
 ITEMS.amulet_regen={name:'Heroic Amulet of Rejuvenation',ex:'A gold sunburst set with heart-ruby and soul-amethyst. Regenerates both health and prayer.',val:3000000,cat:'Luxury',equip:{slot:'neck',def:5,str:2,hpregen:5,prayregen:5,model:'amulet',verb:'Wear',req:0,tint:0xffd24a,trim:0xfff0b0}};
-ITEMS.bodkin_health={name:'Golden Bodkin of Health',ex:'A gilt offhand dirk. It bites in battle and mends its wielder \u2014 health regenerates while wielded.',val:1100000,cat:'Luxury',equip:{slot:'shield',atk:8,str:8,def:2,hpregen:4,model:'sword',verb:'Wield',req:0,tint:0xe0402a,trim:0xffd24a}};
-ITEMS.bodkin_piety={name:'Golden Bodkin of Piety',ex:'A gilt offhand dirk that keeps the faith \u2014 prayer regenerates while wielded.',val:1100000,cat:'Luxury',equip:{slot:'shield',atk:8,str:8,def:2,prayregen:4,model:'sword',verb:'Wield',req:0,tint:0x9a7fe0,trim:0xffd24a}};
+ITEMS.bodkin_health={name:'Golden Bodkin of Health',ex:'A gilt offhand dirk. It bites in battle and mends its wielder \u2014 health regenerates while wielded.',val:1100000,cat:'Luxury',equip:{slot:'shield',atk:8,str:8,def:2,hpregen:3,model:'sword',verb:'Wield',req:0,tint:0xe0402a,trim:0xffd24a}};
+ITEMS.bodkin_piety={name:'Golden Bodkin of Piety',ex:'A gilt offhand dirk that keeps the faith \u2014 prayer regenerates while wielded.',val:1100000,cat:'Luxury',equip:{slot:'shield',atk:8,str:8,def:2,prayregen:3,model:'sword',verb:'Wield',req:0,tint:0x9a7fe0,trim:0xffd24a}};
 ITEMS.bodkin_rejuv={name:'Golden Bodkin of Rejuvenation',ex:'The finest offhand dirk \u2014 it strikes hard and restores both health and prayer while wielded.',val:3400000,cat:'Luxury',equip:{slot:'shield',atk:10,str:10,def:3,hpregen:5,prayregen:5,model:'sword',verb:'Wield',req:0,tint:0xffd24a,trim:0xfff0b0}};
 ITEMS.ring_embers={name:'Ring of Embers',ex:'A band of living coal. It lends real force to every blow.',val:900000,cat:'Luxury',equip:{slot:'ring',str:8,rstr:8,model:'ring',verb:'Wear',req:0,tint:0xff5a1e}};
 ITEMS.ring_warden={name:'Ring of the Warden',ex:'A heavy slag band that turns aside what would fell you.',val:900000,cat:'Luxury',equip:{slot:'ring',def:14,model:'ring',verb:'Wear',req:0,tint:0x8a8f9a}};
@@ -5227,7 +5227,7 @@ function playerTick(){
     if(wstyle==='magic'){if(dmg>(player.maxMagicHit||0)){player.maxMagicHit=dmg;dirty=true;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();}}
     else if(wstyle==='ranged'){if(dmg>(player.maxRangeHit||0)){player.maxRangeHit=dmg;dirty=true;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();}}
     if(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dmg))return;
-    if(r.dormant){if(!r._dwT||performance.now()-r._dwT>2000){r._dwT=performance.now();msg('The Rector sits wreathed in the committee\u2019s ward \u2014 cut down his enforcers first.','#9a6fb0');}cancelAction();return;}
+    if(r.dormant){ if(rats.some(z=>z.kind==='committee_guard'&&z.alive)){ if(!r._dwT||performance.now()-r._dwT>2000){r._dwT=performance.now();msg('The Rector sits wreathed in the committee\u2019s ward \u2014 cut down his enforcers first.','#9a6fb0');}cancelAction();return; } else { /* enforcers already down (a groupmate felled the last one) but the wake never synced -> wake him now so we can actually deal damage */ r.dormant=false;r.enrageDone=false;r.target=player;if(r._siphonCd===undefined)r._siphonCd=performance.now()+10000; } }
     if(player.slayer&&player.slayer.unlocks&&player.slayer.unlocks.bigger&&!r.superiorRolled&&player.slayer.task===slayKindOf(r.kind)&&player.slayer.done<player.slayer.need&&inWild(r.sx,r.sy)){r.superiorRolled=true;if(Math.random()<0.14){r.superior=true;if(r._m&&r._m.group){if(r._supScale===undefined)r._supScale=r._m.group.scale.x;r._m.group.scale.setScalar(r._supScale*1.4);}msg('A superior '+r.name.toLowerCase()+' rises \u2014 bigger, and badder!','#9a6fb0');}}
     {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
     const _rh=player.equip.weapon&&player.equip.weapon.id==='rock_hammer';
@@ -18831,6 +18831,21 @@ const LUX_GEM={
   embers:[0xff5a1e,0x6a1e05], warden:[0x9aa0ac,0x20242c], rector:[0x7b5cff,0x2a1a6a]
 };
 
+/* Build the item on a mannequin using the SAME worn-gear meshes the game renders on players,
+   so an examine preview always matches how the piece actually looks equipped. Returns a rig group or null. */
+function buildWornGearModel(id){
+  const it=ITEMS[id], eq=it&&it.equip;
+  if(!eq||!eq.slot)return null;
+  if(typeof makeHumanoid!=='function')return null;
+  if(typeof MP==='undefined'||!MP.buildGearRig||!MP.applyRemoteGear)return null;
+  try{
+    const rig=makeHumanoid({skin:0xd9a066,shirt:0x8a8148,pants:0x2f5d33,hair:0x6b4a26,belt:0x6e2419});
+    const G=MP.buildGearRig(rig);
+    const gear={}; gear[eq.slot]=id;
+    MP.applyRemoteGear(G, rig, gear, null, undefined);
+    return rig.g;
+  }catch(e){ return null; }
+}
 function buildLuxuryModel(id){
   const g=new THREE.Group();
   const IT=ITEMS[id]||{}, eq=IT.equip||{};
@@ -18922,7 +18937,13 @@ function buildLuxuryModel(id){
     g.scale.setScalar(1.4);
   }
   /* ---- fallback: whatever the in-world model is ---- */
-  else if(typeof makeGroundItem==='function'){ try{ const gi=makeGroundItem(id); if(gi){g.add(gi); g.scale.setScalar(2.2);} }catch(_){} }
+  else {
+    /* regular equippable gear -> show it worn on a mannequin so the preview matches the real 3D piece */
+    let worn=null;
+    if(eq && eq.slot && typeof buildWornGearModel==='function') worn=buildWornGearModel(id);
+    if(worn){ g.add(worn); }
+    else if(typeof makeGroundItem==='function'){ try{ const gi=makeGroundItem(id); if(gi){g.add(gi); g.scale.setScalar(2.2);} }catch(_){} }
+  }
   return g;
 }
 
@@ -18939,8 +18960,8 @@ function luxStatLines(id){
   if(eq.pray)out.push(['Prayer','+'+eq.pray]);
   if(eq.runspeed)out.push(['Run speed','+'+eq.runspeed+'%']);
   if(eq.atkspeed)out.push(['Attack speed','+'+eq.atkspeed+'%']);
-  if(eq.hpregen){const s=Math.max(600,2400/eq.hpregen)/1000; out.push(['Health regen','+1 hp every '+s.toFixed(1)+'s']);}
-  if(eq.prayregen){const s=Math.max(700,2600/eq.prayregen)/1000; out.push(['Prayer regen','+1 prayer every '+s.toFixed(1)+'s']);}
+  if(eq.hpregen){const s=(600/(eq.hpregen*HP_REGEN_PER_PT))/1000; out.push(['Health regen','+1 hp every '+s.toFixed(1)+'s']);}
+  if(eq.prayregen){const s=(600/(eq.prayregen*PRAY_REGEN_PER_PT))/1000; out.push(['Prayer regen','+1 prayer every '+s.toFixed(1)+'s']);}
   return out;
 }
 
@@ -18949,11 +18970,11 @@ const LUX_LORE={
   boots_speed_gold:`Gilt sabatons leafed in Emberdeep gold, so light they seem to skim the floor. They carry you 20% faster \u2014 fast enough to stay ahead of the creeping lava.`,
   gloves_haste_silver:`Silver-mesh gloves woven fine enough to feel a heartbeat through plate. They quicken the hand mid-swing, letting you attack 10% faster.`,
   gloves_haste_gold:`Gilt gauntlets that blur the hand as it moves. The deep's finest smiths pressed haste itself into the gold \u2014 you attack 20% faster.`,
-  amulet_health:`A ruby heart cut from a single furnace-born stone, said to beat in time with the wearer's own. It knits flesh even mid-battle, restoring 1 health point roughly every 2 seconds.`,
-  amulet_piety:`An amethyst reliquary that holds, they say, a scrap of the old chapel's grace. It quietly renews the spirit, restoring 1 prayer point about every 3 seconds.`,
+  amulet_health:`A ruby heart cut from a single furnace-born stone, said to beat in time with the wearer's own. It knits flesh even mid-battle, restoring 1 health point roughly every 2.7 seconds.`,
+  amulet_piety:`An amethyst reliquary that holds, they say, a scrap of the old chapel's grace. It quietly renews the spirit, restoring 1 prayer point about every 4 seconds.`,
   amulet_regen:`A dazzling gold sunburst set with a heart-ruby and a soul-amethyst \u2014 the masterwork of Hirschfeld's own bench. It restores both body and spirit at once: 1 health point every 1.6 seconds and 1 prayer point every 2.4 seconds \u2014 each a touch quicker than the single-stone amulets \u2014 letting you recover even in the thick of a fight.`,
-  bodkin_health:`A gilt offhand dirk that bites deep and mends its wielder in the same breath. Beyond its edge, it knits 1 health point roughly every 2 seconds while held.`,
-  bodkin_piety:`A gilt offhand dirk keyed to the faithful. It strikes true and keeps the spirit lit, restoring 1 prayer point about every 3 seconds while wielded.`,
+  bodkin_health:`A gilt offhand dirk that bites deep and mends its wielder in the same breath. Beyond its edge, it knits 1 health point roughly every 2.7 seconds while held.`,
+  bodkin_piety:`A gilt offhand dirk keyed to the faithful. It strikes true and keeps the spirit lit, restoring 1 prayer point about every 4 seconds while wielded.`,
   bodkin_rejuv:`The finest offhand dirk ever to leave the Cinderworks \u2014 it strikes hardest of the three and restores both at once: 1 health point every 1.6 seconds and 1 prayer point every 2.4 seconds \u2014 each a touch quicker than the single-stone bodkins \u2014 all while wielded.`,
   ring_embers:`A band of living coal that never cools. It lends real force to every blow \u2014 Strength +8 up close and Ranged strength +8 at distance.`,
   ring_warden:`A heavy slag band prised from a fallen Warden of the Molten Gauntlet. It turns aside what would fell you, granting Defence +14.`,
@@ -23198,16 +23219,19 @@ function rectorSpecialTick(r,nowM){
   const pillars=objects.filter(o=>o.def==='siphon_pillar');
   const anyActive=pillars.some(o=>o.active);
   /* SIPHON PILLARS: he lights one (two when enraged); while lit he heals; strike it dark to stop him */
+  /* SIPHON PILLARS + heal: OWNER-ONLY. This ran on every client, each with its own cooldown; only the client that lit a pillar advanced its timer, so the others (whose timer had already elapsed) re-lit a fresh pillar the instant one was doused -> near-constant heal. Now only the Rector's owner lights/heals; peers get the pillar state via 'rpil'. Cooldown also lengthened for more real combat. */
+  if(typeof MP==='undefined'||!MP.iOwnRector||MP.iOwnRector()){
   if(r._siphonCd===undefined)r._siphonCd=nowM+8000;
   if(!anyActive&&nowM>=r._siphonCd&&pillars.length){
     const pool=pillars.slice(), n=r.enraged?2:1;
     for(let k=0;k<n&&pool.length;k++){const idx=Math.floor(Math.random()*pool.length);const pl=pool.splice(idx,1)[0];pl.active=true;pl.hotUntil=nowM+15000;pl.hp=SIPHON_HP;pl.maxhp=SIPHON_HP;}
     msg('The First Rector reaches for the siphon \u2014 a pillar flares! Strike it dark before he knits himself whole.','#ff6a2a');
-    r._siphonCd=nowM+(r.enraged?15000:22000);
+    r._siphonCd=nowM+(r.enraged?20000:30000);
   }
   if(anyActive){ if(!r._healT||nowM-r._healT>900){r._healT=nowM; r.hp=Math.min(r.maxhp,r.hp+Math.round(r.maxhp*0.012)); } }
   for(const pl of pillars)if(pl.active&&pl.hotUntil&&nowM>pl.hotUntil)pl.active=false;
   if(typeof MP!=='undefined'&&MP.emberPillarSync)MP.emberPillarSync();
+  }
   /* ENCROACHING LAVA */
   /* encroaching lava now ticks per-client from playerTick (shared via the synced boss HP) */
   /* SIGNATURE: Chaos Nova -- the owner picks the safe pillar + fire time and broadcasts it; every client resolves it on their own player */
@@ -23395,14 +23419,28 @@ function gotoVolcFloor(idx){
   player.x=e.x;player.y=e.y;player.px=e.x;player.py=e.y;
   camYaw=0; player.path.length=0;
   if(idx===4){
-    if(typeof MP!=='undefined'&&MP.rectorOwnedByGroupmate&&MP.rectorOwnedByGroupmate()){
-      /* a groupmate is already fighting the Rector -- drop into the LIVE fight; do NOT re-arm/reset it */
-      if(_rectorBoss){_rectorBoss.alive=true;_rectorBoss.dormant=false;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true;}
-      for(const gd of _rectorGuards){if(gd){gd.alive=false;if(gd._m&&gd._m.group)gd._m.group.visible=false;}}
-      if(!_volcSilentRestore)msg('You drop into the fray \u2014 the First Rector is already unbound. Help bring him down!','#ff6a2a');
+    const _rectorLive = (typeof MP!=='undefined') && (((MP.rectorArenaPlayers&&MP.rectorArenaPlayers().length>0)) || (MP.rectorOwnedByGroupmate&&MP.rectorOwnedByGroupmate()));
+    if(_rectorLive){
+      /* a groupmate is already in the arena -- JOIN the live fight; do NOT reset or respawn the Discipline Committee. Reflect the current (synced) boss + enforcer state instead of re-arming it. */
+      if(_rectorBoss){_rectorBoss.alive=true;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true;}
+      for(const gd of _rectorGuards){if(gd&&gd._m&&gd._m.group)gd._m.group.visible=!!gd.alive;}
+      if(_rectorBoss&&_rectorBoss.dormant&&!rats.some(z=>z.kind==='committee_guard'&&z.alive)){_rectorBoss.dormant=false;_rectorBoss.target=player;}
+      if(!_volcSilentRestore)msg('You drop into the fray \u2014 the fight is already underway. Join in!','#ff6a2a');
     } else if(typeof rectorResetEncounter==='function'){ rectorResetEncounter();
       if(!_volcSilentRestore&&!_rectorSeen){_rectorSeen=true; msg('Hirschfeld\u2019s voice crackles in your ear: \u201cThis is the man himself. He crawled down here to heal \u2014 and the machine gave him back more than he lost. Put him down.\u201d','#caa23a');}
       if(!_volcSilentRestore)msg('Two Committee Enforcers flank the throne. The First Rector will not stir until they fall.','#e0801f'); }
+  }
+  if(idx===2 && typeof emberGauntletCleared==='function' && emberGauntletCleared()){
+    /* room already cleared -> re-arm the wardens so the vents/invincibility mechanic runs on every visit, regardless of quest progress (repeatable bounty fights) */
+    for(const _wr of (_emberWardens||[])){ if(!_wr)continue;
+      const _cd=(typeof emberConduitOf==='function')?emberConduitOf(_wr.warden):null;
+      if(typeof MP!=='undefined'&&MP.groupBossHandoff&&MP.groupBossHandoff(_wr)){ if(_cd)_cd.shielded=true; continue; }
+      _wr.alive=true;_wr.hp=_wr.maxhp;_wr.target=null;_wr.spec=null;_wr.respawnAt=0;
+      _wr.x=_wr.px=_wr.sx;_wr.y=_wr.py=_wr.sy;
+      if(_wr._m&&_wr._m.group)_wr._m.group.visible=true;
+      if(_cd){_cd.shielded=true;_cd.burnEnd=0;for(const _v of emberVentsOf(_wr.warden)){_v.locked=false;_v.lit=true;}}
+      if(typeof MP!=='undefined'&&MP.emberSync)MP.emberSync(_wr.warden);
+    }
   }
   if(idx===3){_vaultCPIdx=0;_vaultCheckpoint={x:c.entry.x,y:c.entry.y};if(goingDown&&!_vaultSolved.memory&&typeof memGenPath==='function')memGenPath();if(goingDown&&!_vaultSolved.lockout&&typeof lockScramble==='function')lockScramble();if(typeof vaultApplyProgress==='function')vaultApplyProgress();}
   if(!_volcSilentRestore)msg((goingDown?'You descend into ':'You climb up into ')+c.name+'.','#e0801f');
@@ -24155,6 +24193,7 @@ function drawOverlay(now){
     if(age<0)continue;
     let ax,az,ah;
     if(s.ent==='player'){ax=player.px+0.5;az=player.py+0.5;ah=0.95;}
+    else if(s.ent==='obj'&&s.o){ax=s.o.x+0.5;az=s.o.y+0.5;ah=0.6;}   /* siphon pillars / world-object hits carry the object in s.o, not s.ent */
     else{ax=s.ent.px+0.5;az=s.ent.py+0.5;ah=0.42;}
     const p=proj(ax,groundH(ax,az)+ah,az);
     if(!p)continue;
@@ -27556,6 +27595,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     { const be = EQ(gear.body), bmod = be ? be.model : null;
       const _plate = !!gear.body && bmod !== 'hide' && bmod !== 'robe';
       G.bodyM.visible = _plate; G.armPL.visible = G.armPR.visible = _plate;
+      if (rig.torso) rig.torso.visible = rig.sh1.visible = rig.sh2.visible = !gear.body;   /* hide the base shirt shoulders under armour, matching the local rig, so platebody shoulderpads aren't occluded */
       G.hideBodyM.visible = bmod === 'hide'; G.robeBodyM.visible = bmod === 'robe';
       const _bare = bmod === 'hide';
       const _shirt = (shirtHex !== undefined) ? shirtHex : 0x8a8148;
@@ -27951,6 +27991,15 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (m.uid === player.uid) break;
         _maybeGroupDrop(m.m | 0);
         _applyDeadMob(m.m | 0, m.rs | 0);
+        { const _eg = (typeof rats!=='undefined')?rats[m.m|0]:null;   /* a groupmate felled a Discipline Committee enforcer -> if that was the last one, wake the Rector on MY screen too (otherwise he stays dormant here and takes no damage) */
+          if(_eg&&_eg.kind==='committee_guard'&&typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.dormant&&!rats.some(z=>z.kind==='committee_guard'&&z.alive)){
+            _rectorBoss.dormant=false;_rectorBoss.enrageDone=false;_rectorBoss.target=player;
+            if(typeof msg==='function')msg('The last enforcer falls. The First Rector rises from his throne \u2014 unbound.','#b3241f');
+          } }
+        { const _dr = (typeof rats!=='undefined')?rats[m.m|0]:null;   /* group co-attacker: complete the Emberdeep bounty whenever the marked warden falls, regardless of who lands the last hit */
+          if(_dr&&_dr.warden&&inVolcano&&_lastVolcFloor===2&&player.emberBounty&&!player.emberBounty.done&&player.emberBounty.warden===_dr.warden){
+            player.emberBounty.done=true; msg('Bounty target felled \u2014 report to Mr. Hirschfeld for your warrants.','#caa23a'); if(typeof renderQuests==='function')renderQuests();
+          } }
         break;
       }
       case 'ginvite': {
@@ -28671,6 +28720,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   return {
     CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo, pingPresence, refreshApp,
     onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
+    buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
     groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
