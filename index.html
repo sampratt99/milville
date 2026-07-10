@@ -10611,10 +10611,7 @@ function _heartBannerTex(torn,seed){
 }
 /* the school shield, hand-drawn onto a banner texture */
 let _shieldTex=null;
-function shieldTexture(){
-  if(_shieldTex)return _shieldTex;
-  const c=document.createElement('canvas');c.width=96;c.height=120;
-  const g=c.getContext('2d');
+function _drawShieldPaths(g){
   g.beginPath();g.moveTo(10,14);g.lineTo(86,14);g.lineTo(86,52);
   g.bezierCurveTo(86,84,68,102,48,114);
   g.bezierCurveTo(28,102,10,84,10,52);g.closePath();
@@ -10651,8 +10648,23 @@ function shieldTexture(){
   g.fillRect(31,75,6,6);g.strokeRect(31,75,6,6);
   g.fillRect(31,85,6,6);g.strokeRect(31,85,6,6);
   for(let i=0;i<4;i++){g.beginPath();g.moveTo(60,76+i*5);g.lineTo(64,76+i*5);g.stroke();}
+}
+function shieldTexture(){
+  if(_shieldTex)return _shieldTex;
+  const c=document.createElement('canvas');c.width=96;c.height=120;
+  const g=c.getContext('2d');
+  _drawShieldPaths(g);
   _shieldTex=new THREE.CanvasTexture(c);
   return _shieldTex;
+}
+let _crestHiTex=null;
+function _crestHiRes(){
+  if(_crestHiTex)return _crestHiTex;
+  const S=5,c=document.createElement('canvas');c.width=96*S;c.height=120*S;
+  const g=c.getContext('2d');g.scale(S,S);
+  _drawShieldPaths(g);
+  const t=new THREE.CanvasTexture(c);if('anisotropy' in t)t.anisotropy=8;
+  _crestHiTex=t;return t;
 }
 function buildObjModel(o){
   const g=new THREE.Group();
@@ -23105,7 +23117,7 @@ function showVaultSign(key){ const c=SIGN_CONTENT[key]; if(!c)return;
   for(const ly of [20,27,37,49,60,69]){ const L=new THREE.PointLight(0x9fe8ff,0.55,15,2); L.position.set(219.5,FY+2.9,ly+0.5); grp.add(L); }
   { const Lc=new THREE.PointLight(0xff8a4a,0.9,16,2); Lc.position.set(219.5,FY+3.0,25.5); grp.add(Lc); }
 })();
-var _rectorLavaBands=null,_rectorLavaSea=null,_rectorLavaMsgT=0;
+var _rectorLavaBands=null,_rectorLavaSea=null,_rectorLavaMsgT=0,_rectorFloorHalo=null;
 /* ===== THE HEART OF THE EMBERDEEP -- bespoke boss sanctum (Chamber V / floor 4) ===== */
 (function buildHeartArena(){
   if(!volcChamberGroups[4])return;
@@ -23156,14 +23168,15 @@ var _rectorLavaBands=null,_rectorLavaSea=null,_rectorLavaMsgT=0;
     mkband(1,107-bz0,bx1+0.5,(bz0+106)/2+0.5);
     grp.add(bg); _rectorLavaBands.push(bg);
   }
-  /* FLOOR CREST: a massive St Paul's shield inlaid in the dais, top toward north */
-  { const cx=DCX,cz=DCZ,yy=FY+0.42, CW=13.2, CH=16.5;
+  /* FLOOR CREST: the St Paul's shield inlaid in the dais, sized to sit inside the four siphons, top toward north */
+  { const cx=DCX,cz=98.5,yy=FY+0.42, CW=7.7, CH=9.6;   // siphon square is x213.5-225.5 / z93.5-103.5 (centre 219.5,98.5)
     const logo=new THREE.Mesh(new THREE.PlaneGeometry(CW,CH),
-      new THREE.MeshBasicMaterial({map:shieldTexture(),transparent:true,alphaTest:0.26,side:THREE.DoubleSide,depthWrite:false}));
+      new THREE.MeshBasicMaterial({map:_crestHiRes(),transparent:true,alphaTest:0.26,side:THREE.DoubleSide,depthWrite:false}));
     logo.rotation.x=-Math.PI/2;                 /* lay flat; texture-top -> north (-z) */
     logo.position.set(cx,yy,cz); logo.renderOrder=3; grp.add(logo);
-    const halo=G(new THREE.RingGeometry(7.0,7.5,64),0xb3241f,cx,yy-0.02,cz,0.4); halo.rotation.x=-Math.PI/2;
-    const halo2=G(new THREE.RingGeometry(7.5,7.7,64),0xffd36a,cx,yy-0.02,cz,0.3); halo2.rotation.x=-Math.PI/2; }
+    const halo=G(new THREE.RingGeometry(4.6,4.85,72),0xb3241f,cx,yy-0.02,cz,0.16); halo.rotation.x=-Math.PI/2;
+    const halo2=G(new THREE.RingGeometry(4.85,5.05,72),0xffd36a,cx,yy-0.02,cz,0.12); halo2.rotation.x=-Math.PI/2;
+    _rectorFloorHalo=[halo,halo2]; }
   /* THRONE-MACHINE (north): engine core + throne dais + conduits + seal + cables */
   const TX=219.5, TZ=83.5;
   L(new THREE.BoxGeometry(9,0.3,3),0x1c1512,TX,FY+0.15,TZ+2.2);
@@ -26357,6 +26370,12 @@ function render(now){
 
   /* foliage sway, water, fire, fishing rings */
   for(const s of sway)s.obj.rotation.z=Math.sin(now*0.0011+s.ph)*0.04;
+  if(_rectorFloorHalo){                                  /* the crest's ring occasionally lights up */
+    const f=Math.pow(Math.max(0,Math.sin(now*0.0011)),8);
+    _rectorFloorHalo[0].material.opacity=0.14+f*0.80;
+    _rectorFloorHalo[0].material.color.setRGB(0.70+f*0.30,0.14+f*0.30,0.12+f*0.12);
+    _rectorFloorHalo[1].material.opacity=0.10+f*0.72;
+  }
   if(waterMesh){
     const pa=waterMesh.geometry.attributes.position;
     for(let i=0;i<pa.count;i++){
