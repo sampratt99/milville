@@ -10580,33 +10580,32 @@ const sway=[];
 let _heartBanTex=null;
 function _heartBannerTex(torn,seed){
   const sc=shieldTexture().image;
-  const c=document.createElement('canvas');c.width=150;c.height=320;const g=c.getContext('2d');
+  const c=document.createElement('canvas');c.width=168;c.height=300;const g=c.getContext('2d');
   const R=(a=>{let x=Math.sin((seed||1)*127.1+a*311.7)*43758.5;return x-Math.floor(x);});
-  g.fillStyle='#7f1119';g.fillRect(0,0,150,320);
-  g.fillStyle='#c01722';g.fillRect(7,0,136,300);
-  g.fillStyle='#efe9dc';g.fillRect(16,12,118,272);
-  g.drawImage(sc,52,20,46,58);
+  g.fillStyle='#7f1119';g.fillRect(0,0,168,300);
+  g.fillStyle='#c01722';g.fillRect(8,0,152,280);
+  g.fillStyle='#efe9dc';g.fillRect(18,12,132,252);
+  g.drawImage(sc,61,20,46,58);
   g.fillStyle='#1a1410';g.textAlign='center';
-  g.font='bold 23px Georgia';g.fillText("ST PAUL'S",75,110);
-  g.font='bold 16px Georgia';g.fillText('THE HEART',75,136);
-  g.strokeStyle='#c9a23a';g.lineWidth=1.5;g.beginPath();g.moveTo(32,150);g.lineTo(118,150);g.stroke();
-  g.fillStyle='#5a1418';g.font='italic bold 16px Georgia';
-  g.fillText('Freedom with',75,182);g.fillText('Responsibility',75,204);
-  g.drawImage(sc,57,224,36,46);
-  g.strokeStyle='#c9a23a';g.lineWidth=3;g.strokeRect(16,12,118,272);
-  g.fillStyle='#c01722';g.beginPath();g.moveTo(7,300);g.lineTo(143,300);
-  for(let i=0;i<4;i++){g.lineTo(143-i*34,320);g.lineTo(143-i*34-17,300);}
+  g.font='bold 22px Georgia';g.fillText("ST PAUL'S",84,112);
+  g.strokeStyle='#c9a23a';g.lineWidth=1.5;g.beginPath();g.moveTo(42,132);g.lineTo(126,132);g.stroke();
+  g.fillStyle='#5a1418';g.font='italic bold 17px Georgia';
+  g.fillText('Freedom with',84,164);g.fillText('Responsibility',84,188);
+  g.drawImage(sc,66,206,36,46);
+  g.strokeStyle='#c9a23a';g.lineWidth=3;g.strokeRect(18,12,132,252);
+  g.fillStyle='#c01722';g.beginPath();g.moveTo(8,280);g.lineTo(160,280);
+  for(let i=0;i<4;i++){g.lineTo(160-i*38,300);g.lineTo(160-i*38-19,280);}
   g.closePath();g.fill();
   if(torn){
     g.globalCompositeOperation='destination-out';
-    g.beginPath();g.moveTo(0,320);let yy=180;
-    for(let x=0;x<=150;x+=15){yy=170+R(x)*130;g.lineTo(x,yy);}
-    g.lineTo(150,320);g.closePath();g.fill();
-    for(let k=0;k<7;k++){g.beginPath();g.arc(24+R(k)*100,44+R(k+9)*150,4+R(k+3)*10,0,7);g.fill();}
+    g.beginPath();g.moveTo(0,300);let yy=170;
+    for(let x=0;x<=168;x+=16){yy=160+R(x)*120;g.lineTo(x,yy);}
+    g.lineTo(168,300);g.closePath();g.fill();
+    for(let k=0;k<7;k++){g.beginPath();g.arc(26+R(k)*116,44+R(k+9)*140,4+R(k+3)*10,0,7);g.fill();}
     g.globalCompositeOperation='source-over';
     g.fillStyle='rgba(18,9,5,0.5)';
-    g.beginPath();g.moveTo(0,150);for(let x=0;x<=150;x+=15){g.lineTo(x,150+R(x+5)*54);}
-    g.lineTo(150,320);g.lineTo(0,320);g.closePath();g.fill();
+    g.beginPath();g.moveTo(0,140);for(let x=0;x<=168;x+=16){g.lineTo(x,140+R(x+5)*50);}
+    g.lineTo(168,300);g.lineTo(0,300);g.closePath();g.fill();
   }
   return new THREE.CanvasTexture(c);
 }
@@ -11111,13 +11110,12 @@ function buildObjModel(o){
     addProxy(g,1.5,5.8,0,{kind:'obj',o});
   }else if(def==='heart_banner'){
     const torn=!!o.torn;
-    const RW=3.0, RH=torn?6.7:6.3, TOP=7.4;   // big banners covering the tall walls
+    const RW=3.4, RH=torn?6.5:6.1, TOP=7.4;   // big banners covering the tall walls
     const rod=mesh(new THREE.CylinderGeometry(0.07,0.07,RW+0.4,6),0x2a2420);rod.rotation.z=Math.PI/2;rod.position.y=TOP;g.add(rod);
     for(const sx of [-1,1]){const cap=mesh(new THREE.SphereGeometry(0.12,8,7),0xc9a23a);cap.position.set(sx*(RW/2+0.2),TOP,0);g.add(cap);}
     const ban=new THREE.Mesh(new THREE.PlaneGeometry(RW,RH),
       new THREE.MeshLambertMaterial({map:_heartBannerTex(torn,(o.x*13.1+o.y*7.7)),transparent:true,alphaTest:0.3,side:THREE.DoubleSide,emissive:0x140a06,emissiveIntensity:0.22}));
-    ban.position.set(0,TOP-RH/2,0.05);g.add(ban);
-    sway.push({obj:ban,ph:hsh*6.28});
+    ban.position.set(0,TOP-RH/2,0.12);g.add(ban);
     g.rotation.y=(o.ry!==undefined?o.ry:0);
   }else if(def==='boss_door'){
     const IRON=0x171314, IRON2=0x261d1b, RED=0xff2a18, RED2=0xd8401a;
@@ -11778,10 +11776,10 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   addObj('rector_throne',219,85,true);
   /* St Paul's banners ringing the Heart -- a mix of whole and battle-tattered [x,y,faceRy,torn] */
   for(const _b of [
-    [212,81,0,0],[227,81,0,1],               /* N wall, flanking the throne */
-    [242,90,-1.5708,1],[242,102,-1.5708,0],  /* E wall */
-    [196,90,1.5708,0],[196,102,1.5708,1],    /* W wall */
-    [206,112,3.14159,1],[232,112,3.14159,0]  /* S wall, either side of the door */
+    [211,81,0,0],[228,81,0,1],               /* N wall, flanking the throne */
+    [241,90,-1.5708,1],[241,104,-1.5708,0],  /* E wall (in the bays between buttresses) */
+    [196,90,1.5708,0],[196,104,1.5708,1],    /* W wall (in the bays between buttresses) */
+    [203,111,3.14159,1],[235,111,3.14159,0]  /* S wall, either side of the door */
   ]){
     const _bn=addObj('heart_banner',_b[0],_b[1],true); if(_bn){_bn.ry=_b[2];_bn.torn=!!_b[3];}
   }
@@ -23158,13 +23156,14 @@ var _rectorLavaBands=null,_rectorLavaSea=null,_rectorLavaMsgT=0;
     mkband(1,107-bz0,bx1+0.5,(bz0+106)/2+0.5);
     grp.add(bg); _rectorLavaBands.push(bg);
   }
-  /* FLOOR CREST: inverted-pelican sigil at the dais centre */
-  { const cx=DCX,cz=DCZ,yy=FY+0.4;
-    const disc=G(new THREE.CircleGeometry(4.4,44),0x1a1310,cx,yy+0.02,cz,0.92); disc.rotation.x=-Math.PI/2;
-    const ring=G(new THREE.RingGeometry(4.0,4.4,48),0xb3241f,cx,yy+0.03,cz,0.8); ring.rotation.x=-Math.PI/2;
-    const beak=G(new THREE.ConeGeometry(0.6,2.3,4),0xff3b2f,cx,yy+0.04,cz+1.7,0.85); beak.rotation.x=Math.PI/2; beak.rotation.y=Math.PI/4;
-    for(const sgn of [1,-1]){ const wing=G(new THREE.BoxGeometry(3.1,0.02,0.36),0xff3b2f,cx+sgn*1.4,yy+0.04,cz-0.1,0.82); wing.rotation.x=-Math.PI/2; wing.rotation.z=sgn*0.52; }
-    const eye=G(new THREE.CircleGeometry(0.26,16),0xffe9a8,cx,yy+0.05,cz-0.4,0.95); eye.rotation.x=-Math.PI/2; }
+  /* FLOOR CREST: a massive St Paul's shield inlaid in the dais, top toward north */
+  { const cx=DCX,cz=DCZ,yy=FY+0.42, CW=13.2, CH=16.5;
+    const logo=new THREE.Mesh(new THREE.PlaneGeometry(CW,CH),
+      new THREE.MeshBasicMaterial({map:shieldTexture(),transparent:true,alphaTest:0.26,side:THREE.DoubleSide,depthWrite:false}));
+    logo.rotation.x=-Math.PI/2;                 /* lay flat; texture-top -> north (-z) */
+    logo.position.set(cx,yy,cz); logo.renderOrder=3; grp.add(logo);
+    const halo=G(new THREE.RingGeometry(7.0,7.5,64),0xb3241f,cx,yy-0.02,cz,0.4); halo.rotation.x=-Math.PI/2;
+    const halo2=G(new THREE.RingGeometry(7.5,7.7,64),0xffd36a,cx,yy-0.02,cz,0.3); halo2.rotation.x=-Math.PI/2; }
   /* THRONE-MACHINE (north): engine core + throne dais + conduits + seal + cables */
   const TX=219.5, TZ=83.5;
   L(new THREE.BoxGeometry(9,0.3,3),0x1c1512,TX,FY+0.15,TZ+2.2);
