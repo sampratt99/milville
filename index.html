@@ -2436,7 +2436,7 @@ addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('sos_hol
   {const vd=addObj('ember_vault_door',170,30,true);if(vd){vd.downFloor=2;vd.faceX=170;vd.faceY=27;}}
   for(const pr of [['ember_pipe_fishing',166],['ember_pipe_mining',168],['ember_pipe_woodcutting',172]]){const pp=addObj(pr[0],pr[1],30,true);if(pp){pp.faceX=pr[1];pp.faceY=27;}}
   /* Cinderworks skilling nodes: 7 per skill, gated 30/40/50/60/70/80/90 (a guild to 99, no depletion) */
-  {const TIERS=[[30,21,2],[40,30,2],[50,41,3],[60,56,4],[70,74,6],[80,94,8],[90,116,11]];
+  {const TIERS=[[30,16,2],[40,23,2],[50,31,3],[60,42,4],[70,56,6],[80,71,8],[90,87,11]];
    const mkNode=(def,x,y,i)=>{const k=objects.length;addObj(def,x,y,true);const o=objects[k];if(o){o.req=TIERS[i][0];o.xp=TIERS[i][1];o.cinders=TIERS[i][2];o.alive=true;}};
    [[164,7],[170,6],[176,7],[162,10],[170,10],[177,10],[170,13]].forEach((pt,i)=>mkNode('glow_ore',pt[0],pt[1],i));
    [[179,15],[184,15],[178,19],[186,19],[179,23],[184,23],[182,17]].forEach((pt,i)=>mkNode('ember_vine',pt[0],pt[1],i));
