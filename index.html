@@ -1508,14 +1508,15 @@ function strikeConduit(o){
   return true;
 }
 function emberGauntletCleared(){ const q=player.quests&&player.quests.ember; return !!(q&&q.s>=3); }
-function emberWarrantEligible(w){ const q=player.quests&&player.quests.ember; if(q&&q.s===2)return true; const b=player.emberBounty; return !!(b&&!b.done&&b.warden===w); }
+function emberWarrantEligible(w){ const q=player.quests&&player.quests.ember; return !!(q&&q.s===2); }   /* main-quest Gauntlet stage only; bounty warrants come from Hirschfeld's turn-in, not the kill */
 function drainConduit(o){
   o.drained=true; o.charge=0; o.burnEnd=0; o.shielded=true;
   player.emberDrained=player.emberDrained||{}; if(o.warden)player.emberDrained[o.warden]=true;
   for(const v of emberVentsOf(o.warden)){v.lit=false;v.locked=true;}
   if(emberWarrantEligible(o.warden)){ addItem('warrant',EMBER_CONDUIT_WARRANTS);
     msg('The conduit runs cold and dark. You wrest '+EMBER_CONDUIT_WARRANTS+' warrants from its collapse.','#9a6a10'); }
-  else msg('The conduit runs cold and dark \u2014 no bounty stands, so there are no warrants to claim.','#9a6a10');
+  else if(player.emberBounty&&!player.emberBounty.done&&player.emberBounty.warden===o.warden)msg('The conduit runs cold and dark \u2014 the bounty is struck. Report to Mr. Hirschfeld to claim your warrants.','#9a6a10');
+  else msg('The conduit runs cold and dark.','#9a6a10');
   if(emberConduitsAllDrained()){msg('All three conduits lie dead \u2014 the sealed stair to the Heart grinds open.','#9a6a10');if(typeof emberQuestComplete==='function')emberQuestComplete('combat');}
   if(typeof MP!=='undefined'&&MP.emberSync)MP.emberSync(o.warden);
 }
@@ -3829,7 +3830,7 @@ function mobDie(r,groupKill){
   if(r.gaunt){r.respawnAt=9e15; if(typeof onGauntletKill==='function')onGauntletKill(r);}
   if(r.warden){r.respawnAt=9e15; r.spec=null; const _cd=emberConduitOf(r.warden); if(_cd&&!_cd.drained)drainConduit(_cd); msg('The '+r.name+' shudders, its fires guttering \u2014 it crashes into slag, and its conduit dies with it.','#9a6a10');}
   if(r.kind==='committee_guard'){ r.respawnAt=9e15; if(_rectorBoss&&_rectorBoss.dormant&&!rats.some(z=>z.kind==='committee_guard'&&z.alive)){ _rectorBoss.dormant=false; _rectorBoss.enrageDone=false; _rectorBoss.target=player; _rectorBoss._novaCd=performance.now()+7000; _rectorBoss._siphonCd=performance.now()+10000; _rectorFireT=0; msg('The last enforcer falls. The First Rector rises from his throne \u2014 unbound.','#b3241f'); } }
-  if(r.warden&&player.emberBounty&&!player.emberBounty.done&&player.emberBounty.warden===r.warden){ player.emberBounty.done=true; msg('Bounty target felled \u2014 report to Hirschfeld for your warrants.','#caa23a'); }
+  /* (bounty completion now lives in questKill so co-attackers get credit too) */
   if(r.kind==='master_reforged'){ if(typeof rectorRewards==='function')rectorRewards(r); }
   else dropMobLoot(r);
   if(typeof MP!=='undefined'&&MP.clearMobAggro)MP.clearMobAggro(r.i);
@@ -16690,7 +16691,7 @@ function castPick(ev){
     if(d.kind==='rat')return d.r.alive&&(d.r.interior||null)===curInterior();
     if(d.kind==='sosportal')return curInterior()==='sos';
     if(d.kind==='obj'&&(d.o.def==='sos_exit'||d.o.def==='sos_chest'))return curInterior()==='sos';   /* stronghold vault/exit: never hoverable from the schoolhouse lawn above (proxies live in the global list) */
-    if(d.kind==='obj'&&VOLC_CAVE_OBJS[d.o.def])return curInterior()==='volcano';   /* Emberdeep objects: hoverable only inside the volcano (and never blocked by overworld props there) */
+    if(d.kind==='obj'&&VOLC_CAVE_OBJS[d.o.def]){ if(curInterior()!=='volcano')return false; const _ch=(typeof _lastVolcFloor!=='undefined'&&typeof EMBER_CHAMBERS!=='undefined')?EMBER_CHAMBERS[_lastVolcFloor]:null; if(_ch&&(d.o.x<_ch.x0-1||d.o.x>_ch.x1+1||d.o.y<_ch.y0-1||d.o.y>_ch.y1+1))return false; return true; }   /* Emberdeep objects: hoverable only inside the volcano AND only in the chamber you're standing in (no picking distant rooms through walls) */
     if(d.kind==='item'){const _gi=ground.find(gi=>gi.uid===d.uid);return !!_gi&&(_gi.interior||null)===curInterior();}
     return !inSos&&!inVolcano;   /* inside the caves, ignore leaked overworld proxies so clicks land on the floor */
   });
@@ -18290,6 +18291,8 @@ function isQuestTarget(r){
 function questKill(r){
   const kind=r.kind;
   const Q=player.quests;
+  /* Emberdeep bounty: felling the marked warden completes it on every kill path (solo owner OR group co-attacker) */
+  if(r.warden&&player.emberBounty&&!player.emberBounty.done&&player.emberBounty.warden===r.warden){ player.emberBounty.done=true; msg('Bounty target felled \u2014 report to Mr. Hirschfeld for your warrants.','#caa23a'); if(typeof renderQuests==='function')renderQuests(); }
   if(kind==='boar'&&Q.chef.s===5&&countItem('boar_head')<1){
     if(!invFull())addItem('boar_head');else dropGround(r.x,r.y,'boar_head',1);
     msg('The boar falls. You take its head for the feast.','#c97a3a');
@@ -19089,7 +19092,7 @@ function openLuxExamine(id,hideBuy){
   const entry=EMBER_SHOP.find(x=>x.id===id)||{id:id};
   let el=document.getElementById('luxexamine');
   if(!el){
-    el=document.createElement('div'); el.id='luxexamine'; el.className='gemodal';
+    el=document.createElement('div'); el.id='luxexamine'; el.className='gemodal'; el.style.zIndex='100001';   /* above the Examine popup (#explModal, z 99999) so it isn't hidden behind it */
     el.innerHTML='<div class="gepanel" style="width:430px;max-width:94vw;">'
       +'<div class="gebar"><span id="luxexname"></span><div class="gex" id="luxexclose" title="Close">\u2715</div></div>'
       +'<canvas id="luxexcv" style="width:100%;height:210px;display:block;background:radial-gradient(ellipse at 50% 38%,#2a211a 0%,#161210 78%);border-radius:6px;border:1px solid #0d0b08;cursor:grab;"></canvas>'
