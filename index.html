@@ -13783,6 +13783,30 @@ function mkEmberGaunt(gm){
   for(let i=-1;i<=1;i++){const kn=_emberGlow(new THREE.SphereGeometry(0.016,6,5),EMB);kn.position.set(i*0.03,-0.6,0.05);A.add(kn);}
   A.visible=false;return A;
 }
+/* ---- LUXURY GLOVES OF HASTE: forearm + hand gauntlet, tintable, with a faint luxury shimmer ---- */
+function mkLuxGlove(gm){
+  const A=new THREE.Group();
+  const fore=TT(gm(new THREE.CylinderGeometry(0.072,0.056,0.28,12),0xffffff),'tint'); fore.position.y=-0.43; A.add(fore);
+  const ecuff=TT(gm(new THREE.TorusGeometry(0.078,0.024,8,16),0xffffff),'trim'); ecuff.rotation.x=Math.PI/2; ecuff.position.y=-0.30; A.add(ecuff);
+  const hand=TT(gm(new THREE.BoxGeometry(0.125,0.075,0.135),0xffffff),'tint'); hand.position.set(0,-0.60,0.01); A.add(hand);
+  const knuck=TT(gm(new THREE.BoxGeometry(0.125,0.04,0.05),0xffffff),'trim'); knuck.position.set(0,-0.615,0.075); A.add(knuck);
+  for(let i=-1.5;i<=1.5;i++){const fg=TT(gm(new THREE.BoxGeometry(0.025,0.03,0.08),0xffffff),'tint');fg.position.set(i*0.031,-0.625,0.115);A.add(fg);}
+  const thumb=TT(gm(new THREE.BoxGeometry(0.028,0.028,0.06),0xffffff),'tint');thumb.position.set(0.062,-0.59,0.07);A.add(thumb);
+  const gA=TT(_emberGlow(new THREE.TorusGeometry(0.06,0.013,8,18),0xffffff,0.4),'trim'); gA.rotation.x=Math.PI/2; gA.position.y=-0.51; A.add(gA);
+  const gB=TT(_emberGlow(new THREE.BoxGeometry(0.115,0.016,0.05),0xffffff,0.5),'trim'); gB.position.set(0,-0.60,0.10); A.add(gB);
+  A.visible=false; return A;
+}
+/* ---- LUXURY BOOTS OF SPEED: sabaton, tintable, with a faint luxury shimmer ---- */
+function mkLuxBoot(gm){
+  const B=new THREE.Group();
+  const foot=TT(gm(new THREE.BoxGeometry(0.14,0.12,0.2),0xffffff),'tint'); foot.position.set(0,-0.6,0.0); B.add(foot);
+  const toe=TT(gm(new THREE.BoxGeometry(0.14,0.09,0.12),0xffffff),'tint'); toe.position.set(0,-0.63,0.14); B.add(toe);
+  const sole=TT(gm(new THREE.BoxGeometry(0.15,0.04,0.34),0xffffff),'shade'); sole.position.set(0,-0.665,0.04); B.add(sole);
+  const ankle=TT(gm(new THREE.TorusGeometry(0.072,0.022,8,16),0xffffff),'trim'); ankle.rotation.x=Math.PI/2; ankle.position.y=-0.53; B.add(ankle);
+  const gA=TT(_emberGlow(new THREE.TorusGeometry(0.074,0.012,8,18),0xffffff,0.4),'trim'); gA.rotation.x=Math.PI/2; gA.position.y=-0.53; B.add(gA);
+  const gB=TT(_emberGlow(new THREE.BoxGeometry(0.11,0.016,0.1),0xffffff,0.5),'trim'); gB.position.set(0,-0.6,0.17); B.add(gB);
+  B.visible=false; return B;
+}
 
 /* player */
 const pm=makeHumanoid({skin:0xd9a066,shirt:0x8a8148,pants:0x2f5d33,
@@ -14177,7 +14201,7 @@ const mkArmA=()=>{const ag=new THREE.Group();
  const up=TT(gmesh(new THREE.CylinderGeometry(0.076,0.062,0.32,10),0xb9bdc4),'tint');up.position.y=-0.15;ag.add(up);
  const fo=TT(gmesh(new THREE.CylinderGeometry(0.06,0.05,0.3,10),0xb9bdc4),'tint');fo.position.y=-0.42;ag.add(fo);
  const cuff=TT(gmesh(new THREE.TorusGeometry(0.058,0.015,6,14),0xdba968),'trim');cuff.rotation.x=Math.PI/2;cuff.position.y=-0.52;ag.add(cuff);
- const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);ag.userData.gaunt=gaunt;
+ const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);ag.userData.gaunt=gaunt;ag.userData.fo=fo;ag.userData.cuff=cuff;
  ag.visible=false;return ag;};
 const armPL=mkArmA(),armPR=mkArmA();
 pm.lArm.add(armPL);pm.rArm.add(armPR);
@@ -14217,6 +14241,8 @@ const emberHelmG=buildEmberHelm(gmesh);pm.upper.add(emberHelmG);emberHelmG.visib
 const emberBodyG=buildEmberBody(gmesh);pm.upper.add(emberBodyG);emberBodyG.visible=false;
 const emberLegL=mkEmberLeg(gmesh),emberLegR=mkEmberLeg(gmesh);pm.lLeg.add(emberLegL);pm.rLeg.add(emberLegR);
 const emberBootL=mkEmberBoot(gmesh),emberBootR=mkEmberBoot(gmesh);pm.lLeg.add(emberBootL);pm.rLeg.add(emberBootR);
+const luxGloveL=mkLuxGlove(gmesh),luxGloveR=mkLuxGlove(gmesh);pm.lArm.add(luxGloveL);pm.rArm.add(luxGloveR);
+const luxBootL=mkLuxBoot(gmesh),luxBootR=mkLuxBoot(gmesh);pm.lLeg.add(luxBootL);pm.rLeg.add(luxBootR);
 const emberGauntL=mkEmberGaunt(gmesh),emberGauntR=mkEmberGaunt(gmesh);pm.lArm.add(emberGauntL);pm.rArm.add(emberGauntR);
 /* ranged: leather coif */
 const coifM=new THREE.Group();
@@ -25727,18 +25753,22 @@ function render(now){
      if(lmod==='hide'){tintG(hideLegL,le.tint,le.trim);tintG(hideLegR,le.tint,le.trim);}
      else if(lmod==='robe')tintG(robeSkirtM,le.tint,le.trim);
      else{tintG(legL,le.tint,le.trim);tintG(legR,le.tint,le.trim);}}}
-  bootL.visible=bootR.visible=!!player.equip.feet;
+  const _bootLux=!!(player.equip.feet&&/^boots_speed/.test(player.equip.feet.id));
+  bootL.visible=bootR.visible=!!player.equip.feet&&!_bootLux;
+  luxBootL.visible=luxBootR.visible=_bootLux;
   emberBootL.visible=emberBootR.visible=!!(player.equip.feet&&ITEMS[player.equip.feet.id].equip.emberset);
   if(player.equip.feet){
     const fe=ITEMS[player.equip.feet.id].equip;
-    if(player.equip.feet.id==='fighting_boots'){rainbowBoot(bootL);rainbowBoot(bootR);}
+    if(_bootLux){tintG(luxBootL,fe.tint,fe.trim);tintG(luxBootR,fe.tint,fe.trim);}
+    else if(player.equip.feet.id==='fighting_boots'){rainbowBoot(bootL);rainbowBoot(bootR);}
     else{tintG(bootL,fe.tint,fe.trim);tintG(bootR,fe.tint,fe.trim);}
   }
-  {const _he=player.equip.hands&&ITEMS[player.equip.hands.id]&&ITEMS[player.equip.hands.id].equip; const _hasG=!!(_he&&(_he.emberset||/^gloves_haste/.test(player.equip.hands.id)));
-   emberGauntL.visible=emberGauntR.visible=_hasG;
-   if(armPL.userData&&armPL.userData.gaunt)armPL.userData.gaunt.visible=!_hasG;
-   if(armPR.userData&&armPR.userData.gaunt)armPR.userData.gaunt.visible=!_hasG;
-   if(_hasG){const _t=_he.tint!==undefined?_he.tint:0x8a2e1a,_r=_he.trim!==undefined?_he.trim:0xffa24a;tintG(emberGauntL,_t,_r);tintG(emberGauntR,_t,_r);}}
+  {const _he=player.equip.hands&&ITEMS[player.equip.hands.id]&&ITEMS[player.equip.hands.id].equip; const _isLux=!!(_he&&/^gloves_haste/.test(player.equip.hands.id)); const _isEmber=!!(_he&&_he.emberset);
+   emberGauntL.visible=emberGauntR.visible=_isEmber;
+   luxGloveL.visible=luxGloveR.visible=_isLux;
+   for(const _ag of [armPL,armPR]){const _u=_ag.userData;if(!_u)continue; if(_u.fo)_u.fo.visible=!_isLux; if(_u.cuff)_u.cuff.visible=!_isLux; if(_u.gaunt)_u.gaunt.visible=!(_isLux||_isEmber);}
+   if(_isEmber){const _t=_he.tint!==undefined?_he.tint:0x8a2e1a,_r=_he.trim!==undefined?_he.trim:0xffa24a;tintG(emberGauntL,_t,_r);tintG(emberGauntR,_t,_r);}
+   if(_isLux){tintG(luxGloveL,_he.tint,_he.trim);tintG(luxGloveR,_he.tint,_he.trim);}}
   neckM.visible=!!player.equip.neck;
   if(player.equip.neck){
     const ne=ITEMS[player.equip.neck.id].equip, _nid=player.equip.neck.id;
@@ -27426,7 +27456,7 @@ const mkArmA=()=>{const ag=new THREE.Group();
  const up=TT(gmesh(new THREE.CylinderGeometry(0.076,0.062,0.32,10),0xb9bdc4),'tint');up.position.y=-0.15;ag.add(up);
  const fo=TT(gmesh(new THREE.CylinderGeometry(0.06,0.05,0.3,10),0xb9bdc4),'tint');fo.position.y=-0.42;ag.add(fo);
  const cuff=TT(gmesh(new THREE.TorusGeometry(0.058,0.015,6,14),0xdba968),'trim');cuff.rotation.x=Math.PI/2;cuff.position.y=-0.52;ag.add(cuff);
- const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);ag.userData.gaunt=gaunt;
+ const gaunt=TT(gmesh(new THREE.SphereGeometry(0.064,10,8),0xb9bdc4),'tint');gaunt.position.y=-0.585;ag.add(gaunt);ag.userData.gaunt=gaunt;ag.userData.fo=fo;ag.userData.cuff=cuff;
  ag.visible=false;return ag;};
 const armPL=mkArmA(),armPR=mkArmA();
 rig.lArm.add(armPL);rig.rArm.add(armPR);
@@ -27459,6 +27489,8 @@ const emberHelmG=buildEmberHelm(gmesh);rig.upper.add(emberHelmG);emberHelmG.visi
 const emberBodyG=buildEmberBody(gmesh);rig.upper.add(emberBodyG);emberBodyG.visible=false;
 const emberLegL=mkEmberLeg(gmesh),emberLegR=mkEmberLeg(gmesh);rig.lLeg.add(emberLegL);rig.rLeg.add(emberLegR);
 const emberBootL=mkEmberBoot(gmesh),emberBootR=mkEmberBoot(gmesh);rig.lLeg.add(emberBootL);rig.rLeg.add(emberBootR);
+const luxGloveL=mkLuxGlove(gmesh),luxGloveR=mkLuxGlove(gmesh);rig.lArm.add(luxGloveL);rig.rArm.add(luxGloveR);
+const luxBootL=mkLuxBoot(gmesh),luxBootR=mkLuxBoot(gmesh);rig.lLeg.add(luxBootL);rig.rLeg.add(luxBootR);
 const emberGauntL=mkEmberGaunt(gmesh),emberGauntR=mkEmberGaunt(gmesh);rig.lArm.add(emberGauntL);rig.rArm.add(emberGauntR);
 /* ranged: leather coif */
 const coifM=new THREE.Group();
@@ -27545,7 +27577,7 @@ const santaHatM=new THREE.Group();
  const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
  pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
 santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
-    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,emberSwM,ashBowM,bowM,staffM,capeM,capeEmblem,shieldM,leafDagM,elemM,helmM,slayerHelmM,bodyM,armPL,armPR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM,frostHelmG,frostBodyG,frostLegL,frostLegR,iceCrownM,moltCrownM,hoodM,emberHelmG,emberBodyG,emberLegL,emberLegR,emberBootL,emberBootR,emberGauntL,emberGauntR};
+    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,emberSwM,ashBowM,bowM,staffM,capeM,capeEmblem,shieldM,leafDagM,elemM,helmM,slayerHelmM,bodyM,armPL,armPR,luxGloveL,luxGloveR,luxBootL,luxBootR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM,frostHelmG,frostBodyG,frostLegL,frostLegR,iceCrownM,moltCrownM,hoodM,emberHelmG,emberBodyG,emberLegL,emberLegR,emberBootL,emberBootR,emberGauntL,emberGauntR};
   }
   function applyRemoteGear(G, rig, gear, act, shirtHex) {
     if (!G || !gear) return;
@@ -27624,10 +27656,12 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         else { tintG(G.legL, le.tint, le.trim); tintG(G.legR, le.tint, le.trim); }
       }
     }
-    G.bootL.visible = G.bootR.visible = !!gear.feet;
+    const _bootLux = !!(gear.feet && /^boots_speed/.test(gear.feet));
+    G.bootL.visible = G.bootR.visible = !!gear.feet && !_bootLux;
+    if (G.luxBootL) { G.luxBootL.visible = G.luxBootR.visible = _bootLux; if(_bootLux){ const _fe=EQ(gear.feet); if(_fe){ tintG(G.luxBootL,_fe.tint,_fe.trim); tintG(G.luxBootR,_fe.tint,_fe.trim); } } }
     if (G.emberBootL) G.emberBootL.visible = G.emberBootR.visible = !!(gear.feet && EQ(gear.feet) && EQ(gear.feet).emberset);
     if (gear.feet) { const fe = EQ(gear.feet); if (fe) { if(gear.feet==='fighting_boots'){rainbowBoot(G.bootL);rainbowBoot(G.bootR);}else{tintG(G.bootL, fe.tint, fe.trim); tintG(G.bootR, fe.tint, fe.trim);} } }
-    if (G.emberGauntL) { const _hh = gear.hands && EQ(gear.hands); const _hasG = !!(_hh && (_hh.emberset || /^gloves_haste/.test(gear.hands))); G.emberGauntL.visible = G.emberGauntR.visible = _hasG; if(_hasG){ const _t=_hh.tint!==undefined?_hh.tint:0x8a2e1a, _r=_hh.trim!==undefined?_hh.trim:0xffa24a; tintG(G.emberGauntL,_t,_r); tintG(G.emberGauntR,_t,_r); } if(G.armPL&&G.armPL.userData&&G.armPL.userData.gaunt)G.armPL.userData.gaunt.visible=!_hasG; if(G.armPR&&G.armPR.userData&&G.armPR.userData.gaunt)G.armPR.userData.gaunt.visible=!_hasG; }
+    if (G.emberGauntL) { const _hh = gear.hands && EQ(gear.hands); const _isLux = !!(_hh && /^gloves_haste/.test(gear.hands)); const _isEmber = !!(_hh && _hh.emberset); G.emberGauntL.visible = G.emberGauntR.visible = _isEmber; if(G.luxGloveL){ G.luxGloveL.visible = G.luxGloveR.visible = _isLux; } if(_isEmber){ const _t=_hh.tint!==undefined?_hh.tint:0x8a2e1a, _r=_hh.trim!==undefined?_hh.trim:0xffa24a; tintG(G.emberGauntL,_t,_r); tintG(G.emberGauntR,_t,_r); } if(_isLux && G.luxGloveL){ tintG(G.luxGloveL,_hh.tint,_hh.trim); tintG(G.luxGloveR,_hh.tint,_hh.trim); } for(const _ag of [G.armPL,G.armPR]){ if(!_ag||!_ag.userData)continue; const _u=_ag.userData; if(_u.fo)_u.fo.visible=!_isLux; if(_u.cuff)_u.cuff.visible=!_isLux; if(_u.gaunt)_u.gaunt.visible=!(_isLux||_isEmber); } }
     G.neckM.visible = !!gear.neck;
     if (gear.neck) { const ne = EQ(gear.neck); if (ne && G.neckM.children[1]){ G.neckM.children[1].material.color.setHex(ne.trim); const _gs=({amulet_health:[1.15,1.0,1.15],amulet_piety:[0.8,1.55,0.8],amulet_regen:[1.4,1.4,1.4]})[gear.neck]; if(_gs)G.neckM.children[1].scale.set(_gs[0],_gs[1],_gs[2]); else G.neckM.children[1].scale.set(1,1,1); } }
     if (gear.cape) {
