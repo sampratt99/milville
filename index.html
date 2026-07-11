@@ -6565,6 +6565,7 @@ async function loadSlot(id, preObj){
       }
       if(s.volc&&s.volc.fl!=null&&typeof restoreVolcano==='function')restoreVolcano(s.volc.fl,s.volc.x,s.volc.y);
       if(typeof ensureWalkable==='function')ensureWalkable();
+      try{renderPrayers();}catch(_e){}   /* the prayer grid locks are level-dependent; re-render with the loaded skills */
       return true;
     }
   }catch(e){}
@@ -6966,6 +6967,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     t.classList.add('on');
     document.getElementById('panel-'+t.dataset.p).classList.add('on');
     if(t.dataset.p==='quests')renderQuests();
+    if(t.dataset.p==='prayer'){try{renderPrayers();}catch(_e){}}
     if(t.dataset.p==='magic')renderSpellbook();
     if(t.dataset.p==='combat')renderCombat();
     if(t.dataset.p==='emotes'){renderEmotes();if(typeof renderTitles==='function')renderTitles();}
@@ -19064,11 +19066,11 @@ const FORGE_RECIPES=[
 /* ===== EMBER ARMOUR: crafted here from raw feathers + obsidian shards. Requires Smithing 80. Best armour in the school. ===== */
 const EMBER_SMITH_REQ=80;
 const EMBER_ARMOUR=[
-  {out:'ember_body',     signets:5, cinders:5000, warrants:60, blurb:'Def 132 \u2014 the finest body in the school. +4 Strength.'},
-  {out:'ember_legs',     signets:4, cinders:4000, warrants:45, blurb:'Def 84 \u2014 best-in-slot greaves. +3 Strength.'},
-  {out:'ember_helm',     signets:2, cinders:2500, warrants:30, blurb:'Def 62 \u2014 best-in-slot helm. +2 Strength.'},
-  {out:'ember_gauntlets',signets:2, cinders:2000, warrants:25, blurb:'Def 20 \u2014 best-in-slot gauntlets. +1 Strength.'},
-  {out:'ember_boots',    signets:2, cinders:2000, warrants:25, blurb:'Def 22 \u2014 best-in-slot sabatons. +1 Strength.'}
+  {out:'ember_body',     signets:5, cinders:5000, warrants:60, blurb:'Def 132 vs melee, ranged AND magic \u2014 the finest body in the school. +4 Strength.'},
+  {out:'ember_legs',     signets:4, cinders:4000, warrants:45, blurb:'Def 84 vs all three combat styles \u2014 best-in-slot greaves. +3 Strength.'},
+  {out:'ember_helm',     signets:2, cinders:2500, warrants:30, blurb:'Def 62 vs all three combat styles \u2014 best-in-slot helm. +2 Strength.'},
+  {out:'ember_gauntlets',signets:2, cinders:2000, warrants:25, blurb:'Def 20 vs all three combat styles \u2014 best-in-slot gauntlets. +1 Strength.'},
+  {out:'ember_boots',    signets:2, cinders:2000, warrants:25, blurb:'Def 22 vs all three combat styles \u2014 best-in-slot sabatons. +1 Strength.'}
 ];
 function forgeCraftArmour(rec){
   if(countItem('rector_signet')<rec.signets) return 'nosignet';
@@ -19361,6 +19363,40 @@ function buildLuxuryModel(id){
       pr.position.set(Math.cos(a)*0.09,0.27,Math.sin(a)*0.09); g.add(pr); }
     g.rotation.x=-0.42; g.scale.setScalar(1.4);
   }
+  /* ---- GRIMOIRE (standalone book) ---- */
+  else if(eq.model==='book'){
+    M(BOX(0.62,0.82,0.12),tint!==0xd7c48a?tint:0x8c1c22);
+    const pages=M(BOX(0.53,0.73,0.135),0xefe9d0); pages.position.z=0.008;
+    const spine=M(BOX(0.10,0.82,0.15),trim!==0xfff0b0?trim:0xe3b21f); spine.position.x=-0.28;
+    const clasp=M(BOX(0.30,0.12,0.16),trim!==0xfff0b0?trim:0xe3b21f); clasp.position.set(0.06,0,0.06);
+    const rune=M(TOR(0.16,0.026,20),0xffd36a,0xa06a10); rune.position.set(0.06,0,0.10);
+    for(const gy of [0.28,-0.28]){const band=M(BOX(0.62,0.05,0.14),trim!==0xfff0b0?trim:0xe3b21f);band.position.y=gy;band.position.z=0.004;}
+    g.rotation.set(-0.25,0.4,0); g.scale.setScalar(1.25);
+  }
+  /* ---- QUIVER (standalone: leather tube + arrows + strap) ---- */
+  else if(eq.model==='quiver'){
+    const gilt=/rejuv/.test(id), leather=gilt?0xb08a2a:0x6e4424, band=gilt?0xf4d24a:0x8a6a3a;
+    const tube=M(CYL(0.18,0.22,0.85,16),leather); tube.rotation.z=0.16;
+    const lip=M(TOR(0.19,0.03,20),band); lip.rotation.x=Math.PI/2; lip.position.set(-0.068,0.425,0); lip.rotation.z=0.16;
+    const btm=M(TOR(0.215,0.028,20),band); btm.rotation.x=Math.PI/2; btm.position.set(0.068,-0.42,0); btm.rotation.z=0.16;
+    const strap=M(BOX(0.05,0.7,0.03),0x3a2c1a); strap.position.set(0.19,0.02,0.1); strap.rotation.z=0.5;
+    for(let i=0;i<4;i++){const a=-0.35+i*0.23;
+      const sh=M(CYL(0.016,0.016,0.62,6),0x8a6a3a); sh.position.set(-0.07+a*0.16+Math.sin(i)*0.03,0.62,(i-1.5)*0.05); sh.rotation.z=0.16+(i-1.5)*0.06;
+      const fl=M(CON(0.05,0.14,5),gilt?0xffd23d:0xd84a3a); fl.position.set(sh.position.x-0.02,0.93,sh.position.z); fl.rotation.z=0.16+(i-1.5)*0.06;}
+    g.rotation.set(-0.15,0.35,0); g.scale.setScalar(1.05);
+  }
+  /* ---- TOWER SHIELD (standalone Shield of the Mountain) ---- */
+  else if(eq.model==='towershield'){
+    const steel=tint!==0xd7c48a?tint:0x6e6f73, gold=trim!==0xfff0b0?trim:0xc9a23a;
+    M(BOX(0.62,0.98,0.09),steel);
+    for(const mx of [-0.19,0,0.19]){const mn=M(BOX(0.14,0.12,0.09),steel);mn.position.set(mx,0.55,0);}
+    for(const fr of [[0.66,0.06,0,0.49],[0.66,0.06,0,-0.49],[0.06,0.98,0.32,0],[0.06,0.98,-0.32,0]]){const t=M(BOX(fr[0],fr[1],0.11),gold);t.position.set(fr[2],fr[3],0.006);}
+    for(const pk of [[-0.17,0.2],[0.0,0.3],[0.17,0.23]]){const peak=M(CON(0.105,pk[1],4),0x9a9ca0);peak.rotation.y=Math.PI/4;peak.position.set(pk[0],-0.1+pk[1]/2,0.08);
+      const snow=M(CON(0.042,pk[1]*0.32,4),0xffffff);snow.rotation.y=Math.PI/4;snow.position.set(pk[0],-0.1+pk[1]-pk[1]*0.16,0.09);}
+    const boss=M(SPH(0.075,10,8),gold); boss.scale.z=0.5; boss.position.set(0,0.24,0.09);
+    for(const rv of [[-0.24,0.4],[0.24,0.4],[-0.24,-0.4],[0.24,-0.4]]){const rr=M(SPH(0.035,7,6),gold);rr.scale.z=0.5;rr.position.set(rv[0],rv[1],0.07);}
+    g.rotation.set(-0.12,0.45,0); g.scale.setScalar(1.15);
+  }
   /* ---- fallback: whatever the in-world model is ---- */
   else {
     /* regular equippable gear -> show it worn on a mannequin so the preview matches the real 3D piece */
@@ -19377,7 +19413,10 @@ function luxStatLines(id){
   const eq=(ITEMS[id]&&ITEMS[id].equip)||{}, out=[];
   if(eq.atk)out.push(['Attack','+'+eq.atk]);
   if(eq.str)out.push(['Strength','+'+eq.str]);
-  if(eq.def)out.push(['Defence','+'+eq.def]);
+  if(eq.def)out.push(['Defence (melee)','+'+eq.def]);
+  if(eq.rdef)out.push(['Defence (ranged)','+'+eq.rdef]);
+  if(eq.mdef)out.push(['Defence (magic)','+'+eq.mdef]);
+  if(eq.hp)out.push(['Max hitpoints','+'+eq.hp]);
   if(eq.ratk)out.push(['Ranged','+'+eq.ratk]);
   if(eq.rstr)out.push(['Ranged strength','+'+eq.rstr]);
   if(eq.matk)out.push(['Magic','+'+eq.matk]);
@@ -19396,13 +19435,13 @@ const LUX_LORE={
   gloves_haste_silver:`Silver-mesh gloves woven fine enough to feel a heartbeat through plate. They quicken the hand mid-swing, letting you attack 10% faster.`,
   gloves_haste_gold:`Gilt gauntlets that blur the hand as it moves. The deep's finest smiths pressed haste itself into the gold \u2014 you attack 20% faster.`,
   amulet_health:`A ruby heart cut from a single furnace-born stone, said to beat in time with the wearer's own. It knits flesh even mid-battle, restoring 1 health point roughly every 2.7 seconds.`,
-  amulet_piety:`An amethyst reliquary that holds, they say, a scrap of the old chapel's grace. It quietly renews the spirit, restoring 1 prayer point about every 4 seconds.`,
-  amulet_regen:`A dazzling gold sunburst set with a heart-ruby and a soul-amethyst \u2014 the masterwork of Hirschfeld's own bench. It restores both body and spirit at once: 1 health point every 1.6 seconds and 1 prayer point every 2.4 seconds \u2014 each a touch quicker than the single-stone amulets \u2014 letting you recover even in the thick of a fight.`,
+  amulet_piety:`An amethyst reliquary that holds, they say, a scrap of the old chapel's grace. It quietly renews the spirit, restoring 1 prayer point about every 20 seconds.`,
+  amulet_regen:`A dazzling gold sunburst set with a heart-ruby and a soul-amethyst \u2014 the masterwork of Hirschfeld's own bench. It restores both body and spirit at once: 1 health point every 1.6 seconds and 1 prayer point every 12 seconds \u2014 each a touch quicker than the single-stone amulets \u2014 letting you recover even in the thick of a fight.`,
   bodkin_health:`A gilt offhand dirk that bites deep and mends its wielder in the same breath. Beyond its edge, it knits 1 health point roughly every 2.7 seconds while held.`,
-  bodkin_piety:`A gilt offhand dirk keyed to the faithful. It strikes true and keeps the spirit lit, restoring 1 prayer point about every 4 seconds while wielded.`,
-  bodkin_rejuv:`The finest offhand dirk ever to leave the Cinderworks \u2014 it strikes hardest of the three and restores both at once: 1 health point every 1.6 seconds and 1 prayer point every 2.4 seconds \u2014 each a touch quicker than the single-stone bodkins \u2014 all while wielded.`,
+  bodkin_piety:`A gilt offhand dirk keyed to the faithful. It strikes true and keeps the spirit lit, restoring 1 prayer point about every 20 seconds while wielded.`,
+  bodkin_rejuv:`The finest offhand dirk ever to leave the Cinderworks \u2014 it strikes hardest of the three and restores both at once: 1 health point every 1.6 seconds and 1 prayer point every 12 seconds \u2014 each a touch quicker than the single-stone bodkins \u2014 all while wielded.`,
   ring_embers:`A band of living coal that never cools. It lends real force to every blow \u2014 Strength +8 up close and Ranged strength +8 at distance.`,
-  ring_warden:`A heavy slag band prised from a fallen Warden of the Molten Gauntlet. It turns aside what would fell you, granting Defence +14.`,
+  ring_warden:`A heavy slag band prised from a fallen Warden of the Molten Gauntlet. It turns aside blade, bolt and spell alike \u2014 +16 Defence against every combat style.`,
   ring_rector:`The First Rector's own seal-ring, its inverted pelican crest still humming with the arcane authority he wielded in life. It sharpens every spell \u2014 Magic +8 and Magic damage +4.`
 };
 
@@ -19665,7 +19704,9 @@ function buySlayer(id){const sl=player.slayer,cost=SLAYER_PRICES[id];if(id.slice
 function slayerStore(){const sl=player.slayer;const t={shop:{who:'npc',text:'You hold '+(sl.points||0)+' Slayer points. What will you have?',next:'wares'},wares:{opts:[]},info:{who:'npc',text:SLAYER_STORE_INFO,next:'wares'},cant:{who:'npc',text:'Not enough points for that. Cull more, and return.',next:'wares'},lowlvl:{who:'npc',text:'Your Slayer craft runs too shallow for that quarry yet. Train, and return.',next:'wares'},expand:{opts:[]}};const O=t.wares.opts;if(!(sl.unlocks&&sl.unlocks.bigger))O.push({label:'Unlock Bigger and Badder ('+SLAYER_PRICES.bigger+' pts)',next:()=>buySlayer('bigger')});if(!ownProctorAny())O.push({label:'Buy Proctor\u2019s Helm ('+SLAYER_PRICES.proctor_helm+' pts)',next:()=>buySlayer('proctor_helm')});O.push({label:'Buy Hunter\u2019s Signet ('+SLAYER_PRICES.hunter_signet+' pts)',next:()=>buySlayer('hunter_signet')});if(!crimsonDyeSpent())O.push({label:'Buy Crimson Dye ('+SLAYER_PRICES.crimson_dye+' pts)',next:()=>buySlayer('crimson_dye')});if(!giltDyeSpent())O.push({label:'Buy Gilt Dye ('+SLAYER_PRICES.gilt_dye+' pts)',next:()=>buySlayer('gilt_dye')});O.push({label:'Expand my contracts.',next:'expand'});const E=t.expand.opts,u=sl.unlocks||{};if(!u.banshee)E.push({label:'Unlock Banshee contracts ('+SLAYER_PRICES.unlock_banshee+' pts, Slayer '+MOB_KINDS.banshee.slayReq+')',next:()=>buySlayer('unlock_banshee')});if(!u.basilisk)E.push({label:'Unlock Basilisk contracts ('+SLAYER_PRICES.unlock_basilisk+' pts, Slayer '+MOB_KINDS.basilisk.slayReq+')',next:()=>buySlayer('unlock_basilisk')});if(!u.gargoyle)E.push({label:'Unlock Gargoyle contracts ('+SLAYER_PRICES.unlock_gargoyle+' pts, Slayer '+MOB_KINDS.gargoyle.slayReq+')',next:()=>buySlayer('unlock_gargoyle')});if(!u.wyvern)E.push({label:'Unlock Skeletal Wyvern contracts ('+SLAYER_PRICES.unlock_wyvern+' pts, Slayer '+MOB_KINDS.wyvern.slayReq+')',next:()=>buySlayer('unlock_wyvern')});if(!u.kurask)E.push({label:'Unlock Kurask contracts ('+SLAYER_PRICES.unlock_kurask+' pts, Slayer '+MOB_KINDS.kurask.slayReq+')',next:()=>buySlayer('unlock_kurask')});E.push({label:'Back.',next:'wares'});if((player.lostStash||[]).length)O.push({label:'Reclaim my wilderness losses ('+reclaimFee()+' gp)',next:()=>{reclaimLost();dlg.tree=slayerStore();return 'shop';}});O.push({label:'How do the rewards work?',next:'info'});O.push({label:'Back.',next:()=>{dlg.tree=slayerTree();return 'start';}});return t;}
 function applyHelmDye(dyeId){const m=({crimson_dye:['proctor_helm','scholar_crest','crimson_proctor_helm'],gilt_dye:['crimson_proctor_helm','sentinel_visor','gilded_warden_helm']})[dyeId];if(!m)return;const baseId=m[0],pieceId=m[1],outId=m[2];const inInv=findItem(baseId)>=0;const equipped=player.equip.head&&player.equip.head.id===baseId;if(!inInv&&!equipped){msg('You need a '+ITEMS[baseId].name+' to apply this dye.','#9a6fb0');return;}if(findItem(pieceId)<0){msg('You also need a '+ITEMS[pieceId].name+' \u2014 a rare drop from your task monsters.','#9a6fb0');return;}if(inInv)removeSlot(findItem(baseId));else{player.equip.head=null;renderEquip&&renderEquip();}removeSlot(findItem(pieceId));removeSlot(findItem(dyeId));if(!addItem(outId))dropGround(player.x,player.y,outId,1);sfx.level&&sfx.level();dirty=true;msg('You fuse the '+ITEMS[pieceId].name.toLowerCase()+' onto the helm with '+ITEMS[dyeId].name.toLowerCase()+' \u2014 behold, the '+ITEMS[outId].name+'!','#e8b020');renderInv&&renderInv();}
 function signetCheckTask(){const sl=player.slayer;if(!sl.task)msg('No active contract. Seek the Slayer Master at the wild\u2019s edge.','#9a6fb0');else if(sl.done>=sl.need)msg('Contract complete \u2014 return to the Slayer Master to claim your due.','#9a6fb0');else msg('Contract: '+(sl.need-sl.done)+' '+slayName(sl.task,sl.need-sl.done)+' still draw breath. You hold '+(sl.points||0)+' Slayer points.','#9a6fb0');}
-function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}const tx=26+WX,ty=37;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you to the chaos temple, deep in the wild.','#9a6fb0');dirty=true;}
+function signetTeleport(){if(performance.now()-(player.combatT||0)<6000){msg('Too dangerous to slip away mid-fight.','#9a6fb0');return;}
+  if(typeof curInterior==='function'&&curInterior()&&typeof exitToMainMap==='function')exitToMainMap();
+  const tx=26+WX,ty=37;player.x=tx;player.y=ty;player.px=tx;player.py=ty;player.path.length=0;cancelAction&&cancelAction();msg('The signet pulls you to the chaos temple, deep in the wild.','#9a6fb0');dirty=true;}
 function teleNear(tx,ty){if(inb(tx,ty)&&!blocked(tx,ty))return[tx,ty];
   for(let r=1;r<=6;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
     if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;const x=tx+dx,y=ty+dy;
@@ -19682,6 +19723,7 @@ function signetGo(tx,ty,text){if(performance.now()-(player.combatT||0)<6000){msg
   sfx.bury();slayerSmoke(player.x,player.y);teleFlash('#6a4a7a');
   msg('The signet wreathes you in slayer\u2019s smoke\u2026','#9a6fb0');
   setTimeout(()=>{
+    if(typeof curInterior==='function'&&curInterior()&&typeof exitToMainMap==='function')exitToMainMap();
     player.x=t[0];player.y=t[1];player.px=t[0];player.py=t[1];
     player.path.length=0;player.action=null;
     slayerSmoke(player.x,player.y);teleFlash('#6a4a7a');
