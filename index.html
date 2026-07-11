@@ -837,6 +837,7 @@
           <h4>Options</h4>
           <label><input type="checkbox" id="sndchk" checked> Sound effects</label>
           <label><input type="checkbox" id="muschk" checked> Music</label>
+          <label id="mtrackrow" style="display:flex;align-items:center;gap:6px;">Soundtrack: <span id="mtrackname" style="color:#ffe08a;">Milville Grounds</span> <button id="mtracknext" style="font:11px Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);border:1px solid #5a4d2e;border-radius:5px;padding:2px 8px;cursor:pointer;">Next &#9834;</button></label>
           <label id="winterrow" style="display:none"><input type="checkbox" id="winterchk"> Winter scenery</label>
           <label id="fallrow" style="display:none"><input type="checkbox" id="fallchk"> Fall scenery</label>
           <div id="savestatus">Checking autosave…</div>
@@ -1165,7 +1166,7 @@ const ITEMS={
   nativity_figure:{name:'nativity figure',ex:'A small carved figure for the Old Chapel nativity scene.',stack:true,noDrop:true}
 };
 /* the Grand Exchange armoury: bronze through rune */
-const GE_STOCK=[];
+const GE_STOCK=[];GE_STOCK.push('fire_rune','nature_rune');
 {
   /* economy: gear prices held AT/ABOVE their original values; bars = tier v / 2 and ores are
      scaled so barVal < 1.25 x oreCost at every tier -- selling smithed gear (40% of val) returns
@@ -1543,6 +1544,18 @@ ITEMS.ashfang_kindled={name:'Ashfang, Kindled',ex:'Ashfang rekindled at the Cind
 ITEMS.emberbrand_reforged={name:'Emberbrand, Reforged',ex:'Emberbrand folded anew in the Heart of the Emberdeep \u2014 its molten fuller never cools, and Volcanic Rend bites deeper. The finest blade, bettered.',val:480000,equip:{slot:'weapon',atk:100,str:88,spd:2200,model:'sword',verb:'Wield',req:70,spec:1,tint:0x1c0f0a,trim:0xff8a2a}};
 
 /* ===== Emberdeep consumables + luxury (Hirschfeld's shop) ===== */
+ITEMS.potion_attack={name:'Attack potion',ex:'A brew that sharpens your attack for a while. Three sips.',prim:'Drink',potion:{skill:'attack'},doses:3,stack:true,val:200,cat:'Consumable'};
+ITEMS.elixir_attack={name:'Attack elixir',ex:'A potent gilded draught \u2014 a greater attack boost, four sips.',prim:'Drink',potion:{skill:'attack',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
+ITEMS.potion_strength={name:'Strength potion',ex:'A brew that sharpens your strength for a while. Three sips.',prim:'Drink',potion:{skill:'strength'},doses:3,stack:true,val:200,cat:'Consumable'};
+ITEMS.elixir_strength={name:'Strength elixir',ex:'A potent gilded draught \u2014 a greater strength boost, four sips.',prim:'Drink',potion:{skill:'strength',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
+ITEMS.potion_defense={name:'Defence potion',ex:'A brew that sharpens your defence for a while. Three sips.',prim:'Drink',potion:{skill:'defense'},doses:3,stack:true,val:200,cat:'Consumable'};
+ITEMS.elixir_defense={name:'Defence elixir',ex:'A potent gilded draught \u2014 a greater defence boost, four sips.',prim:'Drink',potion:{skill:'defense',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
+ITEMS.potion_ranged={name:'Ranged potion',ex:'A brew that sharpens your ranged for a while. Three sips.',prim:'Drink',potion:{skill:'ranged'},doses:3,stack:true,val:200,cat:'Consumable'};
+ITEMS.elixir_ranged={name:'Ranged elixir',ex:'A potent gilded draught \u2014 a greater ranged boost, four sips.',prim:'Drink',potion:{skill:'ranged',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
+ITEMS.potion_magic={name:'Magic potion',ex:'A brew that sharpens your magic for a while. Three sips.',prim:'Drink',potion:{skill:'magic'},doses:3,stack:true,val:200,cat:'Consumable'};
+ITEMS.elixir_magic={name:'Magic elixir',ex:'A potent gilded draught \u2014 a greater magic boost, four sips.',prim:'Drink',potion:{skill:'magic',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
+ITEMS.fire_rune={name:'Fire rune',ex:'An elemental rune that smoulders with contained flame \u2014 fuel for spells and alchemy.',val:5,stack:true,cat:'Rune'};
+ITEMS.nature_rune={name:'Nature rune',ex:'A rune of raw transmutation. The heart of every alchemy spell.',val:190,stack:true,cat:'Rune'};
 ITEMS.ember_brew={name:'Ember-brew',ex:'A flask of molten-spiced brew from the Deep. Drink deep \u2014 it knits flesh fast.',prim:'Eat',heal:22,val:400,cat:'Consumable'};
 ITEMS.prayer_draught={name:'Molten prayer draught',ex:'Ash steeped in holy water. Restores your prayer to the full.',prim:'Drink',prayrestore:1,val:600,cat:'Consumable'};
 ITEMS.boots_speed_silver={name:'Silver Boots of Speed',ex:'Quicksilver-shod sabatons. You move 10% faster.',val:600000,cat:'Luxury',equip:{slot:'feet',def:5,runspeed:10,model:'boots',verb:'Wear',req:0,tint:0xcfd6e0,trim:0xf4f7ff}};
@@ -2582,8 +2595,8 @@ SPELL_TIERS.forEach(function(T,ti){var tkey=T[0],tname=T[1],ecount=T[2],cat=T[3]
     SPELLS[id]={id:id,name:el[0].toUpperCase()+el.slice(1)+' '+tname,element:el,tier:ti,req:reqs[eidx],pow:pbase+eidx*pstep,runes:runes,col:col};
   });
 });
-SPELLS.low_alch={id:'low_alch',name:'Low Alchemy',req:21,util:'alch',ratio:0.4,mxp:31,runes:{},col:'#c9a04a',tier:0,element:'earth'};
-SPELLS.high_alch={id:'high_alch',name:'High Alchemy',req:55,util:'alch',ratio:0.6,mxp:65,runes:{},col:'#ffd23d',tier:0,element:'fire'};
+SPELLS.low_alch={id:'low_alch',name:'Low Alchemy',req:21,util:'alch',ratio:0.4,mxp:31,runes:{nature_rune:1,fire_rune:3},col:'#c9a04a',tier:0,element:'earth'};
+SPELLS.high_alch={id:'high_alch',name:'High Alchemy',req:55,util:'alch',ratio:0.6,mxp:65,runes:{nature_rune:1,fire_rune:5},col:'#ffd23d',tier:0,element:'fire'};
 const SPELL_LIST=Object.keys(SPELLS).sort(function(a,b){return (SPELLS[a].util?1:0)-(SPELLS[b].util?1:0)||SPELLS[a].req-SPELLS[b].req||SPELLS[a].element.localeCompare(SPELLS[b].element);});
 
 [ /* staves: id,name,req,matk,mdmg,infRune,val */
@@ -3261,7 +3274,10 @@ function masterBoost(s){
   if(!(c&&ITEMS[c.id]&&ITEMS[c.id].equip&&ITEMS[c.id].equip.capeSkill===s))return 0;
   return ITEMS[c.id].equip.grand?12:10;
 }
-const lvl=s=>levelFor(player.skills[s])+masterBoost(s);
+function boostFor(s){ const b=player.boosts&&player.boosts[s]; if(!b)return 0;
+  const cur=b.amt-Math.floor((Date.now()-b.t0)/60000);   /* OSRS: drains 1 boosted level per minute */
+  if(cur<=0){ delete player.boosts[s]; return 0; } return cur; }
+const lvl=s=>levelFor(player.skills[s])+masterBoost(s)+boostFor(s);
 const maxHp=()=>lvl('hitpoints')+(typeof eqStat==='function'?eqStat('hp'):0);
 const maxPray=()=>lvl('prayer')+(typeof eqStat==='function'?eqStat('pray'):0);   /* OSRS: 1 prayer point per level (+ gear bonus) */
 function prayerBonus(){return masterBoost('prayer')+(typeof eqStat==='function'?eqStat('prayerbonus'):0);}
@@ -4571,61 +4587,94 @@ function stopOrgan(){
 }
 
 /* ====== overworld / wilderness background music ====== */
-let musicMode=null,musicTimer=null,musicMaster=null,musicStep=0,musicTrack=null;
-const TRACKS={
-  /* upbeat, adventurous major-key march for the campus grounds */
-  map:{tempo:0.26,lead:'triangle',bw:'sine',mvol:0.22,bvol:0.19,bassLen:2.0,
-    melody:[392,493.88,587.33,0, 493.88,440,392,0, 523.25,493.88,440,392, 440,0,392,0,
-            587.33,0,493.88,587.33, 659.25,0,587.33,0, 523.25,493.88,440,493.88, 392,0,0,0],
-    bass:[98,0,98,0, 130.81,0,130.81,0, 98,0,98,0, 146.83,0,146.83,0,
-          98,0,123.47,0, 130.81,0,130.81,0, 110,0,146.83,0, 98,0,0,0]},
-  /* slow, ominous minor drone with sparse dissonant calls for the wilderness */
-  wild:{tempo:0.5,lead:'sawtooth',bw:'sine',mvol:0.2,bvol:0.22,bassLen:5.0,
-    melody:[440,0,622.25,0, 0,0,587.33,0, 349.23,0,0,0, 329.63,0,0,0,
-            440,0,415.30,0, 0,0,349.23,0, 0,0,329.63,0, 0,0,0,0],
-    bass:[110,0,0,0, 0,0,0,0, 87.31,0,0,0, 0,0,0,0, 110,0,0,0, 0,0,0,0, 82.41,0,0,0, 0,0,0,0]},
-  /* fast, bouncy, celebratory jig for the Party Room */
-  party:{tempo:0.16,lead:'square',bw:'triangle',mvol:0.19,bvol:0.18,bassLen:1.0,
+let musicMode=null,musicTimer=null,musicMaster=null,musicStep=0,musicTrack=null,musicBus=null,mapTrackIdx=0,wildTrackIdx=0;
+const MAP_TRACKS=['map_grounds','map_turkey','map_evensong','map_longpond','map_halcyon'];
+const WILD_TRACKS=['wild_ditch','wild_groves','wild_peak'];
+const TRACKS={"map_grounds":{"name":"Milville Grounds","tempo":0.28,"lead":"harp","pad":"strings","arp":true,"perc":true,"mvol":0.2,"bvol":0.16,"padvol":0.05,"arpvol":0.05,"melody":[587.33,0,659.26,739.99,880.0,0,739.99,659.26,739.99,0,0,0,659.26,0,587.33,0,659.26,0,739.99,783.99,880.0,0,783.99,739.99,659.26,0,0,0,587.33,0,440.0,0,493.88,0,587.33,659.26,739.99,0,659.26,587.33,523.25,0,659.26,783.99,659.26,0,587.33,523.25,587.33,0,739.99,880.0,987.77,0,880.0,739.99,880.0,0,0,0,739.99,0,587.33,0,880.0,0,987.77,880.0,739.99,0,880.0,0,783.99,0,739.99,659.26,587.33,0,659.26,0,739.99,0,783.99,880.0,987.77,0,1046.5,987.77,880.0,0,739.99,0,659.26,0,587.33,0,587.33,0,659.26,739.99,880.0,0,739.99,659.26,739.99,0,0,0,659.26,0,587.33,0,659.26,0,523.25,587.33,523.25,0,440.0,493.88,587.33,0,0,0,0,0,440.0,587.33],"bass":[73.42,0,0,0,110.0,0,0,0,73.42,0,0,0,92.5,0,0,0,98.0,0,0,0,73.42,0,0,0,110.0,0,0,0,82.41,0,0,0,123.47,0,0,0,92.5,0,0,0,65.41,0,0,0,98.0,0,0,0,98.0,0,0,0,123.47,0,0,0,73.42,0,0,0,110.0,0,0,0,73.42,0,0,0,110.0,0,0,0,98.0,0,0,0,73.42,0,0,0,65.41,0,0,0,98.0,0,0,0,110.0,0,0,0,82.41,0,0,0,73.42,0,0,0,110.0,0,0,0,98.0,0,0,0,73.42,0,0,0,65.41,0,0,0,98.0,0,0,0,73.42,0,0,110.0,73.42,0,0,0],"chords":[[293.66,369.99,440.0],[293.66,369.99,440.0],[196.0,246.94,293.66],[220.0,277.18,329.63],[246.94,293.66,369.99],[261.63,329.63,392.0],[196.0,246.94,293.66],[293.66,369.99,440.0],[293.66,369.99,440.0],[196.0,246.94,293.66],[261.63,329.63,392.0],[220.0,277.18,329.63],[293.66,369.99,440.0],[196.0,246.94,293.66],[261.63,329.63,392.0],[293.66,369.99,440.0]]},"map_turkey":{"name":"Turkey Pond","tempo":0.31,"lead":"flute","pad":"warm","arp":true,"perc":false,"mvol":0.19,"bvol":0.15,"padvol":0.06,"arpvol":0.055,"melody":[587.33,0,783.99,0,739.99,659.26,587.33,0,659.26,0,587.33,0,493.88,0,0,0,523.25,0,587.33,659.26,587.33,0,493.88,0,440.0,0,493.88,523.25,493.88,0,392.0,0,493.88,0,587.33,0,783.99,0,739.99,659.26,587.33,0,659.26,739.99,783.99,0,880.0,0,783.99,0,739.99,659.26,587.33,0,659.26,0,587.33,0,0,0,493.88,0,587.33,659.26,783.99,0,880.0,783.99,659.26,0,587.33,0,659.26,0,783.99,0,587.33,0,493.88,0,523.25,0,493.88,440.0,493.88,523.25,587.33,0,493.88,0,392.0,0,440.0,0,587.33,0,587.33,0,783.99,0,739.99,659.26,587.33,0,659.26,0,587.33,0,493.88,0,0,0,523.25,0,440.0,493.88,440.0,0,369.99,0,392.0,0,0,0,0,0,587.33,392.0],"bass":[98.0,0,0,0,73.42,0,0,0,65.41,0,0,0,98.0,0,0,0,98.0,0,0,0,123.47,0,0,0,73.42,0,0,0,110.0,0,0,0,98.0,0,0,0,73.42,0,0,0,65.41,0,0,0,98.0,0,0,0,98.0,0,0,0,73.42,0,0,0,73.42,0,0,0,110.0,0,0,0,65.41,0,0,0,98.0,0,0,0,98.0,0,0,0,73.42,0,0,0,110.0,0,0,0,82.41,0,0,0,73.42,0,0,0,110.0,0,0,0,98.0,0,0,0,73.42,0,0,0,65.41,0,0,0,98.0,0,0,0,110.0,0,0,0,73.42,0,0,0,98.0,0,0,0,73.42,98.0,0,0],"chords":[[196.0,246.94,293.66],[261.63,329.63,392.0],[196.0,246.94,293.66],[146.83,185.0,220.0],[196.0,246.94,293.66],[261.63,329.63,392.0],[196.0,246.94,293.66],[146.83,185.0,220.0],[261.63,329.63,392.0],[196.0,246.94,293.66],[220.0,261.63,329.63],[146.83,185.0,220.0],[196.0,246.94,293.66],[261.63,329.63,392.0],[220.0,261.63,329.63],[196.0,246.94,293.66]]},"map_evensong":{"name":"Evensong","tempo":0.34,"lead":"organ","pad":"strings","arp":false,"perc":false,"mvol":0.17,"bvol":0.16,"padvol":0.07,"arpvol":0.0,"melody":[329.63,0,392.0,0,523.25,0,493.88,0,523.25,0,0,0,392.0,0,0,0,440.0,0,523.25,0,659.26,0,587.33,0,523.25,0,0,0,392.0,0,0,0,349.23,0,440.0,0,523.25,0,440.0,0,392.0,0,493.88,0,587.33,0,493.88,0,659.26,0,587.33,0,523.25,0,493.88,0,523.25,0,0,0,0,0,392.0,0,523.25,0,659.26,0,783.99,0,659.26,0,698.46,0,659.26,0,587.33,0,523.25,0,587.33,0,698.46,0,880.0,0,783.99,0,659.26,0,587.33,0,523.25,0,392.0,0,440.0,0,523.25,0,698.46,0,659.26,0,587.33,0,493.88,0,392.0,0,493.88,0,523.25,0,659.26,587.33,523.25,0,587.33,0,523.25,0,0,0,0,0,392.0,523.25],"bass":[65.41,0,0,0,98.0,0,0,0,65.41,0,0,0,82.41,0,0,0,110.0,0,0,0,82.41,0,0,0,65.41,0,0,0,98.0,0,0,0,87.31,0,0,0,65.41,0,0,0,98.0,0,0,0,73.42,0,0,0,110.0,0,0,0,82.41,0,0,0,65.41,0,0,0,98.0,0,0,0,65.41,0,0,0,98.0,0,0,0,87.31,0,0,0,65.41,0,0,0,73.42,0,0,0,110.0,0,0,0,65.41,0,0,0,98.0,0,0,0,87.31,0,0,0,65.41,0,0,0,98.0,0,0,0,73.42,0,0,0,65.41,0,0,0,98.0,0,0,0,65.41,0,0,0,98.0,65.41,0,0],"chords":[[261.63,329.63,392.0],[261.63,329.63,392.0],[220.0,261.63,329.63],[261.63,329.63,392.0],[174.61,220.0,261.63],[196.0,246.94,293.66],[220.0,261.63,329.63],[261.63,329.63,392.0],[261.63,329.63,392.0],[174.61,220.0,261.63],[293.66,349.23,440.0],[261.63,329.63,392.0],[174.61,220.0,261.63],[196.0,246.94,293.66],[261.63,329.63,392.0],[261.63,329.63,392.0]]},"map_longpond":{"name":"The Long Pond","tempo":0.235,"lead":"musicbox","pad":"warm","arp":true,"perc":true,"mvol":0.16,"bvol":0.15,"padvol":0.045,"arpvol":0.05,"melody":[659.26,0,880.0,987.77,1108.73,0,987.77,880.0,987.77,0,880.0,0,659.26,0,0,0,739.99,0,880.0,987.77,1108.73,0,1318.51,0,1174.66,0,1108.73,0,987.77,0,880.0,0,659.26,0,880.0,987.77,1108.73,0,987.77,880.0,987.77,0,1108.73,0,1174.66,0,987.77,0,1108.73,0,987.77,0,880.0,0,783.99,0,880.0,0,0,0,0,0,659.26,783.99,880.0,0,1108.73,0,987.77,0,880.0,0,783.99,0,987.77,0,880.0,0,783.99,0,739.99,0,880.0,0,659.26,0,739.99,0,659.26,0,587.33,0,554.37,0,440.0,0,440.0,0,554.37,659.26,739.99,0,880.0,0,783.99,0,739.99,0,659.26,0,587.33,0,554.37,0,659.26,0,587.33,0,493.88,0,440.0,0,0,0,0,0,659.26,440.0],"bass":[110.0,0,82.41,0,110.0,0,82.41,0,82.41,0,123.47,0,82.41,0,0,0,92.5,0,69.3,0,92.5,0,0,0,73.42,0,110.0,0,73.42,0,0,0,110.0,0,82.41,0,110.0,0,82.41,0,82.41,0,123.47,0,82.41,0,0,0,98.0,0,73.42,0,98.0,0,0,0,110.0,0,82.41,0,110.0,0,0,0,110.0,0,82.41,0,110.0,0,82.41,0,98.0,0,73.42,0,98.0,0,0,0,92.5,0,69.3,0,92.5,0,0,0,73.42,0,110.0,0,73.42,0,0,0,110.0,0,82.41,0,110.0,0,82.41,0,73.42,0,110.0,0,73.42,0,0,0,82.41,0,123.47,0,82.41,0,0,0,110.0,0,82.41,110.0,110.0,0,0,0],"chords":[[220.0,277.18,329.63],[164.81,207.65,246.94],[185.0,220.0,277.18],[293.66,369.99,440.0],[220.0,277.18,329.63],[164.81,207.65,246.94],[196.0,246.94,293.66],[220.0,277.18,329.63],[220.0,277.18,329.63],[196.0,246.94,293.66],[185.0,220.0,277.18],[293.66,369.99,440.0],[220.0,277.18,329.63],[293.66,369.99,440.0],[164.81,207.65,246.94],[220.0,277.18,329.63]]},"map_halcyon":{"name":"Halcyon Days","tempo":0.3,"lead":"musicbox","pad":"strings","arp":true,"perc":false,"mvol":0.18,"bvol":0.15,"padvol":0.06,"arpvol":0.045,"melody":[493.88,0,659.26,0,830.61,0,739.99,659.26,739.99,0,0,0,493.88,0,0,0,554.37,0,659.26,0,493.88,0,415.3,0,440.0,0,493.88,554.37,493.88,0,369.99,0,415.3,0,493.88,0,659.26,0,622.25,0,659.26,0,739.99,830.61,880.0,0,830.61,739.99,659.26,0,622.25,0,554.37,0,493.88,0,493.88,0,0,0,0,0,739.99,830.61,880.0,0,830.61,739.99,659.26,0,739.99,0,830.61,0,739.99,659.26,622.25,0,659.26,0,554.37,0,659.26,739.99,830.61,0,880.0,0,830.61,0,659.26,0,493.88,0,554.37,0,493.88,0,659.26,0,830.61,0,739.99,659.26,739.99,0,0,0,493.88,0,0,0,554.37,0,493.88,440.0,415.3,0,369.99,415.3,329.63,0,0,0,0,0,493.88,659.26],"bass":[82.41,0,0,0,123.47,0,0,0,123.47,0,0,0,92.5,0,0,0,69.3,0,0,0,103.83,0,0,0,110.0,0,0,0,82.41,0,0,0,82.41,0,0,0,123.47,0,0,0,110.0,0,0,0,82.41,0,0,0,69.3,0,0,0,103.83,0,0,0,123.47,0,0,0,92.5,0,0,0,110.0,0,0,0,82.41,0,0,0,82.41,0,0,0,123.47,0,0,0,69.3,0,0,0,103.83,0,0,0,123.47,0,0,0,92.5,0,0,0,82.41,0,0,0,123.47,0,0,0,123.47,0,0,0,92.5,0,0,0,110.0,0,0,0,82.41,0,0,0,82.41,0,0,0,123.47,82.41,0,0],"chords":[[329.63,415.3,493.88],[246.94,311.13,369.99],[277.18,329.63,415.3],[220.0,277.18,329.63],[329.63,415.3,493.88],[220.0,277.18,329.63],[277.18,329.63,415.3],[246.94,311.13,369.99],[220.0,277.18,329.63],[329.63,415.3,493.88],[277.18,329.63,415.3],[246.94,311.13,369.99],[329.63,415.3,493.88],[246.94,311.13,369.99],[220.0,277.18,329.63],[329.63,415.3,493.88]]},"wild_ditch":{"name":"Beyond the Ditch","tempo":0.42,"lead":"strings","pad":"warm","arp":false,"perc":false,"mvol":0.17,"bvol":0.19,"padvol":0.075,"arpvol":0.0,"melody":[440.0,0,0,0,329.63,0,0,0,415.3,0,0,0,440.0,0,523.25,0,493.88,0,0,0,440.0,0,0,0,329.63,0,0,0,0,0,0,0,440.0,0,523.25,0,659.26,0,587.33,0,523.25,0,493.88,0,440.0,0,415.3,0,349.23,0,0,0,329.63,0,0,0,329.63,0,0,0,0,0,440.0,493.88,523.25,0,0,0,493.88,0,587.33,0,523.25,0,493.88,0,440.0,0,415.3,0,440.0,0,493.88,523.25,587.33,0,659.26,0,587.33,0,523.25,0,493.88,0,440.0,0,392.0,0,0,0,349.23,0,0,0,329.63,0,0,0,415.3,0,0,0,440.0,0,0,0,329.63,0,261.63,0,220.0,0,0,0,0,0,0,0],"bass":[55.0,0,0,0,82.41,0,0,0,55.0,0,0,0,0,0,0,0,82.41,0,0,0,123.47,0,0,0,82.41,0,0,0,0,0,0,0,55.0,0,0,0,82.41,0,0,0,43.65,0,0,0,65.41,0,0,0,73.42,0,0,0,110.0,0,0,0,82.41,0,0,0,0,0,0,0,55.0,0,0,0,82.41,0,0,0,82.41,0,0,0,123.47,0,0,0,55.0,0,0,0,82.41,0,0,0,73.42,0,0,0,110.0,0,0,0,65.41,0,0,0,98.0,0,0,0,82.41,0,0,0,123.47,0,0,0,55.0,0,0,0,82.41,0,0,0,55.0,0,0,0,0,0,0,0],"chords":[[110.0,130.81,164.81],[110.0,130.81,164.81],[82.41,207.65,246.94],[82.41,207.65,246.94],[110.0,130.81,164.81],[87.31,110.0,130.81],[73.42,174.61,220.0],[82.41,207.65,246.94],[110.0,130.81,164.81],[82.41,207.65,246.94],[110.0,130.81,164.81],[73.42,174.61,220.0],[130.81,164.81,196.0],[82.41,207.65,246.94],[110.0,130.81,164.81],[110.0,130.81,164.81]]},"wild_groves":{"name":"The Dark Groves","tempo":0.44,"lead":"flute","pad":"strings","arp":false,"perc":false,"mvol":0.16,"bvol":0.19,"padvol":0.07,"arpvol":0.0,"melody":[587.33,0,0,0,440.0,0,0,0,698.46,0,659.26,0,587.33,0,0,0,554.37,0,0,0,587.33,0,698.46,0,659.26,0,0,0,0,0,0,0,587.33,0,698.46,0,880.0,0,783.99,0,698.46,0,659.26,0,587.33,0,554.37,0,466.16,0,0,0,440.0,0,0,0,440.0,0,0,0,0,0,587.33,659.26,698.46,0,0,0,659.26,0,783.99,0,698.46,0,659.26,0,587.33,0,554.37,0,587.33,0,659.26,698.46,783.99,0,880.0,0,783.99,0,698.46,0,659.26,0,587.33,0,523.25,0,0,0,466.16,0,0,0,440.0,0,0,0,554.37,0,0,0,587.33,0,0,0,440.0,0,349.23,0,293.66,0,0,0,0,0,0,0],"bass":[73.42,0,0,0,110.0,0,0,0,73.42,0,0,0,0,0,0,0,55.0,0,0,0,82.41,0,0,0,55.0,0,0,0,0,0,0,0,73.42,0,0,0,110.0,0,0,0,58.27,0,0,0,87.31,0,0,0,49.0,0,0,0,73.42,0,0,0,55.0,0,0,0,0,0,0,0,73.42,0,0,0,110.0,0,0,0,55.0,0,0,0,82.41,0,0,0,73.42,0,0,0,110.0,0,0,0,49.0,0,0,0,73.42,0,0,0,43.65,0,0,0,65.41,0,0,0,55.0,0,0,0,82.41,0,0,0,73.42,0,0,0,110.0,0,0,0,73.42,0,0,0,0,0,0,0],"chords":[[146.83,174.61,220.0],[146.83,174.61,220.0],[110.0,138.59,164.81],[110.0,138.59,164.81],[146.83,174.61,220.0],[116.54,146.83,174.61],[98.0,116.54,146.83],[110.0,138.59,164.81],[146.83,174.61,220.0],[110.0,138.59,164.81],[146.83,174.61,220.0],[98.0,116.54,146.83],[87.31,110.0,130.81],[110.0,138.59,164.81],[146.83,174.61,220.0],[146.83,174.61,220.0]]},"wild_peak":{"name":"Pat's Peak","tempo":0.38,"lead":"musicbox","pad":"strings","arp":true,"perc":false,"mvol":0.16,"bvol":0.18,"padvol":0.06,"arpvol":0.04,"melody":[659.26,0,0,0,493.88,0,0,0,783.99,0,739.99,0,659.26,0,0,0,622.25,0,0,0,659.26,0,783.99,0,987.77,0,0,0,0,0,880.0,0,783.99,0,987.77,0,1318.51,0,1174.66,0,987.77,0,880.0,0,783.99,0,739.99,0,659.26,0,0,0,622.25,0,0,0,659.26,0,0,0,0,0,493.88,587.33,659.26,0,783.99,0,739.99,0,659.26,0,587.33,0,739.99,0,493.88,0,587.33,0,659.26,0,739.99,783.99,880.0,0,987.77,0,880.0,0,783.99,0,739.99,0,659.26,0,587.33,0,0,0,523.25,0,0,0,493.88,0,0,0,622.25,0,0,0,659.26,0,0,0,493.88,0,392.0,0,329.63,0,0,0,0,0,0,0],"bass":[82.41,0,0,0,123.47,0,0,0,82.41,0,0,0,0,0,0,0,61.74,0,0,0,92.5,0,0,0,61.74,0,0,0,0,0,0,0,82.41,0,0,0,123.47,0,0,0,65.41,0,0,0,98.0,0,0,0,55.0,0,0,0,82.41,0,0,0,61.74,0,0,0,0,0,0,0,82.41,0,0,0,123.47,0,0,0,61.74,0,0,0,92.5,0,0,0,82.41,0,0,0,123.47,0,0,0,55.0,0,0,0,82.41,0,0,0,65.41,0,0,0,98.0,0,0,0,61.74,0,0,0,92.5,0,0,0,82.41,0,0,0,123.47,0,0,0,82.41,0,0,0,0,0,0,0],"chords":[[164.81,196.0,246.94],[164.81,196.0,246.94],[123.47,155.56,185.0],[123.47,155.56,185.0],[164.81,196.0,246.94],[130.81,164.81,196.0],[110.0,130.81,164.81],[123.47,155.56,185.0],[164.81,196.0,246.94],[123.47,155.56,185.0],[164.81,196.0,246.94],[110.0,130.81,164.81],[130.81,164.81,196.0],[123.47,155.56,185.0],[164.81,196.0,246.94],[164.81,196.0,246.94]]},
+party:{tempo:0.16,lead:'square',bw:'triangle',mvol:0.19,bvol:0.18,bassLen:1.0,
     melody:[659.25,783.99,659.25,523.25, 587.33,659.25,587.33,0, 698.46,659.25,587.33,523.25, 587.33,0,523.25,0,
             783.99,880,783.99,659.25, 698.46,783.99,698.46,0, 880,783.99,659.25,587.33, 523.25,0,0,0],
     bass:[130.81,0,98,0, 110,0,82.41,0, 87.31,0,65.41,0, 98,0,98,0,
           130.81,0,98,0, 110,0,82.41,0, 87.31,0,98,0, 130.81,0,0,0]},
-  /* warm, cosy Christmas tune for the Rectory - soft triangle lead, sine bass, sleigh bells */
-  rectory:{tempo:0.28,lead:'triangle',bw:'sine',mvol:0.17,bvol:0.15,bassLen:2.0,bellvol:0.09,
+rectory:{tempo:0.28,lead:'triangle',bw:'sine',mvol:0.17,bvol:0.15,bassLen:2.0,bellvol:0.09,
     melody:[392.00,0,493.88,0, 587.33,0,493.88,0, 440.00,0,493.88,0, 392.00,0,0,0,
             523.25,0,493.88,0, 440.00,0,392.00,0, 440.00,0,329.63,0, 392.00,0,0,0],
     bass:[196.00,0,0,0, 196.00,0,0,0, 146.83,0,0,0, 196.00,0,0,0,
           174.61,0,0,0, 146.83,0,0,0, 220.00,0,0,0, 196.00,0,0,0],
     bells:[1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1, 1,0,1,1]}
 };
+const VOICES={
+  harp:{parts:[[1,'triangle',1],[0.5,'sine',0.5]],atk:0.005,filt:0,sus:false},
+  flute:{parts:[[1,'sine',1],[1,'triangle',0.22],[2,'sine',0.07]],atk:0.06,filt:0,sus:true},
+  musicbox:{parts:[[1,'sine',1],[2,'sine',0.4],[4,'sine',0.11]],atk:0.002,filt:0,sus:false},
+  strings:{parts:[[1,'sawtooth',0.55],[1.004,'sawtooth',0.5],[0.5,'sine',0.22]],atk:0.16,filt:1800,sus:true},
+  warm:{parts:[[1,'sawtooth',0.5],[1,'triangle',0.45],[2,'sine',0.11]],atk:0.24,filt:1300,sus:true},
+  organ:{parts:[[1,'sine',1],[2,'sine',0.6],[3,'sine',0.4],[4,'sine',0.2]],atk:0.02,filt:0,sus:true},
+  bass:{parts:[[1,'sine',1],[1,'triangle',0.3]],atk:0.03,filt:0,sus:true}
+};
+function musicVoice(ac,inst,freq,t,vol,dur,dest){
+  const V=VOICES[inst]||(['sine','square','sawtooth','triangle'].indexOf(inst)>=0?{parts:[[1,inst,1]],atk:0.02,filt:0,sus:false}:VOICES.harp);
+  let sink=dest;
+  if(V.filt){const flt=ac.createBiquadFilter();flt.type='lowpass';flt.frequency.value=V.filt;flt.Q.value=0.4;flt.connect(dest);sink=flt;}
+  const g=ac.createGain();g.gain.value=0;g.connect(sink);
+  g.gain.linearRampToValueAtTime(vol,t+V.atk);
+  if(V.sus){g.gain.setValueAtTime(vol,t+Math.max(V.atk,dur*0.65));g.gain.exponentialRampToValueAtTime(0.0001,t+dur+0.12);}
+  else g.gain.exponentialRampToValueAtTime(0.0001,t+dur);
+  for(const pr of V.parts){const o=ac.createOscillator();o.type=pr[1];o.frequency.value=freq*pr[0];
+    const pg=ac.createGain();pg.gain.value=pr[2];o.connect(pg);pg.connect(g);o.start(t);o.stop(t+dur+0.2);}
+}
 function startMusic(mode){
   if(musicMode===mode)return;
   if(musicOff)return;
-  const ac=audio(); if(!ac||ac.state!=='running')return;   /* wait for a user gesture */
+  const ac=audio(); if(!ac||ac.state!=='running')return;
   stopMusic();
-  musicMode=mode; musicTrack=TRACKS[mode]; musicStep=0;
-  musicMaster=ac.createGain(); musicMaster.gain.value=0.0001; musicMaster.connect(ac.destination);
-  musicMaster.gain.exponentialRampToValueAtTime(0.55,ac.currentTime+1.4);
+  musicMode=mode; musicTrack=TRACKS[mode]||TRACKS.map_grounds; musicStep=0;
+  musicMaster=ac.createGain(); musicMaster.gain.value=0.0001;
+  const lp=ac.createBiquadFilter(); lp.type='lowpass'; lp.frequency.value=4000; lp.Q.value=0.3;
+  const dly=ac.createDelay(0.8); dly.delayTime.value=0.21;
+  const fb=ac.createGain(); fb.gain.value=0.30;
+  const wet=ac.createGain(); wet.gain.value=0.30;
+  musicMaster.connect(lp); lp.connect(ac.destination);
+  lp.connect(dly); dly.connect(fb); fb.connect(dly); dly.connect(wet); wet.connect(ac.destination);
+  musicBus={lp,dly,fb,wet};
+  musicMaster.gain.exponentialRampToValueAtTime(0.42,ac.currentTime+1.8);
   stepMusic();
 }
 function stepMusic(){
   if(!musicMode){return;}
   const ac=audio(),tk=musicTrack;
   if(ac&&!musicOff&&musicMaster&&tk){
-    const t=ac.currentTime,i=musicStep%tk.melody.length;
-    const mf=tk.melody[i],bf=tk.bass[i%tk.bass.length];
-    if(mf){const o=ac.createOscillator(),g=ac.createGain();
-      o.type=tk.lead;o.frequency.value=mf;
-      g.gain.value=0;g.connect(musicMaster);
-      g.gain.linearRampToValueAtTime(tk.mvol,t+0.03);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+tk.tempo*0.92);
-      o.connect(g);o.start(t);o.stop(t+tk.tempo);}
-    if(bf){const o=ac.createOscillator(),g=ac.createGain();
-      o.type=tk.bw;o.frequency.value=bf;
-      g.gain.value=0;g.connect(musicMaster);
-      g.gain.linearRampToValueAtTime(tk.bvol,t+0.04);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+tk.tempo*tk.bassLen);
-      o.connect(g);o.start(t);o.stop(t+tk.tempo*tk.bassLen+0.05);}
+    const t=ac.currentTime, T=tk.tempo, i=musicStep%tk.melody.length, bar=Math.floor(i/8);
+    const chord=tk.chords?tk.chords[bar%tk.chords.length]:null;
+    /* MELODY (lead instrument) */
+    const mf=tk.melody[i];
+    if(mf){ const ring=Math.min(T*4.5,1.25); musicVoice(ac,tk.lead||'harp',mf,t,(tk.mvol||0.2),ring,musicMaster); }
+    /* HARP ARPEGGIO -- the signature OSRS ripple, following the chord */
+    if(tk.arp&&chord&&chord.length){
+      const tone=chord[musicStep%chord.length]*2;
+      musicVoice(ac,'harp',tone,t,(tk.arpvol||0.045),T*1.5,musicMaster);
+      if(!mf && musicStep%2===0){ const g2=chord[(musicStep+1)%chord.length]*2; musicVoice(ac,'harp',g2,t+T*0.5,(tk.arpvol||0.045)*0.8,T*1.1,musicMaster); }
+    }
+    /* BASS */
+    const bf=tk.bass?tk.bass[i%tk.bass.length]:0;
+    if(bf) musicVoice(ac,'bass',bf,t,(tk.bvol||0.17),T*(tk.bassLen||3.4),musicMaster);
+    /* PAD (warm strings/organ bed) -- new chord each bar */
+    if(chord && i%8===0){ const barLen=T*8; for(const cf of chord){ if(cf)musicVoice(ac,tk.pad||'strings',cf,t,(tk.padvol||0.06),barLen+0.3,musicMaster); } }
+    /* gentle PERC on the map themes */
+    if(tk.perc){
+      if(i%8===0||i%8===4){ const o=ac.createOscillator(),g=ac.createGain();
+        o.type='sine'; o.frequency.setValueAtTime(145,t); o.frequency.exponentialRampToValueAtTime(55,t+0.12);
+        g.gain.value=0; g.connect(musicMaster);
+        g.gain.linearRampToValueAtTime(0.11,t+0.005); g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+        o.connect(g); o.start(t); o.stop(t+0.18); }
+      if(i%2===1){ const dur=0.026, nb=ac.createBuffer(1,Math.max(1,(ac.sampleRate*dur)|0),ac.sampleRate), dd=nb.getChannelData(0);
+        for(let k=0;k<dd.length;k++)dd[k]=(Math.random()*2-1);
+        const ns=ac.createBufferSource(); ns.buffer=nb;
+        const hp=ac.createBiquadFilter(); hp.type='highpass'; hp.frequency.value=7500;
+        const g=ac.createGain(); g.gain.value=0.018; g.connect(musicMaster);
+        ns.connect(hp); hp.connect(g); ns.start(t); ns.stop(t+dur); }
+    }
+    /* BELLS (rectory) */
     if(tk.bells&&tk.bells[i%tk.bells.length]){
       const dur=0.17, nb=ac.createBuffer(1,Math.max(1,Math.floor(ac.sampleRate*dur)),ac.sampleRate), dd=nb.getChannelData(0);
       for(let k=0;k<dd.length;k++)dd[k]=Math.random()*2-1;
@@ -4646,6 +4695,20 @@ function stepMusic(){
   musicStep++;
   musicTimer=setTimeout(stepMusic,(musicTrack?musicTrack.tempo:0.3)*1000);
 }
+function _curTrackKey(){
+  if(typeof inWild==='function' && typeof curInterior==='function' && !curInterior() && player && inWild(player.x,player.y))
+    return WILD_TRACKS[wildTrackIdx%WILD_TRACKS.length];
+  return MAP_TRACKS[mapTrackIdx%MAP_TRACKS.length];
+}
+function _updTrackName(){ const el=document.getElementById('mtrackname'); if(el)el.textContent=(TRACKS[_curTrackKey()]||{}).name||'Soundtrack'; }
+function cycleTrack(){
+  const wild=(typeof inWild==='function' && typeof curInterior==='function' && !curInterior() && player && inWild(player.x,player.y));
+  if(wild){ wildTrackIdx=(wildTrackIdx+1)%WILD_TRACKS.length; if(!musicOff)startMusic(WILD_TRACKS[wildTrackIdx]); }
+  else { mapTrackIdx=(mapTrackIdx+1)%MAP_TRACKS.length; if(!musicOff && !curInterior())startMusic(MAP_TRACKS[mapTrackIdx]); }
+  dirty=true; _updTrackName();
+  const nm=(TRACKS[_curTrackKey()]||{}).name||'';
+  if(typeof msg==='function')msg('Soundtrack \u2192 '+nm,'#8fd6ff');
+}
 function stopMusic(){
   musicMode=null; if(musicTimer){clearTimeout(musicTimer);musicTimer=null;}
   if(AC&&musicMaster){try{musicMaster.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+0.5);}catch(e){}}
@@ -4655,7 +4718,8 @@ function updateMusic(){
   if(musicOff||inChapel||inStPaul||inSos){ if(musicMode)stopMusic(); return; }
   if(inRectory){ startMusic('rectory'); return; }
   if(inParty){ startMusic('party'); return; }
-  startMusic((!curInterior()&&inWild(player.x,player.y))?'wild':'map');
+  startMusic((!curInterior()&&inWild(player.x,player.y))?WILD_TRACKS[wildTrackIdx%WILD_TRACKS.length]:MAP_TRACKS[mapTrackIdx%MAP_TRACKS.length]);
+  if(typeof _updTrackName==='function')_updTrackName();
 }
 const sfx={
   chop:()=>tone(140,70,.12,'triangle',.12),
@@ -4690,14 +4754,41 @@ function addItem(id,qty){
   renderInv();dirty=true;return true;
 }
 function removeSlot(i){player.inv[i]=null;renderInv();dirty=true;}
+function drinkPotion(id,i){
+  const P=ITEMS[id].potion; if(!P)return;
+  const sk=P.skill, base=levelFor(player.skills[sk]);
+  const amt = P.super ? (Math.floor(base*0.15)+5) : (Math.floor(base*0.10)+3);   /* OSRS base vs super potion boosts */
+  player.boosts=player.boosts||{};
+  const curV=(typeof boostFor==='function')?boostFor(sk):0;
+  if(amt>=curV){ player.boosts[sk]={amt:amt, t0:Date.now()}; }   /* re-drinking refreshes only if not weaker */
+  const it=player.inv[i]; if(it){ if((it.qty||1)>1){it.qty--;} else removeSlot(i); }
+  if(typeof renderInv==='function')renderInv();
+  if(typeof renderSkills==='function')renderSkills();
+  if(typeof sfx!=='undefined'&&sfx.eat)sfx.eat();
+  msg('You drink the '+ITEMS[id].name.toLowerCase()+'. Your '+SKILL_META[sk].name+' is boosted.','#8fd6ff');
+  dirty=true;
+}
 function alchemiseSlot(i){
   const sp=player._alchMode; player._alchMode=null; if(!sp)return;
   const it=player.inv[i]; if(!it)return; const def=ITEMS[it.id];
-  if(!def||it.id==='coins'||!(def.val>0)||def.noAlch||def.rune&&false){msg('You can\u2019t alchemise that.','#9c1f1f');return;}
+  if(!def||it.id==='coins'||!(def.val>0)||def.noAlch||def.cat==='Rune'){msg('You can\u2019t alchemise that.','#9c1f1f');return;}
+  const runes=sp.runes||{};
+  for(const rid in runes){ if(countItem(rid)<runes[rid]){ msg('You need '+runes[rid]+' '+ITEMS[rid].name.toLowerCase()+(runes[rid]>1?'s':'')+' to cast '+sp.name+'.','#9c1f1f'); return; } }
+  for(const rid in runes) takeItems(rid,runes[rid]);
   const per=Math.max(1,Math.floor(def.val*sp.ratio));
   if((it.qty||1)>1){it.qty--;renderInv();dirty=true;} else removeSlot(i);
   addItem('coins',per); if(typeof addXp==='function')addXp('magic',sp.mxp||0);
   msg((sp.ratio>=0.6?'High':'Low')+' Alchemy \u2014 '+def.name+' \u2192 '+per+' coins.','#ffd23d');
+  alchFlash();
+}
+function alchFlash(){
+  if(typeof teleFlash==='function')teleFlash('#ffd23d');
+  if(typeof parts!=='undefined'){ const gx=player.x+0.5,gz=player.y+0.5,gy=(typeof groundH==='function'?groundH(gx,gz):0),T=performance.now();
+    const gold=['#ffe27a','#ffd23d','#ffbf33','#fff3b0'];
+    for(let k=0;k<20;k++){const a=Math.random()*Math.PI*2,rad=Math.random()*0.45;
+      parts.push({wx:gx+Math.cos(a)*rad,wy:gy+0.4+Math.random()*0.9,wz:gz+Math.sin(a)*rad,
+        vx:Math.cos(a)*rnd(0.4,1.3),vy:rnd(0.6,1.8),t:T+k*10,life:620,smoke:true,
+        r0:rnd(4,8),grow:rnd(-4,-1),a0:rnd(0.55,0.85),col:gold[k%gold.length]});} }
   if(typeof sfx!=='undefined'&&sfx.bury)sfx.bury();
 }
 function addNote(id,qty){qty=qty||1;markCollected(id);
@@ -5063,6 +5154,7 @@ function playerTick(){
   if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.alive&&!_rectorBoss.dormant&&typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4){ if(typeof rectorLavaTick==='function')rectorLavaTick(_rectorBoss,performance.now()); }
   if(typeof rectorChainTick==='function')rectorChainTick();
   if(player.regen>=50){player.regen=0;
+    if(player.boosts){ let _anyB=false; for(const _bk in player.boosts){ if(boostFor(_bk)>0)_anyB=true; } if(_anyB&&typeof renderSkills==='function')renderSkills(); }
     if(player.hp<maxHp()&&performance.now()-player.combatT>3000){player.hp++;updateOrb();}}
   { const _hpr=(typeof eqStat==='function')?eqStat('hpregen'):0; if(_hpr>0){ if(player.hp<maxHp()){ player._hpAcc=(player._hpAcc||0)+_hpr*HP_REGEN_PER_PT; if(player._hpAcc>=1){const _g=Math.floor(player._hpAcc);player._hpAcc-=_g;player.hp=Math.min(maxHp(),player.hp+_g);updateOrb();} } else player._hpAcc=0; } else player._hpAcc=0; }
   { const _ppr=Math.min(8,(typeof eqStat==='function')?eqStat('prayregen'):0); if(_ppr>0){ if(player.pray<maxPray()){ player._prAcc=(player._prAcc||0)+_ppr*PRAY_REGEN_PER_PT; if(player._prAcc>=1){const _g=Math.floor(player._prAcc);player._prAcc-=_g;player.pray=Math.min(maxPray(),player.pray+_g);if(typeof updatePrayOrb==='function')updatePrayOrb();} } else player._prAcc=0; } else player._prAcc=0; }
@@ -5800,6 +5892,7 @@ function playerTick(){
     const burnChance=Math.max(0,.45+(c8[2]-1)*.012-lvl('cooking')*.025-(countItem('oven_mitts')>0?0.2:0));
     sfx.cook();
     if(Math.random()<burnChance){
+      if(c8[1]==='shrimps'){ player.shrimpBurned=(player.shrimpBurned||0)+1; if(typeof LB!=='undefined'&&LB.submit)LB.submit(); }
       addItem(c8[1]==='shrimps'?'burnt_shrimps':'burnt_fish');
       msg('You accidentally burn the '+ITEMS[c8[0]].name.toLowerCase().replace('raw ','')+'.');
     }else{
@@ -6375,7 +6468,7 @@ function genUid(){return 'u'+Date.now().toString(36)+Math.random().toString(36).
 function saveObject(){
   return {
     skills:player.skills,inv:player.inv,hp:player.hp,x:(inChapel?CHAPEL_RETURN.x:inRectory?RECT_RETURN.x:inStPaul?STPAUL_RETURN.x:inMathes?MATHES_RETURN.x:inSos?SOS_RETURN.x:inVolcano?VOLC_RETURN.x:inParty?partyReturn.x:player.x),y:(inChapel?CHAPEL_RETURN.y:inRectory?RECT_RETURN.y:inStPaul?STPAUL_RETURN.y:inMathes?MATHES_RETURN.y:inSos?SOS_RETURN.y:inVolcano?VOLC_RETURN.y:inParty?partyReturn.y:player.y),
-    playMs:player.playMs,kills:player.kills,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,volc:(inVolcano?{fl:_lastVolcFloor,x:player.x,y:player.y}:null),
+    playMs:player.playMs,kills:player.kills,shrimpBurned:player.shrimpBurned||0,mapTrackIdx:mapTrackIdx,wildTrackIdx:wildTrackIdx,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,volc:(inVolcano?{fl:_lastVolcFloor,x:player.x,y:player.y}:null),
     equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
@@ -6548,6 +6641,11 @@ async function loadSlot(id, preObj){
       if(s.emberOrder!==undefined)player.emberOrder=s.emberOrder;
       if(s.emberBounty!==undefined)player.emberBounty=s.emberBounty;
       if(typeof s.kills==='number')player.kills=s.kills;
+      if(typeof s.mapTrackIdx==='number')mapTrackIdx=s.mapTrackIdx%MAP_TRACKS.length;
+      if(typeof s.wildTrackIdx==='number')wildTrackIdx=s.wildTrackIdx%WILD_TRACKS.length;
+      if(typeof _updTrackName==='function')_updTrackName();
+      if(typeof s.shrimpBurned==='number')player.shrimpBurned=s.shrimpBurned;
+      else player.shrimpBurned=0;   /* start counting from now for existing characters */
       if(s.collected)player.collected=s.collected;
       if(s.cageMaps&&typeof s.cageMaps==='object')player.cageMaps=s.cageMaps;
       if(Array.isArray(s.sosKills))player.sosKills=s.sosKills.slice();
@@ -6681,11 +6779,13 @@ function renderSkills(){
     const e=skillEls[s];
     /* equipment boosts stay silent (OSRS-style); only temporary
        buffs like prayer should surface here as e.g. 15/14 */
+    const bst=(typeof boostFor==='function')?boostFor(s):0;
+    const shown=l+bst;
     const lvEl=e.querySelector('.lv');
-    lvEl.textContent=l;
-    lvEl.style.color='';
-    e.querySelector('.lvb').textContent=l;
-    e.title='';
+    lvEl.textContent=shown;
+    lvEl.style.color = bst>0 ? '#5fe06a' : '';          /* boosted -> green, OSRS-style */
+    e.querySelector('.lvb').textContent=shown;
+    e.title = bst>0 ? (SKILL_META[s].name+': '+shown+' (boosted from '+l+')') : '';
     e.classList.toggle('maxed', l>=99);
   }
   const cmb=cmbLvl();
@@ -6734,7 +6834,8 @@ function itemPrimary(i){
     removeSlot(i);player.hp=clamp(player.hp+heal,0,maxHp());updateOrb();sfx.eat();
     msg('You eat the '+ITEMS[id].name.toLowerCase()+'. It heals some health.');
   }else if(prim==='Drink'){
-    if(ITEMS[id].prayrestore){ removeSlot(i); player.pray=maxPray(); if(typeof updatePrayOrb==='function')updatePrayOrb(); if(sfx.eat)sfx.eat(); msg('You drain the '+ITEMS[id].name.toLowerCase()+' \u2014 your prayer is restored.','#7fd0e8'); }
+    if(ITEMS[id].potion){ drinkPotion(id,i); }
+    else if(ITEMS[id].prayrestore){ removeSlot(i); player.pray=maxPray(); if(typeof updatePrayOrb==='function')updatePrayOrb(); if(sfx.eat)sfx.eat(); msg('You drain the '+ITEMS[id].name.toLowerCase()+' \u2014 your prayer is restored.','#7fd0e8'); }
     else { const heal=ITEMS[id].heal||0; removeSlot(i); if(heal){player.hp=clamp(player.hp+heal,0,maxHp());updateOrb();} if(sfx.eat)sfx.eat(); msg('You drink the '+ITEMS[id].name.toLowerCase()+'.'); }
   }else if(prim==='Bury'){
     removeSlot(i);addXp('prayer',{big_bones:30,small_bones:5,ectoplasm:14,infernal_ashes:40}[id]||10);sfx.bury();
@@ -7001,6 +7102,7 @@ document.getElementById('sndchk').addEventListener('change',e=>{muted=!e.target.
 (function(){var _wc=document.getElementById('winterchk'); if(_wc)_wc.addEventListener('change',function(e){ if(player){player.winter=e.target.checked; if(player.winter)player.fall=false;} if(typeof applyWinter==='function')applyWinter(); dirty=true; });})();
 (function(){var _fc=document.getElementById('fallchk'); if(_fc)_fc.addEventListener('change',function(e){ if(player){player.fall=e.target.checked; if(player.fall)player.winter=false;} if(typeof applyFall==='function')applyFall(); dirty=true; });})();
 document.getElementById('muschk').addEventListener('change',e=>{musicOff=!e.target.checked;updateMusic();});
+{const _mtn=document.getElementById('mtracknext'); if(_mtn)_mtn.addEventListener('click',cycleTrack);}
 document.getElementById('savebtn').addEventListener('click',()=>{
   if(storageOK)saveGame(false);else msg('Autosave is not available here.','#103a8c');});
 document.getElementById('exportbtn').addEventListener('click',()=>{exportSaveToClipboard();});
@@ -8415,6 +8517,15 @@ function drawItemIcon(g,id,S){
       for(let k=-1;k<=1;k++){g.fillStyle='#ff6a2a';g.beginPath();g.arc(sx*5.5+k*1.6,2.5,0.9,0,6.28);g.fill();}
     }
     g.restore();return;
+  }
+  if(ITEMS[id]&&ITEMS[id].potion){
+    const P=ITEMS[id].potion, col={attack:'#d0452a',strength:'#3fae4a',defense:'#3a7ad0',ranged:'#c98a2a',magic:'#a24fd0'}[P.skill]||'#d0452a';
+    g.fillStyle=col; g.beginPath(); g.arc(0,S*0.12,S*0.21,0,6.28); g.fill();
+    g.fillStyle=col; g.fillRect(-S*0.06,-S*0.24,S*0.12,S*0.30);
+    g.strokeStyle='rgba(255,255,255,0.55)'; g.lineWidth=1.3; g.beginPath(); g.arc(-S*0.06,S*0.06,S*0.11,Math.PI*0.8,Math.PI*1.5); g.stroke();
+    g.fillStyle=P.super?'#ffd23d':'#7a4a22'; g.fillRect(-S*0.065,-S*0.30,S*0.13,S*0.10);
+    if(P.super){ g.strokeStyle='#ffe27a'; g.lineWidth=1.1; g.beginPath(); g.arc(0,S*0.12,S*0.21,0,6.28); g.stroke(); }
+    g.restore(); return;
   }
   if(id==='elemental_shield'){
     g.fillStyle='#4a5568';g.beginPath();g.arc(0,0,12,0,6.28);g.fill();
@@ -19158,7 +19269,16 @@ function openForge(){forgeConfirmId=null;renderForge();const el=document.getElem
 /* =================== Hirschfeld's Emberdeep shop =================== */
 const EMBER_SHOP=[
   {id:'ember_brew',         cat:'Consumable', cinders:120},
-  {id:'prayer_draught',     cat:'Consumable', cinders:200},
+  {id:'potion_attack',       cat:'Consumable', cinders:30},
+  {id:'potion_strength',       cat:'Consumable', cinders:30},
+  {id:'potion_defense',       cat:'Consumable', cinders:30},
+  {id:'potion_ranged',       cat:'Consumable', cinders:30},
+  {id:'potion_magic',       cat:'Consumable', cinders:30},
+  {id:'elixir_attack',       cat:'Consumable', cinders:75},
+  {id:'elixir_strength',       cat:'Consumable', cinders:75},
+  {id:'elixir_defense',       cat:'Consumable', cinders:75},
+  {id:'elixir_ranged',       cat:'Consumable', cinders:75},
+  {id:'elixir_magic',       cat:'Consumable', cinders:75},
   {id:'boots_speed_silver', cat:'Luxury', coins:600000,  warrants:60,  cinders:8000},
   {id:'boots_speed_gold',   cat:'Luxury', coins:1400000, warrants:130, cinders:16000},
   {id:'gloves_haste_silver',cat:'Luxury', coins:900000,  warrants:90,  cinders:11000},
@@ -19195,7 +19315,8 @@ function emberBuy(e){
   if(countItem('cinders')<(e.cinders||0))return 'poor';
   if(countItem('warrant')<(e.warrants||0))return 'poor';
   if(e.coins)takeItems('coins',e.coins); if(e.cinders)takeItems('cinders',e.cinders); if(e.warrants)takeItems('warrant',e.warrants);
-  if(!addItem(e.id,1)){ if(e.coins)addItem('coins',e.coins); if(e.cinders)addItem('cinders',e.cinders); if(e.warrants)addItem('warrant',e.warrants); return 'full'; }
+  const _qty=(ITEMS[e.id]&&ITEMS[e.id].doses)||1;
+  if(!addItem(e.id,_qty)){ if(e.coins)addItem('coins',e.coins); if(e.cinders)addItem('cinders',e.cinders); if(e.warrants)addItem('warrant',e.warrants); return 'full'; }
   if(player.collected)player.collected[e.id]=true;
   dirty=true; return 'ok';
 }
@@ -27634,7 +27755,7 @@ const MP = (function () {
 
   /* ---- Rector siphon pillars: owner-authoritative shared HP (mirrors group mob combat) ---- */
   let _pilSyncT = 0;
-  function _rectorOwnerUid() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return null; const c = claims.get(_rectorBoss.i); return c ? c.uid : null; }
+  function _rectorOwnerUid() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return null; const c = claims.get(_rectorBoss.i); if (!c) return null; if (c.uid !== player.uid && (Date.now() - c.t) > 5000) return null; /* owner went silent (left/crashed): treat as unowned so ownership re-elects */ return c.uid; }
   function emberPillarSync() {
     if (!active() || !conn || !groupInGroup() || typeof objects === 'undefined') return;
     const _n = now(); if (_n - _pilSyncT < 220) return; _pilSyncT = _n;
@@ -27648,7 +27769,7 @@ const MP = (function () {
     let low = player.uid; for (const rp of rectorArenaPlayers()) if (rp.uid && rp.uid < low) low = rp.uid;
     return low === player.uid; }
   function rectorOwnedByGroupmate() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return false; const c = claims.get(_rectorBoss.i); return !!(c && c.uid && c.uid !== player.uid && isGroupmate(c.uid)); }
-  function rectorArenaPlayers() { const out = []; if (typeof RP !== 'undefined') for (const r of RP.values()) if (_remoteHere(r) && r.px >= 192 && r.px <= 247 && r.py >= 78 && r.py <= 114) out.push({ uid: r.uid, x: Math.round(r.px), y: Math.round(r.py) }); return out; }
+  function rectorArenaPlayers() { const out = []; if (typeof RP !== 'undefined') for (const r of RP.values()) if (_remoteHere(r) && (Date.now() - (r.last || 0) < 5000) && r.px >= 192 && r.px <= 247 && r.py >= 78 && r.py <= 114) out.push({ uid: r.uid, x: Math.round(r.px), y: Math.round(r.py) }); return out; }
   function rectorChainWarn(fireIn, enr) { if (active() && conn && groupInGroup()) send({ t: 'rchainwarn', uid: player.uid, f: fireIn | 0, e: enr | 0 }); }
   function rectorChainFire(segs, hits, dmg) { if (active() && conn && groupInGroup()) send({ t: 'rchain', uid: player.uid, s: segs, h: hits, d: dmg | 0 }); }
   function rectorHandoff() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return; const c = claims.get(_rectorBoss.i); if (c && c.uid === player.uid) { claims.delete(_rectorBoss.i); if (active() && conn) send({ t: 'release', m: _rectorBoss.i }); } const ag = mobAggro.get(_rectorBoss.i); if (ag) ag.acc.delete(player.uid); }
@@ -29732,6 +29853,7 @@ const LB = (function(){
     {id:'kills',  label:'Kills',   fmt:function(v){return ''+v;}},
     {id:'boss_kills', label:'Boss Kills', fmt:function(v){return ''+v;}},
     {id:'brat_kills', label:'Fac Brats Slain', fmt:function(v){return ''+v;}},
+    {id:'shrimp_burned', label:'Shrimp Burned', fmt:function(v){return ''+v;}},
     {id:'slayer_tasks', label:'Slayer Tasks', fmt:function(v){return ''+v;}},
     {id:'gold',   label:'Gold',    fmt:function(v){return _comma(v);}},
     {id:'pvp_wins', label:'PvP wins',  fmt:function(v){return ''+v;}},
@@ -29752,7 +29874,7 @@ const LB = (function(){
       cmb:(typeof cmbLvl==='function')?cmbLvl():((player&&player.cmb)||3),
       total:(typeof totalLevel==='function')?totalLevel():0,
       maxhit:(player&&player.maxHit)||0, kills:(player&&player.kills)||0, gold:_gold(),
-      pvp_wins:(player&&player.pvpWins)||0, boss_kills:(player&&player.bossKills)||0, brat_kills:(player&&player.bratKills)||0, slayer_tasks:(player&&player.slayer&&player.slayer.tasksDone)||0, deaths:(player&&player.deaths)||0, magic_hit:(player&&player.maxMagicHit)||0, range_hit:(player&&player.maxRangeHit)||0, hours:Math.floor(((player&&player.playMs)||0)/360000),
+      pvp_wins:(player&&player.pvpWins)||0, boss_kills:(player&&player.bossKills)||0, brat_kills:(player&&player.bratKills)||0, shrimp_burned:(player&&player.shrimpBurned)||0, slayer_tasks:(player&&player.slayer&&player.slayer.tasksDone)||0, deaths:(player&&player.deaths)||0, magic_hit:(player&&player.maxMagicHit)||0, range_hit:(player&&player.maxRangeHit)||0, hours:Math.floor(((player&&player.playMs)||0)/360000),
       title:(player&&player.title)||null };
   }
   var _lastKey='', _lastT=0;
