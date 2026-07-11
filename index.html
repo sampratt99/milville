@@ -414,7 +414,7 @@
   .stylebtn:hover{background:#4a4234;}
   .stylebtn.on{background:#5d5141; box-shadow:0 0 0 1px #c9a23d inset; color:#ffe9c4;}
   #prayhead,#spellhead{color:#ffd98c; font:bold 12px Georgia,serif; text-align:center; padding:2px 0 7px;}
-  #praylist{display:flex; flex-direction:column; gap:6px; padding:0 6px;}
+  #praylist{display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:6px;}
   .prayrow{display:flex; align-items:center; gap:8px; background:#3a3328;
     border:1px solid #15110c; border-radius:3px; padding:5px 7px; cursor:pointer;}
   .prayrow:hover{background:#4a4234;}
@@ -439,10 +439,10 @@
     background:radial-gradient(circle at 35% 30%, #9a9082, #4f483c 70%);
   }
   #runorbwrap.on #runorb{background:radial-gradient(circle at 35% 30%, #ffe14a, #b8901a 70%);}
-  #activeprayers{position:absolute; left:4px; bottom:4px; display:flex;
-    flex-direction:column; gap:3px; z-index:3;}
-  #activeprayers canvas{background:rgba(20,16,10,.78); border:1px solid #ffe66d;
-    border-radius:50%; box-shadow:0 0 6px rgba(255,230,109,.4);}
+  #activeprayers{position:absolute; right:3px; top:3px; display:flex;
+    flex-direction:row-reverse; flex-wrap:wrap; gap:3px; max-width:120px; z-index:6;}
+  #activeprayers canvas{width:20px;height:20px;background:rgba(20,16,10,.82); border:1px solid #ffe66d;
+    border-radius:50%; box-shadow:0 0 5px rgba(255,230,109,.4);}
   .eslot{
     width:46px; height:46px; background:#3a3128;
     border:1px solid #0d0b08; border-radius:3px;
@@ -697,6 +697,22 @@
   .encname{font:10px Georgia,serif;color:#cdbf9a;text-align:center;line-height:1.15;
     max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
   .encdetail{max-height:64vh;overflow-y:auto;}
+  #guidewrap{display:flex; gap:10px; max-height:66vh;}
+  #guidenav{flex:0 0 148px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; padding-right:4px;}
+  .gnav{display:flex; align-items:center; gap:7px; font:bold 12px Georgia,serif; color:#cdbf9a; background:linear-gradient(#332d1e,#282216); border:1px solid #514627; border-radius:6px; padding:7px 8px; cursor:pointer; text-align:left;}
+  .gnav:hover{background:linear-gradient(#3f3726,#2f2818);}
+  .gnav.on{color:#ffe08a; border-color:#c9a23a; background:linear-gradient(#4a3f22,#382f1a);}
+  .gnav canvas{flex:0 0 18px;}
+  #guidebody{flex:1; overflow-y:auto; padding:2px 8px 8px 2px; color:#e8dfc8; font:13px/1.5 Georgia,serif;}
+  #guidebody h2{color:#ffe08a; font-size:17px; margin:2px 0 8px; border-bottom:1px solid #514627; padding-bottom:5px;}
+  #guidebody h3{color:#ffcf6a; font-size:14px; margin:14px 0 5px;}
+  #guidebody p{margin:6px 0;} #guidebody ul{margin:5px 0 5px 2px; padding-left:18px;} #guidebody li{margin:3px 0;}
+  #guidebody b{color:#fff0c8;} #guidebody .gtag{display:inline-block; background:#3a3322; border:1px solid #5a4d2e; border-radius:4px; padding:0 5px; color:#ffd98a; font-size:12px;}
+  #guidebody .gcard{background:rgba(30,25,15,.5); border:1px solid #4a4027; border-radius:7px; padding:8px 11px; margin:8px 0;}
+  #guidebody .gtri{color:#7fae3f;} #guidebody .gnote{color:#c9b98a; font-style:italic; font-size:12px;}
+  #skillsub{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0 10px;}
+  .sksub{display:flex; align-items:center; gap:5px; font:bold 11px Georgia,serif; color:#cdbf9a; background:#302a1c; border:1px solid #4a4027; border-radius:5px; padding:4px 7px; cursor:pointer;}
+  .sksub.on{color:#ffe08a; border-color:#c9a23a;} .sksub canvas{flex:0 0 15px;}
   .encback{font:bold 11px Georgia,serif;color:#ffd98c;background:none;border:none;cursor:pointer;padding:2px 0 8px;}
   .encback:hover{text-decoration:underline;}
   .enchd{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
@@ -813,36 +829,7 @@
         </div>
         <div class="panel" id="panel-prayer">
           <div id="prayhead">Prayers</div>
-          <div id="praylist">
-            <div class="prayrow" data-pr="halcyon" title="Halcyon Strike &mdash; +18% Attack while active">
-              <canvas width="34" height="34"></canvas>
-              <div class="prinfo"><b>Halcyon Strike</b><span>Sharpens your attack</span></div>
-            </div>
-            <div class="prayrow" data-pr="gordon" title="Gordon Medal &mdash; +18% Strength while active">
-              <canvas width="34" height="34"></canvas>
-              <div class="prinfo"><b>Gordon Medal</b><span>Hardens your strength</span></div>
-            </div>
-            <div class="prayrow" data-pr="love" title="Love Divine &mdash; +18% Defense while active">
-              <canvas width="34" height="34"></canvas>
-              <div class="prinfo"><b>Love Divine</b><span>Steels your defense</span></div>
-            </div>
-            <div class="prayrow" data-pr="pelicans_eye" title="Pelican&rsquo;s Eye &mdash; +18% Ranged accuracy while active">
-              <canvas width="34" height="34"></canvas>
-              <div class="prinfo"><b>Pelican&rsquo;s Eye</b><span>Sharpens your aim</span></div>
-            </div>
-            <div class="prayrow" data-pr="sheldons_insight" title="Sheldon&rsquo;s Insight &mdash; +18% Magic accuracy while active">
-              <canvas width="34" height="34"></canvas>
-              <div class="prinfo"><b>Sheldon&rsquo;s Insight</b><span>Focuses your casting</span></div>
-            </div>
-            <div class="prayrow" data-pr="rectory_tele" title="Rectory Teleport &mdash; teleport home to the Rectory (needs Prayer 3, costs 50 points)">
-              <canvas width="34" height="34"></canvas>
-              <div class="prinfo"><b>Rectory Teleport</b><span>Home, to the Rectory &middot; 50 pts</span></div>
-            </div>
-            <div class="prayrow" data-pr="wild_tele" title="Wilderness Teleport &mdash; teleport out past the ditch by the Slayer Master (needs Prayer 5, costs 50 points)">
-              <canvas width="34" height="34"></canvas>
-              <div class="prinfo"><b>Wilderness Teleport</b><span>Out past the ditch &middot; 50 pts</span></div>
-            </div>
-          </div>
+          <div id="praylist"></div>
           <div id="prayfoot">Active prayers drain your prayer points.<br>
           Restore them at the chapel altar &mdash; or at a darker shrine far to the west.</div>
         </div>
@@ -870,7 +857,7 @@
           <div class="tab" data-p="friends" data-icon="friends" title="Friends"><canvas width="22" height="22"></canvas></div>
           <div class="tab" data-p="settings" data-icon="wrench" title="Options"><canvas width="22" height="22"></canvas></div>
           <div class="tab" data-p="emotes" data-icon="emote" title="Emotes"><canvas width="22" height="22"></canvas></div>
-          <div class="tab" data-act="ency" data-icon="book" title="Encyclopedia"><canvas width="22" height="22"></canvas></div>
+          <div class="tab" data-act="ency" data-icon="question" title="Wiki"><canvas width="22" height="22"></canvas></div>
           <div class="tab" data-act="log" data-icon="log" title="Adventurer's Log"><canvas width="22" height="22"></canvas></div>
         </div>
       </div>
@@ -1007,13 +994,14 @@
   <div id="logbody"></div>
 </div></div>
 <div id="encui" class="gemodal"><div class="gepanel" style="width:560px;">
-  <div class="gebar"><span>Encyclopedia</span><div class="gex" id="encclose" title="Close">&#10005;</div></div>
-  <div id="enctabs" class="enctabs"><button class="enctab on" data-encmode="items">Items</button><button class="enctab" data-encmode="bestiary">Bestiary</button></div>
+  <div class="gebar"><span>Wiki</span><div class="gex" id="encclose" title="Close">&#10005;</div></div>
+  <div id="enctabs" class="enctabs"><button class="enctab on" data-encmode="guide">Guide</button><button class="enctab" data-encmode="items">Items</button><button class="enctab" data-encmode="bestiary">Bestiary</button></div>
   <input id="encsearch" class="encsearch" type="text" placeholder="Search items…" autocomplete="off" spellcheck="false">
   <div id="encfilters" class="encfilters"></div>
   <div id="enccount" class="enccount"></div>
   <div id="encgrid" class="encgrid"></div>
   <div id="encdetail" class="encdetail" style="display:none;"></div>
+  <div id="guidewrap" style="display:none;"><div id="guidenav"></div><div id="guidebody"></div></div>
 </div></div>
 <div id="geui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Grand Exchange</span><span id="gecoins"></span><div class="gex" id="geclose" title="Close">&#10005;</div></div>
@@ -1055,7 +1043,8 @@
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+<script>window.addEventListener("error",function(e){try{console.error("[Milville error]",e.message,"@",e.filename,e.lineno+":"+e.colno,e.error&&e.error.stack);}catch(_){}} );</script>
 <script>
 'use strict';
 /* ============================== utils ============================== */
@@ -1281,21 +1270,21 @@ ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with
 ITEMS.dragon_platelegs={name:'Dragon platelegs',ex:'Red dragon-plate greaves trimmed in gold.',val:130000,equip:{slot:'legs',def:66,model:'legs',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
 ITEMS.dragon_kiteshield={name:'Dragon kiteshield',ex:'A red kiteshield bearing a golden wyrm.',val:120000,equip:{slot:'shield',def:60,model:'shieldM',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
 /* ===== The Snow King unique drops (Pat's Peak summit boss) ===== */
-ITEMS.frostmaul={name:'Frostmaul',ex:'A two-handed maul hewn from blue-black glacier ice, its head a cluster of jagged frost shards. Its blows chill to the bone \u2014 and sometimes freeze the foe solid.',val:250000,equip:{slot:'weapon',atk:78,str:126,spd:3600,twoHand:true,model:'maul',verb:'Wield',req:60,tint:0x7fc8ec,trim:0xe6f6ff,freeze:0.15}};
+ITEMS.frostmaul={name:'Frostmaul',ex:'A two-handed maul hewn from blue-black glacier ice, its head a cluster of jagged frost shards. Its blows chill to the bone \u2014 and sometimes freeze the foe solid.',val:250000,equip:{slot:'weapon',atk:78,str:126,spd:3300,twoHand:true,model:'maul',verb:'Wield',req:60,tint:0x7fc8ec,trim:0xe6f6ff,freeze:0.15}};
 ITEMS.glacial_full_helm={name:'Glacial full helm',ex:'A full helm of blue glacier-steel, crowned with a ring of frost spikes that never melt.',val:120000,equip:{slot:'head',def:56,model:'helm',verb:'Wear',req:60,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
 ITEMS.glacial_platebody={name:'Glacial platebody',ex:'A breastplate of blue glacier-steel, rimed white and studded with frost-shard spikes across the shoulders.',val:220000,equip:{slot:'body',def:122,model:'plate',verb:'Wear',req:60,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
 ITEMS.glacial_platelegs={name:'Glacial platelegs',ex:'Greaves of glacier-steel that never thaw, edged with a frost-spiked knee.',val:160000,equip:{slot:'legs',def:76,model:'legs',verb:'Wear',req:60,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
 /* ===== EMBER SET: the finest armour in the school, forged only in the Emberdeep. Best-in-slot defence, molten look, a set bonus of lava-immunity + power. ===== */
-ITEMS.ember_helm={name:'Ember helm',ex:'A full helm beaten from cooled magma and obsidian, its visor-slit glowing like a forge-mouth. The crown of the Ember set.',val:340000,cat:'Armour',equip:{slot:'head',def:62,str:2,model:'helm',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
-ITEMS.ember_body={name:'Emberplate body',ex:'A breastplate of layered obsidian scale, molten seams running white-hot between the plates. Heavier and harder than any glacier-steel.',val:520000,cat:'Armour',equip:{slot:'body',def:132,str:4,model:'plate',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
-ITEMS.ember_legs={name:'Emberplate legs',ex:'Greaves of fused volcanic glass, veined with living fire. They never cool.',val:380000,cat:'Armour',equip:{slot:'legs',def:84,str:3,model:'legs',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
-ITEMS.ember_boots={name:'Emberboots',ex:'Sabatons of black volcanic glass that let the wearer tread molten rock. Trailing embers mark each step.',val:180000,cat:'Armour',equip:{slot:'feet',def:22,str:1,model:'boots',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
-ITEMS.ember_gauntlets={name:'Ember gauntlets',ex:'Obsidian-plated gauntlets that glow at the knuckles. Their grip never falters, however hot the forge.',val:180000,cat:'Armour',equip:{slot:'hands',def:20,str:1,model:'gauntlets',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
+ITEMS.ember_helm={name:'Ember helm',ex:'A full helm beaten from cooled magma and obsidian, its visor-slit glowing like a forge-mouth. The crown of the Ember set.',val:340000,cat:'Armour',equip:{slot:'head',def:62,rdef:62,mdef:62,str:2,model:'helm',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
+ITEMS.ember_body={name:'Emberplate body',ex:'A breastplate of layered obsidian scale, molten seams running white-hot between the plates. Heavier and harder than any glacier-steel.',val:520000,cat:'Armour',equip:{slot:'body',def:132,rdef:132,mdef:132,str:4,model:'plate',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
+ITEMS.ember_legs={name:'Emberplate legs',ex:'Greaves of fused volcanic glass, veined with living fire. They never cool.',val:380000,cat:'Armour',equip:{slot:'legs',def:84,rdef:84,mdef:84,str:3,model:'legs',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
+ITEMS.ember_boots={name:'Emberboots',ex:'Sabatons of black volcanic glass that let the wearer tread molten rock. Trailing embers mark each step.',val:180000,cat:'Armour',equip:{slot:'feet',def:22,rdef:22,mdef:22,str:1,model:'boots',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
+ITEMS.ember_gauntlets={name:'Ember gauntlets',ex:'Obsidian-plated gauntlets that glow at the knuckles. Their grip never falters, however hot the forge.',val:180000,cat:'Armour',equip:{slot:'hands',def:20,rdef:20,mdef:20,str:1,model:'gauntlets',verb:'Wear',req:60,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
 ITEMS.leaf_sword={name:'Leaf-bladed sword',ex:'A broad green-steel blade honed for rubbery slayer hides \u2014 the only edge a kurask fears.',val:15000,equip:{slot:'weapon',atk:55,str:40,spd:2400,model:'leafsw',verb:'Wield',req:40,tint:0x5a8a3a,trim:0x8fc46a}};
 ITEMS.leaf_battleaxe={name:'Leaf-bladed battleaxe',ex:'A heavy leaf-forged axehead that shears through kurask hide \u2014 and most other things.',val:90000,equip:{slot:'weapon',atk:72,str:84,spd:3000,model:'leafax',verb:'Wield',req:55,tint:0x4a7a2e,trim:0x9fd47a}};
 ITEMS.leaf_dagger={name:'Leaf-bladed dagger',ex:'A single perfect leaf of razor green-steel, gripped point-down in the off hand. The only offhand blade ever forged.',val:120000,equip:{slot:'shield',atk:16,str:10,def:8,model:'leafdag',verb:'Wield',req:60,tint:0x3f6b2e,trim:0x9fd47a}};
-ITEMS.ashfang={name:'Ashfang',ex:'Cinderwing\u2019s own pinion-bone, strung with her sinew. The only bow alive with fire in its draw. It conjures its own dragon arrows as it is drawn \u2014 no ammunition need be equipped in the ammo slot.',val:220000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:84,rstr:14,req:70,maxArrow:7}};
-ITEMS.emberbrand={name:'Emberbrand',ex:'A blade quenched in the crater\u2019s heart \u2014 its fuller still runs molten. The finest sword ever forged. (It carries a special attack: Volcanic Rend.)',val:260000,equip:{slot:'weapon',atk:88,str:76,spd:2400,model:'sword',verb:'Wield',req:60,spec:1,tint:0x2b1c16,trim:0xff6a2a}};
+ITEMS.ashfang={name:'Ashfang',ex:'Cinderwing\u2019s own pinion-bone, strung with her sinew. The only bow alive with fire in its draw. It conjures its own dragon arrows as it is drawn \u2014 no ammunition need be equipped in the ammo slot.',val:220000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:84,rstr:18,req:70,maxArrow:7}};
+ITEMS.emberbrand={name:'Emberbrand',ex:'A blade quenched in the crater\u2019s heart \u2014 its fuller still runs molten. The finest sword ever forged. (It carries a special attack: Volcanic Rend.)',val:260000,equip:{slot:'weapon',atk:88,str:76,spd:2200,model:'sword',verb:'Wield',req:60,spec:1,tint:0x2b1c16,trim:0xff6a2a}};
 ITEMS.ember_cape={name:'Ember cape',ex:'Woven from Cinderwing\u2019s downfeathers; it smoulders but never burns its wearer.',val:90000,equip:{slot:'cape',ratk:6,rstr:4,def:6,model:'cape',verb:'Wear',req:0,tint:0x8a2e1a,trim:0xffa24a}};
 ITEMS.forgemaster_cape={name:"Forgemaster's cape",ex:'Prised from the sealed vault at the Heart of the Emberdeep. Its weave drinks heat and marks its bearer a master of the forge \u2014 finest cape the mountain has to give.',val:0,noSell:true,cat:'Cape',equip:{slot:'cape',atk:4,str:6,def:10,ratk:5,rstr:4,matk:4,mdmg:2,mdef:7,rdef:7,model:'cape',verb:'Wear',req:0,tint:0x8a2e1a,trim:0xffc258}};
 ITEMS.molten_crown={name:'Molten Crown',ex:'A circlet of cooling magma wrenched from Cinderwing\u2019s crest \u2014 a trophy that still breathes heat.',val:300000,equip:{slot:'head',def:30,ratk:6,rstr:3,model:'moltcrown',verb:'Wear',req:0}};
@@ -1550,7 +1539,7 @@ ITEMS.warrant={name:'Warrant',ex:'A rector\u2019s seal of commission, pressed in
 ITEMS.rector_signet={name:'First Rector\u2019s signet',ex:'A signet ring of blackened iron, its pelican crest inverted. Prised from the First Rector \u2014 dense with stolen power, it can be smelted like a bar.',val:0,noSell:true,stack:1};
 ITEMS.obsidian_shard={name:'Obsidian shard',ex:'A splinter of volcanic glass, edges keen enough to draw blood from the air. The Cinder Forge hungers for these.',val:1400,stack:1};
 /* ===== Cinder Forge upgrades of Cinderwing's weapons ===== */
-ITEMS.ashfang_kindled={name:'Ashfang, Kindled',ex:'Ashfang rekindled at the Cinder Forge \u2014 the pinion-bow now draws living flame, each shot trailing embers. Cinderwing\u2019s fury, sharpened. Like Ashfang, it looses its own dragon arrows with nothing equipped in the ammo slot.',val:420000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:96,rstr:22,req:75,maxArrow:8}};
+ITEMS.ashfang_kindled={name:'Ashfang, Kindled',ex:'Ashfang rekindled at the Cinder Forge \u2014 the pinion-bow now draws living flame, each shot trailing embers. Cinderwing\u2019s fury, sharpened. Like Ashfang, it looses its own dragon arrows with nothing equipped in the ammo slot.',val:420000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:96,rstr:29,req:75,maxArrow:8}};
 ITEMS.emberbrand_reforged={name:'Emberbrand, Reforged',ex:'Emberbrand folded anew in the Heart of the Emberdeep \u2014 its molten fuller never cools, and Volcanic Rend bites deeper. The finest blade, bettered.',val:480000,equip:{slot:'weapon',atk:100,str:88,spd:2200,model:'sword',verb:'Wield',req:70,spec:1,tint:0x1c0f0a,trim:0xff8a2a}};
 
 /* ===== Emberdeep consumables + luxury (Hirschfeld's shop) ===== */
@@ -1566,10 +1555,23 @@ ITEMS.amulet_regen={name:'Heroic Amulet of Rejuvenation',ex:'A gold sunburst set
 ITEMS.bodkin_health={name:'Golden Bodkin of Health',ex:'A gilt offhand dirk. It bites in battle and mends its wielder \u2014 health regenerates while wielded.',val:1100000,cat:'Luxury',equip:{slot:'shield',atk:8,str:8,def:2,hpregen:3,model:'sword',verb:'Wield',req:0,tint:0xe0402a,trim:0xffd24a}};
 ITEMS.bodkin_piety={name:'Golden Bodkin of Piety',ex:'A gilt offhand dirk that keeps the faith \u2014 prayer regenerates while wielded.',val:1100000,cat:'Luxury',equip:{slot:'shield',atk:8,str:8,def:2,prayregen:3,model:'sword',verb:'Wield',req:0,tint:0x9a7fe0,trim:0xffd24a}};
 ITEMS.bodkin_rejuv={name:'Golden Bodkin of Rejuvenation',ex:'The finest offhand dirk \u2014 it strikes hard and restores both health and prayer while wielded.',val:3400000,cat:'Luxury',equip:{slot:'shield',atk:10,str:10,def:3,hpregen:5,prayregen:5,model:'sword',verb:'Wield',req:0,tint:0xffd24a,trim:0xfff0b0}};
+ITEMS.halcyon_grimoire={name:'Halcyon Grimoire',ex:'An ornate red leather-bound book of forgotten prayers and fiercer spells \u2014 its pages hum with power and quicken the faithful.',val:3200000,cat:'Luxury',equip:{slot:'shield',model:'book',armStyle:'magic',verb:'Wield',matk:25,mdmg:13,mdef:8,prayregen:4,req:0,tint:0x8c1c22,trim:0xe3b21f}};
+ITEMS.crown_wizardry={name:'Crown of Wizardry',ex:'A tall sapphire-studded circlet of the archmagi \u2014 it deepens the well of prayer and sharpens every incantation.',val:3000000,cat:'Luxury',equip:{slot:'head',model:'crown',armStyle:'magic',verb:'Wear',matk:20,mdmg:13,mdef:6,def:2,pray:50,req:0,tint:0x2a3aa0,trim:0xe3b21f}};
+ITEMS.quiver_farsight={name:'Quiver of Farsight',ex:'A deep enchanted quiver that never empties \u2014 it conjures the finest arrows your skill allows and lends a hawk\u2019s eye.',val:3400000,cat:'Luxury',equip:{slot:'ammo',model:'quiver',verb:'Wear',rstr:44,ratk:20,quiver:1,req:0,tint:0x3a5a2a,trim:0xd0b070}};
+ITEMS.quiver_rejuv={name:'Golden Quiver of Rejuvenation',ex:'A gilded quiver blessed at the altar \u2014 it never empties, and mends flesh and faith as you fight, though its arrows fly a touch softer.',val:3800000,cat:'Luxury',equip:{slot:'ammo',model:'quiver',verb:'Wear',rstr:24,ratk:12,prayregen:4,hpregen:4,quiver:1,req:0,tint:0xffd24a,trim:0xfff0b0}};
+ITEMS.shield_mountain={name:'Shield of the Mountain',ex:'A colossal slab of layered granite and iron, immovable as the peak it was hewn from \u2014 blows simply break against it.',val:3600000,cat:'Luxury',equip:{slot:'shield',model:'towershield',verb:'Wield',def:100,rdef:100,mdef:95,str:4,hp:50,req:0,tint:0x6e6f73,trim:0x9a9ca0}};
 ITEMS.ring_embers={name:'Ring of Embers',ex:'A band of living coal. It lends real force to every blow.',val:900000,cat:'Luxury',equip:{slot:'ring',str:8,rstr:8,model:'ring',verb:'Wear',req:0,tint:0xff5a1e}};
-ITEMS.ring_warden={name:'Ring of the Warden',ex:'A heavy slag band that turns aside what would fell you.',val:900000,cat:'Luxury',equip:{slot:'ring',def:14,model:'ring',verb:'Wear',req:0,tint:0x8a8f9a}};
+ITEMS.ring_warden={name:'Ring of the Warden',ex:'A heavy slag band that turns aside blade, bolt and spell alike \u2014 the wardstone of a true tank.',val:900000,cat:'Luxury',equip:{slot:'ring',def:16,rdef:16,mdef:16,model:'ring',verb:'Wear',req:0,tint:0x8a8f9a}};
 ITEMS.ring_rector={name:'Ring of the Rector',ex:'The First Rector\u2019s own seal-ring, humming with the arcane authority he wielded in life. It sharpens every spell.',val:900000,cat:'Luxury',equip:{slot:'ring',matk:8,mdmg:4,model:'ring',verb:'Wear',req:0,tint:0x7b5cff}};
 function isAshfang(id){return id==='ashfang'||id==='ashfang_kindled';}
+function isQuiver(id){return !!(id&&ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.quiver);}
+function bestArrowId(maxTier){var best=null,bestR=-1,rl=lvl('ranged');
+  for(var id in ITEMS){var e=ITEMS[id]&&ITEMS[id].equip;
+    if(!e||e.slot!=='ammo'||e.rstr===undefined||e.quiver)continue;
+    if((e.arrowTier||0)>(maxTier==null?99:maxTier))continue;
+    if((e.req||0)>rl)continue;
+    if(e.rstr>bestR){bestR=e.rstr;best=id;}}
+  return best||'bronze_arrow';}
 function isEmberbrand(id){return id==='emberbrand'||id==='emberbrand_reforged';}
 ITEMS.icicle_crown={name:'Icicle Crown',ex:'A jagged diadem of everlasting ice, wrenched from the Snow King\u2019s brow \u2014 a trophy few will ever wear. Its frost never leaves you.',val:300000,equip:{slot:'head',def:42,str:6,matk:6,mdef:8,model:'icecrown',verb:'Wear',req:60,tint:0xbfe9ff,trim:0xffffff,frostset:1}};
 ITEMS.aurora_cape={name:'Aurora cape',ex:'A shimmering cloak woven from captured northern lights \u2014 the frost-forged pride of the Snow King\u2019s hoard, and the finest cape a fighter can wear.',val:150000,equip:{slot:'cape',atk:8,str:6,def:9,ratk:8,rstr:4,matk:8,mdmg:4,rdef:9,mdef:9,model:'cape',verb:'Wear',tint:0x3fd0c8,trim:0x9a7fe0}};
@@ -1661,7 +1663,7 @@ ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u201
 ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8}};
 ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,equip:{slot:'weapon',atk:0,str:0,model:'maul',verb:'Wield',req:0}};
 ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:82,str:82,model:'whip',verb:'Wield',req:70,tint:0x1c1118,trim:0x7a2030}};
-ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft, swung two-handed. Slow to heave, but it lands like a rockfall.',val:90000,equip:{slot:'weapon',atk:62,str:120,spd:3600,model:'maul',twoHand:true,verb:'Wield',req:50,tint:0x6e6f73,trim:0x9a9ca0}};
+ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft, swung two-handed. Slow to heave, but it lands like a rockfall.',val:90000,equip:{slot:'weapon',atk:62,str:120,spd:3400,model:'maul',twoHand:true,verb:'Wield',req:50,tint:0x6e6f73,trim:0x9a9ca0}};
 ITEMS.draconic_visage={name:'Draconic visage',ex:'The petrified face of an ancient wyrm. Collectors pay fortunes for it.',val:250000,prim:'Examine'};
 ITEMS.basilisk_jaw={name:'Basilisk jaw',ex:'A heavy, fanged jawbone \u2014 worth a great deal to the right buyer.',val:35000,prim:'Examine'};
 ITEMS.wailing_relic={name:'Wailing relic',ex:'A cold iron charm that still hums with a banshee\u2019s grief. Valuable.',val:18000,prim:'Examine'};
@@ -2572,7 +2574,7 @@ const SPELL_TIERS=[
  ['bolt','Bolt',2,'chaos', 9,1,[17,23,29,35]],
  ['blast','Blast',3,'death',13,1,[41,47,53,59]],
  ['wave','Wave',4,'blood', 17,1,[62,65,70,75]],
- ['surge','Surge',5,'soul', 21,1,[81,85,90,95]]];
+ ['surge','Surge',5,'soul', 31,1,[81,85,90,95]]];
 const SPELLS={};
 SPELL_TIERS.forEach(function(T,ti){var tkey=T[0],tname=T[1],ecount=T[2],cat=T[3],pbase=T[4],pstep=T[5],reqs=T[6];
   ELEM_DEF.forEach(function(E){var el=E[0],eidx=E[1],col=E[2];
@@ -2580,7 +2582,9 @@ SPELL_TIERS.forEach(function(T,ti){var tkey=T[0],tname=T[1],ecount=T[2],cat=T[3]
     SPELLS[id]={id:id,name:el[0].toUpperCase()+el.slice(1)+' '+tname,element:el,tier:ti,req:reqs[eidx],pow:pbase+eidx*pstep,runes:runes,col:col};
   });
 });
-const SPELL_LIST=Object.keys(SPELLS).sort(function(a,b){return SPELLS[a].req-SPELLS[b].req||SPELLS[a].element.localeCompare(SPELLS[b].element);});
+SPELLS.low_alch={id:'low_alch',name:'Low Alchemy',req:21,util:'alch',ratio:0.4,mxp:31,runes:{},col:'#c9a04a',tier:0,element:'earth'};
+SPELLS.high_alch={id:'high_alch',name:'High Alchemy',req:55,util:'alch',ratio:0.6,mxp:65,runes:{},col:'#ffd23d',tier:0,element:'fire'};
+const SPELL_LIST=Object.keys(SPELLS).sort(function(a,b){return (SPELLS[a].util?1:0)-(SPELLS[b].util?1:0)||SPELLS[a].req-SPELLS[b].req||SPELLS[a].element.localeCompare(SPELLS[b].element);});
 
 [ /* staves: id,name,req,matk,mdmg,infRune,val */
  ['staff','Staff',1,6,0,null,40,0xb98fd0],
@@ -2594,15 +2598,15 @@ const SPELL_LIST=Object.keys(SPELLS).sort(function(a,b){return SPELLS[a].req-SPE
   equip:{slot:'weapon',model:'staff',verb:'Wield',spd:3000,matk:a[3],mdmg:a[4],req:a[2],infRune:a[5],orb:a[7]}};GE_STOCK.push(a[0]);});
 
 [ /* robes: id,name,slot,req,mdef,matk,mdmg,val,tint */
- ['wizard_hat','Wizard hat','head',1,2,2,0,80,0x2a3aa0],
- ['wizard_robe_top','Wizard robe top','body',1,4,3,0,140,0x2a3aa0],
- ['wizard_robe_skirt','Wizard skirt','legs',1,3,2,0,100,0x2a3aa0],
- ['mystic_hat','Mystic hat','head',20,5,4,1,1200,0x3a2a80],
- ['mystic_robe_top','Mystic robe top','body',20,9,7,2,3200,0x3a2a80],
- ['mystic_robe_bottom','Mystic robe bottom','legs',20,7,5,1,2400,0x3a2a80],
- ['enchanted_hat','Enchanted hat','head',40,8,7,1,6000,0x1f5f6a],
- ['enchanted_top','Enchanted top','body',40,14,11,2,16000,0x1f5f6a],
- ['enchanted_robe','Enchanted robe','legs',40,11,8,1,12000,0x1f5f6a]
+ ['wizard_hat','Wizard hat','head',1,6,2,0,80,0x2a3aa0],
+ ['wizard_robe_top','Wizard robe top','body',1,10,3,0,140,0x2a3aa0],
+ ['wizard_robe_skirt','Wizard skirt','legs',1,8,2,0,100,0x2a3aa0],
+ ['mystic_hat','Mystic hat','head',20,15,4,1,1200,0x3a2a80],
+ ['mystic_robe_top','Mystic robe top','body',20,26,7,2,3200,0x3a2a80],
+ ['mystic_robe_bottom','Mystic robe bottom','legs',20,21,5,1,2400,0x3a2a80],
+ ['enchanted_hat','Enchanted hat','head',40,24,7,1,6000,0x1f5f6a],
+ ['enchanted_top','Enchanted top','body',40,42,11,2,16000,0x1f5f6a],
+ ['enchanted_robe','Enchanted robe','legs',40,34,8,1,12000,0x1f5f6a]
 ].forEach(function(a){ITEMS[a[0]]={name:a[1],ex:'Magical robes that channel the arts.',val:a[7],
   equip:{slot:a[2],model:'robe',armStyle:'magic',verb:'Wear',mdef:a[4],matk:a[5],mdmg:a[6],def:1,req:a[3],tint:a[8]}};GE_STOCK.push(a[0]);});
 const MOB_KINDS={
@@ -2640,7 +2644,7 @@ const MOB_KINDS={
     resp:14000,bones:1,coinP:0,coins:[0,0],aggro:1,cmb:19},
   banshee:{slayReq:10,name:'Banshee',ex:'A bandaged wraith whose wail claws straight past armour. Stop your ears.',hp:44,acc:0.66,maxhit:9,resp:18000,bones:1,coinP:0.6,coins:[15,55],aggro:0,cmb:48,magic:1},
   gargoyle:{slayReq:70,name:'Gargoyle',ex:'Living stone off the chapel buttresses. Crack it open once it is reeling.',hp:105,acc:0.82,maxhit:10,resp:22000,bones:1,coinP:0.9,coins:[80,220],aggro:0,cmb:111},
-  basilisk:{slayReq:35,name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:82,acc:0.7,maxhit:8,resp:24000,bones:1,coinP:0.8,coins:[45,130],aggro:0,cmb:61,magic:1},
+  basilisk:{slayReq:35,name:'Basilisk',ex:'Do not meet its gaze without a mirror between you.',hp:75,acc:0.7,maxhit:8,resp:24000,bones:1,coinP:0.8,coins:[45,130],aggro:0,cmb:61,magic:1},
   wyvern:{slayReq:68,name:'Skeletal Wyvern',ex:'A frost-rimed bone drake. Its breath freezes straight through plate.',hp:200,acc:0.84,maxhit:14,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:1,cmb:140,magic:1},
   lesser:{name:'Lesser demon',ex:'Imported from somewhere much warmer.',hp:79,
     acc:0.74,maxhit:8,resp:25000,bigbones:1,coinP:.8,coins:[55,150],aggro:1,cmb:82},
@@ -2666,11 +2670,11 @@ const MOB_KINDS={
   cyclops:{name:'Cyclops',ex:'One eye, one purpose: stomp the intruder flat.',hp:70,acc:0.68,maxhit:12,resp:24000,bigbones:1,coinP:.9,coins:[40,120],aggro:0,cmb:56,weak:'melee',resist:'magic'},
   darkwizard:{name:'Dark wizard',ex:'Robed in midnight; the air crackles at its fingertips.',hp:32,acc:0.64,maxhit:8,resp:16000,bones:1,coinP:.6,coins:[10,40],aggro:0,cmb:35,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:4,projCol:'#7b6bf0'},
   skelearcher:{name:'Skeleton archer',ex:'Fleshless fingers still know the draw and the loose.',hp:30,acc:0.64,maxhit:6,resp:18000,bones:1,coinP:.6,coins:[15,55],aggro:0,cmb:49,weak:'melee',resist:'magic',atkStyle:'ranged',atkRange:5,projCol:'#d8d2bc'},
-  kurask:{slayReq:65,name:'Kurask',ex:'A horned brute that only leaf-bladed steel seems to wound.',hp:105,acc:0.80,maxhit:9,resp:30000,bones:1,coinP:1,coins:[60,160],aggro:0,cmb:106,weak:'ranged',resist:'melee'},
+  kurask:{slayReq:65,name:'Kurask',ex:'A horned brute that only leaf-bladed steel seems to wound.',hp:97,acc:0.80,maxhit:9,resp:30000,bones:1,coinP:1,coins:[60,160],aggro:0,cmb:106,weak:'ranged',resist:'melee'},
   greendragon:{name:'Green dragon',ex:'A chromatic dragon of the marshes; its breath is liquid fire.',hp:35,acc:0.72,maxhit:10,resp:30000,bigbones:1,coinP:1,coins:[60,180],aggro:0,cmb:88,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   bluedragon:{name:'Blue dragon',ex:'Frost-scaled but fire-breathing; larger and deadlier than its green kin.',hp:105,acc:0.76,maxhit:10,resp:34000,bigbones:1,coinP:1,coins:[90,240],aggro:0,cmb:111,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   reddragon:{name:'Red dragon',ex:'Crimson and vast, with a furnace in its chest.',hp:140,acc:0.80,maxhit:12,resp:40000,bigbones:1,coinP:1,coins:[140,360],aggro:0,cmb:152,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
-  blackdragon:{name:'Black dragon',ex:'The apex of the chromatic brood; its dragonfire melts stone.',hp:180,acc:0.86,maxhit:16,resp:1800000,bigbones:1,coinP:1,coins:[30000,45000],aggro:0,boss:1,cmb:227,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
+  blackdragon:{name:'Black dragon',ex:'The apex of the chromatic brood; its dragonfire melts stone.',hp:190,acc:0.86,maxhit:16,resp:1800000,bigbones:1,coinP:1,coins:[30000,45000],aggro:0,boss:1,cmb:227,weak:'ranged',resist:'melee',atkStyle:'magic',atkRange:3,projCol:'#e8801f'},
   snowking:{name:'The Snow King',ex:'A colossus of living ice and frost-matted fur that rules the summit of Pat\u2019s Peak. Its fists fall like avalanches, and the air around it bites with cold.',hp:400,acc:0.88,maxhit:24,resp:3600000,bigbones:1,coinP:1,coins:[40000,70000],aggro:0,boss:1,cmb:301},
   cinderwing:{name:'Cinderwing, the Ash Roc',ex:'A colossal ember roc roosting in the volcano\u2019s crater. Her molten quills punch through plate as if it were wax \u2014 bring food, not just armour.',hp:420,acc:0.88,maxhit:19,resp:7200000,bigbones:1,coinP:1,coins:[45000,80000],aggro:0,boss:1,cmb:330,atkStyle:'ranged',atkRange:7,projCol:'#ff7a2a',pierce:0.45},
   icefiend:{name:'Icefiend',ex:'A shard-toothed sprite of the blizzard, conjured from the Snow King\u2019s frost to harry intruders.',hp:40,acc:0.7,maxhit:8,resp:9999999,coinP:0,coins:[0,0],aggro:1,cmb:70,minion:1},
@@ -3258,10 +3262,11 @@ function masterBoost(s){
   return ITEMS[c.id].equip.grand?12:10;
 }
 const lvl=s=>levelFor(player.skills[s])+masterBoost(s);
-const maxHp=()=>lvl('hitpoints');
-const maxPray=()=>100+masterBoost('prayer')*5+(typeof eqStat==='function'?eqStat('pray'):0);
-function prayerDrainMult(){return Math.max(0.4,1-0.05*Math.floor(lvl('prayer')/10));}
-const HP_REGEN_PER_PT=0.075, PRAY_REGEN_PER_PT=0.05;   /* HP/prayer restored per regen-point per 600ms playerTick (fractional accumulator) */
+const maxHp=()=>lvl('hitpoints')+(typeof eqStat==='function'?eqStat('hp'):0);
+const maxPray=()=>lvl('prayer')+(typeof eqStat==='function'?eqStat('pray'):0);   /* OSRS: 1 prayer point per level (+ gear bonus) */
+function prayerBonus(){return masterBoost('prayer')+(typeof eqStat==='function'?eqStat('prayerbonus'):0);}
+function prayerDrainMult(){return 1/(1+prayerBonus()*0.0333);}   /* OSRS: prayer-bonus GEAR slows drain (~3.33%/pt); level does NOT */
+const HP_REGEN_PER_PT=0.075, PRAY_REGEN_PER_PT=0.01;   /* prayer regen is a modest trickle: max gear stack ~5/min << Piety 24 / protection 12 drain, so no infinite prayer */   /* HP/prayer restored per regen-point per 600ms playerTick (fractional accumulator) */
 let uidc=0;
 const ground=[];   /* {x,y,id,qty,exp,uid} */
 const splats=[];   /* {ent,dmg,t} */
@@ -3692,7 +3697,7 @@ const MOB_DROPS={
   ],
   cinderwing:[
     {gearroll:[
-      {i:'ashfang',c:1/10,inv:1,m:'Ashfang drops from the roc\u2019s wing \u2014 the ember bow is yours!'},
+      {i:'ashfang',c:1/20,inv:1,m:'Ashfang drops from the roc\u2019s wing \u2014 the ember bow is yours!'},
       {i:'emberbrand',c:1/20,inv:1,m:'EMBERBRAND falls molten from the crater \u2014 the finest sword ever forged!'},
       {i:'ember_cape',c:1/8,inv:1,m:'An Ember cape drifts down, still smouldering.'}
     ]},
@@ -3845,7 +3850,7 @@ function groupCoLoot(r){
   if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))<=18)msg('Your group has defeated the '+r.name.toLowerCase()+'.');
   questKill(r);
   if(r.interior==='sos')sosCaveKill(r);
-  if(r.kind==='master_reforged'){ player.rectorKilledAt=Date.now(); if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS);} if(typeof msg==='function')msg('The First Rector falls to your group \u2014 Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants and '+EMBER_RECTOR_CINDERS+' cinders to your name.','#caa23a'); }
+  if(r.kind==='master_reforged'){ player.rectorKilledAt=Date.now(); const _crg=rndi(90000,110000); if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS); if(!addItem('coins',_crg))dropGround(r.x,r.y,'coins',_crg);} if(typeof msg==='function')msg('The First Rector falls to your group \u2014 Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants, '+EMBER_RECTOR_CINDERS+' cinders and '+_crg.toLocaleString()+' coins to your name.','#caa23a'); }
   else dropMobLoot(r);
   dirty=true;
 }
@@ -3856,13 +3861,28 @@ function incomingMobHit(mi){
   const _ak=MOB_KINDS[r.kind]; if(!_ak)return;
   const _astyle=_ak.atkStyle||'melee';
   const sdf=_astyle==='magic'?eqStat('mdef'):_astyle==='ranged'?eqStat('rdef'):eqStat('def');
-  const effD=lvl('defense')*(prayers.love?1.18:1);
+  const effD=lvl('defense')*(prayerMult('def'));
   protWarn(r);
   const _mag=_ak.magic&&!protectedFrom(r.kind);
   const _pr=_ak.pierce||1;
-  const ratAcc=_mag?Math.max(0.1,Math.min(0.97,mobAcc(r)+0.05-sdf*0.006)):Math.max(0.22,Math.min(0.92,mobAcc(r)-sdf*0.008*_pr-(effD-1)*0.004*_pr));
+  /* OSRS-style ratio accuracy: hit = Aroll>Droll ? 1-(Droll+2)/(2(Aroll+1)) : Aroll/(2(Droll+1)). Every point of def matters (no early floor); per-style scale offsets that def(463)>>rdef(185)>>mdef(117) are attainable. */
+    /* Stage 2 (OSRS incoming): per-mob attack roll vs per-style player defence roll.
+       Magic defence uses the OSRS rule: effective level = 0.7*Magic + 0.3*Defence.
+       Magic attack bonus scaled x150 (vs 300) -- no protection prayers exist, so magic bosses cap nearer 55% at BIS. */
+    const _atkL=Math.min(125,(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].cmb)||1);
+    const _isMag=(_astyle==='magic'||_mag);
+    const _Aroll=(_atkL+8)*(Math.max(0,(mobAcc(r)-0.2)*(_isMag?150:300))+64);
+    const _stD=(player.style==='defensive'||player.style==='block'||player.style==='longrange')?3:(player.style==='controlled'?1:0);
+    const _effDef=_isMag?Math.floor(0.7*lvl('magic')+0.3*effD):Math.floor(effD);
+    const _Droll=(_effDef+_stD+8)*(sdf*_pr+64);
+    const ratAcc=Math.max(0.05,Math.min(0.95,_Aroll>_Droll?1-(_Droll+2)/(2*(_Aroll+1)):_Aroll/(2*(_Droll+1))));
   const _mh=_mag?Math.ceil(mobMaxhit(r)*(r.kind==='wyvern'?2.4:1.6)):mobMaxhit(r);
   let dmg=0; if(Math.random()<ratAcc)dmg=rndi(0,_mh);
+    if(dmg>0){ /* OSRS protection prayers: 100% block vs the matching style */
+      if((_astyle==='magic'||_mag)&&prayers.protect_magic)dmg=0;
+      else if(_astyle==='ranged'&&prayers.protect_missiles)dmg=0;
+      else if(_astyle==='melee'&&!_mag&&prayers.protect_melee)dmg=0;
+    }
   if((_astyle==='magic'||_astyle==='ranged')&&typeof spawnProjectile==='function')
     spawnProjectile(r.px+0.5,r.py+0.5,player,_astyle==='ranged'?'arrow':'magic',_ak.projCol||(_astyle==='ranged'?'#cfd6da':'#b06fe0'),320);
   player.braceT=performance.now();
@@ -4059,7 +4079,7 @@ const ENCY_SRC={
   leaf_sword:[{label:'Slayer unlock',sub:'Comes with Kurask contracts (130 pts)'},{label:'Monster drop',sub:'Kurask — 1/40'}],
   leaf_battleaxe:[{label:'Monster drop',sub:'Kurask — 1/50'}],
   leaf_dagger:[{label:'Monster drop',sub:'Kurask — 1/100'}],
-  ashfang:[{label:'Boss drop',sub:'Cinderwing, the Ash Roc — 1/10'}],
+  ashfang:[{label:'Boss drop',sub:'Cinderwing, the Ash Roc — 1/20'}],
   emberbrand:[{label:'Boss drop',sub:'Cinderwing, the Ash Roc — 1/20'}],
   ember_cape:[{label:'Boss drop',sub:'Cinderwing, the Ash Roc — 1/8'}],
   molten_crown:[{label:'Boss drop',sub:'Cinderwing, the Ash Roc — 1/25'}],
@@ -4287,7 +4307,7 @@ function encDetail(id){
     d.appendChild(b);d.appendChild(sp);sl.appendChild(d);}
   det.appendChild(sl);
 }
-function openEncy(){const el=document.getElementById('encui');if(el){el.classList.add('on');encFilter='All';encQuery='';const _es=document.getElementById('encsearch');if(_es)_es.value='';setEncMode('items');}}
+function openEncy(){const el=document.getElementById('encui');if(el){el.classList.add('on');encFilter='All';encQuery='';const _es=document.getElementById('encsearch');if(_es)_es.value='';setEncMode('guide');}}
 function closeEncy(){const el=document.getElementById('encui');if(el)el.classList.remove('on');_bestDispose();}
 
 /* ============================ BESTIARY ============================ */
@@ -4295,12 +4315,77 @@ function closeEncy(){const el=document.getElementById('encui');if(el)el.classLis
    mobBoneDrop / the universal rare rolls, so editing a mob auto-updates its page. */
 let encMode='items', _bestRen=null;
 function _bestDispose(){ if(_bestRen){try{_bestRen.forceContextLoss&&_bestRen.forceContextLoss();_bestRen.dispose();}catch(_){}} _bestRen=null; }
+/* ===================== WIKI GUIDE ===================== */
+const SKILL_INFO={
+  attack:{d:'Decides which melee weapons you can wield and how often your melee attacks land.',t:'Fight with melee on the Accurate (\u201cStab\u201d) or Controlled style. Higher Attack unlocks stronger weapons (bronze \u2192 rune \u2192 beyond).'},
+  strength:{d:'Sets your maximum melee hit \u2014 how hard you can hit.',t:'Use the Aggressive (\u201cSlash\u201d) style. Essential for melee damage.'},
+  defense:{d:'Reduces how often enemies hit you and unlocks better armour.',t:'Use the Defensive (\u201cBlock\u201d) style. Higher Defence lets you wear stronger armour of every type.'},
+  hitpoints:{d:'Your health pool. Starts at 10 and grows as you fight.',t:'Trains automatically whenever you deal damage in any style. More Hitpoints = a bigger health bar.'},
+  ranged:{d:'Governs bows and thrown weapons \u2014 both accuracy and damage. Strong against mages.',t:'Wield a bow and <b>keep arrows equipped</b> in the Ammo slot — no arrows, no shots. Longrange also trains a little Defence.'},
+  magic:{d:'Powers spells: combat, teleports, and utility like High Alchemy. Also your defence against enemy magic.',t:'Casting needs <b>runes</b> — you must have <b>one of each rune</b> a spell lists, equipped. An <b>elemental staff</b> supplies unlimited runes of its element (a fire staff covers the fire rune, and so on). So to cast: equip a <b>staff</b> and the required <b>runes</b>, then toggle the spell you want from your <b>spellbook</b> (Magic tab) and attack. Higher Magic unlocks stronger spells and better magic defence.'},
+  prayer:{d:'Gives combat boosts and damage-blocking protection prayers.',t:'Bury bones from monsters, or offer them at an altar for more XP. See the Prayer page.'},
+  slayer:{d:'Lets you harm certain special monsters and earns rewards.',t:'Take tasks from a Slayer master and defeat the assigned creatures. Some monsters need a Slayer level or item to damage.'},
+  woodcutting:{d:'Chop trees for logs, used in Firemaking.',t:'Click a tree with an axe. Better axes and levels cut better trees faster.'},
+  mining:{d:'Mine rocks for ore and gems, feeding Smithing.',t:'Click a rock with a pickaxe. Higher levels unlock better ores (copper \u2192 runite). The <b>Swenson Granite Quarry</b> in the Wilderness is a great place to train.'},
+  smithing:{d:'Turn ore into bars, and bars into weapons and armour.',t:'Smelt ore at a furnace, then hammer bars on an anvil. Higher Smithing makes better metal gear.'},
+  fishing:{d:'Catch fish to cook and eat \u2014 your main food supply.',t:'Click a fishing spot with the right tool. Higher levels catch better fish.'},
+  cooking:{d:'Cook raw food into healing meals.',t:'Use raw food on a fire or range. Higher Cooking burns food less and unlocks better meals.'},
+  firemaking:{d:'Light logs for fires, used in Cooking.',t:'Use a tinderbox on logs. Higher levels light better logs.'},
+  agility:{d:'Improves run energy and unlocks shortcuts.',t:'Train at the <b>ropes course</b> near the western edge of the Wilderness. Higher Agility gives more run energy, and at <b>level 35</b> you can enter the <b>lava volcano</b> to reach the Emberdeep zone.'}
+};
+const GUIDE_PAGES=[
+  {id:'start',icon:'book',title:'Start Here',html:`<h2>Welcome to Milville</h2><p>Milville is an adventure RPG set at St. Paul's School. Train skills, do quests, gather and craft, trade, and fight your way up to powerful bosses. There's no single way to \u201cwin\u201d \u2014 you set your own goals.</p><p>Played Old School RuneScape? This will feel familiar. New to it all? This guide teaches you everything \u2014 use the pages on the left.</p><h3>Your screen</h3><ul><li><b>The world</b> \u2014 the main view. Click the ground to walk; click things to use them.</li><li><b>Minimap</b> (top-right) \u2014 a small map of your area, with a compass.</li><li><b>Tabs</b> (bottom) \u2014 Inventory, Skills, Equipment, Prayer, Magic and more.</li></ul><h3>First steps</h3><ul><li>Click the ground to <b>walk</b>.</li><li>Click a tree, rock or fishing spot to <b>gather</b> resources.</li><li>Click a monster to <b>attack</b> it.</li><li>Talk to <b>NPCs</b> for quests and hints.</li></ul><div class="gcard gnote">Suggested reading order: Moving &amp; Doing \u2192 Combat Basics \u2192 Skills. Curious about the maths? See Combat Mechanics.</div>`},
+  {id:'move',icon:'agility',title:'Moving & Doing',html:`<h2>Moving &amp; Interacting</h2><h3>Walking</h3><p><b>Click the ground</b> to walk there \u2014 your character auto-paths around obstacles. Click the <b>minimap</b> to open the full world map — your location is marked by a big yellow <b>X</b>.</p><h3>Run energy</h3><p>You can walk or run. Running is faster but drains <b>run energy</b> (the orb by the minimap), which refills while you walk or rest.</p><h3>Interacting</h3><p><b>Left-click</b> does the main action (attack, chop, open). <b>Right-click</b> (or press-and-hold on mobile) shows <b>more options</b> \u2014 like Examine or a second action.</p><h3>Doors, ladders & stairs</h3><p>Click them to pass through or change floors. Some need a quest or key first.</p><h3>Examine</h3><p>Right-click almost anything and choose <b>Examine</b> for a short description \u2014 a great way to learn what things are.</p>`},
+  {id:'map',icon:'map',title:'The World & Map',html:`<h2>The World &amp; Map</h2><p>Click the <b>minimap</b> to open the full world map; your location shows as a big yellow <b>X</b>. Milville has several regions:</p><h3>Main Campus</h3><p>The heart of St. Paul's School — safe grounds with shops, the bank, the Grand Exchange, quest-givers and gentle monsters. The best place to start out.</p><h3>The Wilderness</h3><p>A dangerous frontier to the north with tougher monsters and better resources — but <b>other players can attack you here</b>. Great risk, great reward; don't bring what you can't afford to lose.</p><h3>Stronghold of Security</h3><p>An underground dungeon of increasingly difficult floors. A good place to earn early rewards and test your combat — fight your way down through its levels.</p><h3>The Emberdeep</h3><p>A blazing volcanic zone reached by entering the <b>lava volcano</b> (requires Agility level 35). Home to fire monsters and the First Rector boss — endgame territory. Come with strong gear, food and prayer.</p>`},{id:'combat',icon:'sword',title:'Combat Basics',html:`<h2>Combat Basics</h2><p><b>Click a monster</b> to attack. You'll close in (or shoot/cast from range) and fight automatically until it dies or you stop.</p><h3>Three ways to fight</h3><ul><li><span class="gtag">Melee</span> swords &amp; maces \u2014 trains Attack, Strength, Defence.</li><li><span class="gtag">Ranged</span> bows &amp; arrows \u2014 trains Ranged.</li><li><span class="gtag">Magic</span> staves &amp; spells \u2014 trains Magic.</li></ul><h3>Gear &amp; equipping</h3><p>Open your <b>Inventory</b> and <b>click a weapon or armour piece to equip it</b> (or right-click → Wield/Wear). Equipped gear shows in the <b>Equipment</b> tab, which has a slot for each body part: <b>Weapon</b> and <b>Shield</b> (hands), <b>Head</b>, <b>Body</b>, <b>Legs</b>, <b>Cape</b>, <b>Amulet</b>, <b>Gloves</b>, <b>Boots</b>, <b>Ring</b>, and <b>Ammo</b> (arrows).</p><p>Each item adds accuracy, damage or defence bonuses. Stronger gear needs higher Attack, Ranged, Magic or Defence to wear. Click an equipped item to take it off.</p><h3>Hitpoints & food</h3><p>Your <b>Hitpoints</b> (HP) show on the red orb. When hit, HP drops \u2014 <b>eat food</b> from your inventory to heal. At 0 HP you die and respawn, and may drop items, so be careful.</p><h3>Attack styles</h3><p>Open the <b>Combat</b> tab to choose a style:</p><ul><li><b>Accurate</b> (\u201cStab\u201d) \u2014 better chance to hit.</li><li><b>Aggressive</b> (\u201cSlash\u201d) \u2014 more damage, trains Strength.</li><li><b>Defensive</b> (\u201cBlock\u201d) \u2014 better defence.</li><li><b>Controlled</b> \u2014 a bit of everything.</li><li><b>Rapid</b> (Ranged) attacks faster; <b>Longrange</b> hits from further &amp; trains Defence.</li></ul><h3>Auto-retaliate</h3><p>By default you fight back when attacked \u2014 toggle it off in the Combat tab to control every hit.</p><div class="gcard gnote">New? Start on rats and goblins, keep food handy, and upgrade gear as you level.</div>`},
+  {id:'triangle',icon:'shieldic',title:'Combat Mechanics',html:`<h2>Combat Mechanics</h2><p>For players who want to optimise gear and strategy. Milville uses the same maths as Old School RuneScape.</p><h3>The Combat Triangle</h3><div class="gcard"><span class="gtri">Melee</span> beats <span class="gtri">Ranged</span> &middot; <span class="gtri">Ranged</span> beats <span class="gtri">Magic</span> &middot; <span class="gtri">Magic</span> beats <span class="gtri">Melee</span></div><ul><li><b>Magic robes</b> defend well vs magic, poorly vs ranged.</li><li><b>Ranged armour</b> (hide) defends vs magic, poorly vs melee.</li><li><b>Melee plate</b> defends vs melee &amp; ranged, barely vs magic.</li></ul><p>Wear the armour that resists what's hitting you; attack with the style your target is weak to.</p><h3>How a hit is decided</h3><p>Every attack pits two rolls against each other:</p><ul><li><b>Attack roll</b> = your effective level (\u00d7 prayer, \u00d7 style) \u00d7 (gear attack bonus + 64).</li><li><b>Defence roll</b> = target's effective defence \u00d7 (its defence bonus + 64).</li></ul><p>The higher your attack roll beats their defence roll, the more often you hit. This decides <i>whether</i> you hit \u2014 not how hard.</p><h3>Max hit (damage)</h3><p>Your <b>Strength</b> (melee), <b>Ranged</b>, or <b>Magic</b> damage bonus sets your <b>max hit</b>. Each landed hit deals 0 up to that max. So accuracy = <i>if</i> you hit; strength = <i>how hard</i>.</p><h3>Weakness & resistance</h3><p>Many monsters are <b>weak</b> to a style (you hit ~25% more) or <b>resist</b> one (~28% less). A creature's <b>Bestiary</b> page lists its weakness. Range a mage boss; magic melts a stone golem.</p><h3>Magic defence</h3><p>Your defence vs <b>magic</b> is special: mostly your <b>Magic level</b> (70%) plus a little Defence (30%). Train Magic to resist enemy spells \u2014 plate armour alone won't save you from a mage.</p><h3>Prayer in combat</h3><p><b>Protect from Melee / Missiles / Magic</b> fully blocks that damage type from monsters \u2014 the key to surviving bosses \u2014 but drains prayer fast. Boost prayers raise your stats. See the Prayer page.</p><div class="gcard gnote">Rule of thumb: attack the target's weakness, wear armour that resists what's attacking you, and pray to block the boss's main style.</div>`},
+  {id:'skills',icon:'anvil',title:'Skills',html:null},
+  {id:'prayer',icon:'star',title:'Prayer',html:`<h2>Prayer</h2><p>Prayer grants combat boosts and protection. Toggle prayers in the <b>Prayer</b> tab.</p><h3>Prayer points</h3><p>Your maximum <b>prayer points equal your Prayer level</b> (level 50 = 50 points). Active prayers drain them; when empty, prayers switch off.</p><h3>Restoring prayer</h3><p>Pray at an <b>altar</b> to refill. <b>Prayer-bonus gear</b> (blessed capes, holy items) makes prayers drain <i>slower</i> \u2014 it doesn't refill them.</p><h3>Kinds of prayer</h3><ul><li><b>Boost prayers</b> \u2014 raise Attack, Strength, Defence, Ranged or Magic. One per stat; higher tiers unlock with your Prayer level.</li><li><b>Protection prayers</b> \u2014 fully block Melee, Missiles or Magic from monsters. One at a time, and they drain quickly.</li><li><b>Overhead prayers</b> \u2014 protection prayers (and Retribution / Redemption / Smite) show an <b>icon above your head</b> that other players can see.</li></ul><h3>Levelling Prayer</h3><p>Bury <b>bones</b> from monsters, or offer them at an altar for extra XP. Higher Prayer unlocks stronger prayers and a bigger point pool.</p>`},
+  {id:'quests',icon:'quest',title:'Quests',html:`<h2>Quests</h2><p>Quests are stories with puzzles, dialogue and rewards \u2014 the best way to learn the world and unlock new areas, items and abilities.</p><h3>The main questline</h3><p>Milville's main story begins with <b>Rector Matthews</b>, who stands in front of the <b>Rectory</b> on the main campus. New players should complete the <b>five quests</b> of the main questline first — they teach you the game and reward gear and experience that prepare you for everything that follows.</p><h3>Starting a quest</h3><p>Talk to <b>NPCs</b>; anyone with something to say may offer a quest or a clue. Read carefully \u2014 they'll tell you what to do next.</p><h3>Quest journal</h3><p>Your <b>Quest</b> tab tracks what you've started, your current step and what remains. Stuck? Re-read the latest step there.</p><h3>Rewards</h3><p>Quests grant XP, coins, items and access to new content. Some powerful gear and areas are locked behind quests \u2014 well worth doing.</p>`},
+  {id:'ge',icon:'coin',title:'Money & Trading',html:`<h2>Money &amp; Trading</h2><h3>Coins</h3><p><b>Coins</b> are the main currency \u2014 earned from monster drops, selling items, quests and skilling.</p><h3>Shops</h3><p>NPC <b>shops</b> buy and sell specific goods. Click a shopkeeper to trade \u2014 good for food, tools and ammo.</p><h3>The Grand Exchange</h3><p>The <b>Grand Exchange</b> is a marketplace for almost anything at fair prices. Open it, search an item, and click to buy or sell \u2014 the fastest way to gear up or offload loot.</p><h3>Banking</h3><p>Your <b>bank</b> stores items you're not carrying. Deposit valuables before dangerous trips so you don't lose them on death.</p><h3>High Alchemy</h3><p>The <b>High Alchemy</b> spell (Magic tab) turns an inventory item straight into coins \u2014 a handy way to make money and train Magic at once.</p>`},
+  {id:'tips',icon:'heart',title:'New Player Tips',html:`<h2>New Player Tips</h2><ul><li><b>Always carry food.</b> Cook fish or buy some before you fight.</li><li><b>Bank your valuables.</b> Don't carry more than you need into danger \u2014 you can drop items on death.</li><li><b>Upgrade gradually.</b> Bronze \u2192 iron \u2192 steel \u2192 mithril \u2192 adamant \u2192 rune and beyond.</li><li><b>Match the triangle.</b> Bring the right style and armour for what you fight.</li><li><b>Don't rush bosses.</b> They hit hard and often use magic or ranged \u2014 train up, bring prayer and food, learn their attacks.</li><li><b>Train a range of skills.</b> Gathering funds production and raises your total level.</li><li><b>Read Examine text and the Bestiary.</b> They reveal weaknesses, uses and dangers.</li><li><b>Talk to everyone.</b> NPCs hand out quests, tips and shortcuts.</li></ul>`}
+];
+let guidePage='start', guideSkill='attack';
+function _guideSkillsHtml(){
+  let sub='<div id="skillsub">';
+  for(const sk of Object.keys(SKILL_META))sub+='<div class="sksub'+(sk===guideSkill?' on':'')+'" data-sk="'+sk+'"><canvas width="15" height="15"></canvas>'+SKILL_META[sk].name+'</div>';
+  sub+='</div>';
+  const si=SKILL_INFO[guideSkill]||{d:'',t:''};
+  return '<h2>Skills</h2><p>Skills level up as you use them. Every action gives <b>experience (XP)</b>; enough XP raises that skill (up to level 99). Your combined levels are your <b>total level</b>. Pick a skill:</p>'+sub+'<h3>'+SKILL_META[guideSkill].name+'</h3><p>'+si.d+'</p><p><b>How to train:</b> '+si.t+'</p>';
+}
+function renderGuide(){
+  const nav=document.getElementById('guidenav'), body=document.getElementById('guidebody');
+  if(!nav||!body)return;
+  nav.innerHTML='';
+  for(const pg of GUIDE_PAGES){
+    const b=document.createElement('div'); b.className='gnav'+(pg.id===guidePage?' on':'');
+    const c=document.createElement('canvas'); c.width=c.height=18; b.appendChild(c);
+    try{drawUiIcon(c.getContext('2d'),pg.icon,18);}catch(e){}
+    const sp=document.createElement('span'); sp.textContent=pg.title; b.appendChild(sp);
+    b.addEventListener('click',function(){audio&&audio();guidePage=pg.id;renderGuide();});
+    nav.appendChild(b);
+  }
+  const pg=GUIDE_PAGES.find(x=>x.id===guidePage)||GUIDE_PAGES[0];
+  if(pg.id==='skills'){
+    body.innerHTML=_guideSkillsHtml();
+    body.querySelectorAll('.sksub').forEach(function(el){
+      const sk=el.dataset.sk, cv=el.querySelector('canvas');
+      if(cv){try{drawUiIcon(cv.getContext('2d'),SKILL_META[sk].ui,15);}catch(e){}}
+      el.addEventListener('click',function(){audio&&audio();guideSkill=sk;renderGuide();});
+    });
+  } else body.innerHTML=pg.html;
+  body.scrollTop=0;
+}
 function setEncMode(m){
   _bestDispose(); encMode=m; encQuery='';
-  const se=document.getElementById('encsearch'); if(se){se.value='';se.placeholder=(m==='bestiary')?'Search creatures\u2026':'Search items\u2026';}
+  const _isG=(m==='guide');
+  const _gw=document.getElementById('guidewrap'); if(_gw)_gw.style.display=_isG?'flex':'none';
+  const _cnt=document.getElementById('enccount'); if(_cnt)_cnt.style.display=_isG?'none':'';
+  const _gr=document.getElementById('encgrid'); if(_gr&&_isG)_gr.style.display='none';
+  const _dt=document.getElementById('encdetail'); if(_dt&&_isG)_dt.style.display='none';
+  const se=document.getElementById('encsearch'); if(se){se.style.display=_isG?'none':'';se.value='';se.placeholder=(m==='bestiary')?'Search creatures\u2026':'Search items\u2026';}
   const tb=document.getElementById('enctabs'); if(tb)for(const b of tb.children)b.classList.toggle('on',b.getAttribute('data-encmode')===m);
-  const fl=document.getElementById('encfilters'); if(fl)fl.style.display=(m==='bestiary')?'none':'';
-  if(m==='bestiary')renderBestiary(); else renderEncy();
+  const fl=document.getElementById('encfilters'); if(fl)fl.style.display=(m==='bestiary'||_isG)?'none':'';
+  if(_isG)renderGuide(); else if(m==='bestiary')renderBestiary(); else renderEncy();
 }
 function bestiaryKinds(){ return Object.keys(MOB_KINDS).sort((a,b)=>(MOB_KINDS[a].cmb||0)-(MOB_KINDS[b].cmb||0)); }
 function renderBestiary(){
@@ -4605,6 +4690,16 @@ function addItem(id,qty){
   renderInv();dirty=true;return true;
 }
 function removeSlot(i){player.inv[i]=null;renderInv();dirty=true;}
+function alchemiseSlot(i){
+  const sp=player._alchMode; player._alchMode=null; if(!sp)return;
+  const it=player.inv[i]; if(!it)return; const def=ITEMS[it.id];
+  if(!def||it.id==='coins'||!(def.val>0)||def.noAlch||def.rune&&false){msg('You can\u2019t alchemise that.','#9c1f1f');return;}
+  const per=Math.max(1,Math.floor(def.val*sp.ratio));
+  if((it.qty||1)>1){it.qty--;renderInv();dirty=true;} else removeSlot(i);
+  addItem('coins',per); if(typeof addXp==='function')addXp('magic',sp.mxp||0);
+  msg((sp.ratio>=0.6?'High':'Low')+' Alchemy \u2014 '+def.name+' \u2192 '+per+' coins.','#ffd23d');
+  if(typeof sfx!=='undefined'&&sfx.bury)sfx.bury();
+}
 function addNote(id,qty){qty=qty||1;markCollected(id);
   const ex=player.inv.find(s=>s&&s.id===id&&s.noted);
   if(ex){ex.qty+=qty;renderInv();dirty=true;return true;}
@@ -4658,6 +4753,23 @@ function mobMaxHp(r){
   let v=(!mobWildScaled(r))?k.hp:Math.max(k.hp,Math.round(k.hp*Math.pow(mobCmb(r)/k.cmb,0.95)*1.5));
   return r.superior?supHp(r.kind,v):v;
 }
+/* ===== Stage 1 (OSRS combat): mob defence stats + roll-based player accuracy.
+   NPC defence roll = (defLvl+9)*(defBonus+64); hit = A>D ? 1-(D+2)/(2(A+1)) : A/(2(D+1)).
+   Non-boss stats derived from cmb; bosses/notables hand-set in MOB_DEF_OVERRIDES (see combat-osrs-plan.md). */
+const MOB_DEF_OVERRIDES={slag_warden:[95,20],ember_choir:[85,15],forge_tyrant:[100,20],blackdragon:[110,25],snowking:[130,30],cinderwing:[120,25],master_reforged:[135,40],committee_guard:[80,10],kurask:[75,10],gargoyle:[80,15],wyvern:[90,20],obsidian_golem:[105,30],cinder_wraith:[95,15],magma_salamander:[70,10],ember_imp:[55,5]};
+function mobDefStats(r){
+  const k=MOB_KINDS[r.kind]||{},cmb=k.cmb||1,ov=MOB_DEF_OVERRIDES[r.kind];
+  let dl,db;
+  if(ov){dl=ov[0];db=ov[1];}
+  else{dl=Math.max(1,Math.round(cmb*0.42));db=cmb>=60?Math.round((cmb-60)*0.15):0;}
+  if(r.superior){dl=Math.round(dl*1.4);db+=10;}
+  return [dl,db];
+}
+function mobDefRoll(r){const s=mobDefStats(r);return (s[0]+9)*(s[1]+64);}
+const MOB_MLVL={darkwizard:45,banshee:60,basilisk:60,wyvern:80,dragon:50,greendragon:50,bluedragon:60,reddragon:70,blackdragon:90,cinder_wraith:100,ember_choir:100,master_reforged:110,snowking:40,obsidian_golem:30,slag_warden:40,forge_tyrant:45,icegolem:25,icefiend:40,ember_imp:35};
+function mobMagicLvl(r){const k=MOB_KINDS[r.kind]||{};if(MOB_MLVL[r.kind]!==undefined)return MOB_MLVL[r.kind];return Math.max(1,Math.round((k.cmb||1)*0.42));}
+function mobMagicRoll(r){const s=mobDefStats(r);return (mobMagicLvl(r)+9)*(s[1]+64);}
+function hitFromRolls(A,D){return Math.max(0.02,Math.min(0.99,A>D?1-(D+2)/(2*(A+1)):A/(2*(D+1))));}
 function mobAcc(r){
   const a=MOB_KINDS[r.kind].acc;
   if(MOB_KINDS[r.kind].rel!==undefined)return Math.min(0.94,a+Math.max(0,cmbLvl()-18)*0.003);
@@ -4775,6 +4887,12 @@ function walkTo(tx,ty,exact){
 /* large-mob standoff: stand on a ring at radius R from the mob centre so you fight outside its footprint */
 const _BIGREACH={dragon:3,greendragon:3,bluedragon:3,reddragon:3,blackdragon:3,wyvern:3,snowking:2,cinderwing:3,greater:2,obsidian_golem:2,slag_warden:2,forge_tyrant:2};
 function mobReach(r){return (r&&_BIGREACH[r.kind])||1;}
+function playerReach(){
+  const w=player.equip.weapon,eq=w&&ITEMS[w.id]&&ITEMS[w.id].equip,ws=(typeof weaponStyle==='function')?weaponStyle(eq):'melee';
+  if(ws==='ranged'){let r=(eq&&eq.range)||7; if(player.style==='longrange')r+=2; return r;}
+  if(ws==='magic')return (eq&&eq.range)||10;
+  return 1;
+}
 /* big-footprint mobs must be able to hit the player from their standoff ring, so bump their atkRange up to their reach */
 (function(){try{for(const k in _BIGREACH){if(MOB_KINDS[k]){const rr=_BIGREACH[k];if(!MOB_KINDS[k].atkRange||MOB_KINDS[k].atkRange<rr)MOB_KINDS[k].atkRange=rr;}}}catch(e){}})();
 function ringTargets(x,y,R){
@@ -4947,7 +5065,7 @@ function playerTick(){
   if(player.regen>=50){player.regen=0;
     if(player.hp<maxHp()&&performance.now()-player.combatT>3000){player.hp++;updateOrb();}}
   { const _hpr=(typeof eqStat==='function')?eqStat('hpregen'):0; if(_hpr>0){ if(player.hp<maxHp()){ player._hpAcc=(player._hpAcc||0)+_hpr*HP_REGEN_PER_PT; if(player._hpAcc>=1){const _g=Math.floor(player._hpAcc);player._hpAcc-=_g;player.hp=Math.min(maxHp(),player.hp+_g);updateOrb();} } else player._hpAcc=0; } else player._hpAcc=0; }
-  { const _ppr=(typeof eqStat==='function')?eqStat('prayregen'):0; if(_ppr>0){ if(player.pray<maxPray()){ player._prAcc=(player._prAcc||0)+_ppr*PRAY_REGEN_PER_PT; if(player._prAcc>=1){const _g=Math.floor(player._prAcc);player._prAcc-=_g;player.pray=Math.min(maxPray(),player.pray+_g);if(typeof updatePrayOrb==='function')updatePrayOrb();} } else player._prAcc=0; } else player._prAcc=0; }
+  { const _ppr=Math.min(8,(typeof eqStat==='function')?eqStat('prayregen'):0); if(_ppr>0){ if(player.pray<maxPray()){ player._prAcc=(player._prAcc||0)+_ppr*PRAY_REGEN_PER_PT; if(player._prAcc>=1){const _g=Math.floor(player._prAcc);player._prAcc-=_g;player.pray=Math.min(maxPray(),player.pray+_g);if(typeof updatePrayOrb==='function')updatePrayOrb();} } else player._prAcc=0; } else player._prAcc=0; }
   { const _sk=rats.find(rr=>rr.kind==='snowking'&&rr.alive&&(rr.interior||null)===curInterior());
     if(_sk&&dist1(_sk.sx,_sk.sy,player.x,player.y)<=12){
       const _nb=performance.now();
@@ -5094,7 +5212,7 @@ function playerTick(){
       msg('You need Slayer level '+MOB_KINDS[r.kind].slayReq+' to harm a '+MOB_KINDS[r.kind].name.toLowerCase()+'.','#9a6fb0');
       cancelAction();return;}
     r.target=player;
-    const _reach=mobReach(r);
+    const _reach=Math.max(mobReach(r),playerReach());
     if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>_reach){
       if(!player.path.length||a.lx!==r.x||a.ly!==r.y){if(_reach>1){if(!walkToReach(r.x,r.y,_reach))walkTo(r.x,r.y,'adj');}else walkTo(r.x,r.y,'adj');a.lx=r.x;a.ly=r.y;}
       return;
@@ -5107,7 +5225,8 @@ function playerTick(){
     const _weq=_w&&ITEMS[_w.id]&&ITEMS[_w.id].equip;
     const wstyle=weaponStyle(_weq);
     let _ammo=null,_arrowId=null;
-    const _innateArrow=(_w&&isAshfang(_w.id));   /* Ashfang conjures its own dragon arrows -- no ammo needed */
+    const _quiverEq=(wstyle==='ranged'&&player.equip.ammo&&isQuiver(player.equip.ammo.id));
+    const _innateArrow=(_w&&isAshfang(_w.id))||_quiverEq;   /* Ashfang, or any bow with a Quiver, conjures its own arrows -- no ammo consumed */
     if(wstyle==='ranged'&&!_innateArrow){
       _ammo=player.equip.ammo;_arrowId=_ammo&&_ammo.id;
       if(!_ammo||!_ammo.qty){player.nextAtk=nowC+1200;
@@ -5117,7 +5236,7 @@ function playerTick(){
       if(_at>_mx){player.nextAtk=nowC+1200;
         if(!player._badammoT||nowC-player._badammoT>2000){player._badammoT=nowC;msg('Those arrows are too heavy for this bow.','#9c1f1f');}
         cancelAction();return;}
-    } else if(_innateArrow){ _arrowId='dragon_arrow'; }
+    } else if(_innateArrow){ _arrowId=(_w&&isAshfang(_w.id))?'dragon_arrow':bestArrowId(_weq&&_weq.maxArrow); }
     let _spell=null;
     if(wstyle==='magic'){
       _spell=player.autocast&&SPELLS[player.autocast];
@@ -5141,23 +5260,24 @@ function playerTick(){
     const _tb=onTaskBonus(r);
     let acc,max;
     if(wstyle==='ranged'){
-      const effR=Math.floor(lvl('ranged')*(prayers.pelicans_eye?1.18:1));
+      const effR=Math.floor(lvl('ranged')*(prayerMult('rng')));
       /* OSRS ranged max hit: floor(0.5 + (floor(rngLvl*prayer)+styleBonus+8)*(rngStr+64)/640); Accurate +3, else 0 */
       const _styR=player.style==='accurate'?3:0;
-      acc=clamp((.60+effR*.011+eqStat('ratk')*.0025)*(1+_tb),0,.97);
-      const _arStr=_innateArrow?((ITEMS.dragon_arrow&&ITEMS.dragon_arrow.equip&&ITEMS.dragon_arrow.equip.rstr)||0):0;
+      acc=hitFromRolls((effR+_styR+8)*(eqStat('ratk')+64)*(1+_tb),mobDefRoll(r));
+      const _arStr=_innateArrow?((ITEMS[_arrowId]&&ITEMS[_arrowId].equip&&ITEMS[_arrowId].equip.rstr)||0):0;
       max=Math.floor((0.5+(effR+_styR+8)*(eqStat('rstr')+_arStr+64)/640)*(1+_tb));
     }else if(wstyle==='magic'){
-      const effM=lvl('magic')*(prayers.sheldons_insight?1.18:1);
-      acc=clamp((.60+effM*.011+eqStat('matk')*.005)*(1+_tb),0,.97);
+      const effM=lvl('magic')*(prayerMult('mag'));
+      acc=hitFromRolls((Math.floor(effM)+8)*(eqStat('matk')+64)*(1+_tb),mobMagicRoll(r));
       max=Math.floor(_spell.pow*(1+eqStat('mdmg')/100)*(1+_tb));
     }else{
       const wb=eqStat('atk');
-      const effA=lvl('attack')*(prayers.halcyon?1.18:1);
-      const effS=Math.floor(lvl('strength')*(prayers.gordon?1.18:1));
+      const effA=lvl('attack')*(prayerMult('atk'));
+      const effS=Math.floor(lvl('strength')*(prayerMult('str')));
       /* OSRS melee max hit: floor(0.5 + effStr*(strBonus+64)/640); effStr = floor(lvl*prayer) + styleBonus + 8 */
       const _styS=player.style==='slash'?3:player.style==='controlled'?1:0;
-      acc=clamp((.60+effA*.011+wb*.0025)*(1+_tb),0,.97);
+      const _styA=(player.style==='stab'||player.style==='accurate')?3:player.style==='controlled'?1:0;   /* accurate style: 'stab' melee / 'accurate' ranged = +3 */
+      acc=hitFromRolls((Math.floor(effA)+_styA+8)*(wb+64)*(1+_tb),mobDefRoll(r));
       max=Math.floor((0.5+(effS+_styS+8)*(eqStat('str')+64)/640)*(1+_tb));
     }
     {const _tk=MOB_KINDS[r.kind];if(_tk){if(_tk.weak===wstyle)acc=clamp(acc*1.25,0,.97);else if(_tk.resist===wstyle)acc=clamp(acc*0.72,0,.97);}}
@@ -5265,7 +5385,7 @@ function playerTick(){
       if(_at>_bt){player.nextAtk=nowC+1200;msg('Your bow cannot fire arrows of that make.','#9c1f1f');cancelAction();return;}
       _itv=(player.style==='rapid')?2200:((_dw&&_dw.slow)?3000:2400);
       const _styR=player.style==='accurate'?3:0;
-      const _effR=Math.floor(lvl('ranged')*(prayers.pelicans_eye?1.18:1));
+      const _effR=Math.floor(lvl('ranged')*(prayerMult('rng')));
       _max=Math.max(1,Math.floor(0.5+(_effR+_styR+8)*(eqStat('rstr')+64)/640));
       _acc=_duelAcc(_effR,eqStat('ratk'));
       const _amTint=(ITEMS[_am.id].equip.tint!==undefined)?('#'+ITEMS[_am.id].equip.tint.toString(16).padStart(6,'0')):'#cfd6da';
@@ -5283,11 +5403,11 @@ function playerTick(){
       _itv=(_dw&&_dw.spd)||3000;
       if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,opp,'magic',_spell.col,320);
       _max=Math.max(1,Math.floor(_spell.pow*(1+eqStat('mdmg')/100)));
-      _acc=_duelAcc(Math.floor(lvl('magic')*(prayers.sheldons_insight?1.18:1)),eqStat('matk'));
+      _acc=_duelAcc(Math.floor(lvl('magic')*(prayerMult('mag'))),eqStat('matk'));
     }else{
       _itv=(_dw&&_dw.spd)||2400;
       _max=_duelMaxhit();
-      _acc=_duelAcc(Math.floor(lvl('attack')*(prayers.halcyon?1.18:1)),_noW?0:eqStat('atk'));
+      _acc=_duelAcc(Math.floor(lvl('attack')*(prayerMult('atk'))),_noW?0:eqStat('atk'));
     }
     player.nextAtk=nowC+Math.round(_itv*(1-Math.min(30,(typeof eqStat==='function'?eqStat('atkspeed'):0))/100));player.swingT=nowC;
     if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
@@ -5923,7 +6043,7 @@ function doSpecial(){
   const nowS=performance.now();
   if((player.specCdT||0)>nowS){msg('Volcanic Rend is still cooling \u2014 '+Math.ceil(((player.specCdT)-nowS)/1000)+'s.','#e8801f');return;}
   const _sty=player.style==='slash'?3:player.style==='controlled'?1:0;
-  const effS=Math.floor(lvl('strength')*(prayers.gordon?1.18:1));
+  const effS=Math.floor(lvl('strength')*(prayerMult('str')));
   const mx=Math.max(1,Math.floor(0.5+(effS+_sty+8)*(eqStat('str')+64)/640));
   if(typeof duel!=='undefined'&&duel.state==='fight'&&player.action&&player.action.type==='datk'){
     const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
@@ -5947,8 +6067,11 @@ function doSpecial(){
   player.swingT=nowS;if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
   msg('VOLCANIC REND \u2014 the blade erupts!','#ff6a2a');
   if(typeof groundFire==='function')groundFire(r.x,r.y);
+  const _saEffA=Math.floor(lvl('attack')*(prayerMult('atk')));
+  const _saStyA=(player.style==='stab')?3:(player.style==='controlled'?1:0);
+  const _specAcc=hitFromRolls((_saEffA+_saStyA+8)*(eqStat('atk')+64)*1.25,mobDefRoll(r));  /* +25% spec accuracy, rolled per hit */
   for(let h=0;h<2;h++){
-    let dm=rndi(Math.floor(mx*0.5),Math.max(1,Math.floor(mx*1.5)));
+    let dm=(Math.random()<_specAcc)?rndi(Math.floor(mx*0.5),Math.max(1,Math.floor(mx*1.5))):0;
     if(r.warden&&!wardenVulnerable(r))dm=0;
     if(r.kind==='kurask'&&!(player.equip.shield&&player.equip.shield.id==='leaf_dagger'))dm=0;
     if(r.kind==='gargoyle'&&r.hp-dm<1)dm=Math.max(0,r.hp-1);
@@ -6066,11 +6189,21 @@ function ratsTick(){
           const _ak=MOB_KINDS[r.kind];
           const _astyle=_ak.atkStyle||'melee';
           const sdf=_astyle==='magic'?eqStat('mdef'):_astyle==='ranged'?eqStat('rdef'):eqStat('def');
-          const effD=lvl('defense')*(prayers.love?1.18:1);
+          const effD=lvl('defense')*(prayerMult('def'));
           protWarn(r);
           const _mag=_ak.magic&&!protectedFrom(r.kind);
           const _pr=_ak.pierce||1;
-  const ratAcc=_mag?Math.max(0.1,Math.min(0.97,mobAcc(r)+0.05-sdf*0.006)):Math.max(0.22,Math.min(0.92,mobAcc(r)-sdf*0.008*_pr-(effD-1)*0.004*_pr));
+  /* OSRS-style ratio accuracy: hit = Aroll>Droll ? 1-(Droll+2)/(2(Aroll+1)) : Aroll/(2(Droll+1)). Every point of def matters (no early floor); per-style scale offsets that def(463)>>rdef(185)>>mdef(117) are attainable. */
+    /* Stage 2 (OSRS incoming): per-mob attack roll vs per-style player defence roll.
+       Magic defence uses the OSRS rule: effective level = 0.7*Magic + 0.3*Defence.
+       Magic attack bonus scaled x150 (vs 300) -- no protection prayers exist, so magic bosses cap nearer 55% at BIS. */
+    const _atkL=Math.min(125,(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].cmb)||1);
+    const _isMag=(_astyle==='magic'||_mag);
+    const _Aroll=(_atkL+8)*(Math.max(0,(mobAcc(r)-0.2)*(_isMag?150:300))+64);
+    const _stD=(player.style==='defensive'||player.style==='block'||player.style==='longrange')?3:(player.style==='controlled'?1:0);
+    const _effDef=_isMag?Math.floor(0.7*lvl('magic')+0.3*effD):Math.floor(effD);
+    const _Droll=(_effDef+_stD+8)*(sdf*_pr+64);
+    const ratAcc=Math.max(0.05,Math.min(0.95,_Aroll>_Droll?1-(_Droll+2)/(2*(_Aroll+1)):_Aroll/(2*(_Droll+1))));
           const _mh=_mag?Math.ceil(mobMaxhit(r)*(r.kind==='wyvern'?2.4:1.6)):mobMaxhit(r);
           if(Math.random()<ratAcc)dmg=rndi(0,_mh);
           if((_astyle==='magic'||_astyle==='ranged')&&typeof spawnProjectile==='function')
@@ -6137,6 +6270,11 @@ function isRecoverable(id){
 }
 function die(){
   sfx.die();
+  if(prayers.retribution){const _rd=Math.max(1,Math.floor(lvl('prayer')*0.25));
+    for(const r of rats){if(r&&r.alive&&r.hp>1&&Math.max(Math.abs(Math.round(r.x)-player.x),Math.abs(Math.round(r.y)-player.y))<=2){
+      const _dm=Math.min(r.hp-1,rndi(1,_rd));if(_dm>0){r.hp-=_dm;splats.push({ent:r,dmg:_dm,t:performance.now()});}}}
+    msg('Retribution erupts around you!','#e0532a');
+  }
   if(typeof gauntlet!=='undefined'&&gauntlet.active)gauntletAbort('death');
   if(inVolcano&&_lastVolcFloor===4){
     player.deaths=(player.deaths||0)+1;dirty=true;
@@ -6465,8 +6603,9 @@ function updatePrayOrb(){
   e.style.opacity=v>0?'1':'0.45';
   const b=document.getElementById('praybarfill');
   if(b){
-    b.style.width=Math.max(0,Math.min(100,player.pray))+'%';
-    b.style.background=player.pray>25?'linear-gradient(#7ab8e8,#2d6a9e)'
+    const _mp=Math.max(1,maxPray());
+    b.style.width=Math.max(0,Math.min(100,player.pray/_mp*100))+'%';
+    b.style.background=player.pray>_mp*0.25?'linear-gradient(#7ab8e8,#2d6a9e)'
       :'linear-gradient(#e87a6f,#8c2a1d)';
   }
 }
@@ -6643,6 +6782,11 @@ const EMBER_SET_BONUS={str:6,rstr:6};   /* wearing the full set adds this on top
 function emberLavaImmune(){return inVolcano&&hasEmberSet();}   /* full set -> walk the Emberdeep\u2019s lava unharmed */
 function furnaceBlessed(){return performance.now()<(player.furnaceUntil||0);}
 function lavaSafe(){return emberLavaImmune()||furnaceBlessed();}
+/* Stage 2/3 gear spread (OSRS-true, additive only): metal armour defends ranged nearly as well as melee; d'hide carries real magic defence; plate keeps ~no magic defence. */
+(function(){for(const _id in ITEMS){const e=ITEMS[_id]&&ITEMS[_id].equip;if(!e||!e.slot)continue;
+  if(['head','body','legs','shield','feet','hands'].includes(e.slot)&&(e.def||0)>=5&&!e.armStyle&&e.rdef===undefined)e.rdef=Math.round(e.def*0.95);
+  if(e.armStyle==='ranged'&&e.mdef===undefined&&(e.rdef||e.def))e.mdef=Math.round(((e.rdef||0)+(e.def||0)*0.3)*0.6);
+}})();
 function eqStat(k){
   let t=0;
   for(const sl in player.equip){
@@ -6658,6 +6802,7 @@ function statBits(eq,sep){
   const b=[];if(eq.atk)b.push('Atk +'+eq.atk);if(eq.str)b.push('Str +'+eq.str);if(eq.def)b.push('Def +'+eq.def);
   if(eq.ratk)b.push('RngAtk +'+eq.ratk);if(eq.rstr)b.push('RngStr +'+eq.rstr);if(eq.rdef)b.push('RngDef +'+eq.rdef);
   if(eq.matk)b.push('MagAtk +'+eq.matk);if(eq.mdmg)b.push('MagDmg +'+eq.mdmg);if(eq.mdef)b.push('MagDef +'+eq.mdef);
+  if(eq.hp)b.push('HP +'+eq.hp);if(eq.pray)b.push('Prayer +'+eq.pray);
   return b.join(sep||'  ');
 }
 /* hover tooltip: name + combat stats + comparison vs worn gear + GE price */
@@ -6733,15 +6878,15 @@ function equipFromInv(i){
     sfx.pickup();msg('You ready the '+ITEMS[s.id].name.toLowerCase()+'.');
     renderInv();renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;return;
   }
-  if(eq.slot==='shield'&&player.equip.weapon){const _we=ITEMS[player.equip.weapon.id].equip,wm=_we.model;if(wm==='bow'||wm==='staff'||_we.twoHand){msg('You cannot use a shield with a two-handed weapon.');return;}}
-  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff'||eq.twoHand)&&player.equip.shield){
+  if(eq.slot==='shield'&&player.equip.weapon){const _we=ITEMS[player.equip.weapon.id].equip,wm=_we.model;if(wm==='bow'||_we.twoHand){msg('You cannot use a shield with a two-handed weapon.');return;}}
+  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.twoHand)&&player.equip.shield){
     const _prevW=player.equip.weapon,_free=player.inv.filter(x9=>!x9).length;
     if(_free+(_prevW?0:1)<1){msg('You need a free inventory slot for your shield before wielding a two-handed weapon.');return;}
   }
   const prev=player.equip[eq.slot]||null;
   player.equip[eq.slot]={id:s.id};
   player.inv[i]=prev?{id:prev.id,qty:1}:null;
-  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.model==='staff'||eq.twoHand)&&player.equip.shield){const sh=player.equip.shield;player.equip.shield=null;const free=player.inv.findIndex(x=>!x);player.inv[free]={id:sh.id,qty:1};msg('You sling your shield off to wield two-handed.');}
+  if(eq.slot==='weapon'&&(eq.model==='bow'||eq.twoHand)&&player.equip.shield){const sh=player.equip.shield;player.equip.shield=null;const free=player.inv.findIndex(x=>!x);player.inv[free]={id:sh.id,qty:1};msg('You sling your shield off to wield two-handed.');}
   sfx.pickup();
   msg('You '+eq.verb.toLowerCase()+' the '+ITEMS[s.id].name.toLowerCase()+'.');
   if(eq.emberset&&hasEmberSet()){msg('The Ember set flares to life \u2014 you feel the forge\u2019s power. (Full-set bonus: +6 Strength, +6 Ranged, and immunity to the Emberdeep\u2019s lava.)','#ff8a2a');}
@@ -7511,7 +7656,7 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='partyhat'){
-    const t='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
+    const t='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0');
     g.fillStyle=t;g.strokeStyle='#15100a';g.lineWidth=1.5;
     g.beginPath();g.moveTo(0,-13);g.lineTo(8.5,11);g.lineTo(-8.5,11);g.closePath();g.fill();g.stroke();
     g.fillStyle='rgba(255,255,255,0.72)';
@@ -7522,8 +7667,8 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='slayerhelm'){
-    const tint='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
-    const trim='#'+ITEMS[id].equip.trim.toString(16).padStart(6,'0');
+    const tint='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0');
+    const trim='#'+((ITEMS[id].equip.trim??0xdddddd)>>>0).toString(16).padStart(6,'0');
     g.lineJoin='round';g.lineWidth=1.4;g.strokeStyle='#15100a';
     /* horns behind the dome (trim) */
     g.fillStyle=trim;
@@ -7565,7 +7710,7 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='cape'){
-    const t='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
+    const t='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0');
     g.fillStyle=t;
     g.beginPath();g.moveTo(-7,-10);g.lineTo(7,-10);g.lineTo(11,10);
     g.lineTo(-11,10);g.closePath();g.fill();
@@ -7585,7 +7730,7 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='arrow'){
-    const t='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
+    const t='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0');
     g.strokeStyle='#7a5230';g.lineWidth=1.8;g.lineCap='round';
     g.beginPath();g.moveTo(-8,8);g.lineTo(6,-6);g.stroke();
     g.fillStyle=t;g.beginPath();g.moveTo(9,-9);g.lineTo(3,-7);g.lineTo(6,-3);g.closePath();g.fill();
@@ -7629,7 +7774,7 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='hide'){
-    const t='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0'),sl=ITEMS[id].equip.slot;
+    const t='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0'),sl=ITEMS[id].equip.slot;
     g.fillStyle=t;g.strokeStyle='rgba(0,0,0,0.3)';g.lineWidth=1;g.lineJoin='round';
     if(sl==='head'){
       g.beginPath();g.arc(0,-1,8,Math.PI,0);g.lineTo(8,5);g.quadraticCurveTo(0,8,-8,5);g.closePath();g.fill();g.stroke();
@@ -7648,7 +7793,7 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].rune){
-    const t='#'+ITEMS[id].tint.toString(16).padStart(6,'0');
+    const t='#'+((ITEMS[id].tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0');
     g.fillStyle=t;g.strokeStyle='rgba(0,0,0,0.35)';g.lineWidth=1.2;g.lineJoin='round';
     g.beginPath();g.moveTo(0,-9);g.lineTo(8,-3);g.lineTo(6,8);g.lineTo(-6,8);g.lineTo(-8,-3);g.closePath();g.fill();g.stroke();
     g.strokeStyle='rgba(255,255,255,0.85)';g.lineWidth=1.6;g.lineCap='round';
@@ -7667,7 +7812,7 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='robe'){
-    const t='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0'),sl=ITEMS[id].equip.slot;
+    const t='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0'),sl=ITEMS[id].equip.slot;
     g.fillStyle=t;g.strokeStyle='rgba(0,0,0,0.3)';g.lineWidth=1;g.lineJoin='round';
     if(sl==='head'){
       g.beginPath();g.moveTo(0,-10);g.lineTo(6,6);g.lineTo(-6,6);g.closePath();g.fill();g.stroke();
@@ -7773,7 +7918,7 @@ function drawItemIcon(g,id,S){
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='shieldM'){
-    const tt='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
+    const tt='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0');
     const tr='#'+(ITEMS[id].equip.trim||0xdba968).toString(16).padStart(6,'0');
     const w=S*0.3,ty=-S*0.34,my=S*0.05,by=S*0.42;
     g.fillStyle=tr;g.beginPath();g.moveTo(-w-2,ty-2);g.lineTo(w+2,ty-2);g.lineTo(w+2,my+1);g.lineTo(0,by+3);g.lineTo(-w-2,my+1);g.closePath();g.fill();
@@ -7783,7 +7928,7 @@ function drawItemIcon(g,id,S){
   }
   const eqm=ITEMS[id]&&ITEMS[id].equip?ITEMS[id].equip.model:null;
   if(eqm==='helm'||eqm==='chain'||eqm==='plate'||eqm==='amulet'||eqm==='legs'||eqm==='boots'){
-    const tt='#'+ITEMS[id].equip.tint.toString(16).padStart(6,'0');
+    const tt='#'+((ITEMS[id].equip.tint??0x9a9a9a)>>>0).toString(16).padStart(6,'0');
     const tr='#'+(ITEMS[id].equip.trim||0xffffff).toString(16).padStart(6,'0');
     if(eqm==='legs'){
       g.fillStyle=tt;
@@ -8325,6 +8470,47 @@ function drawItemIcon(g,id,S){
       g.fillStyle=gem;g.strokeStyle='#26221c';g.lineWidth=1.1;
       g.beginPath();g.moveTo(0,-9.5);g.lineTo(4.6,-3.6);g.lineTo(0,1.6);g.lineTo(-4.6,-3.6);g.closePath();g.fill();g.stroke();
       g.fillStyle='rgba(255,255,255,0.5)';g.beginPath();g.moveTo(-1.6,-5.4);g.lineTo(0.6,-6);g.lineTo(-0.7,-3.9);g.closePath();g.fill();break;}
+    case 'halcyon_grimoire':{
+      g.fillStyle='#8c1c22';g.strokeStyle='#3a0e10';g.lineWidth=1.2;
+      g.beginPath();g.moveTo(-8,-10);g.lineTo(8,-10);g.lineTo(8,10);g.lineTo(-8,10);g.closePath();g.fill();g.stroke();
+      g.fillStyle='#5a1216';g.fillRect(-8,-10,3,20);
+      g.fillStyle='#efe9d0';g.fillRect(6.6,-9,2.2,18);
+      g.strokeStyle='#c9a23a';g.lineWidth=0.8;g.strokeRect(-6.2,-8.4,12,16.8);
+      g.fillStyle='#e3b21f';g.strokeStyle='#7a5a1e';g.lineWidth=0.8;g.fillRect(-1.8,-2,9.4,4);g.strokeRect(-1.8,-2,9.4,4);
+      g.strokeStyle='#e3b21f';g.lineWidth=1.3;g.beginPath();g.arc(-1.2,-1,3.2,0,7);g.stroke();
+      g.beginPath();g.moveTo(-1.2,-4.4);g.lineTo(-1.2,2.4);g.moveTo(-4.6,-1);g.lineTo(2.2,-1);g.stroke();break;}
+    case 'crown_wizardry':{
+      g.fillStyle='#2a3aa0';g.strokeStyle='#e3b21f';g.lineWidth=1.3;
+      g.beginPath();g.moveTo(-9,6);g.lineTo(9,6);g.lineTo(9,1);g.lineTo(6,-3);g.lineTo(4.5,1);g.lineTo(1.5,-8);
+      g.lineTo(-1.5,1);g.lineTo(-4.5,-8);g.lineTo(-6,1);g.lineTo(-9,-3);g.closePath();g.fill();g.stroke();
+      g.fillStyle='#5aa0ff';g.strokeStyle='#1a2a6a';g.lineWidth=0.8;
+      for(const px of [-4.5,1.5]){g.beginPath();g.arc(px,-7,1.7,0,7);g.fill();g.stroke();}
+      g.beginPath();g.arc(0,3.4,2.1,0,7);g.fill();g.stroke();
+      g.fillStyle='#e3b21f';g.fillRect(-9,6,18,2.4);break;}
+    case 'quiver_farsight':{
+      g.fillStyle='#3a5a2a';g.strokeStyle='#1e2e16';g.lineWidth=1.2;
+      g.beginPath();g.moveTo(-5,-4);g.lineTo(5,-4);g.lineTo(4,11);g.lineTo(-4,11);g.closePath();g.fill();g.stroke();
+      g.fillStyle='#d0b070';g.fillRect(-5.2,-4,10.4,2.2);
+      g.strokeStyle='#5a3d22';g.lineWidth=1.6;g.beginPath();g.moveTo(-5,-2);g.lineTo(5,9);g.stroke();
+      for(const ax of [-2.5,0,2.5]){g.strokeStyle='#c9a06a';g.lineWidth=1;g.beginPath();g.moveTo(ax,-4);g.lineTo(ax,-11);g.stroke();
+        g.fillStyle='#b03030';g.beginPath();g.moveTo(ax,-11.4);g.lineTo(ax-1.6,-8.6);g.lineTo(ax+1.6,-8.6);g.closePath();g.fill();}break;}
+    case 'quiver_rejuv':{
+      g.fillStyle='#ffd24a';g.strokeStyle='#8a6212';g.lineWidth=1.2;
+      g.beginPath();g.moveTo(-5,-4);g.lineTo(5,-4);g.lineTo(4,11);g.lineTo(-4,11);g.closePath();g.fill();g.stroke();
+      g.fillStyle='#fff0b0';g.fillRect(-5.2,-4,10.4,2.2);
+      g.strokeStyle='#8a6212';g.lineWidth=1.6;g.beginPath();g.moveTo(-5,-2);g.lineTo(5,9);g.stroke();
+      for(const ax of [-2.5,0,2.5]){g.strokeStyle='#c9a06a';g.lineWidth=1;g.beginPath();g.moveTo(ax,-4);g.lineTo(ax,-11);g.stroke();
+        g.fillStyle='#efe9d0';g.beginPath();g.moveTo(ax,-11.4);g.lineTo(ax-1.6,-8.6);g.lineTo(ax+1.6,-8.6);g.closePath();g.fill();}
+      g.fillStyle='#ff5a6a';g.beginPath();g.arc(-1.4,3.4,1.4,0,7);g.arc(1.4,3.4,1.4,0,7);g.moveTo(-2.8,4);g.lineTo(0,7.4);g.lineTo(2.8,4);g.closePath();g.fill();break;}
+    case 'shield_mountain':{
+      g.fillStyle='#6e6f73';g.strokeStyle='#3a3b3e';g.lineWidth=1.3;
+      g.beginPath();g.moveTo(-7.5,-8);g.lineTo(7.5,-8);g.lineTo(7.5,9);g.lineTo(0,12);g.lineTo(-7.5,9);g.closePath();g.fill();g.stroke();
+      g.fillStyle='#6e6f73';g.strokeStyle='#3a3b3e';for(const mx of [-6,-2,2,6]){g.fillRect(mx-1.3,-11,2.6,3);g.strokeRect(mx-1.3,-11,2.6,3);}
+      g.strokeStyle='#c9a23a';g.lineWidth=1.4;g.strokeRect(-6.4,-7,12.8,15.5);
+      g.fillStyle='#e6ebf0';g.strokeStyle='#3a3b3e';g.lineWidth=0.7;
+      g.beginPath();g.moveTo(-5,4);g.lineTo(-1.5,-3);g.lineTo(0.5,1);g.lineTo(2.5,-5);g.lineTo(6,4);g.closePath();g.fill();g.stroke();
+      g.fillStyle='#ffffff';g.beginPath();g.moveTo(2.5,-5);g.lineTo(1.3,-2.6);g.lineTo(3.7,-2.6);g.closePath();g.fill();
+      g.fillStyle='#c9a23a';g.strokeStyle='#7a5a1e';g.beginPath();g.arc(0,7.5,1.5,0,7);g.fill();g.stroke();break;}
     case 'cinders':{
       const bits=[[-5,3,3],[3,4,3.4],[-1,-2,3.6],[6,-1,2.6],[-6,-3,2.4],[2,-6,2.8]];
       for(const b of bits){const bx=b[0],by=b[1],br=b[2];
@@ -8603,6 +8789,37 @@ function drawPrayerIcon(g,id,S){
     for(let a=0;a<Math.PI*2.5;a+=0.22){const rr=1+a*1.15,x=Math.cos(a)*rr,y=Math.sin(a)*rr;a===0?g.moveTo(x,y):g.lineTo(x,y);}
     g.stroke();
     g.fillStyle='#e6d2f2';g.beginPath();g.arc(0,0,2,0,7);g.fill();
+    g.restore();return;
+  }
+  if(/^protect_/.test(id)){
+    g.fillStyle='#2a4a8c';g.strokeStyle='#9fbcf0';g.lineWidth=1.6;
+    g.beginPath();g.moveTo(-8,-8);g.lineTo(8,-8);g.lineTo(8,2);g.quadraticCurveTo(8,9,0,11);g.quadraticCurveTo(-8,9,-8,2);g.closePath();g.fill();g.stroke();
+    g.strokeStyle='#eaf1ff';g.lineWidth=2.2;g.lineCap='round';
+    if(id==='protect_melee'){g.beginPath();g.moveTo(-5,5);g.lineTo(5,-5);g.moveTo(5,5);g.lineTo(-5,-5);g.stroke();}
+    else if(id==='protect_missiles'){g.beginPath();g.moveTo(-5,6);g.lineTo(5,-5);g.stroke();g.beginPath();g.moveTo(5,-5);g.lineTo(0.5,-5);g.moveTo(5,-5);g.lineTo(5,-0.5);g.stroke();}
+    else{g.fillStyle='#eaf1ff';g.beginPath();for(let i=0;i<8;i++){const a=i*Math.PI/4,r=(i%2?2.2:6);const x=Math.cos(a)*r,y=Math.sin(a)*r-1;i?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();g.fill();}
+    g.restore();return;
+  }
+  if(id==='retribution'){g.strokeStyle='#e0532a';g.fillStyle='#e0532a';g.lineWidth=2;g.lineCap='round';
+    g.beginPath();for(let k=0;k<12;k++){const an=k*Math.PI/6,rr=(k%2?3:9);g.lineTo(Math.cos(an)*rr,Math.sin(an)*rr);}g.closePath();g.stroke();
+    g.beginPath();g.arc(0,0,2.4,0,7);g.fill();g.restore();return;}
+  if(id==='redemption'){g.fillStyle='#5ac06a';g.strokeStyle='#eafff0';g.lineWidth=1.4;
+    g.beginPath();g.arc(-2.6,-2,3.2,0,7);g.arc(2.6,-2,3.2,0,7);g.moveTo(-5.6,-0.4);g.lineTo(0,7.5);g.lineTo(5.6,-0.4);g.closePath();g.fill();
+    g.beginPath();g.moveTo(0,-3);g.lineTo(0,2);g.moveTo(-2.4,-0.5);g.lineTo(2.4,-0.5);g.stroke();g.restore();return;}
+  if(id==='smite'){g.strokeStyle='#b07fe0';g.fillStyle='#b07fe0';g.lineWidth=2.2;g.lineCap='round';
+    g.beginPath();g.moveTo(0,-9);g.lineTo(0,4);g.stroke();g.beginPath();g.moveTo(-4,-5.5);g.lineTo(4,-5.5);g.stroke();
+    g.beginPath();g.moveTo(0,9);g.lineTo(-3,4);g.lineTo(3,4);g.closePath();g.fill();g.restore();return;}
+  const _pcat=PRAYER_META[id]&&PRAYER_META[id].cat;
+  if(_pcat&&_pcat!=='protect'){
+    const _tm={1.05:1,1.10:2,1.15:3},_mult=PRAYER_META[id].mult,_tier=_tm[_mult]||4;
+    const _CC={atk:'#e06b4a',str:'#e0b23a',def:'#5a8fd0',rng:'#5ac06a',mag:'#b07fe0'}[_pcat];
+    g.lineCap='round';g.lineJoin='round';g.strokeStyle=_CC;g.fillStyle=_CC;g.lineWidth=2.2;
+    if(_pcat==='atk'){g.beginPath();g.moveTo(0,6);g.lineTo(0,-6);g.stroke();g.beginPath();g.moveTo(-4,3.5);g.lineTo(4,3.5);g.stroke();g.beginPath();g.moveTo(0,-9);g.lineTo(-2.6,-5);g.lineTo(2.6,-5);g.closePath();g.fill();}
+    else if(_pcat==='str'){g.beginPath();g.arc(0,-1,5.2,0,7);g.fill();g.strokeStyle='#7a4d10';g.lineWidth=1;for(let k=-3;k<=3;k+=2){g.beginPath();g.moveTo(k,-5.5);g.lineTo(k,-1.5);g.stroke();}g.beginPath();g.moveTo(-5,2.5);g.lineTo(5,2.5);g.stroke();}
+    else if(_pcat==='def'){g.beginPath();g.moveTo(-6,-6);g.lineTo(6,-6);g.lineTo(6,2);g.quadraticCurveTo(6,8,0,10);g.quadraticCurveTo(-6,8,-6,2);g.closePath();g.fill();g.strokeStyle='#eaf1ff';g.lineWidth=1.4;g.beginPath();g.moveTo(0,-4);g.lineTo(0,6);g.moveTo(-3.5,0);g.lineTo(3.5,0);g.stroke();}
+    else if(_pcat==='rng'){g.lineWidth=2;g.beginPath();if(g.ellipse)g.ellipse(0,-1,7,4.2,0,0,7);else g.arc(0,-1,5,0,7);g.stroke();g.beginPath();g.arc(0,-1,2.3,0,7);g.fill();}
+    else{g.beginPath();for(let k=0;k<10;k++){const an=k*Math.PI/5-Math.PI/2,rr=(k%2?2.6:6.8);const x=Math.cos(an)*rr,y=Math.sin(an)*rr-1;k?g.lineTo(x,y):g.moveTo(x,y);}g.closePath();g.fill();}
+    g.fillStyle=_CC;for(let k=0;k<_tier;k++){const px=(k-(_tier-1)/2)*3.6;g.beginPath();g.arc(px,10.8,1.1,0,7);g.fill();}
     g.restore();return;
   }
   if(id==='halcyon'){
@@ -9466,6 +9683,22 @@ function drawUiIcon(g,name,S){
       g.beginPath();g.ellipse(0,6.4,9,2.6,0,0,7);g.fill();g.stroke();
       g.fillStyle='#ffe066';
       g.beginPath();g.arc(-0.5,-1,1.5,0,7);g.fill();
+      break; }
+    case 'coin': {
+      g.fillStyle='#c9971f';g.beginPath();g.arc(0,0,8.5,0,7);g.fill();
+      g.fillStyle='#e8c24a';g.beginPath();g.arc(0,0,7,0,7);g.fill();
+      g.strokeStyle='#8a6a1a';g.lineWidth=1;g.beginPath();g.arc(0,0,7,0,7);g.stroke();
+      g.fillStyle='rgba(255,245,200,0.6)';g.beginPath();g.arc(-2.2,-2.2,2.4,0,7);g.fill();
+      break; }
+    case 'map': {
+      g.fillStyle='#d9c896';g.strokeStyle='#7a6a3a';g.lineWidth=1.2;g.lineJoin='round';
+      g.beginPath();g.moveTo(-9,-7);g.lineTo(-3,-5);g.lineTo(3,-7);g.lineTo(9,-5);g.lineTo(9,7);g.lineTo(3,5);g.lineTo(-3,7);g.lineTo(-9,5);g.closePath();g.fill();g.stroke();
+      g.strokeStyle='#9a8a5a';g.lineWidth=0.8;g.beginPath();g.moveTo(-3,-5);g.lineTo(-3,7);g.moveTo(3,-7);g.lineTo(3,5);g.stroke();
+      g.strokeStyle='#c0241f';g.lineWidth=1.8;g.beginPath();g.moveTo(-1.5,-1.5);g.lineTo(1.5,1.5);g.moveTo(1.5,-1.5);g.lineTo(-1.5,1.5);g.stroke();
+      break; }
+    case 'question': {
+      g.fillStyle='#ffe38a';g.font='bold '+(S*0.86)+'px Georgia,serif';g.textAlign='center';g.textBaseline='middle';
+      g.fillText('?',0,S*0.05);
       break; }
   }
   g.restore();
@@ -14175,6 +14408,23 @@ const shieldM=new THREE.Group();
 pm.lArm.add(shieldM);
 shieldM.position.set(-0.075,-0.34,0.03);
 shieldM.visible=false;
+const grimoireM=new THREE.Group();
+{const cover=TT(gmesh(new THREE.BoxGeometry(0.25,0.33,0.05),0x8c1c22),'tint');grimoireM.add(cover);
+ const pages=gmesh(new THREE.BoxGeometry(0.21,0.29,0.055),0xefe9d0);pages.position.z=0.004;grimoireM.add(pages);
+ const spine=TT(gmesh(new THREE.BoxGeometry(0.04,0.33,0.062),0xe3b21f),'trim');spine.position.x=-0.115;grimoireM.add(spine);
+ const clasp=TT(gmesh(new THREE.BoxGeometry(0.13,0.05,0.07),0xe3b21f),'trim');clasp.position.set(0.02,0,0.03);grimoireM.add(clasp);
+ const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);}
+pm.lArm.add(grimoireM);grimoireM.position.set(-0.08,-0.34,0.05);grimoireM.rotation.set(0.2,0,0);grimoireM.visible=false;
+const mountainShieldM=new THREE.Group();
+{const face=TT(gmesh(new THREE.BoxGeometry(0.32,0.5,0.05),0x6e6f73),'tint');mountainShieldM.add(face);
+ for(const mx of [-0.1,0,0.1]){const mn=TT(gmesh(new THREE.BoxGeometry(0.07,0.06,0.05),0x6e6f73),'tint');mn.position.set(mx,0.28,0);mountainShieldM.add(mn);}
+ for(const fr of [[0.34,0.03,0,0.25],[0.34,0.03,0,-0.25],[0.03,0.5,0.165,0],[0.03,0.5,-0.165,0]]){const t=TT(gmesh(new THREE.BoxGeometry(fr[0],fr[1],0.06),0xc9a23a),'trim');t.position.set(fr[2],fr[3],0.004);mountainShieldM.add(t);}
+ for(const pk of [[-0.09,0.1],[0.0,0.16],[0.09,0.12]]){const peak=gmesh(new THREE.ConeGeometry(0.055,pk[1],4),0x9a9ca0);peak.rotation.y=Math.PI/4;peak.position.set(pk[0],-0.04+pk[1]/2,0.045);mountainShieldM.add(peak);
+   const snow=new THREE.Mesh(new THREE.ConeGeometry(0.022,pk[1]*0.32,4),new THREE.MeshBasicMaterial({color:0xffffff}));snow.rotation.y=Math.PI/4;snow.position.set(pk[0],-0.04+pk[1]-pk[1]*0.16,0.05);mountainShieldM.add(snow);}
+ const boss=TT(gmesh(new THREE.SphereGeometry(0.038,10,8),0xc9a23a),'trim');boss.scale.z=0.5;boss.position.set(0,0.12,0.05);mountainShieldM.add(boss);
+ for(const rv of [[-0.12,0.2],[0.12,0.2],[-0.12,-0.2],[0.12,-0.2]]){const rr=TT(gmesh(new THREE.SphereGeometry(0.018,7,6),0xc9a23a),'trim');rr.scale.z=0.5;rr.position.set(rv[0],rv[1],0.04);mountainShieldM.add(rr);}
+ mountainShieldM.rotation.y=-Math.PI/2;}
+pm.lArm.add(mountainShieldM);mountainShieldM.position.set(-0.075,-0.32,0.03);mountainShieldM.visible=false;
 const leafDagM=new THREE.Group();
 {const _hg=gmesh(new THREE.CylinderGeometry(0.02,0.024,0.13,6),0x6b4a2e);_hg.position.y=0.06;leafDagM.add(_hg);
  for(const _vy of [0.02,0.07,0.11]){const _vr=gmesh(new THREE.TorusGeometry(0.026,0.006,5,8),0x8fc46a);_vr.position.y=_vy;_vr.rotation.x=Math.PI/2;leafDagM.add(_vr);}
@@ -14230,6 +14480,13 @@ const moltCrownM=new THREE.Group();
    const _st7=new THREE.Mesh(new THREE.ConeGeometry(0.02,0.08,5),new THREE.MeshBasicMaterial({color:_i7%2?0xffa24a:0xff6a2a}));
    _st7.position.set(Math.cos(_aa7)*0.19,1.82+(_i7%2)*0.05,Math.sin(_aa7)*0.19);moltCrownM.add(_st7);}}
 moltCrownM.position.y-=0.78;pm.upper.add(moltCrownM);moltCrownM.visible=false;
+const crownM=new THREE.Group();
+{const band=TT(gmesh(new THREE.TorusGeometry(0.185,0.028,7,16),0xe3b21f),'trim');band.rotation.x=Math.PI/2;band.position.y=1.62;crownM.add(band);
+ for(let i=0;i<6;i++){const a=i*Math.PI*2/6,h=0.14+(i%2)*0.1;
+   const sp=TT(gmesh(new THREE.ConeGeometry(0.038,h,4),0x2a3aa0),'tint');sp.position.set(Math.cos(a)*0.18,1.66+h/2,Math.sin(a)*0.18);crownM.add(sp);
+   if(i%2===0){const gem=new THREE.Mesh(new THREE.SphereGeometry(0.032,7,6),new THREE.MeshBasicMaterial({color:0x5aa0ff}));gem.position.set(Math.cos(a)*0.18,1.66+h,Math.sin(a)*0.18);crownM.add(gem);}}
+ const fg=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,7),new THREE.MeshBasicMaterial({color:0x7ac0ff}));fg.position.set(0,1.68,0.185);crownM.add(fg);}
+crownM.position.y-=0.78;pm.upper.add(crownM);crownM.visible=false;
 const slayerHelmM=new THREE.Group();
 {const dome=TT(gmesh(new THREE.SphereGeometry(0.223,12,9,0,Math.PI*2,0,Math.PI*0.6),0xb9bdc4),'tint');
  dome.position.y=1.565;dome.scale.set(1.02,1.1,1.15);slayerHelmM.add(dome);
@@ -16425,6 +16682,34 @@ function makeGroundItem(id){
     const _oc=eq.infRune==='fire_rune'?0xe0632a:eq.infRune==='water_rune'?0x4f86d6:eq.infRune==='earth_rune'?0x7d9a46:eq.infRune==='air_rune'?0xbcd8ee:(eq.mdmg?0xb58be0:0xcfd6da);
     const _orb=add(SPH(0.05),_oc);_orb.position.set(0,0.4,0);
   }
+  else if(eq.model==='book'){
+    const cover=add(BOX(0.2,0.055,0.26),tint);cover.position.y=0.03;
+    const pages=add(BOX(0.17,0.04,0.22),0xefe9d0);pages.position.set(0.015,0.058,0);
+    add(BOX(0.03,0.06,0.26),trim).position.set(-0.088,0.032,0);
+    const rune=add(TOR(0.05,0.008,10),trim);rune.rotation.x=Math.PI/2;rune.position.set(0.015,0.085,0);
+    add(BOX(0.006,0.055,0.09),trim).position.set(0.015,0.085,0);
+  }
+  else if(eq.model==='crown'){
+    add(TOR(0.135,0.022,12),trim).position.y=0.06;
+    for(let i=0;i<6;i++){const a=i/6*6.283;const h=0.1+(i%2)*0.08;const sp=add(CON(0.03,h,4),tint);sp.position.set(Math.cos(a)*0.125,0.07+h/2,Math.sin(a)*0.125);}
+    for(const px of [-0.06,0.06]){const gem=add(SPH(0.028,7,6),0x5aa0ff);gem.position.set(px,0.15,0.11);}
+    const top=add(SPH(0.03,7,6),0x5aa0ff);top.position.set(0,0.2,0);
+  }
+  else if(eq.model==='quiver'){
+    const body=add(CYL(0.062,0.05,0.28,10),tint);body.position.y=0.15;body.rotation.z=0.22;
+    add(TOR(0.062,0.012,10),trim).position.set(0.04,0.28,0);
+    add(TOR(0.052,0.01,10),trim).position.set(-0.028,0.03,0);
+    for(let i=0;i<4;i++){const sh=add(CYL(0.005,0.005,0.17,5),0xc9a06a);sh.position.set(0.055+i*0.016,0.36+i*0.006,(i-1.5)*0.022);sh.rotation.z=0.22;
+      const ft=add(CON(0.02,0.055,4),trim);ft.position.set(0.09+i*0.016,0.45+i*0.006,(i-1.5)*0.022);ft.rotation.z=0.22;}
+  }
+  else if(eq.model==='towershield'){
+    const face=add(BOX(0.3,0.46,0.05),tint);face.position.y=0.26;
+    for(const mx of [-0.09,0,0.09]){add(BOX(0.06,0.06,0.05),tint).position.set(mx,0.52,0);}
+    add(BOX(0.32,0.03,0.06),trim).position.set(0,0.49,0.005);add(BOX(0.32,0.03,0.06),trim).position.set(0,0.05,0.005);
+    const boss=add(SPH(0.035,9,7),trim);boss.scale.z=0.5;boss.position.set(0,0.34,0.04);
+    for(const pk of [[-0.08,0.09],[0,0.14],[0.08,0.1]]){const pe=add(CON(0.05,pk[1],4),0x9a9ca0);pe.rotation.y=Math.PI/4;pe.position.set(pk[0],0.22+pk[1]/2,0.04);
+      const sn=add(CON(0.02,pk[1]*0.3,4),0xffffff);sn.rotation.y=Math.PI/4;sn.position.set(pk[0],0.22+pk[1]-pk[1]*0.15,0.045);}
+  }
   else if(eq.slot==='ammo'||/_arrow$/.test(id)){
     /* a small fan of arrows lying on the ground: shaft + metal head + fletching */
     const mc=metalOf(id)||[0x8a8a8a,0xc8c8c8];
@@ -17075,6 +17360,7 @@ invGrid.addEventListener('click',e=>{
     if(_bit&&_bit.id==='mining_pouch'){if(pouchTotal()>0)emptyPouchToBank();else depositSlot(_bi,_bit.qty||1);return;}
     depositSlot(_bi,1);return;}
   if(shopOpen){sellSlot(+sl.dataset.i,1);return;}
+  if(player._alchMode){alchemiseSlot(+sl.dataset.i);return;}
   itemPrimary(+sl.dataset.i);
 });
 /* ---- drag items to reorganize the inventory (mobile + desktop) ---- */
@@ -17720,6 +18006,17 @@ function drawSayText(wx,wz,yoff,text){
   octx.fillStyle='#ffff2a';octx.fillText(text,p.x,p.y);
   octx.restore();
 }
+const _ohPrayCache={};
+function overheadPrayerIcon(id){ if(_ohPrayCache[id])return _ohPrayCache[id];
+  const c=document.createElement('canvas');c.width=c.height=30;drawPrayerIcon(c.getContext('2d'),id,30);_ohPrayCache[id]=c;return c; }
+function activeOverheadPrayer(){ for(const id in prayers){ if(prayers[id]&&PRAYER_META[id]&&PRAYER_META[id].cat==='protect')return id; } return null; }
+function syncOverheadPrayer(){ if(typeof MP!=='undefined'&&MP.sendOverheadPrayer)MP.sendOverheadPrayer(activeOverheadPrayer()); }
+function drawOverheadPrayer(wx,wz,yoff,id){ if(!id)return; const p=proj(wx,groundH(wx,wz)+yoff,wz); if(!p)return;
+  octx.save();
+  octx.fillStyle='rgba(18,14,8,0.74)'; octx.beginPath(); octx.arc(p.x,p.y,17,0,Math.PI*2); octx.fill();
+  octx.strokeStyle='#ffe66d'; octx.lineWidth=1.5; octx.beginPath(); octx.arc(p.x,p.y,17,0,Math.PI*2); octx.stroke();
+  octx.drawImage(overheadPrayerIcon(id),p.x-15,p.y-15,30,30);
+  octx.restore(); }
 function updateParty(dt){
   buildPartyAgents();
   const ds=dt/1000;
@@ -18865,6 +19162,11 @@ const EMBER_SHOP=[
   {id:'bodkin_health',      cat:'Luxury', coins:1100000, warrants:110, cinders:13000},
   {id:'bodkin_piety',       cat:'Luxury', coins:1100000, warrants:110, cinders:13000},
   {id:'bodkin_rejuv',       cat:'Luxury', coins:3400000, warrants:320, cinders:34000},
+  {id:'halcyon_grimoire',   cat:'Luxury', coins:3200000, warrants:300, cinders:32000},
+  {id:'crown_wizardry',     cat:'Luxury', coins:3000000, warrants:280, cinders:30000},
+  {id:'quiver_farsight',    cat:'Luxury', coins:3200000, warrants:300, cinders:32000},
+  {id:'quiver_rejuv',       cat:'Luxury', coins:3000000, warrants:280, cinders:30000},
+  {id:'shield_mountain',    cat:'Luxury', coins:2800000, warrants:260, cinders:28000},
   {id:'ring_embers',        cat:'Luxury', coins:900000,  warrants:90,  cinders:11000},
   {id:'ring_warden',        cat:'Luxury', coins:900000,  warrants:90,  cinders:11000},
   {id:'ring_rector',        cat:'Luxury', coins:900000,  warrants:90,  cinders:11000}
@@ -19039,15 +19341,25 @@ function buildLuxuryModel(id){
     }
     g.rotation.z=0.14;
   }
+  /* ---- CROWN (circlet + upright spikes + gems) ---- */
+  else if(eq.model==='crown'){
+    const gold=(trim&&trim!==0xfff0b0)?trim:0xe3b21f, spikeCol=tint||0x2a3aa0;
+    const band=new THREE.Mesh(TOR(0.30,0.05,32),new THREE.MeshLambertMaterial({color:gold})); band.rotation.x=Math.PI/2; g.add(band);
+    for(let i=0;i<6;i++){ const a=i*Math.PI*2/6, h=0.22+(i%2)*0.13;
+      const sp=new THREE.Mesh(CON(0.06,h,4),new THREE.MeshLambertMaterial({color:spikeCol})); sp.position.set(Math.cos(a)*0.30,h/2,Math.sin(a)*0.30); g.add(sp);
+      if(i%2===0){ const gem=new THREE.Mesh(OCT(0.055),new THREE.MeshLambertMaterial({color:0x5aa0ff,emissive:0x2a5aa0,emissiveIntensity:0.9})); gem.position.set(Math.cos(a)*0.30,h,Math.sin(a)*0.30); g.add(gem); } }
+    const fg=new THREE.Mesh(OCT(0.075),new THREE.MeshLambertMaterial({color:0x7ac0ff,emissive:0x2a6ac0,emissiveIntensity:1.0})); fg.position.set(0,0.06,0.30); g.add(fg);
+    g.rotation.x=-0.32; g.scale.setScalar(1.5);
+  }
   /* ---- RINGS (band + raised gem setting) ---- */
   else if(eq.model==='ring'||eq.slot==='ring'){
     const gk=/embers/.test(id)?'embers':/warden/.test(id)?'warden':/rector/.test(id)?'rector':'embers', gc=gemOf(gk);
-    const band=new THREE.Mesh(TOR(0.26,0.06,32),new THREE.MeshLambertMaterial({color:trim!==0xfff0b0?trim:0xe8c23d})); band.rotation.x=Math.PI/2; g.add(band);
+    const band=new THREE.Mesh(TOR(0.26,0.06,32),new THREE.MeshLambertMaterial({color:trim!==0xfff0b0?trim:0xe8c23d})); g.add(band);   /* upright band (XY plane) so the setting sits on top, not floating */
     const shoulder=new THREE.Mesh(BOX(0.16,0.06,0.12),new THREE.MeshLambertMaterial({color:0xe8c23d})); shoulder.position.y=0.24; g.add(shoulder);
     const gem=new THREE.Mesh(OCT(0.13),new THREE.MeshLambertMaterial({color:gc[0],emissive:gc[1],emissiveIntensity:1.0})); gem.position.y=0.32; gem.scale.set(1,1.15,1); g.add(gem);
     for(let i=0;i<4;i++){ const pr=new THREE.Mesh(CON(0.02,0.09,4),new THREE.MeshLambertMaterial({color:0xe8c23d})); const a=i/4*Math.PI*2;
       pr.position.set(Math.cos(a)*0.09,0.27,Math.sin(a)*0.09); g.add(pr); }
-    g.scale.setScalar(1.4);
+    g.rotation.x=-0.42; g.scale.setScalar(1.4);
   }
   /* ---- fallback: whatever the in-world model is ---- */
   else {
@@ -21105,17 +21417,19 @@ const SKILL_GUIDE={
     [40,'Cook lobster'],[45,'Cook swordfish']],
   firemaking:[[1,'Light regular logs to make a fire'],[15,'Light oak logs'],
     [30,'Light willow logs'],[45,'Light white birch logs (long-lasting)']],
-  prayer:[[1,'Bury bones to gain Prayer experience'],
-    [1,'Pray at an altar to restore prayer points'],
-    [10,'Prayer points drain 5% slower'],
-    [20,'Prayer points drain 10% slower'],
-    [30,'Prayer points drain 15% slower'],
-    [40,'Prayer points drain 20% slower'],
-    [50,'Prayer points drain 25% slower'],
-    [60,'Prayer points drain 30% slower'],
-    [70,'Prayer points drain 35% slower'],
-    [80,'Prayer points drain 40% slower'],
-    [90,'Prayer points drain 45% slower']],
+  prayer:[[1,'Bury bones for Prayer XP; pray at an altar to restore points'],
+    [1,'Maximum prayer points equal your Prayer level'],
+    [1,'Thick Skin \u2014 +5% Defence'],[4,'Burst of Strength \u2014 +5% Strength'],
+    [7,'Clarity of Thought \u2014 +5% Attack'],[8,'Sharp Eye \u2014 +5% Ranged'],[9,'Mystic Will \u2014 +5% Magic'],
+    [10,'Rock Skin \u2014 +10% Defence'],[13,'Superhuman Strength \u2014 +10%'],[16,'Improved Reflexes \u2014 +10% Attack'],
+    [26,'Hawk Eye \u2014 +10% Ranged'],[27,'Mystic Lore \u2014 +10% Magic'],[28,'Steel Skin \u2014 +15% Defence'],
+    [31,'Ultimate Strength \u2014 +15%'],[34,'Incredible Reflexes \u2014 +15% Attack'],
+    [37,'Protect from Magic'],[40,'Protect from Missiles'],[43,'Protect from Melee'],
+    [44,'Eagle Eye \u2014 +15% Ranged'],[45,'Mystic Might \u2014 +15% Magic'],
+    [46,'Retribution'],[49,'Redemption'],[52,'Smite'],
+    [70,'Halcyon Strike +20% Atk \u00b7 Gordon Medal +23% Str \u00b7 Love Divine +25% Def'],
+    [74,'Pelican\u2019s Eye \u2014 +23% Ranged'],[77,'Sheldon\u2019s Insight \u2014 +25% Magic'],
+    [1,'Prayer-bonus gear (capes, holy items) slows drain \u2014 level does not']],
   ranged:[[1,'Wield a Shortbow; fire bronze/iron arrows; wear Leather armour and vambraces'],
     [5,'Use an Oak shortbow; fire steel arrows'],[10,'Wear a Hard leather body'],
     [20,'Use a Willow shortbow; fire mithril arrows; wear Studded leather'],
@@ -21133,7 +21447,8 @@ const SKILL_GUIDE={
   magic:[[1,'Cast Strike spells; wield a Staff; wear Wizard robes'],[13,'Cast Fire Strike'],
     [17,'Cast Bolt spells'],[20,'Wear Mystic robes'],[30,'Wield a Battlestaff'],[35,'Cast Fire Bolt'],
     [40,'Wield a Mystic staff; wear Enchanted robes'],[41,'Cast Blast spells'],[59,'Cast Fire Blast'],
-    [62,'Cast Wave spells'],[81,'Cast Surge spells'],[95,'Cast Fire Surge']],
+    [62,'Cast Wave spells'],[81,'Cast Surge spells'],[95,'Cast Fire Surge'],
+    [25,'Rectory Teleport (home)'],[45,'Wilderness Teleport']],
   agility:[[1,'Train on the wilderness Ropes Course \u2014 cross all six obstacles in order for a lap bonus'],
     [1,'Run energy: 100 \u00b7 recovers at normal speed'],
     [10,'Max run energy raised to 115'],
@@ -21777,18 +22092,45 @@ function renderShop(){
 function openShop(){shopOpen=true;geFilter='All';geQuery='';const _gs=document.getElementById('gesearch');if(_gs)_gs.value='';renderShop();renderShopCoins();geEl.classList.add('on');
   msg('Clerk: Welcome to the Grand Exchange. Buying and selling!','#103a8c');}
 function closeShop(){shopOpen=false;geEl.classList.remove('on');}
-const prayers={halcyon:false,gordon:false,love:false,pelicans_eye:false,sheldons_insight:false};
-const PRAYER_META={halcyon:{name:'Halcyon Strike'},gordon:{name:'Gordon Medal'},love:{name:'Love Divine'},pelicans_eye:{name:'Pelican\u2019s Eye'},sheldons_insight:{name:'Sheldon\u2019s Insight'},rectory_tele:{name:'Rectory Teleport'},wild_tele:{name:'Wilderness Teleport'}};
-function activePrayerCount(){
-  return (prayers.halcyon?1:0)+(prayers.gordon?1:0)+(prayers.love?1:0)+(prayers.pelicans_eye?1:0)+(prayers.sheldons_insight?1:0);
-}
-function deactivateAllPrayers(){
-  prayers.halcyon=prayers.gordon=prayers.love=prayers.pelicans_eye=prayers.sheldons_insight=false;renderPrayers();
-}
+const PRAYER_META={
+  thick_skin:{name:'Thick Skin',req:1,cat:'def',mult:1.05,drain:3,fx:'+5% Defence'},
+  rock_skin:{name:'Rock Skin',req:10,cat:'def',mult:1.10,drain:6,fx:'+10% Defence'},
+  steel_skin:{name:'Steel Skin',req:28,cat:'def',mult:1.15,drain:12,fx:'+15% Defence'},
+  love:{name:'Love Divine',req:70,cat:'def',mult:1.25,drain:24,fx:'+25% Defence'},
+  burst_strength:{name:'Burst of Strength',req:4,cat:'str',mult:1.05,drain:3,fx:'+5% Strength'},
+  superhuman:{name:'Superhuman Strength',req:13,cat:'str',mult:1.10,drain:6,fx:'+10% Strength'},
+  ultimate_strength:{name:'Ultimate Strength',req:31,cat:'str',mult:1.15,drain:12,fx:'+15% Strength'},
+  gordon:{name:'Gordon Medal',req:70,cat:'str',mult:1.23,drain:24,fx:'+23% Strength'},
+  clarity:{name:'Clarity of Thought',req:7,cat:'atk',mult:1.05,drain:3,fx:'+5% Attack'},
+  improved_reflexes:{name:'Improved Reflexes',req:16,cat:'atk',mult:1.10,drain:6,fx:'+10% Attack'},
+  incredible_reflexes:{name:'Incredible Reflexes',req:34,cat:'atk',mult:1.15,drain:12,fx:'+15% Attack'},
+  halcyon:{name:'Halcyon Strike',req:70,cat:'atk',mult:1.20,drain:24,fx:'+20% Attack'},
+  sharp_eye:{name:'Sharp Eye',req:8,cat:'rng',mult:1.05,drain:3,fx:'+5% Ranged'},
+  hawk_eye:{name:'Hawk Eye',req:26,cat:'rng',mult:1.10,drain:6,fx:'+10% Ranged'},
+  eagle_eye:{name:'Eagle Eye',req:44,cat:'rng',mult:1.15,drain:12,fx:'+15% Ranged'},
+  pelicans_eye:{name:'Pelican\u2019s Eye',req:74,cat:'rng',mult:1.23,drain:24,fx:'+23% Ranged'},
+  mystic_will:{name:'Mystic Will',req:9,cat:'mag',mult:1.05,drain:3,fx:'+5% Magic'},
+  mystic_lore:{name:'Mystic Lore',req:27,cat:'mag',mult:1.10,drain:6,fx:'+10% Magic'},
+  mystic_might:{name:'Mystic Might',req:45,cat:'mag',mult:1.15,drain:12,fx:'+15% Magic'},
+  sheldons_insight:{name:'Sheldon\u2019s Insight',req:77,cat:'mag',mult:1.25,drain:24,fx:'+25% Magic'},
+  protect_magic:{name:'Protect from Magic',req:37,cat:'protect',drain:20,fx:'Blocks all magic damage'},
+  protect_missiles:{name:'Protect from Missiles',req:40,cat:'protect',drain:20,fx:'Blocks all ranged damage'},
+  protect_melee:{name:'Protect from Melee',req:43,cat:'protect',drain:20,fx:'Blocks all melee damage'},
+  retribution:{name:'Retribution',req:46,cat:'protect',drain:3,special:'retribution',fx:'On death, a burst of energy damages nearby foes'},
+  redemption:{name:'Redemption',req:49,cat:'protect',drain:6,special:'redemption',fx:'Heals you when your hitpoints fall very low'},
+  smite:{name:'Smite',req:52,cat:'protect',drain:18,special:'smite',fx:'Your hits sap an opponent\u2019s Prayer (duels)'},
+  rectory_tele:{name:'Rectory Teleport'},wild_tele:{name:'Wilderness Teleport'}
+};
+const prayers={}; Object.keys(PRAYER_META).forEach(function(k){if(PRAYER_META[k].cat)prayers[k]=false;});
+/* highest active multiplier in a category (atk/str/def/rng/mag); 1 if none */
+function prayerMult(cat){var m=1;for(var id in prayers){if(prayers[id]){var pp=PRAYER_META[id];if(pp&&pp.cat===cat&&pp.mult&&pp.mult>m)m=pp.mult;}}return m;}
+function activePrayerCount(){var n=0;for(var id in prayers)if(prayers[id])n++;return n;}
+function activePrayerDrain(){var d=0;for(var id in prayers){if(prayers[id]){var m=PRAYER_META[id];d+=(m&&m.drain)||1;}}return d;}
+function deactivateAllPrayers(){for(var id in prayers)prayers[id]=false;renderPrayers();if(typeof syncOverheadPrayer==='function')syncOverheadPrayer();}
 const TELEPORTS={
-  rectory_tele:{name:'Rectory Teleport',req:3,cost:50,x:200,y:86,fx:'#ffd23d',
+  rectory_tele:{name:'Rectory Teleport',req:25,cost:0,x:200,y:86,fx:'#ffd23d',
     msg:'You call on the Rectory\u2019s grace and slip away...'},
-  wild_tele:{name:'Wilderness Teleport',req:5,cost:50,x:163,y:31,fx:'#9a6fb0',
+  wild_tele:{name:'Wilderness Teleport',req:45,cost:0,x:163,y:31,fx:'#9a6fb0',
     msg:'A cold pull drags you out past the ditch...'}};
 function teleFlash(col){
   const w=document.getElementById('viewwrap');if(!w)return;
@@ -21837,10 +22179,8 @@ function ensureWalkable(){
 }
 function castTeleport(id){
   const T=TELEPORTS[id];if(!T||player._tele)return;
-  if(lvl('prayer')<T.req){msg('You need a Prayer level of '+T.req+' to use '+T.name+'.');return;}
-  if(player.pray<T.cost){msg('You need '+T.cost+' prayer points for '+T.name+'. Restore them at an altar.');return;}
+  if(lvl('magic')<T.req){msg('You need a Magic level of '+T.req+' to use '+T.name+'.');return;}
   player._tele=true;
-  player.pray-=T.cost;updatePrayOrb();
   player.action=null;player.path.length=0;
   sfx.bury();
   teleBurst(T.fx);teleFlash(T.fx);
@@ -21867,8 +22207,14 @@ function togglePrayer(id){
   if(!prayers[id]&&player.pray<=0){
     msg('You have no prayer points left. Pray at an altar to restore them.');return;}
   if((id==='rectory_tele'||id==='wild_tele')&&typeof duel!=='undefined'&&duel.state!=='none'){msg('You cannot invoke travel prayers during a duel!','#9c1f1f');return;}
+  if(!prayers[id]){
+    const _pm=PRAYER_META[id];
+    if(_pm&&_pm.req&&lvl('prayer')<_pm.req){msg('You need Prayer level '+_pm.req+' to use '+_pm.name+'.');return;}
+    if(_pm&&_pm.cat){for(var _o in prayers){if(prayers[_o]&&PRAYER_META[_o]&&PRAYER_META[_o].cat===_pm.cat)prayers[_o]=false;}}
+  }
   prayers[id]=!prayers[id];
   sfx.bury();
+  if(typeof syncOverheadPrayer==='function')syncOverheadPrayer();
   msg(prayers[id]?('You activate '+PRAYER_META[id].name+'.')
     :('You deactivate '+PRAYER_META[id].name+'.'),'#103a8c');
   renderPrayers();dirty=true;
@@ -21881,6 +22227,10 @@ function _spellStar(g,outer,inner,points,rot){
 }
 function drawSpellIcon(g,sp,S){
   g.save();g.translate(S/2,S/2);
+  if(sp.util==='alch'){const cr=S*0.17;g.strokeStyle='#7a5a12';g.lineWidth=1.2;
+    for(const c of [[-4,4],[4,4],[0,-3]]){g.fillStyle=sp.col;g.beginPath();g.arc(c[0],c[1],cr,0,Math.PI*2);g.fill();g.stroke();
+      g.fillStyle='rgba(255,255,255,0.45)';g.beginPath();g.arc(c[0]-cr*0.3,c[1]-cr*0.3,cr*0.42,0,Math.PI*2);g.fill();}
+    g.restore();return;}
   const R=S*0.34, col=sp.col, tier=sp.tier, r=R*1.28;
   g.lineCap='round';g.lineJoin='round';
   // element-tinted glow halo (carries the element colour)
@@ -21955,31 +22305,62 @@ function renderSpellbook(){
     cell.addEventListener('mouseleave',hideSpellTip);
     cell.addEventListener('click',function(){audio();
       if(!can){msg('You need Magic level '+sp.req+' to cast '+sp.name+'.','#9c1f1f');return;}
+      if(sp.util==='alch'){player._alchMode=sp;msg('Choose an item in your inventory to alchemise.','#ffd23d');return;}
       player.autocast=(player.autocast===id)?null:id;
       msg(player.autocast?('Autocasting '+sp.name+'.'):'Autocast cleared.','#103a8c');
       hideSpellTip();renderSpellbook();dirty=true;});
     grid.appendChild(cell);
   }
+  const ml2=lvl('magic');
+  for(const tid of ['rectory_tele','wild_tele']){
+    const T=TELEPORTS[tid], can=ml2>=T.req;
+    const cell=document.createElement('div');
+    cell.className='spellcell'+(can?'':' locked');
+    const c=document.createElement('canvas');c.width=36;c.height=36;cell.appendChild(c);
+    drawPrayerIcon(c.getContext('2d'),tid,36);
+    cell.addEventListener('mouseenter',function(e){const tip=ensureSpellTip();
+      tip.innerHTML='<b style="color:#a9d0ff">'+T.name+'</b><br>Magic level '+T.req+'<br>Teleport (no runes)'+(can?'':'<br><span style="color:#e07070">Locked</span>');
+      tip.style.display='block';moveSpellTip(e);});
+    cell.addEventListener('mousemove',moveSpellTip);
+    cell.addEventListener('mouseleave',hideSpellTip);
+    cell.addEventListener('click',function(){audio();
+      if(!can){msg('You need Magic level '+T.req+' to use '+T.name+'.','#9c1f1f');return;}
+      castTeleport(tid);});
+    grid.appendChild(cell);
+  }
   box.appendChild(grid);
 }
 function renderPrayers(){
-  document.querySelectorAll('.prayrow').forEach(r=>{
-    r.classList.toggle('on',!!prayers[r.dataset.pr]);
-    const _T=TELEPORTS[r.dataset.pr];
-    if(_T)r.style.opacity=lvl('prayer')<_T.req?'0.45':'';});
-  const ap=document.getElementById('activeprayers');
-  if(!ap)return;
-  ap.innerHTML='';
-  for(const id of ['halcyon','gordon','love','pelicans_eye','sheldons_insight'])if(prayers[id]){
-    const c=document.createElement('canvas');c.width=22;c.height=22;
-    c.title=PRAYER_META[id].name+' is active';
-    drawPrayerIcon(c.getContext('2d'),id,22);ap.appendChild(c);
+  const box=document.getElementById('praylist');
+  if(box){
+    box.innerHTML=''; const pl=lvl('prayer');
+    for(const id of Object.keys(PRAYER_META).filter(function(k){return PRAYER_META[k].cat;})){
+      const m=PRAYER_META[id]||{}, can=pl>=(m.req||1);
+      const cell=document.createElement('div');
+      cell.className='spellcell'+(prayers[id]?' on':'')+(can?'':' locked');
+      const c=document.createElement('canvas');c.width=36;c.height=36;cell.appendChild(c);
+      drawPrayerIcon(c.getContext('2d'),id,36);
+      cell.addEventListener('mouseenter',function(e){showPrayerTip(id,can,e);});
+      cell.addEventListener('mousemove',moveSpellTip);
+      cell.addEventListener('mouseleave',hideSpellTip);
+      cell.addEventListener('click',function(){audio();
+        if(!can){msg('You need Prayer level '+(m.req||1)+' to use '+m.name+'.','#9c1f1f');return;}
+        togglePrayer(id);});
+      box.appendChild(cell);
+    }
   }
+  const ap=document.getElementById('activeprayers');
+  if(ap){ ap.innerHTML='';
+    for(const id of Object.keys(PRAYER_META).filter(function(k){return PRAYER_META[k].cat;}))if(prayers[id]){
+      const c=document.createElement('canvas');c.width=22;c.height=22;c.title=PRAYER_META[id].name+' is active';
+      drawPrayerIcon(c.getContext('2d'),id,22);ap.appendChild(c);}}
 }
-document.querySelectorAll('.prayrow').forEach(r=>{
-  drawPrayerIcon(r.querySelector('canvas').getContext('2d'),r.dataset.pr,34);
-  r.addEventListener('click',()=>{audio();togglePrayer(r.dataset.pr);});
-});
+function showPrayerTip(id,can,ev){
+  const tip=ensureSpellTip(); const m=PRAYER_META[id]||{};
+  tip.innerHTML='<b style="color:#ffe08a">'+m.name+'</b><br>Prayer level '+(m.req||1)+'<br>'+(m.fx||'')+(can?'':'<br><span style="color:#e07070">Locked</span>');
+  tip.style.display='block'; moveSpellTip(ev);
+}
+try{renderPrayers();}catch(e){}
 const STYLE_SETS={
   melee:[['stab','Stab','sword','trains Attack'],['slash','Slash','fist','trains Strength'],['block','Block','shieldic','trains Defense'],['controlled','Shared','controlled','trains a little of everything']],
   ranged:[['accurate','Accurate','bow','trains Ranged'],['rapid','Rapid','bow','faster shots, trains Ranged'],['longrange','Longrange','bow','longer range, trains Ranged & Defense']],
@@ -23267,8 +23648,9 @@ const EMBER_RECTOR_WARRANTS=25;
 const EMBER_RECTOR_CINDERS=1000;
 function rectorRewards(r){
   player.rectorKilledAt=Date.now();
-  if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS);}
-  msg('The First Rector is undone at last. Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants and '+EMBER_RECTOR_CINDERS+' cinders to your name.','#caa23a');
+  const _rrg=rndi(90000,110000);
+  if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS); if(!addItem('coins',_rrg))dropGround(r.x,r.y,'coins',_rrg);}
+  msg('The First Rector is undone at last. Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants, '+EMBER_RECTOR_CINDERS+' cinders and '+_rrg.toLocaleString()+' coins to your name.','#caa23a');
   /* exactly ONE signet per kill -> solo: it's yours. (group: random member -- wired with the full reward system) */
   if(!(typeof MP!=='undefined'&&MP.groupRectorSignet&&MP.groupRectorSignet(r.i))){ if(!addItem('rector_signet',1))dropGround(r.x,r.y,'rector_signet',1); msg('A First Rector\u2019s signet clatters loose from the wreck \u2014 one, and only one.','#e8b020'); }
 }
@@ -23352,7 +23734,7 @@ function rectorSpecialTick(r,nowM){
   /* SIGNATURE: Chaos Nova -- the owner picks the safe pillar + fire time and broadcasts it; every client resolves it on their own player */
   /* SIGNATURE: Chain Lightning -- owner warns everyone to scatter, then (post-scatter) floods a chain
      through every clustered arena player. One unlucky player always eats it; bunching = everyone eats it. */
-  if(!_rectorChain){
+  if(!_rectorChain&&(typeof MP==='undefined'||!MP.iOwnRector||MP.iOwnRector())){   /* OWNER-ONLY scheduling: one chain clock for the whole group */
     if(r._chainCd===undefined)r._chainCd=nowM+14000;
     if(nowM>=r._chainCd){
       const fireIn=(r.enraged?1500:2100), enr=r.enraged?1:0;
@@ -23870,14 +24252,19 @@ function _duelMaxhit(){
   /* the real OSRS melee max-hit formula (same as overworld combat), noWeapons-aware */
   const noW=duel.rules&&duel.rules.noWeapons;
   const _sty=player.style==='slash'?3:player.style==='controlled'?1:0;
-  const effS=Math.floor(lvl('strength')*(prayers.gordon?1.18:1));
+  const effS=Math.floor(lvl('strength')*(prayerMult('str')));
   const strB=noW?0:eqStat('str');
   return Math.max(1,Math.floor(0.5+(effS+_sty+8)*(strB+64)/640));
 }
 function _duelAcc(sk,ab){
-  /* attacker's skill level + style attack bonus vs the DEFENDER'S armour AND Defence level */
-  const _dl=(((duel.oppLvls&&duel.oppLvls.def)||1)*(duel.oppDefPray?1.18:1));
-  return clamp(0.30+sk*0.006+(ab||0)*0.0022-_duelOppDef()*0.0016-_dl*0.003,0.12,0.92);
+  /* Stage 5: identical OSRS ratio to PvE. Attack roll = (effLvl+styleAtk+8)*(atkBonus+64) vs
+     defender roll = (oppDefLvl*prayer+defStyleBonus+9)*(oppArmour+64). Melee accurate +3 / controlled +1. */
+  const _dl=(((duel.oppLvls&&duel.oppLvls.def)||1)*(duel.oppDefPray?1.25:1));
+  const _styA=(player.style==='stab'||player.style==='accurate')?3:player.style==='controlled'?1:0;   /* accurate style: 'stab' melee / 'accurate' ranged = +3 */
+  const _oppStD=(duel.oppStyle==='defensive'||duel.oppStyle==='block'||duel.oppStyle==='longrange')?3:(duel.oppStyle==='controlled'?1:0);
+  const _A=(sk+_styA+8)*((ab||0)+64);
+  const _D=(_dl+_oppStD+9)*(_duelOppDef()+64);
+  return hitFromRolls(_A,_D);
 }
 function startDuel(uid,name,rules,myStake,theirStake){
   if(!inMathes||duel.state!=='none')return;
@@ -24237,6 +24624,7 @@ function drawOverlay(now){
   if(duel.state!=='none'){duelTick();drawDuelOverlay();}
   if(mathesDuelGroup)duelMapAnimate(now);
   if(player.chat&&player.chatT>performance.now())drawSayText(player.px+0.5,player.py+0.5,2.35,player.chat);
+  try{ const _op=activeOverheadPrayer(); if(_op)drawOverheadPrayer(player.px+0.5,player.py+0.5,2.75,_op); }catch(_ohe){}
   if(typeof MP!=='undefined')MP.drawOverlays();
   if(!curInterior()&&inWild(player.x,player.y)){
     octx.save();octx.textAlign='center';
@@ -25778,7 +26166,10 @@ function render(now){
   else if(showTool==='staff')staffM.visible=true;
   {const _shId=player.equip.shield&&player.equip.shield.id;
    const _isBod=(_shId||'').indexOf('bodkin_')===0;
-   shieldM.visible=!!player.equip.shield&&_shId!=='leaf_dagger'&&_shId!=='elemental_shield'&&!_isBod;
+   const _shMod=player.equip.shield?ITEMS[_shId].equip.model:null;
+   shieldM.visible=!!player.equip.shield&&_shId!=='leaf_dagger'&&_shId!=='elemental_shield'&&!_isBod&&_shMod!=='book'&&_shMod!=='towershield';
+   mountainShieldM.visible=!!player.equip.shield&&_shMod==='towershield';if(_shMod==='towershield'){const _me=ITEMS[_shId].equip;tintG(mountainShieldM,_me.tint,_me.trim);}
+   grimoireM.visible=!!player.equip.shield&&_shMod==='book';if(_shMod==='book'){const _ge=ITEMS[_shId].equip;tintG(grimoireM,_ge.tint,_ge.trim);}
    leafDagM.visible=_shId==='leaf_dagger'||_isBod;
    elemM.visible=_shId==='elemental_shield';}
   capeM.visible=!!player.equip.cape;
@@ -25793,6 +26184,7 @@ function render(now){
   helmM.visible=hmod==='helm';
   iceCrownM.visible=hmod==='icecrown';
   moltCrownM.visible=hmod==='moltcrown';
+  crownM.visible=hmod==='crown';if(hmod==='crown'){const _ce=ITEMS[player.equip.head.id].equip;tintG(crownM,_ce.tint,_ce.trim);}
   frostHelmG.visible=(hmod==='helm')&&!!(player.equip.head&&ITEMS[player.equip.head.id].equip.frostset);
   emberHelmG.visible=(hmod==='helm')&&!!(player.equip.head&&ITEMS[player.equip.head.id].equip.emberset);
   if(pm.hairG)pm.hairG.visible=!(hmod==='helm'||hmod==='slayerhelm'||hmod==='coif');
@@ -26730,8 +27122,14 @@ function staminaRegenMult(){const L=levelFor(player.skills.agility||0);let v=1.0
 setInterval(()=>{
   beat++;
   const apc=activePrayerCount();
+  if(player.pray>maxPray())player.pray=maxPray();
+  if(prayers.redemption&&player.hp>0&&player.hp<=Math.floor(maxHp()*0.1)&&player.pray>0){
+    const _rh=Math.max(1,Math.floor(lvl('prayer')*0.25));player.hp=Math.min(maxHp(),player.hp+_rh);player.pray=0;
+    if(typeof updateOrb==='function')updateOrb();if(typeof updatePrayOrb==='function')updatePrayOrb();
+    msg('Redemption restores your health!','#5ac06a');
+  }
   if(apc&&player.pray>0){
-    player.pray=Math.max(0,player.pray-apc*0.4*prayerDrainMult());
+    player.pray=Math.max(0,player.pray-activePrayerDrain()/400*prayerDrainMult());
     if(player.pray<=0){
       deactivateAllPrayers();
       msg('You have run out of prayer points!','#9c1f1f');
@@ -27077,6 +27475,7 @@ const MP = (function () {
   function duelSetDecline() { if (!duelSetup.active) return; if (conn) send({ t:'dsdecline', to:duelSetup.withUid }); _duelSetupClose(); }
   function duelSetupSnapshot() { return duelSetup.active ? { active:true, withUid:duelSetup.withUid, withName:duelSetup.withName, rules:Object.assign({},duelSetup.rules), myStake:duelSetup.myStake.map(o=>({id:o.id,qty:o.qty})), theirStake:duelSetup.theirStake.map(o=>({id:o.id,qty:o.qty})), myAccept:duelSetup.myAccept, theirAccept:duelSetup.theirAccept } : { active:false }; }
   let _phitSeq = 0;
+  function sendOverheadPrayer(id){ if (conn) send({ t: 'pray', o: id || null }); }
   function duelSwing(dmg, st, col, fz) { if (duel.oppUid && conn) send({ t: 'phit', to: duel.oppUid, dmg: dmg | 0, st: st || 'melee', col: col || null, fz: fz ? 1 : 0, n: ++_phitSeq }); }
   function duelHp(hp,mhp) { if (duel.oppUid && conn) send({ t: 'dhp', to: duel.oppUid, hp: hp | 0, mhp: mhp | 0, pr: (typeof prayers !== 'undefined' && prayers.love) ? 1 : 0 }); }
   function duelStats(o) { if (duel.oppUid && conn) send({ t: 'dlv', to: duel.oppUid, l: o }); }
@@ -27196,7 +27595,11 @@ const MP = (function () {
     if (ps.length) send({ t: 'rpil', uid: player.uid, p: ps });
   }
   /* a hit on a siphon pillar: if a groupmate owns the Rector, forward the damage to them (shared hp) and skip the local hp path */
-  function iOwnRector() { const o = _rectorOwnerUid(); return !o || o === player.uid; }
+  function iOwnRector() { const o = _rectorOwnerUid(); if (o) return o === player.uid;
+    /* no claim yet: deterministic fallback so EXACTLY ONE client schedules boss mechanics.
+       Every client computes the same lowest-uid among everyone in the arena (uids are strings; lexicographic is consistent). */
+    let low = player.uid; for (const rp of rectorArenaPlayers()) if (rp.uid && rp.uid < low) low = rp.uid;
+    return low === player.uid; }
   function rectorOwnedByGroupmate() { if (typeof _rectorBoss === 'undefined' || !_rectorBoss) return false; const c = claims.get(_rectorBoss.i); return !!(c && c.uid && c.uid !== player.uid && isGroupmate(c.uid)); }
   function rectorArenaPlayers() { const out = []; if (typeof RP !== 'undefined') for (const r of RP.values()) if (_remoteHere(r) && r.px >= 192 && r.px <= 247 && r.py >= 78 && r.py <= 114) out.push({ uid: r.uid, x: Math.round(r.px), y: Math.round(r.py) }); return out; }
   function rectorChainWarn(fireIn, enr) { if (active() && conn && groupInGroup()) send({ t: 'rchainwarn', uid: player.uid, f: fireIn | 0, e: enr | 0 }); }
@@ -27479,6 +27882,30 @@ const shieldM=new THREE.Group();
 rig.lArm.add(shieldM);
 shieldM.position.set(-0.075,-0.34,0.03);
 shieldM.visible=false;
+const crownM=new THREE.Group();
+{const band=TT(gmesh(new THREE.TorusGeometry(0.185,0.028,7,16),0xe3b21f),'trim');band.rotation.x=Math.PI/2;band.position.y=1.62;crownM.add(band);
+ for(let i=0;i<6;i++){const a=i*Math.PI*2/6,h=0.14+(i%2)*0.1;
+   const sp=TT(gmesh(new THREE.ConeGeometry(0.038,h,4),0x2a3aa0),'tint');sp.position.set(Math.cos(a)*0.18,1.66+h/2,Math.sin(a)*0.18);crownM.add(sp);
+   if(i%2===0){const gem=new THREE.Mesh(new THREE.SphereGeometry(0.032,7,6),new THREE.MeshBasicMaterial({color:0x5aa0ff}));gem.position.set(Math.cos(a)*0.18,1.66+h,Math.sin(a)*0.18);crownM.add(gem);}}
+ const fg=new THREE.Mesh(new THREE.SphereGeometry(0.04,8,7),new THREE.MeshBasicMaterial({color:0x7ac0ff}));fg.position.set(0,1.68,0.185);crownM.add(fg);}
+crownM.position.y-=0.78;rig.upper.add(crownM);crownM.visible=false;
+const grimoireM=new THREE.Group();
+{const cover=TT(gmesh(new THREE.BoxGeometry(0.25,0.33,0.05),0x8c1c22),'tint');grimoireM.add(cover);
+ const pages=gmesh(new THREE.BoxGeometry(0.21,0.29,0.055),0xefe9d0);pages.position.z=0.004;grimoireM.add(pages);
+ const spine=TT(gmesh(new THREE.BoxGeometry(0.04,0.33,0.062),0xe3b21f),'trim');spine.position.x=-0.115;grimoireM.add(spine);
+ const clasp=TT(gmesh(new THREE.BoxGeometry(0.13,0.05,0.07),0xe3b21f),'trim');clasp.position.set(0.02,0,0.03);grimoireM.add(clasp);
+ const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);}
+rig.lArm.add(grimoireM);grimoireM.position.set(-0.08,-0.34,0.05);grimoireM.rotation.set(0.2,0,0);grimoireM.visible=false;
+const mountainShieldM=new THREE.Group();
+{const face=TT(gmesh(new THREE.BoxGeometry(0.32,0.5,0.05),0x6e6f73),'tint');mountainShieldM.add(face);
+ for(const mx of [-0.1,0,0.1]){const mn=TT(gmesh(new THREE.BoxGeometry(0.07,0.06,0.05),0x6e6f73),'tint');mn.position.set(mx,0.28,0);mountainShieldM.add(mn);}
+ for(const fr of [[0.34,0.03,0,0.25],[0.34,0.03,0,-0.25],[0.03,0.5,0.165,0],[0.03,0.5,-0.165,0]]){const t=TT(gmesh(new THREE.BoxGeometry(fr[0],fr[1],0.06),0xc9a23a),'trim');t.position.set(fr[2],fr[3],0.004);mountainShieldM.add(t);}
+ for(const pk of [[-0.09,0.1],[0.0,0.16],[0.09,0.12]]){const peak=gmesh(new THREE.ConeGeometry(0.055,pk[1],4),0x9a9ca0);peak.rotation.y=Math.PI/4;peak.position.set(pk[0],-0.04+pk[1]/2,0.045);mountainShieldM.add(peak);
+   const snow=new THREE.Mesh(new THREE.ConeGeometry(0.022,pk[1]*0.32,4),new THREE.MeshBasicMaterial({color:0xffffff}));snow.rotation.y=Math.PI/4;snow.position.set(pk[0],-0.04+pk[1]-pk[1]*0.16,0.05);mountainShieldM.add(snow);}
+ const boss=TT(gmesh(new THREE.SphereGeometry(0.038,10,8),0xc9a23a),'trim');boss.scale.z=0.5;boss.position.set(0,0.12,0.05);mountainShieldM.add(boss);
+ for(const rv of [[-0.12,0.2],[0.12,0.2],[-0.12,-0.2],[0.12,-0.2]]){const rr=TT(gmesh(new THREE.SphereGeometry(0.018,7,6),0xc9a23a),'trim');rr.scale.z=0.5;rr.position.set(rv[0],rv[1],0.04);mountainShieldM.add(rr);}
+ mountainShieldM.rotation.y=-Math.PI/2;}
+rig.lArm.add(mountainShieldM);mountainShieldM.position.set(-0.075,-0.32,0.03);mountainShieldM.visible=false;
 const leafDagM=new THREE.Group();
 {const _hg=gmesh(new THREE.CylinderGeometry(0.02,0.024,0.13,6),0x6b4a2e);_hg.position.y=0.06;leafDagM.add(_hg);
  for(const _vy of [0.02,0.07,0.11]){const _vr=gmesh(new THREE.TorusGeometry(0.026,0.006,5,8),0x8fc46a);_vr.position.y=_vy;_vr.rotation.x=Math.PI/2;leafDagM.add(_vr);}
@@ -27720,7 +28147,7 @@ const santaHatM=new THREE.Group();
  const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
  pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
 santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
-    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,emberSwM,ashBowM,bowM,staffM,capeM,capeEmblem,shieldM,leafDagM,elemM,helmM,slayerHelmM,bodyM,armPL,armPR,luxGloveL,luxGloveR,luxBootL,luxBootR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM,frostHelmG,frostBodyG,frostLegL,frostLegR,iceCrownM,moltCrownM,hoodM,emberHelmG,emberBodyG,emberLegL,emberLegR,emberBootL,emberBootR,emberGauntL,emberGauntR};
+    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,emberSwM,ashBowM,bowM,staffM,capeM,capeEmblem,shieldM,crownM,grimoireM,mountainShieldM,leafDagM,elemM,helmM,slayerHelmM,bodyM,armPL,armPR,luxGloveL,luxGloveR,luxBootL,luxBootR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM,frostHelmG,frostBodyG,frostLegL,frostLegR,iceCrownM,moltCrownM,hoodM,emberHelmG,emberBodyG,emberLegL,emberLegR,emberBootL,emberBootR,emberGauntL,emberGauntR};
   }
   function applyRemoteGear(G, rig, gear, act, shirtHex) {
     if (!G || !gear) return;
@@ -27743,7 +28170,10 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     else if (wmod === 'staff') G.staffM.visible = true;
     else if (wmod === 'maul') { if (gear.weapon === 'frostmaul') G.fmaul.visible = true; else G.maul.visible = true; }
     if ((wmod === 'sword' || wmod === 'scim') && we) tintG(wmod === 'scim' ? G.scim : G.sword, we.tint !== undefined ? we.tint : 0xc7ccd4, we.trim !== undefined ? we.trim : 0x8a6a2a);
-    G.shieldM.visible = !!gear.shield && gear.shield !== 'leaf_dagger' && gear.shield !== 'elemental_shield';
+    const _rShe = gear.shield ? EQ(gear.shield) : null; const _rShMod = _rShe ? _rShe.model : null;
+    G.shieldM.visible = !!gear.shield && gear.shield !== 'leaf_dagger' && gear.shield !== 'elemental_shield' && _rShMod !== 'book' && _rShMod !== 'towershield';
+    if (G.grimoireM) { G.grimoireM.visible = _rShMod === 'book'; if (_rShMod === 'book' && _rShe) tintG(G.grimoireM, _rShe.tint, _rShe.trim); }
+    if (G.mountainShieldM) { G.mountainShieldM.visible = _rShMod === 'towershield'; if (_rShMod === 'towershield' && _rShe) tintG(G.mountainShieldM, _rShe.tint, _rShe.trim); }
     G.leafDagM.visible = gear.shield === 'leaf_dagger' || (gear.shield||'').indexOf('bodkin_')===0;
     G.elemM.visible = gear.shield === 'elemental_shield';
     if (gear.shield) { const se = EQ(gear.shield);
@@ -27755,6 +28185,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (G.hoodM) G.hoodM.visible = false;
     const he = EQ(gear.head), hmod = he ? he.model : null;
     G.helmM.visible = hmod === 'helm';
+    if (G.crownM) { G.crownM.visible = hmod === 'crown'; if (hmod === 'crown' && he) tintG(G.crownM, he.tint, he.trim); }
     G.chefHatM.visible = hmod === 'chefhat';
     G.pumpkinM.visible = hmod === 'pumpkin';
     G.partyHatM.visible = hmod === 'partyhat';
@@ -27885,6 +28316,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         break;
       }
       case 'friended': { if (m.to === player.uid) logSystem(((m.by) || 'Someone') + ' added you as a friend.'); break; }
+      case 'pray': { const r = RP.get(m.uid); if (r) r.ohPray = m.o || null; break; }
       case 'chat': { const r = RP.get(m.uid); if (r) { r.chat = m.text; r.chatT = now() + 4500; } if (typeof logSay === 'function') logSay(m.name || (r && r.name) || '?', m.text, false, (m.title!==undefined?m.title:(r&&r.title))||null); break; }
       case 'emote': { const r = RP.get(m.uid); if (r) { r.emote = m.e; r.emoteT = now(); } break; }
       case 'claim': {
@@ -27945,6 +28377,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       }
       case 'rchainwarn': {
         if (m.uid === player.uid) break;
+        if (typeof _rectorBoss !== 'undefined' && _rectorBoss) _rectorBoss._chainCd = performance.now() + (m.f | 0) + ((m.e | 0) ? 17000 : 25000);
         if (typeof _rectorChain !== 'undefined') { _rectorChain = { phase: 'warn', fireAt: performance.now() + (m.f | 0), enr: m.e | 0 };
           if (typeof msg === 'function') msg('The First Rector crackles with chaos-lightning \u2014 SCATTER, don\u2019t bunch up!', '#ffe24a'); }
         break;
@@ -27957,6 +28390,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       }
       case 'rpil': {
         if (m.uid === player.uid) break;
+        if (typeof _rectorBoss !== 'undefined' && _rectorBoss && _rectorBoss._siphonCd !== undefined) _rectorBoss._siphonCd = Math.max(_rectorBoss._siphonCd, performance.now() + 12000);
         if (typeof objects === 'undefined' || !Array.isArray(m.p)) break;
         for (const pp of m.p) { const o = objects.find(z => z.def === 'siphon_pillar' && z.x === pp.x && z.y === pp.y); if (!o) continue; o.active = !!pp.a; o.hp = pp.h | 0; o.maxhp = pp.m | 0; if (!o.active) o.hotUntil = 0; }
         break;
@@ -28571,6 +29005,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         }
       }
       if (r.chat && r.chatT > now() && typeof drawSayText === 'function') drawSayText(wx, wz, 2.45, r.chat);
+      if (r.ohPray && typeof drawOverheadPrayer === 'function') drawOverheadPrayer(wx, wz, 2.75, r.ohPray);
     }
     if (typeof rats !== 'undefined') {
       for (const [mi, e] of remoteMobs) {
@@ -28898,7 +29333,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 
   return {
     CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo, pingPresence, refreshApp,
-    onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled,
+    onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled, sendOverheadPrayer,
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
