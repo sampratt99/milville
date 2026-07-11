@@ -6206,6 +6206,11 @@ function ratsTick(){
     const ratAcc=Math.max(0.05,Math.min(0.95,_Aroll>_Droll?1-(_Droll+2)/(2*(_Aroll+1)):_Aroll/(2*(_Droll+1))));
           const _mh=_mag?Math.ceil(mobMaxhit(r)*(r.kind==='wyvern'?2.4:1.6)):mobMaxhit(r);
           if(Math.random()<ratAcc)dmg=rndi(0,_mh);
+          if(dmg>0){ /* OSRS protection prayers: 100% block vs the matching style */
+            if((_astyle==='magic'||_mag)&&prayers.protect_magic)dmg=0;
+            else if(_astyle==='ranged'&&prayers.protect_missiles)dmg=0;
+            else if(_astyle==='melee'&&!_mag&&prayers.protect_melee)dmg=0;
+          }
           if((_astyle==='magic'||_astyle==='ranged')&&typeof spawnProjectile==='function')
             spawnProjectile(r.px+0.5,r.py+0.5,player,_astyle==='ranged'?'arrow':'magic',_ak.projCol||(_astyle==='ranged'?'#cfd6da':'#b06fe0'),320);
           if(_astyle==='magic'){if(r.kind==='wyvern')frostBreath(r);else castCharge(r,_ak.projCol||'#b06fe0');}
