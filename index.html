@@ -2169,7 +2169,7 @@ const BUILDINGS=[
  ['Rectory',86,80,5,5,4.9,'rectory',0xeae6dc,0x4a4f57],
  ['Conover/Twenty',69,87,6,5,3.0,'hall',0x9a4a36,0x3f7a48],
  ['Faculty Cottage',67,118,4,3,2.4,'hall',0xd8d2c4,0x5a646e],
- ['Faculty Cottage',72,119,4,3,2.4,'hall',0x8f4434,0x4e5862],
+ ['Hebra Cottage',72,119,4,3,2.4,'hall',0x8f4434,0x4e5862,'The Hebra family cottage. A modest place with, apparently, an immodest attic problem.'],
  ['Faculty Cottage',93,117,4,3,2.4,'hall',0xd8d2c4,0x5a646e],
  ['Faculty Cottage',98,118,4,3,2.4,'hall',0x9a5440,0x4e5862],
  ['Schoolhouse',54,82,8,6,4.2,'schoolhouse',0x8f4434,0x4e545c,
@@ -2693,6 +2693,7 @@ const MOB_KINDS={
   icefiend:{name:'Icefiend',ex:'A shard-toothed sprite of the blizzard, conjured from the Snow King\u2019s frost to harry intruders.',hp:40,acc:0.7,maxhit:8,resp:9999999,coinP:0,coins:[0,0],aggro:1,cmb:70,minion:1},
   goblin:{name:'Goblin',ex:'Small, green and spoiling for a scrap. Smells of wet dog and ambition.',hp:5,acc:0.42,maxhit:1,resp:12000,bones:1,coinP:.6,coins:[2,14],aggro:0,cmb:3,weak:'melee',resist:'magic'},
   biggoblin:{name:'Goblin brute',ex:'A head taller than its kin and twice as mean. War-paint, bad attitude.',hp:14,acc:0.5,maxhit:2,resp:14000,bones:1,coinP:.7,coins:[6,26],aggro:0,cmb:6,weak:'melee',resist:'magic'},
+  gorp:{name:'Gorp the Goblin',ex:'A great green lout with a basketball under one arm and a fouler mood under the other. Weeks cooped in an attic have done nothing for his manners.',hp:32,acc:0.62,maxhit:4,resp:8000,bones:1,coinP:.85,coins:[20,60],aggro:1,cmb:20,weak:'melee',resist:'magic'},
   bigspider:{name:'Deathwidow spider',ex:'A bloated giant spider with venom to spare. Mind the fangs.',hp:24,acc:0.56,maxhit:3,resp:16000,bones:0,coinP:.4,coins:[6,24],aggro:0,cmb:8,weak:'melee',resist:'magic'},
   wolf:{name:'Wolf',ex:'A lean grey hunter that has decided you are lunch.',hp:15,acc:0.55,maxhit:3,resp:14000,bones:1,coinP:.4,coins:[3,20],aggro:0,cmb:25,weak:'melee',resist:'magic'},
   bandit:{name:'Bandit',ex:'A camp tough in a stolen coat. Robs first, asks never.',hp:30,acc:0.55,maxhit:4,resp:14000,bones:1,coinP:1,coins:[15,60],aggro:0,cmb:30,weak:'melee',resist:'magic'},
@@ -2771,6 +2772,8 @@ const NPCS=[
   ex:'Knows where every book \u2014 and every secret \u2014 is shelved.'},
  {id:'bozek',name:'Mr. Bozek',x:56,y:120,r:2,sex:'m',
   ex:'Round, rosy, and radiating goodwill.'},
+ {id:'hebra',name:'Mrs. Hebra',x:73,y:118,r:4,sex:'f',
+  ex:'A cottage matron at the end of her rope, clutching a casserole dish like a shield.'},
  {id:'clunie',name:'Madame Clunie',x:57,y:81,r:0,sex:'f',
   ex:'The French teacher. Beret, scarf, and an accent you could cut with a baguette.',
   lines:["Bonjour !","En français, s'il vous plaît !","L'accent, l'accent !"]},
@@ -2844,6 +2847,7 @@ const MOB_SPAWNS=[
   ['minotaur',64,21],['minotaur',67,21],['minotaur',65,23],
   /* First Rector -- shallow wilderness, m5-gated (starts hidden) */
   ['master',24,50],
+  ['gorp',76,11],
   /* Wild boar -- by Crumpacker Boathouse, chef-gated (starts hidden) */
   ['boar',142,11],
   /* Dragon lawn (SE): grounds dragons (gold) at the entry; chromatic brood ordered E->W by level (green easternmost -> black west); black is a stationary boss */
@@ -2856,7 +2860,7 @@ const MOB_SPAWNS=[
 const LOCKED_KINDS=['banshee','gargoyle','basilisk','wyvern','kurask'];
 const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   px:p[1],py:p[2],hp:MOB_KINDS[p[0]].hp,maxhp:MOB_KINDS[p[0]].hp,
-  alive:p[0]!=='master'&&p[0]!=='boar'&&!LOCKED_KINDS.includes(p[0]),locked:LOCKED_KINDS.includes(p[0]),respawnAt:0,lastHit:0,heading:rnd(0,6.2),
+  alive:p[0]!=='master'&&p[0]!=='gorp'&&p[0]!=='boar'&&!LOCKED_KINDS.includes(p[0]),locked:LOCKED_KINDS.includes(p[0]),respawnAt:0,lastHit:0,heading:rnd(0,6.2),
   target:null,phase:i%2,name:MOB_KINDS[p[0]].name,ex:MOB_KINDS[p[0]].ex}));
 /* ===================== WESTWARD EXPANSION  (Phase 1) ===================== */
 /* Embed the legacy 192-wide world at x-offset WX inside a 304-wide grid, paint a
@@ -3258,7 +3262,7 @@ const player={
   inv:new Array(28).fill(null),
   equip:{weapon:null,shield:null,cape:null,ammo:null},kit:false,cmb:3,playMs:0,kills:0,collected:{},run:false,stamina:100,clueData:{},cluesDone:0,
   mmf:{fish:1,mine:1,smith:1,bank:1,altar:1,quest:1,shop:1},
-  quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},
+  quests:{tut:{s:0,k:0},larry:{s:0},chef:{s:0,up:0,pouch:0,logs:0,lit:0,boar:0},cq:{s:0},dq:{s:0,k:0,f:0},mish:{s:0,r1:0,r2:0},bozek:{s:0,v:{}},hebra:{s:0},
   m1:{s:0,k:0,g:0,i:0},m2:{s:0,k:0,relic:0},m3:{s:0,c:0,k:0},
   m4:{s:0,b:0,k:0,d:0},m5:{s:0,d:0},sos:{s:0,k1:0,k2:0,k3:0,k4:0,o:0},
   rxmas:{s:0,cab:0,prov:0},rxmas2:{s:0,figs:0,placed:0,wreath:0,spots:{}},ember:{s:0,seen:{}}},
@@ -5036,6 +5040,7 @@ function startGather(obj){
 }
 function startAttack(rat){
   if(typeof MP!=='undefined'&&MP.isClaimedByOther(rat)){msg('Someone else is already fighting that.','#103a8c');return;}
+  if(rat.kind==='gorp'&&!rat._taunted){rat._taunted=true;openDialogue({id:'gorp',name:'Gorp the Goblin'});}
   setAction({type:'attack',rat},rat.x,rat.y);
   clickFx(rat.x,rat.y,'#ff4d3d');
 }
@@ -6450,12 +6455,15 @@ function worldTick(){
       objects.splice(_fi,1);
     }
   }
+  {const _hq=player.quests.hebra,_gAct=(_hq&&_hq.s===2),_gr=rats.find(r=>r.kind==='gorp');
+   if(_gr){ if(!_gAct&&_gr.alive)_gr.alive=false;
+    else if(_gAct&&!_gr.alive&&now>=_gr.respawnAt){_gr.alive=true;_gr.maxhp=mobMaxHp(_gr);_gr.hp=_gr.maxhp;_gr.x=_gr.sx;_gr.y=_gr.sy;_gr.px=_gr.sx;_gr.py=_gr.sy;_gr._taunted=false;if(_gr._m&&_gr._m.group)_gr._m.group.visible=true;} }}
   {const _m5=player.quests.m5,_mAct=_m5.s===1&&!_m5.d,_mr=rats.find(r=>r.kind==='master');
    if(_mr){if(!_mAct&&_mr.alive)_mr.alive=false;
     else if(_mAct&&!_mr.alive&&now>=_mr.respawnAt){_mr.alive=true;_mr.maxhp=mobMaxHp(_mr);_mr.hp=_mr.maxhp;_mr.x=_mr.sx;_mr.y=_mr.sy;_mr.px=_mr.sx;_mr.py=_mr.sy;_mr.target=null;}}}
   for(const r of rats)if(!r.alive&&r.minionOf===undefined&&now>=r.respawnAt){
     if(r.superior){r.superior=false;if(r._m&&r._m.group&&r._supScale!==undefined)r._m.group.scale.setScalar(r._supScale);}r.superiorRolled=false;
-    if(r.kind==='master')continue;
+    if(r.kind==='master'||r.kind==='gorp')continue;
     if(r.locked)continue;
     if(MOB_KINDS[r.kind].boss){r.spec=null;r.specCd=undefined;r.enraged=false;r.enrageDone=false;r.blizzardDone=false;r.flying=false;r.flightDone=false;r._hopT=0;r.hopCd=undefined;}
     if(r.kind==='boar'){if(player.quests.chef.s!==5){r.respawnAt=now+4000;continue;}r.lvl=cmbLvl()+rndi(1,2);}
@@ -7570,6 +7578,8 @@ function optionsAt(tx,ty){
       opts.push({html:'Trick-or-treat <span class="t">'+bld.name+'</span>',
         label:'Trick-or-treat '+bld.name,
         fn:()=>trickOrTreat(bld,ck)});
+    if(bld.name==='Hebra Cottage'&&player.quests.hebra&&player.quests.hebra.s>=1&&player.quests.hebra.s<3)
+      opts.push({html:'Knock on <span class="t">'+bld.name+'</span>',label:'Knock on '+bld.name,fn:()=>{cancelAction();openDialogue({id:'serg',name:'Serg'});}});
     opts.push(
       {html:'Walk-to <span class="t">'+bld.name+'</span>',label:'Walk-to '+bld.name,
        fn:()=>{cancelAction();walkTo(tx,ty);}},
@@ -9280,6 +9290,7 @@ const TITLES={
   doombringer:{text:'the Bringer of Doom',col:'#7a1f1f',cond:st=>st.kills>=2500,hint:'Defeat 2,500 monsters.'},
   expert:{text:'the Expert',col:'#b8860b',cond:st=>st.max99,hint:'Reach level 99 in any skill.'},
   grandmaster:{text:'the Grandmaster',col:'#d4af37',cond:st=>st.max120,hint:'Reach level 120 in any skill.'},
+  goblinslayer:{text:'the Goblinslayer',col:'#3f8a3c',hint:'Complete The Goblin of Hebra Manor.'},
   /* -- boss kills -- */
   bossbane:{text:'Bane of Bosses',col:'#c0562a',cond:st=>st.boss>=10,hint:'Defeat 10 bosses.'},
   bosshunter:{text:'the Boss Hunter',col:'#a63e22',cond:st=>st.boss>=50,hint:'Defeat 50 bosses.'},
@@ -14567,7 +14578,7 @@ const grimoireM=new THREE.Group();
  const spine=TT(gmesh(new THREE.BoxGeometry(0.04,0.33,0.062),0xe3b21f),'trim');spine.position.x=-0.115;grimoireM.add(spine);
  const clasp=TT(gmesh(new THREE.BoxGeometry(0.13,0.05,0.07),0xe3b21f),'trim');clasp.position.set(0.02,0,0.03);grimoireM.add(clasp);
  const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);for(const _cx of [-1,1])for(const _cy of [-1,1]){const _cg=TT(gmesh(new THREE.BoxGeometry(0.05,0.05,0.056),0xe3b21f),'trim');_cg.position.set(_cx*0.093,_cy*0.13,0.005);grimoireM.add(_cg);}const _sb1=new THREE.Mesh(new THREE.BoxGeometry(0.006,0.115,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb1.position.set(0.02,0,0.05);grimoireM.add(_sb1);const _sb2=new THREE.Mesh(new THREE.BoxGeometry(0.115,0.006,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb2.position.set(0.02,0,0.05);grimoireM.add(_sb2);const _gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.032,0),new THREE.MeshBasicMaterial({color:0x5aa0ff}));_gem.position.set(0.02,-0.095,0.05);_gem.scale.z=0.6;grimoireM.add(_gem);const _fe=gmesh(new THREE.BoxGeometry(0.01,0.27,0.05),0xd8ccae);_fe.position.set(0.108,0,0.004);grimoireM.add(_fe);}
-pm.lArm.add(grimoireM);grimoireM.position.set(-0.08,-0.34,0.05);grimoireM.rotation.set(0.2,0,0);grimoireM.visible=false;
+pm.lArm.add(grimoireM);grimoireM.position.set(-0.145,-0.50,0.05);grimoireM.rotation.set(0,-Math.PI/2,0.12);grimoireM.visible=false;
 const mountainShieldM=new THREE.Group();
 {const face=TT(gmesh(new THREE.BoxGeometry(0.32,0.5,0.05),0x6e6f73),'tint');mountainShieldM.add(face);
  for(const mx of [-0.1,0,0.1]){const mn=TT(gmesh(new THREE.BoxGeometry(0.07,0.06,0.05),0x6e6f73),'tint');mn.position.set(mx,0.28,0);mountainShieldM.add(mn);}
@@ -15060,6 +15071,10 @@ function makeNpc(n){
       hair:0xb8b4ac,beard:0xc8c4bc,belt:0x55381f,boots:0x3a2c1e});
     g.add(hm.g);
     g.scale.set(1.16,0.97,1.16);
+  }else if(n.id==='hebra'){
+    hm=makeHumanoid({skin:0x8a5a3c,shirt:0x6a8a5a,pants:0x5a4a6a,skirt:0x5a4a6a,hair:0x181310,boots:0x3a2c22,amulet:0xc0a040});
+    g.add(hm.g);
+    g.scale.set(0.97,1.0,0.97);
   }else if(n.id==='slayer'){
     hm=makeHumanoid({skin:0xb89a7a,shirt:0x1a1a22,pants:0x14141c,hair:0x14141c,
       beard:0x14141c,skirt:0x1f1f29,amulet:0x6a2424,boots:0x0e0e14});
@@ -16421,8 +16436,8 @@ function makeRat(r){
     addProxy(g,0.65,1.7,0,{kind:'rat',r});
     scene.add(g);r._m={group:g,kurask:1,legs:[fl,fr,bl,br],legBase:[0,0,-0.08,-0.08],head:head,headBaseX:0,ktail:ktail};return;
   }
-  if(r.kind==='goblin'||r.kind==='biggoblin'){
-    const big=r.kind==='biggoblin';
+  if(r.kind==='goblin'||r.kind==='biggoblin'||r.kind==='gorp'){
+    const big=r.kind==='biggoblin'||r.kind==='gorp';
     const SKIN=big?0x5f7a3a:0x6f8a4a,SKIN2=big?0x4c6630:0x5c7638,BELLY=big?0x6f8a4a:0x82a058;
     const TUNIC=big?0x6e726e:0x8a8f8c,TRIM=0xc8a82a,ACCENT=0x6a4a2e,WRAP=big?0x80857f:0x9aa09a;
     const EYE=0xeef2ee,CLAW=0x241c12,SC=big?1.66:1.38;
@@ -18866,6 +18881,7 @@ function isQuestTarget(r){
 }
 function questKill(r){
   const kind=r.kind;
+  if(kind==='gorp'&&player.quests.hebra&&player.quests.hebra.s===2){ player.quests.hebra.s=3; if(typeof questDone==='function')questDone('The Goblin of Hebra Manor'); if(typeof renderQuests==='function')renderQuests(); dirty=true; }
   const Q=player.quests;
   /* Emberdeep bounty: felling the marked warden completes it on every kill path (solo owner OR group co-attacker) */
   if(r.warden&&player.emberBounty&&!player.emberBounty.done&&player.emberBounty.warden===r.warden){ player.emberBounty.done=true; msg('Bounty target felled \u2014 report to Mr. Hirschfeld for your warrants.','#caa23a'); if(typeof renderQuests==='function')renderQuests(); }
@@ -18963,6 +18979,7 @@ const QUEST_REWARDS={
   'The First Rector':{coins:2000,items:['black_platebody','black_kiteshield','black_platelegs','pelican_cape'],xp:[['attack',300],['strength',250],['defense',225],['hitpoints',250]]},
   'The Three Tables of Millville':{coins:750,items:['oven_mitts'],xp:[['cooking',350]]},
   'The Missing Shipment':{coins:350,items:['chefs_hat'],xp:[['cooking',100]]},
+  'The Goblin of Hebra Manor':{extra:['the Goblinslayer title']},
   'Lost at Practice':{coins:400,items:['amulet_strength'],xp:[['strength',150]]},
   'The Training Table':{coins:500,xp:[['fishing',200],['cooking',125]]},
   'Trick or Treat':{coins:500,items:['pumpkin_helmet'],extra:['the Jack-o\u2019-Lantern emote','fall scenery (toggle in Settings)']},
@@ -18981,7 +18998,7 @@ function _questRewardLine(nm){
 function questDone(nm){
   msg('Quest complete: '+nm+'!','#7a18c9');
   const _rl=(typeof _questRewardLine==='function')?_questRewardLine(nm):null; if(_rl)msg(_rl,'#1d7a33');
-  if(typeof grantTitle==='function'){ if(nm==='Here Be Dragons')grantTitle('orange_shirts'); else if(nm==='Away in a Manger')grantTitle('merry'); }
+  if(typeof grantTitle==='function'){ if(nm==='Here Be Dragons')grantTitle('orange_shirts'); else if(nm==='Away in a Manger')grantTitle('merry'); else if(nm==='The Goblin of Hebra Manor')grantTitle('goblinslayer'); }
   if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
   if(sfx.level)sfx.level();
   if(typeof refreshEmoteUnlocks==='function')refreshEmoteUnlocks(true);
@@ -20237,6 +20254,40 @@ function HIRSCH_HEART(){return {
   bye:{who:'npc',text:"Put him down for good, {name}.",next:null}
 };}
 const DIALOGUES={
+  gorp:()=>({start:{who:'npc',text:'GORP HUNGRY....',next:null}}),
+  hebra:()=>{ const q=player.quests.hebra;
+    if(q.s>=3)return{
+      start:{who:'npc',text:'Bless you, dear. The house has been so PEACEFUL since you sorted out my little goblin problem. I can hear myself think again.',next:'a'},
+      a:{opts:[{label:'Happy to help, Mrs. Hebra.',next:'by'}]},
+      by:{who:'npc',text:'Do come by for tea. Mind the attic \u2014 force of habit.',next:null}};
+    if(q.s===2)return{
+      start:{who:'npc',text:'Serg says the creature slunk off toward the Athletic Center to, and I quote, "shoot hoops." Please, dear, see it gone for good.',next:null}};
+    if(q.s===1)return{
+      start:{who:'npc',text:'Have you asked Serg yet? Knock \u2014 KNOCK, I said \u2014 and WAIT. He is very protective of the property.',next:null}};
+    return{
+      start:{who:'npc',text:'Oh thank heavens, an adventurer. You must help me. There is a GOBLIN in my attic. It has been up there for WEEKS and it simply will not leave.',next:'ask'},
+      ask:{opts:[{label:'A goblin? In your attic?',next:'p1'},{label:'What does it look like?',next:'p2'},{label:'Good day, ma\u2019am.',next:'by'}]},
+      p1:{who:'npc',text:'A great sullen thing. Sleeps all day, prowls all night, grunts when it is spoken to, and the SMELL. I leave food at the door and it vanishes \u2014 but the creature never does.',next:'ask'},
+      p2:{who:'npc',text:'Taller than you would like. Hunched. Will not meet a soul in the eye. Wears the same filthy hood day and night. I have tried everything \u2014 reason, bribery, cutting off the wifi. Nothing shifts it.',next:'ask2'},
+      ask2:{opts:[{label:'So what do you need from me?',next:'p3'}]},
+      p3:{who:'npc',text:'I have not the faintest idea what to do with it. But my Serg might. Ask him \u2014 he is inside. Only, you MUST knock first. Knock, and WAIT. If you barge in he WILL shoot you, dear, and I will not be held liable.',next:'p4'},
+      p4:{opts:[{label:'I will go and knock on the door.',next:()=>{ if(q.s<1){q.s=1;if(typeof renderQuests==='function')renderQuests();dirty=true;msg('Quest started: The Goblin of Hebra Manor','#103a8c');} return 'acc';}},{label:'Maybe later.',next:'no'}]},
+      acc:{who:'npc',text:'Knock, dear. I cannot stress the knocking strongly enough.',next:null},
+      no:{who:'npc',text:'Do not dawdle. The neighbours are beginning to TALK.',next:null},
+      by:{who:'npc',text:'Do watch the attic window. Sometimes it watches back.',next:null}};
+  },
+  serg:()=>{ const q=player.quests.hebra;
+    if(q.s>=3)return{ start:{who:'npc',text:'Peace and quiet at last. You did good, kid. Now get off my lawn \u2014 respectfully.',next:null}};
+    if(q.s>=2)return{ start:{who:'npc',text:'Told you already. It headed for the Athletic Center to shoot hoops. Behind the building, north side. Go on.',next:null}};
+    return{
+      start:{who:'you',text:'You knock. Firmly. Three times. And you wait.',next:'s1'},
+      s1:{who:'npc',text:'...Who is knocking? ...Good. You knocked. Smart. The last fella who did not is still picking rock salt out of his jacket.',next:'s2'},
+      s2:{who:'npc',text:'Serg. You are here about the goblin. Well \u2014 good news. I finally got the thing to LEAVE.',next:'s3'},
+      s3:{opts:[{label:'How did you manage that?',next:'s4'},{label:'Where did it go?',next:'s5'}]},
+      s4:{who:'npc',text:'Cut the wifi at the mains and told it the fridge was empty. Out the door in ten minutes flat. First daylight that thing has seen in a month.',next:'s5'},
+      s5:{who:'npc',text:'Last I saw, it was loping off toward the Athletic Center parking lot with a basketball under one arm \u2014 going to "shoot hoops," if you can believe it. You want it gone for GOOD, that is where you will find it. Behind the building, north side.',next:()=>{ if(q.s<2){q.s=2;if(typeof renderQuests==='function')renderQuests();dirty=true;msg('Serg says the goblin fled to the AFC. Find it behind the Athletic & Fitness Center, to the north.','#103a8c');} return 'end';}},
+      end:{who:'npc',text:'And knock next time too. I do not make exceptions \u2014 I make dents.',next:null}};
+  },
   hirschfeld:()=>{
     const fl=(typeof _lastVolcFloor!=='undefined')?_lastVolcFloor:0;
     if(fl===1)return emberInjectOrder(HIRSCH_CINDERWORKS());
@@ -21299,6 +21350,12 @@ function trickOrTreat(bld,ck){
   renderInv();
 }
 const QUESTS=[
+ ['hebra','The Goblin of Hebra Manor','Mrs. Hebra \u2014 a faculty cottage east of Foster','A new title: the Goblinslayer',null,
+  ()=>{ const q=player.quests.hebra;
+   if(q.s>=3)return{cls:2,text:'Complete \u2014 you ran the "goblin" out of the AFC lot and earned the title of Goblinslayer.'};
+   if(q.s===2)return{cls:1,text:'Gorp the goblin was last seen behind the Athletic & Fitness Center (to the north of it), shooting hoops. See him off for good.'};
+   if(q.s===1)return{cls:1,text:'Mrs. Hebra says to ask Serg. Go and KNOCK on Hebra Cottage \u2014 do not simply walk in.'};
+   return{cls:0,text:'Speak with Mrs. Hebra outside her cottage, east of Foster. Something has taken up residence in her attic and will not leave.'}; }],
  ['ember_skill','The Cinderworks','Mr. Hirschfeld \u2014 the Ashen Landing','1,500 XP each in Fishing, Mining & Woodcutting',null,
   ()=>{ const q=player.quests.ember;
    if(typeof emberPipesAllDone==='function'&&emberPipesAllDone())return{cls:2,text:'Complete \u2014 all three hydraulic pipes run full and the Cinderworks vault door is charged.'};
@@ -28112,7 +28169,7 @@ const grimoireM=new THREE.Group();
  const spine=TT(gmesh(new THREE.BoxGeometry(0.04,0.33,0.062),0xe3b21f),'trim');spine.position.x=-0.115;grimoireM.add(spine);
  const clasp=TT(gmesh(new THREE.BoxGeometry(0.13,0.05,0.07),0xe3b21f),'trim');clasp.position.set(0.02,0,0.03);grimoireM.add(clasp);
  const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);for(const _cx of [-1,1])for(const _cy of [-1,1]){const _cg=TT(gmesh(new THREE.BoxGeometry(0.05,0.05,0.056),0xe3b21f),'trim');_cg.position.set(_cx*0.093,_cy*0.13,0.005);grimoireM.add(_cg);}const _sb1=new THREE.Mesh(new THREE.BoxGeometry(0.006,0.115,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb1.position.set(0.02,0,0.05);grimoireM.add(_sb1);const _sb2=new THREE.Mesh(new THREE.BoxGeometry(0.115,0.006,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb2.position.set(0.02,0,0.05);grimoireM.add(_sb2);const _gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.032,0),new THREE.MeshBasicMaterial({color:0x5aa0ff}));_gem.position.set(0.02,-0.095,0.05);_gem.scale.z=0.6;grimoireM.add(_gem);const _fe=gmesh(new THREE.BoxGeometry(0.01,0.27,0.05),0xd8ccae);_fe.position.set(0.108,0,0.004);grimoireM.add(_fe);}
-rig.lArm.add(grimoireM);grimoireM.position.set(-0.08,-0.34,0.05);grimoireM.rotation.set(0.2,0,0);grimoireM.visible=false;
+rig.lArm.add(grimoireM);grimoireM.position.set(-0.145,-0.50,0.05);grimoireM.rotation.set(0,-Math.PI/2,0.12);grimoireM.visible=false;
 const mountainShieldM=new THREE.Group();
 {const face=TT(gmesh(new THREE.BoxGeometry(0.32,0.5,0.05),0x6e6f73),'tint');mountainShieldM.add(face);
  for(const mx of [-0.1,0,0.1]){const mn=TT(gmesh(new THREE.BoxGeometry(0.07,0.06,0.05),0x6e6f73),'tint');mn.position.set(mx,0.28,0);mountainShieldM.add(mn);}
