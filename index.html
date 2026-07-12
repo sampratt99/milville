@@ -1119,9 +1119,9 @@ const ITEMS={
   raw_shrimps:{name:'Raw shrimps',ex:'I should cook these at the campfire.',prim:'CookHint',val:5},
   shrimps:{name:'Shrimps',ex:'Some nicely cooked shrimps.',prim:'Eat',val:15},
   burnt_shrimps:{name:'Burnt shrimps',ex:'Oops. Charred beyond rescue.',prim:'Yuck',val:1},
-  bones:{name:'Bones',ex:'Bad to the bone.',prim:'Bury',val:8},
-  big_bones:{name:'Big bones',ex:'Hefty bones from something large. A hearty offering for the gods.',prim:'Bury',val:15},
-  small_bones:{name:'Small bones',ex:'Tiny, but they still count.',prim:'Bury',val:4},
+  bones:{name:'Bones',ex:'Bad to the bone.',prim:'Bury',val:30,noAlch:true},
+  big_bones:{name:'Big bones',ex:'Hefty bones from something large. A hearty offering for the gods.',prim:'Bury',val:300,noAlch:true},
+  small_bones:{name:'Small bones',ex:'Tiny, but they still count.',prim:'Bury',val:4,noAlch:true},
   red_bead:{name:'Red bead',ex:'A small glass bead.',val:6,prim:'Examine'},
   yellow_bead:{name:'Yellow bead',ex:'A small glass bead.',val:6,prim:'Examine'},
   black_bead:{name:'Black bead',ex:'A small glass bead.',val:6,prim:'Examine'},
@@ -1167,6 +1167,7 @@ const ITEMS={
 };
 /* the Grand Exchange armoury: bronze through rune */
 const GE_STOCK=[];GE_STOCK.push('fire_rune','nature_rune');
+GE_STOCK.push('bones','ectoplasm','big_bones','infernal_ashes'); /* the prayer sink: buy at val, bury; noAlch */
 {
   /* economy: gear prices held AT/ABOVE their original values; bars = tier v / 2 and ores are
      scaled so barVal < 1.25 x oreCost at every tier -- selling smithed gear (40% of val) returns
@@ -1591,8 +1592,8 @@ ITEMS.aurora_cape={name:'Aurora cape',ex:'A shimmering cloak woven from captured
 ITEMS.frost_shard={name:'Frost shard',ex:'A sliver of never-melting glacier ice, prized by crafters. Cold to the touch, always.',val:800,stack:1};
 ITEMS.uncut_sapphire={name:'Uncut sapphire',ex:'A rough blue gem. The Exchange will pay for it.',val:300,prim:'Examine'};
 ITEMS.red_spider_eggs={name:'Red spider eggs',ex:'A clutch of glistening crimson eggs. Apothecaries pay a fair price for them.',val:90,stack:true,prim:'Examine'};
-ITEMS.ectoplasm={name:'Ectoplasm',ex:'A cold, luminous residue left where a ghost was laid to rest.',val:12,prim:'Bury'};
-ITEMS.infernal_ashes={name:'Infernal ashes',ex:'The smouldering remains of a demon. Scatter them and the gods take notice.',val:30,prim:'Bury'};
+ITEMS.ectoplasm={name:'Ectoplasm',ex:'A cold, luminous residue left where a ghost was laid to rest.',val:90,prim:'Bury',noAlch:true};
+ITEMS.infernal_ashes={name:'Infernal ashes',ex:'The smouldering remains of a demon. Scatter them and the gods take notice.',val:420,prim:'Bury',noAlch:true};
 ITEMS.glens_baton={name:'Glen\u2019s baton',ex:'A striped car-park baton. Glen waves these at illegally parked carts; the bandits were not impressed.',val:320,prim:'Examine'};
 ITEMS.bozeks_pocket_watch={name:'Bozek\u2019s pocket watch',ex:'A brass pocket watch, still ticking. Bozek timed his salt-grinding by it.',val:540,prim:'Examine'};
 ITEMS.ricks_flask={name:'Rick\u2019s flask',ex:'A dented hip flask. Rick swears it has only ever held water.',val:280,prim:'Examine'};
