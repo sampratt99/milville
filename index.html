@@ -2149,15 +2149,15 @@ const BUILDINGS=[
   'Sculls and oars, stacked for calm mornings on Turkey Pond.'],
  ['White Farm',120,14,7,4,2.6,'hall',0xd8d2c4,0x5a646e],
  ["Children's Learning Center",170,30,6,4,2.6,'hall',0x9a5440,0x4e5862],
- ['Drury',123,30,7,5,3.4,'hall',0x8f4434,0x4e5862],
- ['Kehaya',105,28,5,4,3.0,'hall',0x9a5440,0x4e5862],
+ ['Drury',123,30,5,7,4.2,'drury',0x7e3c2c,0x3f444c],
+ ['Kehaya',104,28,6,4,2.0,'kehaya',0x9a5440,0x6d737d],
  ['Sheldon',104,39,8,5,3.0,'sheldon',0x8f8b83,0xa8502e],
  ['McLane Squash Courts',97,33,6,4,3.0,'hall',0x9a5440,0x4e5862],
- ['Warren',79,29,6,4,3.2,'hall',0x8f4434,0x5a646e],
- ['Manville',58,35,7,5,3.2,'hall',0x8f4434,0x4e5862],
- ['Brewster',58,42,6,4,3.2,'hall',0x8f4434,0x4e5862],
- ['Ford',77,38,6,4,3.2,'hall',0x8f4434,0x5a646e],
- ['Simpson',88,41,6,5,3.2,'hall',0x8f4434,0x4e5862],
+ ['Warren',83,28,6,7,3.0,'warren',0x8f4434,0x7a8087],
+ ['Manville',64,34,8,6,3.0,'manville',0x83402f,0x707780],
+ ['Brewster',58,42,5,7,3.0,'brewster',0x83402f,0x707780],
+ ['Ford',78,36,7,6,3.0,'ford',0x83402f,0x707780],
+ ['Simpson',89,43,8,6,3.0,'simpson',0x83402f,0x707780],
  ['Post Office',96,68,5,4,2.6,'round',0x9e4a38,0x67707a,
   'Round as a stamp. The cupola keeps the mail dry and the rumors drier.'],
  ['Kittredge',114,76,10,4,3.2,'hall',0x8f4434,0x4e5862],
@@ -2166,7 +2166,7 @@ const BUILDINGS=[
   'The old fine-arts hall \u2014 kilns, easels and a faint smell of clay.'],
  ['Clark House',94,73,6,4,3.0,'hall',0xcfc6b2,0x5a646e,
   'The health center. Smells of antiseptic and lozenges.'],
- ['Rectory',86,80,5,5,4.9,'rectory',0xeae6dc,0x4a4f57],
+ ['Rectory',85,81,6,4,4.0,'rectory',0xeae6dc,0x4a4f57],
  ['Conover/Twenty',69,87,6,5,3.0,'hall',0x9a4a36,0x3f7a48],
  ['Faculty Cottage',67,118,4,3,2.4,'hall',0xd8d2c4,0x5a646e],
  ['Hebra Cottage',72,119,4,3,2.4,'hall',0x8f4434,0x4e5862,'The Hebra family cottage. A modest place with, apparently, an immodest attic problem.'],
@@ -2186,14 +2186,14 @@ const BUILDINGS=[
   'Notebooks, pennants, and the good pens. Mind the textbook line in September.'],
  ['Lindsay Center for Math & Science',35,80,12,11,3.8,'lindsay',0x9a4632,0xb4bac0,
   'Math and science under a silver roof. The dome is always watching.'],
- ['Pratt House',26,100,4,3,4.4,'hall',0x8a4434,0x3a3f4a,
+ ['Pratt House',26,100,4,3,4.4,'pratt',0x8a4434,0x3a3f4a,
   'A trim three-storey brick house. Smells faintly of hot peppers.'],
  ['Red Barn',13,94,7,5,2.8,'barn',0x8c3a2a,0x4f3a22],
- ['Stronghold of Security',34,109,7,5,3.4,'hall',0x76726a,0x3e444e,
+ ['Stronghold of Security',34,109,7,5,4.2,'stronghold',0x8e4434,0x6b6156,
   'The Stronghold of Security. What lurks beneath is anyone\'s guess.'],
  ['Scudder',45,110,6,4,3.0,'hall',0xd8d2c4,0x5a646e],
  ['Foster',58,119,7,5,3.2,'hall',0xd8d2c4,0x5a646e],
- ['Middle',64,101,7,5,3.2,'hall',0xe8e4d8,0x6a6e74],
+ ['Middle',64,101,6,9,4.2,'middle',0xe8e4d8,0x878c93],
  ['Armour',80,116,11,5,3.6,'hall',0x9a5440,0x4e5862],
  ['Faculty Cottage',118,111,4,3,2.4,'hall',0xd8d2c4,0x5a646e],
  ['Faculty Cottage',128,105,4,3,2.4,'hall',0x9a5440,0x4e5862]
@@ -2206,6 +2206,22 @@ for(const b of BUILDINGS)
   }
 /* Lindsay courtyard: open to the east, paved terrace */
 for(let y=83;y<=87;y++)for(let x=39;x<=46;x++){tiles[y][x]=T_FLOOR;bgrid[y][x]=null;}
+/* Warren courtyard: lawn opening west between the wings */
+for(let y=30;y<=32;y++)for(let x=83;x<=86;x++){tiles[y][x]=T_GRASS;bgrid[y][x]=null;}
+/* Brewster L-plan: open the SW lawn */
+for(let y=45;y<=48;y++)for(let x=58;x<=59;x++){tiles[y][x]=T_GRASS;bgrid[y][x]=null;}
+/* Manville courtyard: lawn opening north between the wings */
+for(let y=34;y<=36;y++)for(let x=66;x<=69;x++){tiles[y][x]=T_GRASS;bgrid[y][x]=null;}
+/* Ford L-plan: open the NE corner (quad path stays south, untouched) */
+for(let y=36;y<=38;y++)for(let x=81;x<=84;x++){tiles[y][x]=T_GRASS;bgrid[y][x]=null;}
+/* Simpson courtyard: lawn opening north between the wings */
+for(let y=43;y<=45;y++)for(let x=91;x<=94;x++){tiles[y][x]=T_GRASS;bgrid[y][x]=null;}
+/* Rectory kitchen garden: fenced plot east of the house, gate to the south */
+for(const f of[[91,81],[92,81],[93,81],[93,82],[93,83],[93,84],[91,84]])
+  if(tiles[f[1]][f[0]]===T_GRASS)tiles[f[1]][f[0]]=T_FENCE;
+/* Middle L-plan: open the west lawn and the SE court */
+for(let y=101;y<=106;y++)for(let x=64;x<=66;x++){tiles[y][x]=T_GRASS;bgrid[y][x]=null;}
+for(let y=108;y<=109;y++)for(let x=67;x<=69;x++){tiles[y][x]=T_GRASS;bgrid[y][x]=null;}
 /* Matthes Cage link corridor: seal the gap to the AFC */
 {const mc=BUILDINGS.find(b2=>b2.name==='Matthes Cage');
  for(let y=17;y<=19;y++){tiles[y][69]=T_WALL;bgrid[y][69]=mc;}}
@@ -2368,10 +2384,10 @@ function addObj(def,x,y,force){
   }
   const _o={def,x,y,alive:true,respawnAt:0};objects.push(_o);return _o;
 }
-[[60,28],[68,30],[80,33],[86,32],[92,36],[64,46],[84,46],[64,57],[78,57],
+[[68,30],[80,33],[92,36],[64,46],[84,46],[64,57],[78,57],
  [88,58],[68,66],[78,68],[86,64],[60,66],[44,54],[44,64],[58,58],[36,57],
  [28,60],[14,64],[30,90],[24,92],[40,94],[50,96],[64,94],[80,90],
- ,[64,104],[82,107],[94,106],[103,92],[107,105],
+ ,[62,103],[92,44],[82,107],[94,106],[103,92],[107,105],
  [134,104],[125,29],[130,36],[145,25],[115,39],[82,76]]
   .forEach(p=>addObj('tree',p[0],p[1]));
 /* Drury Orchard */
@@ -12299,6 +12315,1230 @@ function updateObjVisual(o){
     const cx=b.x+b.w/2,cz=b.y+b.h/2,y0=b.base,hg=b.hgt;
     const RY=alongX?0:Math.PI/2;
     const P=(lx,lz)=>alongX?[cx+lx,cz+lz]:[cx+lz,cz+lx];
+    if(b.kind==='kehaya'){
+      /* Kehaya - shingle-style dorm: orange-brick ground storey under a
+         huge steep slate roof, three slate-clad box dormers corbelled
+         over the south wall (mirrored north), small white ridge dormer,
+         round-arched brick entry, tall ridge stack, and the glowing
+         glass conservatory wrapping the west end */
+      const BR=b.col,TR2=0xf3efe6,SL=b.roof,CLAD=0x5d646e,GRN=0x8c877e,
+            GLS=WIN,AMB=0x8a7440;
+      const base=y0+0.3;
+      const x0=b.x,z0=b.y,zS=z0+4,zN=z0,ccx=x0+3,ccz=z0+2;
+      /* foundation + brick body + white eaves band */
+      bake(out,box(6.36,0.34,4.36),GRN,ccx,y0+0.17,ccz,0);
+      bake(out,box(6,hg,4),BR,ccx,base+hg/2,ccz,0);
+      bake(out,box(6.24,0.14,4.24),TR2,ccx,base+hg+0.02,ccz,0);
+      /* the great slate roof: ridge E-W, steep and deep */
+      const rs=2.4,ang=Math.atan2(rs,2.3),slb=Math.hypot(2.3,rs)+0.12;
+      bake(out,box(6.5,0.12,slb),SL,ccx,base+hg+rs/2,ccz-1.15,0,1,-ang,0);
+      bake(out,box(6.5,0.12,slb),SL,ccx,base+hg+rs/2,ccz+1.15,0,1, ang,0);
+      bake(out,box(6.55,0.13,0.3),dk(SL,0.7),ccx,base+hg+rs,ccz,0);
+      /* tall stepped brick gable ends */
+      for(const gx of[x0+0.09,x0+5.91]){
+        const ws=[3.3,2.2,1.1],ys=[0.4,1.2,1.95];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(0.18,0.82,ws[s2]),BR,gx,base+hg+ys[s2],ccz,0);
+      }
+      /* gable windows: pair low + single high, both ends */
+      for(const g of[[x0-0.01,-1],[x0+6.01,1]]){
+        for(const oz of[-0.5,0.5]){
+          bake(out,box(0.08,0.5,0.4),TR2,g[0],base+hg+0.7,ccz+oz,0);
+          bake(out,box(0.12,0.4,0.3),GLS,g[0]+g[1]*0.01,base+hg+0.7,ccz+oz,0);
+        }
+        bake(out,box(0.08,0.44,0.36),TR2,g[0],base+hg+1.6,ccz,0);
+        bake(out,box(0.12,0.34,0.26),GLS,g[0]+g[1]*0.01,base+hg+1.6,ccz,0);
+      }
+      /* slate-clad box dormers corbelled over the wall line */
+      function boxDorm(px,pz,dz2){
+        const fy=base+hg+0.62;
+        bake(out,box(1.15,0.95,0.75),CLAD,px,fy,pz+dz2*(-0.295),0);
+        bake(out,box(0.95,0.6,0.08),TR2,px,fy,pz+dz2*0.09,0);
+        bake(out,box(0.82,0.48,0.14),GLS,px,fy,pz+dz2*0.1,0);
+        bake(out,box(0.06,0.5,0.16),TR2,px-0.2,fy,pz+dz2*0.1,0);
+        bake(out,box(0.06,0.5,0.16),TR2,px+0.2,fy,pz+dz2*0.1,0);
+        bake(out,box(1.27,0.09,0.9),dk(SL,0.85),px,fy+0.56,pz+dz2*(-0.28),0,1,dz2*-0.25,0);
+      }
+      for(const xx of[x0+2.35,x0+3.65,x0+4.95])boxDorm(xx,zS, 1);
+      for(const xx of[x0+1.6,x0+3.0,x0+4.4])   boxDorm(xx,zN,-1);
+      /* small white gabled dormer near the ridge */
+      {const px=x0+1.9,dy2=base+hg+1.72,dzz=ccz+0.55;
+       bake(out,box(0.5,0.5,0.55),0xeceada,px,dy2,dzz,0);
+       bake(out,box(0.3,0.3,0.12),GLS,px,dy2+0.02,dzz+0.26,0);
+       bake(out,box(0.44,0.08,0.66),SL,px-0.17,dy2+0.36,dzz,0,1,0, 0.66);
+       bake(out,box(0.44,0.08,0.66),SL,px+0.17,dy2+0.36,dzz,0,1,0,-0.66);}
+      /* round-arched brick entry on the south face */
+      {const ex2=x0+1.35;
+       bake(out,box(1.0,1.75,0.4),BR,ex2,base+0.87,zS+0.1,0);
+       bake(out,new THREE.CylinderGeometry(0.46,0.46,0.12,12),dk(BR,0.8),ex2,base+1.26,zS+0.26,0,1,Math.PI/2,0);
+       bake(out,new THREE.CylinderGeometry(0.37,0.37,0.16,12),0x2e2a26,ex2,base+1.26,zS+0.27,0,1,Math.PI/2,0);
+       bake(out,box(0.66,1.15,0.16),0x2e2a26,ex2,base+0.7,zS+0.27,0);
+       bake(out,box(0.5,1.05,0.1),0x4a4038,ex2,base+0.64,zS+0.24,0);
+       bake(out,box(1.1,0.09,0.55),SL,ex2,base+1.86,zS+0.12,0,1,-0.3,0);
+       bake(out,box(0.9,0.12,0.5),0xb9b4a8,ex2,y0+0.36,zS+0.45,0);
+       bake(out,box(0.9,0.12,0.4),0xb9b4a8,ex2,y0+0.24,zS+0.75,0);}
+      /* the glowing glass conservatory at the west end */
+      {const cwx=x0-0.45,cwz=ccz+0.6;
+       bake(out,box(1.4,0.55,2.4),BR,cwx,y0+0.47,cwz,0);
+       bake(out,box(1.2,1.3,2.2),AMB,cwx,y0+1.4,cwz,0);
+       for(const c2 of[[cwx-0.6,cwz-1.1],[cwx-0.6,cwz+1.1],[cwx+0.55,cwz-1.1],[cwx+0.55,cwz+1.1]])
+         bake(out,box(0.1,1.35,0.1),TR2,c2[0],y0+1.42,c2[1],0);
+       for(const oz of[-0.6,0,0.6])
+         bake(out,box(0.06,1.3,0.1),TR2,cwx-0.61,y0+1.4,cwz+oz,0);
+       for(const ox of[-0.35,0.25])
+         bake(out,box(0.1,1.3,0.06),TR2,cwx+ox,y0+1.4,cwz+1.11,0);
+       bake(out,box(0.08,1.28,0.7),AMB,cwx-0.52,y0+1.4,cwz+0.95,0.6);
+       bake(out,box(1.44,0.12,2.44),TR2,cwx,y0+2.12,cwz,0);
+       bake(out,box(1.34,0.1,2.34),SL,cwx,y0+2.22,cwz,0);
+       bake(out,box(0.9,0.09,1.9),dk(SL,0.85),cwx,y0+2.32,cwz,0);}
+      /* ground-storey sash windows */
+      function winG(wx2,wy2,wz2,dx2,dz2){
+        if(dx2){
+          bake(out,box(0.08,0.9,0.58),TR2,wx2+dx2*0.02,wy2,wz2,0);
+          bake(out,box(0.12,0.76,0.44),GLS,wx2+dx2*0.03,wy2,wz2,0);
+          bake(out,box(0.1,0.06,0.66),GRN,wx2+dx2*0.02,wy2-0.5,wz2,0);
+        }else{
+          bake(out,box(0.58,0.9,0.08),TR2,wx2,wy2,wz2+dz2*0.02,0);
+          bake(out,box(0.44,0.76,0.12),GLS,wx2,wy2,wz2+dz2*0.03,0);
+          bake(out,box(0.66,0.06,0.1),GRN,wx2,wy2-0.5,wz2+dz2*0.02,0);
+        }
+      }
+      const gy=base+1.1;
+      for(const xx of[x0+2.5,x0+3.7,x0+4.9,x0+5.5])winG(xx,gy,zS,0, 1);
+      for(const xx of[x0+0.8,x0+1.9,x0+3.0,x0+4.1,x0+5.2])winG(xx,gy,zN,0,-1);
+      for(const zz of[z0+1.2,z0+2.8])winG(x0+6,gy,zz, 1,0);
+      winG(x0,gy,z0+0.9,-1,0);
+      /* tall brick ridge stack */
+      bake(out,box(0.55,1.9,0.55),dk(BR,0.9),x0+2.1,base+hg+2.05,ccz,0);
+      bake(out,box(0.68,0.14,0.68),0x5a4438,x0+2.1,base+hg+3.06,ccz,0);
+      continue;
+    }
+    if(b.kind==='drury'){
+      /* Drury - Georgian brick dorm: gambrel roof with dormer rows, white
+         string courses + keystone lintels, tall end stacks, and a
+         projecting south-end entrance pavilion on the west facade -
+         lunette gable, grand second-storey window band, white columned
+         porch over a recessed entry */
+      const BR=b.col,TR2=0xf3efe6,SL=b.roof,GRN=0x8c877e,GLS=WIN;
+      const base=y0+0.3,sh=hg/3;
+      const x0=b.x,z0=b.y,ccx=x0+2.5,ccz=z0+3.5;
+      /* foundation + brick body + string courses + cornice */
+      bake(out,box(5.36,0.34,7.36),GRN,ccx,y0+0.17,ccz,0);
+      bake(out,box(5,hg,7),BR,ccx,base+hg/2,ccz,0);
+      bake(out,box(5.2,0.1,7.2),TR2,ccx,base+sh,ccz,0);
+      bake(out,box(5.2,0.1,7.2),TR2,ccx,base+2*sh,ccz,0);
+      bake(out,box(5.3,0.16,7.3),TR2,ccx,base+hg+0.02,ccz,0);
+      /* gambrel roof, ridge N-S: steep dormered lower + shallow cap */
+      const aL=Math.atan2(1.5,1.15),wL=Math.hypot(1.15,1.5)+0.1;
+      const aU=Math.atan2(0.5,1.6),wU=Math.hypot(1.6,0.5)+0.1;
+      bake(out,box(wL,0.12,7.5),SL,ccx-2.175,base+hg+0.75,ccz,0,1,0, aL);
+      bake(out,box(wL,0.12,7.5),SL,ccx+2.175,base+hg+0.75,ccz,0,1,0,-aL);
+      bake(out,box(wU,0.12,7.5),SL,ccx-0.8,base+hg+1.75,ccz,0,1,0, aU);
+      bake(out,box(wU,0.12,7.5),SL,ccx+0.8,base+hg+1.75,ccz,0,1,0,-aU);
+      bake(out,box(0.3,0.13,7.55),dk(SL,0.7),ccx,base+hg+2.0,ccz,0);
+      /* gambrel gable ends N + S: stepped brick + attic pair */
+      for(const g of[[z0+0.09,-1],[z0+6.91,1]]){
+        const ws=[4.0,2.6,1.3],ys=[0.33,0.95,1.62];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(ws[s2],0.64,0.18),BR,ccx,base+hg+ys[s2],g[0],0);
+        for(const ox of[-0.5,0.5]){
+          bake(out,box(0.42,0.5,0.08),TR2,ccx+ox,base+hg+0.62,g[0]+g[1]*0.06,0);
+          bake(out,box(0.32,0.4,0.12),GLS,ccx+ox,base+hg+0.62,g[0]+g[1]*0.07,0);
+        }
+      }
+      /* keystone sash windows */
+      function winK(wx2,wy2,wz2,dx2,dz2){
+        if(dx2){
+          bake(out,box(0.08,0.92,0.6),TR2,wx2+dx2*0.02,wy2,wz2,0);
+          bake(out,box(0.12,0.78,0.46),GLS,wx2+dx2*0.03,wy2,wz2,0);
+          bake(out,box(0.07,0.1,0.68),TR2,wx2+dx2*0.03,wy2+0.5,wz2,0);
+          bake(out,box(0.08,0.17,0.12),TR2,wx2+dx2*0.04,wy2+0.53,wz2,0);
+        }else{
+          bake(out,box(0.6,0.92,0.08),TR2,wx2,wy2,wz2+dz2*0.02,0);
+          bake(out,box(0.46,0.78,0.12),GLS,wx2,wy2,wz2+dz2*0.03,0);
+          bake(out,box(0.68,0.1,0.07),TR2,wx2,wy2+0.5,wz2+dz2*0.03,0);
+          bake(out,box(0.12,0.17,0.08),TR2,wx2,wy2+0.53,wz2+dz2*0.04,0);
+        }
+      }
+      const wy=st=>base+st*sh+sh*0.58;
+      /* west facade: 4 cols north of the pavilion */
+      for(const zz of[z0+0.7,z0+1.7,z0+2.7,z0+3.7])
+        for(let st=0;st<3;st++)winK(x0,wy(st),zz,-1,0);
+      /* east facade */
+      for(const zz of[z0+0.7,z0+1.8,z0+2.9,z0+4.0,z0+5.1,z0+6.2])
+        for(let st=0;st<3;st++)winK(x0+5,wy(st),zz, 1,0);
+      /* gable-end walls */
+      for(const xx of[x0+1.6,x0+3.4])for(let st=0;st<3;st++){
+        winK(xx,wy(st),z0,0,-1);winK(xx,wy(st),z0+7,0,1);
+      }
+      /* dormer rows in the steep lower slopes */
+      function gd(pz,dx2){
+        const px=ccx+dx2*1.95,dy2=base+hg+0.72;
+        bake(out,box(0.55,0.56,0.6),BR,px,dy2,pz,0);
+        bake(out,box(0.08,0.4,0.4),TR2,px+dx2*0.28,dy2+0.02,pz,0);
+        bake(out,box(0.12,0.32,0.3),GLS,px+dx2*0.29,dy2+0.02,pz,0);
+        bake(out,box(0.72,0.09,0.5),SL,px,dy2+0.42,pz-0.17,0,1,-0.7,0);
+        bake(out,box(0.72,0.09,0.5),SL,px,dy2+0.42,pz+0.17,0,1, 0.7,0);
+      }
+      for(const zz of[z0+0.9,z0+1.9,z0+2.9,z0+3.9])gd(zz,-1);
+      for(const zz of[z0+1.2,z0+2.4,z0+3.6,z0+4.8,z0+6.0])gd(zz, 1);
+      /* south-end entrance pavilion on the west facade */
+      {const pz=z0+5.2;
+       bake(out,box(0.6,hg,2.0),BR,x0-0.22,base+hg/2,pz,0);
+       bake(out,box(0.55,0.6,1.8),BR,x0-0.22,base+hg+0.3,pz,0);
+       bake(out,box(0.55,0.55,1.2),BR,x0-0.22,base+hg+0.85,pz,0);
+       bake(out,new THREE.CylinderGeometry(0.62,0.62,0.1,14),TR2,x0-0.5,base+hg+0.62,pz,0,1,0,Math.PI/2);
+       bake(out,new THREE.CylinderGeometry(0.5,0.5,0.14,14),GLS,x0-0.51,base+hg+0.6,pz,0,1,0,Math.PI/2);
+       bake(out,box(0.08,0.1,1.3),TR2,x0-0.53,base+hg+0.28,pz,0);
+       /* grand second-storey window band */
+       bake(out,box(0.1,1.0,1.5),TR2,x0-0.54,base+2.4,pz,0);
+       bake(out,box(0.14,0.84,1.3),GLS,x0-0.55,base+2.4,pz,0);
+       bake(out,box(0.07,0.08,1.34),TR2,x0-0.56,base+2.4,pz,0);
+       bake(out,box(0.07,1.04,0.08),TR2,x0-0.56,base+2.4,pz-0.34,0);
+       bake(out,box(0.07,1.04,0.08),TR2,x0-0.56,base+2.4,pz+0.34,0);
+       /* white columned porch + recessed entry + steps */
+       bake(out,box(0.7,0.16,2.0),TR2,x0-0.62,base+1.86,pz,0);
+       bake(out,box(0.74,0.1,2.06),SL,x0-0.62,base+1.98,pz,0);
+       for(const oz of[-0.8,-0.28,0.28,0.8])
+         bake(out,new THREE.CylinderGeometry(0.08,0.09,1.5,8),TR2,x0-0.88,base+1.05,pz+oz,0);
+       bake(out,box(0.14,1.5,1.5),0x1e1a17,x0-0.5,base+0.85,pz,0);
+       bake(out,box(0.1,1.36,0.6),0xe9e5da,x0-0.54,base+0.78,pz,0);
+       bake(out,box(1.0,0.12,1.7),0xb9b4a8,x0-0.95,y0+0.36,pz,0);
+       bake(out,box(1.0,0.12,1.5),0xb9b4a8,x0-1.2,y0+0.24,pz,0);}
+      /* tall brick stacks at both ridge ends */
+      for(const zz of[z0+0.7,z0+6.3]){
+        bake(out,box(0.58,1.4,0.58),dk(BR,0.9),ccx,base+hg+2.0,zz,0);
+        bake(out,box(0.7,0.14,0.7),0x5a4438,ccx,base+hg+2.75,zz,0);
+      }
+      continue;
+    }
+    if(b.kind==='brewster'){
+      /* Brewster - Tudor L by the quad: long N-S block (east facade with
+         shed-dormer row, mullioned windows, stone entry, and a two-storey
+         canted stone bay beneath the south cross-gable), west wing at the
+         north end, SW lawn carved open, tall tiered stacks */
+      const BR=b.col,STN=0xd9d3c2,SL=b.roof,GRN=0x8c877e,GLS=WIN,DRK=0x33383f;
+      const base=y0+0.3,sh=hg/2;
+      const x0=b.x,z0=b.y,bcx=x0+3.5,bcz=z0+3.5,wcx=x0+1.1,wcz=z0+1.5;
+      /* foundations + masses (long block + NW wing) */
+      bake(out,box(3.3,0.34,7.3),GRN,bcx,y0+0.17,bcz,0);
+      bake(out,box(2.5,0.34,3.3),GRN,wcx,y0+0.17,wcz,0);
+      bake(out,box(3,hg,7),BR,bcx,base+hg/2,bcz,0);
+      bake(out,box(2.2,hg,3),BR,wcx,base+hg/2,wcz,0);
+      /* stone eaves bands */
+      bake(out,box(3.2,0.14,7.2),STN,bcx,base+hg+0.02,bcz,0);
+      bake(out,box(2.36,0.14,3.2),STN,wcx,base+hg+0.02,wcz,0);
+      /* steep roofs: block ridge N-S, wing ridge E-W */
+      const rs=1.8,ang=Math.atan2(rs,1.8),slb=Math.hypot(1.8,1.8)+0.12;
+      bake(out,box(slb,0.12,7.5),SL,bcx-0.9,base+hg+rs/2,bcz,0,1,0, ang);
+      bake(out,box(slb,0.12,7.5),SL,bcx+0.9,base+hg+rs/2,bcz,0,1,0,-ang);
+      bake(out,box(0.28,0.13,7.55),dk(SL,0.7),bcx,base+hg+rs,bcz,0);
+      const rsW=1.7,angW=Math.atan2(rsW,1.75),slbW=Math.hypot(1.75,1.7)+0.12;
+      bake(out,box(2.7,0.12,slbW),SL,wcx,base+hg+rsW/2,wcz-0.875,0,1,-angW,0);
+      bake(out,box(2.7,0.12,slbW),SL,wcx,base+hg+rsW/2,wcz+0.875,0,1, angW,0);
+      bake(out,box(2.75,0.13,0.26),dk(SL,0.7),wcx,base+hg+rsW,wcz,0);
+      /* stepped gables: block N + S ends, wing W end */
+      {const ws=[2.45,1.65,0.85];
+       for(const gz of[z0+0.09,z0+6.91])
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(ws[s2],rs/3+0.06,0.18),BR,bcx,base+hg+rs/6+s2*rs/3,gz,0);
+       for(let s2=0;s2<3;s2++)
+        bake(out,box(0.18,rsW/3+0.06,ws[s2]),BR,x0+0.09,base+hg+rsW/6+s2*rsW/3,wcz,0);}
+      /* south cross-gable + the two-storey canted stone bay (east facade) */
+      {const gz=z0+6.0;
+       bake(out,box(0.5,hg,1.7),BR,x0+5.05,base+hg/2,gz,0);
+       const ws=[1.5,1.0,0.55];
+       for(let s2=0;s2<3;s2++)
+         bake(out,box(0.45,0.5,ws[s2]),BR,x0+5.05,base+hg+0.25+s2*0.5,gz,0);
+       bake(out,box(0.9,0.09,1.05),SL,x0+5.05,base+hg+0.78,gz-0.44,0,1,-0.84,0);
+       bake(out,box(0.9,0.09,1.05),SL,x0+5.05,base+hg+0.78,gz+0.44,0,1, 0.84,0);
+       bake(out,box(0.08,0.4,0.3),STN,x0+5.31,base+hg+0.42,gz,0);
+       bake(out,box(0.12,0.3,0.22),GLS,x0+5.32,base+hg+0.42,gz,0);
+       /* the bay: stone core, canted cheeks, glass bands, cap */
+       bake(out,box(0.6,2.3,1.3),STN,x0+5.34,base+1.17,gz,0);
+       bake(out,box(0.09,2.24,0.55),STN,x0+5.36,base+1.17,gz-0.78,0.55);
+       bake(out,box(0.09,2.24,0.55),STN,x0+5.36,base+1.17,gz+0.78,-0.55);
+       bake(out,box(0.1,0.62,1.0),GLS,x0+5.66,base+0.92,gz,0);
+       bake(out,box(0.1,0.62,1.0),GLS,x0+5.66,base+1.92,gz,0);
+       bake(out,box(0.74,0.12,1.5),STN,x0+5.34,base+2.38,gz,0);
+       bake(out,box(0.7,0.08,1.44),SL,x0+5.36,base+2.48,gz,0);}
+      /* stone-mullioned casement pairs */
+      function winMZ(wx2,wy2,wz2,dz2){
+        bake(out,box(0.92,0.86,0.08),STN,wx2,wy2,wz2+dz2*0.02,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2-0.21,wy2,wz2+dz2*0.03,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2+0.21,wy2,wz2+dz2*0.03,0);
+      }
+      function winMX(wx2,wy2,wz2,dx2){
+        bake(out,box(0.08,0.86,0.92),STN,wx2+dx2*0.02,wy2,wz2,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2-0.21,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2+0.21,0);
+      }
+      const wy=st=>base+st*sh+sh*0.58;
+      /* east facade: cols, stone entry at z+4.0, bay/gable at z+6.0 */
+      for(const zz of[z0+0.8,z0+1.9,z0+3.0,z0+4.9])
+        for(let st=0;st<2;st++)winMX(x0+5,wy(st),zz, 1);
+      bake(out,box(0.14,1.7,1.0),STN,x0+4.98,base+0.9,z0+4.0,0);
+      bake(out,box(0.14,1.44,0.62),DRK,x0+4.96,base+0.76,z0+4.0,0);
+      bake(out,box(0.5,0.12,0.9),0xb9b4a8,x0+5.25,y0+0.36,z0+4.0,0);
+      /* block west face (below the carved SW lawn) + wing faces */
+      for(const zz of[z0+3.8,z0+5.0,z0+6.2])
+        for(let st=0;st<2;st++)winMX(x0+2,wy(st),zz,-1);
+      for(const xx of[x0+0.7,x0+1.7])for(let st=0;st<2;st++)winMZ(xx,wy(st),z0+3, 1);
+      for(const xx of[x0+0.6,x0+1.6])for(let st=0;st<2;st++)winMZ(xx,wy(st),z0,-1);
+      for(const zz of[z0+0.8,z0+2.2])for(let st=0;st<2;st++)winMX(x0,wy(st),zz,-1);
+      /* block N + S gable windows + attics; wing W attic */
+      for(const xx of[x0+2.8,x0+4.2]){
+        for(let st=0;st<2;st++){winMZ(xx,wy(st),z0,-1);winMZ(xx,wy(st),z0+7, 1);}
+      }
+      bake(out,box(0.34,0.44,0.08),STN,bcx,base+hg+0.6,z0-0.01,0);
+      bake(out,box(0.24,0.34,0.12),GLS,bcx,base+hg+0.6,z0-0.02,0);
+      for(const ox of[-0.32,0.32]){
+        bake(out,box(0.3,0.4,0.08),STN,bcx+ox,base+hg+0.6,z0+7.01,0);
+        bake(out,box(0.22,0.3,0.12),GLS,bcx+ox,base+hg+0.6,z0+7.02,0);
+      }
+      bake(out,box(0.08,0.44,0.34),STN,x0-0.01,base+hg+0.6,wcz,0);
+      bake(out,box(0.12,0.34,0.24),GLS,x0-0.02,base+hg+0.6,wcz,0);
+      /* shed dormers: east slope row + west slope pair + wing south */
+      function shedX(pz,dx2,px){
+        bake(out,box(0.55,0.5,0.72),dk(SL,0.92),px,base+hg+0.62,pz,0);
+        bake(out,box(0.1,0.3,0.5),GLS,px+dx2*0.28,base+hg+0.62,pz,0);
+        bake(out,box(0.72,0.09,0.86),dk(SL,0.6),px-dx2*0.08,base+hg+0.94,pz,0,1,0,dx2*-0.28);
+      }
+      for(const zz of[z0+1.4,z0+2.5,z0+3.6,z0+4.7])shedX(zz, 1,x0+4.4);
+      for(const zz of[z0+4.2,z0+5.6])shedX(zz,-1,x0+2.6);
+      {const px=x0+1.1;
+       bake(out,box(0.72,0.5,0.55),dk(SL,0.92),px,base+hg+0.62,z0+2.5,0);
+       bake(out,box(0.5,0.3,0.1),GLS,px,base+hg+0.62,z0+2.78,0);
+       bake(out,box(0.86,0.09,0.72),dk(SL,0.6),px,base+hg+0.94,z0+2.42,0,1,0.28,0);}
+      /* tall Tudor stacks: mid-ridge (large), south ridge, wing */
+      function stack(px,pz,h2){
+        bake(out,box(0.62,h2,0.62),dk(BR,0.92),px,base+hg+h2/2+0.2,pz,0);
+        bake(out,box(0.76,0.12,0.76),dk(BR,0.8),px,base+hg+h2+0.26,pz,0);
+        bake(out,box(0.64,0.1,0.64),0x5a4438,px,base+hg+h2+0.37,pz,0);
+      }
+      stack(bcx,z0+2.4,3.0);
+      stack(bcx,z0+5.6,2.7);
+      stack(wcx,wcz,2.6);
+      continue;
+    }
+    if(b.kind==='ford'){
+      /* Ford - Tudor L opening NE: long N-S arm on the west (west facade),
+         E-W south wing fronting the quad path; the photo's four gabled
+         dormers + window rows live on the wing's NORTH face into the
+         inner corner; west cross-gable on the arm, tall tiered stacks */
+      const BR=b.col,STN=0xd9d3c2,SL=b.roof,GRN=0x8c877e,GLS=WIN,DRK=0x33383f;
+      const base=y0+0.3,sh=hg/2;
+      const x0=b.x,z0=b.y,acx=x0+1.5,acz=z0+3,wcx=x0+3.5,wcz=z0+4.5;
+      /* foundations + masses (N-S arm + E-W wing) */
+      bake(out,box(3.3,0.34,6.3),GRN,acx,y0+0.17,acz,0);
+      bake(out,box(7.3,0.34,3.3),GRN,wcx,y0+0.17,wcz,0);
+      bake(out,box(3,hg,6),BR,acx,base+hg/2,acz,0);
+      bake(out,box(7,hg,3),BR,wcx,base+hg/2,wcz,0);
+      /* stone eaves bands */
+      bake(out,box(3.2,0.14,6.2),STN,acx,base+hg+0.02,acz,0);
+      bake(out,box(7.2,0.14,3.2),STN,wcx,base+hg+0.02,wcz,0);
+      /* steep roofs: arm ridge N-S, wing ridge E-W */
+      const rs=1.8,ang=Math.atan2(rs,1.8),slb=Math.hypot(1.8,1.8)+0.12;
+      bake(out,box(slb,0.12,6.5),SL,acx-0.9,base+hg+rs/2,acz,0,1,0, ang);
+      bake(out,box(slb,0.12,6.5),SL,acx+0.9,base+hg+rs/2,acz,0,1,0,-ang);
+      bake(out,box(0.28,0.13,6.55),dk(SL,0.7),acx,base+hg+rs,acz,0);
+      bake(out,box(7.5,0.12,slb),SL,wcx,base+hg+rs/2,wcz-0.9,0,1,-ang,0);
+      bake(out,box(7.5,0.12,slb),SL,wcx,base+hg+rs/2,wcz+0.9,0,1, ang,0);
+      bake(out,box(7.55,0.13,0.28),dk(SL,0.7),wcx,base+hg+rs,wcz,0);
+      /* stepped gables: arm north end + wing east end */
+      {const ws=[2.45,1.65,0.85];
+       for(let s2=0;s2<3;s2++)
+        bake(out,box(ws[s2],rs/3+0.06,0.18),BR,acx,base+hg+rs/6+s2*rs/3,z0+0.09,0);
+       for(let s2=0;s2<3;s2++)
+        bake(out,box(0.18,rs/3+0.06,ws[s2]),BR,x0+6.91,base+hg+rs/6+s2*rs/3,wcz,0);}
+      /* west cross-gable on the arm's long facade */
+      {const gz=z0+1.0;
+       bake(out,box(0.5,hg,1.6),BR,x0-0.05,base+hg/2,gz,0);
+       const ws=[1.4,0.95,0.5];
+       for(let s2=0;s2<3;s2++)
+         bake(out,box(0.45,0.5,ws[s2]),BR,x0-0.05,base+hg+0.25+s2*0.5,gz,0);
+       bake(out,box(0.9,0.09,1.0),SL,x0-0.05,base+hg+0.78,gz-0.42,0,1,-0.84,0);
+       bake(out,box(0.9,0.09,1.0),SL,x0-0.05,base+hg+0.78,gz+0.42,0,1, 0.84,0);
+       bake(out,box(0.08,0.4,0.3),STN,x0-0.31,base+hg+0.42,gz,0);
+       bake(out,box(0.12,0.3,0.22),GLS,x0-0.32,base+hg+0.42,gz,0);}
+      /* stone-mullioned casement pairs */
+      function winMZ(wx2,wy2,wz2,dz2){
+        bake(out,box(0.92,0.86,0.08),STN,wx2,wy2,wz2+dz2*0.02,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2-0.21,wy2,wz2+dz2*0.03,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2+0.21,wy2,wz2+dz2*0.03,0);
+      }
+      function winMX(wx2,wy2,wz2,dx2){
+        bake(out,box(0.08,0.86,0.92),STN,wx2+dx2*0.02,wy2,wz2,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2-0.21,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2+0.21,0);
+      }
+      const wy=st=>base+st*sh+sh*0.58;
+      /* west facade (arm + wing, continuous): cross-gable at z+1.0 */
+      for(const zz of[z0+2.4,z0+3.6,z0+4.8])
+        for(let st=0;st<2;st++)winMX(x0,wy(st),zz,-1);
+      /* wing NORTH face into the inner corner: the photo facade */
+      for(const xx of[x0+3.6,x0+4.5,x0+5.4,x0+6.3])
+        for(let st=0;st<2;st++)winMZ(xx,wy(st),z0+3,-1);
+      /* arm east face on the NE corner + arm north gable */
+      for(const zz of[z0+0.8,z0+2.0])for(let st=0;st<2;st++)winMX(x0+3,wy(st),zz, 1);
+      for(const xx of[x0+0.8,x0+2.2])for(let st=0;st<2;st++)winMZ(xx,wy(st),z0,-1);
+      /* wing south face (fronts the quad path) + east gable */
+      for(const xx of[x0+0.9,x0+2.0,x0+3.1,x0+4.2,x0+5.3,x0+6.4])
+        for(let st=0;st<2;st++)winMZ(xx,wy(st),z0+6, 1);
+      for(const zz of[z0+3.8,z0+5.2])for(let st=0;st<2;st++)winMX(x0+7,wy(st),zz, 1);
+      /* attic windows: arm north gable + wing east gable */
+      bake(out,box(0.34,0.44,0.08),STN,acx,base+hg+0.6,z0-0.01,0);
+      bake(out,box(0.24,0.34,0.12),GLS,acx,base+hg+0.6,z0-0.02,0);
+      bake(out,box(0.08,0.44,0.34),STN,x0+7.01,base+hg+0.6,wcz,0);
+      bake(out,box(0.12,0.34,0.24),GLS,x0+7.02,base+hg+0.6,wcz,0);
+      /* four gabled dormers on the wing's north slope (the photo row) */
+      function gdorm(px){
+        const dzz=z0+3.7,dy2=base+hg+0.58;
+        bake(out,box(0.62,0.58,0.6),BR,px,dy2,dzz,0);
+        bake(out,box(0.4,0.4,0.08),STN,px,dy2+0.02,dzz-0.31,0);
+        bake(out,box(0.3,0.32,0.12),GLS,px,dy2+0.02,dzz-0.32,0);
+        bake(out,box(0.5,0.09,0.78),SL,px-0.2,dy2+0.42,dzz,0,1,0, 0.7);
+        bake(out,box(0.5,0.09,0.78),SL,px+0.2,dy2+0.42,dzz,0,1,0,-0.7);
+      }
+      for(const xx of[x0+3.6,x0+4.5,x0+5.4,x0+6.3])gdorm(xx);
+      /* shed dormers: arm west slope + wing south slope */
+      function shedX(pz){
+        bake(out,box(0.55,0.5,0.72),dk(SL,0.92),x0+0.6,base+hg+0.62,pz,0);
+        bake(out,box(0.1,0.3,0.5),GLS,x0+0.32,base+hg+0.62,pz,0);
+        bake(out,box(0.72,0.09,0.86),dk(SL,0.6),x0+0.68,base+hg+0.94,pz,0,1,0,0.28);
+      }
+      shedX(z0+2.4);shedX(z0+3.6);
+      function shedZ(px){
+        bake(out,box(0.72,0.5,0.55),dk(SL,0.92),px,base+hg+0.62,z0+5.3,0);
+        bake(out,box(0.5,0.3,0.1),GLS,px,base+hg+0.62,z0+5.58,0);
+        bake(out,box(0.86,0.09,0.72),dk(SL,0.6),px,base+hg+0.94,z0+5.22,0,1,0.28,0);
+      }
+      shedZ(x0+4.5);shedZ(x0+6.0);
+      /* stone-surround doors: arm east face (NE corner) + wing south face */
+      bake(out,box(0.14,1.7,1.0),STN,x0+2.98,base+0.9,z0+2.4,0);
+      bake(out,box(0.14,1.44,0.62),DRK,x0+2.96,base+0.76,z0+2.4,0);
+      bake(out,box(0.5,0.12,0.9),0xb9b4a8,x0+3.25,y0+0.36,z0+2.4,0);
+      bake(out,box(1.0,1.7,0.14),STN,x0+3.5,base+0.9,z0+5.97,0);
+      bake(out,box(0.62,1.44,0.14),DRK,x0+3.5,base+0.76,z0+5.99,0);
+      bake(out,box(0.9,0.12,0.5),0xb9b4a8,x0+3.5,y0+0.36,z0+6.25,0);
+      /* tall Tudor stacks: arm gable, inner junction, wing east */
+      function stack(px,pz,h2){
+        bake(out,box(0.62,h2,0.62),dk(BR,0.92),px,base+hg+h2/2+0.2,pz,0);
+        bake(out,box(0.76,0.12,0.76),dk(BR,0.8),px,base+hg+h2+0.26,pz,0);
+        bake(out,box(0.64,0.1,0.64),0x5a4438,px,base+hg+h2+0.37,pz,0);
+      }
+      stack(acx,z0+0.5,2.9);
+      stack(x0+2.9,z0+3.5,3.0);
+      stack(x0+6.5,wcz,2.6);
+      continue;
+    }
+    if(b.kind==='manville'){
+      /* Manville - Tudor U opening north (Simpson's sibling across the
+         road from the Cage): long south block, twin north wings, east
+         cross-gable with a stone entry below it, gabled south dormers,
+         shed dormers elsewhere, tall tiered stacks, courtyard canopy */
+      const BR=b.col,STN=0xd9d3c2,SL=b.roof,GRN=0x8c877e,GLS=WIN,DRK=0x33383f;
+      const base=y0+0.3,sh=hg/2;
+      const x0=b.x,z0=b.y,zS=z0+6;
+      const mcz=z0+4.5,wxW=x0+1.1,wxE=x0+6.9,wcz=z0+1.6;
+      /* foundations + masses */
+      bake(out,box(8.3,0.34,3.3),GRN,x0+4,y0+0.17,mcz,0);
+      bake(out,box(2.5,0.34,3.4),GRN,wxW,y0+0.17,wcz,0);
+      bake(out,box(2.5,0.34,3.4),GRN,wxE,y0+0.17,wcz,0);
+      bake(out,box(8,hg,3),BR,x0+4,base+hg/2,mcz,0);
+      bake(out,box(2.2,hg,3.2),BR,wxW,base+hg/2,wcz,0);
+      bake(out,box(2.2,hg,3.2),BR,wxE,base+hg/2,wcz,0);
+      /* stone eaves bands */
+      bake(out,box(8.2,0.14,3.2),STN,x0+4,base+hg+0.02,mcz,0);
+      bake(out,box(2.36,0.14,3.36),STN,wxW,base+hg+0.02,wcz,0);
+      bake(out,box(2.36,0.14,3.36),STN,wxE,base+hg+0.02,wcz,0);
+      /* steep roofs */
+      const rsM=1.8,angM=Math.atan2(rsM,1.8),slbM=Math.hypot(1.8,1.8)+0.12;
+      bake(out,box(8.5,0.12,slbM),SL,x0+4,base+hg+rsM/2,mcz-0.9,0,1,-angM,0);
+      bake(out,box(8.5,0.12,slbM),SL,x0+4,base+hg+rsM/2,mcz+0.9,0,1, angM,0);
+      bake(out,box(8.55,0.13,0.28),dk(SL,0.7),x0+4,base+hg+rsM,mcz,0);
+      const rsW=1.5,angW=Math.atan2(rsW,1.35),slbW=Math.hypot(1.35,1.5)+0.12;
+      for(const wx of[wxW,wxE]){
+        bake(out,box(slbW,0.12,3.7),SL,wx-0.675,base+hg+rsW/2,wcz,0,1,0, angW);
+        bake(out,box(slbW,0.12,3.7),SL,wx+0.675,base+hg+rsW/2,wcz,0,1,0,-angW);
+        bake(out,box(0.26,0.13,3.75),dk(SL,0.7),wx,base+hg+rsW,wcz,0);
+      }
+      /* stepped gables: main E/W ends + wing north gables */
+      for(const gx of[x0+0.09,x0+7.91]){
+        const ws=[2.45,1.65,0.85];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(0.18,rsM/3+0.06,ws[s2]),BR,gx,base+hg+rsM/6+s2*rsM/3,mcz,0);
+      }
+      for(const wx of[wxW,wxE]){
+        const ws=[1.8,1.2,0.65];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(ws[s2],rsW/3+0.06,0.18),BR,wx,base+hg+rsW/6+s2*rsW/3,z0+0.09,0);
+        for(const ox of[-0.32,0.32]){
+          bake(out,box(0.3,0.4,0.08),STN,wx+ox,base+hg+0.5,z0-0.01,0);
+          bake(out,box(0.22,0.3,0.12),GLS,wx+ox,base+hg+0.5,z0-0.02,0);
+        }
+      }
+      /* east cross-gable (the photo facade) with a stone entry below */
+      {const gz=z0+4.5;
+       bake(out,box(0.5,hg,1.7),BR,x0+8.05,base+hg/2,gz,0);
+       const ws=[1.5,1.0,0.55];
+       for(let s2=0;s2<3;s2++)
+         bake(out,box(0.45,0.5,ws[s2]),BR,x0+8.05,base+hg+0.25+s2*0.5,gz,0);
+       bake(out,box(0.9,0.09,1.05),SL,x0+8.05,base+hg+0.78,gz-0.44,0,1,-0.84,0);
+       bake(out,box(0.9,0.09,1.05),SL,x0+8.05,base+hg+0.78,gz+0.44,0,1, 0.84,0);
+       bake(out,box(0.08,0.4,0.3),STN,x0+8.31,base+hg+0.42,gz,0);
+       bake(out,box(0.12,0.3,0.22),GLS,x0+8.32,base+hg+0.42,gz,0);
+       bake(out,box(0.14,1.7,1.0),STN,x0+8.29,base+0.9,gz,0);
+       bake(out,box(0.14,1.44,0.62),DRK,x0+8.31,base+0.76,gz,0);
+       bake(out,box(0.5,0.12,0.9),0xb9b4a8,x0+8.55,y0+0.36,gz,0);
+       bake(out,box(0.08,0.86,0.92),STN,x0+8.32,base+sh+0.87,gz,0);
+       bake(out,box(0.12,0.68,0.36),GLS,x0+8.33,base+sh+0.87,gz-0.21,0);
+       bake(out,box(0.12,0.68,0.36),GLS,x0+8.33,base+sh+0.87,gz+0.21,0);}
+      /* stone-mullioned casement pairs */
+      function winMZ(wx2,wy2,wz2,dz2){
+        bake(out,box(0.92,0.86,0.08),STN,wx2,wy2,wz2+dz2*0.02,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2-0.21,wy2,wz2+dz2*0.03,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2+0.21,wy2,wz2+dz2*0.03,0);
+      }
+      function winMX(wx2,wy2,wz2,dx2){
+        bake(out,box(0.08,0.86,0.92),STN,wx2+dx2*0.02,wy2,wz2,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2-0.21,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2+0.21,0);
+      }
+      const wy=st=>base+st*sh+sh*0.58;
+      /* main south face */
+      for(const xx of[x0+0.9,x0+2.1,x0+3.3,x0+4.5,x0+5.7,x0+6.9])
+        for(let st=0;st<2;st++)winMZ(xx,wy(st),zS, 1);
+      /* courtyard faces */
+      for(const xx of[x0+3.1,x0+4.9])winMZ(xx,wy(0),z0+3,-1);
+      for(const xx of[x0+3.1,x0+4.0,x0+4.9])winMZ(xx,wy(1),z0+3,-1);
+      for(let st=0;st<2;st++){winMX(x0+2.2,wy(st),z0+1.0, 1);winMX(x0+5.8,wy(st),z0+2.4,-1);}
+      /* long side walls (wing + main continuous); east wall skips the cross-gable */
+      for(const zz of[z0+0.8,z0+2.0,z0+3.8,z0+5.2])
+        for(let st=0;st<2;st++)winMX(x0,wy(st),zz,-1);
+      for(const zz of[z0+0.8,z0+2.0])
+        for(let st=0;st<2;st++)winMX(x0+8,wy(st),zz, 1);
+      /* wing north gable windows */
+      for(const wx of[wxW,wxE])for(const ox of[-0.55,0.55])
+        for(let st=0;st<2;st++)winMZ(wx+ox,wy(st),z0,-1);
+      /* attic singles in the main gable ends */
+      for(const g of[[x0-0.01,-1],[x0+8.01,1]]){
+        bake(out,box(0.08,0.44,0.34),STN,g[0],base+hg+0.6,mcz,0);
+        bake(out,box(0.12,0.34,0.24),GLS,g[0]+g[1]*0.01,base+hg+0.6,mcz,0);
+      }
+      /* gabled dormers on the south slope, sheds on courtyard + wing slopes */
+      function gdorm(px){
+        const dzz=z0+5.3,dy2=base+hg+0.58;
+        bake(out,box(0.62,0.58,0.6),BR,px,dy2,dzz,0);
+        bake(out,box(0.4,0.4,0.08),STN,px,dy2+0.02,dzz+0.31,0);
+        bake(out,box(0.3,0.32,0.12),GLS,px,dy2+0.02,dzz+0.32,0);
+        bake(out,box(0.5,0.09,0.78),SL,px-0.2,dy2+0.42,dzz,0,1,0, 0.7);
+        bake(out,box(0.5,0.09,0.78),SL,px+0.2,dy2+0.42,dzz,0,1,0,-0.7);
+      }
+      for(const xx of[x0+1.6,x0+3.2,x0+4.8,x0+6.4])gdorm(xx);
+      function shed(px,py2,pz,dx2,dz2){
+        bake(out,box(dx2?0.55:0.72,0.5,dx2?0.72:0.55),dk(SL,0.92),px,py2,pz,0);
+        bake(out,box(dx2?0.1:0.5,0.3,dx2?0.5:0.1),GLS,px+dx2*0.28,py2,pz+dz2*0.28,0);
+        bake(out,box(dx2?0.72:0.86,0.09,dx2?0.86:0.72),dk(SL,0.6),
+             px-dx2*0.08,py2+0.32,pz-dz2*0.08,0,1,dz2*0.28,dx2*-0.28);
+      }
+      const dy=base+hg+0.62;
+      for(const xx of[x0+3.2,x0+4.8])shed(xx,dy,z0+3.7,0,-1);
+      for(const zz of[z0+0.8,z0+2.0]){shed(x0+0.5,dy,zz,-1,0);shed(x0+7.5,dy,zz,1,0);}
+      /* courtyard entry: dark canopy + stone surround */
+      bake(out,box(1.0,1.7,0.14),STN,x0+4,base+0.9,z0+2.97,0);
+      bake(out,box(0.62,1.44,0.14),DRK,x0+4,base+0.76,z0+2.95,0);
+      bake(out,box(1.2,0.08,0.7),DRK,x0+4,base+1.88,z0+2.68,0,1,-0.18,0);
+      for(const ox of[-0.5,0.5])
+        bake(out,box(0.09,1.5,0.09),DRK,x0+4+ox,base+0.85,z0+2.42,0);
+      bake(out,box(0.9,0.12,0.5),0xb9b4a8,x0+4,y0+0.36,z0+2.7,0);
+      /* courtyard cross paths */
+      bake(out,box(0.55,0.06,3.0),0xb2ada2,x0+4,y0+0.09,z0+1.55,0);
+      bake(out,box(3.2,0.06,0.55),0xb2ada2,x0+4,y0+0.09,z0+1.7,0);
+      /* tall Tudor stacks */
+      function stack(px,pz,h2){
+        bake(out,box(0.62,h2,0.62),dk(BR,0.92),px,base+hg+h2/2+0.2,pz,0);
+        bake(out,box(0.76,0.12,0.76),dk(BR,0.8),px,base+hg+h2+0.26,pz,0);
+        bake(out,box(0.64,0.1,0.64),0x5a4438,px,base+hg+h2+0.37,pz,0);
+      }
+      stack(wxW,z0+0.5,2.6);
+      stack(x0+5.4,mcz,2.9);
+      stack(wxE,z0+0.5,2.6);
+      continue;
+    }
+    if(b.kind==='simpson'){
+      /* Simpson - Tudor collegiate U-plan opening north: long south block
+         with two south cross-gables (stone oriel on the east one), steep
+         slate roofs, shed dormers, stone-mullioned casements, tall Tudor
+         chimneys with tiered caps, courtyard entry canopy + stone door
+         surrounds, crossing courtyard paths */
+      const BR=b.col,STN=0xd9d3c2,SL=b.roof,GRN=0x8c877e,GLS=WIN,DRK=0x33383f;
+      const base=y0+0.3,sh=hg/2;
+      const x0=b.x,z0=b.y,zS=z0+6;
+      const mcz=z0+4.5,wxW=x0+1.1,wxE=x0+6.9,wcz=z0+1.6;
+      /* foundations + masses */
+      bake(out,box(8.3,0.34,3.3),GRN,x0+4,y0+0.17,mcz,0);
+      bake(out,box(2.5,0.34,3.4),GRN,wxW,y0+0.17,wcz,0);
+      bake(out,box(2.5,0.34,3.4),GRN,wxE,y0+0.17,wcz,0);
+      bake(out,box(8,hg,3),BR,x0+4,base+hg/2,mcz,0);
+      bake(out,box(2.2,hg,3.2),BR,wxW,base+hg/2,wcz,0);
+      bake(out,box(2.2,hg,3.2),BR,wxE,base+hg/2,wcz,0);
+      /* stone eaves bands */
+      bake(out,box(8.2,0.14,3.2),STN,x0+4,base+hg+0.02,mcz,0);
+      bake(out,box(2.36,0.14,3.36),STN,wxW,base+hg+0.02,wcz,0);
+      bake(out,box(2.36,0.14,3.36),STN,wxE,base+hg+0.02,wcz,0);
+      /* steep main roof: ridge E-W */
+      const rsM=1.8,angM=Math.atan2(rsM,1.8),slbM=Math.hypot(1.8,rsM)+0.12;
+      bake(out,box(8.5,0.12,slbM),SL,x0+4,base+hg+rsM/2,mcz-0.9,0,1,-angM,0);
+      bake(out,box(8.5,0.12,slbM),SL,x0+4,base+hg+rsM/2,mcz+0.9,0,1, angM,0);
+      bake(out,box(8.55,0.13,0.28),dk(SL,0.7),x0+4,base+hg+rsM,mcz,0);
+      /* wing roofs: ridge N-S */
+      const rsW=1.5,angW=Math.atan2(rsW,1.35),slbW=Math.hypot(1.35,rsW)+0.12;
+      for(const wx of[wxW,wxE]){
+        bake(out,box(slbW,0.12,3.7),SL,wx-0.675,base+hg+rsW/2,wcz,0,1,0, angW);
+        bake(out,box(slbW,0.12,3.7),SL,wx+0.675,base+hg+rsW/2,wcz,0,1,0,-angW);
+        bake(out,box(0.26,0.13,3.75),dk(SL,0.7),wx,base+hg+rsW,wcz,0);
+      }
+      /* main E/W gable ends + wing north gables: stepped brick */
+      for(const gx of[x0+0.09,x0+7.91]){
+        const ws=[2.45,1.65,0.85];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(0.18,rsM/3+0.06,ws[s2]),BR,gx,base+hg+rsM/6+s2*rsM/3,mcz,0);
+      }
+      for(const wx of[wxW,wxE]){
+        const ws=[1.8,1.2,0.65];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(ws[s2],rsW/3+0.06,0.18),BR,wx,base+hg+rsW/6+s2*rsW/3,z0+0.09,0);
+        for(const ox of[-0.32,0.32]){
+          bake(out,box(0.3,0.4,0.08),STN,wx+ox,base+hg+0.5,z0-0.01,0);
+          bake(out,box(0.22,0.3,0.12),GLS,wx+ox,base+hg+0.5,z0-0.02,0);
+        }
+      }
+      /* two south cross-gables; the east one carries a stone oriel */
+      for(const g of[[x0+5.2,0],[x0+7.0,1]]){
+        const gx=g[0];
+        bake(out,box(1.7,hg,0.5),BR,gx,base+hg/2,zS+0.05,0);
+        const ws=[1.5,1.0,0.55];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(ws[s2],0.5,0.45),BR,gx,base+hg+0.25+s2*0.5,zS+0.05,0);
+        bake(out,box(1.05,0.09,0.9),SL,gx-0.44,base+hg+0.78,zS+0.05,0,1,0, 0.84);
+        bake(out,box(1.05,0.09,0.9),SL,gx+0.44,base+hg+0.78,zS+0.05,0,1,0,-0.84);
+        bake(out,box(0.3,0.4,0.08),STN,gx,base+hg+0.42,zS+0.31,0);
+        bake(out,box(0.22,0.3,0.12),GLS,gx,base+hg+0.42,zS+0.32,0);
+        if(g[1]){ /* stone oriel bay at the second storey */
+          bake(out,box(1.1,0.9,0.42),STN,gx,base+sh+0.85,zS+0.42,0);
+          bake(out,box(0.9,0.55,0.12),GLS,gx,base+sh+0.85,zS+0.6,0);
+          bake(out,box(1.2,0.1,0.52),STN,gx,base+sh+1.34,zS+0.42,0);
+          bake(out,box(1.14,0.08,0.48),SL,gx,base+sh+1.42,zS+0.44,0);
+        }
+      }
+      /* stone-mullioned casement pairs */
+      function winMZ(wx2,wy2,wz2,dz2){
+        bake(out,box(0.92,0.86,0.08),STN,wx2,wy2,wz2+dz2*0.02,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2-0.21,wy2,wz2+dz2*0.03,0);
+        bake(out,box(0.36,0.68,0.12),GLS,wx2+0.21,wy2,wz2+dz2*0.03,0);
+      }
+      function winMX(wx2,wy2,wz2,dx2){
+        bake(out,box(0.08,0.86,0.92),STN,wx2+dx2*0.02,wy2,wz2,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2-0.21,0);
+        bake(out,box(0.12,0.68,0.36),GLS,wx2+dx2*0.03,wy2,wz2+0.21,0);
+      }
+      const wy=st=>base+st*sh+sh*0.58;
+      /* main south face west of the cross-gables */
+      for(const xx of[x0+0.9,x0+2.1,x0+3.3,x0+4.3])
+        for(let st=0;st<2;st++)winMZ(xx,wy(st),zS, 1);
+      for(const g of[x0+5.2,x0+7.0])winMZ(g,wy(0),zS+0.31, 1);
+      winMZ(x0+5.2,wy(1),zS+0.31, 1);
+      /* courtyard faces: main north + wing inner walls */
+      for(const xx of[x0+3.1,x0+4.9])winMZ(xx,wy(0),z0+3,-1);
+      for(const xx of[x0+3.1,x0+4.0,x0+4.9])winMZ(xx,wy(1),z0+3,-1);
+      for(let st=0;st<2;st++){winMX(x0+2.2,wy(st),z0+1.0, 1);winMX(x0+5.8,wy(st),z0+2.4,-1);}
+      /* long side walls (wing + main, continuous) */
+      for(const zz of[z0+0.8,z0+2.0,z0+3.8,z0+5.2]){
+        for(let st=0;st<2;st++){winMX(x0,wy(st),zz,-1);winMX(x0+8,wy(st),zz, 1);}
+      }
+      /* wing north gable ground/first windows */
+      for(const wx of[wxW,wxE])for(const ox of[-0.55,0.55])
+        for(let st=0;st<2;st++)winMZ(wx+ox,wy(st),z0,-1);
+      /* attic singles in the main gable ends */
+      for(const g of[[x0-0.01,-1],[x0+8.01,1]]){
+        bake(out,box(0.08,0.44,0.34),STN,g[0],base+hg+0.6,mcz,0);
+        bake(out,box(0.12,0.34,0.24),GLS,g[0]+g[1]*0.01,base+hg+0.6,mcz,0);
+      }
+      /* shed dormers with dark caps */
+      function shed(px,py2,pz,dx2,dz2){
+        bake(out,box(dx2?0.55:0.72,0.5,dx2?0.72:0.55),dk(SL,0.92),px,py2,pz,0);
+        bake(out,box(dx2?0.1:0.5,0.3,dx2?0.5:0.1),GLS,px+dx2*0.28,py2,pz+dz2*0.28,0);
+        bake(out,box(dx2?0.72:0.86,0.09,dx2?0.86:0.72),dk(SL,0.6),
+             px-dx2*0.08,py2+0.32,pz-dz2*0.08,0,1,dz2*0.28,dx2*-0.28);
+      }
+      const dy=base+hg+0.62;
+      for(const xx of[x0+2.9,x0+4.0,x0+5.1])shed(xx,dy,z0+3.7,0,-1);
+      for(const xx of[x0+1.2,x0+2.6,x0+4.0])shed(xx,dy,z0+5.3,0, 1);
+      for(const zz of[z0+0.8,z0+2.0]){shed(x0+0.5,dy,zz,-1,0);shed(x0+7.5,dy,zz,1,0);}
+      /* courtyard entry: dark canopy + stone surround on the main block */
+      bake(out,box(1.0,1.7,0.14),STN,x0+4,base+0.9,z0+2.97,0);
+      bake(out,box(0.62,1.44,0.14),DRK,x0+4,base+0.76,z0+2.95,0);
+      bake(out,box(1.2,0.08,0.7),DRK,x0+4,base+1.88,z0+2.68,0,1,-0.18,0);
+      for(const ox of[-0.5,0.5])
+        bake(out,box(0.09,1.5,0.09),DRK,x0+4+ox,base+0.85,z0+2.42,0);
+      bake(out,box(0.9,0.12,0.5),0xb9b4a8,x0+4,y0+0.36,z0+2.7,0);
+      /* stone-surround door on the east wing's courtyard face */
+      bake(out,box(0.14,1.7,1.0),STN,x0+5.78,base+0.9,z0+1.6,0);
+      bake(out,box(0.14,1.44,0.62),DRK,x0+5.76,base+0.76,z0+1.6,0);
+      bake(out,box(0.5,0.12,0.9),0xb9b4a8,x0+5.5,y0+0.36,z0+1.6,0);
+      /* crossing courtyard paths */
+      bake(out,box(0.55,0.06,3.0),0xb2ada2,x0+4,y0+0.09,z0+1.55,0);
+      bake(out,box(3.2,0.06,0.55),0xb2ada2,x0+4,y0+0.09,z0+1.7,0);
+      /* tall Tudor chimneys with tiered caps */
+      function stack(px,pz,h2){
+        bake(out,box(0.62,h2,0.62),dk(BR,0.92),px,base+hg+h2/2+0.2,pz,0);
+        bake(out,box(0.76,0.12,0.76),dk(BR,0.8),px,base+hg+h2+0.26,pz,0);
+        bake(out,box(0.64,0.1,0.64),0x5a4438,px,base+hg+h2+0.37,pz,0);
+      }
+      stack(wxW,z0+0.5,2.6);
+      stack(x0+2.6,mcz,2.9);
+      stack(wxE,z0+1.4,2.6);
+      continue;
+    }
+    if(b.kind==='middle'){
+      /* Middle - white clapboard L-plan dorm: long 3-storey main block
+         (ridge N-S, big two-window dormers facing EAST), white-clad
+         chimneys, gabled door hoods on the east face; 2-storey house
+         wing at the SW (ridge E-W, red brick chimney); low white link
+         at the junction; west lawn + SE court carved open */
+      const WH=b.col,TR2=0xfaf7f0,SL=b.roof,GRN=0x9a958c,GLS=WIN,
+            SHUT=0x24272b,DRK=0x3a3f45;
+      const base=y0+0.3,hg2=2.9,sh=hg/3,shh=hg2/2;
+      const x0=b.x,z0=b.y;
+      const mx=x0+4.5,mcz=z0+3.5,hx=x0+1.5,hcz=z0+7.5;
+      /* foundations + the two clapboard masses + link */
+      bake(out,box(3.3,0.34,7.3),GRN,mx,y0+0.17,mcz,0);
+      bake(out,box(3.3,0.34,3.3),GRN,hx,y0+0.17,hcz,0);
+      bake(out,box(3,hg,7),WH,mx,base+hg/2,mcz,0);
+      bake(out,box(3,hg2,3),WH,hx,base+hg2/2,hcz,0);
+      bake(out,box(1.3,2.5,1.1),WH,x0+2.95,base+1.25,z0+6.5,0);
+      bake(out,box(1.46,0.1,1.26),SL,x0+2.95,base+2.55,z0+6.5,0);
+      /* white eaves cornices */
+      bake(out,box(3.24,0.15,7.24),TR2,mx,base+hg+0.02,mcz,0);
+      bake(out,box(3.24,0.14,3.24),TR2,hx,base+hg2+0.02,hcz,0);
+      /* main roof: ridge N-S */
+      const rsM=1.3,angM=Math.atan2(rsM,1.8),slbM=Math.hypot(1.8,rsM)+0.12;
+      bake(out,box(slbM,0.12,7.5),SL,mx-0.9,base+hg+rsM/2,mcz,0,1,0, angM);
+      bake(out,box(slbM,0.12,7.5),SL,mx+0.9,base+hg+rsM/2,mcz,0,1,0,-angM);
+      bake(out,box(0.28,0.13,7.55),dk(SL,0.75),mx,base+hg+rsM,mcz,0);
+      /* house roof: ridge E-W */
+      const rsH=1.2,angH=Math.atan2(rsH,1.8),slbH=Math.hypot(1.8,rsH)+0.12;
+      bake(out,box(3.5,0.12,slbH),SL,hx,base+hg2+rsH/2,hcz-0.9,0,1,-angH,0);
+      bake(out,box(3.5,0.12,slbH),SL,hx,base+hg2+rsH/2,hcz+0.9,0,1, angH,0);
+      bake(out,box(3.55,0.13,0.28),dk(SL,0.75),hx,base+hg2+rsH,hcz,0);
+      /* clapboard gable ends: main N+S, house W+E */
+      for(const gz of[z0+0.09,z0+6.91]){
+        const ws=[2.4,1.6,0.85];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(ws[s2],rsM/3+0.06,0.18),WH,mx,base+hg+rsM/6+s2*rsM/3,gz,0);
+      }
+      for(const gx of[x0+0.09,x0+2.91]){
+        const ws=[2.4,1.6,0.85];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(0.18,rsH/3+0.06,ws[s2]),WH,gx,base+hg2+rsH/6+s2*rsH/3,hcz,0);
+      }
+      /* four big two-window dormers on the main EAST slope */
+      function bigDorm(pz){
+        const dxx=x0+5.35,dy2=base+hg+0.56;
+        bake(out,box(0.7,0.66,0.95),WH,dxx,dy2,pz,0);
+        for(const oz of[-0.23,0.23]){
+          bake(out,box(0.08,0.4,0.34),TR2,dxx+0.34,dy2+0.02,pz+oz,0);
+          bake(out,box(0.12,0.32,0.26),GLS,dxx+0.35,dy2+0.02,pz+oz,0);
+        }
+        bake(out,box(0.85,0.09,0.62),SL,dxx,dy2+0.44,pz-0.26,0,1,-0.6,0);
+        bake(out,box(0.85,0.09,0.62),SL,dxx,dy2+0.44,pz+0.26,0,1, 0.6,0);
+      }
+      for(const zz of[z0+1.4,z0+2.8,z0+4.2,z0+5.6])bigDorm(zz);
+      /* black-shuttered white windows */
+      function winZS(wx2,wy2,wz2,dz2){
+        bake(out,box(0.6,0.9,0.08),TR2,wx2,wy2,wz2+dz2*0.02,0);
+        bake(out,box(0.44,0.76,0.12),GLS,wx2,wy2,wz2+dz2*0.03,0);
+        bake(out,box(0.14,0.8,0.06),SHUT,wx2-0.38,wy2,wz2+dz2*0.04,0);
+        bake(out,box(0.14,0.8,0.06),SHUT,wx2+0.38,wy2,wz2+dz2*0.04,0);
+      }
+      function winXS(wx2,wy2,wz2,dx2){
+        bake(out,box(0.08,0.9,0.6),TR2,wx2+dx2*0.02,wy2,wz2,0);
+        bake(out,box(0.12,0.76,0.44),GLS,wx2+dx2*0.03,wy2,wz2,0);
+        bake(out,box(0.06,0.8,0.14),SHUT,wx2+dx2*0.04,wy2,wz2-0.38,0);
+        bake(out,box(0.06,0.8,0.14),SHUT,wx2+dx2*0.04,wy2,wz2+0.38,0);
+      }
+      const wy=st=>base+st*sh+sh*0.6, why=st=>base+st*shh+shh*0.58;
+      /* main east face: 6 cols + windows over the doors */
+      for(const zz of[z0+0.6,z0+1.7,z0+3.1,z0+4.1,z0+5.5,z0+6.4])
+        for(let st=0;st<3;st++)winXS(x0+6,wy(st),zz, 1);
+      for(const zz of[z0+2.4,z0+4.8])for(let st=1;st<3;st++)winXS(x0+6,wy(st),zz, 1);
+      /* main west face (lawn side) */
+      for(const zz of[z0+0.7,z0+1.8,z0+2.9,z0+4.0,z0+5.1])
+        for(let st=0;st<3;st++)winXS(x0+3,wy(st),zz,-1);
+      /* main north gable: 2 cols + attic pair */
+      for(const xx of[x0+3.8,x0+5.2])for(let st=0;st<3;st++)winZS(xx,wy(st),z0,-1);
+      for(const ox of[-0.35,0.35]){
+        bake(out,box(0.34,0.42,0.08),TR2,mx+ox,base+hg+0.5,z0-0.01,0);
+        bake(out,box(0.24,0.32,0.12),GLS,mx+ox,base+hg+0.5,z0-0.02,0);
+      }
+      /* main south gable (over the court): 2 cols + attic pair */
+      for(const xx of[x0+3.8,x0+5.2])for(let st=0;st<3;st++)winZS(xx,wy(st),z0+7, 1);
+      for(const ox of[-0.35,0.35]){
+        bake(out,box(0.34,0.42,0.08),TR2,mx+ox,base+hg+0.5,z0+7.01,0);
+        bake(out,box(0.24,0.32,0.12),GLS,mx+ox,base+hg+0.5,z0+7.02,0);
+      }
+      /* house wing faces */
+      for(const xx of[x0+0.8,x0+2.2])for(let st=0;st<2;st++)winZS(xx,why(st),z0+9, 1);
+      for(const xx of[x0+0.7,x0+1.7])for(let st=0;st<2;st++)winZS(xx,why(st),z0+6,-1);
+      for(const zz of[z0+6.8,z0+8.2])for(let st=0;st<2;st++)winXS(x0,why(st),zz,-1);
+      for(const oz of[-0.35,0.35]){
+        bake(out,box(0.08,0.42,0.34),TR2,x0-0.01,base+hg2+0.5,hcz+oz,0);
+        bake(out,box(0.12,0.32,0.24),GLS,x0-0.02,base+hg2+0.5,hcz+oz,0);
+      }
+      winXS(x0+3,why(1),z0+8.1, 1);
+      bake(out,box(0.08,0.42,0.34),TR2,x0+3.01,base+hg2+0.5,z0+7.9,0);
+      bake(out,box(0.12,0.32,0.24),GLS,x0+3.02,base+hg2+0.5,z0+7.9,0);
+      /* gabled door hoods facing east: two on the main block, one on the house */
+      function hoodX(px,pz){
+        bake(out,box(0.5,0.1,0.8),TR2,px+0.25,base+1.7,pz,0);
+        bake(out,box(0.66,0.08,0.5),SL,px+0.22,base+1.86,pz-0.21,0,1,-0.55,0);
+        bake(out,box(0.66,0.08,0.5),SL,px+0.22,base+1.86,pz+0.21,0,1, 0.55,0);
+        bake(out,box(0.1,1.44,0.66),TR2,px+0.01,base+0.74,pz,0);
+        bake(out,box(0.14,1.32,0.5),DRK,px+0.02,base+0.7,pz,0);
+        bake(out,box(0.5,0.12,0.7),0xb9b4a8,px+0.3,y0+0.36,pz,0);
+      }
+      hoodX(x0+6,z0+2.4);hoodX(x0+6,z0+4.8);hoodX(x0+3,z0+8.1);
+      /* chimneys: white-clad central + south stacks, brick house stack */
+      bake(out,box(0.72,1.7,0.72),WH,mx,base+hg+1.2,z0+3.0,0);
+      bake(out,box(0.84,0.14,0.84),0x4a4e54,mx,base+hg+2.1,z0+3.0,0);
+      bake(out,box(0.55,1.3,0.55),WH,mx,base+hg+1.0,z0+5.6,0);
+      bake(out,box(0.66,0.13,0.66),0x4a4e54,mx,base+hg+1.7,z0+5.6,0);
+      bake(out,box(0.5,1.2,0.5),0x8c4434,hx,base+hg2+1.1,hcz,0);
+      bake(out,box(0.6,0.13,0.6),0x5a4438,hx,base+hg2+1.75,hcz,0);
+      continue;
+    }
+    if(b.kind==='warren'){
+      /* Warren - gambrel-roofed brick dorm in a Z-plan (6x7 footprint):
+         N-S spine on the east with green-doored porticos + junction
+         tower, E-W north wing (east gambrel gable + white bays), E-W
+         south wing with a white-railed west deck, white dormers on every
+         lower slope, and a real west courtyard (tiles carved to lawn) */
+      const BR=b.col,TR2=0xf3efe6,SL=b.roof,GRN=0x8c877e,GLS=WIN,PW2=0xeceada,
+            GDR=0x2f4a38;
+      const sh2=hg/2,base=y0+0.3;
+      const x0=b.x,x1=b.x+b.w,z0=b.y,z1=b.y+b.h;
+      const sx=x0+5,nz=z0+1,swz=z0+6,swcx=x0+2.25;
+      /* foundations + the three brick masses + cornices */
+      bake(out,box(2.36,0.34,7.36),GRN,sx,y0+0.17,z0+3.5,0);
+      bake(out,box(6.36,0.34,2.36),GRN,x0+3,y0+0.17,nz,0);
+      bake(out,box(4.86,0.34,2.36),GRN,swcx,y0+0.17,swz,0);
+      bake(out,box(2,hg,7),BR,sx,base+hg/2,z0+3.5,0);
+      bake(out,box(6,hg,2),BR,x0+3,base+hg/2,nz,0);
+      bake(out,box(4.5,hg,2),BR,swcx,base+hg/2,swz,0);
+      bake(out,box(2.2,0.14,7.2),TR2,sx,base+hg+0.02,z0+3.5,0);
+      bake(out,box(6.2,0.14,2.2),TR2,x0+3,base+hg+0.02,nz,0);
+      bake(out,box(4.7,0.14,2.2),TR2,swcx,base+hg+0.02,swz,0);
+      /* gambrel roofs: steep lower slope + shallow cap (uniform profile) */
+      bake(out,box(1.57,0.12,7.5),SL,sx-0.825,base+hg+0.6,z0+3.5,0,1,0, 0.955);
+      bake(out,box(1.57,0.12,7.5),SL,sx+0.825,base+hg+0.6,z0+3.5,0,1,0,-0.955);
+      bake(out,box(0.58,0.12,7.5),SL,sx-0.2,base+hg+1.35,z0+3.5,0,1,0, 0.644);
+      bake(out,box(0.58,0.12,7.5),SL,sx+0.2,base+hg+1.35,z0+3.5,0,1,0,-0.644);
+      bake(out,box(0.26,0.13,7.55),dk(SL,0.7),sx,base+hg+1.5,z0+3.5,0);
+      bake(out,box(6.5,0.12,1.57),SL,x0+3,base+hg+0.6,nz-0.825,0,1,-0.955,0);
+      bake(out,box(6.5,0.12,1.57),SL,x0+3,base+hg+0.6,nz+0.825,0,1, 0.955,0);
+      bake(out,box(6.5,0.12,0.58),SL,x0+3,base+hg+1.35,nz-0.2,0,1,-0.644,0);
+      bake(out,box(6.5,0.12,0.58),SL,x0+3,base+hg+1.35,nz+0.2,0,1, 0.644,0);
+      bake(out,box(6.55,0.13,0.26),dk(SL,0.7),x0+3,base+hg+1.5,nz,0);
+      bake(out,box(5.0,0.12,1.57),SL,swcx,base+hg+0.6,swz-0.825,0,1,-0.955,0);
+      bake(out,box(5.0,0.12,1.57),SL,swcx,base+hg+0.6,swz+0.825,0,1, 0.955,0);
+      bake(out,box(5.0,0.12,0.58),SL,swcx,base+hg+1.35,swz-0.2,0,1,-0.644,0);
+      bake(out,box(5.0,0.12,0.58),SL,swcx,base+hg+1.35,swz+0.2,0,1, 0.644,0);
+      bake(out,box(5.05,0.13,0.26),dk(SL,0.7),swcx,base+hg+1.5,swz,0);
+      /* gambrel-profile stepped brick gable ends */
+      for(const g of[[x1-0.09,nz,'x'],[x0+0.09,nz,'x'],
+                     [x0+0.09,swz,'x'],[sx,z1-0.09,'z']]){
+        const ws=[1.64,1.12,0.6],ys=[0.28,0.78,1.24];
+        for(let s2=0;s2<3;s2++){
+          if(g[2]==='x')bake(out,box(0.18,0.52,ws[s2]),BR,g[0],base+hg+ys[s2],g[1],0);
+          else bake(out,box(ws[s2],0.52,0.18),BR,g[0],base+hg+ys[s2],g[1],0);
+        }
+      }
+      /* white-sided dormers on the steep lower slopes */
+      function dorm(px,py2,pz,dx2,dz2){
+        bake(out,box(dx2?0.58:0.5,0.56,dx2?0.5:0.58),PW2,px,py2,pz,0);
+        bake(out,box(dx2?0.12:0.3,0.32,dx2?0.3:0.12),GLS,px+dx2*0.27,py2+0.02,pz+dz2*0.27,0);
+        const ra=0.7;
+        if(dx2){
+          bake(out,box(0.66,0.09,0.4),SL,px,py2+0.38,pz-0.15,0,1,-ra,0);
+          bake(out,box(0.66,0.09,0.4),SL,px,py2+0.38,pz+0.15,0,1, ra,0);
+        }else{
+          bake(out,box(0.4,0.09,0.66),SL,px-0.15,py2+0.38,pz,0,1,0, ra);
+          bake(out,box(0.4,0.09,0.66),SL,px+0.15,py2+0.38,pz,0,1,0,-ra);
+        }
+      }
+      const dy=base+hg+0.7;
+      for(const zz of[z0+3.0,z0+3.9,z0+4.8,z0+5.7])dorm(sx+0.72,dy,zz, 1,0);
+      for(const zz of[z0+2.7,z0+3.9])              dorm(sx-0.72,dy,zz,-1,0);
+      for(const xx of[x0+1.0,x0+2.2,x0+3.4])dorm(xx,dy,nz+0.5,0, 1);
+      for(const xx of[x0+1.2,x0+2.6,x0+4.0])dorm(xx,dy,nz-0.5,0,-1);
+      for(const xx of[x0+1.2,x0+2.8])       dorm(xx,dy,swz+0.5,0, 1);
+      for(const xx of[x0+1.3,x0+3.0])       dorm(xx,dy,swz-0.5,0,-1);
+      /* white sash windows */
+      function winX(wx2,wy2,wz2){
+        bake(out,box(0.1,0.06,0.68),GRN,wx2,wy2-0.5,wz2,0);
+        bake(out,box(0.08,0.94,0.58),TR2,wx2,wy2,wz2,0);
+        bake(out,box(0.14,0.78,0.44),GLS,wx2,wy2,wz2,0);
+        bake(out,box(0.1,0.1,0.66),TR2,wx2,wy2+0.5,wz2,0);
+      }
+      function winZ(wx2,wy2,wz2){
+        bake(out,box(0.68,0.06,0.1),GRN,wx2,wy2-0.5,wz2,0);
+        bake(out,box(0.58,0.94,0.08),TR2,wx2,wy2,wz2,0);
+        bake(out,box(0.44,0.78,0.14),GLS,wx2,wy2,wz2,0);
+        bake(out,box(0.66,0.1,0.1),TR2,wx2,wy2+0.5,wz2,0);
+      }
+      const wy=st=>base+st*sh2+sh2*0.58;
+      /* spine east face: windows between/beyond the porticos */
+      for(const zz of[z0+4.1,z0+5.6])winX(x1,wy(0),zz);
+      for(const zz of[z0+3.0,z0+4.1,z0+5.2,z0+6.2])winX(x1,wy(1),zz);
+      /* spine west face on the courtyard */
+      for(const zz of[z0+2.6,z0+4.4])winX(x0+4,wy(0),zz);
+      for(const zz of[z0+2.6,z0+3.5,z0+4.4])winX(x0+4,wy(1),zz);
+      /* north wing east gambrel gable: windows + attic pair */
+      winX(x1,wy(0),z0+0.5);
+      for(const zz of[z0+0.5,z0+1.4])winX(x1,wy(1),zz);
+      for(const oz of[-0.3,0.3]){
+        bake(out,box(0.08,0.44,0.36),TR2,x1+0.01,base+hg+0.6,nz+oz,0);
+        bake(out,box(0.12,0.34,0.26),GLS,x1+0.02,base+hg+0.6,nz+oz,0);
+      }
+      /* north wing west gable: windows + attic */
+      for(const zz of[z0+0.5,z0+1.5])winX(x0,wy(1),zz);
+      bake(out,box(0.08,0.44,0.36),TR2,x0-0.01,base+hg+0.6,nz,0);
+      bake(out,box(0.12,0.34,0.26),GLS,x0-0.02,base+hg+0.6,nz,0);
+      /* north wing north + courtyard faces */
+      for(let st=0;st<2;st++){
+        for(const xx of[x0+0.8,x0+2.0,x0+3.2,x0+4.4])winZ(xx,wy(st),z0);
+        for(const xx of[x0+1.0,x0+2.2,x0+3.4])winZ(xx,wy(st),z0+2);
+      }
+      /* south wing faces + spine south gable */
+      for(let st=0;st<2;st++){
+        for(const xx of[x0+0.8,x0+2.1,x0+3.4])winZ(xx,wy(st),z1);
+        for(const xx of[x0+1.3,x0+3.0])winZ(xx,wy(st),z0+5);
+        winZ(sx,wy(st),z1);
+      }
+      for(const zz of[swz-0.55,swz+0.55])winX(x0,wy(1),zz);
+      bake(out,box(0.08,0.44,0.36),TR2,x0-0.01,base+hg+0.6,swz,0);
+      bake(out,box(0.12,0.34,0.26),GLS,x0-0.02,base+hg+0.6,swz,0);
+      bake(out,box(0.36,0.44,0.08),TR2,sx,base+hg+0.6,z1+0.01,0);
+      bake(out,box(0.26,0.34,0.12),GLS,sx,base+hg+0.6,z1+0.02,0);
+      /* white bay windows: NE gable, north face, NW gable */
+      function bayX(bx2,bz2,dx2){
+        bake(out,box(0.66,1.25,1.05),PW2,bx2+dx2*0.18,base+0.72,bz2,0);
+        bake(out,box(0.1,0.5,0.8),GLS,bx2+dx2*0.52,base+0.85,bz2,0);
+        bake(out,box(0.74,0.1,1.12),TR2,bx2+dx2*0.18,base+1.38,bz2,0);
+        bake(out,box(0.7,0.08,1.1),SL,bx2+dx2*0.2,base+1.46,bz2,0);
+      }
+      bayX(x1,z0+1.35, 1);
+      bayX(x0,z0+1.0,-1);
+      bake(out,box(1.0,1.25,0.6),PW2,x0+5.1,base+0.72,z0-0.16,0);
+      bake(out,box(0.8,0.5,0.1),GLS,x0+5.1,base+0.85,z0-0.42,0);
+      bake(out,box(1.08,0.1,0.68),TR2,x0+5.1,base+1.38,z0-0.16,0);
+      bake(out,box(1.06,0.08,0.64),SL,x0+5.1,base+1.46,z0-0.18,0);
+      /* junction tower: arched window, louvers, hipped cap */
+      const tx=x1-0.3,tz=z0+2.35,th=hg+1.7;
+      bake(out,box(0.9,th,0.9),BR,tx,base+th/2,tz,0);
+      bake(out,box(1.04,0.14,1.04),TR2,tx,base+th+0.02,tz,0);
+      bake(out,new THREE.ConeGeometry(0.72,0.6,4),SL,tx,base+th+0.36,tz,Math.PI/4);
+      bake(out,box(0.08,0.66,0.4),TR2,x1+0.16,base+th*0.52,tz,0);
+      bake(out,box(0.12,0.56,0.3),GLS,x1+0.17,base+th*0.52,tz,0);
+      bake(out,new THREE.CylinderGeometry(0.2,0.2,0.1,10),TR2,x1+0.16,base+th*0.52+0.33,tz,0,1,0,Math.PI/2);
+      bake(out,new THREE.CylinderGeometry(0.14,0.14,0.14,10),GLS,x1+0.17,base+th*0.52+0.33,tz,0,1,0,Math.PI/2);
+      for(let lv=0;lv<3;lv++)
+        bake(out,box(0.1,0.07,0.42),0x3c4046,x1+0.16,base+th-0.5+lv*0.16,tz,0);
+      /* green-doored white porticos on the spine east face */
+      function portico(pz2){
+        bake(out,box(0.9,0.1,0.6),TR2,x1+0.28,base+1.66,pz2,0);
+        bake(out,new THREE.CylinderGeometry(0.06,0.07,1.34,8),PW2,x1+0.48,base+0.95,pz2-0.3,0);
+        bake(out,new THREE.CylinderGeometry(0.06,0.07,1.34,8),PW2,x1+0.48,base+0.95,pz2+0.3,0);
+        bake(out,box(0.1,1.5,0.78),TR2,x1+0.02,base+0.78,pz2,0);
+        bake(out,box(0.14,1.38,0.6),GDR,x1+0.04,base+0.72,pz2,0);
+        bake(out,box(0.26,0.12,0.8),0xb9b4a8,x1+0.25,y0+0.4,pz2,0);
+        bake(out,box(0.26,0.12,0.8),0xb9b4a8,x1+0.5,y0+0.28,pz2,0);
+      }
+      portico(z0+3.5);portico(z0+4.7);
+      /* west courtyard: brick patio, spine door, step */
+      bake(out,box(3.4,0.08,1.3),0x99604a,x0+2.0,y0+0.1,z0+3.5,0);
+      bake(out,box(0.1,1.46,0.72),TR2,x0+3.98,base+0.74,z0+3.5,0);
+      bake(out,box(0.14,1.36,0.56),GDR,x0+3.96,base+0.7,z0+3.5,0);
+      bake(out,box(0.24,0.12,0.76),0xb9b4a8,x0+3.8,y0+0.38,z0+3.5,0);
+      /* south wing west deck: white balustrade, corner posts, steps */
+      const pwx=x0-0.6;
+      bake(out,box(1.3,0.14,1.9),0xd9d4c6,pwx,base+0.3,swz,0);
+      bake(out,box(1.2,0.26,1.8),PW2,pwx,y0+0.15,swz,0);
+      for(const c of[[pwx-0.58,swz-0.88],[pwx-0.58,swz+0.88],
+                     [pwx+0.5,swz-0.88],[pwx+0.5,swz+0.88]])
+        bake(out,box(0.11,0.62,0.11),PW2,c[0],base+0.66,c[1],0);
+      bake(out,box(1.24,0.07,0.07),PW2,pwx-0.04,base+0.9,swz-0.88,0);
+      bake(out,box(1.24,0.07,0.07),PW2,pwx-0.04,base+0.9,swz+0.88,0);
+      bake(out,box(0.07,0.07,1.83),PW2,pwx-0.58,base+0.9,swz,0);
+      bake(out,box(1.24,0.12,0.05),PW2,pwx-0.04,base+0.58,swz-0.88,0);
+      bake(out,box(1.24,0.12,0.05),PW2,pwx-0.04,base+0.58,swz+0.88,0);
+      bake(out,box(0.05,0.12,1.83),PW2,pwx-0.58,base+0.58,swz,0);
+      bake(out,box(0.1,1.42,0.64),TR2,x0+0.02,base+0.72,swz,0);
+      bake(out,box(0.14,1.32,0.5),PW2,x0+0.04,base+0.68,swz,0);
+      bake(out,box(0.7,0.12,0.9),0xb9b4a8,pwx-0.75,y0+0.28,swz,0);
+      /* chimneys: spine mid-ridge, white-capped north wing, south wing */
+      bake(out,box(0.6,1.3,0.6),dk(BR,0.9),sx,base+hg+1.4,z0+4.2,0);
+      bake(out,box(0.72,0.15,0.72),0x5a4438,sx,base+hg+2.1,z0+4.2,0);
+      bake(out,box(0.55,1.3,0.55),dk(BR,0.9),x0+1.6,base+hg+1.4,nz,0);
+      bake(out,box(0.68,0.18,0.68),0xd8d2c4,x0+1.6,base+hg+2.1,nz,0);
+      bake(out,box(0.45,1.1,0.45),dk(BR,0.9),x0+1.4,base+hg+1.35,swz,0);
+      bake(out,box(0.56,0.13,0.56),0x5a4438,x0+1.4,base+hg+1.95,swz,0);
+      continue;
+    }
+    if(b.kind==='stronghold'){
+      /* Stronghold of Security - U-plan brick hall opening north: long
+         south block with coped E/W gables + peak chimneys, twin north
+         wings with coped gables + chimneys, white enclosed sun porch
+         filling the recess (black flat roof), grand stair down to the
+         parking lot, white-coped dormers on every slope, stone lintels,
+         small white portico on the south face */
+      const BR=b.col,TR2=0xf3efe6,SL=b.roof,GRN=0x8c877e,GLS=WIN,PW2=0xeceada;
+      const sh=hg/3,base=y0+0.3;
+      const x0=b.x,x1=b.x+b.w,z0=b.y,z1=b.y+b.h;
+      const wxW=x0+1.1,wxE=x1-1.1,mcz=z1-1.4;
+      /* granite foundation + the three brick masses */
+      bake(out,box(b.w+0.36,0.34,b.h+0.36),GRN,cx,y0+0.17,cz,0);
+      bake(out,box(b.w,hg,2.8),BR,cx,base+hg/2,mcz,0);
+      bake(out,box(2.2,hg,2.6),BR,wxW,base+hg/2,z0+1.3,0);
+      bake(out,box(2.2,hg,2.6),BR,wxE,base+hg/2,z0+1.3,0);
+      /* white eaves cornices */
+      bake(out,box(b.w+0.24,0.16,2.96),TR2,cx,base+hg+0.02,mcz,0);
+      bake(out,box(2.36,0.16,2.7),TR2,wxW,base+hg+0.02,z0+1.3,0);
+      bake(out,box(2.36,0.16,2.7),TR2,wxE,base+hg+0.02,z0+1.3,0);
+      /* main roof: ridge E-W over the south block */
+      const rsM=1.5,angM=Math.atan2(rsM,1.7),slbM=Math.hypot(1.7,rsM)+0.12;
+      bake(out,box(b.w+0.5,0.13,slbM),SL,cx,base+hg+rsM/2,mcz-0.85,0,1,-angM,0);
+      bake(out,box(b.w+0.5,0.13,slbM),SL,cx,base+hg+rsM/2,mcz+0.85,0,1, angM,0);
+      bake(out,box(b.w+0.55,0.15,0.3),dk(SL,0.7),cx,base+hg+rsM,mcz,0);
+      /* wing roofs: ridges N-S */
+      const rsW=1.35,angW=Math.atan2(rsW,1.35),slbW=Math.hypot(1.35,rsW)+0.12;
+      for(const wx of[wxW,wxE]){
+        bake(out,box(slbW,0.13,3.1),SL,wx-0.675,base+hg+rsW/2,z0+1.3,0,1,0, angW);
+        bake(out,box(slbW,0.13,3.1),SL,wx+0.675,base+hg+rsW/2,z0+1.3,0,1,0,-angW);
+        bake(out,box(0.3,0.15,3.15),dk(SL,0.7),wx,base+hg+rsW,z0+1.3,0);
+      }
+      /* main E/W gable ends: stepped brick, white coping, attic window */
+      for(const e of[[x0+0.09,1],[x1-0.09,-1]]){
+        for(let s2=0;s2<3;s2++){
+          const gw=2.8*(1-(s2+0.5)/3.2);
+          bake(out,box(0.18,rsM/3+0.06,gw),BR,e[0],base+hg+rsM/6+s2*rsM/3,mcz,0);
+        }
+        bake(out,box(0.1,0.11,slbM*0.94),TR2,e[0]-e[1]*0.05,base+hg+rsM/2,mcz-0.85,0,1,-angM,0);
+        bake(out,box(0.1,0.11,slbM*0.94),TR2,e[0]-e[1]*0.05,base+hg+rsM/2,mcz+0.85,0,1, angM,0);
+        bake(out,box(0.08,0.6,0.5),TR2,e[0]-e[1]*0.13,base+hg+rsM*0.32,mcz,0);
+        bake(out,box(0.12,0.48,0.38),GLS,e[0]-e[1]*0.12,base+hg+rsM*0.32,mcz,0);
+      }
+      /* wing north gables: stepped brick, coping, attic pair, peak chimney */
+      for(const wx of[wxW,wxE]){
+        for(let s2=0;s2<3;s2++){
+          const gw=2.2*(1-(s2+0.5)/3.2);
+          bake(out,box(gw,rsW/3+0.06,0.18),BR,wx,base+hg+rsW/6+s2*rsW/3,z0+0.09,0);
+        }
+        bake(out,box(slbW*0.94,0.11,0.1),TR2,wx-0.675,base+hg+rsW/2,z0+0.04,0,1,0, angW);
+        bake(out,box(slbW*0.94,0.11,0.1),TR2,wx+0.675,base+hg+rsW/2,z0+0.04,0,1,0,-angW);
+        for(const ox of[-0.35,0.35]){
+          bake(out,box(0.42,0.5,0.08),TR2,wx+ox,base+hg+rsW*0.28,z0-0.03,0);
+          bake(out,box(0.32,0.4,0.12),GLS,wx+ox,base+hg+rsW*0.28,z0-0.02,0);
+        }
+        bake(out,box(0.5,1.1,0.5),dk(BR,0.9),wx,base+hg+rsW-0.1,z0+0.45,0);
+        bake(out,box(0.62,0.14,0.62),0x5a4438,wx,base+hg+rsW+0.5,z0+0.45,0);
+      }
+      /* main gable peak chimneys */
+      for(const gx of[x0+0.4,x1-0.4]){
+        bake(out,box(0.55,1.2,0.55),dk(BR,0.9),gx,base+hg+rsM-0.05,mcz,0);
+        bake(out,box(0.68,0.15,0.68),0x5a4438,gx,base+hg+rsM+0.62,mcz,0);
+      }
+      /* stone-linteled sash windows */
+      function winX(wx2,wy2,wz2){
+        bake(out,box(0.1,0.06,0.72),GRN,wx2,wy2-0.52,wz2,0);
+        bake(out,box(0.08,0.98,0.62),TR2,wx2,wy2,wz2,0);
+        bake(out,box(0.14,0.82,0.46),GLS,wx2,wy2,wz2,0);
+        bake(out,box(0.1,0.14,0.74),TR2,wx2,wy2+0.54,wz2,0);
+      }
+      function winZ(wx2,wy2,wz2){
+        bake(out,box(0.72,0.06,0.1),GRN,wx2,wy2-0.52,wz2,0);
+        bake(out,box(0.62,0.98,0.08),TR2,wx2,wy2,wz2,0);
+        bake(out,box(0.46,0.82,0.14),GLS,wx2,wy2,wz2,0);
+        bake(out,box(0.74,0.14,0.1),TR2,wx2,wy2+0.54,wz2,0);
+      }
+      const wy=st=>base+st*sh+sh*0.6;
+      for(let st=0;st<3;st++){
+        for(const zz of[z0+0.6,z0+1.7,z1-1.9,z1-0.8]){
+          winX(x0,wy(st),zz);winX(x1,wy(st),zz);
+        }
+        for(const xx of[x0+0.7,x0+2.1,cx,x1-2.1,x1-0.7])
+          if(!(st===0&&xx===cx))winZ(xx,wy(st),z1);
+        for(const wx of[wxW,wxE])for(const ox of[-0.55,0.55])winZ(wx+ox,wy(st),z0);
+        if(st>0){winX(x0+2.2,wy(st),z0+1.1);winX(x1-2.2,wy(st),z0+1.1);}
+      }
+      /* enclosed white sun porch filling the recess */
+      bake(out,box(2.6,1.5,2.3),PW2,cx,base+0.75,z0+1.15,0);
+      bake(out,box(2.7,0.14,2.4),TR2,cx,base+1.5,z0+1.15,0);
+      bake(out,box(2.8,0.1,2.5),0x22262b,cx,base+1.6,z0+1.15,0);
+      for(const ox of[-0.95,-0.55,0.55,0.95])
+        bake(out,box(0.32,0.7,0.1),GLS,cx+ox,base+0.9,z0+0.02,0);
+      bake(out,box(0.66,1.2,0.1),TR2,cx,base+0.72,z0,0);
+      bake(out,box(0.5,1.08,0.14),0x59504a,cx,base+0.66,z0-0.02,0);
+      /* grand stair down to the parking lot */
+      for(let s2=0;s2<5;s2++)
+        bake(out,box(1.7,0.12,0.3),0xe3dfd4,cx,base+0.34-s2*0.12,z0-0.2-s2*0.28,0);
+      for(const sx of[-0.92,0.92]){
+        bake(out,box(0.13,0.6,0.13),PW2,cx+sx,base+0.5,z0-0.08,0);
+        bake(out,box(0.13,0.55,0.13),PW2,cx+sx,base+0.02,z0-1.42,0);
+        bake(out,box(0.12,0.1,1.55),PW2,cx+sx,base+0.42,z0-0.75,0,1,-0.33,0);
+      }
+      /* white-coped dormers */
+      function dorm(px,py2,pz,dx2,dz2){
+        bake(out,box(dx2?0.6:0.56,0.6,dx2?0.56:0.6),BR,px,py2,pz,0);
+        bake(out,box(dx2?0.08:0.44,0.44,dx2?0.44:0.08),TR2,px+dx2*0.29,py2+0.02,pz+dz2*0.29,0);
+        bake(out,box(dx2?0.12:0.32,0.34,dx2?0.32:0.12),GLS,px+dx2*0.3,py2+0.02,pz+dz2*0.3,0);
+        const ra=0.72;
+        if(dx2){
+          bake(out,box(0.72,0.09,0.46),SL,px,py2+0.42,pz-0.17,0,1,-ra,0);
+          bake(out,box(0.72,0.09,0.46),SL,px,py2+0.42,pz+0.17,0,1, ra,0);
+          bake(out,box(0.1,0.08,0.44),TR2,px+dx2*0.32,py2+0.42,pz-0.17,0,1,-ra,0);
+          bake(out,box(0.1,0.08,0.44),TR2,px+dx2*0.32,py2+0.42,pz+0.17,0,1, ra,0);
+        }else{
+          bake(out,box(0.46,0.09,0.72),SL,px-0.17,py2+0.42,pz,0,1,0, ra);
+          bake(out,box(0.46,0.09,0.72),SL,px+0.17,py2+0.42,pz,0,1,0,-ra);
+          bake(out,box(0.44,0.08,0.1),TR2,px-0.17,py2+0.42,pz+dz2*0.32,0,1,0, ra);
+          bake(out,box(0.44,0.08,0.1),TR2,px+0.17,py2+0.42,pz+dz2*0.32,0,1,0,-ra);
+        }
+      }
+      for(const xx of[cx-2.4,cx-0.8,cx+0.8,cx+2.4])dorm(xx,base+hg+0.55,z1-0.5,0, 1);
+      for(const xx of[cx-0.9,cx,cx+0.9])          dorm(xx,base+hg+0.55,mcz-0.85,0,-1);
+      for(const zz of[z0+0.5,z0+1.3,z0+2.1]){
+        dorm(x0+0.45,base+hg+0.55,zz,-1,0);
+        dorm(x1-0.45,base+hg+0.55,zz, 1,0);
+      }
+      /* small white portico + door on the south face */
+      bake(out,box(1.7,0.12,0.8),TR2,cx,base+1.62,z1+0.35,0);
+      bake(out,new THREE.CylinderGeometry(0.09,0.11,1.5,8),PW2,cx-0.62,base+0.82,z1+0.6,0);
+      bake(out,new THREE.CylinderGeometry(0.09,0.11,1.5,8),PW2,cx+0.62,base+0.82,z1+0.6,0);
+      bake(out,box(0.7,1.42,0.1),TR2,cx,base+0.72,z1+0.02,0);
+      bake(out,box(0.56,1.3,0.14),0x59504a,cx,base+0.66,z1+0.04,0);
+      bake(out,box(1.2,0.13,0.5),0xb9b4a8,cx,y0+0.4,z1+0.55,0);
+      bake(out,box(1.2,0.13,0.5),0xb9b4a8,cx,y0+0.27,z1+0.85,0);
+      continue;
+    }
+    if(b.kind==='pratt'){
+      /* Pratt House - dark brick, steep west gable with attic window,
+         arched entry bay under a white pediment, twin white hip porches
+         (NW + SE), two north dormers flanking the great chimney */
+      const BR=b.col,TR2=0xf3efe6,SL=b.roof,GRN=0x8c877e,GLS=WIN,PW2=0xeceada;
+      const hw=b.w/2,hh=b.h/2,sh=hg/3,base=y0+0.3;
+      const xW=cx-hw,xE=cx+hw,zN=cz-hh,zS=cz+hh;
+      /* granite foundation + brick body + white eaves cornice */
+      bake(out,box(b.w+0.36,0.34,b.h+0.36),GRN,cx,y0+0.17,cz,0);
+      bake(out,box(b.w,hg,b.h),BR,cx,base+hg/2,cz,0);
+      bake(out,box(b.w+0.24,0.16,b.h+0.24),TR2,cx,base+hg+0.02,cz,0);
+      /* slate roof, ridge running east-west */
+      const rise=1.3,ang=Math.atan2(rise,hh+0.3),slab=Math.hypot(hh+0.3,rise)+0.12,zo=(hh+0.3)/2;
+      bake(out,box(b.w+0.5,0.13,slab),SL,cx,base+hg+rise/2,cz-zo,0,1,-ang,0);
+      bake(out,box(b.w+0.5,0.13,slab),SL,cx,base+hg+rise/2,cz+zo,0,1, ang,0);
+      bake(out,box(b.w+0.55,0.15,0.3),dk(SL,0.7),cx,base+hg+rise,cz,0);
+      /* brick gable ends */
+      for(const e of[-1,1])for(let s2=0;s2<3;s2++){
+        const gw=b.h*(1-(s2+0.5)/3.2);
+        bake(out,box(0.18,rise/3+0.06,gw),BR,cx+e*(hw-0.09),base+hg+rise/6+s2*rise/3,cz,0);
+      }
+      /* white raking trim + attic window on the west gable */
+      bake(out,box(0.1,0.11,slab*0.94),TR2,xW-0.01,base+hg+rise/2,cz-zo,0,1,-ang,0);
+      bake(out,box(0.1,0.11,slab*0.94),TR2,xW-0.01,base+hg+rise/2,cz+zo,0,1, ang,0);
+      bake(out,box(0.08,0.62,0.5),TR2,xW-0.04,base+hg+rise*0.36,cz,0);
+      bake(out,box(0.12,0.5,0.38),GLS,xW-0.03,base+hg+rise*0.36,cz,0);
+      /* sash windows: granite sill, white frame + lintel, glass */
+      function winX(wx,wy2,wz){
+        bake(out,box(0.1,0.06,0.72),GRN,wx,wy2-0.52,wz,0);
+        bake(out,box(0.08,0.98,0.62),TR2,wx,wy2,wz,0);
+        bake(out,box(0.14,0.82,0.46),GLS,wx,wy2,wz,0);
+        bake(out,box(0.1,0.1,0.7),TR2,wx,wy2+0.52,wz,0);
+      }
+      function winZ(wx,wy2,wz){
+        bake(out,box(0.72,0.06,0.1),GRN,wx,wy2-0.52,wz,0);
+        bake(out,box(0.62,0.98,0.08),TR2,wx,wy2,wz,0);
+        bake(out,box(0.46,0.82,0.14),GLS,wx,wy2,wz,0);
+        bake(out,box(0.7,0.1,0.1),TR2,wx,wy2+0.52,wz,0);
+      }
+      const wy=st=>base+st*sh+sh*0.6;
+      /* west face: two window columns on the gable half */
+      for(let st=0;st<3;st++){
+        winX(xW,wy(st),cz-0.9);
+        if(st>0)winX(xW,wy(st),cz-0.2);
+      }
+      /* north face (porch below on the west half) */
+      for(let st=0;st<3;st++){
+        winZ(cx+1.25,wy(st),zN);
+        if(st>0){winZ(cx,wy(st),zN);winZ(cx-1.25,wy(st),zN);}
+      }
+      /* south face (porch below on the east half) */
+      for(let st=0;st<3;st++){
+        winZ(cx-1.25,wy(st),zS);
+        if(st>0){winZ(cx,wy(st),zS);winZ(cx+1.25,wy(st),zS);}
+      }
+      /* east face */
+      for(let st=0;st<3;st++){winX(xE,wy(st),cz-0.55);winX(xE,wy(st),cz+0.55);}
+      /* arched entry bay with white pediment (west face, south half) */
+      const bz=cz+0.8,bx=xW-0.33,bh2=2.95;
+      bake(out,box(0.86,bh2,1.3),BR,bx,base+bh2/2,bz,0);
+      bake(out,box(1.02,0.14,1.46),TR2,bx,base+bh2+0.07,bz,0);
+      bake(out,box(0.6,0.46,1.04),BR,bx,base+bh2+0.3,bz,0);
+      bake(out,box(0.12,0.1,0.86),TR2,bx-0.3,base+bh2+0.36,bz-0.36,0,1,-0.55,0);
+      bake(out,box(0.12,0.1,0.86),TR2,bx-0.3,base+bh2+0.36,bz+0.36,0,1, 0.55,0);
+      bake(out,box(0.9,0.1,1.3),SL,bx+0.2,base+bh2+0.5,bz,0,1,0,0.42);
+      /* round brick arch + recessed white door */
+      const ax=bx-0.43;
+      bake(out,new THREE.CylinderGeometry(0.5,0.5,0.1,12),dk(BR,0.78),ax+0.03,base+1.52,bz,0,1,0,Math.PI/2);
+      bake(out,new THREE.CylinderGeometry(0.4,0.4,0.14,12),0x241f1b,ax+0.01,base+1.52,bz,0,1,0,Math.PI/2);
+      bake(out,box(0.12,1.5,0.8),0x241f1b,ax,base+0.77,bz,0);
+      bake(out,box(0.1,1.36,0.6),0xe9e5da,ax-0.03,base+0.68,bz,0);
+      bake(out,box(0.05,0.5,0.44),GLS,ax-0.07,base+1.12,bz,0);
+      /* concrete steps down from the entry */
+      for(let s2=0;s2<3;s2++)
+        bake(out,box(0.26,0.13,0.92),0xb9b4a8,ax-0.18-s2*0.24,y0+0.4-s2*0.13,bz,0);
+      /* white hip porches: northwest + southeast */
+      function porch(px,pz,dz){
+        const PWD=1.9,PD=0.95;
+        const pzc=pz+dz*(PD/2-0.06);
+        bake(out,box(PWD-0.1,0.3,PD-0.14),PW2,px,y0+0.18,pzc,0);
+        bake(out,box(PWD,0.16,PD),0xd9d4c6,px,base+0.32,pzc,0);
+        const py=base+0.4,ph=1.15;
+        for(const ox of[-PWD/2+0.12,0,PWD/2-0.12])
+          bake(out,box(0.13,ph,0.13),PW2,px+ox,py+ph/2,pz+dz*(PD-0.16),0);
+        bake(out,box(PWD-0.16,0.07,0.07),PW2,px,py+0.62,pz+dz*(PD-0.16),0);
+        bake(out,box(PWD-0.16,0.14,0.05),PW2,px,py+0.34,pz+dz*(PD-0.16),0);
+        bake(out,box(0.78,1.42,0.1),TR2,px,py+0.62,pz+dz*0.03,0);
+        bake(out,box(0.62,1.3,0.14),0x59504a,px,py+0.58,pz+dz*0.05,0);
+        bake(out,box(PWD+0.24,0.11,PD+0.1),0x39404a,px,py+ph+0.14,pzc-dz*0.05,0,1,dz*0.24,0);
+      }
+      porch(cx-0.9,zN,-1);
+      porch(cx+0.9,zS, 1);
+      /* two north dormers flanking the great chimney */
+      for(const dx of[-0.8,1.0]){
+        const dzz=cz-0.78,dy=base+hg+0.62;
+        bake(out,box(0.56,0.6,0.6),BR,cx+dx,dy,dzz,0);
+        bake(out,box(0.44,0.44,0.08),TR2,cx+dx,dy+0.02,dzz-0.29,0);
+        bake(out,box(0.32,0.34,0.12),GLS,cx+dx,dy+0.02,dzz-0.3,0);
+        bake(out,new THREE.ConeGeometry(0.44,0.4,4),SL,cx+dx,dy+0.46,dzz,Math.PI/4);
+      }
+      /* chimneys: central great stack + west gable peak */
+      bake(out,box(0.66,1.9,0.66),dk(BR,0.9),cx+0.1,base+hg+0.85,cz,0);
+      bake(out,box(0.8,0.16,0.8),0x5a4438,cx+0.1,base+hg+1.85,cz,0);
+      bake(out,box(0.46,1.0,0.46),dk(BR,0.9),cx-1.5,base+hg+rise+0.28,cz,0);
+      bake(out,box(0.58,0.14,0.58),0x5a4438,cx-1.5,base+hg+rise+0.82,cz,0);
+      continue;
+    }
     if(b.kind==='observatory'){
       const orr=D*0.42;
       bake(out,new THREE.CylinderGeometry(orr,orr+0.12,2.0,9),b.col,cx,y0+1.0,cz,0);
@@ -12308,65 +13548,136 @@ function updateObjVisual(o){
       continue;
     }
     if(b.kind==='rectory'){
-      const body=b.col, TR=0xf6f2ea, SHUT=0x33503e, SLATE=b.roof, GLS=WIN;
-      const hw=b.w/2, hh=b.h/2, stor=3, sh=hg/stor, base=y0+0.4;
-      /* stone foundation */
-      bake(out,box(b.w+0.3,0.4,b.h+0.3),0x8c877e,cx,y0+0.2,cz,0);
-      /* tall white body */
-      bake(out,box(b.w,hg,b.h),body,cx,base+hg/2,cz,0);
-      /* storey cornice bands */
-      for(let st=1;st<stor;st++)
-        bake(out,box(b.w+0.16,0.12,b.h+0.16),TR,cx,base+st*sh,cz,0);
-      /* alternating corner quoins */
-      for(const ex of[-1,1])for(const ez of[-1,1])
-        for(let s2=0;s2<8;s2++)
-          bake(out,box(0.42,hg/8,0.42),(s2%2?TR:dk(body,0.9)),cx+ex*(hw-0.16),base+hg/16+s2*(hg/8),cz+ez*(hh-0.16),0);
-      /* deep eaves cornice */
-      bake(out,box(b.w+0.55,0.24,b.h+0.55),TR,cx,base+hg+0.04,cz,0);
-      /* sash windows + green shutters, every storey & face (door takes the ground-front centre) */
-      function sash(wx,wy,wz,fry){
-        bake(out,box(0.66,1.0,0.08),TR,wx,wy,wz,fry);
-        bake(out,box(0.5,0.84,0.13),GLS,wx,wy,wz,fry);
-        for(const sd of[-1,1]){
-          const sx=fry===0?wx+sd*0.42:wx, sz=fry===0?wz:wz+sd*0.42;
-          bake(out,box(fry===0?0.14:0.06,0.86,fry===0?0.06:0.14),SHUT,sx,wy,sz,0);
+      /* The Rectory - rambling white clapboard house: tall central
+         front-gable over the south door (the rectorydoor object at 88,84
+         remains the working interior entrance), lower E+W wings with
+         paired-window south dormers, 1-storey west sunroom, north porch,
+         three white chimneys (west one black-banded), garden beds inside
+         the fenced east plot (fence = T_FENCE tiles; clue spot inside) */
+      const WH=b.col,TR2=0xfbf8f1,SL=b.roof,GRN=0x9a958c,GLS=WIN,DRK=0x3a3f45;
+      const base=y0+0.3,hgW=3.0;
+      const x0=b.x,z0=b.y,zS=z0+4,zN=z0;
+      const ccx=x0+3.6,wcx=x0+1.25,ecx=x0+5.35,wcz=z0+2;
+      /* foundation + masses: tall central block, lower wings */
+      bake(out,box(6.3,0.34,4.3),GRN,x0+3,y0+0.17,wcz,0);
+      bake(out,box(2.4,hg,4),WH,ccx,base+hg/2,wcz,0);
+      bake(out,box(2.5,hgW,4),WH,wcx,base+hgW/2,wcz,0);
+      bake(out,box(1.3,hgW,4),WH,ecx,base+hgW/2,wcz,0);
+      /* cornices */
+      bake(out,box(2.6,0.15,4.24),TR2,ccx,base+hg+0.02,wcz,0);
+      bake(out,box(2.62,0.14,4.24),TR2,wcx,base+hgW+0.02,wcz,0);
+      bake(out,box(1.42,0.14,4.24),TR2,ecx,base+hgW+0.02,wcz,0);
+      /* central roof: ridge N-S, tall gables front + back */
+      const rsC=1.35,angC=Math.atan2(rsC,1.45),slbC=Math.hypot(1.45,rsC)+0.12;
+      bake(out,box(slbC,0.12,4.5),SL,ccx-0.725,base+hg+rsC/2,wcz,0,1,0, angC);
+      bake(out,box(slbC,0.12,4.5),SL,ccx+0.725,base+hg+rsC/2,wcz,0,1,0,-angC);
+      bake(out,box(0.26,0.13,4.55),dk(SL,0.72),ccx,base+hg+rsC,wcz,0);
+      /* wing roofs: ridge E-W */
+      const rsW2=1.4,angW2=Math.atan2(rsW2,2.25),slbW2=Math.hypot(2.25,rsW2)+0.12;
+      for(const w2 of[[wcx,3.1],[ecx,1.9]]){
+        bake(out,box(w2[1],0.12,slbW2),SL,w2[0],base+hgW+rsW2/2,wcz-1.125,0,1,-angW2,0);
+        bake(out,box(w2[1],0.12,slbW2),SL,w2[0],base+hgW+rsW2/2,wcz+1.125,0,1, angW2,0);
+        bake(out,box(w2[1]+0.05,0.13,0.26),dk(SL,0.72),w2[0],base+hgW+rsW2,wcz,0);
+      }
+      /* central gables N+S: stepped clapboard, attic pair, trim panel */
+      for(const g of[[zS-0.09,1],[zN+0.09,-1]]){
+        const ws=[2.1,1.4,0.75];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(ws[s2],rsC/3+0.06,0.18),WH,ccx,base+hg+rsC/6+s2*rsC/3,g[0],0);
+        for(const ox of[-0.34,0.34]){
+          bake(out,box(0.32,0.42,0.08),TR2,ccx+ox,base+hg+0.5,g[0]+g[1]*0.08,0);
+          bake(out,box(0.22,0.32,0.12),GLS,ccx+ox,base+hg+0.5,g[0]+g[1]*0.09,0);
         }
+        bake(out,box(1.5,0.09,0.1),TR2,ccx,base+hg+0.9,g[0]+g[1]*0.08,0);
       }
-      for(let st=0;st<stor;st++){
-        const wy=base+st*sh+sh*0.55;
-        for(const fz of[hh,-hh])for(const off of[-1.0,1.0]){
-          if(st===0&&fz===hh)continue;
-          sash(cx+off,wy,cz+fz+(fz>0?-0.02:0.02),0);
+      /* wing outer gable ends: stepped */
+      for(const gx of[x0+0.09,x0+5.91]){
+        const ws=[3.2,2.15,1.15];
+        for(let s2=0;s2<3;s2++)
+          bake(out,box(0.18,rsW2/3+0.06,ws[s2]),WH,gx,base+hgW+rsW2/6+s2*rsW2/3,wcz,0);
+      }
+      /* windows: bright-white trim on warm white walls */
+      function winZ2(wx2,wy2,wz2,dz2){
+        bake(out,box(0.58,0.88,0.08),TR2,wx2,wy2,wz2+dz2*0.02,0);
+        bake(out,box(0.42,0.74,0.12),GLS,wx2,wy2,wz2+dz2*0.03,0);
+        bake(out,box(0.64,0.09,0.09),TR2,wx2,wy2+0.5,wz2+dz2*0.03,0);
+      }
+      function winX2(wx2,wy2,wz2,dx2){
+        bake(out,box(0.08,0.88,0.58),TR2,wx2+dx2*0.02,wy2,wz2,0);
+        bake(out,box(0.12,0.74,0.42),GLS,wx2+dx2*0.03,wy2,wz2,0);
+        bake(out,box(0.09,0.09,0.64),TR2,wx2+dx2*0.03,wy2+0.5,wz2,0);
+      }
+      const cy=st=>base+st*(hg/2.6)+0.85, wyW=st=>base+st*1.42+0.82;
+      /* central south face: window pairs flanking + above the door */
+      for(const xx of[x0+2.8,x0+4.3]){winZ2(xx,cy(0),zS,1);winZ2(xx,cy(1),zS,1);}
+      winZ2(x0+3.5,cy(1),zS,1);
+      /* wings south faces */
+      for(const xx of[x0+0.7,x0+1.8])for(let st=0;st<2;st++)winZ2(xx,wyW(st),zS,1);
+      for(let st=0;st<2;st++)winZ2(ecx,wyW(st),zS,1);
+      /* wing ends: west lawn face + east garden face */
+      for(const zz of[z0+1.2,z0+2.8])for(let st=0;st<2;st++)winX2(x0,wyW(st),zz,-1);
+      for(const zz of[z0+1.3,z0+2.7])for(let st=0;st<2;st++)winX2(x0+6,wyW(st),zz,1);
+      /* north faces */
+      for(const xx of[x0+2.9,x0+4.3]){winZ2(xx,cy(1),zN,-1);}
+      for(const xx of[x0+0.7,x0+1.8])for(let st=0;st<2;st++)winZ2(xx,wyW(st),zN,-1);
+      for(let st=0;st<2;st++)winZ2(ecx,wyW(st),zN,-1);
+      /* paired-window white dormers on the wing south slopes */
+      for(const dxx of[x0+1.25,x0+5.35]){
+        const dzz=z0+2.9,dy2=base+hgW+0.6;
+        bake(out,box(0.85,0.62,0.66),WH,dxx,dy2,dzz,0);
+        for(const ox of[-0.2,0.2]){
+          bake(out,box(0.3,0.38,0.08),TR2,dxx+ox,dy2+0.02,dzz+0.32,0);
+          bake(out,box(0.22,0.3,0.12),GLS,dxx+ox,dy2+0.02,dzz+0.33,0);
         }
-        for(const fx of[hw,-hw])for(const off of[-1.0,1.0])
-          sash(cx+fx+(fx>0?-0.02:0.02),wy,cz+off,Math.PI/2);
+        bake(out,box(0.56,0.09,0.8),SL,dxx-0.23,dy2+0.42,dzz,0,1,0, 0.58);
+        bake(out,box(0.56,0.09,0.8),SL,dxx+0.23,dy2+0.42,dzz,0,1,0,-0.58);
       }
-      /* grand pedimented portico over the front door (south face) */
-      const dz=cz+hh;
-      bake(out,box(2.4,0.16,0.6),0xcfcabf,cx,y0+0.48,dz+0.6,0);
-      bake(out,box(2.0,0.16,0.45),0xcfcabf,cx,y0+0.62,dz+0.42,0);
-      bake(out,box(1.5,1.95,0.1),TR,cx,base+0.97,dz+0.04,0);
-      bake(out,box(1.1,1.65,0.13),DOOR,cx,base+0.82,dz+0.06,0);
-      bake(out,box(0.06,1.65,0.16),dk(DOOR,0.6),cx,base+0.82,dz+0.07,0);
-      bake(out,box(1.1,0.3,0.1),GLS,cx,base+1.78,dz+0.05,0);
-      for(const sd of[-1,1]){
-        bake(out,new THREE.CylinderGeometry(0.13,0.15,2.0,9),TR,cx+sd*0.95,base+1.0,dz+0.62,0);
-        bake(out,box(0.32,0.14,0.32),TR,cx+sd*0.95,base+2.05,dz+0.62,0);
-        bake(out,box(0.32,0.14,0.32),TR,cx+sd*0.95,base+0.02,dz+0.62,0);
-      }
-      bake(out,box(2.5,0.24,0.85),TR,cx,base+2.2,dz+0.5,0);
-      bake(out,box(2.5,0.12,0.55),SLATE,cx,base+2.42,dz+0.62,0,1,0.6,0);
-      bake(out,box(2.5,0.12,0.55),SLATE,cx,base+2.42,dz+0.34,0,1,-0.6,0);
-      /* steep hipped main roof */
-      const rr=b.w*0.74, rh=b.w*0.72;
-      bake(out,new THREE.ConeGeometry(rr,rh,4),SLATE,cx,base+hg+0.16+rh/2,cz,Math.PI/4);
-      /* central cupola + gold finial */
-      const cuy=base+hg+0.16+rh-0.42;
-      bake(out,box(0.85,0.7,0.85),TR,cx,cuy+0.35,cz,0);
-      for(const f of[[0,0.43],[0,-0.43]]) bake(out,box(0.5,0.5,0.1),GLS,cx,cuy+0.4,cz+f[1],0);
-      for(const f of[[0.43,0],[-0.43,0]]) bake(out,box(0.1,0.5,0.5),GLS,cx+f[0],cuy+0.4,cz,0);
-      bake(out,new THREE.ConeGeometry(0.62,0.7,4),SLATE,cx,cuy+1.05,cz,Math.PI/4);
-      bake(out,new THREE.ConeGeometry(0.05,0.55,6),0xc9a23a,cx,cuy+1.6,cz,0);
+      /* south entry: white surround + gabled hood over the rectorydoor */
+      const ex2=x0+3.5;
+      bake(out,box(0.12,1.6,0.16),TR2,ex2-0.55,base+0.82,zS+0.04,0);
+      bake(out,box(0.12,1.6,0.16),TR2,ex2+0.55,base+0.82,zS+0.04,0);
+      bake(out,box(1.34,0.14,0.24),TR2,ex2,base+1.7,zS+0.08,0);
+      bake(out,box(0.14,1.42,0.08),GLS,ex2-0.42,base+0.74,zS+0.03,0);
+      bake(out,box(0.14,1.42,0.08),GLS,ex2+0.42,base+0.74,zS+0.03,0);
+      bake(out,box(0.6,1.46,0.08),DRK,ex2,base+0.76,zS+0.02,0);
+      bake(out,box(0.6,0.08,0.72),SL,ex2-0.24,base+1.92,zS+0.12,0,1,0, 0.55);
+      bake(out,box(0.6,0.08,0.72),SL,ex2+0.24,base+1.92,zS+0.12,0,1,0,-0.55);
+      bake(out,box(0.9,0.12,0.6),0xb9b4a8,ex2,y0+0.36,zS+0.35,0);
+      /* west 1-storey sunroom */
+      bake(out,box(0.95,1.7,1.9),WH,x0-0.32,base+0.85,z0+2,0);
+      bake(out,box(1.05,0.12,2.0),TR2,x0-0.32,base+1.76,z0+2,0);
+      bake(out,box(1.0,0.08,1.95),SL,x0-0.3,base+1.86,z0+2,0);
+      for(const oz of[-0.6,0,0.6])
+        bake(out,box(0.1,0.7,0.42),GLS,x0-0.76,base+0.95,z0+2+oz,0);
+      for(const oz of[-0.55,0.55])
+        bake(out,box(0.42,0.7,0.1),GLS,x0-0.32+0,base+0.95,z0+2+oz*1.72,0);
+      /* north porch: deck, posts, rails, shed roof, back door */
+      const px2=x0+3.6;
+      bake(out,box(2.2,0.16,0.9),0xd9d4c6,px2,base+0.3,zN-0.39,0);
+      bake(out,box(2.1,0.28,0.8),0xeceada,px2,y0+0.16,zN-0.37,0);
+      for(const ox of[-0.95,0,0.95])
+        bake(out,box(0.12,1.3,0.12),0xeceada,px2+ox,base+1.03,zN-0.72,0);
+      bake(out,box(2.05,0.07,0.07),0xeceada,px2,base+0.98,zN-0.72,0);
+      bake(out,box(2.05,0.13,0.05),0xeceada,px2,base+0.62,zN-0.72,0);
+      bake(out,box(2.44,0.11,1.06),0x394048,px2,base+1.86,zN-0.34,0,1,-0.24,0);
+      bake(out,box(0.66,1.44,0.1),TR2,px2,base+0.74,zN-0.01,0);
+      bake(out,box(0.5,1.32,0.14),DRK,px2,base+0.7,zN-0.02,0);
+      /* three white chimneys - the west one black-banded */
+      bake(out,box(0.5,1.7,0.5),WH,x0+1.0,base+hgW+0.95,wcz-0.6,0);
+      bake(out,box(0.56,0.09,0.56),0x2e3236,x0+1.0,base+hgW+1.35,wcz-0.6,0);
+      bake(out,box(0.56,0.09,0.56),0x2e3236,x0+1.0,base+hgW+1.62,wcz-0.6,0);
+      bake(out,box(0.6,0.12,0.6),0x4a4e54,x0+1.0,base+hgW+1.84,wcz-0.6,0);
+      bake(out,box(0.55,1.3,0.55),WH,ccx,base+hg+rsC-0.15,wcz+0.5,0);
+      bake(out,box(0.66,0.13,0.66),0x4a4e54,ccx,base+hg+rsC+0.56,wcz+0.5,0);
+      bake(out,box(0.48,1.6,0.48),WH,ecx,base+hgW+0.9,wcz-0.8,0);
+      bake(out,box(0.58,0.12,0.58),0x4a4e54,ecx,base+hgW+1.76,wcz-0.8,0);
+      /* garden beds + gravel path inside the fenced east plot */
+      bake(out,box(1.1,0.26,0.7),0x3f6a3a,x0+6.6,y0+0.22,z0+1.6,0);
+      bake(out,box(1.1,0.26,0.7),0x3f6a3a,x0+6.6,y0+0.22,z0+3.0,0);
+      for(const fb of[[x0+6.3,z0+1.5,0xc95b7a],[x0+6.7,z0+1.7,0xd8b23d],
+                      [x0+6.4,z0+3.1,0xe0e6ee],[x0+6.9,z0+2.9,0xc95b7a]])
+        bake(out,box(0.16,0.14,0.16),fb[2],fb[0],y0+0.4,fb[1],0);
+      bake(out,box(0.5,0.06,2.1),0xb9b4a8,x0+7.5,y0+0.09,z0+2.85,0);
       continue;
     }
     if(b.kind==='chapel'){
