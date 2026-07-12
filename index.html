@@ -14541,10 +14541,11 @@ function buildCapeDecor(capeGrp){
 capeM._decor=buildCapeDecor(capeM);
 capeM.position.y-=0.78;pm.upper.add(capeM);capeM.visible=false;
 const hoodM=new THREE.Group();
-{const _hb=gmesh(new THREE.SphereGeometry(0.2,12,10,0,Math.PI*2,0,Math.PI*0.62),0xb3241f);_hb.scale.set(1.08,1.02,1.12);_hb.position.set(0,1.74,-0.02);hoodM.add(_hb);
- const _hn=gmesh(new THREE.CylinderGeometry(0.19,0.24,0.16,12),0xb3241f);_hn.position.set(0,1.55,-0.05);hoodM.add(_hn);
- const _hp=gmesh(new THREE.ConeGeometry(0.07,0.22,8),0xb3241f);_hp.position.set(0,1.82,-0.16);_hp.rotation.x=-0.7;hoodM.add(_hp);
- const _hr=gmesh(new THREE.TorusGeometry(0.19,0.022,7,16),0xe0c050);_hr.rotation.x=Math.PI*0.42;_hr.position.set(0,1.6,0.05);hoodM.add(_hr);}
+{ /* small folded hood on the cape's upper back \u2014 not worn over the head */
+ const _hb=TT(gmesh(new THREE.SphereGeometry(0.115,12,10,0,Math.PI*2,0,Math.PI*0.62),0xb3241f),'tint');_hb.scale.set(1.05,0.82,0.95);_hb.position.set(0,1.315,-0.205);hoodM.add(_hb);
+ const _ho=gmesh(new THREE.SphereGeometry(0.088,12,10,0,Math.PI*2,0,Math.PI*0.6),0x241010);_ho.scale.set(1.0,0.74,0.66);_ho.position.set(0,1.31,-0.172);hoodM.add(_ho);
+ const _hp=TT(gmesh(new THREE.ConeGeometry(0.07,0.13,7),0xb3241f),'tint');_hp.position.set(0,1.21,-0.235);_hp.rotation.x=0.38;hoodM.add(_hp);
+ const _hr=TT(gmesh(new THREE.TorusGeometry(0.1,0.013,8,16),0xe0c050),'trim');_hr.rotation.x=Math.PI*0.5;_hr.position.set(0,1.325,-0.165);hoodM.add(_hr);}
 hoodM.position.y-=0.78;pm.upper.add(hoodM);hoodM.visible=false;
 const shieldM=new THREE.Group();
 {const kite=(w,top,bot,extd)=>{const k=new THREE.Shape();
@@ -26379,12 +26380,12 @@ function render(now){
   else if(showTool==='leafax'){leafAxM.visible=true;leafAxM.rotation.x=_swRest?-1.5:_swT;}
   else if(showTool==='bow'){((player.equip.weapon&&isAshfang(player.equip.weapon.id))?ashBowM:bowM).visible=true;}
   else if(showTool==='staff')staffM.visible=true;
-  const tintG=(grp,t9,r9)=>{grp.traverse(o9=>{
+  function tintG(grp,t9,r9){grp.traverse(o9=>{
     if(!o9.isMesh)return;
     if(o9.userData.t==='tint'&&t9!==undefined)o9.material.color.setHex(t9);
     else if(o9.userData.t==='trim'&&r9!==undefined)o9.material.color.setHex(r9);
     else if(o9.userData.t==='shade'&&t9!==undefined){const _r=(((t9>>16)&255)*0.68)|0,_g=(((t9>>8)&255)*0.68)|0,_b=((t9&255)*0.68)|0;o9.material.color.setHex((_r<<16)|(_g<<8)|_b);}
-  });};
+  });}
   {const _shId=player.equip.shield&&player.equip.shield.id;
    const _isBod=(_shId||'').indexOf('bodkin_')===0;
    const _shMod=player.equip.shield?ITEMS[_shId].equip.model:null;
@@ -28078,10 +28079,11 @@ capeEmblem.position.set(0,0.96,-0.225);capeEmblem.rotation.y=Math.PI;capeEmblem.
 capeM._decor=buildCapeDecor(capeM);
 capeM.position.y-=0.78;rig.upper.add(capeM);capeM.visible=false;
 const hoodM=new THREE.Group();
-{const _hb=gmesh(new THREE.SphereGeometry(0.2,12,10,0,Math.PI*2,0,Math.PI*0.62),0xb3241f);_hb.scale.set(1.08,1.02,1.12);_hb.position.set(0,1.74,-0.02);hoodM.add(_hb);
- const _hn=gmesh(new THREE.CylinderGeometry(0.19,0.24,0.16,12),0xb3241f);_hn.position.set(0,1.55,-0.05);hoodM.add(_hn);
- const _hp=gmesh(new THREE.ConeGeometry(0.07,0.22,8),0xb3241f);_hp.position.set(0,1.82,-0.16);_hp.rotation.x=-0.7;hoodM.add(_hp);
- const _hr=gmesh(new THREE.TorusGeometry(0.19,0.022,7,16),0xe0c050);_hr.rotation.x=Math.PI*0.42;_hr.position.set(0,1.6,0.05);hoodM.add(_hr);}
+{ /* small folded hood on the cape's upper back \u2014 not worn over the head */
+ const _hb=TT(gmesh(new THREE.SphereGeometry(0.115,12,10,0,Math.PI*2,0,Math.PI*0.62),0xb3241f),'tint');_hb.scale.set(1.05,0.82,0.95);_hb.position.set(0,1.315,-0.205);hoodM.add(_hb);
+ const _ho=gmesh(new THREE.SphereGeometry(0.088,12,10,0,Math.PI*2,0,Math.PI*0.6),0x241010);_ho.scale.set(1.0,0.74,0.66);_ho.position.set(0,1.31,-0.172);hoodM.add(_ho);
+ const _hp=TT(gmesh(new THREE.ConeGeometry(0.07,0.13,7),0xb3241f),'tint');_hp.position.set(0,1.21,-0.235);_hp.rotation.x=0.38;hoodM.add(_hp);
+ const _hr=TT(gmesh(new THREE.TorusGeometry(0.1,0.013,8,16),0xe0c050),'trim');_hr.rotation.x=Math.PI*0.5;_hr.position.set(0,1.325,-0.165);hoodM.add(_hr);}
 hoodM.position.y-=0.78;rig.upper.add(hoodM);hoodM.visible=false;
 const shieldM=new THREE.Group();
 {const kite=(w,top,bot,extd)=>{const k=new THREE.Shape();
