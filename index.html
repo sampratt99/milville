@@ -5040,9 +5040,9 @@ function startGather(obj){
 }
 function startAttack(rat){
   if(typeof MP!=='undefined'&&MP.isClaimedByOther(rat)){msg('Someone else is already fighting that.','#103a8c');return;}
-  if(rat.kind==='gorp'&&!rat._taunted){rat._taunted=true;openDialogue({id:'gorp',name:'Gorp the Goblin'});}
   setAction({type:'attack',rat},rat.x,rat.y);
   clickFx(rat.x,rat.y,'#ff4d3d');
+  if(rat.kind==='gorp'&&!rat._taunted){rat._taunted=true;openDialogue({id:'gorp',name:'Gorp the Goblin'});}
 }
 function lightFire(i){
   const _logId=player.inv[i]&&player.inv[i].id;
@@ -18691,6 +18691,9 @@ const dlgOptsEl=document.getElementById('dlgopts');
 const dlgContEl=document.getElementById('dlgcont');
 let dlg=null;
 const FACES={
+  serg:{skin:0x8a5a3c,hair:0x181310,robe:0x3a4a63,hairstyle:'short'},
+  hebra:{skin:0x8a5a3c,hair:0x181310,robe:0x6a8a5a,hairstyle:'long'},
+  gorp:{skin:0x5f8a3e,hair:0x2f4a1e,robe:0x4a3a26,hairstyle:'short'},
   mr_callahan:{skin:0xe0b48c,hair:0x6b4a2e,mustache:1,robe:0x26345e,hairstyle:'short'},
   clunie:{skin:0xe8c39a,hair:0x3a2a1a,robe:0xeef0f2,hairstyle:'long'},
   bassi:{skin:0xd8a878,hair:0x4a443c,robe:0xf2f0e8,hairstyle:'short'},
