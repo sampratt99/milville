@@ -14565,7 +14565,7 @@ const grimoireM=new THREE.Group();
  const pages=gmesh(new THREE.BoxGeometry(0.21,0.29,0.055),0xefe9d0);pages.position.z=0.004;grimoireM.add(pages);
  const spine=TT(gmesh(new THREE.BoxGeometry(0.04,0.33,0.062),0xe3b21f),'trim');spine.position.x=-0.115;grimoireM.add(spine);
  const clasp=TT(gmesh(new THREE.BoxGeometry(0.13,0.05,0.07),0xe3b21f),'trim');clasp.position.set(0.02,0,0.03);grimoireM.add(clasp);
- const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);}
+ const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);for(const _cx of [-1,1])for(const _cy of [-1,1]){const _cg=TT(gmesh(new THREE.BoxGeometry(0.05,0.05,0.056),0xe3b21f),'trim');_cg.position.set(_cx*0.093,_cy*0.13,0.005);grimoireM.add(_cg);}const _sb1=new THREE.Mesh(new THREE.BoxGeometry(0.006,0.115,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb1.position.set(0.02,0,0.05);grimoireM.add(_sb1);const _sb2=new THREE.Mesh(new THREE.BoxGeometry(0.115,0.006,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb2.position.set(0.02,0,0.05);grimoireM.add(_sb2);const _gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.032,0),new THREE.MeshBasicMaterial({color:0x5aa0ff}));_gem.position.set(0.02,-0.095,0.05);_gem.scale.z=0.6;grimoireM.add(_gem);const _fe=gmesh(new THREE.BoxGeometry(0.01,0.27,0.05),0xd8ccae);_fe.position.set(0.108,0,0.004);grimoireM.add(_fe);}
 pm.lArm.add(grimoireM);grimoireM.position.set(-0.08,-0.34,0.05);grimoireM.rotation.set(0.2,0,0);grimoireM.visible=false;
 const mountainShieldM=new THREE.Group();
 {const face=TT(gmesh(new THREE.BoxGeometry(0.32,0.5,0.05),0x6e6f73),'tint');mountainShieldM.add(face);
@@ -14956,8 +14956,11 @@ function masterTree(sk){
   const lv=levelFor(player.skills[sk]);
   const claimable=lv>=99&&!hasMasterCape(sk);
   const grandClaimable=lv>=120&&!hasGrandCape(sk);
+  const _gid=grandCapeId(sk);
+  const grandOwned=lv>=120&&hasGrandCape(sk);
+  const grandWhere=(player.equip.cape&&player.equip.cape.id===_gid)?', and you wear it with honour':player.inv.some(sl=>sl&&sl.id===_gid)?' \u2014 it waits in your pack, ready to wear':bank.some(b=>b&&b.id===_gid&&(b.qty||1)>0)?' \u2014 it is safe in your bank':'';
   const tree={
-    start:{who:'npc',text:'I am the '+nm+' Master. '+(grandClaimable?'And you have surpassed mastery itself \u2014 level 120 '+nm+'! Your hooded Grandmaster Cape awaits.':claimable?'And you have mastered '+nm+' \u2014 your cape is ready whenever you wish to claim it.':hasMasterCape(sk)?'You already wear the '+nm+' cape with honour.':'Reach level 99 '+nm+' and the '+nm+' Master Cape is yours.'),next:'menu'},
+    start:{who:'npc',text:'I am the '+nm+' Master. '+(grandClaimable?'And you have surpassed mastery itself \u2014 level 120 '+nm+'! Your hooded Grandmaster Cape awaits your claim.':grandOwned?'You have already claimed your '+nm+' Grandmaster Cape'+grandWhere+'.':claimable?'And you have mastered '+nm+' \u2014 your cape is ready whenever you wish to claim it.':hasMasterCape(sk)?'You already wear the '+nm+' cape with honour.':'Reach level 99 '+nm+' and the '+nm+' Master Cape is yours.'),next:'menu'},
     menu:{opts:[]},
     teach:{who:'npc',text:MASTER_TIPS[sk],next:'menu'},
     by:{who:'npc',text:'May your '+nm+' never falter.',next:null}
@@ -26376,6 +26379,12 @@ function render(now){
   else if(showTool==='leafax'){leafAxM.visible=true;leafAxM.rotation.x=_swRest?-1.5:_swT;}
   else if(showTool==='bow'){((player.equip.weapon&&isAshfang(player.equip.weapon.id))?ashBowM:bowM).visible=true;}
   else if(showTool==='staff')staffM.visible=true;
+  const tintG=(grp,t9,r9)=>{grp.traverse(o9=>{
+    if(!o9.isMesh)return;
+    if(o9.userData.t==='tint'&&t9!==undefined)o9.material.color.setHex(t9);
+    else if(o9.userData.t==='trim'&&r9!==undefined)o9.material.color.setHex(r9);
+    else if(o9.userData.t==='shade'&&t9!==undefined){const _r=(((t9>>16)&255)*0.68)|0,_g=(((t9>>8)&255)*0.68)|0,_b=((t9&255)*0.68)|0;o9.material.color.setHex((_r<<16)|(_g<<8)|_b);}
+  });};
   {const _shId=player.equip.shield&&player.equip.shield.id;
    const _isBod=(_shId||'').indexOf('bodkin_')===0;
    const _shMod=player.equip.shield?ITEMS[_shId].equip.model:null;
@@ -26386,12 +26395,6 @@ function render(now){
    elemM.visible=_shId==='elemental_shield';}
   capeM.visible=!!player.equip.cape;
   if(hoodM)hoodM.visible=false;
-  const tintG=(grp,t9,r9)=>{grp.traverse(o9=>{
-    if(!o9.isMesh)return;
-    if(o9.userData.t==='tint'&&t9!==undefined)o9.material.color.setHex(t9);
-    else if(o9.userData.t==='trim'&&r9!==undefined)o9.material.color.setHex(r9);
-    else if(o9.userData.t==='shade'&&t9!==undefined){const _r=(((t9>>16)&255)*0.68)|0,_g=(((t9>>8)&255)*0.68)|0,_b=((t9&255)*0.68)|0;o9.material.color.setHex((_r<<16)|(_g<<8)|_b);}
-  });};
   const hmod=player.equip.head?ITEMS[player.equip.head.id].equip.model:null;
   helmM.visible=hmod==='helm';
   iceCrownM.visible=hmod==='icecrown';
@@ -28106,7 +28109,7 @@ const grimoireM=new THREE.Group();
  const pages=gmesh(new THREE.BoxGeometry(0.21,0.29,0.055),0xefe9d0);pages.position.z=0.004;grimoireM.add(pages);
  const spine=TT(gmesh(new THREE.BoxGeometry(0.04,0.33,0.062),0xe3b21f),'trim');spine.position.x=-0.115;grimoireM.add(spine);
  const clasp=TT(gmesh(new THREE.BoxGeometry(0.13,0.05,0.07),0xe3b21f),'trim');clasp.position.set(0.02,0,0.03);grimoireM.add(clasp);
- const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);}
+ const rune=new THREE.Mesh(new THREE.TorusGeometry(0.065,0.011,6,14),new THREE.MeshBasicMaterial({color:0xffd36a}));rune.position.set(0.02,0,0.045);grimoireM.add(rune);for(const _cx of [-1,1])for(const _cy of [-1,1]){const _cg=TT(gmesh(new THREE.BoxGeometry(0.05,0.05,0.056),0xe3b21f),'trim');_cg.position.set(_cx*0.093,_cy*0.13,0.005);grimoireM.add(_cg);}const _sb1=new THREE.Mesh(new THREE.BoxGeometry(0.006,0.115,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb1.position.set(0.02,0,0.05);grimoireM.add(_sb1);const _sb2=new THREE.Mesh(new THREE.BoxGeometry(0.115,0.006,0.006),new THREE.MeshBasicMaterial({color:0xffe9a0}));_sb2.position.set(0.02,0,0.05);grimoireM.add(_sb2);const _gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.032,0),new THREE.MeshBasicMaterial({color:0x5aa0ff}));_gem.position.set(0.02,-0.095,0.05);_gem.scale.z=0.6;grimoireM.add(_gem);const _fe=gmesh(new THREE.BoxGeometry(0.01,0.27,0.05),0xd8ccae);_fe.position.set(0.108,0,0.004);grimoireM.add(_fe);}
 rig.lArm.add(grimoireM);grimoireM.position.set(-0.08,-0.34,0.05);grimoireM.rotation.set(0.2,0,0);grimoireM.visible=false;
 const mountainShieldM=new THREE.Group();
 {const face=TT(gmesh(new THREE.BoxGeometry(0.32,0.5,0.05),0x6e6f73),'tint');mountainShieldM.add(face);
