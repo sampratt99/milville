@@ -7618,6 +7618,33 @@ function optionsAt(tx,ty){
 /* =========================== item icons ============================ */
 function drawItemIcon(g,id,S){
   g.save();g.translate(S/2,S/2);g.imageSmoothingEnabled=false;
+  if(ITEMS[id]&&ITEMS[id].cat==='Rune'){
+    const RC={fire_rune:['#5a220e','#e0641c','#ffc061'],nature_rune:['#16401f','#2f9e44','#9be6a0']}[id]||['#2f2650','#6a4f9a','#c9b8e8'];
+    g.fillStyle=RC[0];
+    g.beginPath();
+    g.moveTo(0,-S*0.30);
+    g.quadraticCurveTo(S*0.27,-S*0.22,S*0.29,0);
+    g.quadraticCurveTo(S*0.24,S*0.25,0,S*0.30);
+    g.quadraticCurveTo(-S*0.24,S*0.25,-S*0.29,0);
+    g.quadraticCurveTo(-S*0.27,-S*0.22,0,-S*0.30);
+    g.closePath(); g.fill();
+    let gr=null; try{ gr=g.createRadialGradient(-S*0.05,-S*0.05,1,0,0,S*0.28); }catch(e){}
+    if(gr){ gr.addColorStop(0,RC[2]); gr.addColorStop(0.55,RC[1]); gr.addColorStop(1,RC[0]); g.fillStyle=gr; }
+    else g.fillStyle=RC[1];
+    g.beginPath(); g.arc(0,0,S*0.235,0,7); g.fill();
+    g.strokeStyle='rgba(18,12,8,0.78)'; g.lineWidth=S*0.05; g.lineCap='round'; g.lineJoin='round';
+    if(id==='fire_rune'){
+      g.beginPath(); g.moveTo(0,S*0.17); g.lineTo(0,-S*0.03); g.lineTo(-S*0.09,-S*0.15);
+      g.moveTo(0,-S*0.03); g.lineTo(S*0.09,-S*0.15); g.moveTo(-S*0.11,S*0.07); g.lineTo(S*0.11,S*0.07); g.stroke();
+    } else if(id==='nature_rune'){
+      g.beginPath(); g.moveTo(0,S*0.17); g.lineTo(0,-S*0.15);
+      g.moveTo(0,-S*0.03); g.quadraticCurveTo(S*0.13,-S*0.07,S*0.13,-S*0.17);
+      g.moveTo(0,S*0.05); g.quadraticCurveTo(-S*0.13,S*0.01,-S*0.13,-S*0.09); g.stroke();
+    } else { g.beginPath(); g.moveTo(0,-S*0.13); g.lineTo(0,S*0.13); g.moveTo(-S*0.10,0); g.lineTo(S*0.10,0); g.stroke(); }
+    g.fillStyle='rgba(255,255,255,0.30)';
+    g.beginPath(); if(g.ellipse)g.ellipse(-S*0.10,-S*0.12,S*0.06,S*0.032,0.6,0,7); else g.arc(-S*0.10,-S*0.12,S*0.05,0,7); g.fill();
+    g.restore(); return;
+  }
   if(id==='key_slag'){
     g.strokeStyle='#141418';g.lineWidth=S*0.045;g.fillStyle='#3c3c46';
     g.beginPath();for(let i=0;i<6;i++){const a=i*Math.PI/3-Math.PI/2,r=S*0.16,px=Math.cos(a)*r,py=-S*0.19+Math.sin(a)*r;i?g.lineTo(px,py):g.moveTo(px,py);}g.closePath();g.fill();g.stroke();
