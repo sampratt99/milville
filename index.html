@@ -443,6 +443,13 @@
     flex-direction:row-reverse; flex-wrap:wrap; gap:3px; max-width:120px; z-index:6;}
   #activeprayers canvas{width:20px;height:20px;background:rgba(20,16,10,.82); border:1px solid #ffe66d;
     border-radius:50%; box-shadow:0 0 5px rgba(255,230,109,.4);}
+  #activebuffs{position:absolute; right:3px; top:27px; display:flex;
+    flex-direction:row-reverse; flex-wrap:wrap; gap:3px; max-width:120px; z-index:6;}
+  .buffchip{display:flex;flex-direction:column;align-items:center;gap:1px;}
+  .buffchip canvas{width:20px;height:20px;background:rgba(14,20,24,.85); border:1px solid #8fd6ff;
+    border-radius:50%; box-shadow:0 0 5px rgba(143,214,255,.4);}
+  .buffchip span{font:bold 9px Verdana;color:#bfe6ff;text-shadow:0 1px 2px #000;
+    background:rgba(10,12,16,.72);padding:0 3px;border-radius:6px;}
   .eslot{
     width:46px; height:46px; background:#3a3128;
     border:1px solid #0d0b08; border-radius:3px;
@@ -794,6 +801,7 @@
         <div id="wildbadge" title="Wilderness level"><canvas id="wildskull" width="20" height="20"></canvas><span id="wildlvl">1</span></div>
         <div id="compass" title="Face north"><span id="compassN">N</span></div>
         <div id="activeprayers"></div>
+        <div id="activebuffs"></div>
         <div id="orbs">
           <div id="hporbwrap" title="Hitpoints"><canvas id="hpheart" width="14" height="14"></canvas><div id="hporb">10</div></div>
           <div id="prorbwrap" title="Prayer points"><div id="prorb">100</div></div>
@@ -4273,6 +4281,10 @@ function renderEncy(){
 }
 
 function itemEffect(id){
+  const _po=ITEMS[id]&&ITEMS[id].potion;
+  if(_po){const _L=levelFor(player.skills[_po.skill]),
+    _a=_po.super?(Math.floor(_L*0.15)+5):(Math.floor(_L*0.10)+3);
+    return 'Boosts your '+SKILL_META[_po.skill].name+' by +'+_a+' levels at your current level ('+_L+'). The boost fades 1 level per minute, so it lasts about '+_a+' minutes. Drinking another refreshes it unless the new boost would be weaker.';}
   const ht={proctor_helm:1,crimson_proctor_helm:2,gilded_warden_helm:3}[id];
   if(ht){const pct=Math.round([0,0.10,0.14,0.18][ht]*100);
     return '+'+pct+'% Attack accuracy and damage against the creature of your active Slayer contract while out in the wild. Also wards off the wail of a banshee.';}
@@ -4792,6 +4804,7 @@ function drinkPotion(id,i){
   const it=player.inv[i]; if(it){ if((it.qty||1)>1){it.qty--;} else removeSlot(i); }
   if(typeof renderInv==='function')renderInv();
   if(typeof renderSkills==='function')renderSkills();
+  if(typeof renderBuffHud==='function')renderBuffHud();
   if(typeof sfx!=='undefined'&&sfx.eat)sfx.eat();
   msg('You drink the '+ITEMS[id].name.toLowerCase()+'. Your '+SKILL_META[sk].name+' is boosted.','#8fd6ff');
   dirty=true;
@@ -6259,6 +6272,7 @@ function ratsTick(){
       &&dist1(r.x,r.y,r.sx,r.sy)<=8
       &&(!_ct||_ct===r||MOB_KINDS[r.kind].minion))r.target=player;
     if(r.dormant||r._rising){r.target=null;continue;}
+    if(r.kind==='master_reforged'&&!r.dormant&&r.sy!==98){r.sx=219;r.sy=98;}   /* fight anchor: arena centre, never the throne (lava) */
     if(r.kind==='master_reforged'&&(r.target||r.spec||r.dormant===false))rectorSpecialTick(r,performance.now());
     if(MOB_KINDS[r.kind].boss&&r.kind!=='snowking'&&r.kind!=='cinderwing'&&r.kind!=='master_reforged'&&r.kind!=='slag_warden'&&r.kind!=='ember_choir'&&r.kind!=='forge_tyrant'&&(r.target||r.spec))bossSpecialTick(r,performance.now());
     if(r.kind==='snowking'&&(r.target||r.spec))snowKingSpecialTick(r,performance.now());
@@ -6858,7 +6872,7 @@ function itemPrimary(i){
   if(s.noted){if(bankOpen)depositSlot(i,s.qty);else msg('A banknote. Take it to a bank to deposit it.');return;}
   const id=s.id,prim=ITEMS[id].prim;
   if(id==='mining_pouch'){if(bankOpen)emptyPouchToBank();else fillPouch();return;}
-  if(id==='logs'||id==='oak_logs'||id==='willow_logs'){lightFire(i);return;}
+  if(id==='logs'||id==='oak_logs'||id==='willow_logs'||id==='birch_logs'){lightFire(i);return;}
   if(ITEMS[id].equip){equipFromInv(i);return;}
   if(prim==='Eat'){
     if(typeof duel!=='undefined'&&duel.state!=='none'&&duel.rules&&duel.rules.noFood){msg('No food is allowed in this duel!','#9c1f1f');return;}
@@ -18075,8 +18089,8 @@ function makeGroundItem(id){
   const metalOf=s=>{for(const k in METAL)if(s.indexOf(k)===0||s.indexOf('_'+k)>=0||nm.indexOf(k)===0)return METAL[k];return null;};
 
   /* ---------------- existing resource models ---------------- */
-  if(id==='logs'||id==='oak_logs'||id==='willow_logs'){
-    const c=id==='logs'?0x6b4a2e:id==='oak_logs'?0x5a3c22:0x7a5a36;
+  if(id==='logs'||id==='oak_logs'||id==='willow_logs'||id==='birch_logs'){
+    const c=id==='logs'?0x6b4a2e:id==='oak_logs'?0x5a3c22:id==='birch_logs'?0xd6cfc2:0x7a5a36;
     const l=add(CYL(0.07,0.07,0.5,6),c);l.rotation.z=Math.PI/2;l.position.y=0.07;
     const l2=add(CYL(0.06,0.06,0.42,6),c);l2.rotation.z=Math.PI/2;l2.rotation.y=0.5;l2.position.set(0.04,0.16,0.04);
   }
@@ -20917,6 +20931,11 @@ function buildLuxuryModel(id){
 /* accurate mechanical stat lines (regen intervals computed from the live tick math) */
 function luxStatLines(id){
   const eq=(ITEMS[id]&&ITEMS[id].equip)||{}, out=[];
+  const _po=ITEMS[id]&&ITEMS[id].potion;
+  if(_po){const _L=levelFor(player.skills[_po.skill]),
+    _a=_po.super?(Math.floor(_L*0.15)+5):(Math.floor(_L*0.10)+3);
+    out.push(['Boost','+'+_a+' '+SKILL_META[_po.skill].name+' (at your Lv '+_L+')']);
+    out.push(['Duration','~'+_a+' min, fades 1 level/min']);}
   if(eq.atk)out.push(['Attack','+'+eq.atk]);
   if(eq.str)out.push(['Strength','+'+eq.str]);
   if(eq.def)out.push(['Defence (melee)','+'+eq.def]);
@@ -23943,6 +23962,27 @@ function renderPrayers(){
       const c=document.createElement('canvas');c.width=22;c.height=22;c.title=PRAYER_META[id].name+' is active';
       drawPrayerIcon(c.getContext('2d'),id,22);ap.appendChild(c);}}
 }
+function renderBuffHud(){
+  const el=document.getElementById('activebuffs'); if(!el)return;
+  el.innerHTML='';
+  if(!player||!player.boosts)return;
+  for(const sk in player.boosts){
+    const cur=boostFor(sk); if(cur<=0)continue;
+    const b=player.boosts[sk];
+    const msLeft=Math.max(0,b.amt*60000-(Date.now()-b.t0));
+    const mm=Math.floor(msLeft/60000), ss=Math.floor((msLeft%60000)/1000);
+    const chip=document.createElement('div'); chip.className='buffchip';
+    chip.title='+'+cur+' '+SKILL_META[sk].name+' boost, fades 1 level per minute';
+    const c=document.createElement('canvas'); c.width=20;c.height=20;
+    const g=c.getContext('2d');
+    g.save();g.translate(2,1);drawUiIcon(g,SKILL_META[sk].ui,16);g.restore();
+    g.fillStyle='#bfe6ff';g.font='bold 8px Verdana';g.textAlign='right';g.textBaseline='alphabetic';
+    g.fillText('+'+cur,19.5,19.5);
+    const t=document.createElement('span'); t.textContent=mm+':'+String(ss).padStart(2,'0');
+    chip.appendChild(c); chip.appendChild(t); el.appendChild(chip);
+  }
+}
+setInterval(renderBuffHud,1000);
 function showPrayerTip(id,can,ev){
   const tip=ensureSpellTip(); const m=PRAYER_META[id]||{};
   tip.innerHTML='<b style="color:#ffe08a">'+m.name+'</b><br>Prayer level '+(m.req||1)+'<br>'+(m.fx||'')+(can?'':'<br><span style="color:#e07070">Locked</span>');
@@ -25258,7 +25298,7 @@ function rectorResetEncounter(){
     if(typeof msg==='function')msg('The Heart lies quiet \u2014 the machine has not yet knit the Rector whole. He reforms in '+hh+'h '+mm+'m.','#caa23a');
     return;
   }
-  if(_rectorBoss){ _rectorBoss.alive=true; _rectorBoss.dormant=true; _rectorBoss.hp=_rectorBoss.maxhp; _rectorBoss.x=_rectorBoss.px=219; _rectorBoss.y=_rectorBoss.py=85; _rectorBoss.target=null; _rectorBoss.spec=null; _rectorBoss.enraged=false; _rectorBoss.enrageDone=false; _rectorBoss._sawDormant=false; _rectorBoss._risen=false; _rectorBoss._rising=null; _rectorBoss.phaseIdx=0; _rectorBoss.respawnAt=0; if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true; }
+  if(_rectorBoss){ _rectorBoss.alive=true; _rectorBoss.dormant=true; _rectorBoss.hp=_rectorBoss.maxhp; _rectorBoss.x=_rectorBoss.px=219; _rectorBoss.y=_rectorBoss.py=85; _rectorBoss.sx=219; _rectorBoss.sy=85; _rectorBoss.target=null; _rectorBoss.spec=null; _rectorBoss.enraged=false; _rectorBoss.enrageDone=false; _rectorBoss._sawDormant=false; _rectorBoss._risen=false; _rectorBoss._rising=null; _rectorBoss.phaseIdx=0; _rectorBoss.respawnAt=0; if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true; }
   for(let i=0;i<_rectorGuards.length;i++){ const gd=_rectorGuards[i]; if(!gd)continue; gd.alive=true; gd.hp=gd.maxhp; gd.x=gd.px=gd.sx; gd.y=gd.py=gd.sy; gd.target=null; gd.respawnAt=0; if(gd._m&&gd._m.group)gd._m.group.visible=true; }
   for(const o of objects)if(o.def==='siphon_pillar')o.active=false;
   _rectorFireRing=null; _rectorFireT=0;
@@ -25296,7 +25336,7 @@ function rectorLavaTick(r,nowM){
     }
   }
 }
-const SIPHON_HP=75;   /* damage needed to batter an active siphon pillar dark */
+const SIPHON_HP=56;   /* damage needed to batter an active siphon pillar dark (was 75; -25% in the group rebalance) */
 function rectorSpecialTick(r,nowM){
   if(!r.alive||r.dormant){r.spec=null;return;}
   const hpf=r.hp/r.maxhp;
@@ -25308,12 +25348,12 @@ function rectorSpecialTick(r,nowM){
   if(typeof MP==='undefined'||!MP.iOwnRector||MP.iOwnRector()){
   if(r._siphonCd===undefined)r._siphonCd=nowM+8000;
   if(!anyActive&&nowM>=r._siphonCd&&pillars.length){
-    const pool=pillars.slice(), n=r.enraged?2:1;
+    const pool=pillars.slice(), n=1;   /* always one pillar, even enraged (was 2 - too punishing) */
     for(let k=0;k<n&&pool.length;k++){const idx=Math.floor(Math.random()*pool.length);const pl=pool.splice(idx,1)[0];pl.active=true;pl.hotUntil=nowM+15000;pl.hp=SIPHON_HP;pl.maxhp=SIPHON_HP;}
     msg('The First Rector reaches for the siphon \u2014 a pillar flares! Strike it dark before he knits himself whole.','#ff6a2a');
-    r._siphonCd=nowM+(r.enraged?20000:30000);
+    r._siphonCd=nowM+(r.enraged?32000:45000);
   }
-  if(anyActive){ if(!r._healT||nowM-r._healT>900){r._healT=nowM; r.hp=Math.min(r.maxhp,r.hp+Math.round(r.maxhp*0.012)); } }
+  if(anyActive){ if(!r._healT||nowM-r._healT>900){r._healT=nowM; r.hp=Math.min(r.maxhp,r.hp+Math.round(r.maxhp*0.008)); } }
   for(const pl of pillars)if(pl.active&&pl.hotUntil&&nowM>pl.hotUntil)pl.active=false;
   if(typeof MP!=='undefined'&&MP.emberPillarSync)MP.emberPillarSync();
   }
