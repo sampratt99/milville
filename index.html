@@ -3905,6 +3905,10 @@ function incomingMobHit(mi){
   if(player.hp<=0)return;
   const _ak=MOB_KINDS[r.kind]; if(!_ak)return;
   const _astyle=_ak.atkStyle||'melee';
+  if(_astyle==='melee'){
+    const _rr=((_ak.atkRange)||1)+1;   /* +1 absorbs stream lag */
+    if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>_rr)return;
+  }
   const sdf=_astyle==='magic'?eqStat('mdef'):_astyle==='ranged'?eqStat('rdef'):eqStat('def');
   const effD=lvl('defense')*(prayerMult('def'));
   protWarn(r);
@@ -5436,6 +5440,7 @@ function playerTick(){
       if(typeof renderEquip==='function')renderEquip();
     }
     if(r.warden&&!wardenVulnerable(r)){dmg=0;if(!r._shrugT||performance.now()-r._shrugT>2500){r._shrugT=performance.now();msg('Your blow rings off the Warden\u2019s molten hide \u2014 smother its four cinder vents to cool it!','#b34718');}}
+    if(r.kind==='master_reforged'&&typeof rectorShielded==='function'&&rectorShielded()){dmg=0;if(!r._sipShrugT||performance.now()-r._sipShrugT>2500){r._sipShrugT=performance.now();msg('The siphon knits him faster than you can wound him \u2014 strike the lit pillar dark!','#ff6a2a');}}
     if(wstyle==='ranged'){
       const _ft=300,_ac=_innateArrow?'#ff7a2a':((_arrowId&&ITEMS[_arrowId].equip.tint!==undefined)?('#'+ITEMS[_arrowId].equip.tint.toString(16).padStart(6,'0')):'#cfd6da');
       spawnProjectile(player.px+0.5,player.py+0.5,r,'arrow',_ac,_ft);
@@ -5785,6 +5790,7 @@ function playerTick(){
     if(nowC<player.nextAtk)return;
     const _dw=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
     player.nextAtk=nowC+((_dw&&_dw.spd)||2400); player.swingT=nowC;
+    if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
     const _mx=(typeof _duelMaxhit==='function')?_duelMaxhit():8;
     const dmg=rndi(1,Math.max(2,_mx));
     splats.push({ent:'obj',o,dmg,t:nowC}); player.combatT=nowC;
@@ -6208,6 +6214,7 @@ function doSpecial(){
   for(let h=0;h<2;h++){
     let dm=(Math.random()<_specAcc)?rndi(Math.floor(mx*0.5),Math.max(1,Math.floor(mx*1.5))):0;
     if(r.warden&&!wardenVulnerable(r))dm=0;
+    if(r.kind==='master_reforged'&&typeof rectorShielded==='function'&&rectorShielded())dm=0;
     if(r.kind==='kurask'&&!(player.equip.shield&&player.equip.shield.id==='leaf_dagger'))dm=0;
     if(r.kind==='gargoyle'&&r.hp-dm<1)dm=Math.max(0,r.hp-1);
     splats.push({ent:r,dmg:dm,t:nowS+h*300});
@@ -6292,11 +6299,13 @@ function ratsTick(){
       {const _cheb=Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y));
        if(_cheb<=1){r._chaseStart=undefined;}
        else if(player.action&&player.action.type==='attack'&&player.action.rat===r){
-         if(r._chaseStart===undefined)r._chaseStart=performance.now();
+         /* anti-SAFESPOT only: the 3s clock runs while the mob is pinned on
+            the SAME tile; a kited mob is moving, so it walks all the way */
+         if(r._chaseStart===undefined||r._csx!==r.x||r._csy!==r.y){r._chaseStart=performance.now();r._csx=r.x;r._csy=r.y;}
          else if(performance.now()-r._chaseStart>3000&&!(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss)){
            for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
              const nx=player.x+dx,ny=player.y+dy;
-             if(!blockedStrict(nx,ny)&&!(nx===player.x&&ny===player.y)){r.x=nx;r.y=ny;break;}
+             if(!blockedStrict(nx,ny)&&!(nx===player.x&&ny===player.y)){r.x=nx;r.y=ny;r.px=nx;r.py=ny;break;}
            }
            r._chaseStart=undefined;
          }
@@ -6319,7 +6328,9 @@ function ratsTick(){
           r.nextAtk=nowM+(r.enraged?(r.kind==='cinderwing'?1800:1500):2400);
           r.swingT=nowM;
           const _gsw=(typeof MP!=='undefined'&&MP.groupMobSwingTarget)?MP.groupMobSwingTarget(r.i):null;
-          if(_gsw){MP.sendMobAtk(r.i,_gsw);}
+          const _gpos=(_gsw&&MP.groupmatePos)?MP.groupmatePos(_gsw):null;
+          const _mrch2=((MOB_KINDS[r.kind].atkRange)||1)+1;   /* +1 absorbs stream lag */
+          if(_gsw&&_gpos&&Math.max(Math.abs(r.x-_gpos.x),Math.abs(r.y-_gpos.y))<=_mrch2){MP.sendMobAtk(r.i,_gsw);}
           else{
           let dmg=0;
           const _ak=MOB_KINDS[r.kind];
@@ -25337,6 +25348,7 @@ function rectorLavaTick(r,nowM){
   }
 }
 const SIPHON_HP=56;   /* damage needed to batter an active siphon pillar dark (was 75; -25% in the group rebalance) */
+function rectorShielded(){return typeof objects!=='undefined'&&objects.some(o=>o.def==='siphon_pillar'&&o.active);}
 function rectorSpecialTick(r,nowM){
   if(!r.alive||r.dormant){r.spec=null;return;}
   const hpf=r.hp/r.maxhp;
@@ -27744,7 +27756,7 @@ function render(now){
         if(_sp<0.6){const u=_ss(_sp/0.6);armR=-0.3-2.3*u;}
         else{const u=_ss((_sp-0.6)/0.4);armR=-2.6+2.35*u;}}
       else{showTool=null;armR=-0.5+Math.sin(now*0.006)*0.22;}
-    }else if(act.type==='attack'||act.type==='datk'){
+    }else if(act.type==='attack'||act.type==='datk'||act.type==='pillarstrike'){
       showTool=wEq;
       const _ws=currentWeaponStyle();
       const _hm=1/(1-Math.min(30,(typeof eqStat==='function'?eqStat('atkspeed'):0))/100); const swA=(now-(player.swingT||-1e9))*_hm;
@@ -29053,7 +29065,7 @@ const MP = (function () {
   };
 
   let ws = null, conn = false, want = false, backoff = 1000;
-  let lastPos = 0, lastPing = 0, lastGear = '', lastAct = '';
+  let lastPos = 0, lastPing = 0, lastGear = '', lastAct = '', _stKeep = 0;
   const RP = new Map();      /* uid -> remote record */
   const claims = new Map();  /* mobIndex -> {uid, t} */
   const _sent = [];          /* debug/test ring of outbound msgs */
@@ -29180,6 +29192,7 @@ const MP = (function () {
     const a = player.action;
     if (a && a.type === 'attack' && a.rat) return { k: 'attack', m: a.rat.i };
     if (a && a.type === 'datk') return { k: 'attack', m: -1 };
+    if (a && a.type === 'pillarstrike') return { k: 'attack', m: -1 };
     if (a && a.type === 'gather' && a.obj && typeof OBJ_DEFS !== 'undefined' && OBJ_DEFS[a.obj.def]) return { k: 'gather', sk: OBJ_DEFS[a.obj.def].skill };
     if (a && a.type === 'cook') return { k: 'cook' };
     if (player.emote) return { k: 'emote', e: player.emote };
@@ -29190,7 +29203,7 @@ const MP = (function () {
   function pushOutbound(t) {
     if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() }); }
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
-    if (g !== lastGear || a !== lastAct) { lastGear = g; lastAct = a; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
+    if (g !== lastGear || a !== lastAct || (a !== 'null' && t - _stKeep > 4000)) { lastGear = g; lastAct = a; _stKeep = t; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
     if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null, app: selfApp() }); }
   }
@@ -30056,7 +30069,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (Array.isArray(m.nodes)) for (const e of m.nodes) _applyDepletedNode(e.x | 0, e.y | 0, e.rs | 0);
         break;
       }
-      case 'sw': { const _rp = RP.get(m.uid); if (_rp) _rp.swingT = now(); break; }
+      case 'sw': { const _rp = RP.get(m.uid); if (_rp) { _rp.swingT = now(); _rp._swActT = now(); } break; }
       case 'frz': {
         if (m.uid === player.uid) break;
         const _fr = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
@@ -30282,7 +30295,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         const mi = m.m | 0, r = (typeof rats !== 'undefined') ? rats[mi] : null;
         if (!r || !r.alive) break;
         const c = claims.get(mi); if (!(c && c.uid === player.uid)) break;   /* only the owner applies */
-        const d = Math.max(0, m.d | 0);
+        let d = Math.max(0, m.d | 0);
+        if (r.kind === 'master_reforged' && typeof rectorShielded === 'function' && rectorShielded()) d = 0;
         groupAggroHit(mi, m.uid, d);
         r.hp -= d;
         if (r.hp <= 0 && typeof mobDie === 'function') mobDie(r, true);
@@ -30526,7 +30540,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     /* combat swing — mirrors the local melee / ranged / magic arm motion, driven by
        real per-hit 'sw' timestamps (falls back to a synthesized cycle if none seen) */
     let _rRest = true, _rSwT = -1.5, _rWpT = -0.6, _rSwA = -1;
-    if (r.act && r.act.k === 'attack') {
+    if ((r.act && r.act.k === 'attack') || (r._swActT && t - r._swActT < 3500)) {
       const we = r.gear && r.gear.weapon && typeof ITEMS !== 'undefined' && ITEMS[r.gear.weapon] && ITEMS[r.gear.weapon].equip;
       const style = (typeof weaponStyle === 'function') ? weaponStyle(we) : 'melee';
       const _hh = r.gear && r.gear.hands && typeof ITEMS!=='undefined' && ITEMS[r.gear.hands] && ITEMS[r.gear.hands].equip; const _hm = 1/(1-Math.min(30,(_hh&&_hh.atkspeed)||0)/100); const swA = ((r.swingT !== undefined) ? (t - r.swingT) : (t % 2400))*_hm;
@@ -30829,6 +30843,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     return tgt;
   }
   function sendMobAtk(mi, toUid) { if (active() && conn) send({ t: 'mobatk', m: mi, to: toUid }); }
+  function groupmatePos(uid) { const r = RP.get(uid); return (r && typeof r.x === 'number') ? { x: Math.round(r.x), y: Math.round(r.y) } : null; }
   /* boss-mechanic sync: freeze procs + the Snow King's Snowfall (warn/fire/enrage) */
   const _rbliz = [];
   function sendFreeze(mi, ms) { if (active() && conn) send({ t: 'frz', m: mi | 0, ms: ms | 0 }); }
@@ -30966,7 +30981,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
