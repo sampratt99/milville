@@ -1293,7 +1293,7 @@ ITEMS.ember_gauntlets={name:'Ember gauntlets',ex:'Obsidian-plated gauntlets that
 ITEMS.leaf_sword={name:'Leaf-bladed sword',ex:'A broad green-steel blade honed for rubbery slayer hides \u2014 the only edge a kurask fears.',val:15000,equip:{slot:'weapon',atk:55,str:40,spd:2400,model:'leafsw',verb:'Wield',req:40,tint:0x5a8a3a,trim:0x8fc46a}};
 ITEMS.leaf_battleaxe={name:'Leaf-bladed battleaxe',ex:'A heavy leaf-forged axehead that shears through kurask hide \u2014 and most other things.',val:90000,equip:{slot:'weapon',atk:72,str:84,spd:3000,model:'leafax',verb:'Wield',req:55,tint:0x4a7a2e,trim:0x9fd47a}};
 ITEMS.leaf_dagger={name:'Leaf-bladed dagger',ex:'A single perfect leaf of razor green-steel, gripped point-down in the off hand. The only offhand blade ever forged.',val:120000,equip:{slot:'shield',atk:16,str:10,def:8,model:'leafdag',verb:'Wield',req:60,tint:0x3f6b2e,trim:0x9fd47a}};
-ITEMS.ashfang={name:'Ashfang',ex:'Cinderwing\u2019s own pinion-bone, strung with her sinew. The only bow alive with fire in its draw. It conjures its own dragon arrows as it is drawn \u2014 no ammunition need be equipped in the ammo slot.',val:220000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:84,rstr:18,req:70,maxArrow:7}};
+ITEMS.ashfang={name:'Ashfang',ex:'Cinderwing\u2019s own pinion-bone, strung with her sinew. The only bow alive with fire in its draw. It conjures its own dragon arrows as it is drawn \u2014 no ammunition need be equipped in the ammo slot. (It carries a special attack: Cinderpoint Shot.)',val:220000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:84,rstr:18,req:70,maxArrow:7,spec:1}};
 ITEMS.emberbrand={name:'Emberbrand',ex:'A blade quenched in the crater\u2019s heart \u2014 its fuller still runs molten. The finest sword ever forged. (It carries a special attack: Volcanic Rend.)',val:260000,equip:{slot:'weapon',atk:88,str:76,spd:2200,model:'sword',verb:'Wield',req:60,spec:1,tint:0x2b1c16,trim:0xff6a2a}};
 ITEMS.ember_cape={name:'Ember cape',ex:'Woven from Cinderwing\u2019s downfeathers; it smoulders but never burns its wearer.',val:90000,equip:{slot:'cape',ratk:6,rstr:4,def:6,model:'cape',verb:'Wear',req:0,tint:0x8a2e1a,trim:0xffa24a}};
 ITEMS.forgemaster_cape={name:"Forgemaster's cape",ex:'Prised from the sealed vault at the Heart of the Emberdeep. Its weave drinks heat and marks its bearer a master of the forge \u2014 finest cape the mountain has to give.',val:0,noSell:true,cat:'Cape',equip:{slot:'cape',atk:4,str:6,def:10,ratk:5,rstr:4,matk:4,mdmg:2,mdef:7,rdef:7,model:'cape',verb:'Wear',req:0,tint:0x8a2e1a,trim:0xffc258}};
@@ -1549,8 +1549,10 @@ ITEMS.warrant={name:'Warrant',ex:'A rector\u2019s seal of commission, pressed in
 ITEMS.rector_signet={name:'First Rector\u2019s signet',ex:'A signet ring of blackened iron, its pelican crest inverted. Prised from the First Rector \u2014 dense with stolen power, it can be smelted like a bar.',val:0,noSell:true,stack:1};
 ITEMS.obsidian_shard={name:'Obsidian shard',ex:'A splinter of volcanic glass, edges keen enough to draw blood from the air. The Cinder Forge hungers for these.',val:1400,stack:1};
 /* ===== Cinder Forge upgrades of Cinderwing's weapons ===== */
-ITEMS.ashfang_kindled={name:'Ashfang, Kindled',ex:'Ashfang rekindled at the Cinder Forge \u2014 the pinion-bow now draws living flame, each shot trailing embers. Cinderwing\u2019s fury, sharpened. Like Ashfang, it looses its own dragon arrows with nothing equipped in the ammo slot.',val:420000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:96,rstr:29,req:75,maxArrow:8}};
+ITEMS.ashfang_kindled={name:'Ashfang, Kindled',ex:'Ashfang rekindled at the Cinder Forge \u2014 the pinion-bow now draws living flame, each shot trailing embers, and Cinderpoint Shot burns hotter. Cinderwing\u2019s fury, sharpened. Like Ashfang, it looses its own dragon arrows with nothing equipped in the ammo slot.',val:420000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:96,rstr:29,req:75,maxArrow:8,spec:1}};
 ITEMS.emberbrand_reforged={name:'Emberbrand, Reforged',ex:'Emberbrand folded anew in the Heart of the Emberdeep \u2014 its molten fuller never cools, and Volcanic Rend bites deeper. The finest blade, bettered.',val:480000,equip:{slot:'weapon',atk:100,str:88,spd:2200,model:'sword',verb:'Wield',req:70,spec:1,tint:0x1c0f0a,trim:0xff8a2a}};
+ITEMS.cindermaw={name:'Cindermaw',ex:'A staff cut from Cinderwing\u2019s own breastbone and capped with a caged ember that never dies. It hungers. (It carries a special attack: Soulfire Brand.)',val:260000,equip:{slot:'weapon',model:'cindermaw',verb:'Wield',spd:2400,matk:52,mdmg:12,req:70,spec:1,tint:0x1c0f0a,trim:0xff6a2a}};
+ITEMS.cindermaw_ignited={name:'Cindermaw, Ignited',ex:'Cindermaw set alight at the Cinder Forge \u2014 the caged ember has become a living coal, and Soulfire Brand burns longer and deeper. Cinderwing\u2019s hunger, unleashed.',val:480000,equip:{slot:'weapon',model:'cindermaw',verb:'Wield',spd:2400,matk:62,mdmg:15,req:75,spec:1,tint:0x0f0806,trim:0xff8a2a}};
 
 /* ===== Emberdeep consumables + luxury (Hirschfeld's shop) ===== */
 ITEMS.potion_attack={name:'Attack potion',ex:'A brew that sharpens your attack for a while. Three sips.',prim:'Drink',potion:{skill:'attack'},doses:3,stack:true,val:200,cat:'Consumable'};
@@ -1595,6 +1597,7 @@ function bestArrowId(maxTier){var best=null,bestR=-1,rl=lvl('ranged');
     if(e.rstr>bestR){bestR=e.rstr;best=id;}}
   return best||'bronze_arrow';}
 function isEmberbrand(id){return id==='emberbrand'||id==='emberbrand_reforged';}
+function isCindermaw(id){return id==='cindermaw'||id==='cindermaw_ignited';}
 ITEMS.icicle_crown={name:'Icicle Crown',ex:'A jagged diadem of everlasting ice, wrenched from the Snow King\u2019s brow \u2014 a trophy few will ever wear. Its frost never leaves you.',val:300000,equip:{slot:'head',def:42,str:6,matk:6,mdef:8,model:'icecrown',verb:'Wear',req:60,tint:0xbfe9ff,trim:0xffffff,frostset:1}};
 ITEMS.aurora_cape={name:'Aurora cape',ex:'A shimmering cloak woven from captured northern lights \u2014 the frost-forged pride of the Snow King\u2019s hoard, and the finest cape a fighter can wear.',val:150000,equip:{slot:'cape',atk:8,str:6,def:9,ratk:8,rstr:4,matk:8,mdmg:4,rdef:9,mdef:9,model:'cape',verb:'Wear',tint:0x3fd0c8,trim:0x9a7fe0}};
 ITEMS.frost_shard={name:'Frost shard',ex:'A sliver of never-melting glacier ice, prized by crafters. Cold to the touch, always.',val:800,stack:1};
@@ -2612,7 +2615,7 @@ const SPELL_TIERS=[
  ['bolt','Bolt',2,'chaos', 9,1,[17,23,29,35]],
  ['blast','Blast',3,'death',13,1,[41,47,53,59]],
  ['wave','Wave',4,'blood', 17,1,[62,65,70,75]],
- ['surge','Surge',5,'soul', 31,1,[81,85,90,95]]];
+ ['surge','Surge',5,'soul', 21,1,[81,85,90,95]]];
 const SPELLS={};
 SPELL_TIERS.forEach(function(T,ti){var tkey=T[0],tname=T[1],ecount=T[2],cat=T[3],pbase=T[4],pstep=T[5],reqs=T[6];
   ELEM_DEF.forEach(function(E){var el=E[0],eidx=E[1],col=E[2];
@@ -2633,7 +2636,7 @@ const SPELL_LIST=Object.keys(SPELLS).sort(function(a,b){return (SPELLS[a].util?1
  ['battlestaff','Battlestaff',30,26,0,null,7000,0x6a5ad0],
  ['mystic_staff','Mystic staff',40,38,8,null,30000,0xc56af0]
 ].forEach(function(a){ITEMS[a[0]]={name:a[1],ex:'A magical staff for casting spells.',val:a[6],
-  equip:{slot:'weapon',model:'staff',verb:'Wield',spd:3000,matk:a[3],mdmg:a[4],req:a[2],infRune:a[5],orb:a[7]}};GE_STOCK.push(a[0]);});
+  equip:{slot:'weapon',model:'staff',verb:'Wield',spd:2400,matk:a[3],mdmg:a[4],req:a[2],infRune:a[5],orb:a[7]}};GE_STOCK.push(a[0]);});
 
 [ /* robes: id,name,slot,req,mdef,matk,mdmg,val,tint */
  ['wizard_hat','Wizard hat','head',1,6,2,0,80,0x2a3aa0],
@@ -3373,6 +3376,35 @@ function dragonFireBreath(r,dir){
   for(let k=0;k<12;k++){parts.push({wx:mx,wy:my,wz:mz,smoke:true,r0:rnd(7,12),grow:rnd(12,26),a0:rnd(0.22,0.46),
     vx:sdir*rnd(1.6,5.0),vy:rnd(-1.4,0.2),t:now+k*14,life:520+rnd(0,220),col:k%2?'#ff7a1e':'#ffae3a'});}
 }
+let _cinderPatches=[];
+function cinderpointImpact(r,kindled,atT){
+  /* register a pending impact; resolved in ratsTick at atT so the patch lands on the
+     mob's CURRENT tile then (mobs move). kindled = hotter/longer patch. */
+  _cinderPatches.push({mi:r.i,at:atT,kindled:!!kindled,uid:(typeof player!=='undefined'&&player.uid)||'me',done:false});
+  if(typeof MP!=='undefined'&&MP.sendCinder)MP.sendCinder(r.i,atT-performance.now(),!!kindled);
+}
+function _resolveCinderPatches(){
+  if(!_cinderPatches.length)return; const now=performance.now();
+  for(const c of _cinderPatches){ if(c.done)continue; if(now<c.at)continue; c.done=true;
+    const r=rats[c.mi]; if(!r||!r.alive)continue;
+    /* the visual scorch lands on the mob's tile RIGHT NOW */
+    if(typeof groundFire==='function')groundFire(Math.round(r.px),Math.round(r.py));
+    /* a short burning-ground DoT on the mob (only the shooter applies damage) */
+    const _mine=(c.uid===((typeof player!=='undefined'&&player.uid)||'me'));
+    if(_mine){ const ticks=c.kindled?5:4, each=c.kindled?7:5, intv=c.kindled?900:1000;
+      r._cinderDot={dmg:each,next:now+intv,until:now+ticks*intv,int:intv,uid:c.uid}; }
+  }
+  _cinderPatches=_cinderPatches.filter(c=>!c.done);
+}
+function soulfireCast(sx,sz,r){
+  const now=performance.now(),tx=r.px+0.5,tz=r.py+0.5,gy=groundH(tx,tz)+0.5;
+  /* a curl of embers rising off the branded mob */
+  const cols=['#ffd24a','#ff8a1e','#ff5a1e','#ffae3a'];
+  for(let k=0;k<18;k++){parts.push({wx:tx+rnd(-0.35,0.35),wy:gy-0.3,wz:tz+rnd(-0.35,0.35),
+    vx:rnd(-0.3,0.3),vy:-rnd(1.4,3.0),t:now+k*14,life:480+rnd(0,260),col:cols[k%cols.length]});}
+  if(typeof burstFx==='function')burstFx(tx,gy,tz,'#ff6a2a',14);
+  if(typeof groundFire==='function')groundFire(r.px,r.py);
+}
 function groundFire(tx,ty){
   const gx=tx+0.5,gz=ty+0.5,gy=groundH(tx,ty)+0.08,now=performance.now();
   const cols=['#ffd24a','#ff8a1e','#ff5a1e','#e0401a'];
@@ -3744,6 +3776,7 @@ const MOB_DROPS={
     {gearroll:[
       {i:'ashfang',c:1/20,inv:1,m:'Ashfang drops from the roc\u2019s wing \u2014 the ember bow is yours!'},
       {i:'emberbrand',c:1/20,inv:1,m:'EMBERBRAND falls molten from the crater \u2014 the finest sword ever forged!'},
+      {i:'cindermaw',c:1/20,inv:1,m:'CINDERMAW falls from the roc\u2019s breast \u2014 the ember staff hungers in your hand!'},
       {i:'ember_cape',c:1/8,inv:1,m:'An Ember cape drifts down, still smouldering.'}
     ]},
     {i:'molten_crown',c:1/25,inv:1,m:'The Molten Crown tumbles from Cinderwing\u2019s crest!'},
@@ -4899,6 +4932,7 @@ function mobDefStats(r){
   if(ov){dl=ov[0];db=ov[1];}
   else{dl=Math.max(1,Math.round(cmb*0.42));db=cmb>=60?Math.round((cmb-60)*0.15):0;}
   if(r.superior){dl=Math.round(dl*1.4);db+=10;}
+  if(r._brandUntil&&performance.now()<r._brandUntil){const _bm=r._brandDef||0.75;dl=Math.max(1,Math.round(dl*_bm));db=Math.round(db*_bm);}
   return [dl,db];
 }
 function mobDefRoll(r){const s=mobDefStats(r);return (s[0]+9)*(s[1]+64);}
@@ -5385,7 +5419,8 @@ function playerTick(){
         if(!player._lowmagT||nowC-player._lowmagT>2000){player._lowmagT=nowC;msg('You need Magic level '+_spell.req+' to cast '+_spell.name+'.','#9c1f1f');}
         cancelAction();return;}
       const _inf=(_weq&&_weq.infRune)||null;let _haveRunes=true;
-      for(const rid in _spell.runes){if(rid===_inf)continue;if(countItem(rid)<_spell.runes[rid]){_haveRunes=false;break;}}
+      const _freeCast=(typeof isCindermaw==='function'&&_w&&isCindermaw(_w.id));   /* Cindermaw conjures its own power \u2014 no runes, like Ashfang needs no arrows */
+      if(!_freeCast)for(const rid in _spell.runes){if(rid===_inf)continue;if(countItem(rid)<_spell.runes[rid]){_haveRunes=false;break;}}
       if(!_haveRunes){player.nextAtk=nowC+1200;
         if(!player._norunesT||nowC-player._norunesT>2000){player._norunesT=nowC;msg('You do not have enough runes to cast '+_spell.name+'.','#9c1f1f');}
         cancelAction();return;}
@@ -5448,7 +5483,8 @@ function playerTick(){
     }
     else if(wstyle==='magic'){
       const _inf=(_weq&&_weq.infRune)||null;
-      for(const rid in _spell.runes){if(rid===_inf)continue;takeItems(rid,_spell.runes[rid]);}
+      const _freeCast=(typeof isCindermaw==='function'&&_w&&isCindermaw(_w.id));
+      if(!_freeCast)for(const rid in _spell.runes){if(rid===_inf)continue;takeItems(rid,_spell.runes[rid]);}
       if(typeof renderInv==='function')renderInv();
       if(typeof renderSpellbook==='function')renderSpellbook();
       const _ft=340;
@@ -5536,9 +5572,10 @@ function playerTick(){
       if(!_spell){player.nextAtk=nowC+1200;msg('Choose a spell to autocast in your spellbook.','#9c1f1f');cancelAction();return;}
       if(lvl('magic')<_spell.req){player.nextAtk=nowC+1200;msg('You need Magic level '+_spell.req+' to cast '+_spell.name+'.','#9c1f1f');cancelAction();return;}
       const _inf=(_dw&&_dw.infRune)||null;let _hv=true;
-      for(const rid in _spell.runes){if(rid===_inf)continue;if(countItem(rid)<_spell.runes[rid]){_hv=false;break;}}
+      const _freeCast2=(typeof isCindermaw==='function'&&player.equip.weapon&&isCindermaw(player.equip.weapon.id));
+      if(!_freeCast2)for(const rid in _spell.runes){if(rid===_inf)continue;if(countItem(rid)<_spell.runes[rid]){_hv=false;break;}}
       if(!_hv){player.nextAtk=nowC+1200;msg('You do not have enough runes to cast '+_spell.name+'.','#9c1f1f');cancelAction();return;}
-      for(const rid in _spell.runes){if(rid===_inf)continue;takeItems(rid,_spell.runes[rid]);}
+      if(!_freeCast2)for(const rid in _spell.runes){if(rid===_inf)continue;takeItems(rid,_spell.runes[rid]);}
       _itv=(_dw&&_dw.spd)||3000;
       if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,opp,'magic',_spell.col,320);
       _max=Math.max(1,Math.floor(_spell.pow*(1+eqStat('mdmg')/100)));
@@ -6178,11 +6215,14 @@ function playerTick(){
 
 /* rats */
 let engagedMob=null;
+function specName(id){ if(typeof isCindermaw==='function'&&isCindermaw(id))return 'Soulfire Brand';
+  if(typeof isAshfang==='function'&&isAshfang(id))return 'Cinderpoint Shot';
+  return 'Volcanic Rend'; }
 function doSpecial(){
   const we=player.equip.weapon&&ITEMS[player.equip.weapon.id]&&ITEMS[player.equip.weapon.id].equip;
   if(!we||!we.spec)return;
   const nowS=performance.now();
-  if((player.specCdT||0)>nowS){msg('Volcanic Rend is still cooling \u2014 '+Math.ceil(((player.specCdT)-nowS)/1000)+'s.','#e8801f');return;}
+  if((player.specCdT||0)>nowS){msg(specName(player.equip.weapon.id)+' is still cooling \u2014 '+Math.ceil(((player.specCdT)-nowS)/1000)+'s.','#e8801f');return;}
   const _sty=player.style==='slash'?3:player.style==='controlled'?1:0;
   const effS=Math.floor(lvl('strength')*(prayerMult('str')));
   const mx=Math.max(1,Math.floor(0.5+(effS+_sty+8)*(eqStat('str')+64)/640));
@@ -6203,6 +6243,78 @@ function doSpecial(){
   }
   const a=player.action;const r=(a&&a.type==='attack'&&a.rat&&a.rat.alive)?a.rat:null;
   if(!r){msg('You must be attacking a target to unleash the special.','#e8801f');return;}
+  /* ---- Soulfire Brand (Cindermaw): magic-weapon special, fires at range ---- */
+  if(isCindermaw(player.equip.weapon.id)){
+    const _reach=(ITEMS[player.equip.weapon.id].equip.range)||10;
+    if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>_reach){msg('Your target is out of range.','#e8801f');return;}
+    const _sp=player.autocast&&SPELLS[player.autocast];
+    if(!_sp){msg('Choose a spell to autocast before branding.','#e8801f');return;}
+    player.specCdT=nowS+60000; player.swingT=nowS;
+    if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
+    const _ign=player.equip.weapon.id==='cindermaw_ignited';
+    /* brand params: ignited burns longer + deeper */
+    const _bdur=_ign?15000:12000, _bdef=_ign?0.70:0.75, _bticks=_ign?6:5, _bint=_bdur/_bticks;
+    /* nuke: ~2x the spell's boosted max hit, rolled through a +25% spec accuracy roll */
+    const _effM=Math.floor(lvl('magic')*(prayerMult('mag')));
+    const _specAcc=hitFromRolls((_effM+8)*(eqStat('matk')+64)*1.25,mobDefRoll(r));
+    const _base=Math.floor(_sp.pow*(1+eqStat('mdmg')/100));
+    const _dot=Math.max(2,Math.round(_base*0.25));
+    msg('SOULFIRE BRAND \u2014 the ember sears its mark into the '+(MOB_KINDS[r.kind].name||'foe').toLowerCase()+'!','#ff6a2a');
+    if(typeof soulfireCast==='function')soulfireCast(player.px+0.5,player.py+0.5,r);
+    /* apply the brand (shared, on the mob object) */
+    r._brandUntil=nowS+_bdur; r._brandDef=_bdef;
+    r._brandDot={dmg:_dot,next:nowS+_bint,until:nowS+_bdur,int:_bint,uid:(typeof player!=='undefined'&&player.uid)||'me'};
+    if(typeof MP!=='undefined'&&MP.sendBrand)MP.sendBrand(r.i,_bdur,_bdef);
+    /* the initial nuke hit */
+    let dm=(Math.random()<_specAcc)?rndi(Math.floor(_base*1.2),Math.max(1,Math.floor(_base*1.8))):0;
+    if(r.warden&&!wardenVulnerable(r))dm=0;
+    if(r.kind==='master_reforged'&&typeof rectorShielded==='function'&&rectorShielded())dm=0;
+    const _ft=340;
+    if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,r,'magic','#ff6a2a',_ft);
+    splats.push({ent:r,dmg:dm,t:nowS+_ft});
+    if(dm>0){ addXp('magic',0.9*dm); addXp('hitpoints',0.5*dm);
+      if(dm>(player.maxMagicHit||0)){player.maxMagicHit=dm;dirty=true;}
+      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm))){
+        r.hp-=dm; if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dm);
+        if(r.hp<=0){mobDie(r,false);cancelAction();} }
+    }
+    player.combatT=nowS; sfx.hit&&sfx.hit();
+    return;
+  }
+  /* ---- Cinderpoint Shot (Ashfang): ranged special, fires at bow range ---- */
+  if(isAshfang(player.equip.weapon.id)){
+    const _wq=ITEMS[player.equip.weapon.id].equip;
+    let _rch=(_wq.range||7); if(player.style==='longrange')_rch+=2;
+    if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>_rch){msg('Your target is out of range.','#e8801f');return;}
+    player.specCdT=nowS+60000; player.swingT=nowS;
+    if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
+    const _kin=player.equip.weapon.id==='ashfang_kindled';
+    msg('CINDERPOINT SHOT \u2014 a blazing shaft sears the '+(MOB_KINDS[r.kind].name||'foe').toLowerCase()+'!','#ff6a2a');
+    /* one massive shot: 2.0x (2.4x kindled) the ranged max, +25% spec accuracy */
+    const _effR=Math.floor(lvl('ranged')*(prayerMult('rng')));
+    const _styR=player.style==='accurate'?3:0;
+    const _arStr=(ITEMS.dragon_arrow&&ITEMS.dragon_arrow.equip.rstr)||60;
+    const _rmax=Math.floor(0.5+(_effR+_styR+8)*(eqStat('rstr')+_arStr+64)/640);
+    const _specAcc=hitFromRolls((_effR+_styR+8)*(eqStat('ratk')+64)*1.25,mobDefRoll(r));
+    const _mult=_kin?2.1:1.8;
+    let dm=(Math.random()<_specAcc)?rndi(Math.floor(_rmax*_mult*0.6),Math.max(1,Math.floor(_rmax*_mult))):0;
+    if(r.warden&&!wardenVulnerable(r))dm=0;
+    if(r.kind==='master_reforged'&&typeof rectorShielded==='function'&&rectorShielded())dm=0;
+    if(r.kind==='kurask')dm=0;
+    /* the flaming shaft, then a burning patch WHERE THE MOB STANDS on impact */
+    const _ft=300;
+    if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,r,'arrow','#ff8a2a',_ft);
+    splats.push({ent:r,dmg:dm,t:nowS+_ft});
+    if(typeof cinderpointImpact==='function')cinderpointImpact(r,_kin,nowS+_ft);
+    if(dm>0){ addXp('ranged',1.2*dm); addXp('hitpoints',0.5*dm);
+      if(dm>(player.maxRangeHit||0)){player.maxRangeHit=dm;dirty=true;}
+      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm))){
+        r.hp-=dm; if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dm);
+        if(r.hp<=0){mobDie(r,false);cancelAction();} }
+    }
+    player.combatT=nowS; sfx.hit&&sfx.hit();
+    return;
+  }
   if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>1){msg('Close with your target first.','#e8801f');return;}
   player.specCdT=nowS+60000;
   player.swingT=nowS;if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
@@ -6237,8 +6349,9 @@ function updateSpecBtn(){
   b.style.display='flex';
   const cd=Math.max(0,(player.specCdT||0)-performance.now());
   const lab=b.querySelector('.speclab'),bar=b.querySelector('.specfill');
-  if(cd>0){const frac=1-cd/60000;if(lab)lab.textContent='Volcanic Rend \u00b7 '+Math.ceil(cd/1000)+'s';b.classList.add('cooling');if(bar)bar.style.width=Math.round(frac*100)+'%';}
-  else{if(lab)lab.textContent='\u2668 Volcanic Rend';b.classList.remove('cooling');if(bar)bar.style.width='100%';}
+  const _sn=specName(player.equip.weapon.id);
+  if(cd>0){const frac=1-cd/60000;if(lab)lab.textContent=_sn+' \u00b7 '+Math.ceil(cd/1000)+'s';b.classList.add('cooling');if(bar)bar.style.width=Math.round(frac*100)+'%';}
+  else{if(lab)lab.textContent='\u2668 '+_sn;b.classList.remove('cooling');if(bar)bar.style.width='100%';}
 }
 setInterval(updateSpecBtn,200);
 let isNewGame=false;
@@ -6264,7 +6377,33 @@ function ratsTick(){
         &&!(nx===player.x&&ny===player.y)&&(n.wild||!inWild(nx,ny))){n.x=nx;n.y=ny;}
     }
   }
+  if(typeof _resolveCinderPatches==='function')_resolveCinderPatches();
   for(const r of rats){
+    if(!r.alive)continue;
+    if(r._cinderDot){const _cd=r._cinderDot,_nw=performance.now();
+      if(_nw>=_cd.until){r._cinderDot=null;}
+      else if(_nw>=_cd.next){_cd.next+=_cd.int;
+        const _mine=(_cd.uid===((typeof player!=='undefined'&&player.uid)||'me'));
+        if(_mine&&r.alive){ const _ct=_cd.dmg; splats.push({ent:r,dmg:_ct,t:_nw});
+          if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,_ct))){
+            r.hp-=_ct; if(r.hp<=0){r._cinderDot=null; if(typeof mobDie==='function')mobDie(r,false);}
+          }
+        }
+      }
+    }
+    if(r._brandDot){const _bd=r._brandDot,_nw=performance.now();
+      if(_nw>=_bd.until){r._brandDot=null;}
+      else if(_nw>=_bd.next){_bd.next+=_bd.int;
+        /* only the brander applies the burn tick (owner-authoritative, no double-dip) */
+        const _mine=(_bd.uid===((typeof player!=='undefined'&&player.uid)||'me'));
+        if(_mine&&r.alive){ const _bt=_bd.dmg;
+          splats.push({ent:r,dmg:_bt,t:_nw});
+          if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,_bt))){
+            r.hp-=_bt; if(r.hp<=0){r._brandDot=null; if(typeof mobDie==='function')mobDie(r,false);}
+          }
+        }
+      }
+    }
     if(!r.alive)continue;
     if(typeof MP!=='undefined'&&MP.mobOverride(r))continue;
     if(!_mobOnCurFloor(r)){if(r.target===player)r.target=null;continue;}
@@ -6942,7 +7081,7 @@ function hasEmberSet(eq){
   for(const sl of slots){const it=eq[sl];if(!it||!ITEMS[it.id]||!ITEMS[it.id].equip||!ITEMS[it.id].equip.emberset)return false;}
   return true;
 }
-const EMBER_SET_BONUS={str:6,rstr:6};   /* wearing the full set adds this on top of the per-piece bonuses */
+const EMBER_SET_BONUS={str:12,rstr:6};   /* wearing the full set adds this on top of the per-piece bonuses (str bumped 6->12 to bring melee sustain to endgame parity with ranged/magic) */
 function emberLavaImmune(){return inVolcano&&hasEmberSet();}   /* full set -> walk the Emberdeep\u2019s lava unharmed */
 function furnaceBlessed(){return performance.now()<(player.furnaceUntil||0);}
 function lavaSafe(){return emberLavaImmune()||furnaceBlessed();}
@@ -7053,7 +7192,7 @@ function equipFromInv(i){
   if(eq.slot==='weapon'&&(eq.model==='bow'||eq.twoHand)&&player.equip.shield){const sh=player.equip.shield;player.equip.shield=null;const free=player.inv.findIndex(x=>!x);player.inv[free]={id:sh.id,qty:1};msg('You sling your shield off to wield two-handed.');}
   sfx.pickup();
   msg('You '+eq.verb.toLowerCase()+' the '+ITEMS[s.id].name.toLowerCase()+'.');
-  if(eq.emberset&&hasEmberSet()){msg('The Ember set flares to life \u2014 you feel the forge\u2019s power. (Full-set bonus: +6 Strength, +6 Ranged, and immunity to the Emberdeep\u2019s lava.)','#ff8a2a');}
+  if(eq.emberset&&hasEmberSet()){msg('The Ember set flares to life \u2014 you feel the forge\u2019s power. (Full-set bonus: +12 Strength, +6 Ranged strength, and immunity to the Emberdeep\u2019s lava.)','#ff8a2a');}
   renderInv();renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;
 }
 function unequipSlot(slot){
@@ -7993,6 +8132,25 @@ function drawItemIcon(g,id,S){
     g.beginPath();g.moveTo(0,-9);g.lineTo(8,-3);g.lineTo(6,8);g.lineTo(-6,8);g.lineTo(-8,-3);g.closePath();g.fill();g.stroke();
     g.strokeStyle='rgba(255,255,255,0.85)';g.lineWidth=1.6;g.lineCap='round';
     g.beginPath();g.moveTo(0,-4);g.lineTo(0,4);g.moveTo(-3,0);g.lineTo(3,0);g.stroke();
+    g.restore();return;
+  }
+  if(typeof isCindermaw==='function'&&isCindermaw(id)){
+    const _ig=id==='cindermaw_ignited';
+    /* charred haft */
+    g.strokeStyle=_ig?'#0f0806':'#1c0f0a';g.lineWidth=3.0;g.lineCap='round';
+    g.beginPath();g.moveTo(-6,10);g.lineTo(4,-5);g.stroke();
+    /* molten cracks along the haft */
+    g.strokeStyle=_ig?'#ff8a2a':'#ff6a2a';g.lineWidth=0.9;
+    g.beginPath();g.moveTo(-4,7);g.lineTo(-2.4,5.4);g.moveTo(-1,3);g.lineTo(0.6,1.4);g.stroke();
+    /* caged ember maw at the head: two jaw prongs + a glowing core */
+    g.strokeStyle=_ig?'#ffb24a':'#c9662a';g.lineWidth=1.6;
+    g.beginPath();g.arc(6,-7,5.2,-2.4,0.5);g.stroke();
+    g.beginPath();g.arc(6,-7,5.2,2.0,4.4);g.stroke();
+    const gd=g.createRadialGradient(6,-7,0,6,-7,5.4);
+    gd.addColorStop(0,'#ffffff');gd.addColorStop(0.35,_ig?'#ffd24a':'#ffae3a');gd.addColorStop(0.7,'#ff5a1e');gd.addColorStop(1,'rgba(0,0,0,0)');
+    g.fillStyle=gd;g.beginPath();g.arc(6,-7,5.2,0,7);g.fill();
+    g.fillStyle='#fff2c0';g.beginPath();g.arc(6,-7,2.0,0,7);g.fill();
+    if(_ig){/* extra flame lick */ g.fillStyle='rgba(255,150,40,0.7)';g.beginPath();g.moveTo(6,-12);g.lineTo(8,-8);g.lineTo(4,-8);g.closePath();g.fill();}
     g.restore();return;
   }
   if(ITEMS[id]&&ITEMS[id].equip&&ITEMS[id].equip.model==='staff'){
@@ -18187,6 +18345,22 @@ function makeGroundItem(id){
     const _bl=add(BOX(0.018,0.22,0.026),0x7a5230);_bl.position.set(0,-0.12,0.04);_bl.rotation.x=-0.45;
     add(BOX(0.004,0.5,0.004),0xd8d2c0).position.set(0,0.05,0.12);
   }
+  else if(eq.model==='cindermaw'){
+    const _ig=(id==='cindermaw_ignited');
+    /* charred haft */
+    add(CYL(0.02,0.024,0.66,6),_ig?0x0f0806:0x1c0f0a).position.set(0,0.04,0);
+    /* molten cracks: thin glowing rings up the haft */
+    for(const hy of [-0.06,0.08,0.22]){const rg=add(TOR(0.026,0.006,8),_ig?0xff8a2a:0xff5a1e);rg.rotation.x=Math.PI/2;rg.position.set(0,hy,0);}
+    /* the maw: two curved jaw prongs cradling the ember */
+    for(const sgn of [-1,1]){const jaw=add(CON(0.028,0.16,4),_ig?0x2a1510:0x241109);jaw.position.set(sgn*0.05,0.4,0);jaw.rotation.z=sgn*0.5;}
+    /* caged ember core */
+    const core=add(SPH(0.055,9,8),_ig?0xffd24a:0xff6a2a);core.position.set(0,0.44,0);
+    const glow=add(SPH(0.078,9,8),_ig?0xff8a2a:0xff5a1e);glow.position.set(0,0.44,0);
+    if(glow.material){glow.material.transparent=true;glow.material.opacity=0.4;}
+    /* three flame shards licking up around the core */
+    for(let i=0;i<3;i++){const a=i/3*6.283;const fl=add(CON(0.02,0.11,4),i%2?0xffd24a:0xff8a1e);
+      fl.position.set(Math.cos(a)*0.055,0.52,Math.sin(a)*0.055);fl.rotation.z=Math.cos(a)*0.3;fl.rotation.x=-Math.sin(a)*0.3;}
+  }
   else if(eq.model==='staff'){
     add(CYL(0.016,0.016,0.62,6),0x6e4a2a).position.set(0,0.06,0);
     const _oc=eq.infRune==='fire_rune'?0xe0632a:eq.infRune==='water_rune'?0x4f86d6:eq.infRune==='earth_rune'?0x7d9a46:eq.infRune==='air_rune'?0xbcd8ee:(eq.mdmg?0xb58be0:0xcfd6da);
@@ -19524,6 +19698,27 @@ function drawSayText(wx,wz,yoff,text){
   octx.fillStyle='#ffff2a';octx.fillText(text,p.x,p.y);
   octx.restore();
 }
+let _brandIconCache=null;
+function soulfireBrandIcon(){ if(_brandIconCache)return _brandIconCache;
+  const c=document.createElement('canvas');c.width=c.height=30;const g=c.getContext('2d');
+  g.translate(15,15);
+  /* a burning brand-sigil: a downward flame with an inner eye of white heat */
+  const gd=g.createRadialGradient(0,2,0,0,2,13);
+  gd.addColorStop(0,'#fff2c0');gd.addColorStop(0.4,'#ffae3a');gd.addColorStop(0.75,'#ff5a1e');gd.addColorStop(1,'rgba(120,20,0,0.05)');
+  g.fillStyle=gd;
+  g.beginPath();g.moveTo(0,-11);g.bezierCurveTo(7,-4,7,6,0,11);g.bezierCurveTo(-7,6,-7,-4,0,-11);g.closePath();g.fill();
+  /* inner white-hot eye */
+  g.fillStyle='#fff6d8';g.beginPath();g.moveTo(0,-3);g.bezierCurveTo(3.4,0,3.4,5,0,8);g.bezierCurveTo(-3.4,5,-3.4,0,0,-3);g.closePath();g.fill();
+  g.fillStyle='#ff5a1e';g.beginPath();g.arc(0,4,1.5,0,7);g.fill();
+  _brandIconCache=c;return c; }
+function drawSoulfireBrand(wx,wz,yoff){ const p=proj(wx,groundH(wx,wz)+yoff,wz); if(!p)return;
+  const t=performance.now(),pulse=0.85+0.15*Math.sin(t*0.008);
+  octx.save();
+  octx.globalAlpha=pulse;
+  octx.fillStyle='rgba(30,8,4,0.66)';octx.beginPath();octx.arc(p.x,p.y,15,0,Math.PI*2);octx.fill();
+  octx.strokeStyle='#ff6a2a';octx.lineWidth=1.6;octx.beginPath();octx.arc(p.x,p.y,15,0,Math.PI*2);octx.stroke();
+  octx.drawImage(soulfireBrandIcon(),p.x-13,p.y-13,26,26);
+  octx.restore(); }
 const _ohPrayCache={};
 function overheadPrayerIcon(id){ if(_ohPrayCache[id])return _ohPrayCache[id];
   const c=document.createElement('canvas');c.width=c.height=30;drawPrayerIcon(c.getContext('2d'),id,30);_ohPrayCache[id]=c;return c; }
@@ -20582,7 +20777,9 @@ const FORGE_RECIPES=[
   {out:'ashfang_kindled',   base:'ashfang',   signets:7, cinders:6000, warrants:80,
    blurb:'Ranged 84\u219296, Ranged str 14\u219222. Draws living flame.'},
   {out:'emberbrand_reforged',base:'emberbrand', signets:7, cinders:6000, warrants:80,
-   blurb:'Attack 88\u2192100, Strength 76\u219288, faster Volcanic Rend. The finest blade, bettered.'}
+   blurb:'Attack 88\u2192100, Strength 76\u219288, faster Volcanic Rend. The finest blade, bettered.'},
+  {out:'cindermaw_ignited',   base:'cindermaw',  signets:7, cinders:6000, warrants:80,
+   blurb:'Magic 52\u219262, Magic dmg 12\u219215%, deeper Soulfire Brand. Cinderwing\u2019s hunger, unleashed.'}
 ];
 /* ===== EMBER ARMOUR: crafted here from raw feathers + obsidian shards. Requires Smithing 80. Best armour in the school. ===== */
 const EMBER_SMITH_REQ=80;
@@ -26292,6 +26489,10 @@ function drawOverlay(now){
   if(inVolcano&&_lastVolcFloor===4)for(const o of objects)if(o.def==='siphon_pillar'&&o.active&&o.maxhp)drawBar(o.x+0.5,o.y+0.5,4.0,clamp((o.hp||0)/o.maxhp,0,1));
   if(typeof _drawRectorChain==='function')_drawRectorChain();
   for(const r of rats)
+    if(r.alive&&r._brandUntil&&now<r._brandUntil&&_mobOnCurFloor(r)){
+      drawSoulfireBrand(r.px+0.5,r.py+0.5,2.35);
+    }
+  for(const r of rats)
     if(r.alive&&now-r.lastHit<3500&&_mobOnCurFloor(r)){
       drawBar(r.px+0.5,r.py+0.5,0.95,clamp(r.hp/r.maxhp,0,1));
       const pN=proj(r.px+0.5,groundH(r.px+0.5,r.py+0.5)+1.3,r.py+0.5);
@@ -29809,7 +30010,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     else if (wmod === 'sword') G.sword.visible = true;
     else if (wmod === 'scim') G.scim.visible = true;
     else if (wmod === 'bow') G.bowM.visible = true;
-    else if (wmod === 'staff') G.staffM.visible = true;
+    else if (wmod === 'staff' || wmod === 'cindermaw') { G.staffM.visible = true;
+      if (wmod === 'cindermaw' && G.staffM) { /* recolor the shared staff orb/haft to ember */
+        G.staffM.traverse(function(o9){ if(o9.material&&o9.material.color){ /* orb is the bright child */ } }); } }
     else if (wmod === 'maul') { if (gear.weapon === 'frostmaul') G.fmaul.visible = true; else G.maul.visible = true; }
     if ((wmod === 'sword' || wmod === 'scim') && we) tintG(wmod === 'scim' ? G.scim : G.sword, we.tint !== undefined ? we.tint : 0xc7ccd4, we.trim !== undefined ? we.trim : 0x8a6a2a);
     const _rShe = gear.shield ? EQ(gear.shield) : null; const _rShMod = _rShe ? _rShe.model : null;
@@ -30074,6 +30277,21 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (m.uid === player.uid) break;
         const _fr = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
         if (_fr && _fr.alive && MOB_KINDS[_fr.kind] && !MOB_KINDS[_fr.kind].boss) _fr.frozen = performance.now() + Math.min(Math.max(m.ms | 0, 0), 10000);
+        break;
+      }
+      case 'brnd': {
+        if (m.uid === player.uid) break;
+        const _br = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
+        if (_br && _br.alive) { const _ms = Math.min(Math.max(m.ms | 0, 0), 20000);
+          _br._brandUntil = performance.now() + _ms; _br._brandDef = m.d || 0.75;
+          _br._brandBy = m.uid; }
+        break;
+      }
+      case 'cndr': {
+        if (m.uid === player.uid) break;
+        if (typeof _cinderPatches !== 'undefined' && typeof rats !== 'undefined' && rats[m.m | 0]) {
+          _cinderPatches.push({ mi: m.m | 0, at: performance.now() + Math.min(Math.max(m.dl | 0, 0), 2000), kindled: !!m.k, uid: m.uid, done: false });
+        }
         break;
       }
       case 'cwsp': {
@@ -30847,6 +31065,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   /* boss-mechanic sync: freeze procs + the Snow King's Snowfall (warn/fire/enrage) */
   const _rbliz = [];
   function sendFreeze(mi, ms) { if (active() && conn) send({ t: 'frz', m: mi | 0, ms: ms | 0 }); }
+  function sendBrand(mi, ms, defMul) { if (active() && conn) send({ t: 'brnd', m: mi | 0, ms: ms | 0, d: defMul || 0.75 }); }
+  function sendCinder(mi, delayMs, kindled) { if (active() && conn) send({ t: 'cndr', m: mi | 0, dl: delayMs | 0, k: kindled ? 1 : 0 }); }
   let _swSentT = 0;
   function sendSwing() { if (!active() || !conn) return; const _n = now(); if (_n - _swSentT < 350) return; _swSentT = _n; send({ t: 'sw' }); }
   function skSpec(ph, x, y, ms, en) { if (active() && conn) send({ t: 'sksp', ph: ph, x: x | 0, y: y | 0, ms: ms | 0, en: en ? 1 : 0 }); }
@@ -30981,7 +31201,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
@@ -31192,8 +31412,9 @@ function openCinderwingInfo(){
       '<div style="color:#ffa24a;font-weight:bold;font-size:13px;margin-bottom:4px;">Notable drops</div>'+
       '<div style="font-size:12.5px;line-height:1.55;color:#f0dcc4;">'+
         '\u2022 Coins: <b>45,000\u201380,000</b> &mdash; every kill<br>'+
-        '\u2022 <b>Ashfang</b> (ember bow, fires its own dragon arrows) &mdash; ~1/10<br>'+
+        '\u2022 <b>Ashfang</b> (ember bow, fires its own dragon arrows; Cinderpoint Shot special) &mdash; ~1/20<br>'+
         '\u2022 <b>Emberbrand</b> (finest sword; Volcanic Rend special) &mdash; ~1/20<br>'+
+        '\u2022 <b>Cindermaw</b> (endgame staff; Soulfire Brand special) &mdash; ~1/20<br>'+
         '\u2022 <b>Ember cape</b> &mdash; ~1/8<br>'+
         '\u2022 <b>Molten Crown</b> &mdash; ~1/25<br>'+
         '\u2022 Rune bars (noted) &mdash; ~1/2<br>'+
