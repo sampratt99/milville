@@ -536,6 +536,29 @@
   #logocv{width:min(560px,92vw);height:auto;margin-bottom:4px;}
   #gesellhead{color:#ffd98c;font:bold 12px Georgia,serif;padding:7px 3px 3px;}
   #gesell{max-height:132px;overflow-y:auto;}
+  #getabs{display:flex;gap:4px;margin:2px 0 6px;}
+  .getab{flex:1;font:bold 12px Georgia,serif;padding:6px 4px;cursor:pointer;color:#d8c49a;
+    background:#241d15;border:1px solid #0d0b08;border-radius:4px 4px 0 0;}
+  .getab.on{background:#3a2f20;color:#ffe08a;border-bottom-color:#caa23a;}
+  #mktbar{display:flex;gap:5px;margin-bottom:5px;}
+  .mktbtn{font:bold 11.5px Georgia,serif;padding:6px 9px;cursor:pointer;color:#fff;
+    background:#33271a;border:1px solid #caa23a;border-radius:6px;}
+  .mktbtn:hover{background:#43331f;}
+  #mktnew{background:#2f4a26;}
+  .mkthead{color:#ffd98c;font:bold 12px Georgia,serif;padding:6px 3px 3px;}
+  #mktmine{max-height:120px;overflow-y:auto;}
+  #mktboard{max-height:210px;overflow-y:auto;}
+  .mktrow{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:5px;cursor:pointer;}
+  .mktrow:hover{background:rgba(255,255,255,0.05);}
+  .mktrow .side{font:bold 10px Verdana;padding:2px 5px;border-radius:4px;flex:0 0 auto;}
+  .mktrow .side.buy{background:#264a66;color:#bfe6ff;}
+  .mktrow .side.sell{background:#5a3030;color:#ffcaca;}
+  .mktrow .nm{flex:1;color:#e8dcc0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px Georgia,serif;}
+  .mktrow .who{color:#9a8c6e;font:11px Verdana;flex:0 0 auto;}
+  .mktrow .pr{color:#ffe08a;font:bold 12px Georgia,serif;flex:0 0 auto;}
+  .mktrow .qy{color:#b8a888;font:11px Verdana;flex:0 0 auto;}
+  .mktrow.mine{background:rgba(90,110,50,0.14);}
+  .mktempty{justify-content:center;color:#9a8c6e;cursor:default;padding:14px;font:12px Georgia,serif;text-align:center;}
   #wmaplegend{width:210px;gap:6px;}
   .wmlrow{gap:10px;padding:6px 9px;font:12px Verdana;}
   .wmlrow canvas{flex:0 0 auto;}
@@ -1014,11 +1037,25 @@
 </div></div>
 <div id="geui" class="gemodal"><div class="gepanel">
   <div class="gebar"><span>Grand Exchange</span><span id="gecoins"></span><div class="gex" id="geclose" title="Close">&#10005;</div></div>
-  <input id="gesearch" class="encsearch" type="text" placeholder="Search the exchange&hellip;" autocomplete="off" spellcheck="false">
-  <div id="gefilters" class="encfilters"></div>
-  <div id="gelist"></div>
-  <div id="gesellhead">Sell from your pack</div><div id="gesell"></div>
-  <div class="gefoot"><span>Click a row to buy &middot; click a row under &ldquo;Sell&rdquo; to sell</span></div>
+  <div id="getabs"><button class="getab on" data-getab="exchange">Exchange</button><button class="getab" data-getab="market">Player Market</button></div>
+  <div id="geview-exchange">
+    <input id="gesearch" class="encsearch" type="text" placeholder="Search the exchange&hellip;" autocomplete="off" spellcheck="false">
+    <div id="gefilters" class="encfilters"></div>
+    <div id="gelist"></div>
+    <div id="gesellhead">Sell from your pack</div><div id="gesell"></div>
+    <div class="gefoot"><span>Click a row to buy &middot; click a row under &ldquo;Sell&rdquo; to sell</span></div>
+  </div>
+  <div id="geview-market" style="display:none;">
+    <div id="mktbar">
+      <button id="mktnew" class="mktbtn">+ New offer</button>
+      <button id="mktcollectbtn" class="mktbtn">Collect <span id="mktcollectn"></span></button>
+      <button id="mktrefresh" class="mktbtn" title="Refresh">&#8635;</button>
+    </div>
+    <input id="mktsearch" class="encsearch" type="text" placeholder="Filter the market by item&hellip;" autocomplete="off" spellcheck="false">
+    <div id="mktminehead" class="mkthead">Your live offers</div><div id="mktmine"></div>
+    <div id="mktboardhead" class="mkthead">The market &mdash; what players are trading</div><div id="mktboard"></div>
+    <div class="gefoot"><span>Sell any item to other players &middot; 2% sell tax &middot; collect what you're owed anytime</span></div>
+  </div>
 </div></div>
 <div id="wmap">
   <div id="wmapframe">
@@ -1546,7 +1583,7 @@ function depositPipe(o){
   }
 }
 ITEMS.warrant={name:'Warrant',ex:'A rector\u2019s seal of commission, pressed in cooling slag. Mr. Hirschfeld issues them for tasks completed \u2014 spend them at his counter.',val:0,stack:1};
-ITEMS.rector_signet={name:'First Rector\u2019s signet',ex:'A signet ring of blackened iron, its pelican crest inverted. Prised from the First Rector \u2014 dense with stolen power, it can be smelted like a bar.',val:0,noSell:true,stack:1};
+ITEMS.rector_signet={name:'First Rector\u2019s signet',ex:'A signet ring of blackened iron, its pelican crest inverted. Prised from the First Rector \u2014 dense with stolen power, it can be smelted like a bar. Prized by smiths; freely traded between adventurers.',val:150000,noAlch:true,stack:1};
 ITEMS.obsidian_shard={name:'Obsidian shard',ex:'A splinter of volcanic glass, edges keen enough to draw blood from the air. The Cinder Forge hungers for these.',val:1400,stack:1};
 /* ===== Cinder Forge upgrades of Cinderwing's weapons ===== */
 ITEMS.ashfang_kindled={name:'Ashfang, Kindled',ex:'Ashfang rekindled at the Cinder Forge \u2014 the pinion-bow now draws living flame, each shot trailing embers, and Cinderpoint Shot burns hotter. Cinderwing\u2019s fury, sharpened. Like Ashfang, it looses its own dragon arrows with nothing equipped in the ammo slot.',val:420000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:96,rstr:29,req:75,maxArrow:8,spec:1}};
@@ -3928,7 +3965,7 @@ function groupCoLoot(r){
   if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))<=18)msg('Your group has defeated the '+r.name.toLowerCase()+'.');
   questKill(r);
   if(r.interior==='sos')sosCaveKill(r);
-  if(r.kind==='master_reforged'){ player.rectorKilledAt=Date.now(); const _crg=rndi(90000,110000); if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS); if(!addItem('coins',_crg))dropGround(r.x,r.y,'coins',_crg);} if(typeof msg==='function')msg('The First Rector falls to your group \u2014 Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants, '+EMBER_RECTOR_CINDERS+' cinders and '+_crg.toLocaleString()+' coins to your name.','#caa23a'); }
+  if(r.kind==='master_reforged'){ player.rectorKilledAt=Date.now(); const _crg=rndi(90000,110000); if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS); if(!addItem('coins',_crg))dropGround(r.x,r.y,'coins',_crg);} if(typeof msg==='function')msg('The First Rector falls to your group \u2014 Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants, '+EMBER_RECTOR_CINDERS+' cinders and '+_crg.toLocaleString()+' coins to your name.','#caa23a'); if(typeof emberQuestComplete==='function')emberQuestComplete('rector'); }
   else dropMobLoot(r);
   dirty=true;
 }
@@ -9477,6 +9514,7 @@ for(const E of [_emoteJack,_emoteXmas,_emoteChef]){EMOTES.push(E);EMOTES_BY_ID[E
 /* ===================== TITLES ===================== */
 const TITLES={
   orange_shirts:{text:'of the Orange Shirts',col:'#e8761a',hint:'Slay the dragon in Here Be Dragons.'},
+  emberbane:{text:'the Emberbane',col:'#ff6a2a',hint:'Fell the First Rector, Reforged in the Heart of the Emberdeep.'},
   merry:{text:'the Merry',col:'#1f8a3c',hint:'Save Millville Christmas (Away in a Manger).'},
   promising:{text:'the Promising',col:'#4a90c2',cond:st=>st.tot>=250,hint:'Reach total level 250.'},
   capable:{text:'the Capable',col:'#3f7bb0',cond:st=>st.tot>=500,hint:'Reach total level 500.'},
@@ -22915,9 +22953,15 @@ const QUESTS=[
   ()=>{ const q=player.quests.ember;
    const _combatDone=(typeof emberConduitsAllDrained==='function'&&emberConduitsAllDrained());
    if(!_combatDone&&q.s<3)return{hidden:true};
-   if(typeof vaultPuzzlesAllSolved==='function'&&vaultPuzzlesAllSolved())return{cls:2,text:'Complete \u2014 all four locks are broken and the blast door to the Heart of the Emberdeep is open.'};
+   if(typeof vaultPuzzlesAllSolved==='function'&&vaultPuzzlesAllSolved())return{cls:2,text:'Complete \u2014 all four locks are broken and the blast door to the Heart of the Emberdeep stands open. The First Rector waits within.'};
    const _v=(typeof _vaultSolved!=='undefined')?_vaultSolved:{}, _done=[_v.memory,_v.lockout,_v.cells,_v.web].filter(Boolean).length;
    return{cls:1,text:'Solve the Siphon Vault\u2019s four locks: the memory floor, the lockout grid, the cell bank and the current web. Solved: '+_done+'/4.'}; }],
+ ['ember_rector','The First Rector, Unmade','Mr. Hirschfeld \u2014 the Heart of the Emberdeep','60 warrants & the title \u201cthe Emberbane\u201d',null,
+  ()=>{ const q=player.quests.ember;
+   const _vaultDone=(typeof vaultPuzzlesAllSolved==='function'&&vaultPuzzlesAllSolved());
+   if(!_vaultDone&&q.s<4)return{hidden:true};
+   if(q.s>=5)return{cls:2,text:'Complete \u2014 the First Rector, Reforged is unmade. Hirschfeld has named you the Emberbane; wear the title from your character panel.'};
+   return{cls:1,text:'Pass through the blast door into the Heart of the Emberdeep and destroy the First Rector, Reforged. Clear his Discipline Committee guards to wake him, batter dark his siphon pillars, scatter from his chain lightning, and cut him down \u2014 best brought with a group.'}; }],
  ['rxmas','A Rectory Christmas','Martha Matthews \u2014 the Rectory (outside)',
   'A festive Christmas sweater & 225 Cooking XP',
   null,
@@ -23904,9 +23948,213 @@ function renderShop(){
     ls.appendChild(r);
   }
 }
-function openShop(){shopOpen=true;geFilter='All';geQuery='';const _gs=document.getElementById('gesearch');if(_gs)_gs.value='';renderShop();renderShopCoins();geEl.classList.add('on');
+function openShop(){shopOpen=true;geFilter='All';geQuery='';const _gs=document.getElementById('gesearch');if(_gs)_gs.value='';
+  if(typeof _wireMarketTabs==='function')_wireMarketTabs();
+  /* default to the Exchange tab each open */
+  const _tx=document.getElementById('getabs'); if(_tx)for(const b of _tx.children)b.classList.toggle('on',b.getAttribute('data-getab')==='exchange');
+  const _ve=document.getElementById('geview-exchange'),_vm=document.getElementById('geview-market'); if(_ve)_ve.style.display=''; if(_vm)_vm.style.display='none';
+  renderShop();renderShopCoins();geEl.classList.add('on');
   msg('Clerk: Welcome to the Grand Exchange. Buying and selling!','#103a8c');}
 function closeShop(){shopOpen=false;geEl.classList.remove('on');}
+
+/* ============================ PLAYER MARKET (client) ============================
+   A cross-server Grand Exchange order book. Talks to the worker over plain HTTP
+   (same base url as the leaderboard + MP relay) so offers match even when the
+   other player is offline. Escrow is honest: listing a SELL removes the item
+   from your pack now; listing a BUY removes the coins now; everything you're
+   owed waits in the Collect box until you claim it.
+   ============================================================================ */
+const Market = (function(){
+  function _url(){ try{ var u=(typeof MP!=='undefined'&&MP.CFG&&MP.CFG.url)||''; return u?(''+u).replace(/\/+$/,''):''; }catch(e){ return ''; } }
+  function _world(){ try{ return (typeof MP!=='undefined'&&MP.CFG&&MP.CFG.world)||'milville'; }catch(e){ return 'milville'; } }
+  function _uid(){ return (player&&player.uid)||''; }
+  function _name(){ return (player&&player.name)||'Adventurer'; }
+  var _board=[], _mine={offers:[],collect:[]}, _loading=false, _err='', _filter='';
+
+  function _api(path, body, cb){
+    var u=_url(); if(!u){ cb&&cb(null,'noserver'); return; }
+    var opts={method:body?'POST':'GET',headers:{'Content-Type':'application/json'}};
+    if(body)opts.body=JSON.stringify(body);
+    var full=u+path+(path.indexOf('?')<0?('?world='+encodeURIComponent(_world())):('&world='+encodeURIComponent(_world())));
+    try{
+      fetch(full,opts).then(function(r){return r.ok?r.json():Promise.reject(r.status);})
+        .then(function(d){ cb&&cb(d,null); })
+        .catch(function(){ cb&&cb(null,'err'); });
+    }catch(e){ cb&&cb(null,'err'); }
+  }
+
+  // ---- refresh both the board and my own state ----
+  function refresh(){
+    if(!_url()){ _err='noserver'; renderMarket(); return; }
+    _loading=true; _err=''; renderMarket();
+    var pend=2, gotErr=false;
+    function done(){ if(--pend===0){ _loading=false; if(gotErr)_err='err'; renderMarket(); } }
+    _api('/mkt/board',null,function(d,e){ if(e){gotErr=true;} else _board=(d&&d.rows)||[]; done(); });
+    if(_uid())_api('/mkt/mine?uid='+encodeURIComponent(_uid()),null,function(d,e){ if(e){gotErr=true;} else if(d){_mine={offers:d.offers||[],collect:d.collect||[]};} done(); });
+    else done();
+  }
+
+  // ---- list an offer, escrowing on the client first ----
+  function listOffer(side, item, qty, price){
+    if(!_url()){ msg('The market is offline right now.','#9c1f1f'); return; }
+    qty=Math.max(1,qty|0); price=Math.max(1,price|0);
+    if(side==='sell'){
+      if(countItem(item)<qty){ msg('You do not have '+qty+' of that to sell.','#9c1f1f'); return; }
+      takeItems(item, qty);   // ESCROW: the item leaves your pack now
+    } else {
+      var cost=qty*price;
+      if(coinsCount()<cost){ msg('You need '+fmt(cost)+' coins to place that buy offer.','#9c1f1f'); return; }
+      spendCoins(cost);       // ESCROW: coins leave your pack now
+    }
+    renderInv(); if(typeof renderShopCoins==='function')renderShopCoins();
+    _api('/mkt/list',{uid:_uid(),name:_name(),side:side,item:item,qty:qty,price:price},function(d,e){
+      if(e||!d||!d.ok){
+        // refund on failure so escrow is never lost
+        if(side==='sell')addItem(item,qty); else addItem('coins',qty*price);
+        renderInv(); if(typeof renderShopCoins==='function')renderShopCoins();
+        msg('The market could not place your offer'+(d&&d.error?(' ('+d.error+')'):'')+'. Your '+(side==='sell'?'items':'coins')+' were returned.','#9c1f1f');
+        return;
+      }
+      var mseg = d.matched>0 ? (' \u2014 '+d.matched+' filled instantly!') : '';
+      msg((side==='sell'?'Sell':'Buy')+' offer placed for '+ITEMS[item].name+mseg+' Collect your '+(side==='sell'?'coins':'items')+' from the market tab.','#2f6a2f');
+      dirty=true; refresh();
+    });
+  }
+
+  // ---- cancel a resting offer; the remainder returns via the collect box ----
+  function cancel(id){
+    _api('/mkt/cancel',{uid:_uid(),id:id},function(d,e){
+      if(e||!d||!d.ok){ msg('Could not cancel that offer.','#9c1f1f'); return; }
+      msg('Offer cancelled \u2014 the remainder is waiting in Collect.','#6b4800'); refresh();
+    });
+  }
+
+  // ---- collect everything owed into the pack ----
+  function collect(){
+    if(!_url()){ msg('The market is offline right now.','#9c1f1f'); return; }
+    _api('/mkt/collect',{uid:_uid()},function(d,e){
+      if(e||!d||!d.ok){ msg('Could not collect right now \u2014 try again.','#9c1f1f'); return; }
+      var pay=d.payouts||[]; if(!pay.length){ msg('Nothing to collect right now.','#6b4800'); refresh(); return; }
+      var got=[], dropped=0;
+      for(var i=0;i<pay.length;i++){ var p=pay[i];
+        if(p.coins){ if(!addItem('coins',p.coins)){dropGround(player.x,player.y,'coins',p.coins);dropped++;} got.push(fmt(p.coins)+' coins'); }
+        if(p.item){ var q=p.qty|0;
+          if(ITEMS[p.item]&&ITEMS[p.item].stack){ if(!addItem(p.item,q)){dropGround(player.x,player.y,p.item,q);dropped++;} }
+          else { for(var k=0;k<q;k++){ if(!addItem(p.item,1)){dropGround(player.x,player.y,p.item,1);dropped++;} } }
+          got.push((q>1?q+' \u00d7 ':'')+ITEMS[p.item].name);
+        }
+      }
+      sfx.pickup&&sfx.pickup();
+      msg('Collected: '+got.join(', ')+(dropped?' (some fell to the ground \u2014 pack was full)':'')+'.','#2f6a2f');
+      renderInv(); if(typeof renderShopCoins==='function')renderShopCoins(); dirty=true; refresh();
+    });
+  }
+
+  // ---- the "new offer" flow: pick side, item, qty, price ----
+  function newOfferDialog(){
+    // choose sell (from pack) or buy (search any item)
+    var side = (typeof confirm==='function' && confirm('Place a SELL offer? (OK = sell from your pack, Cancel = buy an item)')) ? 'sell' : 'buy';
+    var item, qty, price;
+    if(side==='sell'){
+      // list distinct sellable items in the pack
+      var seen={}, opts=[];
+      for(var i=0;i<player.inv.length;i++){var sl=player.inv[i]; if(sl&&sl.id!=='coins'&&ITEMS[sl.id]&&!ITEMS[sl.id].noSell&&!seen[sl.id]){seen[sl.id]=1;opts.push(sl.id);}}
+      if(!opts.length){ msg('You have nothing sellable in your pack.','#9c1f1f'); return; }
+      var names=opts.map(function(id,ix){return (ix+1)+'. '+ITEMS[id].name+' ('+countItem(id)+')';}).join('\n');
+      var pick=prompt('Sell which item? Enter its number:\n'+names,'1'); if(pick===null)return;
+      var pi=(parseInt(pick,10)|0)-1; if(pi<0||pi>=opts.length){ msg('That was not a valid choice.','#9c1f1f'); return; }
+      item=opts[pi];
+      var have=countItem(item);
+      qty=parseInt(prompt('How many '+ITEMS[item].name+'? (you have '+have+')', ''+have),10); if(!(qty>0))return;
+      qty=Math.min(qty,have);
+    } else {
+      var nm=prompt('Buy which item? Type part of its name:',''); if(!nm)return;
+      nm=nm.trim().toLowerCase();
+      var matches=Object.keys(ITEMS).filter(function(id){return ITEMS[id].name&&ITEMS[id].name.toLowerCase().indexOf(nm)>=0;});
+      if(!matches.length){ msg('No item matches \u201c'+nm+'\u201d.','#9c1f1f'); return; }
+      if(matches.length>1){ var mn=matches.slice(0,12).map(function(id,ix){return (ix+1)+'. '+ITEMS[id].name;}).join('\n');
+        var mp=prompt('Which item?\n'+mn,'1'); if(mp===null)return; var mi=(parseInt(mp,10)|0)-1; if(mi<0||mi>=matches.length){return;} item=matches[mi]; }
+      else item=matches[0];
+      qty=parseInt(prompt('How many '+ITEMS[item].name+' to buy?','1'),10); if(!(qty>0))return;
+    }
+    var suggested=(ITEMS[item]&&ITEMS[item].val)||1;
+    price=parseInt(prompt('Price per item, in coins? (guide: '+fmt(suggested)+' gp each)',''+suggested),10); if(!(price>0))return;
+    if(side==='buy'){ var cost=qty*price; if(coinsCount()<cost){ msg('You need '+fmt(cost)+' coins for that buy offer.','#9c1f1f'); return; } }
+    listOffer(side,item,qty,price);
+  }
+
+  return { refresh:refresh, listOffer:listOffer, cancel:cancel, collect:collect, newOfferDialog:newOfferDialog,
+    board:function(){return _board;}, mine:function(){return _mine;}, state:function(){return {loading:_loading,err:_err};},
+    setFilter:function(f){_filter=(f||'').trim().toLowerCase();}, getFilter:function(){return _filter;} };
+})();
+
+
+/* ---- the Player Market renderer + tab wiring ---- */
+function _mktAgo(ms){ var s=Math.floor((Date.now()-ms)/1000); if(s<60)return s+'s'; var m=Math.floor(s/60); if(m<60)return m+'m'; var h=Math.floor(m/60); if(h<24)return h+'h'; return Math.floor(h/24)+'d'; }
+function _mktRow(o, isMine){
+  var r=document.createElement('div'); r.className='mktrow'+(isMine?' mine':'');
+  var c=document.createElement('canvas'); c.width=24;c.height=24;
+  if(ITEMS[o.item])drawItemIcon(c.getContext('2d'),o.item,24);
+  var sd=document.createElement('span'); sd.className='side '+o.side; sd.textContent=o.side==='sell'?'SELL':'BUY';
+  var nm=document.createElement('span'); nm.className='nm'; nm.textContent=(ITEMS[o.item]?ITEMS[o.item].name:o.item);
+  var qy=document.createElement('span'); qy.className='qy'; qy.textContent='\u00d7'+o.qty;
+  var pr=document.createElement('span'); pr.className='pr'; pr.textContent=fmt(o.price)+' gp';
+  r.appendChild(c); r.appendChild(sd); r.appendChild(nm); r.appendChild(qy); r.appendChild(pr);
+  if(!isMine && o.name){ var wh=document.createElement('span'); wh.className='who'; wh.textContent=o.name; r.appendChild(wh); }
+  return r;
+}
+function renderMarket(){
+  var mineEl=document.getElementById('mktmine'), boardEl=document.getElementById('mktboard');
+  if(!mineEl||!boardEl)return;
+  var st=Market.state(), mine=Market.mine(), board=Market.board(), filt=Market.getFilter();
+  // collect button count
+  var cn=document.getElementById('mktcollectn'); var cbtn=document.getElementById('mktcollectbtn');
+  var owed=(mine.collect||[]).length;
+  if(cn)cn.textContent=owed?('('+owed+')'):'';
+  if(cbtn)cbtn.style.opacity=owed?'1':'0.55';
+  // my offers
+  mineEl.innerHTML='';
+  if(st.err==='noserver'){ var e=document.createElement('div'); e.className='mktempty'; e.textContent='The market server is not set up yet.'; mineEl.appendChild(e); }
+  else if(st.loading&&!mine.offers.length){ var l=document.createElement('div'); l.className='mktempty'; l.textContent='Loading\u2026'; mineEl.appendChild(l); }
+  else if(!mine.offers.length){ var n=document.createElement('div'); n.className='mktempty'; n.textContent='You have no live offers. Place one with \u201c+ New offer.\u201d'; mineEl.appendChild(n); }
+  else { mine.offers.forEach(function(o){ var r=_mktRow(o,true);
+    r.title='Click to cancel this offer';
+    r.addEventListener('click',function(){ if(typeof confirm!=='function'||confirm('Cancel your '+o.side+' offer for '+(ITEMS[o.item]?ITEMS[o.item].name:o.item)+'? The remainder returns to Collect.'))Market.cancel(o.id); });
+    mineEl.appendChild(r); }); }
+  // the public board (excluding my own; those show above)
+  boardEl.innerHTML='';
+  var rows=(board||[]).filter(function(o){ return o.uid!==(player&&player.uid) && (!filt||(ITEMS[o.item]&&ITEMS[o.item].name.toLowerCase().indexOf(filt)>=0)); });
+  if(st.err&&st.err!=='noserver'){ var er=document.createElement('div'); er.className='mktempty'; er.textContent='Could not reach the market. Tap \u21bb to retry.'; boardEl.appendChild(er); }
+  else if(!rows.length){ var em=document.createElement('div'); em.className='mktempty'; em.textContent=filt?'No offers match that filter.':'No one is trading right now. Be the first \u2014 hit \u201c+ New offer.\u201d'; boardEl.appendChild(em); }
+  else rows.forEach(function(o){ var r=_mktRow(o,false);
+    // clicking a SELL offer buys it; clicking a BUY offer sells into it
+    if(o.side==='sell'){ r.title='Click to buy from '+o.name;
+      r.addEventListener('click',function(){ var max=o.qty, n=max;
+        if(max>1){ var a=prompt('Buy how many '+ITEMS[o.item].name+' at '+fmt(o.price)+' gp each? (up to '+max+')',''+max); if(a===null)return; n=Math.min(max,Math.max(1,parseInt(a,10)|0)); }
+        var cost=n*o.price; if(coinsCount()<cost){ msg('You need '+fmt(cost)+' coins.','#9c1f1f'); return; }
+        Market.listOffer('buy',o.item,n,o.price); }); }
+    else { r.title='Click to sell to '+o.name;
+      r.addEventListener('click',function(){ var have=countItem(o.item); if(have<=0){ msg('You have no '+ITEMS[o.item].name+' to sell.','#9c1f1f'); return; }
+        var max=Math.min(o.qty,have), n=max;
+        if(max>1){ var a=prompt('Sell how many '+ITEMS[o.item].name+' at '+fmt(o.price)+' gp each? (up to '+max+')',''+max); if(a===null)return; n=Math.min(max,Math.max(1,parseInt(a,10)|0)); }
+        Market.listOffer('sell',o.item,n,o.price); }); }
+    boardEl.appendChild(r); });
+}
+function _wireMarketTabs(){
+  var tabs=document.getElementById('getabs'); if(!tabs||tabs._wired)return; tabs._wired=true;
+  tabs.addEventListener('click',function(e){ var b=e.target.closest('.getab'); if(!b)return;
+    var which=b.getAttribute('data-getab');
+    for(var i=0;i<tabs.children.length;i++)tabs.children[i].classList.toggle('on',tabs.children[i]===b);
+    document.getElementById('geview-exchange').style.display=(which==='exchange')?'':'none';
+    document.getElementById('geview-market').style.display=(which==='market')?'':'none';
+    if(which==='market')Market.refresh();
+  });
+  var nb=document.getElementById('mktnew'); if(nb)nb.addEventListener('click',function(){Market.newOfferDialog();});
+  var cb=document.getElementById('mktcollectbtn'); if(cb)cb.addEventListener('click',function(){Market.collect();});
+  var rb=document.getElementById('mktrefresh'); if(rb)rb.addEventListener('click',function(){Market.refresh();});
+  var ms=document.getElementById('mktsearch'); if(ms)ms.addEventListener('input',function(){Market.setFilter(ms.value);renderMarket();});
+}
+
 const PRAYER_META={
   thick_skin:{name:'Thick Skin',req:1,cat:'def',mult:1.05,drain:3,fx:'+5% Defence'},
   rock_skin:{name:'Rock Skin',req:10,cat:'def',mult:1.10,drain:6,fx:'+10% Defence'},
@@ -25487,6 +25735,7 @@ function rectorRewards(r){
   const _rrg=rndi(90000,110000);
   if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS); if(!addItem('coins',_rrg))dropGround(r.x,r.y,'coins',_rrg);}
   msg('The First Rector is undone at last. Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants, '+EMBER_RECTOR_CINDERS+' cinders and '+_rrg.toLocaleString()+' coins to your name.','#caa23a');
+  if(typeof emberQuestComplete==='function')emberQuestComplete('rector');   /* first kill completes the Emberdeep quest line + grants the Emberbane title */
   /* exactly ONE signet per kill -> solo: it's yours. (group: random member -- wired with the full reward system) */
   if(!(typeof MP!=='undefined'&&MP.groupRectorSignet&&MP.groupRectorSignet(r.i))){ if(!addItem('rector_signet',1))dropGround(r.x,r.y,'rector_signet',1); msg('A First Rector\u2019s signet clatters loose from the wreck \u2014 one, and only one.','#e8b020'); }
 }
@@ -25712,7 +25961,7 @@ function _mobOnCurFloor(r){
   return true;
 }
 const EMBER_Q_XP={skill:1500, combat:1500, prayer:3000};
-const EMBER_Q_WARRANTS={skill:20, combat:25, prayer:40};   /* warrants granted on completing each Emberdeep quest room */
+const EMBER_Q_WARRANTS={skill:20, combat:25, prayer:40, rector:60};   /* warrants granted on completing each Emberdeep quest room; the Rector kill is the finale */
 function emberQuestReconcile(){
   const q=player.quests&&player.quests.ember; if(!q)return; q.seen=q.seen||{};
   if(q.s===0){
@@ -25732,6 +25981,10 @@ function emberQuestComplete(room){
   else if(room==='puzzle'){ if(q.s>=4||q.s<3)return; q.s=4;
     addXp('prayer',EMBER_Q_XP.prayer); if(typeof addItem==='function')addItem('warrant',EMBER_Q_WARRANTS.prayer);
     msg('Quest complete \u2014 The Siphon Vault. '+EMBER_Q_XP.prayer.toLocaleString()+' Prayer XP floods through you, plus '+EMBER_Q_WARRANTS.prayer+' warrants for the ledger. The way to the Heart of the Emberdeep lies open.','#9a6a10'); }
+  else if(room==='rector'){ if(q.s>=5||q.s<4)return; q.s=5;
+    if(typeof addItem==='function')addItem('warrant',EMBER_Q_WARRANTS.rector);
+    if(typeof grantTitle==='function')grantTitle('emberbane');
+    msg('Quest complete \u2014 The First Rector, Unmade. Hirschfeld logs a further '+EMBER_Q_WARRANTS.rector+' warrants and, over the radio, dubs you the Emberbane. \u201cYou can wear that one to the ledger, adventurer.\u201d Set the title from your character panel.','#ff8a2a'); }
   else return;
   if(typeof sfx!=='undefined'&&sfx.level)try{sfx.level();}catch(e){}
   if(typeof renderQuests==='function')renderQuests();
