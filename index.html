@@ -476,7 +476,7 @@
   .gemodal{position:fixed; inset:0; background:rgba(0,0,0,.62); display:none;
     align-items:center; justify-content:center; z-index:42;}
   .gemodal.on{display:flex;}
-  .gepanel{background:#2a241c; border:3px solid #0d0b08; border-radius:4px;
+  .gepanel{background:#2a241c; border:3px solid #0d0b08; border-radius:4px; position:relative;
     box-shadow:0 0 0 2px #5d5141 inset, 0 14px 44px rgba(0,0,0,.75);
     padding:8px; width:392px; max-width:94vw;}
   .gebar{display:flex;justify-content:space-between;align-items:center;
@@ -540,14 +540,53 @@
   .getab{flex:1;font:bold 12px Georgia,serif;padding:6px 4px;cursor:pointer;color:#d8c49a;
     background:#241d15;border:1px solid #0d0b08;border-radius:4px 4px 0 0;}
   .getab.on{background:#3a2f20;color:#ffe08a;border-bottom-color:#caa23a;}
-  #mktbar{display:flex;gap:5px;margin-bottom:5px;}
-  .mktbtn{font:bold 11.5px Georgia,serif;padding:6px 9px;cursor:pointer;color:#fff;
-    background:#33271a;border:1px solid #caa23a;border-radius:6px;}
-  .mktbtn:hover{background:#43331f;}
-  #mktnew{background:#2f4a26;}
+  /* ---- OSRS-style Grand Exchange market ---- */
+  #mkthdr{display:flex;align-items:center;gap:8px;margin:2px 0 7px;}
+  #mkthdrttl{font:bold 15px Georgia,serif;color:#ffd98c;flex:1;letter-spacing:0.3px;}
+  .geicnbtn{font:14px Georgia,serif;padding:4px 9px;cursor:pointer;color:#e8dcc0;background:#2a2016;
+    border:1px solid #5a4426;border-radius:4px;}
+  .geicnbtn:hover{background:#3a2c1a;color:#ffe08a;}
+  #mktcollectbox{display:flex;align-items:center;gap:5px;padding:5px 11px;cursor:pointer;
+    background:#2a2016;border:2px solid #6a512c;border-radius:5px;font:bold 12px Georgia,serif;color:#cdbb96;}
+  #mktcollectbox.has{border-color:#caa23a;color:#ffe08a;background:#3a2c14;box-shadow:0 0 8px rgba(202,162,58,0.4);}
+  #mktcollectn{font:bold 12px Georgia,serif;}
+  /* the 8-slot grid, 2 columns like OSRS */
+  #mktslots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
+  .geslot{position:relative;background:linear-gradient(180deg,#241c12,#1a140c);border:2px solid #4a3826;
+    border-radius:5px;min-height:62px;display:flex;flex-direction:column;overflow:hidden;}
+  /* empty slot: big Buy / Sell buttons */
+  .geslot.empty{align-items:stretch;justify-content:center;flex-direction:row;gap:0;border-style:dashed;border-color:#3a2c1a;}
+  .geslotbuy,.geslotsell{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
+    font:bold 13px Georgia,serif;cursor:pointer;color:#e8dcc0;}
+  .geslotbuy:hover{background:rgba(60,110,150,0.22);color:#bfe6ff;}
+  .geslotsell:hover{background:rgba(150,70,70,0.22);color:#ffcaca;}
+  .geslotdiv{width:2px;background:#3a2c1a;}
+  .geslotbadge{font-size:16px;}
+  /* filled slot: header (buy/sell + item), body (icon + qty/price), progress bar */
+  .geslothead{display:flex;align-items:center;gap:6px;padding:4px 7px 2px;}
+  .geslothead .tag{font:bold 9.5px Verdana;padding:1px 5px;border-radius:3px;letter-spacing:0.4px;}
+  .geslothead .tag.buy{background:#274a66;color:#bfe6ff;}
+  .geslothead .tag.sell{background:#5a3030;color:#ffcaca;}
+  .geslothead .snm{flex:1;font:12px Georgia,serif;color:#f0e6d2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .geslotcancel{font:11px Verdana;color:#9a8c6e;cursor:pointer;padding:0 3px;flex:0 0 auto;}
+  .geslotcancel:hover{color:#ff8a6a;}
+  .geslotbody{display:flex;align-items:center;gap:8px;padding:1px 8px 4px;}
+  .geslotbody canvas{flex:0 0 auto;image-rendering:pixelated;}
+  .geslotinfo{flex:1;display:flex;flex-direction:column;line-height:1.35;}
+  .geslotinfo .qp{font:11.5px Verdana;color:#cdbb96;}
+  .geslotinfo .qp b{color:#ffe08a;font-weight:bold;}
+  .geslotinfo .st{font:10.5px Verdana;color:#9a8c6e;}
+  /* progress bar along the bottom: blue while pending, green when fully done */
+  .geslotbar{height:7px;background:#0d0b08;position:relative;}
+  .geslotbar .fill{height:100%;transition:width 0.4s ease;}
+  .geslotbar .fill.buy{background:linear-gradient(90deg,#2f6a9c,#4a9cd6);}
+  .geslotbar .fill.sell{background:linear-gradient(90deg,#7a4a2a,#caa23a);}
+  .geslot.done{border-color:#3aa03a;box-shadow:0 0 9px rgba(58,160,58,0.45);}
+  .geslot.done .geslotbar .fill{background:linear-gradient(90deg,#2f8a3a,#5ad65a)!important;}
+  .geslot.done .st{color:#7ad67a;}
+  /* the live market board (other players' offers) */
   .mkthead{color:#ffd98c;font:bold 12px Georgia,serif;padding:6px 3px 3px;}
-  #mktmine{max-height:120px;overflow-y:auto;}
-  #mktboard{max-height:210px;overflow-y:auto;}
+  #mktboard{max-height:170px;overflow-y:auto;margin-top:3px;}
   .mktrow{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:5px;cursor:pointer;}
   .mktrow:hover{background:rgba(255,255,255,0.05);}
   .mktrow .side{font:bold 10px Verdana;padding:2px 5px;border-radius:4px;flex:0 0 auto;}
@@ -557,8 +596,44 @@
   .mktrow .who{color:#9a8c6e;font:11px Verdana;flex:0 0 auto;}
   .mktrow .pr{color:#ffe08a;font:bold 12px Georgia,serif;flex:0 0 auto;}
   .mktrow .qy{color:#b8a888;font:11px Verdana;flex:0 0 auto;}
-  .mktrow.mine{background:rgba(90,110,50,0.14);}
   .mktempty{justify-content:center;color:#9a8c6e;cursor:default;padding:14px;font:12px Georgia,serif;text-align:center;}
+  /* ---- offer setup overlay (item pick + qty/price steppers, OSRS-style) ---- */
+  #mktsetup{position:absolute;inset:0;background:#221a12;border-radius:2px;display:flex;flex-direction:column;z-index:5;padding:10px;box-sizing:border-box;}
+  #mktsetuphead{display:flex;align-items:center;margin-bottom:8px;}
+  #mktsetuptitle{flex:1;font:bold 15px Georgia,serif;color:#ffd98c;}
+  #mktpicksearch{margin-bottom:6px;}
+  #mktpicklist{max-height:330px;overflow-y:auto;}
+  .mktpickrow{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:5px;cursor:pointer;}
+  .mktpickrow:hover{background:rgba(255,255,255,0.06);}
+  .mktpickrow .nm{flex:1;color:#e8dcc0;font:13px Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mktpickrow .gv{color:#9a8c6e;font:11px Verdana;flex:0 0 auto;}
+  .mktpickrow .hv{color:#b8a888;font:11px Verdana;flex:0 0 auto;}
+  #mktofferitem{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+  #mktofferitem canvas{image-rendering:pixelated;}
+  #mktoffername{font:bold 15px Georgia,serif;color:#ffe08a;}
+  .mktctrlrow{display:flex;align-items:baseline;justify-content:space-between;margin:9px 0 4px;}
+  .mktctrllbl{font:12px Georgia,serif;color:#cdbb96;}
+  .mktctrlval{font:bold 15px Georgia,serif;color:#fff;}
+  .mktbtnrow{display:flex;gap:4px;}
+  .mktbtnrow button{flex:1;font:bold 11px Georgia,serif;padding:6px 2px;cursor:pointer;color:#e8dcc0;
+    background:#2f2416;border:1px solid #5a4426;border-radius:4px;}
+  .mktbtnrow button:hover{background:#43331f;color:#ffe08a;}
+  #mkttotalrow{display:flex;justify-content:space-between;align-items:baseline;margin:12px 0 8px;padding-top:9px;border-top:1px solid #4a3826;font:13px Georgia,serif;color:#cdbb96;}
+  #mkttotalval{font:bold 16px Georgia,serif;color:#ffe08a;}
+  .mktconfirmbtn{width:100%;font:bold 14px Georgia,serif;padding:9px;cursor:pointer;color:#fff;
+    background:#2f6a2f;border:1px solid #4aa34a;border-radius:6px;}
+  .mktconfirmbtn:hover{background:#3a7d3a;}
+  .mktconfirmbtn.sell{background:#8a5a1e;border-color:#caa23a;}
+  .mktconfirmbtn.sell:hover{background:#a36c24;}
+  #gconfirmmsg{padding:14px 16px 6px;color:#e8dcc0;font:13.5px Georgia,serif;line-height:1.5;}
+  #gconfirmmsg b{color:#ffe08a;}
+  #gconfirmmsg .sub{display:block;margin-top:7px;color:#b8a888;font-size:12px;}
+  #gconfirmbtns{display:flex;gap:8px;padding:6px 14px 14px;}
+  .gcbtn{flex:1;font:bold 13px Georgia,serif;padding:9px;cursor:pointer;color:#fff;border-radius:6px;border:1px solid #0d0b08;}
+  .gcno{background:#5a3030;border-color:#7a4a4a;}
+  .gcno:hover{background:#6b3a3a;}
+  .gcyes{background:#2f6a2f;border-color:#4aa34a;}
+  .gcyes:hover{background:#3a7d3a;}
   #wmaplegend{width:210px;gap:6px;}
   .wmlrow{gap:10px;padding:6px 9px;font:12px Verdana;}
   .wmlrow canvas{flex:0 0 auto;}
@@ -1046,15 +1121,46 @@
     <div class="gefoot"><span>Click a row to buy &middot; click a row under &ldquo;Sell&rdquo; to sell</span></div>
   </div>
   <div id="geview-market" style="display:none;">
-    <div id="mktbar">
-      <button id="mktnew" class="mktbtn">+ New offer</button>
-      <button id="mktcollectbtn" class="mktbtn">Collect <span id="mktcollectn"></span></button>
-      <button id="mktrefresh" class="mktbtn" title="Refresh">&#8635;</button>
+    <div id="mkthdr">
+      <span id="mkthdrttl">Grand Exchange</span>
+      <button id="mktrefresh" class="geicnbtn" title="Refresh offers">&#8635;</button>
+      <div id="mktcollectbox" title="Collect completed offers">
+        <span id="mktcollectlabel">Collection Box</span><span id="mktcollectn"></span>
+      </div>
     </div>
+    <div id="mktslots"></div>
+    <div id="mktboardhead" class="mkthead">Live market &mdash; click an offer to trade instantly</div>
     <input id="mktsearch" class="encsearch" type="text" placeholder="Filter the market by item&hellip;" autocomplete="off" spellcheck="false">
-    <div id="mktminehead" class="mkthead">Your live offers</div><div id="mktmine"></div>
-    <div id="mktboardhead" class="mkthead">The market &mdash; what players are trading</div><div id="mktboard"></div>
-    <div class="gefoot"><span>Sell any item to other players &middot; 2% sell tax &middot; collect what you're owed anytime</span></div>
+    <div id="mktboard"></div>
+    <div class="gefoot"><span>8 offer slots &middot; buy &amp; sell any item &middot; 2% sell tax &middot; offers complete even while you&rsquo;re away</span></div>
+  </div>
+  <!-- generic in-game confirm dialog (replaces native confirm()) -->
+  <!-- OSRS-style offer setup overlay (item pick -> qty/price steppers), rendered inside the GE panel -->
+  <div id="mktsetup" style="display:none;">
+    <div id="mktsetuphead"><span id="mktsetuptitle">Buy offer</span><div class="gex" id="mktsetupback" title="Back">&#10005;</div></div>
+    <div id="mktsetupbody">
+      <div id="mktpickwrap">
+        <input id="mktpicksearch" class="encsearch" type="text" placeholder="Choose an item&hellip;" autocomplete="off" spellcheck="false">
+        <div id="mktpicklist"></div>
+      </div>
+      <div id="mktoffer" style="display:none;">
+        <div id="mktofferitem"><canvas id="mktoffericon" width="34" height="34"></canvas><span id="mktoffername"></span></div>
+        <div class="mktctrlrow"><span class="mktctrllbl">Quantity</span><span id="mktqtyval" class="mktctrlval">1</span></div>
+        <div class="mktbtnrow" id="mktqtybtns"></div>
+        <div class="mktctrlrow"><span class="mktctrllbl">Price each</span><span id="mktpriceval" class="mktctrlval">1</span></div>
+        <div class="mktbtnrow" id="mktpricebtns"></div>
+        <div id="mkttotalrow"><span>Total</span><span id="mkttotalval">1</span></div>
+        <button id="mktconfirm" class="mktconfirmbtn">Confirm offer</button>
+      </div>
+    </div>
+  </div>
+</div></div>
+<div id="gconfirm" class="gemodal"><div class="gepanel" style="width:340px;text-align:center;">
+  <div class="gebar"><span id="gconfirmttl">Confirm</span></div>
+  <div id="gconfirmmsg"></div>
+  <div id="gconfirmbtns">
+    <button id="gconfirmno" class="gcbtn gcno">Cancel</button>
+    <button id="gconfirmyes" class="gcbtn gcyes">Confirm</button>
   </div>
 </div></div>
 <div id="wmap">
@@ -23849,14 +23955,19 @@ function sellItem(id,n){
   if(!ITEMS[id]||!ITEMS[id].val||ITEMS[id].noSell||/^party_hat_/.test(id)||id==='santa_hat')return;
   n=n||1;
   const unit=Math.max(1,Math.floor(ITEMS[id].val*0.6));
-  /* high-value guard: if this sale would exceed the threshold, confirm first (based on how many will actually sell) */
+  /* high-value guard: if this sale would exceed the threshold, confirm first (in-game dialog, based on how many will actually sell) */
   const _avail=player.inv.reduce((a,sl)=>a+((sl&&sl.id===id)?(sl.qty||1):0),0);
   const _willSell=Math.min(n,_avail);
   const _preview=unit*_willSell;
-  if(_preview>SELL_CONFIRM_GP){
-    const ok=(typeof confirm==='function')?confirm('Sell '+(_willSell>1?_willSell+' \u00d7 ':'')+ITEMS[id].name+' for '+fmt(_preview)+' coins?'):true;
-    if(!ok){if(typeof msg==='function')msg('Sale cancelled.','#6b4800');return;}
+  if(_preview>SELL_CONFIRM_GP && typeof gameConfirm==='function'){
+    gameConfirm('Sell for '+fmt(_preview)+' coins?',
+      'Sell <b>'+(_willSell>1?_willSell+' \u00d7 ':'')+ITEMS[id].name+'</b> to the Exchange for <b>'+fmt(_preview)+'</b> coins?',
+      function(){ _doSell(id,n,unit); }, 'Sell');
+    return;
   }
+  _doSell(id,n,unit);
+}
+function _doSell(id,n,unit){
   let sold=0;
   for(let k=0;k<player.inv.length&&sold<n;k++){
     const sl=player.inv[k];
@@ -23953,6 +24064,7 @@ function openShop(){shopOpen=true;geFilter='All';geQuery='';const _gs=document.g
   /* default to the Exchange tab each open */
   const _tx=document.getElementById('getabs'); if(_tx)for(const b of _tx.children)b.classList.toggle('on',b.getAttribute('data-getab')==='exchange');
   const _ve=document.getElementById('geview-exchange'),_vm=document.getElementById('geview-market'); if(_ve)_ve.style.display=''; if(_vm)_vm.style.display='none';
+  const _mst=document.getElementById('mktsetup'); if(_mst)_mst.style.display='none';
   renderShop();renderShopCoins();geEl.classList.add('on');
   msg('Clerk: Welcome to the Grand Exchange. Buying and selling!','#103a8c');}
 function closeShop(){shopOpen=false;geEl.classList.remove('on');}
@@ -24051,95 +24163,211 @@ const Market = (function(){
   }
 
   // ---- the "new offer" flow: pick side, item, qty, price ----
-  function newOfferDialog(){
-    // choose sell (from pack) or buy (search any item)
-    var side = (typeof confirm==='function' && confirm('Place a SELL offer? (OK = sell from your pack, Cancel = buy an item)')) ? 'sell' : 'buy';
-    var item, qty, price;
-    if(side==='sell'){
-      // list distinct sellable items in the pack
-      var seen={}, opts=[];
-      for(var i=0;i<player.inv.length;i++){var sl=player.inv[i]; if(sl&&sl.id!=='coins'&&ITEMS[sl.id]&&!ITEMS[sl.id].noSell&&!seen[sl.id]){seen[sl.id]=1;opts.push(sl.id);}}
-      if(!opts.length){ msg('You have nothing sellable in your pack.','#9c1f1f'); return; }
-      var names=opts.map(function(id,ix){return (ix+1)+'. '+ITEMS[id].name+' ('+countItem(id)+')';}).join('\n');
-      var pick=prompt('Sell which item? Enter its number:\n'+names,'1'); if(pick===null)return;
-      var pi=(parseInt(pick,10)|0)-1; if(pi<0||pi>=opts.length){ msg('That was not a valid choice.','#9c1f1f'); return; }
-      item=opts[pi];
-      var have=countItem(item);
-      qty=parseInt(prompt('How many '+ITEMS[item].name+'? (you have '+have+')', ''+have),10); if(!(qty>0))return;
-      qty=Math.min(qty,have);
-    } else {
-      var nm=prompt('Buy which item? Type part of its name:',''); if(!nm)return;
-      nm=nm.trim().toLowerCase();
-      var matches=Object.keys(ITEMS).filter(function(id){return ITEMS[id].name&&ITEMS[id].name.toLowerCase().indexOf(nm)>=0;});
-      if(!matches.length){ msg('No item matches \u201c'+nm+'\u201d.','#9c1f1f'); return; }
-      if(matches.length>1){ var mn=matches.slice(0,12).map(function(id,ix){return (ix+1)+'. '+ITEMS[id].name;}).join('\n');
-        var mp=prompt('Which item?\n'+mn,'1'); if(mp===null)return; var mi=(parseInt(mp,10)|0)-1; if(mi<0||mi>=matches.length){return;} item=matches[mi]; }
-      else item=matches[0];
-      qty=parseInt(prompt('How many '+ITEMS[item].name+' to buy?','1'),10); if(!(qty>0))return;
-    }
-    var suggested=(ITEMS[item]&&ITEMS[item].val)||1;
-    price=parseInt(prompt('Price per item, in coins? (guide: '+fmt(suggested)+' gp each)',''+suggested),10); if(!(price>0))return;
-    if(side==='buy'){ var cost=qty*price; if(coinsCount()<cost){ msg('You need '+fmt(cost)+' coins for that buy offer.','#9c1f1f'); return; } }
-    listOffer(side,item,qty,price);
-  }
-
-  return { refresh:refresh, listOffer:listOffer, cancel:cancel, collect:collect, newOfferDialog:newOfferDialog,
+  return { refresh:refresh, listOffer:listOffer, cancel:cancel, collect:collect,
     board:function(){return _board;}, mine:function(){return _mine;}, state:function(){return {loading:_loading,err:_err};},
     setFilter:function(f){_filter=(f||'').trim().toLowerCase();}, getFilter:function(){return _filter;} };
 })();
 
 
 /* ---- the Player Market renderer + tab wiring ---- */
-function _mktAgo(ms){ var s=Math.floor((Date.now()-ms)/1000); if(s<60)return s+'s'; var m=Math.floor(s/60); if(m<60)return m+'m'; var h=Math.floor(m/60); if(h<24)return h+'h'; return Math.floor(h/24)+'d'; }
-function _mktRow(o, isMine){
-  var r=document.createElement('div'); r.className='mktrow'+(isMine?' mine':'');
-  var c=document.createElement('canvas'); c.width=24;c.height=24;
-  if(ITEMS[o.item])drawItemIcon(c.getContext('2d'),o.item,24);
-  var sd=document.createElement('span'); sd.className='side '+o.side; sd.textContent=o.side==='sell'?'SELL':'BUY';
-  var nm=document.createElement('span'); nm.className='nm'; nm.textContent=(ITEMS[o.item]?ITEMS[o.item].name:o.item);
-  var qy=document.createElement('span'); qy.className='qy'; qy.textContent='\u00d7'+o.qty;
-  var pr=document.createElement('span'); pr.className='pr'; pr.textContent=fmt(o.price)+' gp';
-  r.appendChild(c); r.appendChild(sd); r.appendChild(nm); r.appendChild(qy); r.appendChild(pr);
-  if(!isMine && o.name){ var wh=document.createElement('span'); wh.className='who'; wh.textContent=o.name; r.appendChild(wh); }
-  return r;
+/* ---- generic in-game confirm dialog (replaces native confirm()) ---- */
+var _gconfirmCb=null;
+function gameConfirm(title, msgHtml, onYes, yesLabel){
+  var box=document.getElementById('gconfirm'); if(!box){ if(onYes)onYes(); return; }
+  document.getElementById('gconfirmttl').textContent=title||'Confirm';
+  document.getElementById('gconfirmmsg').innerHTML=msgHtml||'';
+  var yes=document.getElementById('gconfirmyes'), no=document.getElementById('gconfirmno');
+  yes.textContent=yesLabel||'Confirm';
+  _gconfirmCb=onYes||null;
+  if(!box._wired){ box._wired=true;
+    yes.addEventListener('click',function(){ box.classList.remove('on'); var cb=_gconfirmCb; _gconfirmCb=null; if(cb)cb(); });
+    no.addEventListener('click',function(){ box.classList.remove('on'); _gconfirmCb=null; });
+  }
+  box.classList.add('on');
 }
+
+/* ---- OSRS-style Grand Exchange market UI (in-game panel, no native popups) ---- */
+var _mktSetup={side:'buy',item:null,qty:1,price:1};
+function _mktFmt(n){ return fmt(n|0); }
+function _mktAgo(ms){ var s=Math.floor((Date.now()-ms)/1000); if(s<60)return s+'s'; var m=Math.floor(s/60); if(m<60)return m+'m'; var h=Math.floor(m/60); if(h<24)return h+'h'; return Math.floor(h/24)+'d'; }
+
+/* ===== the 8-slot grid (your own offers) ===== */
 function renderMarket(){
-  var mineEl=document.getElementById('mktmine'), boardEl=document.getElementById('mktboard');
-  if(!mineEl||!boardEl)return;
+  var slotsEl=document.getElementById('mktslots'), boardEl=document.getElementById('mktboard');
+  if(!slotsEl||!boardEl)return;
   var st=Market.state(), mine=Market.mine(), board=Market.board(), filt=Market.getFilter();
-  // collect button count
-  var cn=document.getElementById('mktcollectn'); var cbtn=document.getElementById('mktcollectbtn');
-  var owed=(mine.collect||[]).length;
-  if(cn)cn.textContent=owed?('('+owed+')'):'';
-  if(cbtn)cbtn.style.opacity=owed?'1':'0.55';
-  // my offers
-  mineEl.innerHTML='';
-  if(st.err==='noserver'){ var e=document.createElement('div'); e.className='mktempty'; e.textContent='The market server is not set up yet.'; mineEl.appendChild(e); }
-  else if(st.loading&&!mine.offers.length){ var l=document.createElement('div'); l.className='mktempty'; l.textContent='Loading\u2026'; mineEl.appendChild(l); }
-  else if(!mine.offers.length){ var n=document.createElement('div'); n.className='mktempty'; n.textContent='You have no live offers. Place one with \u201c+ New offer.\u201d'; mineEl.appendChild(n); }
-  else { mine.offers.forEach(function(o){ var r=_mktRow(o,true);
-    r.title='Click to cancel this offer';
-    r.addEventListener('click',function(){ if(typeof confirm!=='function'||confirm('Cancel your '+o.side+' offer for '+(ITEMS[o.item]?ITEMS[o.item].name:o.item)+'? The remainder returns to Collect.'))Market.cancel(o.id); });
-    mineEl.appendChild(r); }); }
-  // the public board (excluding my own; those show above)
+  var SLOTS=8;
+  // collection box
+  var owed=(mine.collect||[]).length, cbox=document.getElementById('mktcollectbox'), cn=document.getElementById('mktcollectn');
+  if(cn)cn.textContent=owed?(' \u00b7 '+owed):'';
+  if(cbox)cbox.classList.toggle('has',owed>0);
+
+  slotsEl.innerHTML='';
+  if(st.err==='noserver'){ var e=document.createElement('div'); e.className='mktempty'; e.style.gridColumn='1 / -1'; e.textContent='The market server is not set up yet.'; slotsEl.appendChild(e); }
+  else {
+    var offers=(mine.offers||[]).slice(0,SLOTS);
+    for(var i=0;i<SLOTS;i++){
+      var o=offers[i];
+      var slot=document.createElement('div'); slot.className='geslot';
+      if(!o){
+        slot.className='geslot empty';
+        var buy=document.createElement('div'); buy.className='geslotbuy'; buy.innerHTML='<span class="geslotbadge">\u2795</span> Buy';
+        var div=document.createElement('div'); div.className='geslotdiv';
+        var sell=document.createElement('div'); sell.className='geslotsell'; sell.innerHTML='<span class="geslotbadge">\uD83D\uDCB0</span> Sell';
+        buy.addEventListener('click',function(){ _mktOpenSetup('buy'); });
+        sell.addEventListener('click',function(){ _mktOpenSetup('sell'); });
+        slot.appendChild(buy); slot.appendChild(div); slot.appendChild(sell);
+      } else {
+        var orig=(o.orig!==undefined?o.orig:o.qty), done=Math.max(0,orig-o.qty), pct=orig>0?Math.round(done/orig*100):0;
+        var full=(o.qty<=0)||(done>=orig);
+        if(full)slot.classList.add('done');
+        var head=document.createElement('div'); head.className='geslothead';
+        var tag=document.createElement('span'); tag.className='tag '+o.side; tag.textContent=o.side==='sell'?'SELL':'BUY';
+        var snm=document.createElement('span'); snm.className='snm'; snm.textContent=(ITEMS[o.item]?ITEMS[o.item].name:o.item);
+        var x=document.createElement('span'); x.className='geslotcancel'; x.textContent='\u2715'; x.title='Cancel / abort this offer';
+        (function(off){ x.addEventListener('click',function(ev){ ev.stopPropagation(); _mktConfirmCancel(off); }); })(o);
+        head.appendChild(tag); head.appendChild(snm); head.appendChild(x);
+        var body=document.createElement('div'); body.className='geslotbody';
+        var cv=document.createElement('canvas'); cv.width=cv.height=32; if(ITEMS[o.item])drawItemIcon(cv.getContext('2d'),o.item,32);
+        var info=document.createElement('div'); info.className='geslotinfo';
+        var qp=document.createElement('span'); qp.className='qp'; qp.innerHTML=done+' / <b>'+orig+'</b> @ '+_mktFmt(o.price)+' gp';
+        var stx=document.createElement('span'); stx.className='st'; stx.textContent=full?'Completed \u2014 collect below':(done>0?('In progress \u00b7 '+pct+'%'):'Waiting for a match\u2026');
+        info.appendChild(qp); info.appendChild(stx);
+        body.appendChild(cv); body.appendChild(info);
+        var bar=document.createElement('div'); bar.className='geslotbar';
+        var fill=document.createElement('div'); fill.className='fill '+o.side; fill.style.width=(full?100:pct)+'%';
+        bar.appendChild(fill);
+        slot.appendChild(head); slot.appendChild(body); slot.appendChild(bar);
+      }
+      slotsEl.appendChild(slot);
+    }
+  }
+
+  /* ===== the live market board (everyone else's offers) ===== */
   boardEl.innerHTML='';
   var rows=(board||[]).filter(function(o){ return o.uid!==(player&&player.uid) && (!filt||(ITEMS[o.item]&&ITEMS[o.item].name.toLowerCase().indexOf(filt)>=0)); });
   if(st.err&&st.err!=='noserver'){ var er=document.createElement('div'); er.className='mktempty'; er.textContent='Could not reach the market. Tap \u21bb to retry.'; boardEl.appendChild(er); }
-  else if(!rows.length){ var em=document.createElement('div'); em.className='mktempty'; em.textContent=filt?'No offers match that filter.':'No one is trading right now. Be the first \u2014 hit \u201c+ New offer.\u201d'; boardEl.appendChild(em); }
-  else rows.forEach(function(o){ var r=_mktRow(o,false);
-    // clicking a SELL offer buys it; clicking a BUY offer sells into it
-    if(o.side==='sell'){ r.title='Click to buy from '+o.name;
-      r.addEventListener('click',function(){ var max=o.qty, n=max;
-        if(max>1){ var a=prompt('Buy how many '+ITEMS[o.item].name+' at '+fmt(o.price)+' gp each? (up to '+max+')',''+max); if(a===null)return; n=Math.min(max,Math.max(1,parseInt(a,10)|0)); }
-        var cost=n*o.price; if(coinsCount()<cost){ msg('You need '+fmt(cost)+' coins.','#9c1f1f'); return; }
-        Market.listOffer('buy',o.item,n,o.price); }); }
-    else { r.title='Click to sell to '+o.name;
-      r.addEventListener('click',function(){ var have=countItem(o.item); if(have<=0){ msg('You have no '+ITEMS[o.item].name+' to sell.','#9c1f1f'); return; }
-        var max=Math.min(o.qty,have), n=max;
-        if(max>1){ var a=prompt('Sell how many '+ITEMS[o.item].name+' at '+fmt(o.price)+' gp each? (up to '+max+')',''+max); if(a===null)return; n=Math.min(max,Math.max(1,parseInt(a,10)|0)); }
-        Market.listOffer('sell',o.item,n,o.price); }); }
-    boardEl.appendChild(r); });
+  else if(!rows.length){ var em=document.createElement('div'); em.className='mktempty'; em.textContent=filt?'No offers match that filter.':'No one else is trading right now.'; boardEl.appendChild(em); }
+  else rows.forEach(function(o){
+    var r=document.createElement('div'); r.className='mktrow';
+    var c=document.createElement('canvas'); c.width=c.height=24; if(ITEMS[o.item])drawItemIcon(c.getContext('2d'),o.item,24);
+    var sd=document.createElement('span'); sd.className='side '+o.side; sd.textContent=o.side==='sell'?'SELLS':'WANTS';
+    var nm=document.createElement('span'); nm.className='nm'; nm.textContent=(ITEMS[o.item]?ITEMS[o.item].name:o.item);
+    var qy=document.createElement('span'); qy.className='qy'; qy.textContent='\u00d7'+o.qty;
+    var pr=document.createElement('span'); pr.className='pr'; pr.textContent=_mktFmt(o.price)+' gp';
+    r.appendChild(c); r.appendChild(sd); r.appendChild(nm); r.appendChild(qy); r.appendChild(pr);
+    var wh=document.createElement('span'); wh.className='who'; wh.textContent=o.name||''; r.appendChild(wh);
+    // clicking a SELL offer sets up a matching BUY; a BUY offer sets up a matching SELL
+    if(o.side==='sell'){ r.title='Buy from '+o.name;
+      r.addEventListener('click',function(){ _mktOpenSetup('buy',o.item,Math.min(o.qty,999999),o.price); }); }
+    else { r.title='Sell to '+o.name;
+      r.addEventListener('click',function(){ var have=countItem(o.item); _mktOpenSetup('sell',o.item,Math.min(o.qty,have||1),o.price); }); }
+    boardEl.appendChild(r);
+  });
 }
+
+/* ===== in-game confirm (no native confirm()) for cancelling an offer ===== */
+function _mktConfirmCancel(o){
+  var refund = o.side==='sell' ? (o.qty+' \u00d7 '+(ITEMS[o.item]?ITEMS[o.item].name:o.item)) : (_mktFmt(o.qty*o.price)+' coins');
+  gameConfirm('Abort this '+o.side+' offer?', 'The unfilled remainder ('+refund+') goes to your Collection Box.',
+    function(){ Market.cancel(o.id); }, o.side==='sell'?'Abort sell':'Abort buy');
+}
+
+/* ===== the offer-setup panel (item pick -> qty/price steppers) ===== */
+function _mktOpenSetup(side, item, qty, price){
+  _mktSetup={side:side, item:item||null, qty:qty||1, price:price||1};
+  document.getElementById('mktsetup').style.display='';
+  document.getElementById('mktsetuptitle').textContent=(side==='sell'?'Create sell offer':'Create buy offer');
+  if(item){ _mktShowOfferControls(); }
+  else { _mktShowPicker(); }
+}
+function _mktCloseSetup(){ document.getElementById('mktsetup').style.display='none'; }
+function _mktShowPicker(){
+  document.getElementById('mktpickwrap').style.display='';
+  document.getElementById('mktoffer').style.display='none';
+  var ps=document.getElementById('mktpicksearch'); ps.value='';
+  _mktRenderPickList('');
+  ps.oninput=function(){ _mktRenderPickList(ps.value); };
+  setTimeout(function(){ try{ps.focus();}catch(e){} },30);
+}
+function _mktRenderPickList(q){
+  var list=document.getElementById('mktpicklist'); list.innerHTML='';
+  q=(q||'').trim().toLowerCase();
+  var ids;
+  if(_mktSetup.side==='sell'){
+    // only items in the pack that can be traded
+    var seen={}; ids=[];
+    for(var i=0;i<player.inv.length;i++){var sl=player.inv[i]; if(sl&&sl.id!=='coins'&&ITEMS[sl.id]&&!seen[sl.id]&&(!q||ITEMS[sl.id].name.toLowerCase().indexOf(q)>=0)){seen[sl.id]=1;ids.push(sl.id);}}
+  } else {
+    ids=Object.keys(ITEMS).filter(function(id){ return id!=='coins'&&ITEMS[id].name&&(!q||ITEMS[id].name.toLowerCase().indexOf(q)>=0); });
+    // sort by closeness of match then name, cap for perf
+    ids.sort(function(a,b){ var an=ITEMS[a].name.toLowerCase(), bn=ITEMS[b].name.toLowerCase();
+      var ai=an.indexOf(q), bi=bn.indexOf(q); if(q){ if(ai!==bi)return ai-bi; } return an<bn?-1:1; });
+    ids=ids.slice(0,60);
+  }
+  if(!ids.length){ var e=document.createElement('div'); e.className='mktempty'; e.textContent=_mktSetup.side==='sell'?'Nothing tradeable in your pack.':'No item matches that search.'; list.appendChild(e); return; }
+  ids.forEach(function(id){
+    var r=document.createElement('div'); r.className='mktpickrow';
+    var c=document.createElement('canvas'); c.width=c.height=26; drawItemIcon(c.getContext('2d'),id,26);
+    var nm=document.createElement('span'); nm.className='nm'; nm.textContent=ITEMS[id].name;
+    r.appendChild(c); r.appendChild(nm);
+    if(_mktSetup.side==='sell'){ var hv=document.createElement('span'); hv.className='hv'; hv.textContent='\u00d7'+countItem(id); r.appendChild(hv); }
+    else { var gv=document.createElement('span'); gv.className='gv'; gv.textContent=_mktFmt((ITEMS[id].val||1))+' gp'; r.appendChild(gv); }
+    r.addEventListener('click',function(){ _mktSetup.item=id;
+      var guide=Math.max(1,(ITEMS[id].val||1));
+      _mktSetup.price=guide;
+      _mktSetup.qty=(_mktSetup.side==='sell')?Math.max(1,countItem(id)):1;
+      _mktShowOfferControls(); });
+    list.appendChild(r);
+  });
+}
+function _mktShowOfferControls(){
+  document.getElementById('mktpickwrap').style.display='none';
+  document.getElementById('mktoffer').style.display='';
+  var it=ITEMS[_mktSetup.item];
+  drawItemIcon(document.getElementById('mktoffericon').getContext('2d'),_mktSetup.item,34);
+  document.getElementById('mktoffername').textContent=it.name;
+  // quantity buttons
+  var qb=document.getElementById('mktqtybtns'); qb.innerHTML='';
+  var qmax=(_mktSetup.side==='sell')?Math.max(1,countItem(_mktSetup.item)):100000;
+  var qadj=[['-','q',-1],['+','q',1],['1','qset',1],['10','qset',10],['100','qset',100],['1k','qset',1000]];
+  if(_mktSetup.side==='sell')qadj.push(['All','qset',qmax]);
+  qadj.forEach(function(a){ var b=document.createElement('button'); b.textContent=a[0];
+    b.addEventListener('click',function(){
+      if(a[1]==='q')_mktSetup.qty=Math.max(1,Math.min(qmax,_mktSetup.qty+a[2]));
+      else _mktSetup.qty=Math.max(1,Math.min(qmax,a[2]));
+      _mktSyncOffer(); }); qb.appendChild(b); });
+  // price buttons
+  var pb=document.getElementById('mktpricebtns'); pb.innerHTML='';
+  var guide=Math.max(1,(it.val||1));
+  var padj=[['-','p',-1],['+','p',1],['-5%','pm',0.95],['+5%','pm',1.05],['Guide','pset',guide]];
+  padj.forEach(function(a){ var b=document.createElement('button'); b.textContent=a[0];
+    b.addEventListener('click',function(){
+      if(a[1]==='p')_mktSetup.price=Math.max(1,_mktSetup.price+a[2]);
+      else if(a[1]==='pm')_mktSetup.price=Math.max(1,Math.round(_mktSetup.price*a[2]));
+      else _mktSetup.price=Math.max(1,a[2]);
+      _mktSyncOffer(); }); pb.appendChild(b); });
+  // confirm button
+  var cf=document.getElementById('mktconfirm');
+  cf.className='mktconfirmbtn'+(_mktSetup.side==='sell'?' sell':'');
+  cf.textContent=(_mktSetup.side==='sell'?'Place sell offer':'Place buy offer');
+  cf.onclick=function(){ _mktPlace(); };
+  _mktSyncOffer();
+}
+function _mktSyncOffer(){
+  document.getElementById('mktqtyval').textContent=_mktFmt(_mktSetup.qty);
+  document.getElementById('mktpriceval').textContent=_mktFmt(_mktSetup.price)+' gp';
+  document.getElementById('mkttotalval').textContent=_mktFmt(_mktSetup.qty*_mktSetup.price)+' gp';
+}
+function _mktPlace(){
+  var s=_mktSetup;
+  // client-side guards (no native alerts; use msg + stay on panel)
+  if(s.side==='sell'){ if(countItem(s.item)<s.qty){ msg('You only have '+countItem(s.item)+' of that to sell.','#9c1f1f'); return; } }
+  else { if(coinsCount()<s.qty*s.price){ msg('You need '+_mktFmt(s.qty*s.price)+' coins for that buy offer.','#9c1f1f'); return; } }
+  Market.listOffer(s.side, s.item, s.qty, s.price);
+  _mktCloseSetup();
+}
+
 function _wireMarketTabs(){
   var tabs=document.getElementById('getabs'); if(!tabs||tabs._wired)return; tabs._wired=true;
   tabs.addEventListener('click',function(e){ var b=e.target.closest('.getab'); if(!b)return;
@@ -24147,12 +24375,13 @@ function _wireMarketTabs(){
     for(var i=0;i<tabs.children.length;i++)tabs.children[i].classList.toggle('on',tabs.children[i]===b);
     document.getElementById('geview-exchange').style.display=(which==='exchange')?'':'none';
     document.getElementById('geview-market').style.display=(which==='market')?'':'none';
+    _mktCloseSetup();
     if(which==='market')Market.refresh();
   });
-  var nb=document.getElementById('mktnew'); if(nb)nb.addEventListener('click',function(){Market.newOfferDialog();});
-  var cb=document.getElementById('mktcollectbtn'); if(cb)cb.addEventListener('click',function(){Market.collect();});
+  var cb=document.getElementById('mktcollectbox'); if(cb)cb.addEventListener('click',function(){Market.collect();});
   var rb=document.getElementById('mktrefresh'); if(rb)rb.addEventListener('click',function(){Market.refresh();});
   var ms=document.getElementById('mktsearch'); if(ms)ms.addEventListener('input',function(){Market.setFilter(ms.value);renderMarket();});
+  var bk=document.getElementById('mktsetupback'); if(bk)bk.addEventListener('click',function(){ _mktCloseSetup(); });
 }
 
 const PRAYER_META={
