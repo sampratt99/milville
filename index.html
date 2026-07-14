@@ -634,6 +634,18 @@
   .gcno:hover{background:#6b3a3a;}
   .gcyes{background:#2f6a2f;border-color:#4aa34a;}
   .gcyes:hover{background:#3a7d3a;}
+  #gnumdisp{margin:12px 14px 6px;padding:9px;background:#1a140c;border:1px solid #4a3826;border-radius:5px;
+    font:bold 22px 'Courier New',monospace;color:#ffe08a;letter-spacing:1px;min-height:26px;}
+  #gnumquick{display:flex;gap:5px;padding:0 14px 8px;}
+  #gnumquick button{flex:1;font:bold 11px Georgia,serif;padding:6px 2px;cursor:pointer;color:#e8dcc0;
+    background:#2f2416;border:1px solid #5a4426;border-radius:4px;}
+  #gnumquick button:hover{background:#43331f;color:#ffe08a;}
+  #gnumpad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 14px 8px;}
+  #gnumpad button{font:bold 18px Georgia,serif;padding:11px 0;cursor:pointer;color:#f0e6d2;
+    background:#2a2016;border:1px solid #5a4426;border-radius:5px;}
+  #gnumpad button:hover{background:#3a2c1a;color:#ffe08a;}
+  #gnumpad button.wide{grid-column:span 1;color:#cdbb96;}
+  #gnumbtns{display:flex;gap:8px;padding:4px 14px 14px;}
   #wmaplegend{width:210px;gap:6px;}
   .wmlrow{gap:10px;padding:6px 9px;font:12px Verdana;}
   .wmlrow canvas{flex:0 0 auto;}
@@ -1153,6 +1165,16 @@
         <button id="mktconfirm" class="mktconfirmbtn">Confirm offer</button>
       </div>
     </div>
+  </div>
+</div></div>
+<div id="gnum" class="gemodal"><div class="gepanel" style="width:300px;text-align:center;">
+  <div class="gebar"><span id="gnumttl">Enter amount</span></div>
+  <div id="gnumdisp">0</div>
+  <div id="gnumquick"></div>
+  <div id="gnumpad"></div>
+  <div id="gnumbtns">
+    <button id="gnumcancel" class="gcbtn gcno">Cancel</button>
+    <button id="gnumok" class="gcbtn gcyes">Enter</button>
   </div>
 </div></div>
 <div id="gconfirm" class="gemodal"><div class="gepanel" style="width:340px;text-align:center;">
@@ -1698,16 +1720,16 @@ ITEMS.cindermaw={name:'Cindermaw',ex:'A staff cut from Cinderwing\u2019s own bre
 ITEMS.cindermaw_ignited={name:'Cindermaw, Ignited',ex:'Cindermaw set alight at the Cinder Forge \u2014 the caged ember has become a living coal, and Soulfire Brand burns longer and deeper. Cinderwing\u2019s hunger, unleashed.',val:480000,equip:{slot:'weapon',model:'cindermaw',verb:'Wield',spd:2400,matk:62,mdmg:15,req:75,spec:1,tint:0x0f0806,trim:0xff8a2a}};
 
 /* ===== Emberdeep consumables + luxury (Hirschfeld's shop) ===== */
-ITEMS.potion_attack={name:'Attack potion',ex:'A brew that sharpens your attack for a while. Three sips.',prim:'Drink',potion:{skill:'attack'},doses:3,stack:true,val:200,cat:'Consumable'};
-ITEMS.elixir_attack={name:'Attack elixir',ex:'A potent gilded draught \u2014 a greater attack boost, four sips.',prim:'Drink',potion:{skill:'attack',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
-ITEMS.potion_strength={name:'Strength potion',ex:'A brew that sharpens your strength for a while. Three sips.',prim:'Drink',potion:{skill:'strength'},doses:3,stack:true,val:200,cat:'Consumable'};
-ITEMS.elixir_strength={name:'Strength elixir',ex:'A potent gilded draught \u2014 a greater strength boost, four sips.',prim:'Drink',potion:{skill:'strength',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
-ITEMS.potion_defense={name:'Defence potion',ex:'A brew that sharpens your defence for a while. Three sips.',prim:'Drink',potion:{skill:'defense'},doses:3,stack:true,val:200,cat:'Consumable'};
-ITEMS.elixir_defense={name:'Defence elixir',ex:'A potent gilded draught \u2014 a greater defence boost, four sips.',prim:'Drink',potion:{skill:'defense',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
-ITEMS.potion_ranged={name:'Ranged potion',ex:'A brew that sharpens your ranged for a while. Three sips.',prim:'Drink',potion:{skill:'ranged'},doses:3,stack:true,val:200,cat:'Consumable'};
-ITEMS.elixir_ranged={name:'Ranged elixir',ex:'A potent gilded draught \u2014 a greater ranged boost, four sips.',prim:'Drink',potion:{skill:'ranged',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
-ITEMS.potion_magic={name:'Magic potion',ex:'A brew that sharpens your magic for a while. Three sips.',prim:'Drink',potion:{skill:'magic'},doses:3,stack:true,val:200,cat:'Consumable'};
-ITEMS.elixir_magic={name:'Magic elixir',ex:'A potent gilded draught \u2014 a greater magic boost, four sips.',prim:'Drink',potion:{skill:'magic',super:true},doses:4,stack:true,val:500,cat:'Consumable'};
+ITEMS.potion_attack={name:'Attack potion',ex:'A brew that sharpens your attack for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'attack'},doses:3,val:200,cat:'Consumable'};
+ITEMS.elixir_attack={name:'Attack elixir',ex:'A gilded four-dose elixir. It grants a greater attack boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'attack',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.potion_strength={name:'Strength potion',ex:'A brew that sharpens your strength for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'strength'},doses:3,val:200,cat:'Consumable'};
+ITEMS.elixir_strength={name:'Strength elixir',ex:'A gilded four-dose elixir. It grants a greater strength boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'strength',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.potion_defense={name:'Defence potion',ex:'A brew that sharpens your defence for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'defense'},doses:3,val:200,cat:'Consumable'};
+ITEMS.elixir_defense={name:'Defence elixir',ex:'A gilded four-dose elixir. It grants a greater defence boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'defense',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.potion_ranged={name:'Ranged potion',ex:'A brew that sharpens your ranged for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'ranged'},doses:3,val:200,cat:'Consumable'};
+ITEMS.elixir_ranged={name:'Ranged elixir',ex:'A gilded four-dose elixir. It grants a greater ranged boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'ranged',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.potion_magic={name:'Magic potion',ex:'A brew that sharpens your magic for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'magic'},doses:3,val:200,cat:'Consumable'};
+ITEMS.elixir_magic={name:'Magic elixir',ex:'A gilded four-dose elixir. It grants a greater magic boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'magic',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
 ITEMS.fire_rune={name:'Fire rune',ex:'An elemental rune that smoulders with contained flame \u2014 fuel for spells and alchemy.',val:5,stack:true,cat:'Rune'};
 ITEMS.nature_rune={name:'Nature rune',ex:'A rune of raw transmutation. The heart of every alchemy spell.',val:190,stack:true,cat:'Rune'};
 ITEMS.ember_brew={name:'Ember-brew',ex:'A flask of molten-spiced brew from the Deep. Drink deep \u2014 it knits flesh fast.',prim:'Eat',heal:22,val:400,cat:'Consumable'};
@@ -3450,7 +3472,10 @@ function masterBoost(s){
   return ITEMS[c.id].equip.grand?12:10;
 }
 function boostFor(s){ const b=player.boosts&&player.boosts[s]; if(!b)return 0;
-  const cur=b.amt-Math.floor((Date.now()-b.t0)/60000);   /* OSRS: drains 1 boosted level per minute */
+  const now=Date.now();
+  if(b.lockUntil){ if(now<b.lockUntil)return b.amt;   /* divine: locked at full boost, no decay */
+    else { b.t0=b.lockUntil; delete b.lockUntil; }     /* lock expired: begin normal decay from that moment */ }
+  const cur=b.amt-Math.floor((now-b.t0)/60000);   /* OSRS: drains 1 boosted level per minute */
   if(cur<=0){ delete player.boosts[s]; return 0; } return cur; }
 const lvl=s=>levelFor(player.skills[s])+masterBoost(s)+boostFor(s);
 const maxHp=()=>lvl('hitpoints')+(typeof eqStat==='function'?eqStat('hp'):0);
@@ -4463,8 +4488,9 @@ function renderEncy(){
 function itemEffect(id){
   const _po=ITEMS[id]&&ITEMS[id].potion;
   if(_po){const _L=levelFor(player.skills[_po.skill]),
-    _a=_po.super?(Math.floor(_L*0.15)+5):(Math.floor(_L*0.10)+3);
-    return 'Boosts your '+SKILL_META[_po.skill].name+' by +'+_a+' levels at your current level ('+_L+'). The boost fades 1 level per minute, so it lasts about '+_a+' minutes. Drinking another refreshes it unless the new boost would be weaker.';}
+    _a=_po.super?(Math.floor(_L*0.15)+5):(Math.floor(_L*0.10)+3), _md=ITEMS[id].doses||1;
+    if(_po.divine)return 'A gilded '+_md+'-dose elixir. Boosts your '+SKILL_META[_po.skill].name+' by +'+_a+' levels at your current level ('+_L+') and LOCKS it there for 5 minutes \u2014 no natural drain. Each sip costs '+DIVINE_HP_COST+' hitpoints. The vial holds '+_md+' doses and empties as you drink.';
+    return 'A '+_md+'-dose vial. Each sip boosts your '+SKILL_META[_po.skill].name+' by +'+_a+' levels at your current level ('+_L+'). The boost fades 1 level per minute, so it lasts about '+_a+' minutes. The vial empties as you drink; re-sipping refreshes the boost unless the new one would be weaker.';}
   const ht={proctor_helm:1,crimson_proctor_helm:2,gilded_warden_helm:3}[id];
   if(ht){const pct=Math.round([0,0.10,0.14,0.18][ht]*100);
     return '+'+pct+'% Attack accuracy and damage against the creature of your active Slayer contract while out in the wild. Also wards off the wail of a banshee.';}
@@ -4970,23 +4996,36 @@ function addItem(id,qty){
   /* non-stackable: need qty free slots (all-or-nothing, so callers' overflow drop stays correct) */
   let free=0;for(const s of player.inv)if(!s)free++;
   if(free<qty)return false;
-  for(let k=0;k<qty;k++){const i=player.inv.findIndex(s=>!s);player.inv[i]={id,qty:1};}
+  for(let k=0;k<qty;k++){const i=player.inv.findIndex(s=>!s);const _sl={id,qty:1};if(ITEMS[id].potion&&ITEMS[id].doses)_sl.dose=ITEMS[id].doses;player.inv[i]=_sl;}
   renderInv();dirty=true;return true;
 }
 function removeSlot(i){player.inv[i]=null;renderInv();dirty=true;}
+const DIVINE_LOCK_MS=300000;   /* OSRS divine potions hold the boost for 5 minutes with no decay */
+const DIVINE_HP_COST=3;        /* each divine sip costs a little vitality (OSRS is 10; scaled for Milville) */
 function drinkPotion(id,i){
   const P=ITEMS[id].potion; if(!P)return;
   const sk=P.skill, base=levelFor(player.skills[sk]);
   const amt = P.super ? (Math.floor(base*0.15)+5) : (Math.floor(base*0.10)+3);   /* OSRS base vs super potion boosts */
+  /* divine (elixir) sips cost hitpoints; refuse if it would down you */
+  if(P.divine){ if(player.hp<=DIVINE_HP_COST){ msg('You need more than '+DIVINE_HP_COST+' hitpoints to survive the elixir\u2019s power.','#9c1f1f'); return; } }
   player.boosts=player.boosts||{};
   const curV=(typeof boostFor==='function')?boostFor(sk):0;
-  if(amt>=curV){ player.boosts[sk]={amt:amt, t0:Date.now()}; }   /* re-drinking refreshes only if not weaker */
-  const it=player.inv[i]; if(it){ if((it.qty||1)>1){it.qty--;} else removeSlot(i); }
+  if(amt>=curV){
+    const b={amt:amt, t0:Date.now()};
+    if(P.divine)b.lockUntil=Date.now()+DIVINE_LOCK_MS;   /* no natural decay while locked */
+    player.boosts[sk]=b;
+  } else if(P.divine && player.boosts[sk]){
+    player.boosts[sk].lockUntil=Date.now()+DIVINE_LOCK_MS;   /* top up the lock even if boost not raised */
+  }
+  if(P.divine){ player.hp=Math.max(1,player.hp-DIVINE_HP_COST); if(typeof updateOrb==='function')updateOrb(); }
+  /* deplete the vial by one dose; empty vials are consumed */
+  const it=player.inv[i];
+  if(it){ if(it.dose!==undefined){ it.dose--; if(it.dose<=0)removeSlot(i); } else if((it.qty||1)>1){it.qty--;} else removeSlot(i); }
   if(typeof renderInv==='function')renderInv();
   if(typeof renderSkills==='function')renderSkills();
   if(typeof renderBuffHud==='function')renderBuffHud();
   if(typeof sfx!=='undefined'&&sfx.eat)sfx.eat();
-  msg('You drink the '+ITEMS[id].name.toLowerCase()+'. Your '+SKILL_META[sk].name+' is boosted.','#8fd6ff');
+  msg('You drink a dose of '+ITEMS[id].name.toLowerCase()+'. Your '+SKILL_META[sk].name+' is boosted'+(P.divine?' and locked for a time':'')+'.','#8fd6ff');
   dirty=true;
 }
 function alchemiseSlot(i){
@@ -5622,6 +5661,7 @@ function playerTick(){
     if(wstyle==='ranged'){
       const _ft=300,_ac=_innateArrow?'#ff7a2a':((_arrowId&&ITEMS[_arrowId].equip.tint!==undefined)?('#'+ITEMS[_arrowId].equip.tint.toString(16).padStart(6,'0')):'#cfd6da');
       spawnProjectile(player.px+0.5,player.py+0.5,r,'arrow',_ac,_ft);
+      if(typeof MP!=='undefined'&&MP.sendShot)MP.sendShot('arrow',Math.round(r.px),Math.round(r.py),_ac);
       splats.push({ent:r,dmg,t:performance.now()+_ft});
     }
     else if(wstyle==='magic'){
@@ -5632,6 +5672,7 @@ function playerTick(){
       if(typeof renderSpellbook==='function')renderSpellbook();
       const _ft=340;
       spawnProjectile(player.px+0.5,player.py+0.5,r,'magic',_spell.col,_ft);
+      if(typeof MP!=='undefined'&&MP.sendShot)MP.sendShot('magic',Math.round(r.px),Math.round(r.py),_spell.col);
       splats.push({ent:r,dmg,t:performance.now()+_ft});
     }
     else splats.push({ent:r,dmg,t:performance.now()});
@@ -6414,6 +6455,7 @@ function doSpecial(){
     if(r.kind==='master_reforged'&&typeof rectorShielded==='function'&&rectorShielded())dm=0;
     const _ft=340;
     if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,r,'magic','#ff6a2a',_ft);
+    if(typeof MP!=='undefined'&&MP.sendShot)MP.sendShot('magic',Math.round(r.px),Math.round(r.py),'#ff6a2a');
     splats.push({ent:r,dmg:dm,t:nowS+_ft});
     if(dm>0){ addXp('magic',0.9*dm); addXp('hitpoints',0.5*dm);
       if(dm>(player.maxMagicHit||0)){player.maxMagicHit=dm;dirty=true;}
@@ -6447,6 +6489,7 @@ function doSpecial(){
     /* the flaming shaft, then a burning patch WHERE THE MOB STANDS on impact */
     const _ft=300;
     if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,r,'arrow','#ff8a2a',_ft);
+    if(typeof MP!=='undefined'&&MP.sendShot)MP.sendShot('arrow',Math.round(r.px),Math.round(r.py),'#ff8a2a');
     splats.push({ent:r,dmg:dm,t:nowS+_ft});
     if(typeof cinderpointImpact==='function')cinderpointImpact(r,_kin,nowS+_ft);
     if(dm>0){ addXp('ranged',1.2*dm); addXp('hitpoints',0.5*dm);
@@ -7153,7 +7196,7 @@ function renderInv(){
     if(s){
       if(s.noted){drawNoteBg(g,30);g.save();g.translate(15,15.5);g.scale(0.6,0.6);g.translate(-15,-15);drawItemIcon(g,s.id,30);g.restore();
         slotEls[i].title='Banknote: '+s.qty+' \u00d7 '+ITEMS[s.id].name+' \u2014 deposit it at a bank.';}
-      else{drawItemIcon(g,s.id,30);slotEls[i].title=itemTip(s.id);}
+      else{drawItemIcon(g,s.id,30,s.dose);slotEls[i].title=itemTip(s.id);}
       if(s.noted||s.qty>1){const fs=fmtStack(s.qty);slotEls[i].lastChild.textContent=fs.t;slotEls[i].lastChild.style.color=fs.c;}}
   }
   if(shopOpen&&typeof renderSell==='function')renderSell();
@@ -7950,7 +7993,7 @@ function optionsAt(tx,ty){
 }
 
 /* =========================== item icons ============================ */
-function drawItemIcon(g,id,S){
+function drawItemIcon(g,id,S,dose){
   g.save();g.translate(S/2,S/2);g.imageSmoothingEnabled=false;
   if(ITEMS[id]&&ITEMS[id].cat==='Rune'){
     const RC={fire_rune:['#5a220e','#e0641c','#ffc061'],nature_rune:['#16401f','#2f9e44','#9be6a0']}[id]||['#2f2650','#6a4f9a','#c9b8e8'];
@@ -8907,11 +8950,34 @@ function drawItemIcon(g,id,S){
   }
   if(ITEMS[id]&&ITEMS[id].potion){
     const P=ITEMS[id].potion, col={attack:'#d0452a',strength:'#3fae4a',defense:'#3a7ad0',ranged:'#c98a2a',magic:'#a24fd0'}[P.skill]||'#d0452a';
-    g.fillStyle=col; g.beginPath(); g.arc(0,S*0.12,S*0.21,0,6.28); g.fill();
-    g.fillStyle=col; g.fillRect(-S*0.06,-S*0.24,S*0.12,S*0.30);
-    g.strokeStyle='rgba(255,255,255,0.55)'; g.lineWidth=1.3; g.beginPath(); g.arc(-S*0.06,S*0.06,S*0.11,Math.PI*0.8,Math.PI*1.5); g.stroke();
+    const maxD=(ITEMS[id].doses||1), dd=(dose===undefined?maxD:Math.max(0,Math.min(maxD,dose))), frac=maxD>0?dd/maxD:1;
+    /* glass vial outline (empty) */
+    const bulbR=S*0.21, bulbCy=S*0.12, glass='rgba(120,150,170,0.28)';
+    g.fillStyle=glass; g.beginPath(); g.arc(0,bulbCy,bulbR,0,6.28); g.fill();
+    g.fillStyle=glass; g.fillRect(-S*0.06,-S*0.24,S*0.12,S*0.30);
+    /* liquid fills from the bottom to a height set by remaining doses (clip to the vial shape) */
+    if(frac>0){
+      g.save();
+      /* build the vial silhouette as a clip: neck rect + bulb circle */
+      g.beginPath(); g.rect(-S*0.06,-S*0.24,S*0.12,S*0.30); g.arc(0,bulbCy,bulbR,0,6.28); g.clip();
+      const vialTop=-S*0.24, vialBot=bulbCy+bulbR, vialH=vialBot-vialTop;
+      const liqTop=vialBot-vialH*frac;
+      g.fillStyle=col; g.fillRect(-S*0.5,liqTop,S,vialBot-liqTop);
+      /* a subtle meniscus highlight at the liquid surface */
+      g.fillStyle='rgba(255,255,255,0.28)'; g.fillRect(-S*0.5,liqTop,S,Math.max(1,S*0.03));
+      g.restore();
+    }
+    /* highlight + cork */
+    g.strokeStyle='rgba(255,255,255,0.5)'; g.lineWidth=1.3; g.beginPath(); g.arc(-S*0.06,S*0.06,S*0.11,Math.PI*0.8,Math.PI*1.5); g.stroke();
     g.fillStyle=P.super?'#ffd23d':'#7a4a22'; g.fillRect(-S*0.065,-S*0.30,S*0.13,S*0.10);
-    if(P.super){ g.strokeStyle='#ffe27a'; g.lineWidth=1.1; g.beginPath(); g.arc(0,S*0.12,S*0.21,0,6.28); g.stroke(); }
+    /* glass rim */
+    g.strokeStyle=P.super?'#ffe27a':'rgba(200,220,235,0.5)'; g.lineWidth=P.super?1.3:1; g.beginPath(); g.arc(0,bulbCy,bulbR,0,6.28); g.stroke();
+    /* dose pips (small dots) so you can read servings at a glance, like OSRS (N) */
+    if(dose!==undefined && S>=24){
+      const pipR=Math.max(1.1,S*0.045), py=bulbCy+bulbR*0.55, gap=pipR*2.4, x0=-(maxD-1)*gap/2;
+      for(let d=0;d<maxD;d++){ g.beginPath(); g.arc(x0+d*gap,py,pipR,0,6.28);
+        g.fillStyle=d<dd?'#ffffff':'rgba(255,255,255,0.22)'; g.fill(); }
+    }
     g.restore(); return;
   }
   if(id==='elemental_shield'){
@@ -16072,6 +16138,8 @@ const ashBowM=new THREE.Group();
  const str6=glow(new THREE.CylinderGeometry(0.005,0.005,1.2,4),0xffe6b0,0.95);str6.position.set(0,0,0.245);ashBowM.add(str6);
  const strGlow=glow(new THREE.CylinderGeometry(0.011,0.011,1.2,4),EMBER,0.3);strGlow.position.set(0,0,0.245);ashBowM.add(strGlow);
  const knock=glow(new THREE.SphereGeometry(0.016,8,6),CORE);knock.position.set(0,0,0.245);ashBowM.add(knock);
+ /* the Ashfang was modelled string-out; flip all its parts 180\u00b0 on Y so the string faces the archer, matching every other bow */
+ {const _ashInner=new THREE.Group(); _ashInner.rotation.y=Math.PI; while(ashBowM.children.length)_ashInner.add(ashBowM.children[0]); ashBowM.add(_ashInner);}
 }
 emberSwM.visible=false;ashBowM.visible=false;
 tool.add(emberSwM);tool.add(ashBowM);
@@ -20311,14 +20379,16 @@ function spendCoins(n){
       if(sl.qty<=0)player.inv[i]=null;}}
   renderInv();dirty=true;
 }
-function bankAdd(id,qty){const b=bank.find(b2=>b2.id===id);
+function bankAdd(id,qty,dose){
+  if(dose!==undefined){ const b=bank.find(b2=>b2.id===id&&b2.dose===dose); if(b){b.qty+=qty;} else bank.push({id,qty,dose}); return; }
+  const b=bank.find(b2=>b2.id===id&&b2.dose===undefined);
   if(b)b.qty+=qty;else bank.push({id,qty});}
 function depositSlot(i,n){
   const sl=player.inv[i];if(!sl)return;
   if(sl.noted){const q=sl.qty;player.inv[i]=null;bankAdd(sl.id,q);renderInv();renderBank();dirty=true;sfx.pickup();return;}
   let q;
   if(ITEMS[sl.id].stack){q=Math.min(n,sl.qty);sl.qty-=q;if(sl.qty<=0)player.inv[i]=null;}
-  else{q=1;player.inv[i]=null;}
+  else{q=1;const _d=sl.dose;player.inv[i]=null;bankAdd(sl.id,q,_d);renderInv();renderBank();dirty=true;sfx.pickup();return;}
   bankAdd(sl.id,q);renderInv();renderBank();dirty=true;sfx.pickup();
 }
 function depositId(id,n){
@@ -20328,20 +20398,31 @@ function depositId(id,n){
       if(sl.noted){bankAdd(id,sl.qty);left-=sl.qty;player.inv[i]=null;}
       else if(ITEMS[id].stack){const q=Math.min(left,sl.qty);sl.qty-=q;left-=q;
         if(sl.qty<=0)player.inv[i]=null;bankAdd(id,q);}
+      else if(ITEMS[id].potion){const _d=sl.dose;player.inv[i]=null;bankAdd(id,1,_d);left--;}
       else{player.inv[i]=null;bankAdd(id,1);left--;}
     }}
   renderInv();renderBank();dirty=true;sfx.pickup();
 }
-function withdrawId(id,n){
-  const b=bank.find(b2=>b2.id===id);if(!b)return;
+function _addVialAtDose(id,dose){   /* place ONE potion vial in a free slot at a specific dose; false if pack full */
+  const i=player.inv.findIndex(s9=>!s9); if(i<0)return false;
+  const sl={id,qty:1}; if(dose!==undefined)sl.dose=dose; else if(ITEMS[id].potion&&ITEMS[id].doses)sl.dose=ITEMS[id].doses;
+  player.inv[i]=sl; markCollected(id); dirty=true; return true;
+}
+function withdrawId(id,n,dose){
+  const b=(dose!==undefined)?bank.find(b2=>b2.id===id&&b2.dose===dose):(bank.find(b2=>b2.id===id&&b2.dose===undefined)||bank.find(b2=>b2.id===id));
+  if(!b)return;
   let got=0;
   if(ITEMS[id].stack){const q=Math.min(n,b.qty);
     if(q>0&&addItem(id,q))got=q;}
+  else if(ITEMS[id].potion){   /* dose vials: place each at its banked dose so nothing is gained or lost */
+    const free=player.inv.filter(s9=>!s9).length,q=Math.min(n,b.qty,free);
+    for(let k=0;k<q;k++){ if(!_addVialAtDose(id,b.dose))break; got++; }
+  }
   else{const free=player.inv.filter(s9=>!s9).length,q=Math.min(n,b.qty,free);
     for(let k=0;k<q;k++){if(!addItem(id))break;got++;}}
   if(!got){msg('Your pack is full.');return;}
   b.qty-=got;if(b.qty<=0)bank.splice(bank.indexOf(b),1);
-  renderBank();dirty=true;sfx.pickup();
+  renderInv&&renderInv();renderBank();dirty=true;sfx.pickup();
 }
 function withdrawNote(id,n){
   const b=bank.find(b2=>b2.id===id);if(!b)return;
@@ -20351,13 +20432,38 @@ function withdrawNote(id,n){
   b.qty-=q;if(b.qty<=0)bank.splice(bank.indexOf(b),1);
   renderBank();dirty=true;sfx.pickup();
 }
-function _promptQty(name,cb){   /* native numeric prompt -> calls cb(N); the target fns all clamp safely */
-  const v=(typeof prompt==='function')?prompt('Enter quantity'+(name?' of '+name:'')+':',''):null;
-  if(v===null||v==='')return;
-  const num=parseInt(v,10);
-  if(!(num>=1)){if(typeof msg==='function')msg('Enter a whole number, 1 or more.','#9c1f1f');return;}
-  cb(Math.min(num,2000000000));
+let _gnumCb=null,_gnumVal='';
+function _promptQty(name,cb){   /* in-game numeric keypad -> calls cb(N); the target fns all clamp safely */
+  const box=document.getElementById('gnum');
+  if(!box){ /* fallback if the modal is missing */ const v=(typeof prompt==='function')?prompt('Enter quantity:',''):null; if(v){const nn=parseInt(v,10); if(nn>=1)cb(Math.min(nn,2000000000));} return; }
+  _gnumCb=cb; _gnumVal='';
+  document.getElementById('gnumttl').textContent='Enter quantity'+(name?' of '+name:'');
+  _gnumRender();
+  if(!box._wired){ box._wired=true;
+    const disp=document.getElementById('gnumdisp');
+    // quick presets
+    const q=document.getElementById('gnumquick');
+    [['1',1],['10',10],['100',100],['1k',1000],['10k',10000]].forEach(a=>{const b=document.createElement('button');b.textContent=a[0];b.addEventListener('click',()=>{_gnumVal=String(a[1]);_gnumRender();});q.appendChild(b);});
+    // keypad 1-9, 0, backspace, clear
+    const pad=document.getElementById('gnumpad');
+    const keys=['1','2','3','4','5','6','7','8','9','C','0','\u232b'];
+    keys.forEach(k=>{const b=document.createElement('button');b.textContent=k;
+      if(k==='C'||k==='\u232b')b.className='wide';
+      b.addEventListener('click',()=>{
+        if(k==='C')_gnumVal='';
+        else if(k==='\u232b')_gnumVal=_gnumVal.slice(0,-1);
+        else if(_gnumVal.length<10)_gnumVal=(_gnumVal==='0'?'':_gnumVal)+k;
+        _gnumRender();
+      });pad.appendChild(b);});
+    document.getElementById('gnumok').addEventListener('click',()=>{ const num=parseInt(_gnumVal,10);
+      box.classList.remove('on'); const cbk=_gnumCb; _gnumCb=null;
+      if(!(num>=1)){ if(typeof msg==='function')msg('Enter a whole number, 1 or more.','#9c1f1f'); return; }
+      if(cbk)cbk(Math.min(num,2000000000)); });
+    document.getElementById('gnumcancel').addEventListener('click',()=>{ box.classList.remove('on'); _gnumCb=null; });
+  }
+  box.classList.add('on');
 }
+function _gnumRender(){ const d=document.getElementById('gnumdisp'); if(d)d.textContent=_gnumVal===''?'0':Number(_gnumVal).toLocaleString('en-US'); }
 /* ------------------ dialogue boxes with talking heads ------------------ */
 const dlgUI=document.getElementById('dlgui');
 const dlgFace=document.getElementById('dlgface');
@@ -21020,11 +21126,11 @@ const EMBER_SHOP=[
   {id:'potion_defense',       cat:'Consumable', cinders:30},
   {id:'potion_ranged',       cat:'Consumable', cinders:30},
   {id:'potion_magic',       cat:'Consumable', cinders:30},
-  {id:'elixir_attack',       cat:'Consumable', cinders:75},
-  {id:'elixir_strength',       cat:'Consumable', cinders:75},
-  {id:'elixir_defense',       cat:'Consumable', cinders:75},
-  {id:'elixir_ranged',       cat:'Consumable', cinders:75},
-  {id:'elixir_magic',       cat:'Consumable', cinders:75},
+  {id:'elixir_attack',       cat:'Consumable', cinders:90},
+  {id:'elixir_strength',       cat:'Consumable', cinders:90},
+  {id:'elixir_defense',       cat:'Consumable', cinders:90},
+  {id:'elixir_ranged',       cat:'Consumable', cinders:90},
+  {id:'elixir_magic',       cat:'Consumable', cinders:90},
   {id:'boots_speed_silver', cat:'Luxury', coins:600000,  warrants:60,  cinders:8000},
   {id:'boots_speed_gold',   cat:'Luxury', coins:1400000, warrants:130, cinders:16000},
   {id:'gloves_haste_silver',cat:'Luxury', coins:900000,  warrants:90,  cinders:11000},
@@ -21061,7 +21167,8 @@ function emberBuy(e){
   if(countItem('cinders')<(e.cinders||0))return 'poor';
   if(countItem('warrant')<(e.warrants||0))return 'poor';
   if(e.coins)takeItems('coins',e.coins); if(e.cinders)takeItems('cinders',e.cinders); if(e.warrants)takeItems('warrant',e.warrants);
-  const _qty=(ITEMS[e.id]&&ITEMS[e.id].doses)||1;
+  /* a dose-vial item (potion/elixir) is ONE item that carries its doses; everything else buys 1 */
+  const _qty=(ITEMS[e.id]&&ITEMS[e.id].potion)?1:((ITEMS[e.id]&&ITEMS[e.id].doses)||1);
   if(!addItem(e.id,_qty)){ if(e.coins)addItem('coins',e.coins); if(e.cinders)addItem('cinders',e.cinders); if(e.warrants)addItem('warrant',e.warrants); return 'full'; }
   if(player.collected)player.collected[e.id]=true;
   dirty=true; return 'ok';
@@ -23649,19 +23756,20 @@ function renderBank(){
   let _lastCat=null;
   for(const b of _items){
     if(bankSortCat){const _c=itemCategory(b.id);if(_c!==_lastCat){_lastCat=_c;const hd=document.createElement('div');hd.textContent=_c;hd.style.cssText='grid-column:1/-1;color:#caa83c;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;padding:5px 2px 1px;';gr.appendChild(hd);}}
-    const d=document.createElement('div');d.className='bslot';d.title=ITEMS[b.id].name;
+    const d=document.createElement('div');d.className='bslot';d.title=ITEMS[b.id].name+(b.dose!==undefined?(' ('+b.dose+')'):'');
     const c=document.createElement('canvas');c.width=30;c.height=30;
-    drawItemIcon(c.getContext('2d'),b.id,30);
+    drawItemIcon(c.getContext('2d'),b.id,30,b.dose);
     const q=document.createElement('span');q.className='qty';
     if(b.qty>1){const fs=fmtStack(b.qty);q.textContent=fs.t;q.style.color=fs.c;}
     d.appendChild(c);d.appendChild(q);
-    d.addEventListener('click',()=>{audio();withdrawId(b.id,1);});
+    const _bd=b.dose;
+    d.addEventListener('click',()=>{audio();withdrawId(b.id,1,_bd);});
     d.addEventListener('contextmenu',ev=>{ev.preventDefault();ev.stopPropagation();audio();
       showMenu(ev.clientX,ev.clientY,[
-        {html:'Withdraw-1 <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,1)},
-        {html:'Withdraw-5 <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,5)},
-        {html:'Withdraw-X <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>_promptQty(ITEMS[b.id].name,n=>withdrawId(b.id,n))},
-        {html:'Withdraw-All <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,1e9)},
+        {html:'Withdraw-1 <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,1,_bd)},
+        {html:'Withdraw-5 <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,5,_bd)},
+        {html:'Withdraw-X <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>_promptQty(ITEMS[b.id].name,n=>withdrawId(b.id,n,_bd))},
+        {html:'Withdraw-All <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>withdrawId(b.id,1e9,_bd)},
         ...(!ITEMS[b.id].stack?[{html:'Withdraw note-X <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>_promptQty(ITEMS[b.id].name,nn=>withdrawNote(b.id,nn))}]:[]),
         {html:'Examine <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>examineItem(b.id)}]);});
     gr.appendChild(d);
@@ -24172,16 +24280,18 @@ const Market = (function(){
 /* ---- the Player Market renderer + tab wiring ---- */
 /* ---- generic in-game confirm dialog (replaces native confirm()) ---- */
 var _gconfirmCb=null;
-function gameConfirm(title, msgHtml, onYes, yesLabel){
+var _gconfirmNoCb=null;
+function gameConfirm(title, msgHtml, onYes, yesLabel, onNo, noLabel){
   var box=document.getElementById('gconfirm'); if(!box){ if(onYes)onYes(); return; }
   document.getElementById('gconfirmttl').textContent=title||'Confirm';
   document.getElementById('gconfirmmsg').innerHTML=msgHtml||'';
   var yes=document.getElementById('gconfirmyes'), no=document.getElementById('gconfirmno');
   yes.textContent=yesLabel||'Confirm';
-  _gconfirmCb=onYes||null;
+  no.textContent=noLabel||'Cancel';
+  _gconfirmCb=onYes||null; _gconfirmNoCb=onNo||null;
   if(!box._wired){ box._wired=true;
-    yes.addEventListener('click',function(){ box.classList.remove('on'); var cb=_gconfirmCb; _gconfirmCb=null; if(cb)cb(); });
-    no.addEventListener('click',function(){ box.classList.remove('on'); _gconfirmCb=null; });
+    yes.addEventListener('click',function(){ box.classList.remove('on'); var cb=_gconfirmCb; _gconfirmCb=null; _gconfirmNoCb=null; if(cb)cb(); });
+    no.addEventListener('click',function(){ box.classList.remove('on'); var cb=_gconfirmNoCb; _gconfirmCb=null; _gconfirmNoCb=null; if(cb)cb(); });
   }
   box.classList.add('on');
 }
@@ -26357,9 +26467,12 @@ function onGauntletWaveClear(){
   setTimeout(function(){
     if(!gauntlet.active)return;
     const nxt=w+1;
-    const ok=(typeof confirm==='function')?confirm('Wave '+w+' cleared!\nBanked pot: '+gauntlet.pot+' ember feathers.\n\nOK \u2014 brave Wave '+nxt+' (bigger pot, but dying forfeits it).\nCancel \u2014 cash out and claim '+gauntlet.pot+' feathers now.'):true;
-    if(!gauntlet.active)return;
-    if(ok)gauntletNextWave(); else gauntletCashOut();
+    if(typeof gameConfirm==='function'){
+      gameConfirm('Wave '+w+' cleared \u2014 press on?',
+        'Banked pot: <b>'+gauntlet.pot+'</b> ember feathers.<span class="sub">Brave Wave '+nxt+' for a bigger pot \u2014 but dying forfeits it. Or cash out now and keep '+gauntlet.pot+' feathers.</span>',
+        function(){ if(gauntlet.active)gauntletNextWave(); }, 'Brave Wave '+nxt,
+        function(){ if(gauntlet.active)gauntletCashOut(); }, 'Cash out');
+    } else { if(gauntlet.active)gauntletNextWave(); }
   },80);
 }
 function gauntletNextWave(){
@@ -30147,6 +30260,8 @@ const ashBowM=new THREE.Group();
  const str6=glow(new THREE.CylinderGeometry(0.005,0.005,1.2,4),0xffe6b0,0.95);str6.position.set(0,0,0.245);ashBowM.add(str6);
  const strGlow=glow(new THREE.CylinderGeometry(0.011,0.011,1.2,4),EMBER,0.3);strGlow.position.set(0,0,0.245);ashBowM.add(strGlow);
  const knock=glow(new THREE.SphereGeometry(0.016,8,6),CORE);knock.position.set(0,0,0.245);ashBowM.add(knock);
+ /* the Ashfang was modelled string-out; flip all its parts 180\u00b0 on Y so the string faces the archer, matching every other bow */
+ {const _ashInner=new THREE.Group(); _ashInner.rotation.y=Math.PI; while(ashBowM.children.length)_ashInner.add(ashBowM.children[0]); ashBowM.add(_ashInner);}
 }
 emberSwM.visible=false;ashBowM.visible=false;
 tool.add(emberSwM);tool.add(ashBowM);
@@ -30755,6 +30870,13 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         break;
       }
       case 'sw': { const _rp = RP.get(m.uid); if (_rp) { _rp.swingT = now(); _rp._swActT = now(); } break; }
+      case 'shot': { if (m.uid === player.uid) break; const _rp = RP.get(m.uid);
+        if (_rp && typeof spawnProjectile === 'function') {
+          _rp.swingT = now(); _rp._swActT = now();   /* also play the raise, in case 'sw' was throttled */
+          const _k = (m.k === 'magic') ? 'magic' : 'arrow';
+          const _col = (typeof m.c === 'string' && m.c) ? m.c : (_k === 'magic' ? '#b06fe0' : '#cfd6da');
+          spawnProjectile((_rp.px|0) + 0.5, (_rp.py|0) + 0.5, { px: m.tx | 0, py: m.ty | 0 }, _k, _col, 320);
+        } break; }
       case 'frz': {
         if (m.uid === player.uid) break;
         const _fr = (typeof rats !== 'undefined') ? rats[m.m | 0] : null;
@@ -31551,6 +31673,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function sendCinder(mi, delayMs, kindled) { if (active() && conn) send({ t: 'cndr', m: mi | 0, dl: delayMs | 0, k: kindled ? 1 : 0 }); }
   let _swSentT = 0;
   function sendSwing() { if (!active() || !conn) return; const _n = now(); if (_n - _swSentT < 350) return; _swSentT = _n; send({ t: 'sw' }); }
+  /* projectile visual: k = 'arrow'|'magic', target tile tx/ty, colour c (so peers see arrows/spells fly, not just the raise) */
+  function sendShot(kind, tx, ty, col) { if (active() && conn) send({ t: 'shot', k: (kind === 'magic' ? 'magic' : 'arrow'), tx: tx | 0, ty: ty | 0, c: (typeof col === 'string' ? col.slice(0, 9) : '') }); }
   function skSpec(ph, x, y, ms, en) { if (active() && conn) send({ t: 'sksp', ph: ph, x: x | 0, y: y | 0, ms: ms | 0, en: en ? 1 : 0 }); }
   function wardSpec(w, ph, x, y, ms) { if (active() && conn) send({ t: 'wdsp', w: w, ph: ph, x: x | 0, y: y | 0, ms: ms | 0 }); }
   function wardLine(w, ph, tiles, ms) { if (active() && conn) send({ t: 'wdln', w: w, ph: ph, tl: (tiles||[]).map(function(t){return [t[0]|0,t[1]|0];}), ms: ms | 0 }); }
@@ -31683,7 +31807,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
