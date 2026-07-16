@@ -1995,7 +1995,7 @@ const OBJ_DEFS={
   raid_bank:{name:'Bank chest',action:'Bank',ex:'A strongbox bound to the Bank of Millville. Mr. Ellison had it carried down. He will not say how.'},
   raid_geartable:{name:'Display case',action:'Examine',ex:'A long case of the finest arms the school has seen come through. Look, do not touch \u2014 Mr. Ellison is very clear on that.'},
   raid_lobbygate:{name:'The delve gate',action:'Open',ex:'Iron, and older than the school. Past it the tunnels start in earnest. It does not open by itself.'},
-  raid_stair:{name:'Stair down',action:'Descend',ex:'Steps worn into the brick, dropping to the next level of the tunnels. Deeper means worse.'},
+  raid_stair:{name:'Hole down',action:'Climb down',ex:'A hole broken clean through the brick floor, dropping to the next level of the tunnels. Deeper means worse.'},
   raid_well:{name:'Drainage well',action:'Drink',ex:'Cold, clean water welling up through the brick. A drink here puts the run back in your legs.'},
   raid_pipe:{name:'The pipe run',action:'Cross',ex:'A lagged steam main, flaking, spanning the chasm. It is the only way over \u2014 and it is a long way down.'},
   raid_rack:{name:'Larder rack',action:'Cut down',ex:'A butcher\u2019s rack of hooks and hanging meat, dragged down here from the Coit kitchens. The Chimera rears up to it and feeds. Cut it down and it cannot.'},
@@ -5604,6 +5604,7 @@ function playerTick(){
   }
   if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); }
   /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
+  if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
   if(typeof raidHudTick==='function')raidHudTick();
   if(typeof petTick==='function'){ const _pn=performance.now();
     petTick(Math.min(200,_pn-(_petLastT||_pn))); _petLastT=_pn; }
@@ -6175,7 +6176,7 @@ function playerTick(){
        through rather than leaving you standing in the gateway */
     if(player.x!==a.x||player.y!==a.y){ if(!player.path.length)walkTo(a.x,a.y); return; }
     const e=_raidRoomEntryPoint(a.to);   /* just inside the doorway, not dumped in the middle */
-    walkTo(e[0],e[1]);
+    if(inb(e[0],e[1])&&raidTiles[e[1]]&&raidTiles[e[1]][e[0]]===T_FLOOR)walkTo(e[0],e[1]);
     cancelAction();
   }
   else if(a.type==='raidbank'){
@@ -6228,7 +6229,7 @@ function playerTick(){
     }
     player.x=to[0]; player.y=to[1]; player.px=to[0]; player.py=to[1];
     player._agiAnim=null;
-    if(typeof addXp==='function')addXp('agility', 120);
+    if(typeof addXp==='function')addXp('agility', 50);   /* was 120 -- too rich for a 1.6s crossing */
     msg('You step off the far end of the pipe run.','#9fd06a');
     cancelAction();
   }
@@ -6908,9 +6909,12 @@ function ratsTick(){
     if(r.kind==='ember_mote'){emberMoteTick(r,performance.now());continue;}
     const _ct=(player.action&&player.action.type==='attack'&&player.action.rat&&player.action.rat.alive)?player.action.rat:((engagedMob&&engagedMob.alive&&engagedMob.target===player)?engagedMob:null);
     if(r.target===player&&_ct&&_ct!==r&&!r.tame&&!MOB_KINDS[r.kind].minion){r.target=null;r._chaseStart=undefined;if(engagedMob===r)engagedMob=null;continue;}
-    if(!r.target&&!r.tame&&(r.gaunt||r.interior!=='volcano')&&(MOB_KINDS[r.kind].aggro||r.gaunt||(inWild(r.x,r.y)&&r.kind!=='snowking'))
+    if(!r.target&&!r.tame&&(r.gaunt||r.interior!=='volcano')&&(r.raid||MOB_KINDS[r.kind].aggro||r.gaunt||(inWild(r.x,r.y)&&r.kind!=='snowking'))
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
-      &&(MOB_KINDS[r.kind].minion||MOB_KINDS[r.kind].cmb>=cmbLvl())&&player.hp>0
+      /* EVERYTHING in the delve aggroes, whatever its level or yours. The out-levelled rule (a mob
+         ignores you once cmb < yours) is right for a field and wrong for a dungeon that has already
+         scaled itself to meet you -- at 119 a delve rat would simply have watched you walk past. */
+      &&(r.raid||MOB_KINDS[r.kind].minion||MOB_KINDS[r.kind].cmb>=cmbLvl())&&player.hp>0
       &&dist1(r.x,r.y,player.x,player.y)<=4
       &&dist1(r.x,r.y,r.sx,r.sy)<=8
       &&(!_ct||_ct===r||MOB_KINDS[r.kind].minion))r.target=player;
@@ -13061,12 +13065,25 @@ function buildObjModel(o){
     put(mesh(new THREE.TorusGeometry(0.17,0.045,6,12),BRASS), 0.3,1.25,0.12);    /* the ring you pull */
     addProxy(g,1.2,2.6,0,{kind:'obj',o});
   }else if(def==='raid_stair'){
-    for(let i=0;i<5;i++){const st=mesh(new THREE.BoxGeometry(1.2,0.16,0.34),0x4a443c);
-      st.position.set(0,-0.08*i,-0.30+i*0.30);g.add(st);}
-    for(const sx of [-1,1]){const rail=mesh(new THREE.BoxGeometry(0.08,0.5,1.6),0x2a2620);rail.position.set(sx*0.62,0.1,0.3);g.add(rail);}
-    const dark=new THREE.Mesh(new THREE.PlaneGeometry(1.2,1.0),new THREE.MeshBasicMaterial({color:0x05040a}));
-    dark.rotation.x=-Math.PI/2;dark.position.set(0,-0.42,0.9);g.add(dark);
-    addProxy(g,1.6,1.4,0,{kind:'obj',o});
+    /* A HOLE, not a staircase. The floor slab bakes across the tile and a flight of steps is invisible
+       from directly above -- which is the only angle this camera ever gives you. A hole reads instantly:
+       a dark shaft, a broken rim, and rungs going down. (The Stronghold's ditch does the same.) */
+    const RIM=0x5a5148, DARK=0x0a0806, IRON=0x3a352d, BRICK=0x4a3a30;
+    const put=(m,x,y,z,rx,ry)=>{ m.position.set(x,y,z); if(rx)m.rotation.x=rx; if(ry)m.rotation.y=ry; g.add(m); return m; };
+    /* the shaft: a dark cylinder sunk into the floor, open at the top */
+    const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.62,0.5,2.4,16,1,true),
+      new THREE.MeshBasicMaterial({color:DARK,side:THREE.DoubleSide}));
+    put(shaft, 0,-1.15,0);
+    const floorDisc=new THREE.Mesh(new THREE.CircleGeometry(0.62,16),new THREE.MeshBasicMaterial({color:DARK}));
+    put(floorDisc, 0,-2.3,0, -Math.PI/2);
+    /* the broken rim: chunks of lifted brick around the lip */
+    for(let i=0;i<10;i++){ const a2=i/10*Math.PI*2;
+      const c=mesh(new THREE.BoxGeometry(0.26,0.12,0.20),(i%2)?RIM:BRICK);
+      c.rotation.y=-a2; c.rotation.z=(Math.sin(i*2.3))*0.22;
+      put(c, Math.cos(a2)*0.68,0.04,Math.sin(a2)*0.68); }
+    /* rungs going down the side, so it reads as somewhere you climb rather than fall */
+    for(let i=0;i<5;i++)put(mesh(new THREE.BoxGeometry(0.34,0.04,0.04),IRON), 0,-0.2-i*0.4,0.42);
+    addProxy(g,1.0,1.0,0,{kind:'obj',o});
   }else if(def==='raid_well'){
     const rim=mesh(new THREE.CylinderGeometry(0.44,0.48,0.30,12),0x4a443c);rim.position.y=0.15;g.add(rim);
     const water=new THREE.Mesh(new THREE.CircleGeometry(0.38,16),new THREE.MeshBasicMaterial({color:0x3f8fb8,transparent:true,opacity:0.75}));
@@ -18607,6 +18624,47 @@ function makeRat(r){
     addProxy(g,0.7,1.9,0,{kind:'rat',r});scene.add(g);
     r._m={group:g,demi:1,dk:'prefect',arms:[hm.lArm,hm.rArm],armBase:[0,0],head:hm.hairG,headBaseX:0,cane:cane};
     return;
+  }else if(r.kind==='raid_icedemon'){
+    /* ** THE ICE DEMON HAD NO MODEL BRANCH AT ALL. ** It has a MOB_KINDS entry so it spawned and fought
+       fine -- and makeRat fell straight through to the default RAT. It was the ONLY delve mob that did;
+       I audited the rest and all 8 demis + the Cornerstone have their own.
+       It is a thing that GREW INSIDE THE ICE: a translucent shell with a dark core visible through it,
+       rime spines, cold lights for eyes. critterSweep like the other beasts, not stacked boxes. */
+    const ICE=0xbfe6ff, CORE=0x2f5a7a, RIME=0x8fb8cf, GLOW=0x8fd0ff;
+    hm=null;
+    const core=critterSweep([
+      {p:[0,0.55,0.24],rx:0.16,ry:0.18},
+      {p:[0,0.70,0.06],rx:0.30,ry:0.34},
+      {p:[0,0.62,-0.16],rx:0.24,ry:0.26},
+      {p:[0,0.55,-0.34],rx:0.10,ry:0.10}
+    ],CORE,14,true,true,{top:0x1f3f5a,bottom:CORE});
+    g.add(core);
+    const shellGeo=critterSweep([
+      {p:[0,0.55,0.28],rx:0.22,ry:0.24},
+      {p:[0,0.72,0.06],rx:0.40,ry:0.44},
+      {p:[0,0.62,-0.18],rx:0.32,ry:0.34},
+      {p:[0,0.55,-0.38],rx:0.14,ry:0.14}
+    ],ICE,14,true,true).geometry;
+    const shell=new THREE.Mesh(shellGeo,new THREE.MeshLambertMaterial({color:ICE,transparent:true,opacity:0.55}));
+    g.add(shell);
+    for(let i=0;i<7;i++){ const t=i/6;
+      const sp=new THREE.Mesh(new THREE.ConeGeometry(0.045,0.16+Math.sin(t*Math.PI)*0.14,5),new THREE.MeshLambertMaterial({color:RIME}));
+      sp.position.set(0,0.98+Math.sin(t*Math.PI)*0.10,0.16-t*0.44); sp.rotation.x=-0.35; g.add(sp); }
+    const head=new THREE.Group(); head.position.set(0,0.78,0.30); g.add(head);
+    head.add(critterSweep([{p:[0,0,0],rx:0.16,ry:0.14},{p:[0,-0.02,0.20],rx:0.09,ry:0.07}],ICE,10,true,true));
+    for(const sx of [-1,1]){
+      const e=new THREE.Mesh(new THREE.SphereGeometry(0.035,7,6),new THREE.MeshBasicMaterial({color:GLOW}));
+      e.position.set(sx*0.07,0.03,0.10); head.add(e);
+      const hh=new THREE.Mesh(new THREE.SphereGeometry(0.08,7,6),new THREE.MeshBasicMaterial({color:GLOW,transparent:true,opacity:0.3}));
+      hh.position.set(sx*0.07,0.03,0.10); head.add(hh);
+    }
+    for(const [sx,sz] of [[-1,0.16],[1,0.16],[-1,-0.20],[1,-0.20]]){
+      g.add(critterSweep([{p:[sx*0.22,0.62,sz],rx:0.06,ry:0.06},{p:[sx*0.30,0.30,sz],rx:0.05,ry:0.05},
+        {p:[sx*0.28,0.02,sz+0.04],rx:0.06,ry:0.04}],RIME,8,true,true));
+      for(let c=0;c<3;c++){ const cl=new THREE.Mesh(new THREE.ConeGeometry(0.02,0.07,4),new THREE.MeshLambertMaterial({color:ICE}));
+        cl.position.set(sx*0.28+(c-1)*0.03,0.02,sz+0.10); cl.rotation.x=1.4; g.add(cl); }
+    }
+    g.scale.setScalar(1.35);
   }else if(r.kind==='raid_chimera'){
     /* a BEAST, so it is lofted with critterSweep like the boar -- not boxes. Grease-slick countershaded
        body, three necks that strike independently. */
@@ -27359,6 +27417,15 @@ function _rbRound(out, f, st, room){
     bake(out, new THREE.CylinderGeometry(0.34,0.26,0.18,10), st.accent, px, _raidFY+RAID_WALL_H, pz);
   }
   if(prof==='ring'){
+    /* ** BLOCK IT. ** The pier was baked geometry and nothing else -- no tile under it was ever
+       marked, so you could stand inside the masonry and guardians spawned in it. Stamp its
+       footprint solid; _raidTileSpawnable and the pathfinder both read the tiles. */
+    { const pcx=Math.round(cx), pcz=Math.round(cz);
+      for(let dy=-2;dy<=2;dy++)for(let dx=-2;dx<=2;dx++){
+        if(dx*dx+dy*dy>6)continue;                       /* a disc, matching the 2.2-radius drum */
+        const tx=pcx+dx, ty=pcz+dy;
+        if(inb(tx,ty)&&raidTiles[ty])raidTiles[ty][tx]=T_WALL;
+      } }
     /* THE TELESCOPE PIER. This was one cylinder in st.wall (0x2c251c -- near black) with nothing on
        it, so it read as a black post in the middle of the room. It is the masonry the Observatory
        stands on: dressed stone, banded, with the dome drive still turning overhead. */
@@ -27604,41 +27671,63 @@ function _raidRoomEmber(out, f, room){
    A CHASM. Two ledges, one pipe, nothing else. The void tiles do the falling away; this is the drama:
    depth you can see down, and up-light from far below so you cross as a silhouette on a wire. */
 function _raidRoomTightrope(out, f, room){
+  /* ===== THE PIPE RUN =====
+     A CHASM. Ledges, one pipe, and a long way down onto something unpleasant. The void tiles do the
+     falling away; this is the drama. Deliberately SPARSE: the first pass had catwalk stubs, a fallen
+     ladder, surviving pipes and warning signs strewn across the span, and Sam could not tell what any
+     of it was for -- "the pipe has some weird objects in the middle of it including some lights, idk
+     what those are for". If it is not the pipe or the thing you land on, it is not here. */
   const st=RAID_STYLE.stone; _rbFloor(out,f,st,room); _rbWalls(out,f,st,room);
   const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
   const g=_raidRoomGeom(f,room);
-  const IRON=0x3a352d, LAG=0x8a8272, RUST=0x6a4a2a, STEAM=0xffb14a;
-  const midY=Math.round(g.cz-0.5), x0=f.x0+2, x1=f.x1-2;
-  /* THE PIPE you cross: lagged, flaking, with a valve wheel mid-span */
-  bake(out, new THREE.CylinderGeometry(0.42,0.42,x1-x0+2,14), IRON, g.cx, _raidFY+0.05, midY+0.5, 0,1, 0,Math.PI/2);
-  for(let i=0;i<9;i++)   /* lagging bands, half of it flaked off */
-    if(i%3)bake(out, new THREE.CylinderGeometry(0.47,0.47,0.8,14), LAG, x0+i*((x1-x0)/8), _raidFY+0.05, midY+0.5, 0,1, 0,Math.PI/2);
-  bake(out, new THREE.TorusGeometry(0.5,0.07,6,16), RUST, g.cx, _raidFY+0.5, midY+0.5, 0,1, 0,Math.PI/2);
-  for(let i=0;i<4;i++)bake(out, box(0.05,0.55,0.05), RUST, g.cx, _raidFY+0.5, midY+0.5, 0,1, 0, i*0.78);
-  /* BROKEN CATWALK STUBS either side -- there WAS a floor here once */
-  for(const sy of [midY-2,midY+3]){
-    for(let i=0;i<3;i++){
-      bake(out, box(1.6,0.12,0.7), IRON, x0-0.5+i*0.9, _raidFY-0.1, sy+0.5, 0,1, 0, 0.05*i);
-      bake(out, box(1.6,0.12,0.7), IRON, x1+0.5-i*0.9, _raidFY-0.1, sy+0.5, 0,1, 0, -0.05*i);
+  const IRON=0x3a352d, LAG=0x8a8272, RUST=0x6a4a2a, SPIKE=0x6a6f74, BLOOD=0x5a1a1a, DARK=0x14110d;
+  /* ---- THE BED OF SPIKES at the bottom. This was a plain floor with some circles on it, which read
+     as nothing at all. It is what makes the drop mean something. ---- */
+  const vd=[];
+  for(const key in _raidVoid){ const q=key.split(','); const vx=+q[0], vy=+q[1];
+    if(vx>=f.x0&&vx<=f.x1&&vy>=f.y0&&vy<=f.y1)vd.push([vx,vy]); }
+  if(vd.length){
+    let mnx=1e9,mxx=-1e9,mny=1e9,mxy=-1e9;
+    for(const [vx,vy] of vd){ mnx=Math.min(mnx,vx); mxx=Math.max(mxx,vx); mny=Math.min(mny,vy); mxy=Math.max(mxy,vy); }
+    const cw=mxx-mnx+1, ch=mxy-mny+1, ccx=(mnx+mxx)/2+0.5, ccz=(mny+mxy)/2+0.5;
+    const FLOORY=_raidFY-6.4;
+    /* wet black rock, so the spikes read against it */
+    bake(out, box(cw,0.4,ch), DARK, ccx, FLOORY-0.2, ccz);
+    /* the spikes: iron, uneven, rusted at the base and dark at the tips */
+    for(const [vx,vy] of vd){
+      for(let k=0;k<3;k++){
+        const jx=((vx*7+vy*13+k*29)%10)/10-0.5, jz=((vx*11+vy*5+k*17)%10)/10-0.5;
+        const h=0.55+(((vx*3+vy*7+k)%5)/5)*0.75;
+        bake(out, new THREE.ConeGeometry(0.10,h,5), SPIKE, vx+0.5+jx*0.7, FLOORY+h/2, vy+0.5+jz*0.7);
+        bake(out, new THREE.CylinderGeometry(0.13,0.16,0.14,5), RUST, vx+0.5+jx*0.7, FLOORY+0.07, vy+0.5+jz*0.7);
+      }
     }
-    bake(out, box(0.08,0.5,0.08), IRON, x0+1.6, _raidFY+0.2, sy+0.5);
-    bake(out, box(0.08,0.5,0.08), IRON, x1-1.6, _raidFY+0.2, sy+0.5);
+    /* a few that have been used */
+    for(let i=0;i<5;i++){ const [vx,vy]=vd[(i*7)%vd.length];
+      bake(out, new THREE.SphereGeometry(0.16,7,6), BLOOD, vx+0.5, FLOORY+0.10, vy+0.5); }
+    /* the shaft walls, so the drop reads as a shaft and not a hole in space */
+    for(const sx of [-1,1])
+      bake(out, box(0.3,6.4,ch), 0x2a2620, ccx+sx*(cw/2), FLOORY+3.2, ccz);
+    for(const sz of [-1,1])
+      bake(out, box(cw,6.4,0.3), 0x2a2620, ccx, FLOORY+3.2, ccz+sz*(ch/2));
   }
-  /* a fallen ladder in the void, and the pipes that survived */
-  bake(out, new THREE.CylinderGeometry(0.05,0.05,3.4,6), RUST, g.cx-2, _raidFY-3.2, midY+3.4, 0.4,1, 0.9,0.3);
-  for(const sy of [midY-4,midY+5])
-    bake(out, new THREE.CylinderGeometry(0.2,0.2,x1-x0+4,8), IRON, g.cx, _raidFY-2.2, sy+0.5, 0,1, 0,Math.PI/2);
-  /* DEPTH: you should see a long way down. Steam far below, lighting you from underneath. */
-  for(let i=0;i<5;i++){
-    const px=x0+1+i*((x1-x0)/4);
-    _raidGlowMesh(new THREE.SphereGeometry(1.5,10,8), STEAM, px, _raidFY-6.2, midY+0.5, 0.12);
-    _raidGlowMesh(new THREE.SphereGeometry(0.7,8,7), STEAM, px, _raidFY-5.4, midY+0.5, 0.10);
-  }
-  _raidGlowMesh(new THREE.BoxGeometry(x1-x0+2,0.05,7.0), STEAM, g.cx, _raidFY-6.6, midY+0.5, 0.16);
-  /* warning signs on the ledges */
-  for(const lx of [x0-1.2,x1+1.2]){
-    bake(out, box(0.7,0.5,0.05), 0xc9a23a, lx, _raidFY+1.3, midY+0.5, 0,1, 0, 0.15);
-    bake(out, box(0.5,0.08,0.02), 0x14110d, lx, _raidFY+1.35, midY+0.44);
+  /* ---- THE PIPE ITSELF. Baked so it spans the gap; the CLICKABLE object sits at each ledge. ---- */
+  const px=stt=>0;
+  const P=raid&&raid.roomState&&raid.roomState[_raidRK(room.idx)];
+  const ax=P&&P.puz&&P.puz.axis;
+  if(ax){
+    const [mx,my,ux,uy,HW]=ax;
+    const span=(HW+1)*2;
+    const pipe=new THREE.CylinderGeometry(0.40,0.40,span,14);
+    bake(out, pipe, IRON, mx-0.5, _raidFY+0.30, my-0.5, Math.atan2(ux,uy), 1, 0, Math.PI/2);
+    for(let i=-2;i<=2;i++){   /* lagging bands, half of it flaked off */
+      if(i===0)continue;
+      bake(out, new THREE.CylinderGeometry(0.45,0.45,0.7,14), LAG,
+        mx-0.5+ux*i*1.6, _raidFY+0.30, my-0.5+uy*i*1.6, Math.atan2(ux,uy), 1, 0, Math.PI/2);
+    }
+    /* a stanchion at each lip, so it visibly LEAVES from somewhere */
+    for(const sgn of [-1,1])
+      bake(out, box(0.5,1.0,0.5), RUST, mx-0.5+ux*(HW+0.4)*sgn, _raidFY-0.2, my-0.5+uy*(HW+0.4)*sgn);
   }
   for(const p of _raidWallRing(f,room,4,0.16,0.4))_rbTorchAt(out, p.x, p.z, 0xffb14a, p.yaw);
 }
@@ -27654,20 +27743,27 @@ function _raidRoomIcePlant(out, f, room){
     bake(out, new THREE.CylinderGeometry(0.5,0.5,2.0,14), 0x4a5058, cx2, _raidFY+1.4, f.y0+2.2, 0,1, 0,Math.PI/2);
     bake(out, new THREE.TorusGeometry(0.34,0.06,6,14), 0x8a6a2a, cx2+1.2, _raidFY+1.5, f.y0+1.5, 0,1, Math.PI/2,0);
   }
-  /* BRINE PIPES overhead in a grid, furred with frost */
-  for(let i=0;i<6;i++){
-    const px=f.x0+2.5+i*((f.x1-f.x0-5)/5);
+  /* BRINE PIPES, furred with frost -- but ONLY down the sides. This was a full grid across the whole
+     ceiling and the camera looked straight into the underside of it: you could not see your own room.
+     Hugging the walls keeps the machine-room read and leaves the middle open, same call as Drury's
+     vault crown. */
+  for(const px of [f.x0+2, f.x0+3.4, f.x1-3.4, f.x1-2]){
     bake(out, new THREE.CylinderGeometry(0.14,0.14,f.y1-f.y0-1,8), IRON, px, _raidFY+RAID_WALL_H-0.45, g.cz, 0,1, Math.PI/2,0);
     bake(out, new THREE.CylinderGeometry(0.19,0.19,f.y1-f.y0-1,8), FROST, px, _raidFY+RAID_WALL_H-0.45, g.cz, 0,1, Math.PI/2,0);
   }
-  for(let i=0;i<4;i++)
-    bake(out, new THREE.CylinderGeometry(0.12,0.12,f.x1-f.x0-1,8), IRON, g.cx, _raidFY+RAID_WALL_H-0.75, f.y0+3+i*((f.y1-f.y0-6)/3), 0,1, 0,Math.PI/2);
+  /* two cross-runs hard against the end walls only */
+  for(const pz of [f.y0+1.5, f.y1-1.5])
+    bake(out, new THREE.CylinderGeometry(0.12,0.12,f.x1-f.x0-1,8), IRON, g.cx, _raidFY+RAID_WALL_H-0.75, pz, 0,1, 0,Math.PI/2);
   /* hanging chains */
-  for(let i=0;i<5;i++){ const hx=g.cx-4+i*2, hz=f.y1-3;
+  for(let i=0;i<4;i++){ const hx=(i<2?f.x0+2:f.x1-2), hz=f.y1-3-(i%2)*2;   /* chains against the walls, not over your head */
     for(let k=0;k<5;k++)bake(out, new THREE.TorusGeometry(0.08,0.025,5,8), 0x5a5f66, hx, _raidFY+RAID_WALL_H-0.9-k*0.15, hz, 0,1, k%2?Math.PI/2:0,0); }
-  /* THE BULGE: the demon frozen into the ice, visible before you thaw it */
-  _raidGlowMesh(new THREE.SphereGeometry(2.1,14,12), FROST, g.cx, _raidFY+0.6, g.cz, 0.34);
-  bake(out, new THREE.SphereGeometry(1.5,12,10), DEMON, g.cx, _raidFY+0.5, g.cz);
+  /* THE BULGE: the demon frozen into the ice, visible before you thaw it.
+     ** NOT BAKED. ** These are kept as live meshes so the melt can actually shrink and fade them --
+     baked geometry is merged into the room and cannot be animated, which is why the demon used to walk
+     out of a block of ice that never moved. */
+  _raidIceBulge=_raidGlowMesh(new THREE.SphereGeometry(2.1,14,12), FROST, g.cx, _raidFY+0.6, g.cz, 0.34);
+  _raidIceBulgeY=_raidFY+0.6;
+  _raidIceCore=_raidGlowMesh(new THREE.SphereGeometry(1.5,12,10), DEMON, g.cx, _raidFY+0.5, g.cz, 0.95);
   bake(out, new THREE.SphereGeometry(2.2,12,10), RIME, g.cx, _raidFY-0.9, g.cz);
   /* thermometer board */
   bake(out, box(1.2,0.9,0.08), 0x2a2620, g.cx+g.hw-1.2, _raidFY+1.5, g.cz);
@@ -27802,24 +27898,32 @@ function _raidRoomFoster(out, f, room){
   const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
   const g=_raidRoomGeom(f,room);
   const WIRE=0x6a6f74, WOOD=0x5a4327, TRUNK=0x4a3a26, IRON=0x2a2620;
-  /* STORAGE BAYS: chicken-wire cages */
-  for(let b=0;b<4;b++){
-    const bx=f.x0+2.5+b*((f.x1-f.x0-5)/3);
-    for(let i=0;i<7;i++)   /* the mesh, read as verticals */
-      bake(out, box(0.05,2.2,0.05), WIRE, bx-1.2+i*0.4, _raidFY+1.1, f.y0+2.5);
-    bake(out, box(2.7,0.08,0.08), WIRE, bx, _raidFY+2.2, f.y0+2.5);
-    bake(out, box(0.1,2.3,0.1), IRON, bx-1.35, _raidFY+1.15, f.y0+2.5);
-    bake(out, box(0.1,2.3,0.1), IRON, bx+1.35, _raidFY+1.15, f.y0+2.5);
-    /* trunks with names stencilled on them, stacked inside */
-    bake(out, box(1.1,0.6,0.7), TRUNK, bx, _raidFY+0.3, f.y0+1.6, 0.1);
-    bake(out, box(1.0,0.5,0.6), 0x5a4430, bx, _raidFY+0.85, f.y0+1.6, -0.2);
-    bake(out, box(0.5,0.16,0.04), 0xd8cfb4, bx, _raidFY+0.6, f.y0+1.26);
+  /* STORAGE BAYS: chicken-wire cages, AGAINST THE WALL wherever the wall actually is. These were
+     hand-placed at f.x0+2.5+b*... along a bounding box -- the exact mistake _raidWallPt exists to
+     prevent, and why Sam saw them floating off the brick. */
+  for(const p of _raidWallRing(f,room,4,0.30,0.15)){
+    const ix=Math.sin(p.yaw), iz=Math.cos(p.yaw);      /* inward from the wall face */
+    for(let i=0;i<7;i++){
+      const ox=Math.cos(p.yaw)*(-1.2+i*0.4), oz=-Math.sin(p.yaw)*(-1.2+i*0.4);
+      bake(out, box(0.05,2.2,0.05), WIRE, p.x+ox, _raidFY+1.1, p.z+oz, p.yaw);
+    }
+    bake(out, box(2.7,0.08,0.08), WIRE, p.x, _raidFY+2.2, p.z, p.yaw);
+    for(const sx of [-1.35,1.35])
+      bake(out, box(0.1,2.3,0.1), IRON, p.x+Math.cos(p.yaw)*sx, _raidFY+1.15, p.z-Math.sin(p.yaw)*sx, p.yaw);
+    /* trunks stacked inside the bay, just off the wall */
+    bake(out, box(1.1,0.6,0.7), TRUNK, p.x+ix*0.5, _raidFY+0.3, p.z+iz*0.5, p.yaw+0.1);
+    bake(out, box(1.0,0.5,0.6), 0x5a4430, p.x+ix*0.5, _raidFY+0.85, p.z+iz*0.5, p.yaw-0.2);
+    bake(out, box(0.5,0.16,0.04), 0xd8cfb4, p.x+ix*0.86, _raidFY+0.6, p.z+iz*0.86, p.yaw);
   }
-  /* bicycles hanging from hooks */
-  for(let i=0;i<3;i++){
-    const bx=g.cx-3+i*3, bz=f.y1-2.0;
-    for(const o of [-0.5,0.5])bake(out, new THREE.TorusGeometry(0.42,0.05,6,14), IRON, bx+o, _raidFY+1.5, bz, 0,1, 0,Math.PI/2);
-    bake(out, box(1.2,0.06,0.06), 0x7a3b2a, bx, _raidFY+1.7, bz);
+  /* BICYCLES HANGING FROM HOOKS -- flat against the brick, wheels parallel to the wall. They were
+     placed at g.cx-3+i*3 on a fixed z, so they hung in mid-air off any wall that was not exactly there. */
+  for(const p of _raidWallRing(f,room,3,0.22,2.3)){
+    for(const o of [-0.5,0.5]){
+      const ox=Math.cos(p.yaw)*o, oz=-Math.sin(p.yaw)*o;
+      bake(out, new THREE.TorusGeometry(0.42,0.05,6,14), IRON, p.x+ox, _raidFY+1.5, p.z+oz, p.yaw, 1, 0,Math.PI/2);
+    }
+    bake(out, box(1.2,0.06,0.06), 0x7a3b2a, p.x, _raidFY+1.7, p.z, p.yaw);
+    bake(out, box(0.06,0.22,0.06), IRON, p.x, _raidFY+2.0, p.z, p.yaw);   /* the hook it hangs from */
   }
   /* a boot rack, lacrosse sticks, a dead radiator */
   bake(out, box(2.6,0.1,0.5), WOOD, g.cx+4, _raidFY+0.35, g.cz);
@@ -28181,7 +28285,7 @@ function raidBuildInterior(graph, fl){
      gate. Baking it globally drew every entryway on the floor and gave the layout away. */
   if(typeof _raidBuildFloorPick==='function')_raidBuildFloorPick();   /* clicks need a surface at the graded heights */
   if(typeof _raidBuildDoors==='function')_raidBuildDoors(F);         /* portcullises on every doorway tile */
-  if(floorNo===1&&typeof _raidPlaceLobbyGate==='function')_raidPlaceLobbyGate(F);
+  if(floorNo===1&&typeof _raidPlaceLobbyGate==='function')_raidPlaceLobbyGate(F);   /* the gate is floor 1 only: below, you are already past it */
   if(typeof _raidPaintMinimap==='function')_raidPaintMinimap(F);    /* the map is per-FLOOR now */
   _raidBuiltSeed=key;
 }
@@ -28492,6 +28596,9 @@ function _raidSpawnMob(kind, x, y, roomIdx){
   if(_slot>=0){ const old=rats[_slot]; if(old&&old._m&&old._m.group)scene.remove(old._m.group); rats[_slot]=r; }
   else rats.push(r);   /* fallback: out of reserved slots (should not happen) */
   if(typeof makeRat==='function')makeRat(r);
+  /* a guardian appears with its room, never before it: makeRat adds to `scene`, which raidRevealRoom
+     does not touch -- so without this you saw the next room's mobs floating in the dark. */
+  if(r._m&&r._m.group&&raid&&raid.seen)r._m.group.visible=!!raid.seen[_raidRK(roomIdx,(raid&&raid.floor)||1)];
   if(r._m&&r._m.group)r._m.group.visible=true;
   return r;
 }
@@ -28508,6 +28615,7 @@ function raidEnterRoom(idx){
   if(!raid||!raid.rooms)return;
   const room=raid.rooms[idx]; if(!room)return;
   raidRevealRoom(idx);   /* you only see a room once you are standing in it */
+  if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();   /* ...and its guardians appear WITH it, not before */
   /* THE LOBBY is safe ground: no guardians, no seal, no brief. It exists so a group can gather. */
   if(room.type==='entrance'&&raid.floor===1){ const st0=_raidRoomState(idx); st0.cleared=true; return; }
   const stt=_raidRoomState(idx);
@@ -28624,6 +28732,8 @@ function _raidWasDoor(x,y){ return !!(_raidDoorSet&&_raidDoorSet.has(x+','+y)); 
    seal. Without these the guardian doors were invisible -- you just walked through a hole. */
 let _raidDoors={};
 let _raidOrb=null;
+/* the Ice Demon's block: live meshes, not baked, so the melt can animate them */
+let _raidIceBulge=null, _raidIceCore=null, _raidIceBulgeY=0;
 /* ============ THE PICK FLOOR ============
    Clicks resolve by raycasting a per-interior floor mesh (sosFloor / volcFloor / chapelFloor ...). The
    delve had NONE, so every click fell through to `terra` -- the overworld terrain -- and landed on
@@ -28641,7 +28751,10 @@ function _raidBuildFloorPick(){
   if(pos&&pos.count&&typeof pos.getX==='function')
   for(let i=0;i<pos.count;i++){
     /* PlaneGeometry is built in XY then rotated, so its local y maps to world z */
-    const wx=RAID.x0+(pos.getX(i)+W2/2), wz=RAID.y0+(pos.getY(i)+H2/2);
+    /* rotation.x=-PI/2 maps local (x,y,z) -> world (x, z, -y): local y is NEGATED into world z.
+       Sampling as if y->+z mirrored the whole height field along z, which is why clicks still
+       landed 1-2 tiles out on the graded floor. */
+    const wx=RAID.x0+(pos.getX(i)+W2/2), wz=RAID.y0+H2/2-pos.getY(i);
     pos.setZ(i, _raidCornerH(Math.round(wx),Math.round(wz)));   /* the height the player will stand at */
   }
   if(pos&&pos.needsUpdate!==undefined)pos.needsUpdate=true;
@@ -28749,6 +28862,17 @@ function _raidRoomLight(rg, room, f){
 }
 /* Reveal a room the first time you set foot in it. CoX never shows you the floor ahead: what is past
    the door is unknown until you go through it. */
+/* Hide every raid mob whose room has not been revealed. Mob models live in `scene`, not in the room
+   group -- so raidRevealRoom never touched them, and you could see the next room's guardians floating
+   in the dark before you had opened the door. */
+function _raidSyncMobVisibility(){
+  if(!inRaid||!raid)return;
+  for(const r of rats){ if(!r||!r.raid||!r._m||!r._m.group)continue;
+    const seen=!!(raid.seen&&raid.seen[_raidRK(r.raidRoom,r.raidFloor)]);
+    const here=(r.raidFloor==null||r.raidFloor===raid.floor);
+    r._m.group.visible = !!(r.alive&&seen&&here);
+  }
+}
 function raidRevealRoom(idx){
   const rg=_raidRoomMesh[idx];
   if(rg&&!rg.visible){
@@ -28925,7 +29049,7 @@ function _raidPlacePuzzle(room, f){
       if(put('raid_brazier',x,y,{lit:false,fuelled:false}))braz.push([x,y]); }
     for(let i=0;i<RAID_ICE_BRAZIERS;i++){ const a2=i/RAID_ICE_BRAZIERS*6.283;
       const x=Math.round(f.cx+Math.cos(a2)*(R-2)), y=Math.round(f.cz+Math.sin(a2)*(R-2));
-      if(put('raid_sapling',x,y,{chops:2}))saps.push([x,y]); }
+      if(put('raid_sapling',x,y,{chops:1}   /* ONE kindling per timber. It was >1, so two timbers lit all four braziers and the other two were decoration -- the room solved itself at half length. */))saps.push([x,y]); }
     stt.puz={kind:'ice_demon', spots:braz, saplings:saps, n:braz.length, solved:false, thawed:false, peerPlates:{}};
     return;
   }
@@ -28953,48 +29077,76 @@ function _raidPlacePuzzle(room, f){
     return;
   }
   if(room.puzzle==='tightrope'){
-    /* CoX's Tightrope: the floor is gone. Deathly shooters cover the crossing; cross the pipe run
-       (Agility), take the keystone from the far side, and bring it back to the barrier. */
-    const midY=Math.round(f.cz);
-    const x0=f.x0+2, x1=f.x1-2;
-    /* ** THE PIPE IS AN OBSTACLE, NOT A FLOOR. ** It used to leave the midline walkable, so you simply
-       strolled across a chasm on an invisible tightrope. Reusing the ropes course's own rig (agiObstacle
-       / _agiAnim), the span is now VOID -- you cannot walk it at all -- and the pipe is a clickable
-       object at each ledge that glides you across with the same animation as the Balance log. */
-    for(let x=x0+1;x<=x1-1;x++){ for(let y=f.y0;y<=f.y1;y++){
+    /* ** THE CHASM MUST SEPARATE THE TWO DOORWAYS. ** It used to be a fixed vertical band across the
+       middle, which assumed the doors were east and west. They are not: the generator puts them on
+       whichever walls the graph needs -- so a room could have its exit at (97,61) with the band running
+       right through it. That is Sam's "the locked door is sitting on the side wall in the middle of the
+       chasm": the exit was UNREACHABLE, and the keystone was on the wrong side of it.
+       Now the chasm is cut PERPENDICULAR to the line between the two doorways, at their midpoint. That
+       always separates them, whatever walls they are on: you arrive on one side, the keystone and the
+       exit are on the other, and the pipe is the only way over. */
+    const doors=[];
+    for(const k in _raidDoorRooms){ const rr=_raidDoorRooms[k];
+      if(rr&&(rr[0]===room.idx||rr[1]===room.idx)){ const q=k.split(','); doors.push([+q[0],+q[1]]); } }
+    /* collapse the doorway tiles into two clusters (a doorway is 2 tiles wide) */
+    let A=doors[0]||[f.x0,Math.round(f.cz)], B=null, bd=-1;
+    for(const d of doors){ const dd=Math.hypot(d[0]-A[0],d[1]-A[1]); if(dd>bd){bd=dd;B=d;} }
+    if(!B||bd<3){ A=[f.x0,Math.round(f.cz)]; B=[f.x1,Math.round(f.cz)]; }
+    const mx=(A[0]+B[0])/2+0.5, my=(A[1]+B[1])/2+0.5;
+    const vx=B[0]-A[0], vy=B[1]-A[1];
+    const L=Math.hypot(vx,vy)||1, ux=vx/L, uy=vy/L;   /* the axis you will cross along */
+    /* The chasm must never swallow a DOORWAY. The doors sit at t = +/-L/2 along this axis, so the
+       half-width has to leave a landing at each end -- otherwise the exit itself is void and the
+       keystone and barrier end up in mid-air, which is exactly what happened. */
+    const HW=Math.max(1.5, Math.min(3.5, L/2-3.0));
+    for(let y=f.y0;y<=f.y1;y++)for(let x=f.x0;x<=f.x1;x++){
       if(!inb(x,y))continue;
-      raidTiles[y][x]=T_WALL;                     /* still blocks... */
-      _raidVoid[x+','+y]=1;                       /* ...but it is a FALL, not a wall. */
-    } }
-    /* THE KEYSTONE is across the chasm, on the far ledge -- that is the whole reason to cross.
-       THE BARRIER bars THE WAY ON. It used to sit at x0-1, on the near end of the rope, barring
-       nothing and standing in the doorway you had just walked through: Sam, fairly -- "is it supposed
-       to be blocking the exit or what? it's just sitting on top of the pipe at the entrance, and the
-       exit to the room is in a completely separate location."
-       Now it stands ON the room's onward doorway, so the shape of the room reads itself:
-         you come in -> the way on is barred -> the keystone is over there -> cross, fetch, unbar. */
-    /* the crossing, from either ledge: click it and you go over. `to` is the far ledge, exactly as the
-       ropes course's obstacles carry their landing tile. */
-    const pipeA=put('raid_pipe',x0,midY,{to:[x1,midY]});
-    const pipeB=put('raid_pipe',x1,midY,{to:[x0,midY]});
-    const key=put('raid_keystone',x1,midY+1,{taken:false});
-    let bx=x0-1, by=midY;
-    if(typeof _raidDoorRooms!=='undefined'){
-      let best=null,bd=1e9;
-      for(const k in _raidDoorRooms){ const rr=_raidDoorRooms[k];
-        if(!rr||(rr[0]!==room.idx&&rr[1]!==room.idx))continue;
-        const q=k.split(','), dx=+q[0], dy=+q[1];
-        const d=Math.hypot(dx-x1,dy-midY);          /* the doorway FURTHEST from the keystone = the way ON */
-        if(d<bd)continue;
-        bd=d; best=[dx,dy];
+      const t=(x+0.5-mx)*ux+(y+0.5-my)*uy;             /* distance along the doorway axis */
+      if(Math.abs(t)<HW && raidTiles[y][x]===T_FLOOR){
+        raidTiles[y][x]=T_WALL;                        /* still blocks... */
+        _raidVoid[x+','+y]=1;                          /* ...but it is a FALL, not a wall. */
       }
-      /* stand it just inside that doorway, on the room's own floor */
-      if(best){ const ix=best[0]+Math.sign(Math.round(f.cx)-best[0]), iy=best[1]+Math.sign(Math.round(f.cz)-best[1]);
-        if(inb(ix,iy)&&raidTiles[iy]&&raidTiles[iy][ix]===T_FLOOR){ bx=ix; by=iy; } }
     }
+    /* the two ledges, on the axis, just outside the chasm */
+    const led=(sgn)=>{
+      for(let k=0;k<8;k++){
+        const px=Math.round(mx+ux*(HW+0.5+k)*sgn-0.5), py=Math.round(my+uy*(HW+0.5+k)*sgn-0.5);
+        if(inb(px,py)&&raidTiles[py]&&raidTiles[py][px]===T_FLOOR&&!blockedStrict(px,py))return [px,py];
+      }
+      return null;
+    };
+    const nearL=led(-1), farL=led(1);
+    if(nearL&&farL){
+      /* a pipe at BOTH ledges: click it and you cross. `to` is the other ledge. */
+      put('raid_pipe',nearL[0],nearL[1],{to:[farL[0],farL[1]]});
+      put('raid_pipe',farL[0],farL[1],{to:[nearL[0],nearL[1]]});
+    }
+    /* THE KEYSTONE and THE BARRIER both live on B's SIDE -- across the pipe. Anchor them to the far
+       LEDGE and search outward from there, so they can only ever land on ground that is reachable
+       once you have crossed. Anchoring them to a doorway put them in the void whenever the chasm
+       reached that far. */
+    const anchor=farL||[B[0],B[1]];
+    const near=(ax0,ay0)=>{
+      for(let r=0;r<=8;r++)for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+        if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
+        const nx=ax0+dx, ny=ay0+dy;
+        if(nx<f.x0||nx>f.x1||ny<f.y0||ny>f.y1)continue;
+        if(_raidVoid[nx+','+ny])continue;
+        if(inb(nx,ny)&&raidTiles[ny]&&raidTiles[ny][nx]===T_FLOOR&&!blockedStrict(nx,ny))return [nx,ny];
+      }
+      return null;
+    };
+    const kp=near(Math.round(mx+ux*(HW+2.5)-0.5), Math.round(my+uy*(HW+2.5)-0.5))||anchor;
+    const key=put('raid_keystone',kp[0],kp[1],{taken:false});
+    /* the barrier bars the way ON: just inside B's doorway, on the far side of the chasm */
+    let bp=near(B[0]+Math.sign(Math.round(f.cx)-B[0]), B[1]+Math.sign(Math.round(f.cz)-B[1]));
+    if(!bp||_raidVoid[bp[0]+','+bp[1]])bp=near(B[0],B[1])||anchor;
+    const bx=bp[0], by=bp[1];
     const bar=put('raid_barrier',bx,by,{open:false});
-    stt.puz={kind:'tightrope', spots:[], n:1, solved:false, rope:[x0,x1,midY],
-             keyAt:key?[x1,midY+1]:null, barAt:bar?[bx,by]:null, keyHeld:false, peerPlates:{},
+    stt.puz={kind:'tightrope', spots:[], n:1, solved:false,
+             rope:[nearL?nearL[0]:f.x0, farL?farL[0]:f.x1, Math.round(my-0.5)],
+             axis:[mx,my,ux,uy,HW],
+             keyAt:key?[kp[0],kp[1]]:null, barAt:bar?[bx,by]:null, keyHeld:false, peerPlates:{},
              crossed:false};
     /* the Deathly shooters that make the crossing hurt */
     stt.mobIdx=stt.mobIdx||[];
@@ -29154,12 +29306,37 @@ function raidPuzzleTick(){
         let lit=0;
         for(const [x,y] of puz.spots){ const o=objects.find(z=>z.def==='raid_brazier'&&z.x===x&&z.y===y);
           if(o&&o.lit)lit++; }
-        if(lit>=puz.n&&puz.n>0){
+        if(lit>=puz.n&&puz.n>0&&!puz.melting){
+          /* ** THE MELT. ** This used to set thawed=true and spawn on the spot -- so the demon simply
+             walked out of a block of ice that was still standing there, untouched. The ice is a real
+             mesh (_raidIceBulge): shrink it, drop its opacity, and only THEN wake what was inside. */
+          puz.melting=performance.now();
+          msg('The braziers roar up. The ice begins to run.','#8fd0ff');
+          if(typeof sfx!=='undefined'&&sfx.fire)sfx.fire();
+        }
+        if(puz.melting&&!puz.thawed){
+          const t=(performance.now()-puz.melting)/2600;      /* 2.6s of melt */
+          if(_raidIceBulge&&_raidIceBulge.parent){
+            const k=Math.max(0,1-t);
+            _raidIceBulge.scale.setScalar(0.35+k*0.65);
+            if(_raidIceBulge.material)_raidIceBulge.material.opacity=0.34*k;
+            _raidIceBulge.position.y=(_raidIceBulgeY||0)-(1-k)*0.55;
+          }
+          if(_raidIceCore&&_raidIceCore.parent){
+            _raidIceCore.scale.setScalar(1+Math.min(0.25,t*0.25));   /* it swells as the ice lets go */
+          }
+          if(t<1)return;
+          if(_raidIceBulge&&_raidIceBulge.parent)_raidIceBulge.parent.remove(_raidIceBulge);
+          if(_raidIceCore&&_raidIceCore.parent)_raidIceCore.parent.remove(_raidIceCore);
+          _raidIceBulge=null; _raidIceCore=null;
+          msg('The ice sloughs away. Something is standing in the puddle.','#7fd4f0');
+        }
+        if(puz.melting&&!puz.thawed){
           puz.thawed=true;
           const f2=raidRoomFootprint(room.idx);
           const dm=_raidSpawnMob('raid_icedemon', Math.round(f2.cx), Math.round(f2.cz), room.idx);
           dm.raidDemi=true; dm.raidBase={hp:150,maxhit:14,acc:0.88,dl:56,db:9};
-          dm.maxhp=mobMaxHp(dm); dm.hp=dm.maxhp; dm._sig='flare'; dm._sigCd=performance.now()+6000;
+          dm.maxhp=mobMaxHp(dm); dm.hp=dm.maxhp; dm._sig='rime';   /* was 'flare' -- a FIRE attack on an ICE demon. It freezes you now. */ dm._sigCd=performance.now()+6000;
           stt.mobIdx=(stt.mobIdx||[]).concat([dm.i]);
           msg('The ice sloughs off it. The Ice Demon is awake - burn it down.','#c9483a');
         }
@@ -29392,6 +29569,38 @@ function raidBossTick(){
         if(now-(r._feedMsg||0)>2500){ r._feedMsg=now; msg('The Chimera rears up to the larder rack and feeds - cut the rack down!','#e0532a'); } }
       continue;
     }
+    /* --- THE ICE DEMON: a rime blast that FREEZES you. It used to be 'flare' -- a FIRE attack on an
+       ice demon, which was simply wrong. It reuses the freeze the game already has (player.frozenUntil
+       + groundFrost, from the Frostmaul/duel path) rather than inventing a second one.
+       ** TELEGRAPHED AND DODGEABLE: ** it marks the tile you are standing on, waits 1.4s, and only
+       freezes you if you are STILL THERE. Move and it hits the floor. --- */
+    if(r._sig==='rime'){
+      if(r._rimeAt && now>=r._rimeAt){
+        const tx=r._rimeX, ty=r._rimeY;
+        r._rimeAt=0;
+        if(typeof groundFrost==='function')groundFrost(tx,ty,false);
+        if(player.x===tx&&player.y===ty){
+          const dmg=rndi(4,9);
+          player.hp=Math.max(0,player.hp-dmg);
+          splats.push({ent:'player',dmg,t:now}); if(typeof updateOrb==='function')updateOrb();
+          player.frozenUntil=now+2600;
+          player.path.length=0;
+          msg('The rime takes you \u2014 you are frozen solid!','#7fd4f0');
+          if(player.hp<=0){ die(); continue; }
+        } else {
+          msg('The rime bursts where you were standing.','#8fd0ff');
+        }
+      }
+      if(!r._rimeCd||now>=r._rimeCd){
+        const d=Math.max(Math.abs(Math.round(r.x)-player.x),Math.abs(Math.round(r.y)-player.y));
+        if(d<=7&&!r._rimeAt){
+          r._rimeCd=now+9000; r._rimeAt=now+1400;         /* the tell: 1.4s to move */
+          r._rimeX=player.x; r._rimeY=player.y;
+          if(typeof groundFrost==='function')groundFrost(player.x,player.y,true);
+          msg('The Ice Demon draws breath \u2014 the floor whitens under you. MOVE.','#7fd4f0');
+        }
+      }
+    }
     /* --- Guardians: The Benefactor hardens to bronze and takes nothing until the seam cracks. --- */
     if(r._sig==='harden' && r._hardUntil){
       if(now<r._hardUntil){ r.hp=Math.min(r.maxhp, r.hp); r._immune=true;
@@ -29586,8 +29795,24 @@ function raidGotoFloor(n){
      be re-sealed, or you could walk straight past its live guardians. */
   for(const room of F.rooms){ const st=raid.roomState&&raid.roomState[_raidRK(room.idx,n)];
     if(st&&st.spawned&&!st.cleared)_raidSealRoom(room.idx,true); }
-  player.x=RAID_ENTRY.x; player.y=RAID_ENTRY.y; player.px=RAID_ENTRY.x; player.py=RAID_ENTRY.y;
+  /* ** WHERE YOU LAND. ** This used to be RAID_ENTRY on EVERY floor -- which is the LOBBY's arrival
+     tile. So descending dropped you back beside Ellison, in front of the gate, and you had to open
+     it again: the whole lobby ceremony, once per floor. The lobby is FLOOR 1 ONLY. Below that you
+     have already committed -- you drop straight into the first chamber. */
+  if(n===1){ player.x=RAID_ENTRY.x; player.y=RAID_ENTRY.y; }
+  else {
+    const _to=(F.rooms&&F.rooms.length>1)?1:0;
+    const _e=_raidRoomEntryPoint(_to);
+    player.x=_e[0]; player.y=_e[1];
+    raid.roomIdx=_to; raid.started=true;   /* you are past the gate; there is no gate down here */
+  }
+  player.px=player.x; player.py=player.y;
   player.path.length=0; cancelAction(); camYaw=0;
+  if(n>1&&typeof raidEnterRoom==='function'){ raidRevealRoom(raid.roomIdx); raidEnterRoom(raid.roomIdx); }
+  /* Ellison keeps the lobby, and the lobby is floor 1 -- he must not haunt the floors below. This
+     lives in _raidEnterNow too, but that does NOT re-run on a floor change. */
+  for(const _n of npcs)if(_n._g&&_n.interior==='raid')_n._g.visible=(raid.floor===1);
+  if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
   for(const o9 of objects){ if(o9._m&&o9._m.group&&RAID_CAVE_OBJS[o9.def])o9._m.group.visible=false; }   /* apparatus reveals with its room */
   raid.seen={}; raidRevealRoom(0);   /* a fresh floor: only the room you land in is known */
   if(!inRaidRestore){
@@ -29712,6 +29937,7 @@ function raidAbandon(){
      anyone else's delve -- their raid object, their points and their rooms are untouched. Nothing is
      broadcast; the only thing the others see is that you stop streaming, exactly as if you logged off. */
   const uid=(player&&player.uid)||'me';
+  _raidStripKit();   /* abandoning is leaving: the delve's own kit does not come with you */
   msg('You turn your back on it. The tunnels settle behind you.','#9a8a6a');
   if(typeof MP!=='undefined'&&MP.sendRaidPoints)MP.sendRaidPoints(0);   /* your points leave the pool */
   /* re-roll THIS player's delve and put them in its lobby */
@@ -29844,6 +30070,8 @@ function raidBeginDelve(){
 function _raidRoomEntryPoint(idx){
   const f=raidRoomFootprint(idx);
   let best=null, bd=1e9;
+  /* EVERY candidate below is checked for real floor. This used to be able to return a void tile, and
+     the gate then teleported you onto it -- which is how Sam ended up UNDER the floor. */
   for(const key in _raidDoorRooms){ const rr=_raidDoorRooms[key];
     if(!rr||(rr[0]!==idx&&rr[1]!==idx))continue;
     const q=key.split(','), dx=+q[0], dy=+q[1];
@@ -29856,7 +30084,20 @@ function _raidRoomEntryPoint(idx){
       break;
     }
   }
-  return best||[Math.round(f.cx),Math.round(f.cz)];
+  if(best)return best;
+  /* fall back to the room's heart -- and if even that is not floor (a shaped mask, a carved void),
+     spiral until we find real ground. Never return a tile you cannot stand on. */
+  const cx=Math.round(f.cx), cz=Math.round(f.cz);
+  if(inb(cx,cz)&&raidTiles[cz]&&raidTiles[cz][cx]===T_FLOOR&&!blockedStrict(cx,cz))return [cx,cz];
+  for(let r=1;r<=12;r++){
+    for(let dy=-r;dy<=r;dy++)for(let dx=-r;dx<=r;dx++){
+      if(Math.max(Math.abs(dx),Math.abs(dy))!==r)continue;
+      const nx=cx+dx, ny=cz+dy;
+      if(nx<f.x0||nx>f.x1||ny<f.y0||ny>f.y1)continue;
+      if(inb(nx,ny)&&raidTiles[ny]&&raidTiles[ny][nx]===T_FLOOR&&!blockedStrict(nx,ny))return [nx,ny];
+    }
+  }
+  return [cx,cz];
 }
 let _raidSkipPanel=false;
 function _raidEnterNow(){
@@ -29873,7 +30114,7 @@ function _raidEnterNow(){
   /* AFTER the hide-loop above, or it wipes the reveal and room 0's props -- including the way OUT -- stay dark. */
   raid.seen={}; if(typeof raidRevealRoom==='function')raidRevealRoom(0);
   if(typeof MP!=='undefined'&&MP.sendRaidCombat)MP.sendRaidCombat(_raidMyCombat());   /* so the party can scale to its highest */
-  for(const n of npcs)if(n._g){ n._g.visible=(n.interior==='raid');
+  for(const n of npcs)if(n._g){ n._g.visible=(n.interior==='raid'&&(!raid||raid.floor===1));   /* Ellison keeps the lobby, and the lobby is floor 1 */
     /* re-seat him on the DELVE floor: his model was placed at load, using the overworld height at
        (22,56) -- deep wilderness -- so he was buried about a metre under the lobby. */
     if(n.interior==='raid')n._g.position.set(n.px+0.5, groundH(n.px+0.5,n.py+0.5), n.py+0.5); }
@@ -29884,11 +30125,20 @@ function _raidEnterNow(){
   if(!inRaidRestore){msg('You descend the cellar steps into a cold vaulted undercroft. The passages wait beyond.','#8fb8d6');}
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
 }
+/* Everything the delve hands you that must not follow you out. ONE list, used by exitRaid AND by
+   raidAbandon -- the rations kept escaping because each path had its own hard-coded array and I kept
+   forgetting one. Anything you brought IN is untouched; this only ever removes delve-issue kit. */
+const RAID_ONLY_ITEMS=['raid_ration','raid_lab_rod','raid_lab_wand','raid_kindling','raid_keystone'];
+function _raidStripKit(){
+  for(const id of RAID_ONLY_ITEMS){
+    if(typeof countItem!=='function')break;
+    const n=countItem(id);
+    if(n>0&&typeof takeItems==='function')takeItems(id,n);   /* takeItems, not removeItem -- removeItem does not exist and THREW */
+  }
+}
 function exitRaid(){
   inRaid=false; tiles=TILES_MAIN; _raidRestore();
-  /* delve-only kit never leaves: the lab instruments, and the rations (free 18-heal food otherwise,
-     and the cache is repeatable). CoX drops all raid-only items on the way out for the same reason. */
-  for(const id of ['raid_lab_rod','raid_lab_wand','raid_ration']){ const _n=countItem(id); if(_n>0)takeItems(id,_n); }   /* removeItem() does not exist -- this THREW, so exitRaid never finished and you could not leave */
+  _raidStripKit();
   for(const r of rats){ if(r.raid){ r.alive=false; r.target=null; r.respawnAt=9e15; if(r._m&&r._m.group)r._m.group.visible=false; } }   /* clear raid guardians */
   worldGroup.visible=true; raidGroup.visible=false;
   for(const n of npcs)if(n._g)n._g.visible=(n.interior!=='raid');   /* and nowhere else */
@@ -30039,8 +30289,13 @@ function _raidGenFloor(rng, floorNo, large, wantPuz){
   /* the second scavenger (already paid for above) goes anywhere after the first -- with exactly one,
      22% of floors were literally the same shape (e-C-S-P-...). */
   if(nScav>1){
-    const at2 = at+1 + Math.floor(rng()*Math.max(1,(pool.length-at-1)));
-    pool.splice(Math.min(at2,pool.length), 0, Object.assign({type:'resource'}, RAID_RESOURCE_ROOM));
+    /* NEVER ADJACENT. Placing the second anywhere after the first allowed at2 = at+1 -- two scavenger
+       rooms back to back, which is pointless (you have fought nothing in between) and looks broken. */
+    const lo2=at+2;
+    if(lo2<=pool.length){
+      const at2 = lo2 + Math.floor(rng()*Math.max(1,(pool.length-lo2+1)));
+      pool.splice(Math.min(at2,pool.length), 0, Object.assign({type:'resource'}, RAID_RESOURCE_ROOM));
+    }
   }
 
   const rooms=[];
