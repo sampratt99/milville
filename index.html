@@ -5249,7 +5249,9 @@ function mobCmb(r){
      here -- a level-3 delver was being shown 'level-145' on a mob that had actually been weakened
      to meet them. Report what it really is. */
   if(r.raid&&r.raidBase&&raid&&raid.scale){
-    const base=MOB_KINDS[r.kind]?MOB_KINDS[r.kind].cmb:60;
+    /* a raid mob's REAL level: its raid base, not its overworld kind. A delve zombie is not a
+       churchyard zombie -- it has 80hp and hits for 10. */
+    const base=r.raidBase.cmb || (MOB_KINDS[r.kind]?MOB_KINDS[r.kind].cmb:60);
     return Math.max(3, Math.round(base*raid.scale.dmgMul));
   }
   if(r.kind==='boar')return r.lvl||MOB_KINDS.boar.cmb;
@@ -12987,7 +12989,7 @@ function buildObjModel(o){
     put(mesh(new THREE.BoxGeometry(0.02,0.02,0.82),0xe8e4d8), 1.3,1.16,0.2);
     /* little brass plates under each piece */
     for(const px of [-1.5,-0.6,0.1,1.3])put(mesh(new THREE.BoxGeometry(0.4,0.02,0.1),GOLD), px,0.95,0.3);
-    addProxy(g,4.6,1.6,0,{kind:'obj',o});
+    addProxy(g,2.2,1.5,0,{kind:'obj',o});   /* was 4.6 -- it swallowed every click for four tiles around, including the gate */
   }else if(def==='raid_lobbygate'){
     /* same trap as the ladder: build, position, THEN add. */
     const IRON=0x3c3630, DARK=0x2a2620, BRASS=0x8a6a2a;
@@ -13912,7 +13914,7 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   {const z=addObj('vault_zipline',222,19,true);if(z){z.to=[219,68];z.xp=18;z.role='exit';}}   /* exit now past the laser, on the boss-door landing */
 })();
 objects.forEach(buildObjModel);
-objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
+objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
 
 function updateObjVisual(o){
   const m=o._m;if(!m)return;
@@ -26894,8 +26896,12 @@ const _RAID_R0=raidRoomFootprint(0);
 const RAID_ENTRY={x:Math.round(_RAID_R0.cx), y:_RAID_R0.y1-1};   /* arrive at the south end of room 0 */
 const RAID_PORTAL={x:254,y:49};   /* RUNTIME. The cellar hatch: lawn against Coit's north wall, E of Larry. Must equal the source x in the addObj above + WX. */
 const RAID_RETURN={x:254,y:48};   /* RUNTIME. You climb out onto the path tile just north of the hatch (walkable, adjacent). */
-const RAID_CAVE_OBJS={raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1};   /* objects that live INSIDE the raid instance */
-const RAID_APPARATUS={raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1};   /* per-run objects cleared + rebuilt each layout */
+const RAID_CAVE_OBJS={raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1};   /* objects that live INSIDE the raid instance */
+const RAID_APPARATUS={raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1
+/* NOTE: raid_sign is deliberately NOT here. RAID_APPARATUS is the set that raidBuildInterior DELETES
+   and rebuilds on every floor build -- and the lobby notice board is placed once at LOAD, so listing
+   it here destroyed it on the first build. It was invisible-but-clickable because optionsAt is
+   tile-based and still found the dead object's tile. */};   /* per-run objects cleared + rebuilt each layout */
 const raidTiles=TILES_MAIN.map(r=>r.slice());
 const raidGroup=new THREE.Group();raidGroup.visible=false;scene.add(raidGroup);
 const _raidFY=groundH(RAID_ENTRY.x,RAID_ENTRY.y);   /* flat floor height for the whole instance */
@@ -27142,7 +27148,10 @@ function _raidGlowMesh(geo,hex,x,y,z,op,ry){
 /* wall height + palette per style */
 const RAID_STYLE={
   stone:  {floor:0x413b34, floor2:0x4a443c, wall:0x2f2a25, trim:0x5a5148, accent:0x6a5a3a},
-  ruin:   {floor:0x494036, floor2:0x554b40, wall:0x332c24, trim:0x6a5c48, accent:0x7a6a4a},
+  /* a DORM cellar, not a crypt: whitewashed brick over a green painted dado, red quarry-tile floor.
+     This used to be 0x494036/0x332c24 -- within a hair of `stone`, so Foster and the lobby looked
+     identical and Sam could not tell he had changed rooms. */
+  ruin:   {floor:0x8a5a4a, floor2:0x9a6a56, wall:0xa8a294, trim:0x3f6a52, accent:0xd8cfb4},
   cave:   {floor:0x33322f, floor2:0x3c3b37, wall:0x232320, trim:0x44443e, accent:0x3a5a4a},
   ember:  {floor:0x3a2620, floor2:0x462c22, wall:0x281a14, trim:0x6a3a1e, accent:0xff5a1e},
   archive:{floor:0x3e352a, floor2:0x483d30, wall:0x2c251c, trim:0x6a5330, accent:0x8a6a3a},
@@ -27942,7 +27951,7 @@ function _raidRoomEntrance(out, f, room){
     const cxr=Math.round(f.cx), czr=Math.round(f.cz);
     const bk=addObj('raid_bank',cxr-5,czr,true);
     if(bk){ bk.raidRoom=room.idx; bk.raidFloor=1; if(typeof buildObjModel==='function')buildObjModel(bk); if(bk._m&&bk._m.group)bk._m.group.visible=false; }
-    const gt=addObj('raid_geartable',cxr+5,czr,true);
+    const gt=addObj('raid_geartable',cxr+6,czr-3,true);   /* clear of the gate */
     if(gt){ gt.raidRoom=room.idx; gt.raidFloor=1; if(typeof buildObjModel==='function')buildObjModel(gt); if(gt._m&&gt._m.group)gt._m.group.visible=false; }
   }
   const sx=sxc+0.5, wz=f.y1+1.5;
@@ -28090,13 +28099,16 @@ function raidBuildInterior(graph, fl){
 /* which existing kinds guard each room STYLE, + a base-stat profile per kind (balanced for a
    ~115-combat solo raider; the CoX scale multiplies these). dl/db = defence level/bonus. */
 const RAID_MOB_BASE={
-  skelearcher: {hp:70, maxhit:9,  acc:0.80, dl:48, db:6},
-  ghost:       {hp:60, maxhit:8,  acc:0.78, dl:42, db:4},
-  zombie:      {hp:80, maxhit:10, acc:0.76, dl:44, db:5},
-  bigspider:   {hp:75, maxhit:11, acc:0.82, dl:46, db:6},
-  spider:      {hp:55, maxhit:7,  acc:0.78, dl:38, db:3},
-  redspider:   {hp:65, maxhit:9,  acc:0.82, dl:42, db:5},
-  ember_imp:   {hp:58, maxhit:8,  acc:0.80, dl:40, db:4},
+  /* `cmb` is what the nameplate SHOWS (scaled by the party's dmgMul). Without it, mobCmb fell back to
+     MOB_KINDS[kind].cmb -- so a delve guardian with 80hp and a 10 max hit read as a "level 13 zombie"
+     next to level-110 Prefects. The stats were always right; the label was lying. */
+  skelearcher: {hp:70, maxhit:9,  acc:0.80, dl:48, db:6, cmb:52},
+  ghost:       {hp:60, maxhit:8,  acc:0.78, dl:42, db:4, cmb:45},
+  zombie:      {hp:80, maxhit:10, acc:0.76, dl:44, db:5, cmb:58},
+  bigspider:   {hp:75, maxhit:11, acc:0.82, dl:46, db:6, cmb:56},
+  spider:      {hp:55, maxhit:7,  acc:0.78, dl:38, db:3, cmb:40},
+  redspider:   {hp:65, maxhit:9,  acc:0.82, dl:42, db:5, cmb:48},
+  ember_imp:   {hp:58, maxhit:8,  acc:0.80, dl:40, db:4, cmb:44},
   magma_salamander:{hp:78, maxhit:11, acc:0.82, dl:48, db:7},
   cinder_wraith:{hp:85, maxhit:12, acc:0.84, dl:52, db:8},
   brat:        {hp:62, maxhit:8,  acc:0.78, dl:40, db:4},
@@ -28460,7 +28472,13 @@ function raidEnterRoom(idx){
       if(n>1)db._trio=idx;
       stt.mobIdx.push(db.i); made.push(db.i);
     }
-    if(n>1){ stt.trio={members:made, margin:0.30};
+    /* ** THE PREFECTS' TRIO RULE IS REMOVED. ** It was CoX's Vanguards: if any one of the three drifted
+       more than 30% of max HP away from the others, ALL THREE healed to full -- i.e. you had to bring
+       them down together. Sam: "they just kept healing themselves and it was unclear what I was
+       supposed to do" -- which is fair. The rule never announced itself until it had already punished
+       you, and a heal-to-full with no telegraph reads as a bug, not a mechanic. They are now simply
+       three hard mobs. */
+    if(false){ stt.trio={members:made, margin:0.30};
       msg('The Prefects fan out. They will not tolerate being separated - bring them down together.','#c9483a'); }
   }
   const kinds=RAID_ROOM_MOBS[room.style]||RAID_ROOM_MOBS.stone;
@@ -29484,8 +29502,8 @@ function raidHudTick(){
 /* Abandoning: back to Ellison, and the delve is thrown away. */
 function raidConfirmAbandon(){
   if(!inRaid)return;
-  if(!raid.started){   /* in the lobby you have nothing to lose -- just go */
-    exitRaid(); return;
+  if(!raid.started){   /* nothing underway: no confirm needed, but still go to the LOBBY, not the lawn */
+    raidAbandon(); return;
   }
   const pts=raidMyPoints();
   const html='<div style="text-align:left;line-height:1.5">'
