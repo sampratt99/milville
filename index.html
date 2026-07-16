@@ -2712,7 +2712,9 @@ addObj('raid_portal',142,49,true);
 /* east of the hatch, clear of it, and TURNED TO FACE the path. An object has no yaw unless you give
    it one -- the same trap the lobby gate and the lab notice both hit. It was overlapping the cellar
    door and facing away from anyone walking up to it. */
-{ const _lb=addObj('raid_sign_lawn',145,49,true); if(_lb)_lb.faceYaw=-Math.PI/2; }
+/* faces NORTH, per Sam. The model's face looks down +Z by default, and north is -Z, so it needs a
+   half-turn. (An object has no yaw at all unless you give it one -- the recurring trap.) */
+{ const _lb=addObj('raid_sign_lawn',145,49,true); if(_lb)_lb.faceYaw=Math.PI; }
 { const _ls=addObj('raid_sign',24,50,true); if(_ls){_ls.raidRoom=0; _ls.raidFloor=1;} }   /* room 0, beside the arrival stairs. MUST track RAID_ENTRY: with CELL=24 room 0 is x15-36 y39-60, so the entry is (26,59). Room-0 membership is asserted in harness-entrance-load.mjs. */
 (function placeEmberLadders(){
   /* one BIG stone ladder per chamber, offering BOTH up and down (OSRS-style), facing the room centre */
@@ -4879,7 +4881,7 @@ function openPetExamine(id){
     el.innerHTML='<div class="gepanel" style="width:430px;max-width:94vw;">'
       +'<div class="gebar"><span id="petexname"></span><div class="gex" id="petexclose" title="Close">\u2715</div></div>'
       +'<canvas id="petexcv" style="width:100%;height:210px;display:block;background:radial-gradient(ellipse at 50% 38%,#22201a 0%,#141210 78%);border-radius:6px;border:1px solid #0d0b09;cursor:grab"></canvas>'
-      +'<div id="petexbody" style="padding:10px 12px;text-align:left;line-height:1.5"></div></div>';
+      +'<div id="petexbody" style="padding:10px 12px;text-align:left;line-height:1.5;color:#e8e0c8"></div></div>';   /* the panel is dark brown: unset text renders BLACK and disappears */
     document.body.appendChild(el);
     el.addEventListener('click',(e)=>{ if(e.target===el)closePetExamine(); });
     const xb=document.getElementById('petexclose'); if(xb)xb.addEventListener('click',closePetExamine);
@@ -4892,9 +4894,9 @@ function openPetExamine(id){
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
       +'<span style="color:#8a8172">While it is out</span><b style="color:#9fd06a">'+(info.perk||'')+'</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
-      +'<span style="color:#8a8172">Vigour</span><b>30 minutes, and only while called</b></div>'
+      +'<span style="color:#8a8172">Vigour</span><b style="color:#e8e0c8">30 minutes, and only while called</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
-      +'<span style="color:#8a8172">Its food</span><b>'+(info.food||'')+' \u2014 from Mr. Ellison</b></div>'
+      +'<span style="color:#8a8172">Its food</span><b style="color:#e8e0c8">'+(info.food||'')+' \u2014 from Mr. Ellison</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
       +'<span style="color:#8a8172">How to get one</span><b style="color:#ffd24a">The Delve \u2014 about 1 run in 50</b></div>'
     +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">Its perk only works while it is out, and it '
@@ -6369,7 +6371,12 @@ function playerTick(){
       msg('You step out onto the pipe\u2026','#1a5f6a');
       /* seq:1 is the Balance log: the rig walks the span with its arms out and teeters. 1.6s, longer
          than a log, because this is a chasm. */
-      player._agiAnim={seq:1,t0:performance.now(),dur:1600,fx:player.x,fy:player.y,tx:to[0],ty:to[1],ox:o.x,oy:o.y};
+      /* ** WALK THE PIPE, NOT THE PIT. ** _agiAnim lerps the rig between the two tiles and reads the
+         GROUND for its height -- and every tile between the ledges is VOID, seven units down. So it
+         glided you along the bottom of the chasm and back up the far side. `overY` pins the walk to
+         the pipe's own height: you cross ON it, which is the entire point of the room. */
+      player._agiAnim={seq:1,t0:performance.now(),dur:1600,fx:player.x,fy:player.y,tx:to[0],ty:to[1],ox:o.x,oy:o.y,
+        overY:(typeof _raidFY!=='undefined')?(_raidFY+0.62):null};
       player.heading=Math.atan2(to[0]-player.x,to[1]-player.y);
       if(typeof MP!=='undefined'&&MP.sendAgi)MP.sendAgi(1);
     }
@@ -8451,7 +8458,11 @@ function optionsAt(tx,ty){
   if(guide.x===tx&&guide.y===ty)opts.push(
     {html:'Talk-to <span class="t">Guide</span>',label:'Talk-to Guide',fn:startTalk},
     {html:'Examine <span class="t">Guide</span>',fn:()=>msg(guide.ex)});
-  const np2=npcs.find(n2=>!n2.gone&&n2.x===tx&&n2.y===ty);
+  /* ** AN INVISIBLE NPC MUST NOT BE CLICKABLE. ** optionsAt is TILE-based, and the delve's NPCs live on
+     tiles that other floors reuse -- Ellison stands at (26,50), which is inside the Cornerstone's
+     chamber on floor 3. So his menu came up in the boss room, off an NPC you could not see. If he is
+     not rendered, he is not there. */
+  const np2=npcs.find(n2=>!n2.gone&&n2.x===tx&&n2.y===ty&&!(n2._g&&n2._g.visible===false));
   if(np2)opts.push(
     {html:'Talk-to <span class="t">'+np2.name+'</span>',label:'Talk-to '+np2.name,
      fn:()=>setAction({type:'talkn',n:np2},np2.x,np2.y)},
@@ -28554,6 +28565,15 @@ function _raidRoomMemorial(out, f, room){
   const g=_raidRoomGeom(f,room);
   const BRONZE=0x6a4a22, PATINA=0x3f6a52, STONE=0x6a6156, SHAFT=0xdce6ff;
   const R=g.R;
+  /* ** BLOCK THE CENTRAL PILLAR. ** Exactly the bug Hawley's pier had: it is baked geometry and nothing
+     ever marked the tiles beneath it, so you could stand inside the masonry and the Benefactor spawned
+     and walked around IN there. Stamp its footprint solid -- the pathfinder and _raidTileSpawnable both
+     read raidTiles, so this fixes movement AND spawning in one go. */
+  { const pcx=Math.round(g.cx), pcz=Math.round(g.cz);
+    for(let dy=-1;dy<=1;dy++)for(let dx=-1;dx<=1;dx++){
+      const tx=pcx+dx, ty=pcz+dy;
+      if(inb(tx,ty)&&raidTiles[ty])raidTiles[ty][tx]=T_WALL;
+    } }
   /* ** THE DOME, OPENED UP. ** It was six stacked rings closing to an oculus -- which from directly
      above (the only angle this camera gives) is six concentric circles roofing the room: Sam could not
      see his own floor. Only the SPRINGING now -- the two lowest courses, which read unmistakably as a
@@ -29410,10 +29430,16 @@ function raidRevealRoom(idx){
   /* re-seat this room's props on the graded floor: the relief differs per room AND per floor. */
   if(raid&&objects)for(const o of objects){ if(!RAID_CAVE_OBJS[o.def]||o.raidRoom!==idx)continue;
     if(o._m&&o._m.group&&typeof _raidObjY==='function')o._m.group.position.y=_raidObjY(o); }
+  /* ** THE BOOKKEEPING MUST NOT HANG OFF THE MESH. ** This used to read `if(rg && !rg.visible)` -- so a
+     room whose mesh was ALREADY visible (a fresh build starts them visible) never got marked seen at
+     all. Everything that keys off raid.seen then treats the room as unvisited: _raidSyncMobVisibility
+     hides every mob in it, and Sam walks into the Cornerstone's chamber to find an empty circular room
+     with two invisible hands in it. Mark it seen ALWAYS; only the mesh toggle is conditional.
+     ** This is very likely the root of the whole family of 'it is there but I cannot see it' bugs. ** */
+  raid.seen=raid.seen||{}; raid.seen[_raidRK(idx)]=1;
   const rg=_raidRoomMesh[idx];
   if(rg&&!rg.visible){
     rg.visible=true;
-    raid.seen=raid.seen||{}; raid.seen[_raidRK(idx)]=1;
     const F=raid.graph&&raid.graph.floors[(raid.floor||1)-1];
     if(F&&typeof _raidPaintMinimap==='function')_raidPaintMinimap(F);   /* the map fills in as you go */
   }
@@ -29639,7 +29665,12 @@ function _raidPlacePuzzle(room, f){
     let A=doors[0]||[f.x0,Math.round(f.cz)], B=null, bd=-1;
     for(const d of doors){ const dd=Math.hypot(d[0]-A[0],d[1]-A[1]); if(dd>bd){bd=dd;B=d;} }
     if(!B||bd<3){ A=[f.x0,Math.round(f.cz)]; B=[f.x1,Math.round(f.cz)]; }
-    const mx=(A[0]+B[0])/2+0.5, my=(A[1]+B[1])/2+0.5;
+    /* ** CENTRE IT ON THE ROOM, not on the doorways. ** The midpoint of two doorways can sit right up
+       against a wall -- which is why Sam got 4-5 tiles of chasm on one side and an enormous walkable
+       apron on the other. The doorways decide the AXIS; the room decides where the gap goes. */
+    const _dm=(A[0]+B[0])/2+0.5, _dn=(A[1]+B[1])/2+0.5;
+    const mx=(Math.abs(B[0]-A[0])>=Math.abs(B[1]-A[1])) ? (f.cx+0.5) : _dm;
+    const my=(Math.abs(B[0]-A[0])>=Math.abs(B[1]-A[1])) ? _dn : (f.cz+0.5);
     const vx=B[0]-A[0], vy=B[1]-A[1];
     /* ** SNAP THE AXIS TO A CARDINAL. ** Two bugs, one cause: a diagonal axis gave a DIAGONAL band of
        wall tiles -- which is POROUS, because diagonally-adjacent walls leave a corner gap you can step
@@ -29658,7 +29689,12 @@ function _raidPlacePuzzle(room, f){
     /* ** LEAVE A REAL LEDGE. ** AL/2-3 left a ONE-TILE strip on a tight room: you spawned on a single
        row of floor with a chasm on one side and a wall on the other. AL/2-4.5 keeps at least three
        tiles of standing room at each end, which is what a landing has to be. */
-    const HW=Math.max(1.5, Math.min(3.5, AL/2-4.5));
+    /* ** A REAL GAP. ** This was clamped to AL/2-4.5 and capped at 3.5 -- measured between the DOORS,
+       so you got a 4-5 tile chasm hard against one side and an enormous walkable apron on the other
+       (Sam's exact report). Measure across the ROOM and leave 3 tiles of ledge at each end; every
+       tile between is gap. */
+    const _span=ux?(f.x1-f.x0):(f.y1-f.y0);
+    const HW=Math.max(2.5, _span/2-3.5);
     for(let y=f.y0;y<=f.y1;y++)for(let x=f.x0;x<=f.x1;x++){
       if(!inb(x,y))continue;
       const t=(x+0.5-mx)*ux+(y+0.5-my)*uy;             /* distance along the doorway axis */
@@ -30704,7 +30740,8 @@ function raidGotoFloor(n){
      have already committed -- you drop straight into the first chamber. */
   if(n===1){ player.x=RAID_ENTRY.x; player.y=RAID_ENTRY.y; }
   else {
-    const _to=(F.rooms&&F.rooms.length>1)?1:0;
+    /* floors below 1 have no arrival room: room 0 IS the first real chamber, so land in it. */
+    const _to=0;
     const _e=_raidRoomEntryPoint(_to);
     player.x=_e[0]; player.y=_e[1];
     raid.roomIdx=_to; raid.started=true;   /* you are past the gate; there is no gate down here */
@@ -31151,7 +31188,7 @@ const RAID_DEMI={
 /* The one final boss. Always present, always last. */
 const RAID_FINAL={id:'cornerstone', name:'The Cornerstone', under:'everything', style:'stone'};
 const RAID_RESOURCE_ROOM={id:'scavenger', name:'The Scavenger Warren', style:'cave', resource:1};
-const RAID_ENTRANCE_ROOM={id:'entrance',  name:'The Undercroft',        style:'stone', entrance:1};
+const RAID_ENTRANCE_ROOM={id:'entrance',  name:'The Upper Basement',    style:'stone', entrance:1};
 
 /* Fixed launch size (decision 4): 6 rooms total = entrance + resource + 2 combat + 1 puzzle +
    boss, arranged as a linear critical path entrance -> ... -> boss. (Graph shape is a simple
@@ -31222,17 +31259,17 @@ function _raidGenFloor(rng, floorNo, large, wantPuz){
   }
 
   const rooms=[];
-  /* ** THE LOBBY IS FLOOR 1 ONLY. ** Every floor used to open with RAID_ENTRANCE_ROOM, so descending
-     built a whole second Undercroft -- ladder shaft, stores and all -- sitting next to you on floor 2
-     (Sam: "I could see the cellar lobby next to me, just without any objects or Ellison"). Hiding
-     Ellison and the gate was treating the symptom; the ROOM should not be there at all. Below floor
-     1 the tunnels just open into a landing: a plain stone chamber, no lobby furniture, no ladder. */
+  /* ** THE LOBBY IS FLOOR 1 ONLY -- and below it there is NO arrival room AT ALL. **
+     Third go at this, so: the first fix hid Ellison and the gate (symptom). The second swapped the
+     entrance room for a 'landing' -- which was still a WHOLE EXTRA ROOM, and since a landing and the
+     lobby are both built by _raidRoomStone it looked identical to the thing I had just removed. Sam
+     kept seeing "two rooms, the one I spawn in and a lobby-looking one next to it" because that is
+     exactly what was there.
+     Below floor 1 the hole simply drops you into the first real chamber. Room 0 IS that chamber. */
+  const first = (floorNo===1) ? 1 : 0;
   if(floorNo===1)
     rooms.push(Object.assign({idx:0,type:'entrance'}, RAID_ENTRANCE_ROOM, {floor:floorNo}));
-  else
-    rooms.push({idx:0, type:'landing', id:'landing', name:'The Landing',
-                under:'the steam tunnels', style:'stone', floor:floorNo});
-  pool.forEach((r,i)=>rooms.push(Object.assign({}, r, {idx:i+1, floor:floorNo})));
+  pool.forEach((r,i)=>rooms.push(Object.assign({}, r, {idx:i+first, floor:floorNo})));
   rooms.push({idx:rooms.length, type:'stair', id:'stairhead', name:'The Stair Head',
               under:'the steam tunnels', style:'stone', floor:floorNo});
   const edges=[]; for(let i=0;i<rooms.length-1;i++)edges.push([i,i+1]);
@@ -34825,7 +34862,11 @@ function render(now){
       /* glide the rig from the obstacle tile toward the landing tile across the traversal */
       if(A.fx!==undefined&&A.tx!==undefined){
         const gx=A.fx+(A.tx-A.fx)*u+0.5, gz=A.fy+(A.ty-A.fy)*u+0.5;
-        const gyBase=groundH(gx,gz);
+        /* ** OVER THE PIPE, NOT THROUGH THE PIT. ** This reads the GROUND for its height -- and on the
+           Pipe Run every tile between the ledges is VOID, seven units down. So the rig glided along
+           the bottom of the chasm and climbed out the far side, which is exactly what Sam saw.
+           `overY` pins the walk to the pipe's own height: you cross ON it. */
+        const gyBase=(A.overY!=null)?A.overY:groundH(gx,gz);
         pm.g.position.x=gx; pm.g.position.z=gz; pm.g.position.y=gyBase;
       }
       if(A.seq===0){
