@@ -5581,8 +5581,22 @@ function adjacentTo(x,y){return dist1(player.x,player.y,x,y)===1;}
 
 function playerTick(){
   player.regen++;
+  /* SAFEGUARD: never stand in a room that has not been drawn. Whatever put you here -- a restore, a
+     death, a floor change, a bug I have not thought of -- if the room you are in is not revealed,
+     reveal it. And if you are somehow nowhere at all, put you back in the lobby rather than leave
+     you floating in the void. */
+  if(inRaid&&raid&&raid.rooms&&_raidRoomMesh){
+    const _cur=raidRoomAt(player.x,player.y);
+    if(_cur!=null){ const _m=_raidRoomMesh[_cur]; if(_m&&!_m.visible)raidRevealRoom(_cur); }
+    else if(!raidTiles[player.y]||raidTiles[player.y][player.x]!==T_FLOOR){
+      const e=_raidRoomEntryPoint(0);
+      player.x=e[0];player.y=e[1];player.px=e[0];player.py=e[1];player.path.length=0;
+      msg('You come to your senses at the cellar steps.','#9a8a6a');
+    }
+  }
   if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); }
   /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
+  if(typeof raidHudTick==='function')raidHudTick();
   if(typeof petTick==='function'){ const _pn=performance.now();
     petTick(Math.min(200,_pn-(_petLastT||_pn))); _petLastT=_pn; }
   if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.alive&&!_rectorBoss.dormant&&typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4){ if(typeof rectorLavaTick==='function')rectorLavaTick(_rectorBoss,performance.now()); }
@@ -7101,7 +7115,7 @@ function saveObject(){
     /* The delve session: enough to REBUILD it from the seed and drop you back where you stood.
        x/y above already point at the cellar door, so if any of this is missing or the restore
        fails you surface at the door -- never in the wilderness. */
-    raidSess:(inRaid&&raid&&raid.graph)?{sd:raid.seed>>>0,lg:raid.large?1:0,cl:raid.scaleCL|0,ps:raid.scalePS|0,fl:raid.floor|0,
+    raidSess:(inRaid&&raid&&raid.graph)?{sd:raid.seed>>>0,lg:raid.large?1:0,cl:raid.scaleCL|0,ps:raid.scalePS|0,fl:raid.floor|0,sn:Object.keys(raid.seen||{}),st:raid.started?1:0,
       pts:(raid.points&&raid.points[player.uid||'me'])|0,rx:player.x,ry:player.y,ri:raid.roomIdx|0}:null,
     playMs:player.playMs,kills:player.kills,shrimpBurned:player.shrimpBurned||0,musicSel:musicSel,musicManual:musicManual,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,volc:(inVolcano?{fl:_lastVolcFloor,x:player.x,y:player.y}:null),
     equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,mapv:'sps4',xpv:2};
@@ -28019,6 +28033,7 @@ function raidBuildInterior(graph, fl){
   const F = (graph.floors&&graph.floors[floorNo-1]) || null;
   if(!F)return;
   _raidCarveTiles(F);   /* always re-carve: resets any guardian-door seals from a prior run */
+  _raidReserveMobSlots();   /* deterministic rats[] indices: MP addresses mobs by index */
   _computeRaidWallDist();   /* MUST run before anything bakes: _rbFloor/_rbWallBlock read the field */
   const key = graph.seed+':'+floorNo;
   if(_raidBuiltSeed===key && raidGroup.children.length)return;   /* this floor is already built */
@@ -28315,19 +28330,59 @@ function _raidFindSpawn(x,y,roomIdx){
     if(_raidTileSpawnable(c[0],c[1],f))return c; }
   return null;
 }
+/* ============ DETERMINISTIC MOB SLOTS ============
+   ** THE BUG THIS FIXES: ** the MP mob protocol addresses mobs by their rats[] INDEX -- send({t:'mob',
+   m:r.i}) and the peer applies it to rats[m.m]. That is fine for the overworld, where every client
+   spawns those mobs at load in a fixed order, so index N is the same creature everywhere.
+   Raid mobs were spawned ON ROOM ENTRY with `i: rats.length` -- so the index depended on which rooms
+   you had entered and in what order. Two players exploring the same delve in different orders built
+   DIFFERENT arrays: the same Coxswain was i=183 on one client and i=194 on the other, so streaming it
+   moved a completely different creature on the peer's screen. That broke streaming, claims, ghit
+   damage-forwarding and mobatk redirection -- all of group combat underground.
+   ** THE FIX: ** reserve a fixed slot block per ROOM. Room r's mobs always live at
+   base + r*RAID_MOB_PER_ROOM + slot, on every client, whatever order anyone explores in.
+   ** WHY NOT SPARSE INDICES: ** there are 22 `for(const r of rats)` loops and not one guards against
+   holes, so a sparse rats[] would break the whole game. The block is PRE-FILLED with dead placeholders
+   to keep the array dense. */
+const RAID_MOB_PER_ROOM=16, RAID_MOB_ROOMS=10;      /* 8 cells + the boss + headroom */
+let _raidWorldMobs=null;                             /* how many mobs the OVERWORLD has: identical on every client */
+function _raidReserveMobSlots(){
+  if(_raidWorldMobs==null)_raidWorldMobs=rats.length;   /* first build: no raid mobs exist yet */
+  /* drop every raid mob and truncate back to the overworld block, so the base never drifts between
+     delves (a player on their 3rd run must not have a different base to one on their 1st) */
+  if(player&&player.target&&player.target.raid)player.target=null;
+  for(const r of rats)if(r&&r.raid){ r.alive=false; if(r._m&&r._m.group){ scene.remove(r._m.group); r._m=null; } }
+  rats.length=_raidWorldMobs;
+  for(let k=0;k<RAID_MOB_PER_ROOM*RAID_MOB_ROOMS;k++){
+    rats.push({i:_raidWorldMobs+k, kind:'rat', raid:true, _slot:true, alive:false, locked:false,
+      x:0,y:0,px:0,py:0,sx:0,sy:0, hp:0,maxhp:1, respawnAt:9e15, heading:0, target:null,
+      name:'', ex:'', interior:'raid', raidFloor:-1, raidRoom:-1});
+  }
+}
+function _raidSlotFor(roomIdx){
+  if(_raidWorldMobs==null)return -1;
+  const base=_raidWorldMobs+Math.min(roomIdx,RAID_MOB_ROOMS-1)*RAID_MOB_PER_ROOM;
+  for(let k=0;k<RAID_MOB_PER_ROOM;k++){ const r=rats[base+k];
+    if(r&&r._slot&&!r.alive)return base+k; }
+  return -1;
+}
 function _raidSpawnMob(kind, x, y, roomIdx){
   /* NEVER spawn a mob in a wall, in the void, or on top of an object. Every call site hands us a
      hand-picked tile and none of them checked. */
   const sp=_raidFindSpawn(x,y,roomIdx);
   if(sp){ x=sp[0]; y=sp[1]; }
   const base=RAID_MOB_BASE[kind]||{hp:60,maxhit:8,acc:0.8,dl:42,db:4};
-  const r={i:rats.length, kind, sx:x, sy:y, x, y, px:x, py:y,
+  /* take THIS ROOM's next reserved slot, so the index is the same on every client */
+  const _slot=_raidSlotFor(roomIdx);
+  const r={i:(_slot>=0?_slot:rats.length), kind, sx:x, sy:y, x, y, px:x, py:y,
     alive:true, locked:false, respawnAt:9e15, lastHit:0,
     heading:rnd(0,6.2), target:null, phase:rats.length%2,
     name:MOB_KINDS[kind].name, ex:MOB_KINDS[kind].ex,
     interior:'raid', raid:true, raidRoom:roomIdx, raidFloor:(raid&&raid.floor)||1, raidBase:base};
   r.maxhp=mobMaxHp(r); r.hp=r.maxhp;
-  rats.push(r); if(typeof makeRat==='function')makeRat(r);
+  if(_slot>=0){ const old=rats[_slot]; if(old&&old._m&&old._m.group)scene.remove(old._m.group); rats[_slot]=r; }
+  else rats.push(r);   /* fallback: out of reserved slots (should not happen) */
+  if(typeof makeRat==='function')makeRat(r);
   if(r._m&&r._m.group)r._m.group.visible=true;
   return r;
 }
@@ -29360,10 +29415,21 @@ function restoreRaid(ss){
     _raidSkipPanel=true;            /* no rules brief on a restore */
     _raidEnterNow();
     /* drop them back where they stood, if that tile still exists in this layout */
+    raid.started=!!ss.st;
+    /* Put the rooms you had already explored BACK on screen. _raidEnterNow resets raid.seen and reveals
+       only room 0 -- so without this, logging back in mid-delve un-explores the whole floor. */
+    if(ss.sn&&ss.sn.length){ raid.seen=raid.seen||{};
+      for(const k of ss.sn){ raid.seen[k]=1;
+        const pr=String(k).split(':'); if((pr[0]|0)===raid.floor)raidRevealRoom(pr[1]|0); } }
     const rx=ss.rx|0, ry=ss.ry|0;
     if(inb(rx,ry)&&raidTiles[ry]&&raidTiles[ry][rx]===T_FLOOR&&!blockedStrict(rx,ry)){
       player.x=rx;player.y=ry;player.px=rx;player.py=ry;
       if(ss.ri!=null)raid.roomIdx=ss.ri|0;
+      /* ...and reveal wherever we actually landed. This is THE bug Sam hit: _raidEnterNow reveals room
+         0, then we teleport you to (rx,ry) which may be room 3 -- so you stand in an unrendered room
+         and it looks like the void. */
+      const _lr=raidRoomAt(player.x,player.y);
+      if(_lr!=null)raidRevealRoom(_lr);
     }
     inRaidRestore=false;
     msg('You are still in the delve. The chambers have re-armed behind you.','#8fd0ff');
@@ -29378,6 +29444,88 @@ function restoreRaid(ss){
 /* THE NOTICE BOARD. All of this used to be the panel you saw every single time you started a run --
    which is exactly the wrong place for it. Lore is a thing you read ONCE. It lives on a board by the
    hatch, and on a second board next to Ellison for anyone who came down without reading it. */
+/* ============ THE DELVE HUD ============
+   Sam logged in mid-delve and was TRAPPED: no abort, and points were invisible. Both are the same gap
+   -- you cannot see what the run is worth, and you cannot choose to end it. */
+let _raidHud=null, _raidQuitArm=0;
+function raidHudTick(){
+  if(!_raidHud){
+    _raidHud=document.createElement('div');
+    _raidHud.id='raidhud';
+    _raidHud.style.cssText='position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:40;'
+      +'background:rgba(20,17,13,0.88);border:1px solid #3a3226;border-radius:6px;padding:6px 10px;'
+      +'font:12px Georgia,serif;color:#e8e0c8;display:none;align-items:center;gap:10px;pointer-events:auto';
+    _raidHud.innerHTML='<span style="color:#8a8172">The Delve</span>'
+      +'<b id="raidhudpts" style="color:#ffd24a">0</b><span style="color:#8a8172">pts</span>'
+      +'<span id="raidhudfl" style="color:#8fd0ff"></span>'
+      +'<button id="raidhudquit" class="btn" style="padding:2px 8px;font-size:11px">Abandon</button>';
+    /* INSIDE the game window (#viewwrap), not the page -- on the body it floats over the whole UI. */
+    (document.getElementById('viewwrap')||document.getElementById('frame')||document.body).appendChild(_raidHud);
+    const q=document.getElementById('raidhudquit');
+    if(q){ /* DOUBLE-click: this button sits in the game window and a single click is a misclick
+             waiting to happen. First click arms it and says so; second click within 2s opens the
+             confirm. So it takes a double-click AND a confirm to lose a run. */
+      q.addEventListener('click',()=>{
+        const now=performance.now();
+        if(_raidQuitArm&&(now-_raidQuitArm)<2000){ _raidQuitArm=0; q.textContent='Abandon';
+          q.style.background=''; raidConfirmAbandon(); return; }
+        _raidQuitArm=now; q.textContent='Sure?'; q.style.background='#5a1f1f';
+        setTimeout(()=>{ if(_raidQuitArm&&performance.now()-_raidQuitArm>=2000){ _raidQuitArm=0;
+          q.textContent='Abandon'; q.style.background=''; } },2100);
+      }); }
+  }
+  if(!inRaid){ _raidHud.style.display='none'; return; }
+  _raidHud.style.display='flex';
+  const p=document.getElementById('raidhudpts');
+  if(p)p.textContent=fmt(raidMyPoints());
+  const f=document.getElementById('raidhudfl');
+  if(f)f.textContent=raid.started?('Floor '+(raid.floor||1)+'/'+((raid.graph&&raid.graph.floors.length)||3)):'Lobby';
+}
+/* Abandoning: back to Ellison, and the delve is thrown away. */
+function raidConfirmAbandon(){
+  if(!inRaid)return;
+  if(!raid.started){   /* in the lobby you have nothing to lose -- just go */
+    exitRaid(); return;
+  }
+  const pts=raidMyPoints();
+  const html='<div style="text-align:left;line-height:1.5">'
+    +'<p style="margin:0 0 8px">Walk away from this delve?</p>'
+    +'<p style="margin:0 0 8px;color:#c9483a">You will lose <b>'+fmt(pts)+' points</b> and everything you '
+    +'have opened. The tunnels re-arm behind you \u2014 next time is a fresh delve.</p>'
+    +'<p style="margin:0;color:#8a8172">Anything already in your pack is yours to keep.</p></div>';
+  gameConfirm('Abandon the delve', html, function(){ raidAbandon(); }, 'Walk away', null, 'Stay');
+}
+function raidAbandon(){
+  if(!inRaid)return;
+  /* Back to the CELLAR LOBBY beside Ellison -- not out onto the lawn. You are giving up on this delve,
+     not on being underground. The run is thrown away and re-rolled; the lobby is safe ground.
+     ** PERSONAL, NOT PARTY-WIDE: ** this only ever touches YOU. A groupmate walking out must not end
+     anyone else's delve -- their raid object, their points and their rooms are untouched. Nothing is
+     broadcast; the only thing the others see is that you stop streaming, exactly as if you logged off. */
+  const uid=(player&&player.uid)||'me';
+  msg('You turn your back on it. The tunnels settle behind you.','#9a8a6a');
+  if(typeof MP!=='undefined'&&MP.sendRaidPoints)MP.sendRaidPoints(0);   /* your points leave the pool */
+  /* re-roll THIS player's delve and put them in its lobby */
+  const nseed=(Math.random()*0xffffffff)>>>0;
+  raid.points={}; raid.peerPoints={}; raid.roomState={}; raid.seen={}; raid.started=false;
+  raid.floor=1;
+  raidApplySeed(nseed, false, uid, true, _raidPartyCombat());
+  raidBuildInterior(raid.graph, 1);
+  _raidFlatten();
+  /* Put them BESIDE ELLISON, not on a doorway: _raidRoomEntryPoint aims at the nearest gate, which in
+     the lobby is the far wall. You are meant to land back at the old man, who has seen this before. */
+  const el=(typeof npcs!=='undefined')?npcs.find(n=>n.id==='ellison'):null;
+  let ax=RAID_ENTRY.x, ay=RAID_ENTRY.y;
+  if(el){ for(const [ox,oy] of [[0,2],[1,2],[-1,2],[2,1],[-2,1],[0,3]]){
+    const tx=el.x+ox, ty=el.y+oy;
+    if(inb(tx,ty)&&raidTiles[ty]&&raidTiles[ty][tx]===T_FLOOR&&!blockedStrict(tx,ty)){ ax=tx; ay=ty; break; } } }
+  player.x=ax; player.y=ay; player.px=ax; player.py=ay;
+  player.path.length=0; cancelAction();
+  raid.roomIdx=0; raid.seen={}; raidRevealRoom(0);
+  for(const r of rats)if(r.raid){ r.alive=false; if(r._m&&r._m.group)r._m.group.visible=false; }
+  msg('Mr. Ellison does not look up. "It will still be there tomorrow."','#9a8a6a');
+  dirty=true;
+}
 function raidShowSign(){
   const html=
     '<div style="text-align:left;max-height:52vh;overflow:auto;line-height:1.5">'
@@ -35466,7 +35614,21 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
           spawnProjectile((_rp.px|0) + 0.5, (_rp.py|0) + 0.5, { px: m.tx | 0, py: m.ty | 0 }, _k, _col, 320);
         } break; }
       case 'rdseed': { if (m.uid === player.uid) break;   /* a groupmate/leader shared the raid layout + difficulty */
+        if (typeof isGroupmate === 'function' && !isGroupmate(m.uid)) break;
         if (typeof raidApplySeed === 'function') raidApplySeed(m.sd >>> 0, !!m.lg, m.ld || m.uid, true, m.cl | 0);
+        /* ** AND ACTUALLY GO. ** This used to stop at applying the seed, so a leader could open the gate
+           and nobody moved -- the party had the same layout and were still standing in the lobby.
+           If you are down here in the lobby when someone opens the gate, the gate opens for you too. */
+        if (typeof inRaid !== 'undefined' && inRaid && typeof raid !== 'undefined' && raid && !raid.started
+            && typeof raidBeginDelve === 'function') {
+          raid.started = true;
+          const to = (raid.rooms && raid.rooms.length > 1) ? 1 : 0;
+          const e = (typeof _raidRoomEntryPoint === 'function') ? _raidRoomEntryPoint(to) : null;
+          if (e) { player.x = e[0]; player.y = e[1]; player.px = e[0]; player.py = e[1];
+                   player.path.length = 0; raid.roomIdx = to;
+                   if (typeof raidEnterRoom === 'function') raidEnterRoom(to); }
+          if (typeof msg === 'function') msg('The gate grinds up. Someone has started the delve.', '#c9483a');
+        }
         break; }
       case 'rdsolve': { if (m.uid === player.uid) break;   /* a groupmate solved a puzzle room */
         if (typeof raidPeerSolve === 'function') raidPeerSolve(m.ri | 0);
