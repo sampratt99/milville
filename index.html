@@ -1114,7 +1114,7 @@
 </div></div>
 <div id="encui" class="gemodal"><div class="gepanel" style="width:560px;">
   <div class="gebar"><span>Wiki</span><div class="gex" id="encclose" title="Close">&#10005;</div></div>
-  <div id="enctabs" class="enctabs"><button class="enctab on" data-encmode="guide">Guide</button><button class="enctab" data-encmode="items">Items</button><button class="enctab" data-encmode="bestiary">Bestiary</button></div>
+  <div id="enctabs" class="enctabs"><button class="enctab on" data-encmode="guide">Guide</button><button class="enctab" data-encmode="items">Items</button><button class="enctab" data-encmode="bestiary">Bestiary</button><button class="enctab" data-encmode="pets">Pets</button></div>
   <input id="encsearch" class="encsearch" type="text" placeholder="Search items…" autocomplete="off" spellcheck="false">
   <div id="encfilters" class="encfilters"></div>
   <div id="enccount" class="enccount"></div>
@@ -1499,12 +1499,18 @@ ITEMS.food_marrow={name:'Marrow bone',ex:'A knuckle-end, split lengthways. There
 ITEMS.food_magpie={name:'Bright things',ex:'A twist of paper holding buttons, foil and one brass pin. Worthless. It will not care.',val:900,stack:1,cat:'Raid',prim:'Feed'};
 ITEMS.food_pebble={name:'Grit tin',ex:'Coarse quarry grit. Pebble does not eat, exactly. It grinds.',val:900,stack:1,cat:'Raid',prim:'Feed'};
 ITEMS.food_hackles={name:'Bloodmeal',ex:'Dark, wet, and best not looked at. Hackles takes it without breaking eye contact.',val:900,stack:1,cat:'Raid',prim:'Feed'};
-ITEMS.pet_gorger={name:'Gorger',ex:'Mostly stomach. It has never once been full, and it has never once stopped trying. While it is out, food does you more good.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
-ITEMS.pet_marrow={name:'Marrow',ex:'A grave-hound, and pleased about it. It will not give up the bone. While it is out, bones teach you more.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
-ITEMS.pet_magpie={name:'Magpie',ex:'It found a coin. It will find more. It does not intend to share, but some falls out.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
-ITEMS.pet_pebble={name:'Pebble',ex:'A rock that has decided to come with you. It gets in the way of exactly one thing per room, and that is enough.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
-ITEMS.pet_hackles={name:'Hackles',ex:'Small, low, and far too interested in you. Things in the dark would rather wait and see.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
+ITEMS.pet_gorger={name:'Gorger',ex:'Mostly stomach. It has never once been full, and it has never once stopped trying. While it is out, food does you more good.',val:0,noSell:true,cat:'Raid',pet:1,
+  equip:{slot:'pet',model:'pet',verb:'Call',req:0,tint:0x8a7a5a}};
+ITEMS.pet_marrow={name:'Marrow',ex:'A grave-hound, and pleased about it. It will not give up the bone. While it is out, bones teach you more.',val:0,noSell:true,cat:'Raid',pet:1,
+  equip:{slot:'pet',model:'pet',verb:'Call',req:0,tint:0xe7dcc0}};
+ITEMS.pet_magpie={name:'Magpie',ex:'It found a coin. It will find more. It does not intend to share, but some falls out.',val:0,noSell:true,cat:'Raid',pet:1,
+  equip:{slot:'pet',model:'pet',verb:'Call',req:0,tint:0x14110d}};
+ITEMS.pet_pebble={name:'Pebble',ex:'A rock that has decided to come with you. It gets in the way of exactly one thing per room, and that is enough.',val:0,noSell:true,cat:'Raid',pet:1,
+  equip:{slot:'pet',model:'pet',verb:'Call',req:0,tint:0x6a6156}};
+ITEMS.pet_hackles={name:'Hackles',ex:'Small, low, and far too interested in you. Things in the dark would rather wait and see.',val:0,noSell:true,cat:'Raid',pet:1,
+  equip:{slot:'pet',model:'pet',verb:'Call',req:0,tint:0x3a3630}};
 ITEMS.blood_shard={name:'Blood shard',ex:'A splinter of dark glass, still wet. Use it on an Amulet of Blood Fury to feed it.',val:60000,stack:1,cat:'Raid'};
+ITEMS.raid_keystone={name:'Keystone',ex:'A wedge of dressed stone, cut to fit the barrier across the way. Heavy, and warm for something that has sat in the dark this long.',val:0,noSell:true,noTrade:true,cat:'Raid'};
 ITEMS.raid_kindling={name:'Frozen kindling',ex:'Splintered roof timber, hacked out of the ice. Dry enough to catch, if you are quick about it.',val:0,stack:1};
 /* prim is the ACTION LABEL, not a flag -- trout is prim:'Eat'. This was prim:1, so no Eat option ever
    appeared and the ration sat in the pack uneatable. */
@@ -4795,8 +4801,118 @@ function setEncMode(m){
   const _dt=document.getElementById('encdetail'); if(_dt&&_isG)_dt.style.display='none';
   const se=document.getElementById('encsearch'); if(se){se.style.display=_isG?'none':'';se.value='';se.placeholder=(m==='bestiary')?'Search creatures\u2026':'Search items\u2026';}
   const tb=document.getElementById('enctabs'); if(tb)for(const b of tb.children)b.classList.toggle('on',b.getAttribute('data-encmode')===m);
-  const fl=document.getElementById('encfilters'); if(fl)fl.style.display=(m==='bestiary'||_isG)?'none':'';
-  if(_isG)renderGuide(); else if(m==='bestiary')renderBestiary(); else renderEncy();
+  const fl=document.getElementById('encfilters'); if(fl)fl.style.display=(m==='bestiary'||m==='pets'||_isG)?'none':'';
+  if(_isG)renderGuide(); else if(m==='bestiary')renderBestiary(); else if(m==='pets')renderPets(); else renderEncy();
+}
+/* ===================== THE PETS TAB =====================
+   Every pet, whether you own it or not, with what it does and how to get one. Clicking a cell opens a
+   rotatable 3D model -- the same treatment the luxury goods get (openLuxExamine), because a pet is a
+   thing you look at more than any weapon in the game. */
+const PET_INFO={
+  pet_gorger:{perk:'Food heals +3.', how:'Mostly stomach, and entirely sincere about it. It has never once been full.',
+    food:'Trencher scraps'},
+  pet_marrow:{perk:'Bones give +20% Prayer XP.', how:'A grave-hound. It will not give up the bone, and you should not ask.',
+    food:'Marrow bone'},
+  pet_magpie:{perk:'+10% coins from drops.', how:'It found a coin. It will find more. It does not intend to share, but some falls out.',
+    food:'Bright things'},
+  pet_pebble:{perk:'Blocks the first hit in every room.', how:'A rock that has decided to come with you. It gets in the way of exactly one thing per room, and that is enough.',
+    food:'Grit tin'},
+  pet_hackles:{perk:'Things hesitate before their first swing at you.', how:'Small, low, and far too interested in you. Whatever is in the dark would rather wait and see.',
+    food:'Bloodmeal'},
+};
+function renderPets(){
+  _bestDispose();
+  const grid=document.getElementById('encgrid'), det=document.getElementById('encdetail');
+  if(!grid)return;
+  if(det)det.style.display='none';
+  grid.style.display='grid'; grid.innerHTML='';
+  const cnt=document.getElementById('enccount');
+  const owned=RAID_PETS.filter(id=>countItem(id)>0||(player.equip&&player.equip.pet&&player.equip.pet.id===id)).length;
+  if(cnt)cnt.textContent=owned+' / '+RAID_PETS.length+' found';
+  const q=(encQuery||'').trim().toLowerCase();
+  for(const id of RAID_PETS){
+    const it=ITEMS[id]; if(q&&it.name.toLowerCase().indexOf(q)<0)continue;
+    const have=countItem(id)>0||(player.equip&&player.equip.pet&&player.equip.pet.id===id);
+    const cell=document.createElement('div'); cell.className='bcell'; cell.title=it.name;
+    if(!have)cell.style.opacity='0.45';
+    const cv=document.createElement('canvas'); cv.width=48; cv.height=48;
+    cv.style.cssText='width:48px;height:48px;image-rendering:pixelated';
+    drawItemIcon(cv.getContext('2d'), id, 48);
+    const nm=document.createElement('div'); nm.className='bn'; nm.textContent=have?it.name:'???';
+    const lv=document.createElement('div'); lv.className='bl';
+    lv.textContent=have?'Found':'Not found';
+    lv.style.color=have?'#9fd06a':'#6a6156';
+    cell.appendChild(cv); cell.appendChild(nm); cell.appendChild(lv);
+    cell.addEventListener('click',()=>openPetExamine(id));
+    grid.appendChild(cell);
+  }
+}
+/* The rotatable 3D page. Same rig as the luxury examine: its own renderer, drag to spin, disposed on
+   close so we never leak a WebGL context. */
+let _petExRen=null,_petExRaf=0;
+function openPetExamine(id){
+  const it=ITEMS[id]; if(!it)return;
+  const info=PET_INFO[id]||{};
+  const have=countItem(id)>0||(player.equip&&player.equip.pet&&player.equip.pet.id===id);
+  let el=document.getElementById('petexamine');
+  if(!el){
+    el=document.createElement('div'); el.id='petexamine'; el.className='gemodal'; el.style.zIndex='100001';
+    el.innerHTML='<div class="gepanel" style="width:430px;max-width:94vw;">'
+      +'<div class="gebar"><span id="petexname"></span><div class="gex" id="petexclose" title="Close">\u2715</div></div>'
+      +'<canvas id="petexcv" style="width:100%;height:210px;display:block;background:radial-gradient(ellipse at 50% 38%,#22201a 0%,#141210 78%);border-radius:6px;border:1px solid #0d0b09;cursor:grab"></canvas>'
+      +'<div id="petexbody" style="padding:10px 12px;text-align:left;line-height:1.5"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click',(e)=>{ if(e.target===el)closePetExamine(); });
+    const xb=document.getElementById('petexclose'); if(xb)xb.addEventListener('click',closePetExamine);
+  }
+  el.classList.add('on');
+  const nm=document.getElementById('petexname'); if(nm)nm.textContent=have?it.name:'An unfound pet';
+  const body=document.getElementById('petexbody');
+  if(body)body.innerHTML=
+     '<div style="color:#c9a23a;font-style:italic;margin-bottom:8px">'+(have?(info.how||''):'You have not found this one yet.')+'</div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
+      +'<span style="color:#8a8172">While it is out</span><b style="color:#9fd06a">'+(info.perk||'')+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
+      +'<span style="color:#8a8172">Vigour</span><b>30 minutes, and only while called</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
+      +'<span style="color:#8a8172">Its food</span><b>'+(info.food||'')+' \u2014 from Mr. Ellison</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
+      +'<span style="color:#8a8172">How to get one</span><b style="color:#ffd24a">The Delve \u2014 about 1 run in 50</b></div>'
+    +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">Its perk only works while it is out, and it '
+    +'only stays out while it has Vigour. Feed it its own food to fill that back up.</p>';
+  /* the model */
+  const cv=document.getElementById('petexcv'); if(!cv)return;
+  closePetRenderer();
+  try{
+    _petExRen=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+    _petExRen.setSize(cv.clientWidth||400,210,false);
+    const sc=new THREE.Scene();
+    const cam=new THREE.PerspectiveCamera(38,(cv.clientWidth||400)/210,0.1,50);
+    cam.position.set(0,0.55,1.9); cam.lookAt(0,0.28,0);
+    sc.add(new THREE.HemisphereLight(0xffffff,0x404040,1.15));
+    const key=new THREE.DirectionalLight(0xfff0d0,0.9); key.position.set(2,3,2); sc.add(key);
+    const g=makePet(id); g.position.y=-0.1; sc.add(g);
+    if(!have)g.traverse(o2=>{ if(o2.material){ o2.material=o2.material.clone(); o2.material.color&&o2.material.color.setHex(0x2a2620); } });
+    let yaw=0.6, drag=false, lx=0;
+    cv.onpointerdown=(e)=>{drag=true;lx=e.clientX;cv.style.cursor='grabbing';};
+    window.addEventListener('pointerup',()=>{drag=false;if(cv)cv.style.cursor='grab';});
+    cv.onpointermove=(e)=>{ if(!drag)return; yaw+=(e.clientX-lx)*0.01; lx=e.clientX; };
+    const tick=()=>{ if(!_petExRen)return;
+      if(!drag)yaw+=0.006;
+      g.rotation.y=yaw;
+      _petExRen.render(sc,cam);
+      _petExRaf=requestAnimationFrame(tick); };
+    tick();
+  }catch(e){ /* no WebGL: the text page still works */ }
+}
+function closePetRenderer(){
+  if(_petExRaf)cancelAnimationFrame(_petExRaf); _petExRaf=0;
+  if(_petExRen){ try{ _petExRen.forceContextLoss&&_petExRen.forceContextLoss(); _petExRen.dispose(); }catch(_){} }
+  _petExRen=null;
+}
+function closePetExamine(){
+  closePetRenderer();
+  const el=document.getElementById('petexamine'); if(el)el.classList.remove('on');
 }
 function bestiaryKinds(){ return Object.keys(MOB_KINDS).sort((a,b)=>(MOB_KINDS[a].cmb||0)-(MOB_KINDS[b].cmb||0)); }
 function renderBestiary(){
@@ -5605,6 +5721,7 @@ function playerTick(){
   if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); }
   /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
   if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
+  if(typeof raidTelFxTick==='function')raidTelFxTick();   /* the boss telegraphs have to be SEEN */
   if(typeof raidHudTick==='function')raidHudTick();
   if(typeof petTick==='function'){ const _pn=performance.now();
     petTick(Math.min(200,_pn-(_petLastT||_pn))); _petLastT=_pn; }
@@ -5903,7 +6020,12 @@ function playerTick(){
     if(dmg>(player.maxHit||0)){player.maxHit=dmg;dirty=true;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();}
     if(wstyle==='magic'){if(dmg>(player.maxMagicHit||0)){player.maxMagicHit=dmg;dirty=true;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();}}
     else if(wstyle==='ranged'){if(dmg>(player.maxRangeHit||0)){player.maxRangeHit=dmg;dirty=true;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();}}
-    if(r._immune){ splats.push({ent:r,dmg:0,t:performance.now()}); msg('Your blow rings off solid bronze.','#9a8a6a'); return; }   /* Guardians rule: nothing lands while he is hardened */
+    /* ** STYLE-AWARE IMMUNITY. ** _immune==='physical' (the Benefactor's bronze) turns steel and arrows
+       but NOT magic -- so hardening is a style swap you can answer, rather than five seconds of
+       standing still waiting for a seam. _immune===true is still a full block (the Rector's guards). */
+    if(r._immune==='physical'&&wstyle!=='magic'){ splats.push({ent:r,dmg:0,t:performance.now()});
+      msg('Your blow rings off solid bronze \u2014 switch to magic!','#9a8a6a'); return; }
+    if(r._immune===true){ splats.push({ent:r,dmg:0,t:performance.now()}); msg('Your blow rings off solid bronze.','#9a8a6a'); return; }   /* Guardians rule: nothing lands while he is hardened */
     if(r.raid&&typeof raidAwardPoints==='function')raidAwardPoints('damage',r.raidRoom,Math.min(dmg,r.hp)*RAID_PTS_PER_DAMAGE);   /* points BEFORE the group forward-return, so co-attackers bank their own damage (CoX: points are personal). Capped at remaining hp so overkill can't inflate. */
     if(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dmg))return;
     if(r.dormant){ if(rats.some(z=>z.kind==='committee_guard'&&z.alive)){ if(!r._dwT||performance.now()-r._dwT>2000){r._dwT=performance.now();msg('The Rector sits wreathed in the committee\u2019s ward \u2014 cut down his enforcers first.','#9a6fb0');}cancelAction();return; } else { /* enforcers already down (a groupmate felled the last one) but the wake never synced -> wake him now so we can actually deal damage */ r.dormant=false;r.enrageDone=false;r.target=player;if(r._siphonCd===undefined)r._siphonCd=performance.now()+10000; } }
@@ -6240,6 +6362,10 @@ function playerTick(){
   else if(a.type==='takeinstr'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     raidTakeInstruments(a.o);cancelAction();
+  }
+  else if(a.type==='clearprism'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    raidClearPrism(a.o);cancelAction();
   }
   else if(a.type==='strikeprism'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
@@ -7617,26 +7743,33 @@ const PET_FOOD_FOR={food_gorger:'pet_gorger', food_marrow:'pet_marrow', food_mag
                     food_pebble:'pet_pebble', food_hackles:'pet_hackles'};
 const PET_FOOD_PRICE=900;
 let _petGroup=null, _petBob=0, _petLastT=0;
-function petCalled(){ return (player.pet&&player.pet.id&&(player.pet.vig|0)>0)?player.pet.id:null; }
+/* ** THE SLOT IS THE TRUTH. ** A pet is equipment now: worn in the 12th slot, which means the panel,
+   the save, buildGearRig and every `for(const sl in player.equip)` loop all see it for free. player.pet
+   holds only its VIGOUR, which is state the slot cannot carry. */
+function petSlotId(){ const it=player.equip&&player.equip.pet; return it?it.id:null; }
+function petCalled(){ const id=petSlotId(); return (id&&(player.pet&&player.pet.vig|0)>0)?id:null; }
 function hasPet(id){ return petCalled()===id; }
-function petCall(id){
-  if(player.pet&&player.pet.id===id){ petDismiss(); return; }
-  if(countItem(id)<1){ msg('You do not have that.','#9a8a6a'); return; }
-  if(player.pet&&player.pet.id)petDismiss(true);
-  player.pet={id, vig:(player.pet&&player.pet.wasId===id&&player.pet.saved)?player.pet.saved:PET_VIGOUR_MAX};
-  takeItems(id,1);
+/* Called when a pet is EQUIPPED into the 12th slot. The slot holds which pet; player.pet holds only
+   its Vigour, which the slot cannot carry. */
+function petOnEquip(id){
+  player.pet=player.pet||{};
+  const saved=(player.pet.wasId===id&&player.pet.saved)?player.pet.saved:PET_VIGOUR_MAX;
+  player.pet.vig=saved; player.pet.wasId=id;
   _petBuild(id);
-  msg(ITEMS[id].name+' trots out and looks up at you.','#9fd06a');
+  msg(ITEMS[id].name+(saved<PET_VIGOUR_MAX*0.2?' pads out, and looks at you hopefully.':' trots out and looks up at you.'),'#9fd06a');
   dirty=true;
 }
+function _petDespawn(){ if(_petGroup){ scene.remove(_petGroup); _petGroup=null; } }
+/* Kept as an alias: equipping the 12th slot is the real entry point. */
+function petCall(id){
+  const i=(player.inv||[]).findIndex(x=>x&&x.id===id);
+  if(i>=0&&typeof equipFromInv==='function')equipFromInv(i);   /* equipFromInv is the real path; there is no useItem */
+  else msg('You do not have that.','#9a8a6a');
+}
 function petDismiss(quiet){
-  if(!player.pet||!player.pet.id)return;
-  const id=player.pet.id;
-  if(!addItem(id,1))dropGround(player.x,player.y,id,1);
-  player.pet={id:null, wasId:id, saved:player.pet.vig|0};   /* Vigour is PAUSED, not lost, when uncalled */
-  if(_petGroup){ scene.remove(_petGroup); _petGroup=null; }
-  if(!quiet)msg(ITEMS[id].name+' curls up and goes back in your pack.','#9a8a6a');
-  dirty=true;
+  const id=petSlotId(); if(!id)return;
+  if(typeof unequipSlot==='function')unequipSlot('pet');
+  else { player.equip.pet=null; _petDespawn(); }
 }
 function _petBuild(id){
   if(_petGroup)scene.remove(_petGroup);
@@ -7702,9 +7835,10 @@ function petTick(dt){
   const id=petCalled();
   if(!id){ if(_petGroup){ scene.remove(_petGroup); _petGroup=null; } return; }
   const _wasHungry=petIsHungry();
+  if(!player.pet)player.pet={};
   player.pet.vig=Math.max(0,(player.pet.vig|0)-dt);
   if(!_wasHungry&&petIsHungry())msg(ITEMS[id].name+' is getting hungry. Mr. Ellison sells its food in the lobby.','#c9a23a');
-  if(player.pet.vig<=0){ msg(ITEMS[id].name+' is worn out and goes back in your pack. Feed it and call it again.','#9a8a6a'); petDismiss(true); return; }
+  if(player.pet.vig<=0){ msg(ITEMS[id].name+' is worn out and goes back in your pack. Feed it and call it again.','#9a8a6a'); player.pet.saved=0; petDismiss(true); return; }
   if(!_petGroup)_petBuild(id);
   const g=_petGroup, P=g.userData.parts||{};
   /* FOLLOW: trail the player at a heel position that sits behind-and-beside them, so the pet never
@@ -7951,6 +8085,8 @@ function equipFromInv(i){
   player.inv[i]=prev?{id:prev.id,qty:1}:null;
   if(eq.slot==='weapon'&&(eq.model==='bow'||eq.twoHand)&&player.equip.shield){const sh=player.equip.shield;player.equip.shield=null;const free=player.inv.findIndex(x=>!x);player.inv[free]={id:sh.id,qty:1};msg('You sling your shield off to wield two-handed.');}
   sfx.pickup();
+  if(eq.slot==='pet'){ if(typeof petOnEquip==='function')petOnEquip(s.id);
+    renderInv();renderEquip();dirty=true; return; }   /* a pet is CALLED, not worn: it says its own line */
   msg('You '+eq.verb.toLowerCase()+' the '+ITEMS[s.id].name.toLowerCase()+'.');
   if(eq.emberset&&hasEmberSet()){msg('The Ember set flares to life \u2014 you feel the forge\u2019s power. (Full-set bonus: +12 Strength, +6 Ranged strength, and immunity to the Emberdeep\u2019s lava.)','#ff8a2a');}
   renderInv();renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;
@@ -7960,6 +8096,14 @@ function unequipSlot(slot){
   if(invFull()){msg("You don't have enough room to remove that.");return;}
   player.equip[slot]=null;
   addItem(it.id,it.qty||1);
+  if(slot==='pet'){
+    /* un-calling PAUSES its Vigour rather than wasting it -- the perk is a resource you spend, and you
+       should not be punished for putting it away while you bank. */
+    if(player.pet)player.pet.saved=player.pet.vig|0;
+    if(typeof _petDespawn==='function')_petDespawn();
+    msg(ITEMS[it.id].name+' curls up and goes back in your pack.','#9a8a6a');
+    renderEquip(); dirty=true; return;
+  }
   msg('You remove the '+ITEMS[it.id].name.toLowerCase()+'.');
   renderEquip();if(typeof renderStyleBar==='function')renderStyleBar();dirty=true;
 }
@@ -7968,11 +8112,12 @@ const EQUIP_LAYOUT=[
   ['cape','neck','ammo'],
   ['weapon','body','shield'],
   [null,'legs',null],
-  ['hands','feet','ring']
+  ['hands','feet','ring'],
+  [null,'pet',null]            /* the 12th slot: a called pet. Its own row, under everything else. */
 ];
-const EQUIP_ACTIVE={weapon:1,shield:1,cape:1,head:1,body:1,neck:1,legs:1,feet:1,ammo:1,ring:1,hands:1};
+const EQUIP_ACTIVE={weapon:1,shield:1,cape:1,head:1,body:1,neck:1,legs:1,feet:1,ammo:1,ring:1,hands:1,pet:1};
 const EQUIP_GLYPH={head:'helm',cape:'cape',neck:'neck',ammo:'ammo',weapon:'sword',
-  body:'body',shield:'shield',legs:'legs',hands:'hands',feet:'feet',ring:'ring'};
+  body:'body',shield:'shield',legs:'legs',hands:'hands',feet:'feet',ring:'ring',pet:'pet'};
 const equipGrid=document.getElementById('equipgrid');
 const equipEls={};
 for(const row of EQUIP_LAYOUT)for(const slot of row){
@@ -8343,8 +8488,11 @@ function optionsAt(tx,ty){
         label:'Open hoard',fn:()=>setAction({type:'raidchest',o},o.x,o.y)},
         {html:'Examine <span class="t">delvers hoard</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='raid_prism'){
-      opts.push({html:'Strike <span class="t">the prism</span>',label:'Strike prism',fn:()=>setAction({type:'strikeprism',o},o.x,o.y)},
-        {html:'Examine <span class="t">specimen prism</span>',fn:()=>msg(def.ex)});
+      opts.push({html:'Strike <span class="t">the prism</span>',label:'Strike prism',fn:()=>setAction({type:'strikeprism',o},o.x,o.y)});
+      /* ** THE ROOM WAS UNSOLVABLE WITHOUT THIS. ** A prism could be STAINED but never CLEARED -- so one
+         wrong strike and the board was dead for the rest of the delve, with no way back. */
+      if(o.col)opts.push({html:'Clear <span class="t">the prism</span>',label:'Clear prism',fn:()=>setAction({type:'clearprism',o},o.x,o.y)});
+      opts.push({html:'Examine <span class="t">specimen prism</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='raid_bank'){
       opts.push({html:'Bank <span class="t">chest</span>',label:'Bank',fn:()=>setAction({type:'raidbank',o,bank:true},o.x,o.y)},
         {html:'Examine <span class="t">bank chest</span>',fn:()=>msg(def.ex)});
@@ -10208,6 +10356,18 @@ function drawItemIcon(g,id,S,dose){
       g.fillStyle='#ff9aa8'; g.beginPath(); g.arc(0.5,-3.4,1.0,0,7); g.fill();
       break;
     }
+    case 'raid_keystone': {
+      /* a dressed stone wedge, cut to fit the barrier */
+      g.fillStyle='#7f776a';
+      g.beginPath(); g.moveTo(-5.5,6); g.lineTo(-3.5,-6); g.lineTo(3.5,-6); g.lineTo(5.5,6); g.closePath(); g.fill();
+      g.fillStyle='#948c7e';
+      g.beginPath(); g.moveTo(-3.5,-6); g.lineTo(3.5,-6); g.lineTo(2.6,-1); g.lineTo(-2.6,-1); g.closePath(); g.fill();
+      g.strokeStyle='#4a4038'; g.lineWidth=1;
+      g.beginPath(); g.moveTo(-4.6,1); g.lineTo(4.6,1); g.stroke();
+      g.beginPath(); g.moveTo(-5.5,6); g.lineTo(-3.5,-6); g.lineTo(3.5,-6); g.lineTo(5.5,6); g.closePath(); g.stroke();
+      g.fillStyle='#c9a23a'; g.beginPath(); g.arc(0,3.4,1.2,0,7); g.fill();   /* the socket mark */
+      break;
+    }
     case 'raid_kindling': {
       /* a bundle of splintered, frost-furred timber */
       for(let i=0;i<4;i++){
@@ -11132,6 +11292,14 @@ function drawUiIcon(g,name,S){
       g.beginPath();g.moveTo(-7,-8);g.lineTo(-1,-8);g.lineTo(-1,2);g.lineTo(9,2);
       g.lineTo(9,8);g.lineTo(-7,8);g.closePath();g.fill();g.stroke();
       break; }
+    case 'pet':{
+      /* the empty pet slot: a little paw print */
+      g.fillStyle='#8a8172';
+      g.beginPath(); g.ellipse(0,2.2,3.0,2.4,0,0,7); g.fill();
+      for(const [tx,ty] of [[-3.0,-1.8],[-1.0,-3.2],[1.0,-3.2],[3.0,-1.8]]){
+        g.beginPath(); g.ellipse(tx,ty,1.15,1.4,0,0,7); g.fill(); }
+      break;
+    }
     case 'ring': {
       g.strokeStyle='#7a5a28';g.lineWidth=3.4;
       g.beginPath();g.arc(0,2,6,0,7);g.stroke();
@@ -13138,6 +13306,7 @@ function buildObjModel(o){
     addProxy(g,1.3,1.9,0,{kind:'obj',o});
   }else if(def==='raid_crabsign'){
     const post=mesh(new THREE.CylinderGeometry(0.05,0.05,1.1,6),0x3a352d);post.position.y=0.55;g.add(post);
+    if(o.faceYaw!==undefined)g.rotation.y=o.faceYaw;   /* a sign nobody can read is not a sign */
     const plate=mesh(new THREE.BoxGeometry(0.8,0.55,0.05),0x8a6a2a);plate.position.set(0,1.15,0.04);g.add(plate);
     const face=mesh(new THREE.BoxGeometry(0.7,0.45,0.02),0x6a5320);face.position.set(0,1.15,0.07);g.add(face);
     for(let i=0;i<3;i++){const ln=mesh(new THREE.BoxGeometry(0.5,0.03,0.01),0x3a2c14);ln.position.set(0,1.28-i*0.11,0.09);g.add(ln);}
@@ -13158,10 +13327,19 @@ function buildObjModel(o){
     o._crystalRef=cry;   /* recoloured when the prism is tuned */
     addProxy(g,1.0,1.2,0,{kind:'obj',o});
   }else if(def==='raid_socket'){
+    /* ** A SOCKET SHOWS WHAT IT WANTS. ** These were all the same colourless grey, so nothing in the room
+       told you which bead each one needed -- the whole puzzle was invisible. It burns in its own colour
+       now, dim until it is fed and bright once it is. */
+    const want=RAID_COL_HEX[o.col]||0xbfc6cf;
     const plate=mesh(new THREE.BoxGeometry(0.7,0.7,0.18),0x3a352d);plate.position.set(0,1.0,0);g.add(plate);
-    const cry=new THREE.Mesh(new THREE.OctahedronGeometry(0.20,0),new THREE.MeshBasicMaterial({color:0xbfc6cf}));
+    const ring=mesh(new THREE.TorusGeometry(0.26,0.05,7,16),0x5a5148);ring.position.set(0,1.0,0.10);g.add(ring);
+    const cry=new THREE.Mesh(new THREE.OctahedronGeometry(0.20,0),
+      new THREE.MeshBasicMaterial({color:want,transparent:true,opacity:o.lit?1:0.55}));
     cry.position.set(0,1.0,0.14);g.add(cry);
-    o._crystalRef=cry;
+    const halo=new THREE.Mesh(new THREE.SphereGeometry(0.34,10,8),
+      new THREE.MeshBasicMaterial({color:want,transparent:true,opacity:o.lit?0.35:0.12}));
+    halo.position.set(0,1.0,0.14);g.add(halo);
+    o._crystalRef=cry; o._haloRef=halo;
     addProxy(g,1.0,1.6,0,{kind:'obj',o});
   }else if(def==='raid_sapling'){
     const trunk=mesh(new THREE.CylinderGeometry(0.16,0.20,1.5,8),0x4a3a26);trunk.position.y=0.75;g.add(trunk);
@@ -27084,7 +27262,7 @@ const RAID_RELIEF={
   /* tightrope stays flat for now: its void is carved as T_WALL, so a drop would fight the wall
      ramp. Making it a true chasm means a VOID tile type -- next pass. */
   tightrope:'flat',
-  stairhead:'flat', entrance:'flat',   /* RAID_ENTRANCE_ROOM's id is 'entrance' */
+  stairhead:'flat', entrance:'flat', landing:'cave',   /* RAID_ENTRANCE_ROOM's id is 'entrance'; 'landing' is floors 2-3's arrival chamber */
 };
 const _RAID_STEP=0.34;   /* one step of relief */
 /* Height at a tile CORNER. Everything downstream (the floor bake, the walls, groundH) reads this. */
@@ -27293,7 +27471,11 @@ const RAID_STYLE={
   ruin:   {floor:0x8a5a4a, floor2:0x9a6a56, wall:0xa8a294, trim:0x3f6a52, accent:0xd8cfb4},
   cave:   {floor:0x33322f, floor2:0x3c3b37, wall:0x232320, trim:0x44443e, accent:0x3a5a4a},
   ember:  {floor:0x3a2620, floor2:0x462c22, wall:0x281a14, trim:0x6a3a1e, accent:0xff5a1e},
-  archive:{floor:0x3e352a, floor2:0x483d30, wall:0x2c251c, trim:0x6a5330, accent:0x8a6a3a},
+  /* A LIBRARY, not a cellar. This was floor 0x3e352a / wall 0x2c251c against stone's 0x413b34 /
+     0x2f2a25 -- the SAME near-identical brown that made Foster indistinguishable from the lobby.
+     Ohrstrom is oxblood carpet over a parquet border, oak panelling, and brass: it should read as a
+     reading room the moment you walk in. */
+  archive:{floor:0x5a2f2a, floor2:0x6a4a32, wall:0x6a4a2a, trim:0x8a6a3a, accent:0xc9a23a},
 };
 const RAID_WALL_H=2.6;
 const RAID_GATE_OPEN=0.34;   /* how much of the gate still hangs when raised. At 0.10 all you could see was the metal band on the lintel, so it never read as a gate. */
@@ -27383,20 +27565,26 @@ function _rbRound(out, f, st, room){
          is flush by construction, where a flat bookcase against a curve never can be. */
       /* stand PROUD of the wall face (segment centre R+0.5, depth 0.7 => face at -0.35). These were
          at -0.34, i.e. a centimetre INSIDE the slab, so the whole case was buried. */
-      bake(out, new THREE.BoxGeometry(chord*0.92,RAID_WALL_H-0.45,0.08), 0x2a1f14, px-Math.cos(a)*0.40, _raidFY+(RAID_WALL_H-0.45)/2, pz-Math.sin(a)*0.40, yaw);
+      /* THE WHOLE CASE STANDS IN THE ROOM. The drum's inner face is at R+0.15 (segment centre R+0.5,
+         depth 0.7). The backboard used to sit at R+0.10 with the boards straddling the face -- so the
+         shelves cut INTO the wall and the books looked buried in the woodwork. Everything is pushed
+         clear of it now. */
+      bake(out, new THREE.BoxGeometry(chord*0.92,RAID_WALL_H-0.45,0.08), 0x2a1f14, px-Math.cos(a)*0.42, _raidFY+(RAID_WALL_H-0.45)/2, pz-Math.sin(a)*0.42, yaw);
       for(const sx of [-1,1]){ /* the case's uprights */
         const ox=-Math.sin(a)*sx*chord*0.45, oz=Math.cos(a)*sx*chord*0.45;
         bake(out, new THREE.BoxGeometry(0.1,RAID_WALL_H-0.45,0.34), 0x4a3a24, px-Math.cos(a)*0.56+ox, _raidFY+(RAID_WALL_H-0.45)/2, pz-Math.sin(a)*0.56+oz, yaw); }
       for(let sh=0;sh<4;sh++){
         const sy=_raidFY+0.42+sh*0.52;
-        bake(out, new THREE.BoxGeometry(chord*0.92,0.06,0.34), 0x4a3a24, px-Math.cos(a)*0.62, sy-0.2, pz-Math.sin(a)*0.62, yaw);
+        bake(out, new THREE.BoxGeometry(chord*0.92,0.05,0.30), 0x6a4a2a, px-Math.cos(a)*0.60, sy-0.2, pz-Math.sin(a)*0.60, yaw);
         for(let bk=-1;bk<=1;bk++){
           const c=[0x7a3b2a,0x3b5a7a,0x6a5a2a,0x5a3a5a][(i+sh+bk+8)%4];
           const ox=-Math.sin(a)*bk*chord*0.26, oz=Math.cos(a)*bk*chord*0.26;
           /* THE BOOKS STAND IN FRONT OF THE BACKBOARD. The board is 0.08 deep centred at -0.40, so its
              face is ~-0.44; books at -0.58 were BEHIND it -- buried, exactly like the drum shelving.
              -0.66 puts them proud of the boards and visible. */
-          bake(out, new THREE.BoxGeometry(chord*0.2,0.38,0.2), c, px-Math.cos(a)*0.66+ox, sy, pz-Math.sin(a)*0.66+oz, yaw);
+          /* the books stand ON the boards and IN FRONT of the backboard -- 0.62 puts their spines out
+             where you can read them, not inside the woodwork. */
+          bake(out, new THREE.BoxGeometry(chord*0.18,0.34,0.16), c, px-Math.cos(a)*0.62+ox, sy, pz-Math.sin(a)*0.62+oz, yaw);
         }
       }
     } else {
@@ -27783,15 +27971,20 @@ function _raidRoomLindsay(out, f, room){
     bake(out, box(1.7,RAID_WALL_H-0.5,0.5), BENCH, p.x, _raidFY+(RAID_WALL_H-0.5)/2, p.z, p.yaw);
     for(let sh=0;sh<4;sh++){
       const sy=_raidFY+0.5+sh*0.5;
-      bake(out, box(1.6,0.05,0.44), 0x3a2c1c, p.x, sy-0.22, p.z, p.yaw);
+      /* ** EVERYTHING RIDES THE FRONT LIP. ** The case is 0.5 deep centred on the wall point, so its
+         front face is at -0.25 -- and the boards and jars were baked at inset 0, i.e. dead centre
+         INSIDE the woodwork. That is why Sam could not see a single vial. */
+      const _ix=Math.sin(p.yaw), _iz=Math.cos(p.yaw);   /* inward, off the wall */
+      bake(out, box(1.6,0.05,0.46), 0x3a2c1c, p.x+_ix*0.10, sy-0.22, p.z+_iz*0.10, p.yaw);
       for(let j=-2;j<=2;j++){
         /* spread ALONG the shelf, i.e. the board's own local X = (cos yaw, -sin yaw). This used the
            drum's tangent formula (-sin, cos), which takes a BEARING -- on a yaw it points straight
            OUT of the wall, which is why the vials stood perpendicular to their backdrop. */
-        const ox=Math.cos(p.yaw)*j*0.3, oz=-Math.sin(p.yaw)*j*0.3;
-        bake(out, new THREE.CylinderGeometry(0.11,0.11,0.34,8), GLASS, p.x+ox, sy, p.z+oz);
+        const ox=Math.cos(p.yaw)*j*0.3+_ix*0.19, oz=-Math.sin(p.yaw)*j*0.3+_iz*0.19;
+        bake(out, new THREE.CylinderGeometry(0.10,0.10,0.32,8), GLASS, p.x+ox, sy, p.z+oz);
+        bake(out, new THREE.CylinderGeometry(0.11,0.11,0.04,8), 0x5a4327, p.x+ox, sy+0.17, p.z+oz);
         if(((j+sh)%3)===0)   /* something in this one */
-          bake(out, new THREE.SphereGeometry(0.07,6,5), 0x8a6a5a, p.x+ox, sy-0.04, p.z+oz);
+          bake(out, new THREE.SphereGeometry(0.06,6,5), 0x8a6a5a, p.x+ox, sy-0.05, p.z+oz);
       }
     }
   }
@@ -27804,8 +27997,12 @@ function _raidRoomLindsay(out, f, room){
   bake(out, new THREE.CylinderGeometry(0.08,0.1,0.7,8), BRASS, g.cx-3.2, _raidFY+1.25, g.cz-2);
   bake(out, new THREE.CylinderGeometry(0.2,0.14,0.2,10), BRASS, g.cx-3.2, _raidFY+1.65, g.cz-2);
   bake(out, box(1.0,0.4,0.7), 0x5a5f66, g.cx+3.2, _raidFY+1.1, g.cz+3);
-  bake(out, box(0.7,1.1,0.7), GLASS, g.cx-3.2, _raidFY+1.45, g.cz+3);
-  bake(out, new THREE.CylinderGeometry(0.05,0.05,0.5,6), 0x8a8272, g.cx-3.2, _raidFY+1.2, g.cz+3);
+  /* the stuffed heron under glass -- ON A WALL. It stood free at (cx-3.2, cz+3), which on some layouts
+     is squarely in the doorway you walk in through: Sam's 'big TV-looking object right in front of
+     the door'. Anything free-standing in this room ends up in someone's way. */
+  { const hp=_raidWallPt(f,room,Math.PI*0.75,0.9);
+    bake(out, box(0.7,1.1,0.7), GLASS, hp.x, _raidFY+1.45, hp.z, hp.yaw);
+    bake(out, new THREE.CylinderGeometry(0.05,0.05,0.5,6), 0x8a8272, hp.x, _raidFY+1.2, hp.z); }
   /* THE CHALKBOARD -- someone else got half way through this puzzle */
   bake(out, box(3.0,1.6,0.1), SLATE, g.cx, _raidFY+1.6, f.y0+0.9);
   for(let i=0;i<5;i++)bake(out, box(0.4+0.5*(i%3),0.05,0.02), 0xd8cfb4, g.cx-1+((i*7)%5)*0.4, _raidFY+2.1-i*0.24, f.y0+0.83);
@@ -28064,11 +28261,21 @@ function _raidRoomMemorial(out, f, room){
   const g=_raidRoomGeom(f,room);
   const BRONZE=0x6a4a22, PATINA=0x3f6a52, STONE=0x6a6156, SHAFT=0xdce6ff;
   const R=g.R;
-  /* the dome: stacked rings closing to an oculus */
-  for(let i=0;i<6;i++){
+  /* ** THE DOME, OPENED UP. ** It was six stacked rings closing to an oculus -- which from directly
+     above (the only angle this camera gives) is six concentric circles roofing the room: Sam could not
+     see his own floor. Only the SPRINGING now -- the two lowest courses, which read unmistakably as a
+     dome starting -- and then it stops. The oculus and its shaft still fall through the opening; the
+     room reads exactly the same from eye level and is transparent from overhead. Same call as Drury's
+     vault crown and the Ice Plant's pipe grid. */
+  for(let i=0;i<2;i++){
     const t=i/6, rr=(R+0.5)*Math.cos(t*Math.PI*0.42), yy=_raidFY+RAID_WALL_H+t*2.4;
     bake(out, new THREE.CylinderGeometry(rr*0.96,rr,0.5,40,1,true), st.wall, g.cx, yy, g.cz);
     bake(out, new THREE.TorusGeometry(rr,0.07,6,40), st.trim, g.cx, yy-0.24, g.cz, 0,1, -Math.PI/2,0);
+  }
+  /* ribs springing off the last course and dying away, so the dome is IMPLIED rather than closed */
+  for(let i=0;i<10;i++){ const a2=i/10*Math.PI*2;
+    bake(out, new THREE.BoxGeometry(0.16,0.16,1.1), st.trim,
+      g.cx+Math.cos(a2)*(R+0.34), _raidFY+RAID_WALL_H+1.0, g.cz+Math.sin(a2)*(R+0.34), -a2, 1, 0.9, 0);
   }
   /* THE OCULUS, and the shaft of daylight coming down it onto the plinth */
   const oy=_raidFY+RAID_WALL_H+2.4;
@@ -28616,8 +28823,9 @@ function raidEnterRoom(idx){
   const room=raid.rooms[idx]; if(!room)return;
   raidRevealRoom(idx);   /* you only see a room once you are standing in it */
   if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();   /* ...and its guardians appear WITH it, not before */
-  /* THE LOBBY is safe ground: no guardians, no seal, no brief. It exists so a group can gather. */
-  if(room.type==='entrance'&&raid.floor===1){ const st0=_raidRoomState(idx); st0.cleared=true; return; }
+  /* THE LOBBY (floor 1) and THE LANDING (below) are both safe ground: no guardians, no seal, no brief.
+     The lobby exists so a group can gather; the landing is just where the hole drops you. */
+  if(room.type==='entrance'||room.type==='landing'){ const st0=_raidRoomState(idx); st0.cleared=true; return; }
   const stt=_raidRoomState(idx);
   if(room.type==='puzzle'){
     if(stt.spawned||stt.cleared)return; stt.spawned=true;
@@ -28625,8 +28833,8 @@ function raidEnterRoom(idx){
       if(stt.puz.kind==='crabs'&&typeof raidShowCrabSign==='function'&&!player._sawCrabSign){ player._sawCrabSign=true; raidShowCrabSign(); }
       _raidRoomBrief(room, ({
         ice_demon:'Something is frozen into the ice. Chop the timbers, feed all four braziers, and thaw it out.',
-        tightrope:'The floor is gone. Cross the pipe run, take the keystone, and bring it back to the barrier.',
-        crabs:'Bend the lens-beam into all three wall sockets, matching each one\u2019s colour. Read the lab notice on the wall.'
+        tightrope:'The floor is gone. Cross the pipe run, take the keystone, and then use it on the barred way on.',
+        crabs:'Bend the lens-beam into all three wall sockets, matching each one\u2019s colour. Strike a prism to stain it; right-click to CLEAR one if you stain it wrong. Read the lab notice.'
       })[stt.puz.kind]||'Solve it and the way opens.'); }
     else { stt.cleared=true; _raidSealRoom(idx,false); }   /* FAIL OPEN: an unsolvable/unknown puzzle must never seal the party in */
     return;
@@ -28697,7 +28905,7 @@ function raidEnterRoom(idx){
       /* Reveal it NOW. This runs from inside raidEnterRoom, AFTER raidRevealRoom has already been and
          gone -- so a rack created here would be built hidden and never shown. You are standing in
          the room; the rack is visible. */
-      if(rk._m&&rk._m.group){ rk._m.group.position.y=_raidFY;
+      if(rk._m&&rk._m.group){ rk._m.group.position.y=_raidObjY(rk);
         rk._m.group.visible=!!(raid&&raid.seen&&raid.seen[_raidRK(idx)]); }
       stt.rackAt=[sp[0],sp[1]]; }
   }
@@ -28732,6 +28940,14 @@ function _raidWasDoor(x,y){ return !!(_raidDoorSet&&_raidDoorSet.has(x+','+y)); 
    seal. Without these the guardian doors were invisible -- you just walked through a hole. */
 let _raidDoors={};
 let _raidOrb=null;
+/* The height a raid object should SIT AT. Everything used to be parked at the flat _raidFY, but the
+   delve's floor is GRADED (_raidCornerH gives every room its relief) -- so a prop on a raised tile
+   sank into the floor and one on a dip floated. Sam saw the scavenger cache climbing toward the
+   ceiling. Use the ground the player actually stands on. */
+function _raidObjY(o){
+  if(typeof groundH==='function'){ const h=groundH(o.x+0.5,o.y+0.5); if(isFinite(h))return h; }
+  return _raidFY;
+}
 /* the Ice Demon's block: live meshes, not baked, so the melt can animate them */
 let _raidIceBulge=null, _raidIceCore=null, _raidIceBulgeY=0;
 /* ============ THE PICK FLOOR ============
@@ -28874,6 +29090,9 @@ function _raidSyncMobVisibility(){
   }
 }
 function raidRevealRoom(idx){
+  /* re-seat this room's props on the graded floor: the relief differs per room AND per floor. */
+  if(raid&&objects)for(const o of objects){ if(!RAID_CAVE_OBJS[o.def]||o.raidRoom!==idx)continue;
+    if(o._m&&o._m.group&&typeof _raidObjY==='function')o._m.group.position.y=_raidObjY(o); }
   const rg=_raidRoomMesh[idx];
   if(rg&&!rg.visible){
     rg.visible=true;
@@ -28908,7 +29127,7 @@ function _raidPlaceLobbyGate(F){
     if(!g)continue;
     g.raidRoom=0; g.raidFloor=1; g.alive=true;
     if(typeof buildObjModel==='function')buildObjModel(g);
-    if(g._m&&g._m.group){ g._m.group.visible=false; g._m.group.position.y=_raidFY;
+    if(g._m&&g._m.group){ g._m.group.visible=false; g._m.group.position.y=_raidObjY(g);
       /* TURN IT ACROSS THE OPENING. The model spans X, so an east-west doorway needs a quarter
          turn -- without it the gate lies flat ALONG the wall and reads as open. The portcullises
          already do this from _raidDoorAxis; the object had no yaw at all. */
@@ -29061,7 +29280,18 @@ function _raidPlacePuzzle(room, f){
        than a random scatter, because a random board can be unsolvable. */
     const cx=Math.round(f.cx), cy=Math.round(f.cz);
     put('raid_lens',f.x0+1,cy,{});
-    put('raid_crabsign',Math.round(f.cx),cy-5,{});   /* central and clear of the beam line (cy), not tucked by the door */
+    /* ** FACE IT AT THE ROOM. ** An object has no rotation unless you give it one -- the same trap the
+       lobby gate hit -- so the notice was showing its back to whoever walked in. Turn it toward the
+       doorway you arrive through. */
+    { const sg=put('raid_crabsign',Math.round(f.cx),cy-5,{});
+      if(sg){
+        let ex=Math.round(f.cx), ey=Math.round(f.cz);
+        for(const k in _raidDoorRooms){ const rr=_raidDoorRooms[k];
+          if(!rr||(rr[0]!==room.idx&&rr[1]!==room.idx))continue;
+          const q=k.split(','); ex=+q[0]; ey=+q[1]; break; }
+        sg.faceYaw=Math.atan2(ex-sg.x, ey-sg.y);
+        if(sg._m&&sg._m.group)sg._m.group.rotation.y=sg.faceYaw;
+      } }
     put('raid_bench',f.x0+1,cy+2,{});
     /* A in the bead's path, B further along it, C south of B. Every socket is reachable:
          red   -> tune A red                      (bend south into the red socket)
@@ -29094,11 +29324,21 @@ function _raidPlacePuzzle(room, f){
     if(!B||bd<3){ A=[f.x0,Math.round(f.cz)]; B=[f.x1,Math.round(f.cz)]; }
     const mx=(A[0]+B[0])/2+0.5, my=(A[1]+B[1])/2+0.5;
     const vx=B[0]-A[0], vy=B[1]-A[1];
-    const L=Math.hypot(vx,vy)||1, ux=vx/L, uy=vy/L;   /* the axis you will cross along */
+    /* ** SNAP THE AXIS TO A CARDINAL. ** Two bugs, one cause: a diagonal axis gave a DIAGONAL band of
+       wall tiles -- which is POROUS, because diagonally-adjacent walls leave a corner gap you can step
+       through, so Sam walked across a chasm that my 4-directional test said was solid. It also made
+       the pipe a 'jagged diagonal', because a pipe drawn along that axis is drawn on the diagonal.
+       A straight band is solid AND the pipe is one clean run from wall to wall. */
+    const L=Math.hypot(vx,vy)||1;
+    const ux=(Math.abs(vx)>=Math.abs(vy))?Math.sign(vx)||1:0;
+    const uy=(Math.abs(vx)>=Math.abs(vy))?0:(Math.sign(vy)||1);
     /* The chasm must never swallow a DOORWAY. The doors sit at t = +/-L/2 along this axis, so the
        half-width has to leave a landing at each end -- otherwise the exit itself is void and the
        keystone and barrier end up in mid-air, which is exactly what happened. */
-    const HW=Math.max(1.5, Math.min(3.5, L/2-3.0));
+    /* the doors' separation ALONG THE CHOSEN AXIS -- not the diagonal distance, or the band could
+       still swallow a doorway. */
+    const AL=Math.abs(ux?vx:vy);
+    const HW=Math.max(1.5, Math.min(3.5, AL/2-3.0));
     for(let y=f.y0;y<=f.y1;y++)for(let x=f.x0;x<=f.x1;x++){
       if(!inb(x,y))continue;
       const t=(x+0.5-mx)*ux+(y+0.5-my)*uy;             /* distance along the doorway axis */
@@ -29108,14 +29348,31 @@ function _raidPlacePuzzle(room, f){
       }
     }
     /* the two ledges, on the axis, just outside the chasm */
-    const led=(sgn)=>{
-      for(let k=0;k<8;k++){
-        const px=Math.round(mx+ux*(HW+0.5+k)*sgn-0.5), py=Math.round(my+uy*(HW+0.5+k)*sgn-0.5);
-        if(inb(px,py)&&raidTiles[py]&&raidTiles[py][px]===T_FLOOR&&!blockedStrict(px,py))return [px,py];
+    /* ** BOTH LEDGES MUST SHARE A LANE, ** or the pipe is drawn from one row to another and reads as a
+       bent, jagged thing -- which is what Sam saw. Pick a lane (a row if the axis is E/W, a column if
+       N/S) that has real floor on BOTH sides of the chasm, and put both lips on it. */
+    const lipOn=(lane,sgn)=>{
+      for(let k=0;k<10;k++){
+        const px=Math.round((ux?mx+ux*(HW+0.5+k)*sgn:lane+0.5)-0.5);
+        const py=Math.round((uy?my+uy*(HW+0.5+k)*sgn:lane+0.5)-0.5);
+        const qx=ux?px:lane, qy=ux?lane:py;
+        if(qx<f.x0||qx>f.x1||qy<f.y0||qy>f.y1)continue;
+        if(inb(qx,qy)&&raidTiles[qy]&&raidTiles[qy][qx]===T_FLOOR&&!blockedStrict(qx,qy))return [qx,qy];
       }
       return null;
     };
-    const nearL=led(-1), farL=led(1);
+    let nearL=null, farL=null;
+    { const home=ux?Math.round(my-0.5):Math.round(mx-0.5);   /* start on the doorway line, then fan out */
+      const lo=ux?f.y0:f.x0, hi=ux?f.y1:f.x1;
+      for(let off=0; off<=Math.max(hi-home,home-lo) && !(nearL&&farL); off++){
+        for(const sd2 of (off?[-1,1]:[0])){
+          const lane=home+off*sd2;
+          if(lane<lo||lane>hi)continue;
+          const a=lipOn(lane,-1), b=lipOn(lane,1);
+          if(a&&b){ nearL=a; farL=b; break; }
+        }
+      }
+    }
     if(nearL&&farL){
       /* a pipe at BOTH ledges: click it and you cross. `to` is the other ledge. */
       put('raid_pipe',nearL[0],nearL[1],{to:[farL[0],farL[1]]});
@@ -29238,10 +29495,18 @@ function raidCutRack(o){
     if(o._m&&o._m.group)o._m.group.rotation.z=(Math.random()-0.5)*0.12;
     return; }
   o.down=true;
-  if(o._m&&o._m.group){ o._m.group.rotation.z=1.35; o._m.group.position.y=_raidFY-0.25; }
+  if(o._m&&o._m.group){ o._m.group.rotation.z=1.35; o._m.group.position.y=_raidObjY(o)-0.25; }
   msg('The larder rack comes down in a heap. The Chimera screams - it has nothing to feed on now.','#9fd06a');
   /* tell every Chimera in this room that its larder is gone */
   for(const r of rats)if(r&&r.alive&&r.raid&&r.raidRoom===o.raidRoom&&r._sig==='feed'){ r._rackDown=true; r._feedUntil=0; }
+}
+/* Wipe a prism back to clear glass. Without this the board is a one-way trip. */
+function raidClearPrism(o){
+  if(!o||o.def!=='raid_prism'||!o.col)return;
+  o.col=null;
+  if(o._crystalRef&&o._crystalRef.material)o._crystalRef.material.color.setHex(0xbfc6cf);
+  msg('You wipe the prism clear. The stain runs out of it.','#8fd0ff');
+  if(typeof MP!=='undefined'&&MP.sendRaidSolve){}
 }
 /* Strike a prism. CoX sets a crab's colour by the STYLE you hit it with -- red melee, blue magic,
    green ranged -- so you have to switch styles rather than click a menu. */
@@ -29335,6 +29600,14 @@ function raidPuzzleTick(){
           puz.thawed=true;
           const f2=raidRoomFootprint(room.idx);
           const dm=_raidSpawnMob('raid_icedemon', Math.round(f2.cx), Math.round(f2.cz), room.idx);
+          /* ** REVEAL IT ON THE SPOT. ** This is the fourth time this exact pattern has bitten: anything
+             created AFTER raidRevealRoom has run for its room is built hidden and nothing ever shows it.
+             The rack had it, the Ellison NPC had it, the guardians had it, and now the demon: Sam could
+             attack it (the proxy is live) but could not see it (the mesh was never made visible).
+             _raidSpawnMob sets this too, but belt and braces -- you are standing in the room. */
+          dm.raidFloor=raid.floor;
+          if(dm._m&&dm._m.group)dm._m.group.visible=true;
+          if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
           dm.raidDemi=true; dm.raidBase={hp:150,maxhit:14,acc:0.88,dl:56,db:9};
           dm.maxhp=mobMaxHp(dm); dm.hp=dm.maxhp; dm._sig='rime';   /* was 'flare' -- a FIRE attack on an ICE demon. It freezes you now. */ dm._sigCd=performance.now()+6000;
           stt.mobIdx=(stt.mobIdx||[]).concat([dm.i]);
@@ -29427,15 +29700,26 @@ function raidLightBrazier(o){
 function raidTakeKeystone(o){
   if(!o||o.def!=='raid_keystone'||o.taken)return;
   const stt=raid.roomState&&raid.roomState[_raidRK(o.raidRoom)]; if(!stt||!stt.puz)return;
+  /* ** IT IS AN ITEM. ** keyHeld lived on stt.puz -- which _raidPlacePuzzle RECREATES on every room
+     build, wiping it. So you could pick the keystone up and the barrier would still swear you did not
+     have it. It is an inventory item now (and it was ALREADY in RAID_ONLY_ITEMS, so it was always
+     meant to be one): the pack is the state, and the pack survives a rebuild. */
+  if(typeof addItem==='function'&&!addItem('raid_keystone',1)){
+    msg('Your pack is too full to lift the keystone.','#9a8a6a'); return; }
   o.taken=true; stt.puz.keyHeld=true;
   if(o._m&&o._m.group)o._m.group.visible=false;
-  msg('You lift the keystone. Now get it back across.','#8fd0ff');
+  msg('You lift the keystone. The barred way on is over there.','#8fd0ff');
 }
 function raidUseKeystone(o){
   if(!o||o.def!=='raid_barrier')return;
   const stt=raid.roomState&&raid.roomState[_raidRK(o.raidRoom)]; if(!stt||!stt.puz)return;
-  if(!stt.puz.keyHeld){ msg('The socket is empty. The keystone is on the far side.','#9a8a6a'); return; }
-  stt.puz.keyHeld=false; o.open=true;
+  /* the PACK is the truth: stt.puz is recreated on every room build, so keyHeld alone could not survive
+     one -- which is why the barrier swore you had no keystone after you had just picked it up. */
+  const _hasKey=(typeof countItem==='function'&&countItem('raid_keystone')>0)||stt.puz.keyHeld;
+  if(!_hasKey){ msg('The socket is empty. The keystone is across the chasm.','#9a8a6a'); return; }
+  stt.puz.keyHeld=false;
+  if(typeof countItem==='function'&&countItem('raid_keystone')>0)takeItems('raid_keystone',1);
+  o.open=true;
   if(o._m&&o._m.group)o._m.group.visible=false;
   _raidPuzzleSolved(o.raidRoom);
 }
@@ -29529,10 +29813,73 @@ function raidTrioTick(){
 /* ---- Telegraph framework: EVERY miniboss mechanic marks tiles and warns first, then resolves on a
    fuse. Standing on a marked tile when the fuse blows is the only way to get hit -- so every mechanic
    has counterplay. Previously these just did damage on a timer with no tell. ---- */
-function _raidTelegraph(r, tiles, fuse, lo, hi, warn){
+/* ** THE TELEGRAPH DREW NOTHING. ** It pushed tiles into r._pending and printed a line of chat, and that
+   was the entire mechanic -- so the Astronomer's stars and the Coxswain's flood were invisible and all
+   you ever saw was text. A telegraph you cannot SEE is not a telegraph.
+   Every marked tile now gets a real marker on the floor: a coloured pane that pulses faster as the fuse
+   burns down, a rim, and a spit of particles on the tell. The colour is the boss's own. It streams to
+   the party (rdtel) so groupmates see the same floor light up -- a mechanic only the caster can see is
+   worse than useless in a group. */
+const RAID_TEL_COL={grave:0x6a5a3a, surge:0x3a7a9a, collapse:0x8a6a4a, blink:0x8f6fd6,
+                    slam:0xc9483a, flare:0xff6a24, rime:0x8fd0ff};
+let _raidTelFx=[];
+function _raidTelegraph(r, tiles, fuse, lo, hi, warn, sigOverride){
   r._pending=r._pending||[];
-  r._pending.push({tiles:tiles.slice(), at:performance.now()+fuse, lo, hi});
+  const at=performance.now()+fuse;
+  r._pending.push({tiles:tiles.slice(), at, lo, hi});
+  const sig=sigOverride||r._sig||'slam';
+  _raidTelMark(tiles, at, sig);
+  if(typeof MP!=='undefined'&&MP.sendRaidTelegraph)MP.sendRaidTelegraph(tiles, fuse, sig);
   if(warn)msg(warn,'#c9483a');
+}
+/* draw the marked ground */
+function _raidTelMark(tiles, at, sig){
+  const hex=RAID_TEL_COL[sig]||0xc9483a;
+  for(const [tx,ty] of tiles){
+    if(!inb(tx,ty))continue;
+    const gy=(typeof groundH==='function'?groundH(tx+0.5,ty+0.5):0)+0.06;
+    const pane=new THREE.Mesh(new THREE.PlaneGeometry(0.94,0.94),
+      new THREE.MeshBasicMaterial({color:hex,transparent:true,opacity:0.30,depthWrite:false}));
+    pane.rotation.x=-Math.PI/2; pane.position.set(tx+0.5,gy,ty+0.5);
+    const rim=new THREE.Mesh(new THREE.TorusGeometry(0.46,0.035,6,16),
+      new THREE.MeshBasicMaterial({color:hex,transparent:true,opacity:0.85,depthWrite:false}));
+    rim.rotation.x=-Math.PI/2; rim.position.set(tx+0.5,gy+0.01,ty+0.5);
+    scene.add(pane); scene.add(rim);
+    _raidTelFx.push({pane, rim, at, born:performance.now()});
+    if(typeof groundFrost==='function'&&sig==='rime')groundFrost(tx,ty,true);
+  }
+}
+/* pulse them, faster as the fuse burns down, then bloom and clear */
+function raidTelFxTick(){
+  if(!_raidTelFx.length)return;
+  const now=performance.now();
+  for(let i=_raidTelFx.length-1;i>=0;i--){
+    const fx=_raidTelFx[i];
+    const left=fx.at-now, span=Math.max(1,fx.at-fx.born);
+    if(left<=-260){
+      if(fx.pane.parent)fx.pane.parent.remove(fx.pane);
+      if(fx.rim.parent)fx.rim.parent.remove(fx.rim);
+      _raidTelFx.splice(i,1); continue;
+    }
+    if(left<=0){                                   /* it lands: bloom and go */
+      const k=1-(-left/260);
+      fx.pane.material.opacity=0.7*k;
+      fx.rim.material.opacity=0.9*k;
+      fx.rim.scale.setScalar(1+(1-k)*1.6);
+      continue;
+    }
+    const t=1-(left/span);                          /* 0 -> 1 as the fuse burns */
+    const hz=3+t*9;                                 /* it beats faster the closer it gets */
+    const puls=0.5+0.5*Math.sin(now*0.001*hz*6.283);
+    fx.pane.material.opacity=0.16+0.34*puls*(0.5+t*0.5);
+    fx.rim.material.opacity =0.45+0.45*puls;
+    fx.rim.scale.setScalar(1-0.10*puls);
+  }
+}
+function _raidTelFxClear(){
+  for(const fx of _raidTelFx){ if(fx.pane.parent)fx.pane.parent.remove(fx.pane);
+    if(fx.rim.parent)fx.rim.parent.remove(fx.rim); }
+  _raidTelFx=[];
 }
 const _raidRing=(cx,cy,rad)=>{ const out=[]; for(let a2=0;a2<8;a2++){ out.push([Math.round(cx+Math.cos(a2/8*6.283)*rad), Math.round(cy+Math.sin(a2/8*6.283)*rad)]); } return out; };
 /* per-frame miniboss + final-boss mechanics */
@@ -29557,17 +29904,52 @@ function raidBossTick(){
     /* --- Tekton: The Custodian breaks off to repair at his boiler. Punish him or he out-heals you. --- */
     if(r._sig==='repair'){
       if(r._repairUntil&&now<r._repairUntil){
-        r.hp=Math.min(r.maxhp, r.hp + r.maxhp*0.012);   /* healing WHILE unattended */
-        if(now-(r._repairMsg||0)>2000){ r._repairMsg=now; msg('The Custodian is stoking his boiler - hit him NOW or he mends himself.','#ff8a3a'); }
-        if(player.combatT && now-player.combatT<900) r._repairUntil=0;   /* you interrupted him */
+        r.target=null;
+        const to=r._repairTo;
+        if(to){
+          const dx=Math.sign(to[0]-Math.round(r.x)), dy=Math.sign(to[1]-Math.round(r.y));
+          const atBoiler=(Math.round(r.x)===to[0]&&Math.round(r.y)===to[1]);
+          if(!atBoiler){
+            /* SHUFFLE there, a tile at a time, so you can see him leave and get between him and it */
+            if(!r._repStep||now-r._repStep>420){
+              r._repStep=now;
+              const nx=Math.round(r.x)+dx, ny=Math.round(r.y)+dy;
+              if(inb(nx,ny)&&raidTiles[ny]&&raidTiles[ny][nx]===T_FLOOR&&!blockedStrict(nx,ny)){ r.x=nx; r.y=ny; }
+              else if(inb(Math.round(r.x)+dx,Math.round(r.y))&&raidTiles[Math.round(r.y)][Math.round(r.x)+dx]===T_FLOOR){ r.x=Math.round(r.x)+dx; }
+              else if(inb(Math.round(r.x),Math.round(r.y)+dy)&&raidTiles[Math.round(r.y)+dy][Math.round(r.x)]===T_FLOOR){ r.y=Math.round(r.y)+dy; }
+            }
+            if(now-(r._repairMsg||0)>2200){ r._repairMsg=now;
+              msg('The Custodian is making for the firebox \u2014 get between him and it!','#ff8a3a'); }
+          } else {
+            /* only NOW does he mend, and only while you leave him alone */
+            r.hp=Math.min(r.maxhp, r.hp + r.maxhp*0.012);
+            if(now-(r._repairMsg||0)>2000){ r._repairMsg=now;
+              msg('He has the firebox open and is stoking himself back together \u2014 HIT HIM NOW!','#ff8a3a'); }
+          }
+        }
+        if(player.combatT && now-player.combatT<900){ r._repairUntil=0; r._repairTo=null;
+          msg('You break the Custodian off his boiler.','#8fd06a'); }
         continue;
       }
+      if(r._repairTo)r._repairTo=null;
     }
     /* --- Muttadile: the Chimera feeds off its larder rack; break the rack to stop the healing. --- */
     if(r._sig==='feed' && r._feedUntil && now<r._feedUntil){
       if(!r._rackDown){ r.hp=Math.min(r.maxhp, r.hp + r.maxhp*0.010);
         if(now-(r._feedMsg||0)>2500){ r._feedMsg=now; msg('The Chimera rears up to the larder rack and feeds - cut the rack down!','#e0532a'); } }
       continue;
+    }
+    /* --- The Archivist's silence lands: only if you are still praying. --- */
+    if(r._silenceAt && now>=r._silenceAt){
+      r._silenceAt=0;
+      const praying=(typeof prayers!=='undefined')&&Object.keys(prayers).some(k=>prayers[k]);
+      if(praying){
+        const drain=Math.min(player.pray, Math.max(3,Math.round(maxPray()*0.15)));
+        if(drain>0){ player.pray-=drain; if(typeof updatePrayOrb==='function')updatePrayOrb(); }
+        msg('The book closes. Your prayers go out of you.','#8f6fd6');
+      } else {
+        msg('The book closes on nothing. She looks almost disappointed.','#9fd06a');
+      }
     }
     /* --- THE ICE DEMON: a rime blast that FREEZES you. It used to be 'flare' -- a FIRE attack on an
        ice demon, which was simply wrong. It reuses the freeze the game already has (player.frozenUntil
@@ -29603,10 +29985,14 @@ function raidBossTick(){
     }
     /* --- Guardians: The Benefactor hardens to bronze and takes nothing until the seam cracks. --- */
     if(r._sig==='harden' && r._hardUntil){
-      if(now<r._hardUntil){ r.hp=Math.min(r.maxhp, r.hp); r._immune=true;
-        if(now-(r._hardMsg||0)>2500){ r._hardMsg=now; msg('The Benefactor sets hard as bronze - nothing you do marks him. Wait for the seam.','#c9a23a'); }
+      if(now<r._hardUntil){
+        /* immune to STEEL and ARROWS only. Magic still marks him -- see raidHardenBlocks(). */
+        r._immune='physical';
+        if(now-(r._hardMsg||0)>2500){ r._hardMsg=now;
+          msg('The bronze holds. Only magic is marking him \u2014 keep casting.','#c9a23a'); }
         continue; }
-      r._immune=false; r._hardUntil=0; msg('A seam cracks across the bronze - hit it!','#8fd06a');
+      r._immune=false; r._hardUntil=0;
+      msg('The bronze softens. Hit him with anything you like.','#8fd06a');
     }
 
     if(!r._sigCd||now<r._sigCd)continue;
@@ -29636,19 +30022,34 @@ function raidBossTick(){
         _raidTelegraph(r,_raidRing(player.x,player.y,1),1500,6,14,'It draws breath to vent flame - get clear!');
         break;
       case 'repair':     /* Tekton */
-        r._repairUntil=now+6000; r._repairMsg=0;
-        msg('The Custodian shuffles back toward his boiler...','#ff8a3a');
+        /* ** HE ACTUALLY GOES NOW. ** The tell said he shuffles back to his boiler and he healed standing
+           exactly where he stood -- so the mechanic read as broken, because it was. He breaks off, walks
+           to the firebox, and only mends once he reaches it. Chase him off it. */
+        { const bf=raidRoomFootprint(r.raidRoom);
+          const bx=Math.round(bf.cx), by=Math.round(bf.y0+4.5);
+          const sp=_raidFindSpawn(bx,by,r.raidRoom)||[bx,by];
+          r._repairTo=sp; r._repairUntil=now+9000; r._repairMsg=0; r.target=null;
+          msg('The Custodian breaks off and shuffles back toward his boiler \u2014 CHASE HIM OFF IT before he mends!','#ff8a3a'); }
         break;
       case 'feed':       /* Muttadile */
         r._feedUntil=now+6000; r._feedMsg=0;
+        msg('The Chimera turns for the larder rack \u2014 CUT THE RACK DOWN or it heals through you!','#9c5512');
         break;
       case 'harden':     /* Guardians */
+        /* ** THIS USED TO BE A PAUSE, NOT A MECHANIC. ** He went immune for 5s and your only option was
+           to stand there; the tell said "wait for the seam", which is a description of nothing.
+           Now bronze does what bronze does: steel and arrows skate off it, but MAGIC still bites. It is
+           a STYLE SWAP -- an actual instruction, and a reason to carry a staff into the delve. */
         r._hardUntil=now+5000; r._hardMsg=0;
+        msg('The Benefactor sets hard as bronze \u2014 blades and arrows will skate off him. SWITCH TO MAGIC!','#c9a23a');
         break;
-      case 'silence':    /* telegraphed prayer drain: she raises the book first */
-        { const drain=Math.min(player.pray, Math.max(3,Math.round(maxPray()*0.15)));
-          msg('The Mad Archivist raises a book and calls for silence...','#8f6fd6');
-          if(drain>0){ player.pray-=drain; updatePrayOrb(); } }
+      case 'silence':
+        /* ** THE TELL WAS A LIE. ** It said "...calls for silence..." -- an ellipsis promising a wind-up --
+           and then drained your prayer in the same instant. You could not react to it because there was
+           nothing to react to. It is a real telegraph now: 1.6s, and it only takes your prayer if your
+           prayers are still ON when the book closes. Turn them off and she gets nothing. */
+        r._silenceAt=now+1600;
+        msg('The Mad Archivist raises a book and calls for silence \u2014 TURN YOUR PRAYERS OFF!','#8f6fd6');
         break;
     }
   }
@@ -29892,6 +30293,7 @@ function raidHudTick(){
     _raidHud.innerHTML='<span style="color:#8a8172">The Delve</span>'
       +'<b id="raidhudpts" style="color:#ffd24a">0</b><span style="color:#8a8172">pts</span>'
       +'<span id="raidhudfl" style="color:#8fd0ff"></span>'
+      +'<span id="raidhudroom" style="color:#c9a23a"></span>'
       +'<button id="raidhudquit" class="btn" style="padding:2px 8px;font-size:11px">Abandon</button>';
     /* INSIDE the game window (#viewwrap), not the page -- on the body it floats over the whole UI. */
     (document.getElementById('viewwrap')||document.getElementById('frame')||document.body).appendChild(_raidHud);
@@ -29914,6 +30316,11 @@ function raidHudTick(){
   if(p)p.textContent=fmt(raidMyPoints());
   const f=document.getElementById('raidhudfl');
   if(f)f.textContent=raid.started?('Floor '+(raid.floor||1)+'/'+((raid.graph&&raid.graph.floors.length)||3)):'Lobby';
+  /* WHERE YOU ARE. You could see your points and your floor but not the room you were standing in --
+     which is the one thing on the HUD you actually look at while playing. */
+  const rm=document.getElementById('raidhudroom');
+  if(rm){ const r0=raid.rooms&&raid.rooms[raid.roomIdx];
+    rm.textContent=r0?('\u2014 '+(r0.name||'')):''; }
 }
 /* Abandoning: back to Ellison, and the delve is thrown away. */
 function raidConfirmAbandon(){
@@ -30109,7 +30516,7 @@ function _raidEnterNow(){
   /* Raid apparatus is seated on the delve floor but stays HIDDEN -- it reveals with its room.
      This used to force every raid object visible, which is why props showed through blacked-out rooms. */
   for(const o9 of objects){if(o9._m&&o9._m.group){const cv=!!RAID_CAVE_OBJS[o9.def];
-    if(cv){o9._m.group.position.y=_raidFY; o9._m.group.visible=false;} else o9._m.group.visible=false;}}
+    if(cv){ o9._m.group.position.y=_raidObjY(o9); o9._m.group.visible=false; } else o9._m.group.visible=false;}}
   if(waterMesh)waterMesh.visible=false;
   /* AFTER the hide-loop above, or it wipes the reveal and room 0's props -- including the way OUT -- stay dark. */
   raid.seen={}; if(typeof raidRevealRoom==='function')raidRevealRoom(0);
@@ -30146,6 +30553,7 @@ function exitRaid(){
   if(waterMesh)waterMesh.visible=true;
   player.x=RAID_RETURN.x;player.y=RAID_RETURN.y;player.px=RAID_RETURN.x;player.py=RAID_RETURN.y;
   camYaw=0; player.path.length=0; cancelAction();
+  if(typeof _raidTelFxClear==='function')_raidTelFxClear();
   _raidLightsOff();   /* restore the OUTDOOR light + fog. This used to hardcode 30/52 -- an interior
                          fog -- on the way out to the lawn, which would stomp the restore. */
   raidReset();
@@ -30299,7 +30707,16 @@ function _raidGenFloor(rng, floorNo, large, wantPuz){
   }
 
   const rooms=[];
-  rooms.push(Object.assign({idx:0,type:'entrance'}, RAID_ENTRANCE_ROOM, {floor:floorNo}));
+  /* ** THE LOBBY IS FLOOR 1 ONLY. ** Every floor used to open with RAID_ENTRANCE_ROOM, so descending
+     built a whole second Undercroft -- ladder shaft, stores and all -- sitting next to you on floor 2
+     (Sam: "I could see the cellar lobby next to me, just without any objects or Ellison"). Hiding
+     Ellison and the gate was treating the symptom; the ROOM should not be there at all. Below floor
+     1 the tunnels just open into a landing: a plain stone chamber, no lobby furniture, no ladder. */
+  if(floorNo===1)
+    rooms.push(Object.assign({idx:0,type:'entrance'}, RAID_ENTRANCE_ROOM, {floor:floorNo}));
+  else
+    rooms.push({idx:0, type:'landing', id:'landing', name:'The Landing',
+                under:'the steam tunnels', style:'stone', floor:floorNo});
   pool.forEach((r,i)=>rooms.push(Object.assign({}, r, {idx:i+1, floor:floorNo})));
   rooms.push({idx:rooms.length, type:'stair', id:'stairhead', name:'The Stair Head',
               under:'the steam tunnels', style:'stone', floor:floorNo});
@@ -36103,6 +36520,10 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'rdplate': { if (m.uid === player.uid) break;   /* a groupmate's plate occupancy */
         if (typeof raidPeerPlate === 'function') raidPeerPlate(m.x | 0, m.y | 0, !!m.on);
         break; }
+      case 'rdtel': { if (m.uid === player.uid) break;   /* a groupmate's boss is winding up: light the same floor */
+        if (typeof _raidTelMark === 'function' && typeof inRaid !== 'undefined' && inRaid && Array.isArray(m.ts))
+          _raidTelMark(m.ts, performance.now() + (m.f | 0), m.s);
+        break; }
       case 'rdcl': { if (m.uid === player.uid) break;    /* a delver's combat level, for max-of-party scaling */
         if (typeof raid !== 'undefined' && raid) { raid.peerCombat = raid.peerCombat || {}; raid.peerCombat[m.uid] = m.c | 0; }
         break; }
@@ -36936,6 +37357,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function sendRaidPlate(x, y, on) { if (active() && conn) send({ t: 'rdplate', x: x | 0, y: y | 0, on: on ? 1 : 0 }); }
   function sendRaidPoints(pts) { if (active() && conn) send({ t: 'rdpts', p: pts | 0 }); }
   function sendRaidCombat(cl) { if (active() && conn) send({ t: 'rdcl', c: cl | 0 }); }   /* CoX scales to the party's HIGHEST combat level */
+  /* a boss telegraph must light up on EVERY screen, or a groupmate cannot dodge what he cannot see */
+  function sendRaidTelegraph(tiles, fuse, sig) { if (active() && conn) send({ t: 'rdtel', ts: tiles, f: fuse | 0, s: String(sig || '') }); }
   function sendRaidDown(down) { if (active() && conn) send({ t: 'rddown', d: down ? 1 : 0 }); }
   function sendRaidRevive(uid) { if (active() && conn) send({ t: 'rdrev', to: uid }); }
   function sendRaidReviveStart(uid, ms) { if (active() && conn) send({ t: 'rdrvs', to: uid, ms: ms | 0, n: player.name }); }
@@ -37076,7 +37499,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidTelegraph, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
