@@ -1471,15 +1471,48 @@ ITEMS.embercarp={name:'Embercarp',ex:'A fat, faintly luminous fish hauled from t
    care about. Raid-only, worthless, and stripped when you leave. */
 ITEMS.raid_lab_rod={name:'Calibration rod',ex:'A sighting rod off the lab bench. Useless in a fight, but the prisms read it as an arrow.',val:0,noSell:true,noTrade:true,cat:'Raid',equip:{slot:'weapon',model:'bow',verb:'Wield',req:0,tint:0x8a6a2a,trim:0xcfe3ff,range:1}};
 ITEMS.raid_lab_wand={name:'Calibration wand',ex:'A glass wand off the lab bench. Useless in a fight, but the prisms read it as a spell.',val:0,noSell:true,noTrade:true,cat:'Raid',equip:{slot:'weapon',model:'staff',verb:'Wield',req:0,tint:0x2f7ad8,trim:0xcfe3ff}};
+/* ============ THE DELVE'S UNIQUE TABLE ============
+   Every one of these is an EFFECT, not a stat line. They deliberately carry little or no combat
+   bonus: the Ember set stays the best armour and the Cinderforge weapons stay the best weapons, and
+   nothing here can out-stat them because they are not competing on that axis at all. All tradeable. */
+ITEMS.larder_charm={name:'Larder Charm',ex:'A greasy little charm on a bootlace, smelling faintly of the Coit kitchens. Bones crumble to dust near it, and something in you is the better for it.',val:1400000,cat:'Raid',
+  equip:{slot:'neck',model:'charm',verb:'Wear',req:0,tint:0x6a5330,trim:0xd8cfb4}};
+ITEMS.thrift_gauntlets={name:'Thrift Gauntlets',ex:'Lab gloves, chalk-stained and singed. A quarter of your spells cost you nothing at all \u2014 the Archivist never did explain how.',val:1600000,cat:'Raid',
+  equip:{slot:'hands',def:3,model:'gauntlets',verb:'Wear',req:0,tint:0x3b2a55,trim:0xc9a23a}};
+ITEMS.ring_wealth={name:'Ring of Wealth',ex:'A plain gold band that makes the world slightly more generous. Nobody agrees on how.',val:2000000,cat:'Raid',
+  equip:{slot:'ring',model:'ring',verb:'Wear',req:0,tint:0xd9b04a}};
+ITEMS.ring_suffering={name:'Ring of Suffering',ex:'Cold iron, and it hurts to wear. Whatever hits you shares the feeling.',val:1800000,cat:'Raid',
+  equip:{slot:'ring',def:6,rdef:6,mdef:6,pray:4,model:'ring',verb:'Wear',req:0,tint:0x8a2a3a}};
+ITEMS.lightbearer={name:'The Lightbearer',ex:'The Sexton\u2019s lamp, worn down to a ring. It gives no protection whatsoever \u2014 it simply will not let you tire.',val:2600000,cat:'Raid',
+  equip:{slot:'ring',model:'ring',verb:'Wear',req:0,tint:0xffe08a}};
+ITEMS.amulet_blood_fury={name:'Amulet of Blood Fury',ex:'A shard of something red, strung on sinew. It drinks what you spill and gives a little back. Needs blood shards to keep its thirst.',val:3400000,cat:'Raid',
+  equip:{slot:'neck',model:'amulet',verb:'Wear',req:0,tint:0x8a1020,trim:0xd23b4e}};
+/* ============ PETS ============
+   Called from the inventory rather than worn in a slot, so the equipment panel is untouched. You hold
+   the item; calling it puts the creature in the world. A called pet burns VIGOUR (30 min) and its perk
+   only works while it is out -- so a perk is a resource you spend, not a 12th equipment slot, which is
+   what would have made them permanent power creep. */
+/* Pet food. Ellison keeps a sack of each behind the gate -- he has been feeding things down here for a
+   century, so of course he has. One tin restores a pet to a FULL 30 minutes. */
+ITEMS.food_gorger={name:'Trencher scraps',ex:'A dripping parcel of kitchen offcuts. Ellison swears the Gorger can smell it through the gate.',val:900,stack:1,cat:'Raid',prim:'Feed'};
+ITEMS.food_marrow={name:'Marrow bone',ex:'A knuckle-end, split lengthways. There is only one thing down here that wants it this badly.',val:900,stack:1,cat:'Raid',prim:'Feed'};
+ITEMS.food_magpie={name:'Bright things',ex:'A twist of paper holding buttons, foil and one brass pin. Worthless. It will not care.',val:900,stack:1,cat:'Raid',prim:'Feed'};
+ITEMS.food_pebble={name:'Grit tin',ex:'Coarse quarry grit. Pebble does not eat, exactly. It grinds.',val:900,stack:1,cat:'Raid',prim:'Feed'};
+ITEMS.food_hackles={name:'Bloodmeal',ex:'Dark, wet, and best not looked at. Hackles takes it without breaking eye contact.',val:900,stack:1,cat:'Raid',prim:'Feed'};
+ITEMS.pet_gorger={name:'Gorger',ex:'Mostly stomach. It has never once been full, and it has never once stopped trying. While it is out, food does you more good.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
+ITEMS.pet_marrow={name:'Marrow',ex:'A grave-hound, and pleased about it. It will not give up the bone. While it is out, bones teach you more.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
+ITEMS.pet_magpie={name:'Magpie',ex:'It found a coin. It will find more. It does not intend to share, but some falls out.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
+ITEMS.pet_pebble={name:'Pebble',ex:'A rock that has decided to come with you. It gets in the way of exactly one thing per room, and that is enough.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
+ITEMS.pet_hackles={name:'Hackles',ex:'Small, low, and far too interested in you. Things in the dark would rather wait and see.',val:0,noSell:true,cat:'Raid',prim:'Call',pet:1};
+ITEMS.blood_shard={name:'Blood shard',ex:'A splinter of dark glass, still wet. Use it on an Amulet of Blood Fury to feed it.',val:60000,stack:1,cat:'Raid'};
 ITEMS.raid_kindling={name:'Frozen kindling',ex:'Splintered roof timber, hacked out of the ice. Dry enough to catch, if you are quick about it.',val:0,stack:1};
-ITEMS.raid_ration={name:'Delvers\u2019 ration',ex:'A dense cake of pressed roots and dried meat scavenged from the delve. Eat it to heal. Only good underground.',val:0,stack:1,heal:18,prim:1};
+/* prim is the ACTION LABEL, not a flag -- trout is prim:'Eat'. This was prim:1, so no Eat option ever
+   appeared and the ration sat in the pack uneatable. */
+ITEMS.raid_ration={name:'Delvers\u2019 ration',ex:'A dense cake of pressed roots and dried meat, scavenged from the delve. It will not keep above ground.',val:0,noSell:true,noTrade:true,cat:'Raid',heal:18,prim:'Eat'};
 /* ---- Raid chase uniques (the "purple"). Deliberate SIDEGRADES so the raid never invalidates
    existing BIS: the fang trades raw power vs the whip (82/82) for a prayer bonus; the codex
    trades magic attack vs the Halcyon Grimoire (matk25/mdmg13) for damage + defence; the cape is
    an all-style defensive/prayer cape rather than an offensive one. ---- */
-ITEMS.chimera_fang={name:'Chimera fang',ex:'A curved tooth the length of a forearm, still warm, prised from the thing that lives under the kitchens. It hums when the faithful hold it.',val:1200000,noSell:true,cat:'Raid',equip:{slot:'weapon',atk:80,str:80,pray:6,model:'scim',verb:'Wield',req:60,tint:0x8a3a1e,trim:0xffb14a}};
-ITEMS.archivist_codex={name:'Archivist\u2019s codex',ex:'A water-stained ledger of every book the school ever lost. The Archivist would very much like it back.',val:1200000,noSell:true,cat:'Raid',equip:{slot:'shield',model:'book',armStyle:'magic',verb:'Wield',matk:22,mdmg:14,mdef:10,pray:5,req:0,tint:0x3b2a1e,trim:0x8a6a3a}};
-ITEMS.delve_cape={name:'Delver\u2019s cape',ex:'Cellar-dust and lamp-soot worked into good wool. Worn by those who go down and come back up.',val:900000,noSell:true,cat:'Raid',equip:{slot:'cape',def:8,rdef:8,mdef:8,str:3,pray:4,model:'cape',verb:'Wear',req:0,tint:0x3a2f4a,trim:0xc9a23a}};
 ITEMS.emberore={name:'Ember ore',ex:'Dark ore veined with cyan crystal, unnervingly warm. Feeds the vault hydraulics.',val:14,stack:1};
 ITEMS.ember_log={name:'Ember log',ex:'A length of cut embervine, glowing green at the core. Feeds the vault hydraulics.',val:14,stack:1};
 ITEMS.key_slag={name:'Basalt Key',ex:'A heavy obsidian key veined with cyan crystal, cold to the hand. It fits the Slag Warden\u2019s gate.',val:0};
@@ -1951,12 +1984,16 @@ const OBJ_DEFS={
   relic:{name:'Blessed Censer',action:'Take',ex:'A founder-era censer on the altar. Its light still burns against the dark.'},
   mathesdoor:{name:'Matthes Cage',action:'Enter',ex:'The Matthes Cage field house. Within, a sunken pit waits beneath an indoor track.'},
   sos_hole:{name:'Cavern mouth',action:'Enter',ex:'A jagged hole gapes in the turf, breathing cold air from somewhere old and deep.'},
+  raid_sign:{name:'Notice board',action:'Read',noBlock:true,ex:'A board of school notices. Most are about laundry. One is not.'},
+  raid_sign_lawn:{name:'Notice board',action:'Read',noBlock:true,ex:'A board of school notices. Most are about laundry. One is not.'},
   raid_portal:{name:'Cellar stair',action:'Descend',ex:'A slanted bulkhead door set into the lawn north of the dining hall, just east of Larry\u2019s kitchen, propped open over stone steps that drop into the cellars below Coit. The passages down there run far deeper \u2014 and far stranger \u2014 than any root cellar has a right to. Gather your party before you go down.'},
   raid_exit:{name:'Ladder up',action:'Climb',ex:'An iron ladder bolted to the brick, climbing to the bulkhead door and the lawn behind the dining hall. Daylight, somewhere up there.'},   /* flush against the lobby's south wall at (26,60) */
   raid_chest:{name:'Delvers\u2019 hoard',action:'Open',ex:'A strongbox that rises out of the flagstones when the delve is beaten. It opens once for each delver.'},
   raid_node:{name:'Scavenger cache',action:'Search',ex:'A heap of crates, nests and root-tangles in the warren. Search it for delvers\u2019 rations \u2014 until it is picked clean.'},
   raid_plate:{name:'Pressure plate',action:'Examine',noBlock:true,ex:'A worn stone plate set flush in the floor. It sinks under weight and springs back slowly. Hold every plate down at once to open the way \u2014 easier with company.'},
   raid_brazier:{name:'Cold brazier',action:'Light',ex:'An iron brazier crusted with old ash. It needs kindling before it will take a flame.'},
+  raid_bank:{name:'Bank chest',action:'Bank',ex:'A strongbox bound to the Bank of Millville. Mr. Ellison had it carried down. He will not say how.'},
+  raid_geartable:{name:'Display case',action:'Examine',ex:'A long case of the finest arms the school has seen come through. Look, do not touch \u2014 Mr. Ellison is very clear on that.'},
   raid_lobbygate:{name:'The delve gate',action:'Open',ex:'Iron, and older than the school. Past it the tunnels start in earnest. It does not open by itself.'},
   raid_stair:{name:'Stair down',action:'Descend',ex:'Steps worn into the brick, dropping to the next level of the tunnels. Deeper means worse.'},
   raid_well:{name:'Drainage well',action:'Drink',ex:'Cold, clean water welling up through the brick. A drink here puts the run back in your legs.'},
@@ -2652,7 +2689,17 @@ addObj('mathesdoor',65,20,true);addObj('mathesexit',120,43,true);addObj('sos_hol
    Both are placed UNCONDITIONALLY so the hatch is always visible; RAID_ENABLED gates ENTRY
    inside enterRaid(), not placement. */
 addObj('raid_portal',142,49,true);
-{ const _rx=addObj('raid_exit',26,60,true); if(_rx)_rx.raidRoom=0; }   /* room 0, beside the arrival stairs. MUST track RAID_ENTRY: with CELL=24 room 0 is x15-36 y39-60, so the entry is (26,59). Room-0 membership is asserted in harness-entrance-load.mjs. */
+{ const _rx=addObj('raid_exit',26,60,true); if(_rx)_rx.raidRoom=0; }
+/* The lore board, twice: one on the lawn by the hatch, one in the lobby by Ellison for anyone who came
+   down without reading it.
+   ** TWO DEFS, deliberately. ** INT_DEFS is per-DEF, not per-object:
+     raid_sign_lawn -- NOT in INT_DEFS, so it IS shifted +112. Write SOURCE x: 143 -> runtime 255,
+                       right beside the hatch at runtime (254,49).
+     raid_sign      -- IS in INT_DEFS, so it is NOT shifted. Write raid-interior coords: (24,50).
+   One def could not do both. And this line runs BEFORE the expansion, while W is still 192 -- so a
+   runtime x of 255 is out of bounds here and addObj silently drops it. (It did. The test caught it.) */
+addObj('raid_sign_lawn',143,49,true);
+{ const _ls=addObj('raid_sign',24,50,true); if(_ls)_ls.raidRoom=0; }   /* room 0, beside the arrival stairs. MUST track RAID_ENTRY: with CELL=24 room 0 is x15-36 y39-60, so the entry is (26,59). Room-0 membership is asserted in harness-entrance-load.mjs. */
 (function placeEmberLadders(){
   /* one BIG stone ladder per chamber, offering BOTH up and down (OSRS-style), facing the room centre */
   const mk=(x,y,up,down,cx,cy)=>{const o=addObj('ember_ladder',x,y,true);if(o){o.upFloor=up;o.downFloor=down;o.faceX=cx;o.faceY=cy;}return o;};
@@ -3146,7 +3193,7 @@ const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   for(let y=3;y<H-3;y++)for(let x=OFF;x<OFF+3;x++)
     if(tiles[y][x]===T_FOREST)tiles[y][x]=T_GRASS;
   W=NW;
-  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','heart_door','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step','raid_exit','raid_node','raid_plate','raid_brazier','raid_chest','raid_sapling','raid_keystone','raid_barrier','raid_lens','raid_prism','raid_socket','raid_crabsign','raid_bench','raid_stair','raid_well','raid_lobbygate']);
+  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','heart_door','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step','raid_exit','raid_node','raid_plate','raid_brazier','raid_chest','raid_sapling','raid_keystone','raid_barrier','raid_lens','raid_prism','raid_socket','raid_crabsign','raid_bench','raid_stair','raid_well','raid_lobbygate','raid_bank','raid_geartable','raid_sign']);
   for(const o of objects)if(!INT_DEFS.has(o.def))o.x+=WX;  /* interior objects stay at their (unshifted) interior coords */
   for(const b of BUILDINGS)b.x+=WX;
   for(const n of npcs){n.x+=WX;if(n.sx!=null)n.sx+=WX;if(n.px!=null)n.px+=WX;}
@@ -4125,8 +4172,13 @@ function dropMobLoot(r){
   const _prevLog=_lootLog;
   if(_boss)_lootLog=[];
   const _bd=mobBoneDrop(r.kind);
-  if(_bd){dropGround(r.x,r.y,_bd,1);_logLoot(_bd,1);}
-  if(Math.random()<mk.coinP){const _cn=rndi(mk.coins[0],mk.coins[1]);dropGround(r.x,r.y,'coins',_cn);_logLoot('coins',_cn);}
+  if(_bd){
+    /* LARDER CHARM: the bone crumbles where it falls and you take the Prayer XP -- it is never
+       dropped, exactly as OSRS's bonecrusher consumes it. */
+    if(hasDelveItem('larder_charm')&&LARDER_XP[_bd])addXp('prayer', Math.round(LARDER_XP[_bd]*((typeof hasPet==='function'&&hasPet('pet_marrow'))?1.2:1)));   /* MARROW: bones teach you more */
+    else { dropGround(r.x,r.y,_bd,1);_logLoot(_bd,1); }
+  }
+  if(Math.random()<mk.coinP){const _cn=Math.round(rndi(mk.coins[0],mk.coins[1])*((typeof petCoinMult==='function')?petCoinMult():1));   /* MAGPIE */dropGround(r.x,r.y,'coins',_cn);_logLoot('coins',_cn);}
   rollMobDrops(r);
   rollRareDrop(r);
   if(_boss){
@@ -4177,6 +4229,11 @@ function groupCoLoot(r){
 function incomingMobHit(mi){
   const r=(typeof rats!=='undefined'&&rats[mi])?rats[mi]:null; if(!r)return;
   if(player.hp<=0)return;
+  /* HACKLES: real hesitation. The first time a given mob would swing at you it stops and thinks about
+     it for PET_HESITATE_MS instead. Per-mob and once only, so it delays an opener -- it does not
+     halve anything's damage. */
+  if(typeof petHesitate==='function'&&petHesitate(r))return;
+  if(hasPet('pet_hackles')&&r._petSeen&&(performance.now()-r._petSeen)<PET_HESITATE_MS)return;
   const _ak=MOB_KINDS[r.kind]; if(!_ak)return;
   const _astyle=_ak.atkStyle||'melee';
   if(_astyle==='melee'){
@@ -4212,13 +4269,20 @@ function incomingMobHit(mi){
   splats.push({ent:'player',dmg,t:performance.now()+((_astyle==='magic'||_astyle==='ranged')?320:0)});
   playerLastHit=performance.now();
   (dmg>0?sfx.hit:sfx.miss)();
+  if(dmg>0&&typeof petBlocksHit==='function'&&petBlocksHit()){   /* PEBBLE: it gets in the way of exactly one thing per room */
+    msg('Pebble takes it for you.','#9fd06a'); dmg=0;
+  }
   if(dmg>0){player.hp-=dmg;player.combatT=performance.now();updateOrb();
+    if(typeof delveOnDamageTaken==='function')delveOnDamageTaken(dmg, mi);   /* RING OF SUFFERING: 10% goes back at whatever hit you */
     if(player.autoRetaliate!==false&&!player.action&&rats[mi].alive)startAttack(rats[mi]);
     if(player.hp<=0)die();}
 }
 function rollRareDrop(r){
   const c=MOB_KINDS[r.kind].cmb;
-  if(Math.random()<Math.min(0.16,0.015+c*0.005)){
+  /* RING OF WEALTH: +10% to the rare roll. Deliberately NOT applied to the delve's own unique table
+     (raidClaimChest) -- a wealth ring that improved its own drop rate would feed itself. */
+  const _row=hasDelveItem('ring_wealth')?1.10:1;
+  if(Math.random()<Math.min(0.16,0.015+c*0.005)*_row){
     const roll=Math.random()*Math.max(6,c);
     let gem='uncut_sapphire';
     if(roll>17)gem='uncut_diamond'; else if(roll>12)gem='uncut_ruby'; else if(roll>7)gem='uncut_emerald';
@@ -4382,6 +4446,23 @@ let encFilter='All';
 let encQuery='';
 /* authored sources for rare drops / quests / clues / specials (the rest are derived live) */
 const ENCY_SRC={
+  food_gorger:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Gorger to a full 30 minutes'}],
+  food_marrow:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Marrow to a full 30 minutes'}],
+  food_magpie:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Magpie to a full 30 minutes'}],
+  food_pebble:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Pebble to a full 30 minutes'}],
+  food_hackles:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Hackles to a full 30 minutes'}],
+  pet_gorger:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: food heals +3'}],
+  pet_marrow:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: bones give +20% Prayer XP'}],
+  pet_magpie:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: +10% coins from drops'}],
+  pet_pebble:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: blocks the first hit in each room'}],
+  pet_hackles:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: things hesitate before attacking you'}],
+  larder_charm:[{label:'The Delve',sub:'Unique reward \u2014 26% of the unique table'}],
+  thrift_gauntlets:[{label:'The Delve',sub:'Unique reward \u2014 23% of the unique table'}],
+  ring_wealth:[{label:'The Delve',sub:'Unique reward \u2014 19% of the unique table'}],
+  ring_suffering:[{label:'The Delve',sub:'Unique reward \u2014 16% of the unique table'}],
+  lightbearer:[{label:'The Delve',sub:'Unique reward \u2014 10% of the unique table'}],
+  amulet_blood_fury:[{label:'The Delve',sub:'Unique reward \u2014 6% of the unique table; the rarest'}],
+  blood_shard:[{label:'The Delve',sub:'Common reward; feeds an Amulet of Blood Fury'}],
   party_token:[{label:'Party Room',sub:'Buy for 30,000 coins'}],
   infernal_ashes:[{label:'Monster drop',sub:'Scattered from slain greater demons for Prayer XP'}],
   ectoplasm:[{label:'Monster drop',sub:'Dropped by ghosts and spectres; scatter for Prayer XP'}],
@@ -5500,7 +5581,10 @@ function adjacentTo(x,y){return dist1(player.x,player.y,x,y)===1;}
 
 function playerTick(){
   player.regen++;
-  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); }
+  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); }
+  /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
+  if(typeof petTick==='function'){ const _pn=performance.now();
+    petTick(Math.min(200,_pn-(_petLastT||_pn))); _petLastT=_pn; }
   if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.alive&&!_rectorBoss.dormant&&typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4){ if(typeof rectorLavaTick==='function')rectorLavaTick(_rectorBoss,performance.now()); }
   if(typeof rectorChainTick==='function')rectorChainTick();
   if(player.regen>=50){player.regen=0;
@@ -5689,7 +5773,8 @@ function playerTick(){
         if(!player._lowmagT||nowC-player._lowmagT>2000){player._lowmagT=nowC;msg('You need Magic level '+_spell.req+' to cast '+_spell.name+'.','#9c1f1f');}
         cancelAction();return;}
       const _inf=(_weq&&_weq.infRune)||null;let _haveRunes=true;
-      const _freeCast=(typeof isCindermaw==='function'&&_w&&isCindermaw(_w.id));   /* Cindermaw conjures its own power \u2014 no runes, like Ashfang needs no arrows */
+      const _freeCast=(typeof isCindermaw==='function'&&_w&&isCindermaw(_w.id))
+        ||(hasDelveItem('thrift_gauntlets')&&Math.random()<0.25);   /* THRIFT GAUNTLETS: a quarter of casts cost no runes. Rides the existing free-cast path. */   /* Cindermaw conjures its own power \u2014 no runes, like Ashfang needs no arrows */
       if(!_freeCast)for(const rid in _spell.runes){if(rid===_inf)continue;if(countItem(rid)<_spell.runes[rid]){_haveRunes=false;break;}}
       if(!_haveRunes){player.nextAtk=nowC+1200;
         if(!player._norunesT||nowC-player._norunesT>2000){player._norunesT=nowC;msg('You do not have enough runes to cast '+_spell.name+'.','#9c1f1f');}
@@ -5750,18 +5835,19 @@ function playerTick(){
       const _ft=300,_ac=_innateArrow?'#ff7a2a':((_arrowId&&ITEMS[_arrowId].equip.tint!==undefined)?('#'+ITEMS[_arrowId].equip.tint.toString(16).padStart(6,'0')):'#cfd6da');
       spawnProjectile(player.px+0.5,player.py+0.5,r,'arrow',_ac,_ft);
       if(typeof MP!=='undefined'&&MP.sendShot)MP.sendShot('arrow',Math.round(r.px),Math.round(r.py),_ac);
-      splats.push({ent:r,dmg,t:performance.now()+_ft});
+      splats.push({ent:r,dmg,t:performance.now()+_ft}); delveOnDamageDealt(dmg);   /* BLOOD FURY leech */
     }
     else if(wstyle==='magic'){
       const _inf=(_weq&&_weq.infRune)||null;
-      const _freeCast=(typeof isCindermaw==='function'&&_w&&isCindermaw(_w.id));
+      const _freeCast=(typeof isCindermaw==='function'&&_w&&isCindermaw(_w.id))
+        ||(hasDelveItem('thrift_gauntlets')&&Math.random()<0.25);   /* THRIFT GAUNTLETS */
       if(!_freeCast)for(const rid in _spell.runes){if(rid===_inf)continue;takeItems(rid,_spell.runes[rid]);}
       if(typeof renderInv==='function')renderInv();
       if(typeof renderSpellbook==='function')renderSpellbook();
       const _ft=340;
       spawnProjectile(player.px+0.5,player.py+0.5,r,'magic',_spell.col,_ft);
       if(typeof MP!=='undefined'&&MP.sendShot)MP.sendShot('magic',Math.round(r.px),Math.round(r.py),_spell.col);
-      splats.push({ent:r,dmg,t:performance.now()+_ft});
+      splats.push({ent:r,dmg,t:performance.now()+_ft}); delveOnDamageDealt(dmg);   /* BLOOD FURY leech */
     }
     else splats.push({ent:r,dmg,t:performance.now()});
     player.combatT=performance.now();
@@ -5846,7 +5932,8 @@ function playerTick(){
       if(!_spell){player.nextAtk=nowC+1200;msg('Choose a spell to autocast in your spellbook.','#9c1f1f');cancelAction();return;}
       if(lvl('magic')<_spell.req){player.nextAtk=nowC+1200;msg('You need Magic level '+_spell.req+' to cast '+_spell.name+'.','#9c1f1f');cancelAction();return;}
       const _inf=(_dw&&_dw.infRune)||null;let _hv=true;
-      const _freeCast2=(typeof isCindermaw==='function'&&player.equip.weapon&&isCindermaw(player.equip.weapon.id));
+      const _freeCast2=(typeof isCindermaw==='function'&&player.equip.weapon&&isCindermaw(player.equip.weapon.id))
+        ||(hasDelveItem('thrift_gauntlets')&&Math.random()<0.25);   /* THRIFT GAUNTLETS */
       if(!_freeCast2)for(const rid in _spell.runes){if(rid===_inf)continue;if(countItem(rid)<_spell.runes[rid]){_hv=false;break;}}
       if(!_hv){player.nextAtk=nowC+1200;msg('You do not have enough runes to cast '+_spell.name+'.','#9c1f1f');cancelAction();return;}
       if(!_freeCast2)for(const rid in _spell.runes){if(rid===_inf)continue;takeItems(rid,_spell.runes[rid]);}
@@ -6068,6 +6155,10 @@ function playerTick(){
     const e=_raidRoomEntryPoint(a.to);   /* just inside the doorway, not dumped in the middle */
     walkTo(e[0],e[1]);
     cancelAction();
+  }
+  else if(a.type==='raidbank'){
+    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
+    openBank();cancelAction();
   }
   else if(a.type==='lobbygate'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
@@ -6570,7 +6661,7 @@ function doSpecial(){
     const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
     if(!opp)return;
     if(Math.max(Math.abs(Math.round(opp.px)-player.x),Math.abs(Math.round(opp.py)-player.y))>1){msg('Close with your opponent first.','#e8801f');return;}
-    player.specCdT=nowS+60000;
+    player.specCdT=nowS+(hasDelveItem('lightbearer')?30000:60000);   /* LIGHTBEARER: spec recharges twice as fast. Milville's spec is a 60s COOLDOWN, not an energy bar, so 2x regen = half the cooldown. */
     const mxD=_duelMaxhit();
     for(let h=0;h<2;h++){const dm=rndi(Math.floor(mxD*0.5),Math.max(1,Math.floor(mxD*1.5)));
       splats.push({ent:opp,dmg:dm,t:nowS+h*300});
@@ -6589,7 +6680,7 @@ function doSpecial(){
     if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>_reach){msg('Your target is out of range.','#e8801f');return;}
     const _sp=player.autocast&&SPELLS[player.autocast];
     if(!_sp){msg('Choose a spell to autocast before branding.','#e8801f');return;}
-    player.specCdT=nowS+60000; player.swingT=nowS;
+    player.specCdT=nowS+(hasDelveItem('lightbearer')?30000:60000);   /* LIGHTBEARER: spec recharges twice as fast. Milville's spec is a 60s COOLDOWN, not an energy bar, so 2x regen = half the cooldown. */ player.swingT=nowS;
     if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
     const _ign=player.equip.weapon.id==='cindermaw_ignited';
     /* brand params: ignited burns longer + deeper */
@@ -6627,7 +6718,7 @@ function doSpecial(){
     const _wq=ITEMS[player.equip.weapon.id].equip;
     let _rch=(_wq.range||7); if(player.style==='longrange')_rch+=2;
     if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>_rch){msg('Your target is out of range.','#e8801f');return;}
-    player.specCdT=nowS+60000; player.swingT=nowS;
+    player.specCdT=nowS+(hasDelveItem('lightbearer')?30000:60000);   /* LIGHTBEARER: spec recharges twice as fast. Milville's spec is a 60s COOLDOWN, not an energy bar, so 2x regen = half the cooldown. */ player.swingT=nowS;
     if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
     const _kin=player.equip.weapon.id==='ashfang_kindled';
     msg('CINDERPOINT SHOT \u2014 a blazing shaft sears the '+(MOB_KINDS[r.kind].name||'foe').toLowerCase()+'!','#ff6a2a');
@@ -6658,7 +6749,7 @@ function doSpecial(){
     return;
   }
   if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>1){msg('Close with your target first.','#e8801f');return;}
-  player.specCdT=nowS+60000;
+  player.specCdT=nowS+(hasDelveItem('lightbearer')?30000:60000);   /* LIGHTBEARER: spec recharges twice as fast. Milville's spec is a 60s COOLDOWN, not an energy bar, so 2x regen = half the cooldown. */
   player.swingT=nowS;if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
   msg('VOLCANIC REND \u2014 the blade erupts!','#ff6a2a');
   if(typeof groundFire==='function')groundFire(r.x,r.y);
@@ -7373,9 +7464,11 @@ function itemPrimary(i){
   if(id==='mining_pouch'){if(bankOpen)emptyPouchToBank();else fillPouch();return;}
   if(id==='logs'||id==='oak_logs'||id==='willow_logs'||id==='birch_logs'){lightFire(i);return;}
   if(ITEMS[id].equip){equipFromInv(i);return;}
+  if(prim==='Call'){ petCall(id); return; }
+  if(prim==='Feed'){ petFeed(id); return; }
   if(prim==='Eat'){
     if(typeof duel!=='undefined'&&duel.state!=='none'&&duel.rules&&duel.rules.noFood){msg('No food is allowed in this duel!','#9c1f1f');return;}
-    const heal=ITEMS[id].heal||3;
+    const heal=(ITEMS[id].heal||3)+((typeof petFoodBonus==='function')?petFoodBonus():0);   /* GORGER: food does you more good while it is out */
     removeSlot(i);player.hp=clamp(player.hp+heal,0,maxHp());updateOrb();sfx.eat();
     msg('You eat the '+ITEMS[id].name.toLowerCase()+'. It heals some health.');
   }else if(prim==='Drink'){
@@ -7439,6 +7532,256 @@ function lavaSafe(){return emberLavaImmune()||furnaceBlessed();}
   if(['head','body','legs','shield','feet','hands'].includes(e.slot)&&(e.def||0)>=5&&!e.armStyle&&e.rdef===undefined)e.rdef=Math.round(e.def*0.95);
   if(e.armStyle==='ranged'&&e.mdef===undefined&&(e.rdef||e.def))e.mdef=Math.round(((e.rdef||0)+(e.def||0)*0.3)*0.6);
 }})();
+/* ============ THE DELVE'S UNIQUES -- EFFECT PLUMBING ============
+   Milville has never had effects like these: every item until now was a number in a slot. Each of
+   these hooks a site that has only ever dealt in numbers. `hasDelveItem` is the one place that
+   answers "is it worn". */
+/* ============ PETS: calling, Vigour, perks ============
+   A perk that is always on is just a 12th equipment slot -- permanent creep. So a called pet burns
+   VIGOUR (30 minutes of it) and its perk works ONLY while it is out. Feed it to restore. That makes a
+   perk a resource you spend, and it gives Milville the food sink it has never had. */
+const PET_VIGOUR_MAX=30*60*1000;          /* 30 minutes of being out */
+/* Each pet has ITS OWN food, bought from Ellison. One tin = a full 30 minutes. Ordinary food still
+   works in a pinch, but only a little -- the tin is the proper answer. */
+const PET_FOOD={pet_gorger:'food_gorger', pet_marrow:'food_marrow', pet_magpie:'food_magpie',
+                pet_pebble:'food_pebble', pet_hackles:'food_hackles'};
+const PET_FOOD_FOR={food_gorger:'pet_gorger', food_marrow:'pet_marrow', food_magpie:'pet_magpie',
+                    food_pebble:'pet_pebble', food_hackles:'pet_hackles'};
+const PET_FOOD_PRICE=900;
+let _petGroup=null, _petBob=0, _petLastT=0;
+function petCalled(){ return (player.pet&&player.pet.id&&(player.pet.vig|0)>0)?player.pet.id:null; }
+function hasPet(id){ return petCalled()===id; }
+function petCall(id){
+  if(player.pet&&player.pet.id===id){ petDismiss(); return; }
+  if(countItem(id)<1){ msg('You do not have that.','#9a8a6a'); return; }
+  if(player.pet&&player.pet.id)petDismiss(true);
+  player.pet={id, vig:(player.pet&&player.pet.wasId===id&&player.pet.saved)?player.pet.saved:PET_VIGOUR_MAX};
+  takeItems(id,1);
+  _petBuild(id);
+  msg(ITEMS[id].name+' trots out and looks up at you.','#9fd06a');
+  dirty=true;
+}
+function petDismiss(quiet){
+  if(!player.pet||!player.pet.id)return;
+  const id=player.pet.id;
+  if(!addItem(id,1))dropGround(player.x,player.y,id,1);
+  player.pet={id:null, wasId:id, saved:player.pet.vig|0};   /* Vigour is PAUSED, not lost, when uncalled */
+  if(_petGroup){ scene.remove(_petGroup); _petGroup=null; }
+  if(!quiet)msg(ITEMS[id].name+' curls up and goes back in your pack.','#9a8a6a');
+  dirty=true;
+}
+function _petBuild(id){
+  if(_petGroup)scene.remove(_petGroup);
+  _petGroup=makePet(id);
+  _petGroup.position.set(player.px+0.7,groundH(player.px+0.7,player.py+0.7),player.py+0.7);
+  scene.add(_petGroup);
+}
+/* Feed it. Any food works; its favourite works far better. */
+function petFeed(foodId){
+  const id=petCalled();
+  if(!id){ msg('You have no pet out to feed.','#9a8a6a'); return false; }
+  if(countItem(foodId)<1){ msg('You have none of that.','#9a8a6a'); return false; }
+  const want=PET_FOOD[id];
+  if(PET_FOOD_FOR[foodId] && PET_FOOD_FOR[foodId]!==id){
+    msg(ITEMS[id].name+' sniffs the '+ITEMS[foodId].name.toLowerCase()+' and turns its back. That is not for it.','#9a8a6a');
+    return false;
+  }
+  takeItems(foodId,1);
+  if(foodId===want){
+    player.pet.vig=PET_VIGOUR_MAX;   /* the proper tin: back to a full 30 minutes */
+    msg(ITEMS[id].name+' devours the '+ITEMS[foodId].name.toLowerCase()+'. Good for another half hour.','#9fd06a');
+  } else {
+    player.pet.vig=Math.min(PET_VIGOUR_MAX,(player.pet.vig|0)+4*60*1000);
+    msg(ITEMS[id].name+' eats it, unimpressed. It would rather have its own food.','#9a8a6a');
+  }
+  dirty=true; if(typeof renderInv==='function')renderInv(); return true;
+}
+/* A hungry pet says so, in its name and out loud. */
+const PET_HUNGRY_AT=0.20;
+function petIsHungry(){ const id=petCalled(); return !!(id && (player.pet.vig|0) < PET_VIGOUR_MAX*PET_HUNGRY_AT); }
+function petDisplayName(){
+  const id=petCalled(); if(!id)return '';
+  return ITEMS[id].name + (petIsHungry()?' (Hungry)':'');
+}
+/* Ellison's sack. He has been feeding things down here for a century. */
+function ellisonPetShop(){
+  const rows=Object.keys(PET_FOOD_FOR).map(fid=>{
+    const pet=PET_FOOD_FOR[fid], owned=(countItem(pet)>0||(player.pet&&player.pet.id===pet));
+    return '<div class="gerow" style="display:flex;align-items:center;gap:8px;padding:5px 2px;border-bottom:1px solid #2a241c">'
+      +'<div style="flex:1"><b>'+ITEMS[fid].name+'</b>'
+      +'<div style="color:#8a8172;font-size:11px">for '+ITEMS[pet].name+(owned?'':' \u2014 <i>you have no '+ITEMS[pet].name+'</i>')+'</div></div>'
+      +'<div style="color:#d9b04a;white-space:nowrap">'+fmt(PET_FOOD_PRICE)+' gp</div>'
+      +'<button class="btn" data-food="'+fid+'" style="margin-left:6px">Buy</button></div>';
+  }).join('');
+  const html='<div style="text-align:left">'
+    +'<p style="margin:0 0 8px;color:#9a8a6a">"They will eat anything, mind. But they will <i>work</i> for their own."</p>'
+    +rows
+    +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">One tin restores a called pet to a full 30 minutes.</p></div>';
+  gameConfirm('Ellison\u2019s sack', html, null, 'Done', null, null);
+  setTimeout(()=>{
+    document.querySelectorAll('[data-food]').forEach(b=>b.addEventListener('click',()=>{
+      const fid=b.getAttribute('data-food');
+      if(countItem('coins')<PET_FOOD_PRICE){ msg('You cannot afford that.','#d0312d'); return; }
+      if(!addItem(fid,1)){ msg('Your pack is full.','#d0312d'); return; }
+      takeItems('coins',PET_FOOD_PRICE);
+      msg('You buy '+ITEMS[fid].name.toLowerCase()+' from Mr. Ellison.','#9fd06a');
+      if(typeof renderInv==='function')renderInv();
+    }));
+  },0);
+}
+/* Drain + animate. ONE MOVING PART EACH -- that is what makes it read as alive. */
+function petTick(dt){
+  const id=petCalled();
+  if(!id){ if(_petGroup){ scene.remove(_petGroup); _petGroup=null; } return; }
+  const _wasHungry=petIsHungry();
+  player.pet.vig=Math.max(0,(player.pet.vig|0)-dt);
+  if(!_wasHungry&&petIsHungry())msg(ITEMS[id].name+' is getting hungry. Mr. Ellison sells its food in the lobby.','#c9a23a');
+  if(player.pet.vig<=0){ msg(ITEMS[id].name+' is worn out and goes back in your pack. Feed it and call it again.','#9a8a6a'); petDismiss(true); return; }
+  if(!_petGroup)_petBuild(id);
+  const g=_petGroup, P=g.userData.parts||{};
+  /* FOLLOW: trail the player at a heel position that sits behind-and-beside them, so the pet never
+     stands underfoot and never teleports. It closes the gap at a speed proportional to the distance,
+     which is what makes it look like it is keeping up rather than being dragged. */
+  const back=(player.heading||0)+Math.PI;
+  const tx=player.px+0.5+Math.sin(back)*0.75+Math.cos(back)*0.35;
+  const tz=player.py+0.5+Math.cos(back)*0.75-Math.sin(back)*0.35;
+  const dx=tx-g.position.x, dz=tz-g.position.z;
+  const gap=Math.hypot(dx,dz);
+  /* speed scales with how far behind it is: it trots to catch up, ambles when close */
+  const spd=Math.min(0.011, 0.0035+gap*0.004);
+  g.position.x += dx*Math.min(1,dt*spd);
+  g.position.z += dz*Math.min(1,dt*spd);
+  const gy=groundH(g.position.x,g.position.z);
+  const moving=gap>0.18;
+  if(gap>0.10){                                     /* face the way it is actually travelling */
+    const want=Math.atan2(dx,dz);
+    let d=want-g.rotation.y; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2;
+    g.rotation.y += d*Math.min(1,dt*0.010);
+  }
+  /* THE WALK CLOCK advances with DISTANCE COVERED, not wall time -- that is the difference between
+     legs that walk and legs that windmill while the body slides. */
+  const step=Math.min(0.35, gap*dt*0.010);
+  _petBob += moving ? step*3.4 : dt*0.0016;
+  const t=_petBob;
+  /* ---- the gait ---- */
+  if(P.legs&&P.legs.length){
+    const amp=moving?({pet_gorger:0.55,pet_marrow:0.75,pet_magpie:0.30,pet_pebble:0.40,pet_hackles:0.70}[id]||0.6):0.06;
+    for(const L of P.legs){
+      const ph=t+L.phase;
+      if(id==='pet_magpie'){
+        /* a hop: both legs TUCK at the top and reach for the landing */
+        const hop=Math.max(0,Math.sin(t*1.0));
+        L.hip.rotation.x = -hop*0.9;
+        L.knee.rotation.x = hop*1.3;
+      } else {
+        const sw=Math.sin(ph);
+        L.hip.rotation.x = sw*amp;                                   /* the swing */
+        /* the knee only bends on the RETURN stroke -- a leg that bends on the push looks broken */
+        L.knee.rotation.x = Math.max(0,-Math.cos(ph))*amp*(id==='pet_hackles'?1.25:0.9);
+      }
+    }
+    /* the body rises and falls with the gait -- pets that stay at a fixed height read as sliding */
+    if(moving&&id!=='pet_magpie')g.position.y=gy+Math.abs(Math.sin(t*2))*0.012;
+    else if(id!=='pet_magpie')g.position.y=gy;
+    /* and it leans into a turn */
+    g.rotation.z=moving?Math.sin(t*2)*0.03:0;
+  }
+  if(id==='pet_magpie'){                       /* HOPS rather than walks; the coin catches the light */
+    const hop=moving?Math.max(0,Math.sin(t*1.0))*0.14:0;
+    g.position.y=gy+hop;
+    if(P.body)P.body.rotation.x=-hop*0.9;      /* it pitches forward as it launches */
+    if(P.shine)P.shine.material.opacity=0.14+0.30*hop;
+    if(P.tail)P.tail.rotation.x=-0.2+hop*0.7;
+  }
+  if(id==='pet_gorger'&&P.belly){              /* the belly swings OUT OF PHASE with the legs */
+    P.belly.rotation.z=Math.sin(t*1.6)*0.10;
+    P.belly.position.y=Math.abs(Math.sin(t*1.6))*0.012;
+    if(P.jaw)P.jaw.rotation.x=0.18+Math.sin(t*3.1)*0.18;   /* chewing whether or not there is food */
+  }
+  if(id==='pet_marrow'){
+    if(P.tail)P.tail.rotation.y=Math.sin(t*3.4)*0.5;        /* vertebrae wag */
+    if(P.bone)P.bone.rotation.z=Math.sin(t*2.2)*0.22;       /* the bone rocks */
+    if(P.head)P.head.rotation.x=Math.sin(t*1.7)*0.06;
+  }
+  if(id==='pet_pebble'){
+    const hit=(performance.now()-(player._petTuckT||-9e9))<600;
+    const k=hit?1:0;
+    if(P.limbs)P.limbs.position.z=-k*0.10, P.limbs.scale.setScalar(1-k*0.5);
+    if(P.shell)P.shell.position.y=0.16-k*0.03;
+    const fl=hit?(1-(performance.now()-player._petTuckT)/600):0;
+    if(P.vein)P.vein.material.opacity=0.85*(0.5+0.5*Math.sin(t*2))+fl*1.5;
+    if(P.vein2)P.vein2.material.opacity=0.85*(0.5+0.5*Math.sin(t*2+1))+fl*1.5;
+  }
+  if(id==='pet_hackles'&&P.quills){            /* THE QUILLS RISE when something is about to aggro */
+    const near=_petThreatNear();
+    const want=near?0.15:-0.9;
+    for(const q of P.quills.children)q.rotation.x += (want-q.rotation.x)*Math.min(1,dt*0.008);
+    if(P.tail)P.tail.rotation.y = near?0:Math.sin(t*2.0)*0.35;   /* ...and the tail STOPS */
+  }
+}
+function _petThreatNear(){
+  if(typeof rats==='undefined')return false;
+  for(const r of rats){ if(!r||!r.alive)continue;
+    if(typeof _mobOnCurFloor==='function'&&!_mobOnCurFloor(r))continue;
+    if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))<=4)return true; }
+  return false;
+}
+function hasDelveItem(id){
+  if(!player||!player.equip)return false;
+  for(const sl in player.equip){ const it=player.equip[sl]; if(it&&it.id===id)return true; }
+  return false;
+}
+/* Prayer XP a bone is worth when the Larder Charm crumbles it. Mirrors burying. */
+const LARDER_XP={bones:5, small_bones:4, big_bones:35, infernal_ashes:60, ectoplasm:45};
+/* Blood Fury: OSRS-exact -- 20% chance to heal 30% of the damage dealt. One charge per proc; a blood
+   shard is worth 1,000. Uncharged it is inert, exactly like OSRS's. */
+const BLOOD_FURY_CHANCE=0.20, BLOOD_FURY_HEAL=0.30, BLOOD_SHARD_CHARGES=1000;
+/* Called wherever the PLAYER deals damage. */
+/* GORGER: food does you more good while it is out. */
+function petFoodBonus(){ return hasPet('pet_gorger')?3:0; }
+/* MAGPIE: +10% coins from drops. */
+function petCoinMult(){ return hasPet('pet_magpie')?1.10:1; }
+/* PEBBLE: eats the first hit in each room. */
+function petBlocksHit(){
+  if(!hasPet('pet_pebble'))return false;
+  const key=inRaid?('r'+(raid&&raid.floor)+':'+(raid&&raid.roomIdx)):('w'+Math.floor(player.x/8)+','+Math.floor(player.y/8));
+  if(player._petBlockKey===key)return false;
+  player._petBlockKey=key; player._petTuckT=performance.now();
+  return true;
+}
+/* HACKLES: things hesitate before their first swing at you. */
+const PET_HESITATE_MS=1200;
+function petHesitate(r){
+  if(!hasPet('pet_hackles')||!r)return false;
+  /* `if(r._petSeen)` was a falsy trap: performance.now() can be 0, and 0 reads as "never seen" -- so a
+     mob would hesitate forever. Compare against null. */
+  if(r._petSeen!=null)return false;
+  r._petSeen=performance.now();
+  return true;
+}
+function delveOnDamageDealt(dmg){
+  if(!(dmg>0))return;
+  if(!hasDelveItem('amulet_blood_fury'))return;
+  if((player._bloodFury|0)<=0)return;
+  if(Math.random()>=BLOOD_FURY_CHANCE)return;
+  const heal=Math.max(1,Math.round(dmg*BLOOD_FURY_HEAL));
+  const before=player.hp;
+  player.hp=Math.min(maxHp(), player.hp+heal);
+  player._bloodFury--;
+  if(player.hp>before&&typeof updateOrb==='function')updateOrb();
+  if((player._bloodFury|0)===0)msg('Your Amulet of Blood Fury runs dry.','#9c1f1f');
+}
+/* RING OF SUFFERING: 10% of what hits you goes back. Recoil awards NO raid points -- otherwise
+   standing still and being hit would farm the delve's point table. */
+function delveOnDamageTaken(dmg, mi){
+  if(!(dmg>0))return;
+  if(!hasDelveItem('ring_suffering'))return;
+  const back=Math.max(1,Math.round(dmg*0.10));
+  const r=(mi!=null&&rats[mi])?rats[mi]:null;
+  if(!r||!r.alive)return;
+  r.hp-=back; splats.push({ent:r,dmg:back,t:performance.now()});
+  if(r.hp<=0&&typeof mobDie==='function')mobDie(r);
+}
 function eqStat(k){
   let t=0;
   for(const sl in player.equip){
@@ -7739,11 +8082,13 @@ function optionsAt(tx,ty){
     const stt=raid.roomState&&raid.roomState[_raidRK(here)];
     const shut=!!(stt&&stt.sealed&&!stt.cleared);
     if(dest){
+      /* NEVER name the room beyond. The whole point of the reveal system is not knowing what is
+         through the door until you walk through it -- and the menu was reading it out. */
       if(shut){
-        opts.push({html:'Locked <span class="t">'+(dest.name||'the way on')+'</span>',
+        opts.push({html:'Locked <span class="t">door</span>',
           label:'Locked',fn:()=>msg('The gate is down. Finish this chamber first.','#9a8a6a')});
       } else {
-        opts.push({html:'Enter <span class="t">'+(dest.name||'the next chamber')+'</span>',
+        opts.push({html:'Enter <span class="t">the door</span>',
           label:'Enter',fn:()=>setAction({type:'raidgate',x:tx,y:ty,to:to},tx,ty)});
       }
     }
@@ -7829,6 +8174,8 @@ function optionsAt(tx,ty){
      fn:()=>setAction({type:'talkn',n:np2},np2.x,np2.y)},
     {html:'Examine <span class="t">'+np2.name+'</span>',
      fn:()=>msg(np2.ex||'A St. Paul\'s student, between classes.')});
+  if(np2&&np2.id==='ellison')opts.splice(1,0,{html:'Buy <span class="t">pet food</span>',label:'Buy pet food',
+    fn:()=>{ if(typeof ellisonPetShop==='function')ellisonPetShop(); }});
   if(np2&&np2.id==='slayer'&&player.quests.m5.s>=2)opts.splice(1,0,{html:'Shop <span class="t">Slayer Master</span>',label:'Shop',fn:openSlayerShop});
   if(np2&&np2.id==='capeseller'){opts.push(
     {html:'Trade <span class="t">'+np2.name+'</span>',label:'Trade '+np2.name,
@@ -7930,6 +8277,11 @@ function optionsAt(tx,ty){
     }else if(o.def==='raid_prism'){
       opts.push({html:'Strike <span class="t">the prism</span>',label:'Strike prism',fn:()=>setAction({type:'strikeprism',o},o.x,o.y)},
         {html:'Examine <span class="t">specimen prism</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='raid_bank'){
+      opts.push({html:'Bank <span class="t">chest</span>',label:'Bank',fn:()=>setAction({type:'raidbank',o,bank:true},o.x,o.y)},
+        {html:'Examine <span class="t">bank chest</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='raid_geartable'){
+      opts.push({html:'Examine <span class="t">display case</span>',label:'Examine',fn:()=>msg(def.ex)});
     }else if(o.def==='raid_lobbygate'){
       opts.push({html:'Open <span class="t">the delve gate</span>',label:'Open gate',fn:()=>setAction({type:'lobbygate',o},o.x,o.y)},
         {html:'Examine <span class="t">the delve gate</span>',fn:()=>msg(def.ex)});
@@ -7942,6 +8294,9 @@ function optionsAt(tx,ty){
     }else if(o.def==='raid_bench'){
       opts.push({html:'Take <span class="t">instruments</span>',label:'Take instruments',fn:()=>setAction({type:'takeinstr',o},o.x,o.y)},
         {html:'Examine <span class="t">instrument bench</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='raid_sign'||o.def==='raid_sign_lawn'){
+      opts.push({html:'Read <span class="t">the notice board</span>',label:'Read board',fn:()=>raidShowSign()},
+        {html:'Examine <span class="t">notice board</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='raid_crabsign'){
       opts.push({html:'Read <span class="t">the lab notice</span>',label:'Read notice',fn:()=>raidShowCrabSign()},
         {html:'Examine <span class="t">lab notice</span>',fn:()=>msg(def.ex)});
@@ -9584,6 +9939,200 @@ function drawItemIcon(g,id,S,dose){
     /* ---- The Delve. drawItemIcon switches on ID, so a new item without a case here silently draws a
        '?'. Note "the icon constructs without throwing" is NOT "the icon exists" -- my earlier sweep
        reported all 401 icons fine while these four were drawing question marks. ---- */
+    case 'larder_charm': {
+      /* a greasy bone-charm on a bootlace */
+      g.strokeStyle='#6a5330'; g.lineWidth=1.4;
+      g.beginPath(); g.arc(0,-4,5.4,0.25,Math.PI-0.25,true); g.stroke();
+      g.fillStyle='#d8cfb4';
+      g.beginPath(); g.ellipse(0,3.4,2.0,4.6,0,0,7); g.fill();          /* the bone */
+      g.beginPath(); g.arc(-1.5,-0.6,1.5,0,7); g.fill();
+      g.beginPath(); g.arc(1.5,-0.6,1.5,0,7); g.fill();
+      g.beginPath(); g.arc(-1.5,7.4,1.5,0,7); g.fill();
+      g.beginPath(); g.arc(1.5,7.4,1.5,0,7); g.fill();
+      g.fillStyle='#8a8272'; g.beginPath(); g.arc(0,3.4,0.9,0,7); g.fill();
+      break;
+    }
+    case 'thrift_gauntlets': {
+      /* chalk-stained lab gloves with a violet spark */
+      g.fillStyle='#3b2a55';
+      g.fillRect(-6,-4,5,10); g.fillRect(1,-4,5,10);
+      g.fillStyle='#4d3870'; g.fillRect(-6,-4,5,3); g.fillRect(1,-4,5,3);
+      g.fillStyle='#c9a23a'; g.fillRect(-6.5,4.5,12.5,2.2);              /* the cuff band */
+      g.fillStyle='#d8cfb4'; g.fillRect(-5,-2,1.2,4); g.fillRect(3,0,1.2,3);  /* chalk */
+      g.fillStyle='#a884ff'; g.beginPath(); g.arc(0,-6.2,1.8,0,7); g.fill();
+      g.fillStyle='#e0ccff'; g.beginPath(); g.arc(-0.5,-6.8,0.7,0,7); g.fill();
+      break;
+    }
+    case 'ring_wealth': case 'ring_suffering': case 'lightbearer': {
+      const gem={ring_wealth:'#d9b04a', ring_suffering:'#8a2a3a', lightbearer:'#ffe08a'}[id];
+      const band={ring_wealth:'#d8b24a', ring_suffering:'#5a5f66', lightbearer:'#c9a23a'}[id];
+      g.strokeStyle=band; g.lineWidth=3.2;
+      g.beginPath(); g.arc(0,4,6.2,0.12,Math.PI-0.12,true); g.stroke();
+      g.fillStyle=gem; g.strokeStyle='#26221c'; g.lineWidth=1.1;
+      g.beginPath();
+      g.moveTo(0,-8.4); g.lineTo(3.4,-4.6); g.lineTo(0,-0.8); g.lineTo(-3.4,-4.6);
+      g.closePath(); g.fill(); g.stroke();
+      if(id==='lightbearer'){ g.fillStyle='#fff6d0'; g.beginPath(); g.arc(-0.8,-5.4,1.0,0,7); g.fill(); }
+      if(id==='ring_suffering'){ g.strokeStyle='#c94a5a'; g.lineWidth=0.8;   /* the barbs */
+        for(const a of [-0.6,0,0.6]){ g.beginPath(); g.moveTo(Math.sin(a)*4,-4.6-Math.cos(a)*4);
+          g.lineTo(Math.sin(a)*7,-4.6-Math.cos(a)*7); g.stroke(); } }
+      break;
+    }
+    case 'amulet_blood_fury': {
+      g.strokeStyle='#7a1020'; g.lineWidth=1.5;
+      g.beginPath(); g.arc(0,-4,5.4,0.25,Math.PI-0.25,true); g.stroke();
+      let gr=null; try{ gr=g.createRadialGradient(-1,1,0.5,0,3,6.5); }catch(e){}
+      if(gr){ gr.addColorStop(0,'#ff4a6a'); gr.addColorStop(0.6,'#a01028'); gr.addColorStop(1,'#4a0812'); g.fillStyle=gr; }
+      else g.fillStyle='#a01028';
+      g.beginPath();
+      g.moveTo(0,-1.5); g.quadraticCurveTo(5.4,2.4,3.0,6.4);
+      g.quadraticCurveTo(0,9.8,-3.0,6.4); g.quadraticCurveTo(-5.4,2.4,0,-1.5);
+      g.closePath(); g.fill();
+      g.strokeStyle='#3a0810'; g.lineWidth=1; g.stroke();
+      g.fillStyle='#ff9aa8'; g.beginPath(); g.arc(-1.4,2.4,1.1,0,7); g.fill();
+      break;
+    }
+    case 'food_gorger': {
+      g.fillStyle='#6a4a2a'; g.beginPath();                    /* a dripping paper parcel */
+      g.moveTo(-6,-5); g.lineTo(6,-5); g.lineTo(7,5); g.lineTo(-7,5); g.closePath(); g.fill();
+      g.fillStyle='#8a6a3a'; g.beginPath(); g.moveTo(-6,-5); g.lineTo(0,-8); g.lineTo(6,-5); g.closePath(); g.fill();
+      g.fillStyle='#a83a3a'; g.beginPath(); g.ellipse(-1.5,0.5,3.4,2.2,0.2,0,7); g.fill();
+      g.fillStyle='#d05a5a'; g.beginPath(); g.arc(-2.5,-0.5,1.1,0,7); g.fill();
+      g.strokeStyle='#5a4327'; g.lineWidth=1; g.beginPath(); g.moveTo(0,-8); g.lineTo(0,-5); g.stroke();
+      g.fillStyle='#8a2a2a'; g.beginPath(); g.arc(-4,7,1.0,0,7); g.fill(); g.beginPath(); g.arc(3,7.5,0.8,0,7); g.fill();
+      break;
+    }
+    case 'food_marrow': {
+      g.fillStyle='#e7dcc0';                                   /* a split knuckle-end */
+      g.beginPath(); g.ellipse(0,0,3.0,7.4,0.25,0,7); g.fill();
+      for(const [x,y] of [[-2.2,-6.2],[1.4,-7.0],[-1.4,6.6],[2.2,5.8]]){
+        g.beginPath(); g.arc(x,y,2.2,0,7); g.fill(); }
+      g.fillStyle='#c9748a'; g.beginPath(); g.ellipse(0.4,-0.4,1.2,4.2,0.25,0,7); g.fill();   /* the marrow */
+      g.fillStyle='#bfb49a'; g.beginPath(); g.ellipse(-1.4,1.0,0.9,3.4,0.25,0,7); g.fill();
+      break;
+    }
+    case 'food_magpie': {
+      g.fillStyle='#8a8272'; g.beginPath();                    /* a twist of paper */
+      g.moveTo(-6,4); g.quadraticCurveTo(-7,-4,0,-6); g.quadraticCurveTo(7,-4,6,4);
+      g.quadraticCurveTo(0,7,-6,4); g.closePath(); g.fill();
+      g.fillStyle='#a89f8a'; g.beginPath(); g.moveTo(0,-6); g.lineTo(2.4,-9); g.lineTo(-2.4,-8.4); g.closePath(); g.fill();
+      g.fillStyle='#d9b04a'; g.beginPath(); g.arc(-2.2,0.5,1.6,0,7); g.fill();   /* buttons + foil + a brass pin */
+      g.fillStyle='#cfd6e0'; g.beginPath(); g.arc(1.6,-0.5,1.3,0,7); g.fill();
+      g.fillStyle='#c9a23a'; g.fillRect(0.5,1.8,3.4,0.8);
+      g.fillStyle='#e8e4d8'; g.beginPath(); g.arc(-0.5,2.6,0.9,0,7); g.fill();
+      break;
+    }
+    case 'food_pebble': {
+      g.fillStyle='#5a5f66'; g.fillRect(-5.5,-4.5,11,10);      /* a grit tin */
+      g.fillStyle='#7a828a'; g.fillRect(-5.5,-4.5,11,2.2);
+      g.fillStyle='#3a4046'; g.fillRect(-5.5,4.0,11,1.5);
+      g.fillStyle='#8a8272';                                    /* the grit */
+      for(const [x,y] of [[-2.5,-0.5],[0.5,-1.5],[2.5,0.5],[-1,1.5],[1.5,2.5],[-3,2]]){
+        g.beginPath(); g.arc(x,y,1.0,0,7); g.fill(); }
+      g.fillStyle='#c9a23a'; g.fillRect(-3.5,-3.8,7,1.0);
+      break;
+    }
+    case 'food_hackles': {
+      g.fillStyle='#3a2a2a'; g.beginPath();                     /* dark, wet, best not looked at */
+      g.ellipse(0,1,5.4,5.0,0,0,7); g.fill();
+      g.fillStyle='#5a1a1a'; g.beginPath(); g.ellipse(-0.5,0.5,3.8,3.4,0.3,0,7); g.fill();
+      g.fillStyle='#8a2020'; g.beginPath(); g.arc(-1.5,-0.5,1.6,0,7); g.fill();
+      g.fillStyle='#4a4038'; g.fillRect(-6,-5.5,12,2.2);        /* the pail rim */
+      g.strokeStyle='#4a4038'; g.lineWidth=1.2;
+      g.beginPath(); g.arc(0,-5.5,4.2,Math.PI,0); g.stroke();
+      g.fillStyle='#a83a3a'; g.beginPath(); g.arc(3.5,6.5,0.9,0,7); g.fill();
+      break;
+    }
+    case 'pet_gorger': {
+      g.fillStyle='#8a7a5a';                                   /* the belly IS the silhouette */
+      g.beginPath(); g.ellipse(0,2.2,7.4,5.4,0,0,7); g.fill();
+      g.fillStyle='#c9a892'; g.beginPath(); g.ellipse(0,4.2,5.6,3.2,0,0,7); g.fill();
+      g.fillStyle='#6a5a42';
+      for(const x of [-4.4,-1.6,1.6,4.4]) g.fillRect(x-0.9,6.4,1.8,2.2);   /* stubby legs */
+      g.fillStyle='#8a7a5a'; g.beginPath(); g.arc(-6.2,-1.4,3.2,0,7); g.fill();
+      g.fillStyle='#2a2018'; g.beginPath();                    /* the mouth, wider than the skull */
+      g.moveTo(-9.4,-1.2); g.quadraticCurveTo(-5.0,2.6,-2.4,-0.6); g.quadraticCurveTo(-6.0,-0.2,-9.4,-1.2);
+      g.closePath(); g.fill();
+      g.fillStyle='#e7dcc0'; g.fillRect(-8.2,-1.6,1.0,1.6); g.fillRect(-5.4,-0.8,0.9,1.4);
+      g.fillStyle='#14110d'; g.beginPath(); g.arc(-5.6,-3.0,0.8,0,7); g.fill();
+      break;
+    }
+    case 'pet_marrow': {
+      g.strokeStyle='#e7dcc0'; g.lineWidth=1.6;
+      g.beginPath(); g.moveTo(-5.5,1.5); g.quadraticCurveTo(0,-2.5,5.5,0.5); g.stroke();   /* spine */
+      g.lineWidth=1.1;
+      for(let i=0;i<5;i++){ const x=-4.2+i*1.9, y=0.2+Math.abs(i-2)*0.5;   /* ribs */
+        g.beginPath(); g.ellipse(x,y+2.2,1.5,2.6,0,Math.PI*0.15,Math.PI*0.85); g.stroke(); }
+      g.strokeStyle='#d8cfb4'; g.lineWidth=1.4;
+      for(const [x0,y0,x1,y1] of [[-4.6,2.4,-5.2,7.4],[-2.4,2.8,-2.0,7.4],[3.2,2.2,3.0,7.2],[5.0,1.8,5.6,7.0]])
+        { g.beginPath(); g.moveTo(x0,y0); g.lineTo(x1,y1); g.stroke(); }
+      g.fillStyle='#e7dcc0'; g.beginPath(); g.ellipse(6.8,-0.6,3.0,2.0,0.2,0,7); g.fill();   /* skull */
+      g.fillStyle='#3fd06a'; g.beginPath(); g.arc(6.4,-1.2,0.9,0,7); g.fill();               /* the glow */
+      g.strokeStyle='#e7dcc0'; g.lineWidth=1.5;
+      g.beginPath(); g.moveTo(6.0,1.6); g.lineTo(10.4,2.6); g.stroke();                      /* the bone */
+      g.fillStyle='#e7dcc0'; g.beginPath(); g.arc(10.6,2.6,1.0,0,7); g.fill();
+      g.strokeStyle='#d8cfb4'; g.lineWidth=1;
+      g.beginPath(); g.moveTo(-5.5,1.5); g.lineTo(-9.4,-1.4); g.stroke();                    /* vertebrae tail */
+      break;
+    }
+    case 'pet_magpie': {
+      g.fillStyle='#14110d';                                   /* black over white, plump */
+      g.beginPath(); g.ellipse(-0.5,1.0,5.6,6.0,0.12,0,7); g.fill();
+      g.fillStyle='#e8e4d8'; g.beginPath(); g.ellipse(-1.4,3.0,3.2,3.6,0.1,0,7); g.fill();
+      g.fillStyle='#2a3a5a'; g.beginPath();                    /* oil-slick wing */
+      g.ellipse(1.6,1.2,2.6,4.4,-0.35,0,7); g.fill();
+      g.fillStyle='#3a5a7a'; g.beginPath(); g.ellipse(1.9,0.4,1.4,2.6,-0.35,0,7); g.fill();
+      g.fillStyle='#14110d'; g.beginPath();                    /* long tail */
+      g.moveTo(2.4,4.4); g.lineTo(9.0,8.6); g.lineTo(4.4,5.6); g.closePath(); g.fill();
+      g.fillStyle='#14110d'; g.beginPath(); g.arc(-3.4,-4.4,2.8,0,7); g.fill();
+      g.fillStyle='#e8e4d8'; g.beginPath(); g.arc(-4.2,-5.0,0.8,0,7); g.fill();
+      g.fillStyle='#d9b04a'; g.beginPath();                    /* the coin it will not share */
+      g.arc(-7.6,-3.0,2.2,0,7); g.fill();
+      g.fillStyle='#f0d78a'; g.beginPath(); g.arc(-8.2,-3.6,0.8,0,7); g.fill();
+      break;
+    }
+    case 'pet_pebble': {
+      g.fillStyle='#6a6156';                                   /* faceted, not smooth: a rock is CUT */
+      g.beginPath();
+      g.moveTo(-7.4,2.4); g.lineTo(-4.6,-3.4); g.lineTo(0.4,-5.4); g.lineTo(5.4,-3.0);
+      g.lineTo(7.4,2.0); g.lineTo(4.0,4.2); g.lineTo(-4.0,4.2); g.closePath(); g.fill();
+      g.fillStyle='#7f776a'; g.beginPath();
+      g.moveTo(-4.6,-3.4); g.lineTo(0.4,-5.4); g.lineTo(1.4,0.4); g.lineTo(-3.0,0.8); g.closePath(); g.fill();
+      g.fillStyle='#8fd06a'; g.fillRect(-7.0,2.8,13.6,1.2);    /* the moss line on the seam */
+      g.strokeStyle='#cfe0ff'; g.lineWidth=1.2;                /* quartz vein */
+      g.beginPath(); g.moveTo(-5.4,-1.0); g.lineTo(-0.6,-2.6); g.lineTo(3.6,0.4); g.stroke();
+      g.fillStyle='#5a5248';
+      g.beginPath(); g.arc(-7.0,5.6,2.0,0,7); g.fill();        /* head */
+      for(const x of [-3.4,3.4]) g.fillRect(x-1.0,4.6,2.0,2.4);
+      g.fillStyle='#14110d'; g.beginPath(); g.arc(-7.6,5.2,0.6,0,7); g.fill();
+      break;
+    }
+    case 'pet_hackles': {
+      g.fillStyle='#3a3630';                                   /* low, lean, crouched */
+      g.beginPath();
+      g.moveTo(-7.0,3.0); g.quadraticCurveTo(-3.0,-0.6,1.0,0.8);
+      g.quadraticCurveTo(5.0,2.2,7.2,1.0); g.quadraticCurveTo(4.0,5.4,-1.0,5.4);
+      g.quadraticCurveTo(-4.6,5.4,-7.0,3.0); g.closePath(); g.fill();
+      g.fillStyle='#5a544c'; g.beginPath(); g.ellipse(-1.0,4.6,4.4,1.4,0,0,7); g.fill();
+      g.strokeStyle='#8a8272'; g.lineWidth=1.1;                /* THE QUILLS -- the whole point */
+      for(let i=0;i<6;i++){ const x=-5.4+i*1.9;
+        g.beginPath(); g.moveTo(x,1.2-Math.abs(i-2.5)*0.3); g.lineTo(x-0.6,-3.6-Math.abs(i-2.5)*0.4); g.stroke(); }
+      g.fillStyle='#3a3630'; g.beginPath(); g.arc(7.0,2.6,2.8,0,7); g.fill();
+      for(const [ex,ey] of [[6.0,1.6],[8.2,1.6],[6.2,3.4],[8.4,3.4]]){   /* four eyes, two rows */
+        g.fillStyle='#c9e04a'; g.beginPath(); g.arc(ex,ey,0.8,0,7); g.fill(); }
+      g.strokeStyle='#3a3630'; g.lineWidth=1.6;                /* the low lashing tail */
+      g.beginPath(); g.moveTo(-7.0,3.4); g.quadraticCurveTo(-10.4,4.6,-9.0,7.6); g.stroke();
+      break;
+    }
+    case 'blood_shard': {
+      g.fillStyle='#8a1020';
+      g.beginPath(); g.moveTo(-1.5,-8); g.lineTo(4,-1); g.lineTo(1.5,8); g.lineTo(-4,1);
+      g.closePath(); g.fill();
+      g.fillStyle='#d23b4e';
+      g.beginPath(); g.moveTo(-1.5,-8); g.lineTo(4,-1); g.lineTo(0,0); g.closePath(); g.fill();
+      g.fillStyle='#ff9aa8'; g.beginPath(); g.arc(0.5,-3.4,1.0,0,7); g.fill();
+      break;
+    }
     case 'raid_kindling': {
       /* a bundle of splintered, frost-furred timber */
       for(let i=0;i<4;i++){
@@ -9607,35 +10156,6 @@ function drawItemIcon(g,id,S,dose){
       for(const p2 of [[-2.4,-2],[1.8,-2.8],[2.6,1.4],[-1.6,2.2],[0,0]])
         { g.beginPath(); g.arc(p2[0],p2[1],1.1,0,7); g.fill(); }
       g.strokeStyle='#3a2c1c'; g.lineWidth=1; g.beginPath(); g.arc(0,0,7,0,7); g.stroke();
-      break;
-    }
-    case 'chimera_fang': {
-      /* a curved tooth the length of a forearm, still warm */
-      g.fillStyle='#e7dcc0';
-      g.beginPath();
-      g.moveTo(-4.5,7.5); g.quadraticCurveTo(-1,1,3.5,-7.5);
-      g.quadraticCurveTo(5.5,-4,5,0); g.quadraticCurveTo(3.5,5,-2,8);
-      g.closePath(); g.fill();
-      g.fillStyle='#c9bfa0';                                   /* the shaded edge */
-      g.beginPath(); g.moveTo(-4.5,7.5); g.quadraticCurveTo(-1,1,3.5,-7.5);
-      g.quadraticCurveTo(3.2,-3,1.6,1); g.quadraticCurveTo(0,5,-2,8); g.closePath(); g.fill();
-      g.fillStyle='#8a3a1e';                                   /* the binding at the root */
-      g.fillRect(-5.5,5.6,5,3.2);
-      g.fillStyle='#ffb14a'; g.fillRect(-5.5,6.4,5,0.9);
-      break;
-    }
-    case 'archivist_codex': {
-      /* a water-stained ledger, still open */
-      g.fillStyle='#3b2a1e'; g.fillRect(-7,-6,14,12);          /* boards */
-      g.fillStyle='#d8cfb4'; g.fillRect(-6,-5,5.4,10); g.fillRect(0.6,-5,5.4,10);   /* leaves */
-      g.fillStyle='#8a6a3a'; g.fillRect(-0.7,-6,1.4,12);       /* spine */
-      g.strokeStyle='#9a8f72'; g.lineWidth=0.6;
-      for(let i=0;i<5;i++){ const y=-3.4+i*1.7;
-        g.beginPath(); g.moveTo(-5.4,y); g.lineTo(-1.4,y); g.stroke();
-        g.beginPath(); g.moveTo(1.4,y); g.lineTo(5.4,y); g.stroke(); }
-      g.fillStyle='rgba(90,120,70,0.45)';                      /* the water damage */
-      g.beginPath(); g.arc(4.2,3.4,2.6,0,7); g.fill();
-      g.fillStyle='#8f6fd6'; g.beginPath(); g.arc(0,0,1.5,0,7); g.fill();   /* the thing in it */
       break;
     }
     default:
@@ -10662,6 +11182,238 @@ function furTexture(){if(_furTex)return _furTex;const c=document.createElement('
 function vcMat(){if(_vcMat)return _vcMat;_vcMat=new THREE.MeshLambertMaterial({color:0xffffff,vertexColors:true,side:THREE.DoubleSide,map:furTexture()});return _vcMat;}
 /* critterSweep: ONE continuous skinned tube through a spine of elliptical cross-sections.
    sections=[{p:[x,y,z],rx,ry}] (rx=side radius, ry=vertical radius). Smooth-shaded + UV'd. */
+/* ============ THE PETS ============
+   Built with critterSweep -- the same lofted, countershaded builder the wolf, the boar and the dragons
+   use -- because a pet is on screen every second you play and stacked primitives would show. Each has a
+   real silhouette, a countershade, and ONE MOVING PART: that last bit is what makes a pet read as alive
+   rather than as a prop being dragged behind you. */
+function makePet(id){
+  const g=new THREE.Group();
+  const sm=(geo,hex)=>new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:hex}));
+  const glow=(geo,hex,op)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex,transparent:op!==undefined,opacity:op===undefined?1:op}));
+  const parts={};
+
+  if(id==='pet_gorger'){
+    /* MOSTLY STOMACH. Narrow at the snout, ballooning to a very wide belly, tapering to a stub -- the
+       countershade does the work: dusty hide on top, pale pink under, so the belly reads as HEAVY. */
+    const HIDE=0x8a7a5a, BACK=0x6a5c42, BELLY=0xc9a892, DARK=0x2a2018, TUSK=0xe7dcc0;
+    const belly=new THREE.Group(); g.add(belly); parts.belly=belly;
+    belly.add(critterSweep([
+      {p:[0,0.20,0.30],rx:0.075,ry:0.070},
+      {p:[0,0.19,0.16],rx:0.115,ry:0.105},
+      {p:[0,0.17,-0.02],rx:0.205,ry:0.180},   /* the balloon */
+      {p:[0,0.16,-0.18],rx:0.215,ry:0.190},
+      {p:[0,0.18,-0.32],rx:0.130,ry:0.120},
+      {p:[0,0.20,-0.42],rx:0.045,ry:0.045}
+    ],HIDE,16,true,true,{top:BACK,bottom:BELLY}));
+    /* the head: low, forward, and a jaw that opens wider than the skull */
+    const head=new THREE.Group(); head.position.set(0,0.20,0.30); g.add(head); parts.head=head;
+    const skull=sm(new THREE.SphereGeometry(0.085,14,12),HIDE); skull.scale.set(1.0,0.9,1.15); head.add(skull);
+    const jaw=new THREE.Group(); jaw.position.set(0,-0.03,0.02); head.add(jaw); parts.jaw=jaw;
+    jaw.add(critterSweep([
+      {p:[0,0,0.02],rx:0.080,ry:0.030},
+      {p:[0,-0.01,0.10],rx:0.065,ry:0.026}
+    ],DARK,12,true,true,{top:0x3a2c22,bottom:DARK}));
+    for(const sx of [-1,1]){                    /* under-tusks */
+      const t=sm(new THREE.ConeGeometry(0.014,0.055,6),TUSK);
+      t.position.set(sx*0.045,0.01,0.10); t.rotation.x=-0.5; jaw.add(t);
+    }
+    for(const sx of [-1,1]){                    /* tiny, unbothered eyes, set far apart */
+      const e=glow(new THREE.SphereGeometry(0.012,7,6),0x14110d);
+      e.position.set(sx*0.062,0.04,0.055); head.add(e);
+    }
+    /* HINGED legs: each is a group pivoting at the HIP, so it swings rather than slides. */
+    parts.legs=[];
+    for(const [sx,sz] of [[-1,0.16],[1,0.16],[-1,-0.22],[1,-0.22]]){
+      const hip=new THREE.Group(); hip.position.set(sx*0.10,0.13,sz); g.add(hip);
+      const thigh=critterSweep([{p:[0,0,0],rx:0.030,ry:0.030},{p:[sx*0.012,-0.062,0],rx:0.026,ry:0.026}],BACK,8,true,true);
+      hip.add(thigh);
+      const knee=new THREE.Group(); knee.position.set(sx*0.012,-0.062,0); hip.add(knee);   /* the bend */
+      knee.add(critterSweep([{p:[0,0,0],rx:0.024,ry:0.024},{p:[0,-0.048,0.006],rx:0.020,ry:0.020}],BACK,8,true,true));
+      const f=sm(new THREE.SphereGeometry(0.028,8,7),DARK); f.scale.y=0.55; f.position.set(0,-0.052,0.012); knee.add(f);
+      parts.legs.push({hip,knee,phase:(sx>0?0:Math.PI)+(sz>0?0:Math.PI*0.5)});
+    }
+  }
+
+  else if(id==='pet_marrow'){
+    /* A SKELETAL GREYHOUND: deep chest, tucked waist, and the ribs are SEPARATE swept rings over a dark
+       inner body, so you can see through it. The eyes are the only unlit thing on the model -- in a dark
+       delve they are all you see coming. */
+    const BONE=0xe7dcc0, BONE2=0xbfb49a, INNER=0x1a1610, EYE=0x3fd06a;
+    g.add(critterSweep([                        /* the dark inside, glimpsed between ribs */
+      {p:[0,0.24,0.22],rx:0.050,ry:0.055},
+      {p:[0,0.25,0.06],rx:0.075,ry:0.085},
+      {p:[0,0.23,-0.10],rx:0.045,ry:0.050},
+      {p:[0,0.24,-0.24],rx:0.060,ry:0.062}
+    ],INNER,12,true,true));
+    const spine=critterSweep([                  /* the spine itself */
+      {p:[0,0.31,0.26],rx:0.018,ry:0.018},
+      {p:[0,0.325,0.06],rx:0.022,ry:0.022},
+      {p:[0,0.305,-0.12],rx:0.020,ry:0.020},
+      {p:[0,0.315,-0.26],rx:0.016,ry:0.016}
+    ],BONE,10,true,true); g.add(spine);
+    for(let i=0;i<6;i++){                       /* RIBS: separate rings, tapering to the waist */
+      const t=i/5, z=0.20-t*0.34;
+      const r=0.085-Math.abs(t-0.25)*0.07;
+      const rib=sm(new THREE.TorusGeometry(Math.max(0.035,r),0.0075,6,14,Math.PI*1.15),BONE);
+      rib.position.set(0,0.28,z); rib.rotation.y=Math.PI/2; rib.rotation.z=Math.PI*0.42;
+      g.add(rib);
+    }
+    /* A CANINE gait: hip -> knee -> paw, with the fore and hind legs on opposite phases and the
+       diagonals paired, which is what a dog actually does. */
+    parts.legs=[];
+    for(const [sx,sz,fore] of [[-1,0.16,1],[1,0.16,1],[-1,-0.20,0],[1,-0.20,0]]){
+      const hip=new THREE.Group(); hip.position.set(sx*0.055,0.25,sz); g.add(hip);
+      hip.add(critterSweep([{p:[0,0,0],rx:0.015,ry:0.015},{p:[sx*0.008,-0.10,fore?0.008:-0.010],rx:0.012,ry:0.012}],BONE2,7,true,true));
+      const knee=new THREE.Group(); knee.position.set(sx*0.008,-0.10,fore?0.008:-0.010); hip.add(knee);
+      knee.add(critterSweep([{p:[0,0,0],rx:0.012,ry:0.012},{p:[0,-0.10,fore?-0.006:0.012],rx:0.010,ry:0.010}],BONE2,7,true,true));
+      const paw=sm(new THREE.SphereGeometry(0.016,7,6),BONE); paw.scale.set(1,0.6,1.2); paw.position.set(0,-0.105,fore?-0.004:0.014); knee.add(paw);
+      /* diagonals move together: FL+HR, then FR+HL */
+      const diag=(fore?(sx>0?0:1):(sx>0?1:0));
+      parts.legs.push({hip,knee,fore,phase:diag*Math.PI});
+    }
+    const head=new THREE.Group(); head.position.set(0,0.30,0.28); g.add(head); parts.head=head;
+    head.add(critterSweep([                     /* long, fleshless skull */
+      {p:[0,0.02,0],rx:0.048,ry:0.045},
+      {p:[0,0.01,0.07],rx:0.038,ry:0.033},
+      {p:[0,0.0,0.14],rx:0.024,ry:0.020}
+    ],BONE,12,true,true,{top:BONE,bottom:BONE2}));
+    for(const sx of [-1,1]){
+      const e=glow(new THREE.SphereGeometry(0.011,7,6),EYE);   /* soft green, unlit -- the only pop */
+      e.position.set(sx*0.024,0.035,0.055); head.add(e);
+      const h=glow(new THREE.SphereGeometry(0.024,7,6),EYE,0.28);
+      h.position.set(sx*0.024,0.035,0.055); head.add(h);
+    }
+    const bone=new THREE.Group(); bone.position.set(0,-0.02,0.12); head.add(bone); parts.bone=bone;
+    const shaft=sm(new THREE.CylinderGeometry(0.010,0.010,0.10,7),BONE); shaft.rotation.z=Math.PI/2; bone.add(shaft);
+    for(const sx of [-1,1]){ const k=sm(new THREE.SphereGeometry(0.018,8,7),BONE); k.position.x=sx*0.05; bone.add(k); }
+    const tail=new THREE.Group(); tail.position.set(0,0.30,-0.26); g.add(tail); parts.tail=tail;
+    for(let i=0;i<5;i++){ const v=sm(new THREE.SphereGeometry(0.010-i*0.001,6,5),BONE2); v.position.z=-i*0.028; tail.add(v); }
+  }
+
+  else if(id==='pet_magpie'){
+    /* PLUMP, GLOSSY, UNREPENTANT. Black over white, with an oil-slick shell over the wings -- a second
+       slightly larger translucent skin in petrol blue, which is what gives it the sheen. */
+    const BLACK=0x14110d, WHITE=0xe8e4d8, SLICK=0x2a3a5a, GOLD=0xd9b04a, BEAK=0x3a3630;
+    const body=new THREE.Group(); g.add(body); parts.body=body;
+    body.add(critterSweep([
+      {p:[0,0.30,0.10],rx:0.065,ry:0.070},
+      {p:[0,0.27,-0.02],rx:0.090,ry:0.095},     /* round breast */
+      {p:[0,0.25,-0.14],rx:0.070,ry:0.072},
+      {p:[0,0.26,-0.26],rx:0.032,ry:0.030}
+    ],BLACK,14,true,true,{top:BLACK,bottom:WHITE}));
+    for(const sx of [-1,1]){                    /* wings + the oil-slick shell over them */
+      const w=critterSweep([
+        {p:[sx*0.070,0.30,0.02],rx:0.020,ry:0.045},
+        {p:[sx*0.085,0.27,-0.10],rx:0.016,ry:0.050},
+        {p:[sx*0.080,0.26,-0.20],rx:0.008,ry:0.030}
+      ],BLACK,10,true,true); g.add(w);
+      const sl=new THREE.Mesh(w.geometry.clone(),new THREE.MeshBasicMaterial({color:SLICK,transparent:true,opacity:0.35}));
+      sl.scale.setScalar(1.08); g.add(sl);
+    }
+    const tail=new THREE.Group(); tail.position.set(0,0.26,-0.26); g.add(tail); parts.tail=tail;
+    tail.add(critterSweep([{p:[0,0,0],rx:0.028,ry:0.012},{p:[0,-0.02,-0.16],rx:0.014,ry:0.006}],BLACK,8,true,true));
+    const head=new THREE.Group(); head.position.set(0,0.36,0.10); g.add(head); parts.head=head;
+    const skull=sm(new THREE.SphereGeometry(0.048,14,12),BLACK); head.add(skull);
+    const bib=sm(new THREE.SphereGeometry(0.030,10,9),WHITE); bib.position.set(0,-0.028,0.028); head.add(bib);
+    const beak=sm(new THREE.ConeGeometry(0.016,0.055,7),BEAK); beak.rotation.x=Math.PI/2; beak.position.set(0,-0.004,0.070); head.add(beak);
+    const eye=glow(new THREE.SphereGeometry(0.008,6,5),0xe8e4d8); eye.position.set(0.030,0.014,0.032); head.add(eye);
+    const coin=new THREE.Group(); coin.position.set(0,-0.012,0.100); head.add(coin); parts.coin=coin;
+    const disc=glow(new THREE.CylinderGeometry(0.024,0.024,0.005,12),GOLD); disc.rotation.x=Math.PI/2; coin.add(disc);
+    const shine=glow(new THREE.SphereGeometry(0.032,8,7),GOLD,0.22); coin.add(shine); parts.shine=shine;
+    /* bird legs: they TUCK on the hop and reach on the landing, which is what makes a hop a hop */
+    parts.legs=[];
+    for(const sx of [-1,1]){
+      const hip=new THREE.Group(); hip.position.set(sx*0.030,0.20,-0.01); g.add(hip);
+      const shin=sm(new THREE.CylinderGeometry(0.005,0.006,0.075,6),0xc9a23a); shin.position.y=-0.037; hip.add(shin);
+      const foot=new THREE.Group(); foot.position.y=-0.075; hip.add(foot);
+      for(const a of [-0.5,0,0.5]){ const toe=sm(new THREE.CylinderGeometry(0.003,0.003,0.030,5),0xc9a23a);
+        toe.rotation.x=Math.PI/2; toe.rotation.y=a; toe.position.set(Math.sin(a)*0.012,0,0.013); foot.add(toe); }
+      parts.legs.push({hip,knee:foot,phase:sx>0?0:0.3});
+    }
+  }
+
+  else if(id==='pet_pebble'){
+    /* A ROCK READS AS CUT, NOT SMOOTH -- so this is the one place I deliberately do NOT sweep a surface.
+       Hand-placed facets, a moss line on the seam, and a quartz vein that catches the light. */
+    const STONE=0x6a6156, STONE2=0x7f776a, DARK=0x4a4038, MOSS=0x6a9a4a, QUARTZ=0xcfe0ff;
+    const shell=new THREE.Group(); shell.position.y=0.16; g.add(shell); parts.shell=shell;
+    for(let i=0;i<9;i++){                       /* faceted dome: overlapping cut planes */
+      const a=i/9*Math.PI*2, r=0.13;
+      const f=sm(new THREE.BoxGeometry(0.11,0.045,0.10),(i%2)?STONE:STONE2);
+      f.position.set(Math.cos(a)*r*0.72,0.035+Math.sin(i*1.7)*0.012,Math.sin(a)*r*0.72);
+      f.rotation.set(0.5+Math.sin(i)*0.18,-a,0.22*Math.cos(i*2.1));
+      shell.add(f);
+    }
+    const cap=sm(new THREE.DodecahedronGeometry(0.10,0),STONE2); cap.position.y=0.055; cap.scale.set(1.15,0.62,1.15); shell.add(cap);
+    const rim=sm(new THREE.TorusGeometry(0.135,0.016,6,14),DARK); rim.rotation.x=Math.PI/2; shell.add(rim);
+    const moss=sm(new THREE.TorusGeometry(0.140,0.008,5,16),MOSS); moss.rotation.x=Math.PI/2; moss.position.y=0.006; shell.add(moss);
+    const vein=glow(new THREE.BoxGeometry(0.024,0.006,0.20),QUARTZ,0.85);   /* flashes when it eats a hit */
+    vein.position.set(0.01,0.075,0); vein.rotation.y=0.5; shell.add(vein); parts.vein=vein;
+    const vein2=glow(new THREE.BoxGeometry(0.016,0.006,0.12),QUARTZ,0.85);
+    vein2.position.set(-0.05,0.070,0.04); vein2.rotation.y=-0.9; shell.add(vein2); parts.vein2=vein2;
+    const limbs=new THREE.Group(); g.add(limbs); parts.limbs=limbs;
+    const head=critterSweep([{p:[0,0.10,0.10],rx:0.030,ry:0.028},{p:[0,0.105,0.19],rx:0.036,ry:0.032}],DARK,10,true,true);
+    limbs.add(head);
+    for(const sx of [-1,1]){ const e=glow(new THREE.SphereGeometry(0.008,6,5),0x14110d); e.position.set(sx*0.018,0.12,0.21); limbs.add(e); }
+    /* stone legs: a slow, heavy trudge -- they lift and plant, they never slide */
+    parts.legs=[];
+    for(const [sx,sz] of [[-1,0.07],[1,0.07],[-1,-0.08],[1,-0.08]]){
+      const hip=new THREE.Group(); hip.position.set(sx*0.10,0.085,sz); limbs.add(hip);
+      const l=sm(new THREE.BoxGeometry(0.036,0.050,0.048),DARK); l.position.y=-0.025; hip.add(l);
+      const foot=new THREE.Group(); foot.position.y=-0.050; hip.add(foot);
+      const fm=sm(new THREE.BoxGeometry(0.042,0.020,0.052),0x5a5248); fm.position.y=-0.010; foot.add(fm);
+      parts.legs.push({hip,knee:foot,phase:((sx>0?0:1)+(sz>0?0:1))%2*Math.PI});
+    }
+  }
+
+  else if(id==='pet_hackles'){
+    /* LOW, LEAN, PERMANENTLY CROUCHED MID-STALK. The quills are the whole model: they stand when
+       something is about to aggro, so the pet TELLS you the perk is working. */
+    const FUR=0x3a3630, BACK=0x2a2620, BELLY=0x6a645c, QUILL=0x8a8272, EYE=0xc9e04a;
+    g.add(critterSweep([
+      {p:[0,0.16,0.24],rx:0.048,ry:0.042},
+      {p:[0,0.19,0.10],rx:0.062,ry:0.058},      /* high shoulders */
+      {p:[0,0.165,-0.04],rx:0.050,ry:0.048},    /* tucked waist */
+      {p:[0,0.175,-0.18],rx:0.058,ry:0.052},
+      {p:[0,0.165,-0.28],rx:0.028,ry:0.026}
+    ],FUR,16,true,true,{top:BACK,bottom:BELLY}));
+    const quills=new THREE.Group(); g.add(quills); parts.quills=quills;
+    for(let i=0;i<7;i++){                        /* the ridge */
+      const t=i/6, z=0.16-t*0.40;
+      const q=sm(new THREE.ConeGeometry(0.008,0.075+Math.sin(t*Math.PI)*0.035,6),QUILL);
+      q.position.set(0,0.20+Math.sin(t*Math.PI)*0.02,z);
+      q.rotation.x=-0.9;                         /* laid flat at rest; raidPetTick stands them up */
+      quills.add(q);
+    }
+    /* a PROWL: deep knee bend, low body, diagonals paired. It stalks rather than trots. */
+    parts.legs=[];
+    for(const [sx,sz,fore] of [[-1,0.12,1],[1,0.12,1],[-1,-0.16,0],[1,-0.16,0]]){
+      const hip=new THREE.Group(); hip.position.set(sx*0.045,0.165,sz); g.add(hip);
+      hip.add(critterSweep([{p:[0,0,0],rx:0.017,ry:0.017},{p:[sx*0.006,-0.070,fore?0.006:-0.010],rx:0.014,ry:0.014}],BACK,8,true,true));
+      const knee=new THREE.Group(); knee.position.set(sx*0.006,-0.070,fore?0.006:-0.010); hip.add(knee);
+      knee.add(critterSweep([{p:[0,0,0],rx:0.013,ry:0.013},{p:[0,-0.072,fore?-0.004:0.010],rx:0.011,ry:0.011}],BACK,8,true,true));
+      const paw=sm(new THREE.SphereGeometry(0.015,7,6),FUR); paw.scale.set(1,0.6,1.15); paw.position.set(0,-0.076,fore?-0.002:0.012); knee.add(paw);
+      const diag=(fore?(sx>0?0:1):(sx>0?1:0));
+      parts.legs.push({hip,knee,fore,phase:diag*Math.PI});
+    }
+    const head=new THREE.Group(); head.position.set(0,0.17,0.26); g.add(head); parts.head=head;
+    const skull=sm(new THREE.SphereGeometry(0.052,14,12),FUR); skull.scale.set(1.25,0.85,1.0); head.add(skull);
+    for(const [ex,ey] of [[-1,0.012],[1,0.012],[-1,-0.016],[1,-0.016]]){   /* FOUR eyes, two rows */
+      const e=glow(new THREE.SphereGeometry(0.009,7,6),EYE);
+      e.position.set(ex*0.028,ey+0.008,0.042); head.add(e);
+    }
+    for(const sx of [-1,1]){ const ear=sm(new THREE.ConeGeometry(0.016,0.040,5),FUR);
+      ear.position.set(sx*0.032,0.046,-0.008); ear.rotation.z=sx*0.4; head.add(ear); }
+    const tail=new THREE.Group(); tail.position.set(0,0.17,-0.28); g.add(tail); parts.tail=tail;
+    tail.add(critterSweep([{p:[0,0,0],rx:0.014,ry:0.014},{p:[0,-0.03,-0.14],rx:0.010,ry:0.010},
+      {p:[0,-0.05,-0.26],rx:0.006,ry:0.006}],FUR,8,true,true));
+  }
+
+  g.scale.setScalar(1.25);
+  g.userData.parts=parts;
+  return g;
+}
 function critterSweep(sections,color,R,capStart,capEnd,shade){
   R=R||14;const n=sections.length;
   const up=new THREE.Vector3(0,1,0),alt=new THREE.Vector3(0,0,1);
@@ -12181,6 +12933,47 @@ function buildObjModel(o){
     const glow=new THREE.Mesh(new THREE.BoxGeometry(0.9,0.05,0.6),new THREE.MeshBasicMaterial({color:0xffd24a,transparent:true,opacity:0.8}));
     glow.position.y=0.88;g.add(glow);
     addProxy(g,1.6,1.4,0,{kind:'obj',o});
+  }else if(def==='raid_bank'){
+    const WOOD=0x4a3a24, IRON=0x2a2620, GOLD=0xd9b04a;
+    const put=(m,x,y,z)=>{ m.position.set(x,y,z); g.add(m); return m; };
+    put(mesh(new THREE.BoxGeometry(1.3,0.8,0.9),WOOD), 0,0.4,0);
+    put(mesh(new THREE.CylinderGeometry(0.45,0.45,1.3,12,1,false,0,Math.PI),WOOD), 0,0.8,0, 0);
+    g.children[g.children.length-1].rotation.z=Math.PI/2;
+    for(const sx of [-0.5,0.5])put(mesh(new THREE.BoxGeometry(0.1,0.9,0.95),IRON), sx,0.45,0);
+    put(mesh(new THREE.BoxGeometry(0.22,0.26,0.1),GOLD), 0,0.5,0.47);
+    addProxy(g,1.5,1.4,0,{kind:'obj',o});
+  }else if(def==='raid_geartable'){
+    /* A LONG DISPLAY CASE of the best arms in the school -- look, do not touch. */
+    const WOOD=0x4a3a24, DARK=0x2a2018, GLASS=0xbcd6e0, STEEL=0x9aa6b4, GOLD=0xd9b04a;
+    const put=(m,x,y,z,ry)=>{ m.position.set(x,y,z); if(ry)m.rotation.y=ry; g.add(m); return m; };
+    put(mesh(new THREE.BoxGeometry(4.4,0.14,1.1),WOOD), 0,0.86,0);          /* the top */
+    put(mesh(new THREE.BoxGeometry(4.2,0.7,0.9),DARK), 0,0.45,0);           /* the carcass */
+    for(const sx of [-2.0,2.0])put(mesh(new THREE.BoxGeometry(0.16,0.9,1.0),WOOD), sx,0.45,0);
+    /* the case */
+    const gl=new THREE.Mesh(new THREE.BoxGeometry(4.2,0.6,0.95),new THREE.MeshBasicMaterial({color:GLASS,transparent:true,opacity:0.16}));
+    put(gl, 0,1.24,0);
+    for(const sx of [-2.1,2.1])put(mesh(new THREE.BoxGeometry(0.06,0.62,0.06),GOLD), sx,1.24,0.46);
+    /* A DRAGON SCIMITAR -- curved blade, ornate hilt */
+    put(mesh(new THREE.BoxGeometry(1.0,0.03,0.11),0x2f8f5a), -1.5,1.16,-0.15, 0.15);
+    put(mesh(new THREE.BoxGeometry(0.1,0.05,0.24),GOLD), -0.95,1.16,-0.15);
+    put(mesh(new THREE.CylinderGeometry(0.035,0.04,0.28,7),0x3a2c1c), -0.78,1.16,-0.15, 0);
+    /* EMBERBRAND -- a straight sword, molten edge */
+    put(mesh(new THREE.BoxGeometry(1.2,0.03,0.09),0x8a3a1e), 0.1,1.16,-0.15);
+    const ember=new THREE.Mesh(new THREE.BoxGeometry(1.2,0.02,0.03),new THREE.MeshBasicMaterial({color:0xff6a24}));
+    put(ember, 0.1,1.18,-0.15);
+    put(mesh(new THREE.BoxGeometry(0.08,0.05,0.26),0x6a4a2a), 0.75,1.16,-0.15);
+    /* A MAUL -- the frost one: heavy head, long haft */
+    put(mesh(new THREE.CylinderGeometry(0.035,0.035,1.1,7),0x3a2c1c), -1.2,1.16,0.2, 0);
+    g.children[g.children.length-1].rotation.z=Math.PI/2;
+    put(mesh(new THREE.BoxGeometry(0.34,0.3,0.3),0x8fc8e0), -0.6,1.2,0.2);
+    put(mesh(new THREE.BoxGeometry(0.36,0.1,0.32),STEEL), -0.6,1.36,0.2);
+    /* A BOW, strung */
+    put(mesh(new THREE.TorusGeometry(0.42,0.03,6,14,Math.PI), 0x5a4327), 1.3,1.16,0.2, 0);
+    g.children[g.children.length-1].rotation.x=Math.PI/2;
+    put(mesh(new THREE.BoxGeometry(0.02,0.02,0.82),0xe8e4d8), 1.3,1.16,0.2);
+    /* little brass plates under each piece */
+    for(const px of [-1.5,-0.6,0.1,1.3])put(mesh(new THREE.BoxGeometry(0.4,0.02,0.1),GOLD), px,0.95,0.3);
+    addProxy(g,4.6,1.6,0,{kind:'obj',o});
   }else if(def==='raid_lobbygate'){
     /* same trap as the ladder: build, position, THEN add. */
     const IRON=0x3c3630, DARK=0x2a2620, BRASS=0x8a6a2a;
@@ -12215,6 +13008,20 @@ function buildObjModel(o){
     const rod=mesh(new THREE.CylinderGeometry(0.02,0.02,0.7,6),0x8a6a2a);rod.rotation.z=Math.PI/2;rod.position.set(-0.2,0.79,-0.1);g.add(rod);
     const wand=mesh(new THREE.CylinderGeometry(0.025,0.02,0.5,6),0x2f7ad8);wand.rotation.z=Math.PI/2;wand.position.set(0.25,0.79,0.12);g.add(wand);
     addProxy(g,1.4,1.0,0,{kind:'obj',o});
+  }else if(def==='raid_sign'||def==='raid_sign_lawn'){
+    const WOOD=0x5a4327, DARK=0x3a2c1c, PAPER=0xd8cfb4;
+    const put=(m,x,y,z,ry)=>{ m.position.set(x,y,z); if(ry)m.rotation.y=ry; g.add(m); return m; };
+    for(const sx of [-0.42,0.42])put(mesh(new THREE.CylinderGeometry(0.055,0.065,1.5,7),DARK), sx,0.75,0);
+    put(mesh(new THREE.BoxGeometry(1.15,0.85,0.07),WOOD), 0,1.35,0.03);
+    put(mesh(new THREE.BoxGeometry(1.25,0.09,0.11),DARK), 0,1.82,0.03);      /* the cap rail */
+    for(const [px,py,w,h,rz] of [[-0.28,1.48,0.34,0.26,0.06],[0.24,1.52,0.30,0.22,-0.09],
+                                 [-0.18,1.16,0.40,0.24,-0.04],[0.28,1.18,0.26,0.28,0.11]]){
+      const n=mesh(new THREE.BoxGeometry(w,h,0.012),PAPER); n.position.set(px,py,0.075); n.rotation.z=rz; g.add(n);
+      const ln=mesh(new THREE.BoxGeometry(w*0.7,0.012,0.004),0x8a8272); ln.position.set(px,py+0.04,0.082); ln.rotation.z=rz; g.add(ln);
+    }
+    const one=mesh(new THREE.BoxGeometry(0.42,0.34,0.014),0xe8e4d8); one.position.set(0.02,1.30,0.078); one.rotation.z=-0.02; g.add(one);
+    const seal=mesh(new THREE.CylinderGeometry(0.05,0.05,0.008,10),0x8a2a2a); seal.rotation.x=Math.PI/2; seal.position.set(0.16,1.19,0.086); g.add(seal);
+    addProxy(g,1.3,1.9,0,{kind:'obj',o});
   }else if(def==='raid_crabsign'){
     const post=mesh(new THREE.CylinderGeometry(0.05,0.05,1.1,6),0x3a352d);post.position.y=0.55;g.add(post);
     const plate=mesh(new THREE.BoxGeometry(0.8,0.55,0.05),0x8a6a2a);plate.position.set(0,1.15,0.04);g.add(plate);
@@ -13091,7 +13898,7 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   {const z=addObj('vault_zipline',222,19,true);if(z){z.to=[219,68];z.xp=18;z.role='exit';}}   /* exit now past the laser, on the boss-door landing */
 })();
 objects.forEach(buildObjModel);
-objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
+objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
 
 function updateObjVisual(o){
   const m=o._m;if(!m)return;
@@ -21909,6 +22716,17 @@ function buildLuxuryModel(id){
     g.rotation.y=0.5;
   }
   /* ---- AMULETS (chain + setting + gem) ---- */
+  else if(eq.model==='charm'){
+    /* a bone charm on a bootlace */
+    const cord=new THREE.Mesh(new THREE.TorusGeometry(0.16,0.012,6,16),new THREE.MeshLambertMaterial({color:tint}));
+    cord.position.set(0,1.35,0.02); cord.rotation.x=0.35; g.add(cord);
+    const bone=new THREE.Mesh(new THREE.CylinderGeometry(0.028,0.028,0.16,6),new THREE.MeshLambertMaterial({color:trim}));
+    bone.position.set(0,1.19,0.13); g.add(bone);
+    for(const sy of [-0.08,0.08])for(const sx of [-0.03,0.03]){
+      const k=new THREE.Mesh(new THREE.SphereGeometry(0.028,6,5),new THREE.MeshLambertMaterial({color:trim}));
+      k.position.set(sx,1.19+sy,0.13); g.add(k);
+    }
+  }
   else if(eq.model==='amulet'){
     const chain=new THREE.Mesh(TOR(0.34,0.022,36),new THREE.MeshLambertMaterial({color:0xf4d24a})); chain.position.y=0.18; g.add(chain);
     const health=/health|regen/.test(id), piety=/piety|regen/.test(id), dual=/regen/.test(id);
@@ -23446,6 +24264,7 @@ function ellisonTree(n){
   return {
     start:{who:'npc',text:'Oh \u2014 hello. You are not Larry. Thank goodness.',next:'ask'},
     ask:{opts:[
+      {label:'Have you anything for my pet?',next:'petfood',fn:()=>{ if(typeof ellisonPetShop==='function')ellisonPetShop(); }},
       {label:'What IS this place?',next:'what'},
       {label:'What are you doing down here?',next:'why'},
       {label:'How does a delve work?',next:'how1'},
@@ -23479,6 +24298,7 @@ function ellisonTree(n){
       +'down, and I have seen what came out of it, and I have not slept the same since.',next:'loot2'},
     loot2:{who:'npc',text:'Things that exist nowhere else in this school. Whether that is worth it is your affair. '
       +'I only work here.',next:'ask'},
+    petfood:{who:'npc',text:'Ah. You have made a friend down here. I keep a sack of the proper stuff for each of them \u2014 they will eat anything, mind, but they will WORK for their own. Help yourself; leave the coin in the tin.',next:'ask'},
     bye:{who:'npc',text:'Mind the gate. And if you see Larry \u2014 you have not seen me.',next:null}
   };
 }
@@ -26060,8 +26880,8 @@ const _RAID_R0=raidRoomFootprint(0);
 const RAID_ENTRY={x:Math.round(_RAID_R0.cx), y:_RAID_R0.y1-1};   /* arrive at the south end of room 0 */
 const RAID_PORTAL={x:254,y:49};   /* RUNTIME. The cellar hatch: lawn against Coit's north wall, E of Larry. Must equal the source x in the addObj above + WX. */
 const RAID_RETURN={x:254,y:48};   /* RUNTIME. You climb out onto the path tile just north of the hatch (walkable, adjacent). */
-const RAID_CAVE_OBJS={raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1};   /* objects that live INSIDE the raid instance */
-const RAID_APPARATUS={raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1};   /* per-run objects cleared + rebuilt each layout */
+const RAID_CAVE_OBJS={raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1};   /* objects that live INSIDE the raid instance */
+const RAID_APPARATUS={raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1};   /* per-run objects cleared + rebuilt each layout */
 const raidTiles=TILES_MAIN.map(r=>r.slice());
 const raidGroup=new THREE.Group();raidGroup.visible=false;scene.add(raidGroup);
 const _raidFY=groundH(RAID_ENTRY.x,RAID_ENTRY.y);   /* flat floor height for the whole instance */
@@ -26560,9 +27380,23 @@ function _raidWallPt(f, room, a, inset){
   return {x:g.cx+ca*t, z:g.cz+sa*t, yaw};
 }
 /* Ring of N points inside the wall -- the honest way to furnish a room whose shape you do not know. */
+/* Is (x,z) close enough to a doorway that a prop there would block the way? */
+function _raidNearDoor(x,z,r){
+  r=r||3.0;
+  for(const key in _raidDoorRooms){ const q=key.split(',');
+    if(Math.hypot((+q[0])+0.5-x,(+q[1])+0.5-z)<r)return true; }
+  return false;
+}
+/* Ring of points inside the wall, SKIPPING anything that would furnish a doorway shut. Nothing used
+   to tell this to leave the doors alone, so rooms grew walls of vials and shelves across their own
+   exits. One guard here fixes every room at once. */
 function _raidWallRing(f, room, n, inset, phase){
   const out=[];
-  for(let i=0;i<n;i++)out.push(_raidWallPt(f,room,(phase||0)+i/n*Math.PI*2,inset));
+  for(let i=0;i<n;i++){
+    const p=_raidWallPt(f,room,(phase||0)+i/n*Math.PI*2,inset);
+    if(_raidNearDoor(p.x,p.z))continue;
+    out.push(p);
+  }
   return out;
 }
 /* Exact-position wall torch. The tile-based _rbTorch rounds to a tile centre, which leaves a sconce
@@ -26748,7 +27582,10 @@ function _raidRoomLindsay(out, f, room){
       const sy=_raidFY+0.5+sh*0.5;
       bake(out, box(1.6,0.05,0.44), 0x3a2c1c, p.x, sy-0.22, p.z, p.yaw);
       for(let j=-2;j<=2;j++){
-        const ox=-Math.sin(p.yaw)*j*0.3, oz=Math.cos(p.yaw)*j*0.3;
+        /* spread ALONG the shelf, i.e. the board's own local X = (cos yaw, -sin yaw). This used the
+           drum's tangent formula (-sin, cos), which takes a BEARING -- on a yaw it points straight
+           OUT of the wall, which is why the vials stood perpendicular to their backdrop. */
+        const ox=Math.cos(p.yaw)*j*0.3, oz=-Math.sin(p.yaw)*j*0.3;
         bake(out, new THREE.CylinderGeometry(0.11,0.11,0.34,8), GLASS, p.x+ox, sy, p.z+oz);
         if(((j+sh)%3)===0)   /* something in this one */
           bake(out, new THREE.SphereGeometry(0.07,6,5), 0x8a6a5a, p.x+ox, sy-0.04, p.z+oz);
@@ -27085,6 +27922,15 @@ function _raidRoomEntrance(out, f, room){
      behind the steps and frame the opening, so it reads as the way you came in. ---- */
   const sxc=Math.round((f.x0+f.x1)/2);
   for(let ox=-1;ox<=1;ox++)_raidWallOpen[(sxc+ox)+','+(f.y1+1)]=1;     /* the hole */
+  /* THE LOBBY KIT: a bank chest and a display of the best arms the school has seen, so a party can
+     gear up before they go down. Placed either side of Ellison (room centre), clear of the ladder. */
+  if(room.type==='entrance'&&raid&&raid.floor===1){
+    const cxr=Math.round(f.cx), czr=Math.round(f.cz);
+    const bk=addObj('raid_bank',cxr-5,czr,true);
+    if(bk){ bk.raidRoom=room.idx; bk.raidFloor=1; if(typeof buildObjModel==='function')buildObjModel(bk); if(bk._m&&bk._m.group)bk._m.group.visible=false; }
+    const gt=addObj('raid_geartable',cxr+5,czr,true);
+    if(gt){ gt.raidRoom=room.idx; gt.raidFloor=1; if(typeof buildObjModel==='function')buildObjModel(gt); if(gt._m&&gt._m.group)gt._m.group.visible=false; }
+  }
   const sx=sxc+0.5, wz=f.y1+1.5;
   /* a brick shaft rising behind the ladder, framed */
   for(const side of [-1,1])
@@ -27190,7 +28036,12 @@ function raidBuildInterior(graph, fl){
     else if(room.type==='boss')_raidRoomBoss(out,f,room);
     else if(room.type==='resource'){ _raidBuildRoom(out,f,room);   /* was calling _raidRoomScavenger directly, which bypassed the per-room dispatch */
       const nx=Math.round(f.cx), ny=Math.round(f.cz);
-      const node=addObj('raid_node',nx,ny,true); if(node){ node.raidCharges=RAID_NODE_CHARGES; node.raidRoom=room.idx; node.raidFloor=room.floor; if(typeof buildObjModel==='function')buildObjModel(node); if(node._m&&node._m.group)node._m.group.visible=false; }
+      const node=addObj('raid_node',nx,ny,true); if(node){
+        /* charges live in ROOM STATE, not on the object: the object is recreated on every floor
+           rebuild (and every death), so keeping them here refilled the cache -- infinite rations. */
+        const _rs=_raidRoomState(room.idx, room.floor);
+        if(_rs.cacheLeft===undefined)_rs.cacheLeft=RAID_NODE_CHARGES;
+        node.raidCharges=_rs.cacheLeft; node.raidRoom=room.idx; node.raidFloor=room.floor; if(typeof buildObjModel==='function')buildObjModel(node); if(node._m&&node._m.group)node._m.group.visible=false; }
     }
     else if(room.type==='puzzle'){ _raidBuildRoom(out,f,room); _raidPlacePuzzle(room, f); }
     else if(room.type==='stair'){ _raidBuildRoom(out,f,room);
@@ -27268,7 +28119,100 @@ const RAID_UNIQUE_MAX_ROLLS=6;       /* CoX-exact */
    Keep this comment ABOVE the const -- a multi-line comment trailing a const breaks any single-line
    extraction (it reads as an unterminated block comment and swallows the code after it). */
 const RAID_COINS_PER_PT=2;
-const RAID_UNIQUES=['chimera_fang','archivist_codex','delve_cape'];
+/* THE UNIQUE TABLE -- 69 weight, CoX-shaped: the most wanted item is the rarest, and the QoL items
+   soak the weight (the job the prayer scrolls do in CoX). Every entry is an EFFECT, not a stat line,
+   so none of it can out-stat the Ember set or the Cinderforge weapons.
+   Chimera fang + Archivist's codex were CUT: the fang was whip-tier melee competing head-on with
+   Emberbrand, and the codex duplicated the Halcyon Grimoire almost stat-for-stat. */
+/* ============ THE COMMON TABLE ============
+   CoX gives TWO DIFFERENT commons, quantity scaled by PERSONAL points, and a unique REPLACES them
+   entirely (Wiki: "If one of these items is received, no common rewards are given"). Coins are the one
+   deliberate deviation -- always paid, because Sam wants the delve to be Milville's repeatable combat
+   gold and a coin-flip would undermine that.
+   EVERY id below verified present in the file. Excluded per Sam: prayer_draught, ember_brew,
+   embercarp, warrant, frost_shard, ember_feather, obsidian_shard. No yew/magic logs -- Milville's
+   logs stop at willow. */
+const RAID_COMMON_TABLE=[
+  {id:'rune_bar',      w:8,  q:[2,5]},
+  {id:'adamant_bar',   w:9,  q:[3,7]},
+  {id:'mithril_bar',   w:9,  q:[4,9]},
+  {id:'runite_ore',    w:7,  q:[2,5]},
+  {id:'berrite_ore',   w:6,  q:[2,4]},
+  {id:'adamant_ore',   w:9,  q:[3,7]},
+  {id:'willow_logs',   w:9,  q:[8,18]},
+  {id:'oak_logs',      w:8,  q:[10,22]},
+  {id:'raw_swordfish', w:8,  q:[4,9]},
+  {id:'raw_lobster',   w:9,  q:[5,12]},
+  {id:'death_rune',    w:8,  q:[15,40]},
+  {id:'blood_rune',    w:7,  q:[12,32]},
+  {id:'chaos_rune',    w:9,  q:[25,60]},
+  {id:'nature_rune',   w:8,  q:[20,45]},
+  {id:'big_bones',     w:9,  q:[8,20]},
+  {id:'cinders',       w:7,  q:[250,250]},   /* Sam's number: meaningful, but the volcano stays where you earn them */
+  {id:'blood_shard',   w:5,  q:[1,1]},       /* ~1 in 2 runs across two rolls -- feeds the amulet */
+  {id:'party_token',   w:7,  q:[1,2]},       /* gives the Party Room a reason to exist again */
+  {id:'potion_strength',w:5, q:[2,4]},
+  {id:'potion_ranged', w:4,  q:[2,4]},
+  {id:'potion_magic',  w:4,  q:[2,4]},
+  {id:'elixir_strength',w:3, q:[1,2]},
+  {id:'elixir_ranged', w:3,  q:[1,2]},
+  {id:'elixir_magic',  w:3,  q:[1,2]},
+];
+const RAID_COMMON_WEIGHT=RAID_COMMON_TABLE.reduce((a,b)=>a+b.w,0);
+/* Two DIFFERENT commons. Quantity scales with PERSONAL points -- CoX caps common scaling well below
+   where uniques keep counting; ours saturates at a maxed solo run (~30k). */
+function raidRollCommons(personal){
+  const scale=Math.max(0.35, Math.min(1.6, (personal||0)/30000));
+  const out=[]; const seen={};
+  for(let n=0;n<2;n++){
+    for(let tries=0;tries<40;tries++){
+      let r=Math.random()*RAID_COMMON_WEIGHT, pick=null;
+      for(const t of RAID_COMMON_TABLE){ if(r<t.w){pick=t;break;} r-=t.w; }
+      if(!pick||seen[pick.id])continue;            /* never the same thing twice (CoX) */
+      seen[pick.id]=1;
+      const base=rndi(pick.q[0],pick.q[1]);
+      out.push({id:pick.id, qty:Math.max(1,Math.round(base*scale))});
+      break;
+    }
+  }
+  return out;
+}
+/* Cosmetics: 1/120 a run. Rolls the Party Room's own shape -- 10% santa, else one of the six phats.
+   These already exist and already drop from the balloons and from clues; the delve is a SECOND SOURCE. */
+/* PETS: their OWN roll, not gated behind a unique. At 1/29 for a purple, hanging pets off it would put
+   them at 1/1,450 runs (~170 hours) -- fine for a game with a 20-year horizon, absurd for Milville,
+   where endgame is 8-10 hours. Sam also cut the boss restriction, so it is a flat pick of the five. */
+const RAID_PET_CHANCE=1/50;
+const RAID_PETS=['pet_gorger','pet_marrow','pet_magpie','pet_pebble','pet_hackles'];
+function raidRollPet(){
+  if(Math.random()>=RAID_PET_CHANCE)return null;
+  const pool=RAID_PETS.filter(id=>countItem(id)<1 && !(player.pet&&player.pet.id===id));   /* never a duplicate */
+  if(!pool.length)return null;
+  return pool[rndi(0,pool.length-1)];
+}
+const RAID_COSMETIC_CHANCE=1/120;
+function raidRollCosmetic(){
+  if(Math.random()>=RAID_COSMETIC_CHANCE)return null;
+  if(Math.random()<0.10)return 'santa_hat';
+  const P=['party_hat_red','party_hat_yellow','party_hat_blue','party_hat_green','party_hat_white','party_hat_purple'];
+  return P[rndi(0,P.length-1)];
+}
+const RAID_UNIQUE_TABLE=[
+  {id:'larder_charm',      w:18},   /* 26%   ~1/111 solo runs */
+  {id:'thrift_gauntlets',  w:16},   /* 23%   ~1/125 */
+  {id:'ring_wealth',       w:13},   /* 19%   ~1/154 */
+  {id:'ring_suffering',    w:11},   /* 16%   ~1/182 */
+  {id:'lightbearer',       w:7},    /* 10%   ~1/286 */
+  {id:'amulet_blood_fury', w:4},    /* 5.8%  ~1/500 -- the chase */
+];
+const RAID_UNIQUE_WEIGHT=RAID_UNIQUE_TABLE.reduce((a,b)=>a+b.w,0);   /* 69, as CoX's table sums to 69 */
+/* Roll WHICH unique, by weight. */
+function raidRollUnique(){
+  let r=Math.random()*RAID_UNIQUE_WEIGHT;
+  for(const t of RAID_UNIQUE_TABLE){ if(r<t.w)return t.id; r-=t.w; }
+  return RAID_UNIQUE_TABLE[0].id;
+}
+const RAID_UNIQUES=RAID_UNIQUE_TABLE.map(t=>t.id);   /* kept: other code reads this list */
 /* The 3 bosses. Each reuses an existing mob KIND for its model/AI (a stone colossus, a fire beast,
    a caster) but carries its own raid name + raidBase stats; bespoke boss models are later polish.
    `sig` is the signature mechanic wired in raidBossTick. */
@@ -27495,6 +28439,45 @@ function _raidWasDoor(x,y){ return !!(_raidDoorSet&&_raidDoorSet.has(x+','+y)); 
    seal. Without these the guardian doors were invisible -- you just walked through a hole. */
 let _raidDoors={};
 let _raidOrb=null;
+/* ============ THE REWARD BEAM ============
+   CoX's best idea, and it costs almost nothing: the light over YOUR chest says what you got before you
+   have read a single line of chat. White = two commons. Purple = a unique. Gold = a pet. Turquoise = a
+   party hat. Hit more than one and it ALTERNATES between them -- which is the game bragging for you. */
+const RAID_BEAM_COL={white:0xf2f2ea, purple:0xc060ff, gold:0xffd24a, turquoise:0x3fd0c0};
+let _raidBeam=null;          /* {mesh, core, cols:[], t0} */
+function raidSetChestBeam(o, cols){
+  cols=(cols&&cols.length)?cols.filter(c=>RAID_BEAM_COL[c]):['white'];
+  if(!cols.length)cols=['white'];
+  const H=14;
+  const g=new THREE.Group();
+  const shaft=new THREE.Mesh(new THREE.CylinderGeometry(0.55,0.95,H,16,1,true),
+    new THREE.MeshBasicMaterial({color:RAID_BEAM_COL[cols[0]],transparent:true,opacity:0.22,side:THREE.DoubleSide,depthWrite:false}));
+  shaft.position.y=H/2; g.add(shaft);
+  const core=new THREE.Mesh(new THREE.CylinderGeometry(0.16,0.28,H,12,1,true),
+    new THREE.MeshBasicMaterial({color:RAID_BEAM_COL[cols[0]],transparent:true,opacity:0.55,side:THREE.DoubleSide,depthWrite:false}));
+  core.position.y=H/2; g.add(core);
+  const pool=new THREE.Mesh(new THREE.CircleGeometry(1.3,20),
+    new THREE.MeshBasicMaterial({color:RAID_BEAM_COL[cols[0]],transparent:true,opacity:0.30,depthWrite:false}));
+  pool.rotation.x=-Math.PI/2; pool.position.y=0.06; g.add(pool);
+  g.position.set(o.x+0.5,_raidFY,o.y+0.5);
+  raidGroup.add(g);
+  _raidBeam={g, parts:[shaft,core,pool], cols, t0:performance.now()};
+  if(cols.length>1)msg('The light over the strongbox will not settle on one colour.','#c9a23a');
+}
+/* alternate between colours when you hit more than one, and breathe */
+function raidBeamTick(){
+  if(!_raidBeam)return;
+  if(!inRaid){ if(_raidBeam.g&&_raidBeam.g.parent)_raidBeam.g.parent.remove(_raidBeam.g); _raidBeam=null; return; }
+  const t=(performance.now()-_raidBeam.t0)/1000;
+  const idx=_raidBeam.cols.length>1 ? Math.floor(t*1.2)%_raidBeam.cols.length : 0;
+  const hex=RAID_BEAM_COL[_raidBeam.cols[idx]];
+  const puls=0.85+0.15*Math.sin(t*3.2);
+  for(const p of _raidBeam.parts){ if(p.material){ p.material.color.setHex(hex); } }
+  _raidBeam.parts[0].material.opacity=0.22*puls;
+  _raidBeam.parts[1].material.opacity=0.55*puls;
+  _raidBeam.parts[2].material.opacity=0.30*puls;
+  _raidBeam.g.rotation.y=t*0.25;
+}
 let _raidRoomMesh={};
 /* ============================ LIGHT ============================
    The delve was lit BY DAYLIGHT. `hemi` is a sky-blue hemisphere at 0.72 and `sun` a warm directional
@@ -27672,9 +28655,12 @@ function raidOnMobDead(r){
    (CoX-style capped resource room). The cache empties and hides when picked clean. */
 function raidHarvestNode(o){
   if(!o||o.def!=='raid_node')return;
+  const _rs=raid&&raid.roomState&&raid.roomState[_raidRK(o.raidRoom,o.raidFloor)];
+  if(_rs&&_rs.cacheLeft!==undefined)o.raidCharges=_rs.cacheLeft;   /* the room remembers, the object does not */
   if((o.raidCharges|0)<=0){ msg('The cache is picked clean.','#9a8a6a'); return; }
   if(typeof addItem==='function' && !addItem('raid_ration',1)){ msg('Your pack is too full to carry any more.'); return; }
   o.raidCharges=(o.raidCharges|0)-1;
+  if(_rs)_rs.cacheLeft=o.raidCharges;                              /* persist, so a rebuild cannot refill it */
   if(typeof raidAwardPoints==='function')raidAwardPoints('resource', raidRoomAt(o.x,o.y), 4);
   if(typeof addXp==='function')addXp('hitpoints',10);
   if(o.raidCharges<=0){ msg('You scrape the last ration from the cache - it is picked clean now.','#9fd06a'); if(o._m&&o._m.group)o._m.group.visible=false; o.alive=false; }
@@ -27732,7 +28718,7 @@ function _raidPlacePuzzle(room, f){
        than a random scatter, because a random board can be unsolvable. */
     const cx=Math.round(f.cx), cy=Math.round(f.cz);
     put('raid_lens',f.x0+1,cy,{});
-    put('raid_crabsign',f.x0+1,cy-2,{});
+    put('raid_crabsign',Math.round(f.cx),cy-5,{});   /* central and clear of the beam line (cy), not tucked by the door */
     put('raid_bench',f.x0+1,cy+2,{});
     /* A in the bead's path, B further along it, C south of B. Every socket is reachable:
          red   -> tune A red                      (bend south into the red socket)
@@ -27778,6 +28764,15 @@ function _raidPlacePuzzle(room, f){
   }
 }
 /* Lend the player the two instruments the puzzle might otherwise be impossible without. */
+/* Feed the amulet. A shard is 1,000 charges; a proc costs 1. */
+function useBloodShard(){
+  if(countItem('blood_shard')<1){ msg('You have no blood shards.','#9a8a6a'); return; }
+  if(!hasDelveItem('amulet_blood_fury')&&countItem('amulet_blood_fury')<1){
+    msg('You have nothing to feed it to.','#9a8a6a'); return; }
+  takeItems('blood_shard',1);
+  player._bloodFury=(player._bloodFury|0)+BLOOD_SHARD_CHARGES;
+  msg('The shard dissolves into the amulet. '+fmt(player._bloodFury)+' charges.','#d23b4e');
+}
 function raidTakeInstruments(o){
   let got=0;
   for(const id of ['raid_lab_rod','raid_lab_wand']){
@@ -27840,7 +28835,12 @@ function raidShowCrabSign(){
    green ranged -- so you have to switch styles rather than click a menu. */
 function raidStrikePrism(o){
   if(!o||o.def!=='raid_prism')return;
-  const ws=(typeof weaponStyle==='function')?weaponStyle(player.equip&&player.equip.weapon&&player.equip.weapon.equip):'melee';
+  /* the slot holds {id}, NOT the item -- look the equip block up, exactly as the combat code does
+     (const _weq=_w&&ITEMS[_w.id]&&ITEMS[_w.id].equip). Reading .equip off the slot gives undefined,
+     and weaponStyle(undefined) is 'melee' -- which is why EVERY strike made a RED prism. */
+  const _w=player.equip&&player.equip.weapon;
+  const _weq=_w&&ITEMS[_w.id]&&ITEMS[_w.id].equip;
+  const ws=(typeof weaponStyle==='function')?weaponStyle(_weq):'melee';
   const col=RAID_CRAB_COL[ws]||'red';
   o.col=col;
   if(o._crystalRef&&o._crystalRef.material)o._crystalRef.material.color.setHex(RAID_COL_HEX[col]);
@@ -27973,7 +28973,7 @@ function raidLightBrazier(o){
   if(o.lit){ msg('That brazier is already burning.','#9a8a6a'); return; }
   if(!o.fuelled){
     if(countItem('raid_kindling')<1){ msg('The brazier is bare. It needs kindling - chop the frozen timbers.','#9a8a6a'); return; }
-    removeItem('raid_kindling',1); o.fuelled=true;
+    takeItems('raid_kindling',1); o.fuelled=true;   /* removeItem() does not exist here -- it threw, so a brazier could never be lit and the Ice Demon room was unsolvable */
     msg('You pack the brazier with frozen kindling.','#9fd06a');
   }
   if(lvl('firemaking')<RAID_ICE_FM){ msg('You need Firemaking '+RAID_ICE_FM+' to light this.'); return; }
@@ -28018,27 +29018,52 @@ function raidClaimChest(o){
   const mine=raidMyPoints(), total=raidTotalPoints();
   if(mine<=0){ msg('You did nothing to earn a share of this.','#9a8a6a'); return; }
   o.claimed=true;
+  const give=(id,n)=>{ if(typeof addItem!=='function'||!addItem(id,n))dropGround(player.x,player.y,id,n); };
+
+  /* COINS ALWAYS. The one deliberate break from CoX (where coins are just another common): the delve
+     is meant to be Milville's repeatable combat gold, and a coin-flip would undermine that. */
   const coins=Math.max(1,Math.round(mine*RAID_COINS_PER_PT));
-  if(typeof addItem==='function'&&!addItem('coins',coins))dropGround(player.x,player.y,'coins',coins);
-  msg('Delve complete - '+fmt(mine)+' points. You take '+fmt(coins)+' coins.','#ffd24a');
-  /* the unique roll happens once for the raid; the leader-most deterministic path is simply: each
-     client rolls its OWN share so solo always works, and MP hands out exactly one in a group. */
+  give('coins',coins);
+
+  /* THE UNIQUE ROLL. Team points buy the chance; your PERSONAL share decides whether it is yours. */
   const rolls=raidUniqueRolls(total);
-  const share=total>0?(mine/total):1;   /* personal points decide WHO gets it (CoX) */
-  let got=0;
-  for(const r of rolls){ if(Math.random()<r*share){
-    const id=RAID_UNIQUES[Math.floor(Math.random()*RAID_UNIQUES.length)];
-    if(typeof addItem==='function'&&!addItem(id,1))dropGround(player.x,player.y,id,1);
-    msg('The hoard yields something rare - '+ITEMS[id].name+'!','#c060ff');
-    if(typeof MP!=='undefined'&&MP.sendRaidUnique)MP.sendRaidUnique(id);
-    got++;
-  } }
-  if(!got){
-    if(typeof addItem==='function')addItem('raid_ration',2);
-    let miss=1; for(const r of rolls)miss*=(1-r*share);
-    msg('No rarity this time ('+((1-miss)*100).toFixed(1)+'% you had).','#9a8a6a');
+  const share=total>0?(mine/total):1;
+  const won=[];
+  for(const r of rolls) if(Math.random()<r*share) won.push(raidRollUnique());
+
+  const beams=[];
+  if(won.length){
+    /* A UNIQUE REPLACES YOUR COMMONS. Wiki: "If one of these items is received, no common rewards are
+       given." It is never both -- which is what makes the beam feel like a lightning strike. */
+    for(const id of won){
+      give(id,1);
+      msg('\u2728 The strongbox yields ' + ITEMS[id].name + '!','#c060ff');
+      if(typeof MP!=='undefined'&&MP.sendRaidUnique)MP.sendRaidUnique(id);
+    }
+    beams.push('purple');
+  } else {
+    /* TWO DIFFERENT commons, quantity scaled to your personal points. */
+    const lot=raidRollCommons(mine);
+    const names=[];
+    for(const c of lot){ give(c.id,c.qty); names.push((c.qty>1?fmt(c.qty)+' ':'')+ITEMS[c.id].name); }
+    msg('Delve complete \u2014 '+fmt(mine)+' points. You take '+fmt(coins)+' coins'
+      +(names.length?', '+names.join(' and '):'')+'.','#ffd24a');
+    beams.push('white');
   }
-  if(typeof raidAwardPoints==='function'){ raid.points[(player&&player.uid)||'me']=0; }   /* share taken */
+
+  /* COSMETIC SUB-ROLL -- rides alongside, never dilutes the table above. */
+  const cos=raidRollCosmetic();
+  if(cos){ give(cos,1); msg('\ud83c\udf88 Something impossible falls out of the strongbox: '+ITEMS[cos].name+'!','#3fd0c0'); beams.push('turquoise'); }
+
+  /* PET SUB-ROLL -- Phase 5 wires the pets themselves; the hook lives here. */
+  if(typeof raidRollPet==='function'){ const pet=raidRollPet();
+    if(pet){ give(pet,1); msg('\u2b50 Something has followed you out of the dark: '+ITEMS[pet].name+'!','#ffd24a'); beams.push('gold'); } }
+
+  if(typeof raidSetChestBeam==='function')raidSetChestBeam(o,beams);
+  /* CoX broadcasts a purple to the whole raid -- the beam is the group moment, not a private one */
+  if(typeof MP!=='undefined'&&MP.sendRaidBeam)for(const b of beams)if(b!=='white')MP.sendRaidBeam(b);
+  if(typeof raidAwardPoints==='function'){}
+  raid.claimedAt=performance.now();
 }
 /* Boss signature mechanics, ticked while the boss lives. Deliberately light-touch in v1:
    slam = a telegraphed hard hit; flare = burst damage if you stand still; silence = drains prayer. */
@@ -28163,8 +29188,21 @@ function raidBossTick(){
 function raidDeath(){
   const uid=(player&&player.uid)||'me';
   raid.points=raid.points||{};
-  const lost=Math.round((raid.points[uid]||0)*RAID_DEATH_LOSS);
-  raid.points[uid]=Math.max(0,(raid.points[uid]||0)-lost);
+  const mine=raid.points[uid]||0;
+  const total=(typeof raidTotalPoints==='function')?raidTotalPoints():mine;
+  /* CoX's real rule, both halves of it: you lose 40% of YOUR points -- UNLESS you are carrying under
+     5% of the team's, in which case the TEAM loses 5% instead. It stops a passenger dying for free:
+     with almost no points of your own, 40% of nothing is no penalty at all. */
+  let lost=0;
+  if(total>0 && mine < total*0.05){
+    const teamCut=0.05;
+    for(const k in raid.points)raid.points[k]=Math.max(0,Math.round((raid.points[k]||0)*(1-teamCut)));
+    if(raid.peerPoints)for(const k in raid.peerPoints)raid.peerPoints[k]=Math.max(0,Math.round((raid.peerPoints[k]||0)*(1-teamCut)));
+    msg('You had almost nothing to lose \u2014 the whole team pays 5% for that one.','#9c1f1f');
+  } else {
+    lost=Math.round(mine*RAID_DEATH_LOSS);
+    raid.points[uid]=Math.max(0,mine-lost);
+  }
   player.deaths=(player.deaths||0)+1; dirty=true;
   player.hp=maxHp(); player.pray=0; deactivateAllPrayers(); updatePrayOrb(); updateOrb();
   const mates=(typeof MP!=='undefined'&&MP.raidPeersHere)?MP.raidPeersHere().length:0;
@@ -28197,6 +29235,8 @@ function raidResetRoom(idx){
   const stt=raid.roomState[_raidRK(idx)]; if(!stt)return;
   for(const i of (stt.mobIdx||[])){ const m=rats[i]; if(m){ m.alive=false; m.target=null; m.respawnAt=9e15; if(m._m&&m._m.group)m._m.group.visible=false; } }
   stt.mobIdx=[]; stt.spawned=false; stt.cleared=false;
+  /* NOTE: stt.cacheLeft is deliberately NOT reset -- resetting a room must not refill its cache,
+     or dying becomes a ration farm. */
   if(stt.puz){ stt.puz.solved=false; stt.puz.peerPlates={};
     for(const [x,y] of stt.puz.spots){ const o=objects.find(z=>z.x===x&&z.y===y&&(z.def==='raid_plate'||z.def==='raid_brazier'));
       if(o){ o.lit=false; o.pressT=0; o.litUntil=0; o._meOn=false; if(o.def==='raid_plate')_raidSetPlateVisual(o,false); else _raidSetBrazierVisual(o,false); } } }
@@ -28335,59 +29375,84 @@ function restoreRaid(ss){
 /* The entry brief. The delve had ZERO onboarding -- you fell down a hole with no explanation of
    scaling, points, death, or the chest. This is the rules screen you get BEFORE committing (CoX shows
    a party/size screen; ours also has to teach the whole system because nothing else does). */
-function raidShowEntryPanel(){
-  const ps=_raidPartySize(), cl=_raidMyCombat();
-  const sc=raidComputeScale(ps,cl);
-  /* NARRATIVE FIRST. Assume the reader has never heard the word "raid": tell them the story, tell
-     them what the thing IS and why they'd want to, and keep the numbers to a short footnote. */
+/* THE NOTICE BOARD. All of this used to be the panel you saw every single time you started a run --
+   which is exactly the wrong place for it. Lore is a thing you read ONCE. It lives on a board by the
+   hatch, and on a second board next to Ellison for anyone who came down without reading it. */
+function raidShowSign(){
   const html=
-    '<div style="text-align:left;max-height:48vh;overflow:auto;line-height:1.5">'
+    '<div style="text-align:left;max-height:52vh;overflow:auto;line-height:1.5">'
     +'<div style="color:#c9a23a;font-style:italic;margin-bottom:8px">'
     +'They laid the first stone in 1856. They did not ask what was already here.</div>'
-    +'<p style="margin:0 0 8px">Every building on these grounds is joined underneath by steam tunnels \u2014 '
-    +'brick, pipework, and a hundred and seventy years of things the school would rather forget. '
+    +'<p style="margin:0 0 8px">Every building on these grounds is joined underneath by steam tunnels '
+    +'\u2014 brick, pipework, and a hundred and seventy years of things the school would rather forget. '
     +'The Chapel has an undercroft. Drury has sewers. Ohrstrom\u2019s stacks go down further than the '
-    +'catalogue admits. Somewhere under all of it, the thing the foundation was laid on top of is '
-    +'still down there, and it has had a very long time to think about it.</p>'
-    +'<p style="margin:0 0 8px">Larry keeps the cellar door shut. He is not, on the whole, wrong to.</p>'
+    +'catalogue admits. You can walk from one end of the school to the other and never see the sky.</p>'
+    +'<p style="margin:0 0 8px">Something down there has had a long time to think about being built on.</p>'
     +'<hr style="border-color:#3a3226">'
-    +'<b style="color:#8fd0ff">What a delve actually is</b>'
-    +'<p style="margin:4px 0 8px">A run down through the tunnels \u2014 <b>on your own or with up to three '
-    +'friends</b>. You go room by room: some hold something that has to be killed, some hold a problem '
-    +'that has to be solved. <b>The way out seals behind you each time</b>, so there is no slipping past '
-    +'anything. Clear a room and the next opens.</p>'
-    +'<p style="margin:0 0 8px">At the bottom is <b>The Cornerstone</b>. Put it down and a strongbox comes '
-    +'up out of the flagstones \u2014 <b>coin for everyone, and a chance at something rare that exists '
-    +'nowhere else in Milville</b>. Then you climb out and do it again, because the tunnels are never '
-    +'quite the same twice.</p>'
-    +'<p style="margin:0 0 8px;color:#9fd06a">It takes five or ten minutes. <b>It is built to be better '
-    +'with company</b> \u2014 but it will not stop you going alone.</p>'
-    +'<hr style="border-color:#3a3226">'
-    +'<b style="color:#8fd0ff">Before you go down</b>'
-    +'<ul style="margin:4px 0 0;padding-left:18px">'
-    +'<li><b>It sizes itself to you.</b> Nothing down there is tuned for someone else\u2019s character \u2014 '
-    +'come at any level.</li>'
-    +'<li><b>Your gear is never at risk.</b> Die and you lose progress on the run, not your things.</li>'
-    +'<li><b>Bring your own food.</b> There is a little to scavenge, but not much.</li>'
+    +'<b style="color:#8fd0ff">How a delve goes</b>'
+    +'<ul style="margin:4px 0 8px;padding-left:18px">'
+    +'<li><b>The cellar is safe.</b> Gather whoever is coming, bank, kit up. Nothing starts until '
+    +'someone opens the gate.</li>'
+    +'<li><b>Then it takes you room by room.</b> Some hold something that needs killing; some hold a '
+    +'problem that needs solving. <b>The way seals behind you</b> \u2014 you finish a room or you stand in it.</li>'
+    +'<li><b>Three levels down</b>, each worse than the last, and at the bottom is the Cornerstone: the '
+    +'thing the school was built on top of.</li>'
+    +'<li><b>It sizes itself to you.</b> Come at any level. More friends means more of them, '
+    +'<b>never harder ones</b>.</li>'
+    +'<li><b>Your gear is never at risk.</b> Die and you lose progress, not your things. A friend can '
+    +'haul you up; alone, you wake a level higher and walk it again.</li>'
+    +'<li><b>Bring food.</b> There is a little to scavenge, and not much.</li>'
     +'</ul>'
     +'<hr style="border-color:#3a3226">'
-    +'<b style="color:#8fd0ff">What the tunnels will be like for you, right now</b>'
-    +'<p style="margin:4px 0 6px">'
+    +'<p style="margin:0;color:#9a8a6a">Beneath, in a different hand: <i>\u201cthe shipments are not lost. '
+    +'ask the kitchens.\u201d</i></p>'
+    +'</div>';
+  gameConfirm('Notice board', html, null, 'Close', null, null);
+}
+function raidShowEntryPanel(){
+  /* THE LOBBY BOARD. This used to be a wall of lore -- which belongs on a signpost you read once, not
+     on the button you press every single run. What you actually need at this moment is: who is coming,
+     what level they are, and what that does to the delve. */
+  const ps=_raidPartySize(), cl=_raidPartyCombat(), mine=_raidMyCombat();
+  const sc=raidComputeScale(ps,cl);
+  const roster=[{name:(player.name||'You'), cl:mine, me:1}];
+  if(raid&&raid.peerCombat)for(const uid in raid.peerCombat){
+    let nm=uid;
+    if(typeof MP!=='undefined'&&MP._RP&&MP._RP.get(uid)&&MP._RP.get(uid).name)nm=MP._RP.get(uid).name;
+    roster.push({name:nm, cl:raid.peerCombat[uid]|0});
+  }
+  const rows=roster.map(r=>{
+    const top=(r.cl===cl);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid #2a241c">'
+      +'<div style="flex:1">'+(r.me?'<b>':'')+r.name+(r.me?'</b>':'')
+      +(top?' <span style="color:#c9a23a;font-size:11px">\u2014 the delve reads this one</span>':'')+'</div>'
+      +'<div style="color:'+(top?'#ffd24a':'#8a8172')+';white-space:nowrap">combat '+r.cl+'</div></div>';
+  }).join('');
+  const pct=(x)=>Math.round(x*100)+'%';
+  const html=
+    '<div style="text-align:left;line-height:1.5">'
+    +'<b style="color:#8fd0ff">Your party ('+ps+'/4)</b>'
+    +'<div style="margin:4px 0 10px">'+rows+'</div>'
+    +'<b style="color:#8fd0ff">What the tunnels will be, for you</b>'
+    +'<div style="margin:4px 0 10px;padding:8px;background:#1a1610;border:1px solid #2a241c;border-radius:4px">'
+    +'<div style="display:flex;justify-content:space-between"><span>Scaled to combat</span>'
+    +'<b style="color:#ffd24a">'+cl+(cl<RAID_CL_PLATEAU?'':' (full strength)')+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>Monster health</span>'
+    +'<b>'+pct(sc.hpMul)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>Monster damage</span>'
+    +'<b>'+pct(sc.dmgMul)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>How many of them</span>'
+    +'<b>'+pct(sc.countMul)+'</b></div>'
+    +'</div>'
     +(cl<RAID_CL_PLATEAU
-       ? 'You are <b>combat '+cl+'</b>. The delve reads that and <b>holds back</b> \u2014 everything down '
-        +'there will be weaker than it would be for a maxed character. You are not too low to come.'
-       : 'You are <b>combat '+cl+'</b>, so the delve comes at you at <b>full strength</b>. Nothing is held back.')
-    +'</p>'
-    +'<p style="margin:0 0 6px">'
-    +(ps<=1
-       ? 'You are going <b>alone</b>, so it is sized for one person.'
-       : 'There are <b>'+ps+' of you</b>, so the tunnels answer in kind: monsters have about '
-        +'<b>'+Math.round((sc.hpMul-1)*100)+'% more health</b> and there are roughly '
-        +'<b>'+Math.round((sc.countMul-1)*100)+'% more of them</b>.')
-    +' Either way <b>they never hit any harder</b> \u2014 a bigger group means more to swing at, '
-    +'not a rougher fight.</p>'
-    +'<p style="margin:0;color:#c9a23a"><b>This is decided the moment you go down and does not change '
-    +'afterwards</b> \u2014 so if someone else is joining you, wait for them up here.</p>'
+       ? '<p style="margin:0 0 6px;color:#9fd06a">The delve is <b>holding back</b> for you. You are not too low to come.</p>'
+       : '<p style="margin:0 0 6px;color:#c9483a">Nothing is held back at this level.</p>')
+    +(ps>1
+       ? '<p style="margin:0 0 6px">It reads <b>the highest combat level in the party</b>, so it is sized for '
+        +'whoever is strongest. More of you means more of them \u2014 <b>never harder ones</b>.</p>'
+       : '<p style="margin:0 0 6px;color:#8a8172">Going alone. It is sized for one.</p>')
+    +'<p style="margin:0;color:#c9a23a"><b>This locks when you open the gate.</b> If someone else is '
+    +'coming, wait for them.</p>'
     +'</div>';
   gameConfirm('The Delve', html, function(){ raidBeginDelve(); }, 'Enter the delve', null, 'Not yet');
 }
@@ -28409,7 +29474,7 @@ function raidBeginDelve(){
   for(const o of objects)if(o.def==='raid_lobbygate'&&o.alive){   /* it lifts, and stops blocking */
     o.alive=false; if(o._m&&o._m.group)o._m.group.visible=false; }
   msg('The gate grinds up. The tunnels have you.','#c9483a');
-  if(typeof MP!=='undefined'&&MP.sendRaidSeed)MP.sendRaidSeed(raid.seed, raid.large, raid.leaderUid, _raidMyCombat());
+  if(typeof MP!=='undefined'&&MP.sendRaidSeed)MP.sendRaidSeed(raid.seed, raid.large, raid.leaderUid, _raidPartyCombat());
   const to=(raid.rooms&&raid.rooms.length>1)?1:0;
   const e=_raidRoomEntryPoint(to);
   /* PUT them in the room. This used to walkTo(), which silently does nothing if the path is blocked --
@@ -28450,6 +29515,7 @@ function _raidEnterNow(){
   if(waterMesh)waterMesh.visible=false;
   /* AFTER the hide-loop above, or it wipes the reveal and room 0's props -- including the way OUT -- stay dark. */
   raid.seen={}; if(typeof raidRevealRoom==='function')raidRevealRoom(0);
+  if(typeof MP!=='undefined'&&MP.sendRaidCombat)MP.sendRaidCombat(_raidMyCombat());   /* so the party can scale to its highest */
   for(const n of npcs)if(n._g){ n._g.visible=(n.interior==='raid');
     /* re-seat him on the DELVE floor: his model was placed at load, using the overworld height at
        (22,56) -- deep wilderness -- so he was buried about a metre under the lobby. */
@@ -28463,7 +29529,9 @@ function _raidEnterNow(){
 }
 function exitRaid(){
   inRaid=false; tiles=TILES_MAIN; _raidRestore();
-  for(const id of ['raid_lab_rod','raid_lab_wand']){ while(countItem(id)>0)removeItem(id,1); }   /* lab kit never leaves the delve */
+  /* delve-only kit never leaves: the lab instruments, and the rations (free 18-heal food otherwise,
+     and the cache is repeatable). CoX drops all raid-only items on the way out for the same reason. */
+  for(const id of ['raid_lab_rod','raid_lab_wand','raid_ration']){ const _n=countItem(id); if(_n>0)takeItems(id,_n); }   /* removeItem() does not exist -- this THREW, so exitRaid never finished and you could not leave */
   for(const r of rats){ if(r.raid){ r.alive=false; r.target=null; r.respawnAt=9e15; if(r._m&&r._m.group)r._m.group.visible=false; } }   /* clear raid guardians */
   worldGroup.visible=true; raidGroup.visible=false;
   for(const n of npcs)if(n._g)n._g.visible=(n.interior!=='raid');   /* and nowhere else */
@@ -28581,7 +29649,10 @@ function _raidGenFloor(rng, floorNo, large, wantPuz){
   const total = large ? RAID_ROOMS_LARGE
                       : (RAID_ROOMS_MIN + Math.floor(rng()*(RAID_ROOMS_MAX-RAID_ROOMS_MIN+1)));
   const mid = total - 2;                 /* minus the entrance and the stair down */
-  const rest = Math.max(1, mid - 1);     /* minus the guaranteed scavenger room */
+  /* CoX runs "one or two scavenger rooms" per floor. Decide that FIRST and take it out of the budget:
+     bolting a second one on afterwards pushed floors to 9 rooms and broke the room count. */
+  const nScav = (mid>=4 && rng()<0.45) ? 2 : 1;
+  const rest = Math.max(1, mid - nScav);
   const nPuz = wantPuz ? 1 : 0;
   const nCom = Math.max(1, rest - nPuz);
 
@@ -28591,10 +29662,29 @@ function _raidGenFloor(rng, floorNo, large, wantPuz){
   const pool=combats.concat(puzzles);
   for(let i=pool.length-1;i>0;i--){ const j2=Math.floor(rng()*(i+1)); const t=pool[i];pool[i]=pool[j2];pool[j2]=t; }
 
-  /* CoX GUARANTEE: a scavenger room always appears BEFORE the first puzzle room. */
-  const firstPuz = pool.findIndex(r=>r.type==='puzzle');
-  const limit = (firstPuz<0) ? pool.length : firstPuz;
-  pool.splice(Math.floor(rng()*(limit+1)), 0, Object.assign({type:'resource'}, RAID_RESOURCE_ROOM));
+  /* TWO rules, and they fight each other if you are careless:
+       (a) CoX GUARANTEE: a scavenger room always appears BEFORE the first puzzle room.
+       (b) a scavenger must never be the room you OPEN on -- you have fought nothing yet, so there is
+           nothing to scavenge for.
+     Naively forcing (b) with max(1, ...) BREAKS (a) whenever the puzzle sits at index 0: the scavenger
+     lands at 1, i.e. AFTER it. (My own harness caught exactly that, 1868 times.) So make sure a COMBAT
+     room opens the floor first -- which is the right thing anyway -- and only then place the scavenger
+     somewhere in 1..firstPuzzle. */
+  let fp = pool.findIndex(r=>r.type==='puzzle');
+  if(fp===0){
+    const c0 = pool.findIndex(r=>r.type==='combat');
+    if(c0>0){ const t=pool[0]; pool[0]=pool[c0]; pool[c0]=t; fp=pool.findIndex(r=>r.type==='puzzle'); }
+  }
+  const limit = (fp<0) ? pool.length : fp;          /* the scavenger must land at or before this */
+  const lo = Math.min(1, limit);                     /* ...and at/after here, so it never opens the floor */
+  const at = lo + Math.floor(rng()*Math.max(1,(limit-lo+1)));
+  pool.splice(at, 0, Object.assign({type:'resource'}, RAID_RESOURCE_ROOM));
+  /* the second scavenger (already paid for above) goes anywhere after the first -- with exactly one,
+     22% of floors were literally the same shape (e-C-S-P-...). */
+  if(nScav>1){
+    const at2 = at+1 + Math.floor(rng()*Math.max(1,(pool.length-at-1)));
+    pool.splice(Math.min(at2,pool.length), 0, Object.assign({type:'resource'}, RAID_RESOURCE_ROOM));
+  }
 
   const rooms=[];
   rooms.push(Object.assign({idx:0,type:'entrance'}, RAID_ENTRANCE_ROOM, {floor:floorNo}));
@@ -28656,6 +29746,14 @@ function raidComputeScale(partySize, combatLvl){
   };
 }
 function _raidMyCombat(){ return (typeof cmbLvl==='function')?cmbLvl():99; }
+/* RESEARCHED: CoX scales the monsters to the HIGHEST combat level in the party (full scaling at
+   115+). The team AVERAGE affects POINTS, not difficulty. We used the LEADER's level as a proxy,
+   so a maxed friend leading for your alt brought the delve at you at full strength. */
+function _raidPartyCombat(){
+  let hi=_raidMyCombat();
+  if(raid&&raid.peerCombat)for(const k in raid.peerCombat)hi=Math.max(hi, raid.peerCombat[k]|0);
+  return hi;
+}
 function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl){
   const ps=_raidPartySize();
   const graph=raidGenGraph(seed>>>0, ps, !!large);   /* size is DERIVED from (seed, large) now -- variable, CoX-style */
@@ -28667,7 +29765,7 @@ function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl){
   raid.rooms=_f0.rooms; raid.edges=_f0.edges;     /* raid.rooms always means THIS FLOOR's rooms */
   raid.roomIdx=0; raid.leaderUid=leaderUid||(typeof player!=='undefined'?player.uid:null);
   raid.party=(function(){ if(typeof MP!=='undefined'&&MP.groupSnapshot){const g=MP.groupSnapshot(); if(g&&g.roster)return g.roster.map(m=>m.uid);} return (typeof player!=='undefined'&&player.uid)?[player.uid]:[]; })();
-  const cl=(combatLvl!==undefined&&combatLvl>0)?combatLvl:_raidMyCombat();
+  const cl=(combatLvl!==undefined&&combatLvl>0)?combatLvl:_raidPartyCombat();
   raid.scaleCL=cl; raid.scalePS=ps;
   raid.scale=raidComputeScale(ps, cl);
   raid.points=raid.points||{};
@@ -28680,7 +29778,7 @@ function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl){
 /* Leader entry point: roll a seed, apply it locally, and broadcast so the party matches. */
 function raidStart(large){
   const seed=raidRollSeed();
-  const cl=_raidMyCombat();
+  const cl=_raidPartyCombat();
   const g=raidApplySeed(seed, !!large, (typeof player!=='undefined'?player.uid:null), false, cl);
   if(typeof MP!=='undefined'&&MP.sendRaidSeed)MP.sendRaidSeed(g.seed, g.large, raid.leaderUid, cl);
   return g;
@@ -34379,6 +35477,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'rdplate': { if (m.uid === player.uid) break;   /* a groupmate's plate occupancy */
         if (typeof raidPeerPlate === 'function') raidPeerPlate(m.x | 0, m.y | 0, !!m.on);
         break; }
+      case 'rdcl': { if (m.uid === player.uid) break;    /* a delver's combat level, for max-of-party scaling */
+        if (typeof raid !== 'undefined' && raid) { raid.peerCombat = raid.peerCombat || {}; raid.peerCombat[m.uid] = m.c | 0; }
+        break; }
       case 'rdpts': { if (m.uid === player.uid) break;   /* a groupmate's running point total */
         if (typeof raid !== 'undefined' && raid) { raid.peerPoints = raid.peerPoints || {}; raid.peerPoints[m.uid] = m.p | 0; }
         break; }
@@ -34393,6 +35494,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         break; }
       case 'rdrvc': { if (m.to !== player.uid) break;    /* they were interrupted -> drop my bar */
         if (typeof raidPeerReviveCancel === 'function') raidPeerReviveCancel();
+        break; }
+      case 'rdbeam': { if (m.uid === player.uid) break;   /* a groupmate's chest lit up -- CoX broadcasts this */
+        if (typeof msg === 'function' && m.c === 'purple') msg('\u2728 ' + (m.n||'A delver') + '\u2019s strongbox burns purple!', '#c060ff');
+        else if (typeof msg === 'function' && m.c === 'gold') msg('\u2b50 ' + (m.n||'A delver') + '\u2019s strongbox burns gold \u2014 something followed them home!', '#ffd24a');
+        else if (typeof msg === 'function' && m.c === 'turquoise') msg('\ud83c\udf88 ' + (m.n||'A delver') + '\u2019s strongbox burns turquoise!', '#3fd0c0');
         break; }
       case 'rduniq': { if (m.uid === player.uid) break;   /* a groupmate pulled a purple */
         if (typeof logSay === 'function' && m.id && typeof ITEMS !== 'undefined' && ITEMS[m.id]) logSay('A delver pulls something rare from the hoard: ' + ITEMS[m.id].name + '!');
@@ -35203,10 +36309,12 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function sendRaidBrazier(x, y, ms) { if (active() && conn) send({ t: 'rdbrz', x: x | 0, y: y | 0, ms: ms | 0 }); }
   function sendRaidPlate(x, y, on) { if (active() && conn) send({ t: 'rdplate', x: x | 0, y: y | 0, on: on ? 1 : 0 }); }
   function sendRaidPoints(pts) { if (active() && conn) send({ t: 'rdpts', p: pts | 0 }); }
+  function sendRaidCombat(cl) { if (active() && conn) send({ t: 'rdcl', c: cl | 0 }); }   /* CoX scales to the party's HIGHEST combat level */
   function sendRaidDown(down) { if (active() && conn) send({ t: 'rddown', d: down ? 1 : 0 }); }
   function sendRaidRevive(uid) { if (active() && conn) send({ t: 'rdrev', to: uid }); }
   function sendRaidReviveStart(uid, ms) { if (active() && conn) send({ t: 'rdrvs', to: uid, ms: ms | 0, n: player.name }); }
   function sendRaidReviveCancel(uid) { if (active() && conn) send({ t: 'rdrvc', to: uid }); }
+  function sendRaidBeam(c) { if (active() && conn) send({ t: 'rdbeam', c: String(c||''), n: player.name }); }
   function sendRaidUnique(id) { if (active() && conn) send({ t: 'rduniq', id: String(id || '') }); }
   /* positions of raid-mates currently in the instance (for plate occupancy) */
   function raidPeersHere() { const out = []; if (typeof RP !== 'undefined') for (const r of RP.values()) if (_remoteHere(r) && (Date.now() - (r.last || 0) < 5000)) out.push({ uid: r.uid, name: r.name || 'a delver', x: Math.round(r.px), y: Math.round(r.py) }); return out; }
@@ -35342,7 +36450,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPoints, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
