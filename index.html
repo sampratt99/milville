@@ -4161,7 +4161,14 @@ function _dropOrNote(r,id,q){
 function rollMobDrops(r){
   const D=MOB_DROPS[r.kind]; if(!D)return;
   const _q=d=>Array.isArray(d.q)?rndi(d.q[0],d.q[1]):(d.q||1);
+  /* ** A DELVE MOB MUST NOT PAY ITS HOME ZONE'S CURRENCY. ** MOB_DROPS is keyed by KIND, so the Emberdeep
+     mobs reused as delve filler (ember_imp, magma_salamander in the boiler room) handed out CINDERS
+     underneath the school. Exactly the family that gave Sam obsidian shards off the Cornerstone's hands:
+     a mob reused in a new place drags its old economy in with it. */
+  const _inDelve=!!(r.raid);
   for(const d of D){
+    if(_inDelve && d.i && RAID_BLOCKED_DROPS[d.i])continue;
+    if(_inDelve && d.gearroll && d.gearroll.every(g=>g.i&&RAID_BLOCKED_DROPS[g.i]))continue;
     if(d.gearroll){ const rr=Math.random(); let acc=0;
       for(const g of d.gearroll){ acc+=(g.c||0);
         if(rr<acc){ const gid=g.pool?g.pool[rndi(0,g.pool.length-1)]:g.i;
@@ -4196,6 +4203,12 @@ function bestToolBoost(skill){
 }
 let _lootLog=null;   /* when an array, drop routines push {id,q,noted} here instead of announcing individually */
 function _logLoot(id,q,noted){ if(_lootLog)_lootLog.push({id:id,q:q||1,noted:!!noted}); }
+/* ** A DELVE MOB PAYS DELVE REWARDS -- NOT ITS HOME ZONE'S. ** MOB_DROPS is keyed by KIND, so an
+   Emberdeep mob reused as delve filler (ember_imp, magma_salamander in the boiler room) paid out
+   CINDERS inside the delve. Exactly the same family as the Cornerstone's hands dropping obsidian
+   shards: a mob reused in a new place drags its old economy in behind it. The delve pays in POINTS,
+   and the chest pays the rest. */
+const RAID_BLOCKED_DROPS={cinders:1, warrant:1, obsidian_shard:1, ember_core:1};
 function dropMobLoot(r){
   if(r.gaunt)return;   /* Gauntlet mobs pay out via the banked pot, not ground loot */
   const mk=MOB_KINDS[r.kind];
@@ -5760,6 +5773,7 @@ function playerTick(){
   /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
   if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
   if(typeof raidTelFxTick==='function')raidTelFxTick();   /* the boss telegraphs have to be SEEN */
+  if(typeof _syncFrozenShell==='function')_syncFrozenShell();   /* the block of ice you are standing in */
   if(typeof raidHudTick==='function')raidHudTick();
   if(typeof petTick==='function'){ const _pn=performance.now();
     petTick(Math.min(200,_pn-(_petLastT||_pn))); _petLastT=_pn; }
@@ -6410,6 +6424,10 @@ function playerTick(){
     if(typeof addXp==='function')addXp('agility', 50);   /* was 120 -- too rich for a 1.6s crossing */
     msg('You step off the far end of the pipe run.','#2f6a1e');
     cancelAction();
+  }
+  else if(a.type==='readsign'){
+    if(!adjacentTo(a.o.x,a.o.y)){ if(!player.path.length)walkTo(a.o.x,a.o.y,'adj'); return; }
+    raidShowSign(); cancelAction();
   }
   else if(a.type==='cutrack'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
@@ -8502,7 +8520,14 @@ function optionsAt(tx,ty){
     opts.push({html:'Take <span class="t">'+ITEMS[g.id].name+'</span>',
       label:'Take '+ITEMS[g.id].name,fn:()=>startPickup(g)});
   }
+  /* ** AN OBJECT YOU CANNOT SEE IS NOT THERE. ** optionsAt is TILE-based, and the delve reuses the same
+     tiles on every floor -- room 0's footprint is IDENTICAL on floors 1, 2 and 3 (verified), so the
+     LOBBY's ladder (26,60) and notice board (24,50) sit physically inside the Cornerstone's chamber
+     and inside floor 2's first room. They were hidden but still clickable, in every delve room,
+     every time. I fixed exactly this for NPCs and never for OBJECTS, which is why Sam kept
+     reporting it. */
   let o=objAt(tx,ty);
+  if(o&&o._m&&o._m.group&&o._m.group.visible===false)o=null;
   if(o&&(SOS_CAVE_OBJS[o.def]?!inSos:inSos))o=null;   /* interior objects hidden from outside, and vice-versa */
   if(o&&(VOLC_CAVE_OBJS[o.def]?!inVolcano:inVolcano))o=null;   /* Emberdeep objects: only interactable inside the volcano */
   if(o){
@@ -8621,7 +8646,10 @@ function optionsAt(tx,ty){
       opts.push({html:'Take <span class="t">instruments</span>',label:'Take instruments',fn:()=>setAction({type:'takeinstr',o},o.x,o.y)},
         {html:'Examine <span class="t">instrument bench</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='raid_sign'||o.def==='raid_sign_lawn'){
-      opts.push({html:'Read <span class="t">the notice board</span>',label:'Read board',fn:()=>raidShowSign()},
+      /* ** WALK THERE FIRST. ** This called raidShowSign() straight from the menu, so the popup opened
+         the instant you clicked -- from across the room. Every other object in the game routes through
+         setAction and waits until you have actually arrived. */
+      opts.push({html:'Read <span class="t">the notice board</span>',label:'Read board',fn:()=>setAction({type:'readsign',o},o.x,o.y)},
         {html:'Examine <span class="t">notice board</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='raid_crabsign'){
       opts.push({html:'Read <span class="t">the lab notice</span>',label:'Read notice',fn:()=>raidShowCrabSign()},
@@ -17661,6 +17689,18 @@ function mkLuxBoot(gm){
 }
 
 /* player */
+/* ** THE ICE BLOCK ON THE PLAYER. ** The game already encases a frozen MOB in one (m.frostShell in the
+   mob render). Frozen players had nothing at all -- you just stopped moving, with no idea why. This is
+   the same mesh, on you, and it is driven purely by player.frozenUntil so a remote player's block
+   appears from their streamed freeze without any extra plumbing. */
+function _syncFrozenShell(){
+  const on=!!(player.frozenUntil&&performance.now()<player.frozenUntil);
+  if(on&&!pm._frostShell){
+    const fs=new THREE.Mesh(new THREE.IcosahedronGeometry(0.85,0),
+      new THREE.MeshBasicMaterial({color:0xaef0ff,transparent:true,opacity:0.32}));
+    fs.position.y=0.7; pm.g.add(fs); pm._frostShell=fs;
+  } else if(!on&&pm._frostShell){ pm.g.remove(pm._frostShell); pm._frostShell=null; }
+}
 const pm=makeHumanoid({skin:0xd9a066,shirt:0x8a8148,pants:0x2f5d33,
   hair:0x6b4423,boots:0x5a3a26,belt:0x6e2419});
 scene.add(pm.g);
@@ -18978,6 +19018,13 @@ function makeRat(r){
       sl.rotation.set(0.5+((i*3)%4)*0.16, -a, 0.2*Math.sin(i)); g.add(sl);
     }
     g.scale.setScalar(1.0);
+    /* ** FINISH THE BRANCH. ** makeRat's tail IS the rat -- no return meant the rat's body, head, ears
+       and nose were glued onto the Cornerstone's face and it got a rat-sized pick proxy. */
+    g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
+    addProxy(g,2.6,3.4,0,{kind:'rat',r});
+    scene.add(g);
+    r._m={group:g, demi:1, dk:'cs_face'};
+    return;
   }else if(r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand'){
     /* ===== THE HANDS =====
        Also up through the floor, wrist-deep, with the slabs broken around each. The LEFT is dead stone
@@ -19030,6 +19077,13 @@ function makeRat(r){
       sl.position.set(Math.cos(a)*1.15,-0.75,Math.sin(a)*1.15);
       sl.rotation.set(0.55+((i*3)%3)*0.2,-a,0.15*Math.sin(i)); g.add(sl); }
     g.scale.setScalar(1.0);
+    /* ** FINISH THE BRANCH (see the Ice Demon above). ** No return here meant the rat tail ran and glued
+       a rat onto the Cornerstone's hand. The proxy is hand-sized, not rat-sized. */
+    g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
+    addProxy(g,1.2,2.6,0,{kind:'rat',r});
+    scene.add(g);
+    r._m={group:g, demi:1, dk:(r.kind==='raid_cs_rhand')?'cs_rhand':'cs_lhand'};
+    return;
   }else if(r.kind==='raid_icedemon'){
     /* ** THE ICE DEMON HAD NO MODEL BRANCH AT ALL. ** It has a MOB_KINDS entry so it spawned and fought
        fine -- and makeRat fell straight through to the default RAT. It was the ONLY delve mob that did;
@@ -19071,6 +19125,16 @@ function makeRat(r){
         cl.position.set(sx*0.28+(c-1)*0.03,0.02,sz+0.10); cl.rotation.x=1.4; g.add(cl); }
     }
     g.scale.setScalar(1.35);
+    /* ** FINISH THE BRANCH. ** makeRat's TAIL IS THE RAT ITSELF -- every bespoke branch must addProxy,
+       scene.add, set r._m and RETURN. Without the return this fell through and the rat tail glued a
+       rat's body, head, ears and nose onto this group and gave it a rat-sized proxy. That is exactly
+       why Sam reported the Ice Demon "literally uses the rat model". */
+    g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
+    addBlob(g,0.6);
+    addProxy(g,0.7,1.6,0,{kind:'rat',r});
+    scene.add(g);
+    r._m={group:g, demi:1, dk:'icedemon'};
+    return;
   }else if(r.kind==='raid_chimera'){
     /* a BEAST, so it is lofted with critterSweep like the boar -- not boxes. Grease-slick countershaded
        body, three necks that strike independently. */
@@ -28708,11 +28772,36 @@ function _raidRoomArchive(out, f, room){
   const bays=g.round?0:10;
   for(const p of _raidWallRing(f,room,bays,1.1)){
     const w=g.round?1.5:2.0;
-    bake(out, box(w,RAID_WALL_H-0.35,0.55), 0x3a2c1e, p.x,_raidFY+(RAID_WALL_H-0.35)/2,p.z, p.yaw);
+    /* ** THE BOOKS WERE BAKED AT DEPTH ZERO -- DEAD CENTRE INSIDE THE CASE. **
+       The case is 0.55 DEEP and centred on p, so it spans p-0.275 .. p+0.275. The books were placed at
+       p.x+ox / p.z+oz where ox/oz ONLY move along the shelf (cos/-sin * bx) -- there was no inward
+       component AT ALL. So every book sat at the exact middle of the woodwork, invisible from any angle.
+       ** WHY I MISSED THIS FOUR TIMES: ** I kept fixing _rbRound's drum shelving. Ohrstrom is room
+       id:'stacks', which has NO bespoke builder -- it falls through to the 'archive' STYLE builder, i.e.
+       THIS function. I was fixing the wrong shelves, repeatedly.
+       ix/iz is the inward normal (toward the room), the same convention Lindsay's jars use. */
+    const ix=Math.sin(p.yaw), iz=Math.cos(p.yaw);   /* inward: toward the room */
+    const H=RAID_WALL_H-0.35;
+    /* ** A BOOKCASE IS A CARCASS, NOT A BLOCK. ** This used to bake ONE SOLID BOX 0.55 deep and then put
+       the books at depth ZERO -- i.e. inside the solid. No inward offset existed at all, so every book
+       was entombed in the woodwork. A real case is a thin backboard, two side panels and open shelves:
+       the front is a HOLE, which is the whole point, and the books stand in it facing the room. */
+    bake(out, box(w,H,0.06), 0x2a1f14, p.x-ix*0.24,_raidFY+H/2,p.z-iz*0.24, p.yaw);        /* backboard */
+    for(const sx of [-1,1])                                                                 /* side panels */
+      bake(out, box(0.07,H,0.5), 0x3a2c1e, p.x+Math.cos(p.yaw)*sx*(w/2), _raidFY+H/2, p.z-Math.sin(p.yaw)*sx*(w/2), p.yaw);
+    bake(out, box(w,0.09,0.52), 0x3a2c1e, p.x,_raidFY+H,p.z, p.yaw);                        /* cornice */
+    bake(out, box(w,0.10,0.52), 0x3a2c1e, p.x,_raidFY+0.05,p.z, p.yaw);                     /* plinth */
+    for(let sh=0;sh<4;sh++)                                                                 /* the shelves */
+      bake(out, box(w-0.14,0.05,0.46), 0x5a4327, p.x,_raidFY+0.22+sh*0.55,p.z, p.yaw);
+    /* THE BOOKS: standing ON the shelves, IN the opening, spines out at the front edge. */
     for(let sh=0;sh<4;sh++)for(let bx=-1;bx<=1;bx++){
       const c=[0x7a3b2a,0x3b5a7a,0x6a5a2a,0x5a3a5a][(bx+sh+4)%4];
-      const ox=Math.cos(p.yaw)*bx*0.42, oz=-Math.sin(p.yaw)*bx*0.42;
-      bake(out, box(0.36,0.4,0.14), c, p.x+ox, _raidFY+0.45+sh*0.55, p.z+oz, p.yaw);
+      const ox=Math.cos(p.yaw)*bx*0.42 + ix*0.14, oz=-Math.sin(p.yaw)*bx*0.42 + iz*0.14;
+      bake(out, box(0.36,0.42,0.20), c, p.x+ox, _raidFY+0.47+sh*0.55, p.z+oz, p.yaw);
+      /* one or two leaning, and a paper edge showing -- a library in use, not a wallpaper of spines */
+      if((bx+sh)%3===0){
+        bake(out, box(0.09,0.40,0.22), 0xd8cfb4, p.x+ox+Math.cos(p.yaw)*0.22, _raidFY+0.47+sh*0.55, p.z-Math.sin(p.yaw)*0.22, p.yaw+0.22);
+      }
     }
   }
   /* reading tables, spread to the room's ACTUAL size rather than a fixed +/-2.5 from the middle */
@@ -28869,14 +28958,16 @@ function raidBuildInterior(graph, fl){
       _computeRaidWallDist();          /* the void changed the tiles, so the distance field must too */
       _raidBuildRoom(out,f,room);
     }
-    else if(room.type==='stair'){ _raidBuildRoom(out,f,room);
-      /* CoX puts an energy well at the end of floors 1 and 2, and the way down beside it */
+    else if(room.type==='stair'){
+      /* ** REGISTER THE SHAFT *BEFORE* THE ROOM IS BAKED. ** This is the third time this exact ordering
+         has bitten: _rbFloor lays a slab on every tile it is allowed to, and it runs inside
+         _raidBuildRoom. Marking the hole AFTERWARDS is far too late -- the slab is already down and
+         renders straight over it, which is precisely what Sam kept seeing. The Pipe Run's chasm had the
+         same bug and the same fix: carve first, bake second. */
       const sx=Math.round(f.cx), sy=Math.round(f.cz);
-      /* ** CARVE THE SHAFT. ** The hole is drawn, and then _rbFloor bakes a slab straight over its
-         tile -- so the ground renders on top of it and you see nothing. Register it as void, exactly
-         like the chasm, so no floor is laid there. It stays WALKABLE (you climb down it), so only the
-         BAKE skips it: _raidVoid is a render rule, raidTiles is the collision rule. */
       if(typeof _raidNoFloor!=='undefined')_raidNoFloor[sx+','+sy]=1;
+      _raidBuildRoom(out,f,room);
+      /* CoX puts an energy well at the end of floors 1 and 2, and the way down beside it */
       const st=addObj('raid_stair',sx,sy,true); if(st){ st.raidFloor=room.floor; st.raidRoom=room.idx; if(typeof buildObjModel==='function')buildObjModel(st); if(st._m&&st._m.group)st._m.group.visible=false; }
       const wl=addObj('raid_well',sx-2,sy,true); if(wl){ wl.raidFloor=room.floor; wl.raidRoom=room.idx; if(typeof buildObjModel==='function')buildObjModel(wl); if(wl._m&&wl._m.group)wl._m.group.visible=false; }
     }
@@ -29831,15 +29922,15 @@ function _raidPlacePuzzle(room, f){
     };
     const kp=near(Math.round(mx+ux*(HW+2.5)-0.5), Math.round(my+uy*(HW+2.5)-0.5))||anchor;
     const key=put('raid_keystone',kp[0],kp[1],{taken:false});
-    /* the barrier bars the way ON: just inside B's doorway, on the far side of the chasm */
-    let bp=near(B[0]+Math.sign(Math.round(f.cx)-B[0]), B[1]+Math.sign(Math.round(f.cz)-B[1]));
-    if(!bp||_raidVoid[bp[0]+','+bp[1]])bp=near(B[0],B[1])||anchor;
-    const bx=bp[0], by=bp[1];
-    const bar=put('raid_barrier',bx,by,{open:false});
+    /* ** NO BARRIER. ** There used to be a raid_barrier here as a second lock beside the room's own
+       sealed doorway -- two locks for one door, and the placement heuristic kept putting it somewhere
+       daft (on the rope, in the void, across the room from the exit). Sam cut it, rightly: the room
+       already SEALS until its puzzle is solved, so the keystone can just BE the solve. Cross, pick it
+       up, the way on opens. One object, one rule. */
     stt.puz={kind:'tightrope', spots:[], n:1, solved:false,
              rope:[nearL?nearL[0]:f.x0, farL?farL[0]:f.x1, Math.round(my-0.5)],
              axis:[mx,my,ux,uy,HW],
-             keyAt:key?[kp[0],kp[1]]:null, barAt:bar?[bx,by]:null, keyHeld:false, peerPlates:{},
+             keyAt:key?[kp[0],kp[1]]:null, barAt:null, keyHeld:false, peerPlates:{},
              crossed:false};
     /* ** THE SHOOTERS STAND BY THE CHASM. ** CoX's Tightrope is dangerous because the mages can hit you
        while you are out on the rope with nowhere to go. Put them on the FAR ledge, beside the lip, so
@@ -30163,7 +30254,11 @@ function raidTakeKeystone(o){
     msg('Your pack is too full to lift the keystone.','#9a8a6a'); return; }
   o.taken=true; stt.puz.keyHeld=true;
   if(o._m&&o._m.group)o._m.group.visible=false;
-  msg('You lift the keystone. The barred way on is over there.','#1a5a8c');
+  /* ** THE KEYSTONE IS THE SOLVE. ** There used to be a separate barrier to carry it to -- a second lock
+     beside the room's own sealed door, which is one lock too many and was never placed anywhere sensible.
+     Lifting the stone opens the way on. */
+  msg('You lift the keystone out of its socket. Somewhere behind you, the way on grinds open.','#2f6a1e');
+  if(typeof _raidPuzzleSolved==='function')_raidPuzzleSolved(o.raidRoom);
 }
 function raidUseKeystone(o){
   if(!o||o.def!=='raid_barrier')return;
@@ -30557,29 +30652,30 @@ function raidBossTick(){
        ** TELEGRAPHED AND DODGEABLE: ** it marks the tile you are standing on, waits 1.4s, and only
        freezes you if you are STILL THERE. Move and it hits the floor. --- */
     if(r._sig==='rime'){
+      /* ** UNAVOIDABLE, per Sam. ** It used to be a dodgeable tile-marker like everything else in the
+         delve. This one is meant to LAND: it catches you, freezes you solid for a few seconds, and puts
+         you in a block of ice everyone can see. The freeze itself is the game's own (player.frozenUntil,
+         which the movement tick already honours) and the block is the Frostmaul's own shell -- the same
+         mesh the game already builds on a frozen MOB (m.frostShell), mirrored onto the player. */
       if(r._rimeAt && now>=r._rimeAt){
-        const tx=r._rimeX, ty=r._rimeY;
         r._rimeAt=0;
-        if(typeof groundFrost==='function')groundFrost(tx,ty,false);
-        if(player.x===tx&&player.y===ty){
-          const dmg=rndi(4,9);
-          player.hp=Math.max(0,player.hp-dmg);
-          splats.push({ent:'player',dmg,t:now}); if(typeof updateOrb==='function')updateOrb();
-          player.frozenUntil=now+2600;
-          player.path.length=0;
-          msg('The rime takes you \u2014 you are frozen solid!','#1a5a8c');
-          if(player.hp<=0){ die(); continue; }
-        } else {
-          msg('The rime bursts where you were standing.','#1a5a8c');
-        }
+        const dmg=rndi(4,9);
+        player.hp=Math.max(0,player.hp-dmg);
+        splats.push({ent:'player',dmg,t:now}); if(typeof updateOrb==='function')updateOrb();
+        player.frozenUntil=now+4000;
+        player.path.length=0; if(typeof cancelAction==='function')cancelAction();
+        if(typeof groundFrost==='function')groundFrost(player.x,player.y,false);
+        msg('The Ice Demon breathes and the cold closes over you \u2014 you are FROZEN SOLID. Wait it out.','#1a5a8c');
+        /* tell the party so the block appears on their screens too */
+        if(typeof MP!=='undefined'&&MP.sendFreeze)MP.sendFreeze(4000);
+        if(player.hp<=0){ die(); continue; }
       }
       if(!r._rimeCd||now>=r._rimeCd){
         const d=Math.max(Math.abs(Math.round(r.x)-player.x),Math.abs(Math.round(r.y)-player.y));
-        if(d<=7&&!r._rimeAt){
-          r._rimeCd=now+9000; r._rimeAt=now+1400;         /* the tell: 1.4s to move */
-          r._rimeX=player.x; r._rimeY=player.y;
+        if(d<=7&&!r._rimeAt&&r.target){
+          r._rimeCd=now+11000; r._rimeAt=now+1100;
           if(typeof groundFrost==='function')groundFrost(player.x,player.y,true);
-          msg('The Ice Demon draws breath \u2014 the floor whitens under you. MOVE.','#1a5a8c');
+          msg('The Ice Demon draws a long breath. This one you cannot dodge \u2014 brace, and keep your food ready.','#1a5a8c');
         }
       }
     }
@@ -31001,30 +31097,48 @@ function raidAbandon(){
   dirty=true;
 }
 function raidShowSign(){
+  /* ** WRITTEN FOR A STRANGER. ** The old text said things like "the monsters size themselves to you" and
+     "more of you means more of them, never harder ones" -- which is precise, and completely opaque unless
+     you already know how the delve works. This is the first thing a new player ever reads about it, so it
+     explains the mechanics in plain English and says what they mean FOR YOU. */
   const html=
-    '<div style="text-align:left;max-height:52vh;overflow:auto;line-height:1.5">'
-    +'<div style="color:#c9a23a;font-style:italic;margin-bottom:8px">'
+    '<div style="text-align:left;max-height:52vh;overflow:auto;line-height:1.55">'
+    +'<div style="color:#7a5a10;font-style:italic;margin-bottom:8px">'
     +'They laid the first stone in 1856. They did not ask what was already here.</div>'
     +'<p style="margin:0 0 8px">Every building on these grounds is joined underneath by steam tunnels '
     +'\u2014 brick, pipework, and a hundred and seventy years of things the school would rather forget. '
-    +'The Chapel has an undercroft. Drury has sewers. Ohrstrom\u2019s stacks go down further than the '
-    +'catalogue admits. You can walk from one end of the school to the other and never see the sky.</p>'
-    +'<p style="margin:0 0 8px">Something down there has had a long time to think about being built on.</p>'
+    +'You can walk from one end of Milville to the other and never see the sky.</p>'
+    +'<p style="margin:0 0 10px">Something down there has had a long time to think about being built on.</p>'
     +'<hr style="border-color:#3a3226">'
-    +'<b style="color:#8fd0ff">How a delve goes</b>'
+    +'<b style="color:#1a5a8c">What a delve actually is</b>'
+    +'<p style="margin:4px 0 8px">A run of rooms under the school, put together fresh every time \u2014 you '
+    +'will never get the same one twice. You go down through them one at a time, and at the bottom is the '
+    +'thing the school was built on top of. It takes about ten minutes. You can go alone or with up to '
+    +'three friends.</p>'
+    +'<b style="color:#1a5a8c">How you get through it</b>'
     +'<ul style="margin:4px 0 8px;padding-left:18px">'
-    +'<li><b>The cellar is safe.</b> Gather whoever is coming, bank, kit up. Nothing starts until '
-    +'someone opens the gate.</li>'
-    +'<li><b>Then it takes you room by room.</b> Some hold something that needs killing; some hold a '
-    +'problem that needs solving. <b>The way seals behind you</b> \u2014 you finish a room or you stand in it.</li>'
-    +'<li><b>Three levels down</b>, each worse than the last, and at the bottom is the Cornerstone: the '
-    +'thing the school was built on top of.</li>'
-    +'<li><b>It sizes itself to you.</b> Come at any level. More friends means more of them, '
-    +'<b>never harder ones</b>.</li>'
-    +'<li><b>Your gear is never at risk.</b> Die and you lose progress, not your things. A friend can '
-    +'haul you up; alone, you wake a level higher and walk it again.</li>'
-    +'<li><b>Bring food.</b> There is a little to scavenge, and not much.</li>'
+    +'<li><b>The cellar is safe.</b> Nothing starts until somebody opens the gate, so bank, eat, and wait '
+    +'for whoever is coming.</li>'
+    +'<li><b>Each room shuts behind you.</b> Some have something to kill, some have a problem to work out. '
+    +'You finish the room or you stand in it \u2014 there is no walking past.</li>'
+    +'<li><b>Three floors down</b>, each one worse than the last.</li>'
     +'</ul>'
+    +'<b style="color:#1a5a8c">Can I do this at my level?</b>'
+    +'<p style="margin:4px 0 8px"><b>Yes.</b> Whatever your combat level is, the delve builds itself to '
+    +'match it \u2014 a level 30 and a level 120 both get a fight they can actually win. It looks at the '
+    +'<b>highest</b> level in your group and sizes everything to that one, so bringing a strong friend '
+    +'makes it harder for everyone, not easier.</p>'
+    +'<p style="margin:0 0 8px">Bringing more people does <b>not</b> make the monsters hit harder. It just '
+    +'means there are <b>more of them</b> \u2014 enough to keep four of you busy instead of one.</p>'
+    +'<b style="color:#1a5a8c">What happens if I die?</b>'
+    +'<p style="margin:4px 0 8px"><b>You keep everything you are carrying.</b> Dying costs you points, not '
+    +'your gear. If a friend is with you they can pick you back up; alone, you wake one floor higher and '
+    +'walk it again.</p>'
+    +'<b style="color:#1a5a8c">What do I get?</b>'
+    +'<p style="margin:4px 0 8px">You earn points for everything you do down there \u2014 damage, puzzles, '
+    +'rooms cleared. At the bottom your points decide what is in your strongbox: coins always, and a '
+    +'chance at something rare. Everyone gets their own box. <b>Bring food</b>; there is a little to '
+    +'scavenge and not much.</p>'
     +'<hr style="border-color:#3a3226">'
     +'<p style="margin:0;color:#9a8a6a">Beneath, in a different hand: <i>\u201cthe shipments are not lost. '
     +'ask the kitchens.\u201d</i></p>'
@@ -37158,6 +37272,10 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'rdplate': { if (m.uid === player.uid) break;   /* a groupmate's plate occupancy */
         if (typeof raidPeerPlate === 'function') raidPeerPlate(m.x | 0, m.y | 0, !!m.on);
         break; }
+      case 'frz': { if (m.uid === player.uid) break;     /* a groupmate has been frozen: show their block */
+        const _rf = RP.get(m.uid);
+        if (_rf) _rf.frozenUntil = now() + (m.ms | 0);
+        break; }
       case 'rdtel': { if (m.uid === player.uid) break;   /* a groupmate's boss is winding up: light the same floor */
         if (typeof _raidTelMark === 'function' && typeof inRaid !== 'undefined' && inRaid && Array.isArray(m.ts))
           _raidTelMark(m.ts, performance.now() + (m.f | 0), m.s);
@@ -37785,6 +37903,16 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       }
       if (r.chat && r.chatT > now() && typeof drawSayText === 'function') drawSayText(wx, wz, 2.45, r.chat);
       if (r.ohPray && typeof drawOverheadPrayer === 'function') drawOverheadPrayer(wx, wz, 2.75, r.ohPray);
+      /* ** THEIR BLOCK OF ICE. ** Same shell the game already puts on a frozen MOB. Without it a frozen
+         groupmate just stops dead, which reads as a disconnect rather than a mechanic. */
+      if (r.g) {
+        const _fz = !!(r.frozenUntil && r.frozenUntil > now());
+        if (_fz && !r._frostShell) {
+          const _fs = new THREE.Mesh(new THREE.IcosahedronGeometry(0.85, 0),
+            new THREE.MeshBasicMaterial({ color: 0xaef0ff, transparent: true, opacity: 0.32 }));
+          _fs.position.y = 0.7; r.g.add(_fs); r._frostShell = _fs;
+        } else if (!_fz && r._frostShell) { r.g.remove(r._frostShell); r._frostShell = null; }
+      }
     }
     if (typeof rats !== 'undefined') {
       for (const [mi, e] of remoteMobs) {
@@ -38020,6 +38148,10 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function sendRaidCombat(cl) { if (active() && conn) send({ t: 'rdcl', c: cl | 0 }); }   /* CoX scales to the party's HIGHEST combat level */
   /* a boss telegraph must light up on EVERY screen, or a groupmate cannot dodge what he cannot see */
   function sendRaidTelegraph(tiles, fuse, sig) { if (active() && conn) send({ t: 'rdtel', ts: tiles, f: fuse | 0, s: String(sig || '') }); }
+  /* ** THE BLOCK HAS TO SHOW ON EVERY SCREEN. ** A frozen groupmate that just stops moving reads as a
+     disconnect; encased in ice it reads as a mechanic, and tells the others to expect a stationary
+     target for four seconds. */
+  function sendFreeze(ms) { if (active() && conn) send({ t: 'frz', ms: ms | 0 }); }
   function sendRaidDown(down) { if (active() && conn) send({ t: 'rddown', d: down ? 1 : 0 }); }
   function sendRaidRevive(uid) { if (active() && conn) send({ t: 'rdrev', to: uid }); }
   function sendRaidReviveStart(uid, ms) { if (active() && conn) send({ t: 'rdrvs', to: uid, ms: ms | 0, n: player.name }); }
@@ -38179,7 +38311,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidTelegraph, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidTelegraph, sendFreeze, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
