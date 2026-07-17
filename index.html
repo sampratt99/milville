@@ -1995,6 +1995,7 @@ const OBJ_DEFS={
   relic:{name:'Blessed Censer',action:'Take',ex:'A founder-era censer on the altar. Its light still burns against the dark.'},
   mathesdoor:{name:'Matthes Cage',action:'Enter',ex:'The Matthes Cage field house. Within, a sunken pit waits beneath an indoor track.'},
   sos_hole:{name:'Cavern mouth',action:'Enter',ex:'A jagged hole gapes in the turf, breathing cold air from somewhere old and deep.'},
+  raid_hoard:{name:'Delvers\u2019 reliquary',action:'Read',ex:'A royal strongbox on a heap of coin and cut stones \u2014 a hundred and seventy years of things people carried up out of the dark. A card on the lid lists every one of them.'},
   raid_sign:{name:'Notice board',action:'Read',noBlock:true,ex:'A board of school notices. Most are about laundry. One is not.'},
   raid_sign_lawn:{name:'Notice board',action:'Read',noBlock:true,ex:'A board of school notices. Most are about laundry. One is not.'},
   raid_portal:{name:'Cellar stair',action:'Descend',ex:'A slanted bulkhead door set into the lawn north of the dining hall, just east of Larry\u2019s kitchen, propped open over stone steps that drop into the cellars below Coit. The passages down there run far deeper \u2014 and far stranger \u2014 than any root cellar has a right to. Gather your party before you go down.'},
@@ -2721,6 +2722,14 @@ addObj('raid_portal',142,49,true);
    half-turn. (An object has no yaw at all unless you give it one -- the recurring trap.) */
 { const _lb=addObj('raid_sign_lawn',145,49,true); if(_lb)_lb.faceYaw=Math.PI; }
 { const _ls=addObj('raid_sign',24,50,true); if(_ls){_ls.raidRoom=0; _ls.raidFloor=1;} }   /* room 0, beside the arrival stairs. MUST track RAID_ENTRY: with CELL=24 room 0 is x15-36 y39-60, so the entry is (26,59). Room-0 membership is asserted in harness-entrance-load.mjs. */
+/* ** THE RELIQUARY. ** Middle of the cellar, on the walk between the ladder and the gate so you pass it
+   on the way in -- but clear of Ellison (26,50), the notice board (24,50), the ladder (26,60) and the
+   gate. It FACES THE LADDER you came down: an object has no yaw unless you give it one (the trap the
+   gate, the notice board and the lab sign each hit in turn).
+   ** FLOOR-TAGGED. ** raidRoom 0 + raidFloor 1. Room 0 exists on EVERY floor at the SAME tiles, so
+   without the floor tag this would haunt the Cornerstone's chamber exactly as the ladder did. */
+{ const _hd=addObj('raid_hoard',30,50,true);   /* beside Ellison (26,50), four tiles east of him */
+  if(_hd){ _hd.raidRoom=0; _hd.raidFloor=1; _hd.faceYaw=0; } }
 (function placeEmberLadders(){
   /* one BIG stone ladder per chamber, offering BOTH up and down (OSRS-style), facing the room centre */
   const mk=(x,y,up,down,cx,cy)=>{const o=addObj('ember_ladder',x,y,true);if(o){o.upFloor=up;o.downFloor=down;o.faceX=cx;o.faceY=cy;}return o;};
@@ -3224,7 +3233,7 @@ const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   for(let y=3;y<H-3;y++)for(let x=OFF;x<OFF+3;x++)
     if(tiles[y][x]===T_FOREST)tiles[y][x]=T_GRASS;
   W=NW;
-  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','heart_door','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step','raid_exit','raid_node','raid_plate','raid_brazier','raid_chest','raid_sapling','raid_keystone','raid_barrier','raid_lens','raid_prism','raid_socket','raid_crabsign','raid_bench','raid_stair','raid_well','raid_lobbygate','raid_bank','raid_geartable','raid_sign','raid_rack','raid_pipe']);
+  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','heart_door','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step','raid_exit','raid_node','raid_plate','raid_brazier','raid_chest','raid_sapling','raid_keystone','raid_barrier','raid_lens','raid_prism','raid_socket','raid_crabsign','raid_bench','raid_stair','raid_well','raid_lobbygate','raid_bank','raid_geartable','raid_sign','raid_rack','raid_pipe','raid_hoard']);
   for(const o of objects)if(!INT_DEFS.has(o.def))o.x+=WX;  /* interior objects stay at their (unshifted) interior coords */
   for(const b of BUILDINGS)b.x+=WX;
   for(const n of npcs){n.x+=WX;if(n.sx!=null)n.sx+=WX;if(n.px!=null)n.px+=WX;}
@@ -6425,6 +6434,12 @@ function playerTick(){
     msg('You step off the far end of the pipe run.','#2f6a1e');
     cancelAction();
   }
+  else if(a.type==='readhoard'){
+    /* walk there FIRST, like every other object. The notice board used to open the instant you
+       clicked, from across the room; this one does not repeat that. */
+    if(!adjacentTo(a.o.x,a.o.y)){ if(!player.path.length)walkTo(a.o.x,a.o.y,'adj'); return; }
+    raidShowLootTable(); cancelAction();
+  }
   else if(a.type==='readsign'){
     if(!adjacentTo(a.o.x,a.o.y)){ if(!player.path.length)walkTo(a.o.x,a.o.y,'adj'); return; }
     raidShowSign(); cancelAction();
@@ -8645,6 +8660,9 @@ function optionsAt(tx,ty){
     }else if(o.def==='raid_bench'){
       opts.push({html:'Take <span class="t">instruments</span>',label:'Take instruments',fn:()=>setAction({type:'takeinstr',o},o.x,o.y)},
         {html:'Examine <span class="t">instrument bench</span>',fn:()=>msg(def.ex)});
+    }else if(o.def==='raid_hoard'){
+      opts.push({html:'Read <span class="t">the loot table</span>',label:'Read loot table',fn:()=>setAction({type:'readhoard',o},o.x,o.y)},
+        {html:'Examine <span class="t">the reliquary</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='raid_sign'||o.def==='raid_sign_lawn'){
       /* ** WALK THERE FIRST. ** This called raidShowSign() straight from the menu, so the popup opened
          the instant you clicked -- from across the room. Every other object in the game routes through
@@ -13423,6 +13441,107 @@ function buildObjModel(o){
     const rod=mesh(new THREE.CylinderGeometry(0.02,0.02,0.7,6),0x8a6a2a);rod.rotation.z=Math.PI/2;rod.position.set(-0.2,0.79,-0.1);g.add(rod);
     const wand=mesh(new THREE.CylinderGeometry(0.025,0.02,0.5,6),0x2f7ad8);wand.rotation.z=Math.PI/2;wand.position.set(0.25,0.79,0.12);g.add(wand);
     addProxy(g,1.4,1.0,0,{kind:'obj',o});
+  }else if(def==='raid_hoard'){
+    /* ===== THE DELVERS' RELIQUARY =====
+       A royal strongbox on top of a MOUND of coin and cut stones. The one cheerful object in the cellar:
+       everything else down here is a warning. */
+    const OAK=0x5a3a1e, DARK=0x3a2410, GOLD=0xd9b04a, BRASS=0xc9a23a, PALE=0xf0d78a, DEEPG=0xb8912f;
+    const RUBY=0xa8202a, EMER=0x1f8a4a, SAPH=0x2f5aa8, PEARL=0xf0ece0, AMET=0x7b3fa0;
+    const put=(m,x,y,z,ry)=>{ m.position.set(x,y,z); if(ry!==undefined)m.rotation.y=ry; g.add(m); return m; };
+    if(o.faceYaw!==undefined)g.rotation.y=o.faceYaw;   /* it faces the ladder you came down */
+
+    /* ---- THE MOUND. ** This was 90 loose coins and you could see the floor between them, with the gems
+       buried UNDER the chest. ** It is a solid heap now: a smoothed mound underneath so there are no gaps
+       to see through, then coins ON that surface, then gems on TOP of the coins where the light hits
+       them. The chest sits on the crown of it. ---- */
+    const MR=1.9;   /* mound radius */
+    const moundH=(r)=>Math.max(0, 0.62*Math.cos(Math.min(1,r/MR)*Math.PI/2));   /* a dome, tallest in the middle */
+    /* the solid heap: a lathe-turned dome, so there is never a gap between coins */
+    { const pts=[];
+      for(let i=0;i<=10;i++){ const r=MR*(i/10); pts.push(new THREE.Vector2(Math.max(0.02,r), moundH(r))); }
+      pts.push(new THREE.Vector2(0.02,0));
+      const dome=mesh(new THREE.LatheGeometry(pts,26),DEEPG);
+      dome.scale.z=0.82; put(dome, 0,0,0); }
+    /* COINS all over its surface -- dense, overlapping, following the dome so none of them float */
+    for(let i=0;i<240;i++){
+      const a=(i*2.39996), rr=Math.sqrt(i/240)*MR*0.98;
+      const cx=Math.cos(a)*rr, cz=Math.sin(a)*rr*0.82;
+      const surf=moundH(rr);
+      const c=mesh(new THREE.CylinderGeometry(0.085,0.085,0.020,7),(i%6===0)?PALE:((i%11===0)?BRASS:GOLD));
+      c.rotation.x=(Math.PI/2)*(0.75+((i*7)%5)*0.06);
+      c.rotation.z=(i*0.9)%3.14;
+      put(c, cx, surf*(0.55+((i*3)%5)*0.09), cz);
+    }
+    /* GEMS on top of the coins, out at the flanks where you can actually see them */
+    for(let i=0;i<22;i++){
+      const a=i*1.61, rr=0.55+((i*5)%6)*0.22;
+      if(rr>MR*0.95)continue;
+      const col=[RUBY,EMER,SAPH,PEARL,AMET][i%5];
+      const gem=new THREE.Mesh(new THREE.OctahedronGeometry(0.085+((i*3)%3)*0.025,0),
+        new THREE.MeshBasicMaterial({color:col}));
+      put(gem, Math.cos(a)*rr, moundH(rr)+0.06, Math.sin(a)*rr*0.82);
+    }
+    /* spilled plate down the flanks */
+    for(let i=0;i<5;i++){ const a=0.8+i*1.25, rr=MR*0.72;
+      const cup=mesh(new THREE.CylinderGeometry(0.10,0.07,0.16,9),BRASS);
+      cup.rotation.z=1.2; cup.rotation.y=a;
+      put(cup, Math.cos(a)*rr, moundH(rr)+0.05, Math.sin(a)*rr*0.82); }
+    for(let i=0;i<3;i++){ const a=2.1+i*2.0, rr=MR*0.55;
+      const crown=mesh(new THREE.TorusGeometry(0.13,0.035,7,14),PALE);
+      crown.rotation.x=1.3; put(crown, Math.cos(a)*rr, moundH(rr)+0.06, Math.sin(a)*rr*0.82); }
+
+    /* ---- THE CHEST, on the crown of the mound ---- */
+    const BY=moundH(0)+0.02;
+    put(mesh(new THREE.BoxGeometry(1.16,0.56,0.72),OAK), 0,BY+0.28,0);
+    put(mesh(new THREE.BoxGeometry(1.22,0.08,0.78),DARK), 0,BY+0.04,0);
+    put(mesh(new THREE.BoxGeometry(1.22,0.06,0.78),DARK), 0,BY+0.55,0);
+    /* ** THE LID IS ONE SMOOTH SHELL, not a fan of straight boxes. **
+       It used to be 7 flat staves fanned round an arc -- boxes cannot tile a curve, so there was a gap
+       between every one of them. A half-cylinder IS the shape: one surface, no seams. */
+    const lid=new THREE.Group(); lid.position.set(0,BY+0.57,0); g.add(lid);
+    lid.rotation.z=0; lid.rotation.x=-0.30;                      /* open a crack */
+    { const shell=mesh(new THREE.CylinderGeometry(0.38,0.38,1.16,22,1,false,0,Math.PI),OAK);
+      shell.rotation.z=Math.PI/2;                                 /* lay the barrel along X */
+      lid.add(shell); shell.position.set(0,0,0);
+      /* the two end caps, so you never see into a hollow tube */
+      for(const sx of [-0.58,0.58]){
+        const cap=mesh(new THREE.CircleGeometry(0.38,22,0,Math.PI),DARK);
+        cap.rotation.y=Math.PI/2; cap.rotation.z=Math.PI/2;
+        cap.position.set(sx,0,0); lid.add(cap);
+      }
+      /* iron straps OVER the shell, following its curve */
+      for(const bx of [-0.40,0.40]){
+        const strap=mesh(new THREE.CylinderGeometry(0.40,0.40,0.09,22,1,false,0,Math.PI),DARK);
+        strap.rotation.z=Math.PI/2; strap.position.set(bx,0,0); lid.add(strap);
+      }
+      /* a gold ridge along the crown */
+      const ridge=mesh(new THREE.BoxGeometry(1.14,0.05,0.06),BRASS);
+      ridge.position.set(0,0.39,0); lid.add(ridge);
+    }
+    /* iron bands down the body */
+    for(const bx of [-0.40,0.40])
+      put(mesh(new THREE.BoxGeometry(0.09,0.60,0.78),DARK), bx,BY+0.28,0);
+    for(const cx of [-0.56,0.56])for(const cz of [-0.34,0.34])
+      put(mesh(new THREE.BoxGeometry(0.09,0.60,0.09),BRASS), cx,BY+0.28,cz);
+    /* the lock: brass plate, keyhole, a ruby above it */
+    put(mesh(new THREE.BoxGeometry(0.28,0.26,0.05),BRASS), 0,BY+0.34,0.37);
+    put(mesh(new THREE.CylinderGeometry(0.04,0.04,0.06,8),DARK), 0,BY+0.36,0.40);
+    put(mesh(new THREE.BoxGeometry(0.03,0.08,0.06),DARK), 0,BY+0.30,0.40);
+    { const rb=new THREE.Mesh(new THREE.OctahedronGeometry(0.055,0),new THREE.MeshBasicMaterial({color:RUBY}));
+      put(rb, 0,BY+0.48,0.38); }
+    /* the card on the lid -- the thing you actually walk over to read */
+    { const card=mesh(new THREE.BoxGeometry(0.40,0.02,0.28),0xe8e4d8);
+      card.rotation.x=-0.30; put(card, 0.34,BY+0.94,0.06);
+      for(let i=0;i<4;i++){ const ln=mesh(new THREE.BoxGeometry(0.28,0.004,0.012),0x6a6156);
+        ln.rotation.x=-0.30; put(ln, 0.34,BY+0.955+i*0.003,-0.005+i*0.05); } }
+    /* ** THE GLOW OUT OF THE CRACK -- built INLINE, not via _raidGlowMesh. **
+       This object is placed at LOAD time, and _raidGlowMesh writes into `raidGroup`, which is declared
+       further down the file. Under 'use strict' that is a TDZ ReferenceError and it would have killed
+       the whole model exactly the way `hm=null` did. Caught by the strict harness. */
+    { const glow=new THREE.Mesh(new THREE.SphereGeometry(0.40,10,8),
+        new THREE.MeshBasicMaterial({color:PALE,transparent:true,opacity:0.30,depthWrite:false}));
+      put(glow, 0,BY+0.60,0.04); }
+    addProxy(g,1.3,1.6,0,{kind:'obj',o});
   }else if(def==='raid_sign'||def==='raid_sign_lawn'){
     if(o.faceYaw!==undefined)g.rotation.y=o.faceYaw;   /* a notice nobody can read is not a notice */
     const WOOD=0x5a4327, DARK=0x3a2c1c, PAPER=0xd8cfb4;
@@ -14324,7 +14443,7 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   {const z=addObj('vault_zipline',222,19,true);if(z){z.to=[219,68];z.xp=18;z.role='exit';}}   /* exit now past the laser, on the boss-door landing */
 })();
 objects.forEach(buildObjModel);
-objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1,raid_rack:1,raid_pipe:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
+objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1,raid_rack:1,raid_pipe:1,raid_hoard:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
 
 function updateObjVisual(o){
   const m=o._m;if(!m)return;
@@ -18960,7 +19079,9 @@ function makeRat(r){
     const STONE=0x5a5148, STONE2=0x6a6156, DEEP=0x2a2620, FIRE=0xff6a24, GOLD=0xc9a23a, MOSS=0x3f5a3a;
     const sm=(geo,hex)=>new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:hex}));
     const gl=(geo,hex,op)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex,transparent:op!==undefined,opacity:op===undefined?1:op}));
-    hm=null;
+    /* NOTE: no `hm=null` here. `hm` is NOT declared anywhere in makeRat -- assigning to it under
+       'use strict' (which this file runs) throws ReferenceError and kills the whole model. These
+       branches set their own r._m and return, so hm is never needed. */
     /* ---- THE MASS. Sunk deliberately: its base is BELOW the floor, so it has no visible bottom. ---- */
     const mass=critterSweep([
       {p:[0,-2.6,0],rx:3.4,ry:2.6},          /* under the floor -- you never see this end */
@@ -19035,7 +19156,9 @@ function makeRat(r){
     const VEIN=mage?0x7b5cff:0x8a3a2a;
     const sm=(geo,hex)=>new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:hex}));
     const gl=(geo,hex,op)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex,transparent:op!==undefined,opacity:op===undefined?1:op}));
-    hm=null;
+    /* NOTE: no `hm=null` here. `hm` is NOT declared anywhere in makeRat -- assigning to it under
+       'use strict' (which this file runs) throws ReferenceError and kills the whole model. These
+       branches set their own r._m and return, so hm is never needed. */
     /* the wrist, coming up out of the floor and going down further than you can see */
     g.add(critterSweep([
       {p:[0,-2.0,0],rx:0.95,ry:0.95},
@@ -19091,7 +19214,9 @@ function makeRat(r){
        It is a thing that GREW INSIDE THE ICE: a translucent shell with a dark core visible through it,
        rime spines, cold lights for eyes. critterSweep like the other beasts, not stacked boxes. */
     const ICE=0xbfe6ff, CORE=0x2f5a7a, RIME=0x8fb8cf, GLOW=0x8fd0ff;
-    hm=null;
+    /* NOTE: no `hm=null` here. `hm` is NOT declared anywhere in makeRat -- assigning to it under
+       'use strict' (which this file runs) throws ReferenceError and kills the whole model. These
+       branches set their own r._m and return, so hm is never needed. */
     const core=critterSweep([
       {p:[0,0.55,0.24],rx:0.16,ry:0.18},
       {p:[0,0.70,0.06],rx:0.30,ry:0.34},
@@ -23326,6 +23451,113 @@ function buildLuxuryModel(id){
         w.rotation.z=Math.PI/2; w.rotation.y=wsx*0.5; w.position.set(wsx*0.18,0.30,-0.05); grp.add(w); }
     }
     g.rotation.y=0.5;
+  }
+  /* ================= THE DELVE'S REWARDS =================
+     These fell through to the generic ring/amulet before -- six or seven parts of nothing in
+     particular. Each one is now built to say what it DOES at a glance, because the item page is the
+     only place most people will ever look at them closely. */
+  else if(id==='larder_charm'){
+    /* a kitchen charm: a butcher's hook, a knuckle of bone, a scrap of red twine */
+    const BONE=0xe7dcc0, BONE2=0xbfb49a, IRON=0x3a352d, TWINE=0x8a2a2a;
+    const hook=new THREE.Mesh(TOR(0.13,0.022,20),new THREE.MeshLambertMaterial({color:IRON}));
+    hook.rotation.x=Math.PI/2; hook.position.y=0.30; g.add(hook);
+    const barb=new THREE.Mesh(CON(0.028,0.09,7),new THREE.MeshLambertMaterial({color:IRON}));
+    barb.position.set(0.11,0.24,0); barb.rotation.z=0.9; g.add(barb);
+    /* the bone itself, hanging */
+    const shaft=new THREE.Mesh(CYL(0.045,0.045,0.30,10),new THREE.MeshLambertMaterial({color:BONE}));
+    shaft.position.y=0.02; g.add(shaft);
+    for(const sy of [-1,1])for(const sx of [-1,1]){
+      const k=new THREE.Mesh(SPH(0.062,10,9),new THREE.MeshLambertMaterial({color:sy>0?BONE:BONE2}));
+      k.position.set(sx*0.045,sy*0.16,0); g.add(k);
+    }
+    /* the split down it, where the marrow shows */
+    const split=new THREE.Mesh(BOX(0.014,0.24,0.05),new THREE.MeshBasicMaterial({color:0xc9748a}));
+    split.position.set(0,0.02,0.042); g.add(split);
+    /* red twine round the top */
+    for(let i=0;i<4;i++){ const t=new THREE.Mesh(TOR(0.05,0.008,10),new THREE.MeshLambertMaterial({color:TWINE}));
+      t.rotation.x=Math.PI/2+0.2; t.position.y=0.12-i*0.03; g.add(t); }
+    g.scale.setScalar(1.5);
+  }
+  else if(id==='ring_wealth'){
+    /* a heavy band with a coin set into it, edge-on */
+    const GOLD=0xd9b04a, PALE=0xf0d78a, DARK=0x8a6a10;
+    const band=new THREE.Mesh(TOR(0.20,0.045,26),new THREE.MeshLambertMaterial({color:GOLD}));
+    band.rotation.x=Math.PI/2; g.add(band);
+    const coin=new THREE.Mesh(CYL(0.115,0.115,0.028,20),new THREE.MeshLambertMaterial({color:PALE}));
+    coin.position.y=0.21; coin.rotation.x=Math.PI/2; g.add(coin);
+    const rim=new THREE.Mesh(TOR(0.115,0.014,18),new THREE.MeshLambertMaterial({color:DARK}));
+    rim.position.y=0.21; g.add(rim);
+    /* the school's crest stamped on the coin */
+    for(let i=0;i<6;i++){ const a=i/6*Math.PI*2;
+      const r=new THREE.Mesh(BOX(0.016,0.006,0.05),new THREE.MeshLambertMaterial({color:DARK}));
+      r.position.set(Math.cos(a)*0.05,0.225,Math.sin(a)*0.05); r.rotation.y=-a; g.add(r); }
+    /* four little coins caught in the band, as if it collects them */
+    for(let i=0;i<4;i++){ const a=0.8+i*1.4;
+      const c=new THREE.Mesh(CYL(0.035,0.035,0.012,10),new THREE.MeshLambertMaterial({color:PALE}));
+      c.position.set(Math.cos(a)*0.20,Math.sin(a)*0.05,Math.sin(a)*0.20); c.rotation.set(1.2,a,0.4); g.add(c); }
+    g.scale.setScalar(1.6);
+  }
+  else if(id==='ring_suffering'){
+    /* a black band grown through with thorns, pointing INWARD -- it hurts to wear */
+    const IRON=0x2a2620, RED=0x8a1a20, DULL=0x4a4038;
+    const band=new THREE.Mesh(TOR(0.20,0.05,26),new THREE.MeshLambertMaterial({color:IRON}));
+    band.rotation.x=Math.PI/2; g.add(band);
+    for(let i=0;i<9;i++){ const a=i/9*Math.PI*2;
+      const th=new THREE.Mesh(CON(0.022,0.10,6),new THREE.MeshLambertMaterial({color:DULL}));
+      th.position.set(Math.cos(a)*0.155,0,Math.sin(a)*0.155);
+      th.rotation.z=Math.PI/2; th.rotation.y=-a+Math.PI/2; g.add(th); }
+    /* the stone: a dark garnet, wet-looking */
+    const gem=new THREE.Mesh(OCT(0.085),new THREE.MeshBasicMaterial({color:RED}));
+    gem.position.y=0.22; g.add(gem);
+    const claw=new THREE.Mesh(TOR(0.075,0.016,14),new THREE.MeshLambertMaterial({color:IRON}));
+    claw.position.y=0.20; claw.rotation.x=Math.PI/2; g.add(claw);
+    for(let i=0;i<3;i++){ const a=i/3*Math.PI*2;
+      const d=new THREE.Mesh(SPH(0.018,7,6),new THREE.MeshBasicMaterial({color:RED}));
+      d.position.set(Math.cos(a)*0.07,0.13,Math.sin(a)*0.07); g.add(d); }   /* it beads */
+    g.scale.setScalar(1.6);
+  }
+  else if(id==='lightbearer'){
+    /* a plain band carrying a lamp that will not go out */
+    const BRASS=0xc9a23a, GLASS=0xfff0b0, IRON=0x3a352d;
+    const band=new THREE.Mesh(TOR(0.19,0.038,26),new THREE.MeshLambertMaterial({color:BRASS}));
+    band.rotation.x=Math.PI/2; g.add(band);
+    /* the lantern */
+    const cage=new THREE.Mesh(CYL(0.075,0.075,0.14,10,1,true),new THREE.MeshLambertMaterial({color:IRON}));
+    cage.position.y=0.25; g.add(cage);
+    const flame=new THREE.Mesh(SPH(0.055,10,9),new THREE.MeshBasicMaterial({color:GLASS}));
+    flame.position.y=0.25; g.add(flame);
+    const halo=new THREE.Mesh(SPH(0.13,10,9),new THREE.MeshBasicMaterial({color:GLASS,transparent:true,opacity:0.30}));
+    halo.position.y=0.25; g.add(halo);
+    for(const sy of [0.18,0.32]){ const r=new THREE.Mesh(TOR(0.078,0.012,14),new THREE.MeshLambertMaterial({color:BRASS}));
+      r.position.y=sy; r.rotation.x=Math.PI/2; g.add(r); }
+    for(let i=0;i<4;i++){ const a=i/4*Math.PI*2;
+      const b=new THREE.Mesh(BOX(0.012,0.15,0.012),new THREE.MeshLambertMaterial({color:IRON}));
+      b.position.set(Math.cos(a)*0.075,0.25,Math.sin(a)*0.075); g.add(b); }
+    const cap=new THREE.Mesh(CON(0.09,0.06,10),new THREE.MeshLambertMaterial({color:BRASS}));
+    cap.position.y=0.36; g.add(cap);
+    g.scale.setScalar(1.5);
+  }
+  else if(id==='amulet_blood_fury'){
+    /* a cut stone on a chain, full of something that moves */
+    const CHAIN=0x8a8272, RED=0xa8202a, DEEP=0x5a0e14, GOLD=0xc9a23a;
+    for(let i=0;i<16;i++){ const a=Math.PI*0.18+ (i/15)*Math.PI*0.64;
+      const l=new THREE.Mesh(TOR(0.022,0.008,8),new THREE.MeshLambertMaterial({color:CHAIN}));
+      l.position.set(Math.cos(a)*0.30,Math.sin(a)*0.30+0.06,0);
+      l.rotation.y=(i%2)?Math.PI/2:0; l.rotation.z=-a; g.add(l); }
+    const bail=new THREE.Mesh(TOR(0.035,0.012,12),new THREE.MeshLambertMaterial({color:GOLD}));
+    bail.position.y=-0.18; g.add(bail);
+    /* the stone: a dark shell with a live core */
+    const shell=new THREE.Mesh(OCT(0.15),new THREE.MeshLambertMaterial({color:DEEP,transparent:true,opacity:0.62}));
+    shell.position.y=-0.32; shell.scale.y=1.35; g.add(shell);
+    const core=new THREE.Mesh(SPH(0.075,12,10),new THREE.MeshBasicMaterial({color:RED}));
+    core.position.y=-0.32; g.add(core);
+    const glow=new THREE.Mesh(SPH(0.20,12,10),new THREE.MeshBasicMaterial({color:RED,transparent:true,opacity:0.20}));
+    glow.position.y=-0.32; g.add(glow);
+    /* the gold claws holding it */
+    for(let i=0;i<4;i++){ const a=i/4*Math.PI*2+0.7;
+      const c=new THREE.Mesh(CON(0.022,0.11,5),new THREE.MeshLambertMaterial({color:GOLD}));
+      c.position.set(Math.cos(a)*0.10,-0.22,Math.sin(a)*0.10); c.rotation.x=Math.cos(a)*0.5; c.rotation.z=-Math.sin(a)*0.5; g.add(c); }
+    g.scale.setScalar(1.5);
   }
   /* ---- GLOVES OF HASTE (a pair of gauntlets) ---- */
   else if(eq.model==='gauntlets'){
@@ -27568,7 +27800,7 @@ const _RAID_R0=raidRoomFootprint(0);
 const RAID_ENTRY={x:Math.round(_RAID_R0.cx), y:_RAID_R0.y1-1};   /* arrive at the south end of room 0 */
 const RAID_PORTAL={x:254,y:49};   /* RUNTIME. The cellar hatch: lawn against Coit's north wall, E of Larry. Must equal the source x in the addObj above + WX. */
 const RAID_RETURN={x:254,y:48};   /* RUNTIME. You climb out onto the path tile just north of the hatch (walkable, adjacent). */
-const RAID_CAVE_OBJS={raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1,raid_rack:1,raid_pipe:1};   /* objects that live INSIDE the raid instance */
+const RAID_CAVE_OBJS={raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1,raid_rack:1,raid_pipe:1,raid_hoard:1};   /* objects that live INSIDE the raid instance */
 const RAID_APPARATUS={raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_rack:1,raid_pipe:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1
 /* NOTE: raid_sign is deliberately NOT here. RAID_APPARATUS is the set that raidBuildInterior DELETES
    and rebuilds on every floor build -- and the lobby notice board is placed once at LOAD, so listing
@@ -27623,8 +27855,16 @@ const _RAID_STEP=0.34;   /* one step of relief */
 /* Height at a tile CORNER. Everything downstream (the floor bake, the walls, groundH) reads this. */
 function _raidCornerH(cx,cy){
   const base=_raidFY;
-  if(_raidVoid[cx+','+cy])return base-7.0;   /* the drop. Everything else reads off this too, so the
-                                                floor and walls fall away rather than closing over it. */
+  /* ** A CORNER IS SHARED BY FOUR TILES. ** This used to drop the corner if the TILE of the same name was
+     void -- but corner (cx,cy) is a corner of tiles (cx-1,cy-1), (cx,cy-1), (cx-1,cy) and (cx,cy). So the
+     first solid tile beside the chasm shared two void corners and groundH dragged it 7 units down with
+     them: Sam's "the tile before the pipe renders at the bottom of the chasm, and I can click it and walk
+     down there". A corner only falls if EVERY tile touching it has fallen; otherwise it is the LIP, and a
+     lip stays up. */
+  if(_raidVoid[cx+','+cy]
+     && _raidVoid[(cx-1)+','+cy]
+     && _raidVoid[cx+','+(cy-1)]
+     && _raidVoid[(cx-1)+','+(cy-1)])return base-7.0;
   const info=_raidReliefAt(cx,cy);
   const prof=info?(RAID_RELIEF[info.room.id]||(info.room.type==='resource'?'cave':'flat')):'corridor';
   const dist=Math.min(_raidWD(cx,cy),4);
@@ -28354,10 +28594,14 @@ function _raidRoomTightrope(out, f, room){
       const ax2=a.x+0.5, az2=a.y+0.5, bx2=b.x+0.5, bz2=b.y+0.5;
       const mx2=(ax2+bx2)/2, mz2=(az2+bz2)/2;
       const len=Math.hypot(bx2-ax2, bz2-az2);
-      const yaw=Math.atan2(bx2-ax2, bz2-az2);
+      /* ** THE YAW IS MEASURED FROM +X, NOT +Z. ** bake's rz=PI/2 has ALREADY laid the cylinder along X,
+         so ry has to be the angle from +X: -atan2(dz,dx). I passed atan2(dx,dz) -- measured from +Z --
+         which put a 90-degree turn in every pipe, so an east-west run came out running north-south. That
+         is Sam's "the pipe is parallel to the chasm instead of perpendicular across it". */
+      const yaw=-Math.atan2(bz2-az2, bx2-ax2);
       bake(out, new THREE.CylinderGeometry(0.40,0.40,len,14), IRON, mx2, _raidFY+0.30, mz2, yaw, 1, 0, Math.PI/2);
       const ux2=(bx2-ax2)/(len||1), uz2=(bz2-az2)/(len||1);
-      for(let d=1.2; d<len-0.6; d+=1.7)   /* lagging bands, half of it flaked off */
+      for(let d=1.2; d<len-0.6; d+=1.7)   /* lagging bands, half of it flaked off -- same yaw convention */
         bake(out, new THREE.CylinderGeometry(0.45,0.45,0.7,14), LAG,
           ax2+ux2*d, _raidFY+0.30, az2+uz2*d, yaw, 1, 0, Math.PI/2);
       /* a stanchion ON each ledge, so it visibly leaves from somewhere solid */
@@ -31095,6 +31339,264 @@ function raidAbandon(){
   for(const r of rats)if(r.raid){ r.alive=false; if(r._m&&r._m.group)r._m.group.visible=false; }
   msg('Mr. Ellison does not look up. "It will still be there tomorrow."','#9a8a6a');
   dirty=true;
+}
+/* ===================== THE DELVE LOOT TABLE =====================
+   Everything the delve can give you, with the real numbers off the real tables -- RAID_UNIQUE_TABLE,
+   RAID_COMMON_TABLE, RAID_PETS and the cosmetic roll -- so this page can never drift from what the game
+   actually does. If someone retunes a weight, this page retunes itself. */
+let _raidLootTab='uniques';
+function raidShowLootTable(){
+  let el=document.getElementById('raidloot');
+  if(!el){
+    el=document.createElement('div'); el.id='raidloot'; el.className='gemodal'; el.style.zIndex='100001';
+    el.innerHTML='<div class="gepanel" style="width:470px;max-width:95vw;">'
+      +'<div class="gebar"><span>The Delve \u2014 everything it can give you</span><div class="gex" id="raidlootx" title="Close">\u2715</div></div>'
+      +'<div id="raidloottabs" style="display:flex;gap:4px;padding:8px 10px 0"></div>'
+      +'<div id="raidlootbody" style="padding:8px 12px 12px;text-align:left;line-height:1.5;color:#e8e0c8;max-height:56vh;overflow:auto"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click',(e)=>{ if(e.target===el)el.classList.remove('on'); });
+    const x=document.getElementById('raidlootx');
+    if(x)x.addEventListener('click',()=>el.classList.remove('on'));
+  }
+  el.classList.add('on');
+  _raidLootRender();
+}
+function _raidLootRender(){
+  const tabs=document.getElementById('raidloottabs'), body=document.getElementById('raidlootbody');
+  if(!tabs||!body)return;
+  /* the KEYS are code; the LABELS are for a person who has never heard of a raid. 'Uniques',
+     'Commons' and 'Cosmetics' are all raid jargon. */
+  const TABS=[['uniques','Rare rewards'],['pets','Pets'],['commons','Everyday haul'],
+              ['cosmetics','Hats'],['how','How it works']];
+  tabs.innerHTML='';
+  for(const [k,label] of TABS){
+    const b=document.createElement('button'); b.className='btn'; b.textContent=label;
+    b.style.cssText='padding:3px 9px;font-size:12px'+(_raidLootTab===k?';background:#5a4327;color:#ffd24a':'');
+    b.addEventListener('click',()=>{ _raidLootTab=k; _raidLootRender(); });
+    tabs.appendChild(b);
+  }
+  body.innerHTML='';
+  const row=(id,left,right,sub,onClick)=>{
+    const r=document.createElement('div');
+    r.style.cssText='display:flex;align-items:center;gap:9px;padding:5px 2px;border-bottom:1px solid #2a241c'
+      +(onClick?';cursor:pointer':'');
+    if(onClick){
+      r.addEventListener('click',onClick);
+      r.addEventListener('mouseenter',()=>{r.style.background='rgba(201,162,58,0.10)';});
+      r.addEventListener('mouseleave',()=>{r.style.background='';});
+    }
+    if(id&&ITEMS[id]){
+      const cv=document.createElement('canvas'); cv.width=32; cv.height=32;
+      cv.style.cssText='width:32px;height:32px;flex:0 0 32px';
+      try{ drawItemIcon(cv.getContext('2d'), id, 32); }catch(e){}
+      r.appendChild(cv);
+    }
+    const L=document.createElement('div'); L.style.cssText='flex:1;min-width:0';
+    L.innerHTML='<div style="color:#e8e0c8">'+left+'</div>'+(sub?'<div style="color:#8a8172;font-size:11px">'+sub+'</div>':'');
+    r.appendChild(L);
+    const R=document.createElement('div'); R.style.cssText='color:#c9a23a;white-space:nowrap;text-align:right';
+    R.innerHTML=right; r.appendChild(R);
+    body.appendChild(r);
+  };
+  const note=(t)=>{ const p=document.createElement('p');
+    p.style.cssText='margin:0 0 9px;color:#9a8a6a;font-size:12px'; p.innerHTML=t; body.appendChild(p); };
+
+  if(_raidLootTab==='uniques'){
+    note('These are the rare rewards \u2014 the reason people come down here. Your team\u2019s points buy '
+      +'the chances at them: <b>one chance per 8,675 points</b>, up to six. A rare reward takes the place '
+      +'of two of the ordinary things in your box. At a strong solo pace you would see one about '
+      +'<b>every 29 delves</b>. <b>Click any of them</b> to see exactly what it does.');
+    const tot=RAID_UNIQUE_TABLE.reduce((a,x)=>a+x.w,0);
+    for(const u of RAID_UNIQUE_TABLE){
+      const it=ITEMS[u.id]; if(!it)continue;
+      const pct=(u.w/tot*100);
+      /* ** NO JARGON. ** This used to say "% of purples" -- which means nothing at all to someone who has
+         never heard of a raid. Say what it is. */
+      row(u.id, it.name+' <span style="color:#8a8172;font-size:11px">\u2192 click</span>',
+        pct.toFixed(1)+' out of every 100<br><span style="color:#8a8172;font-size:11px">about 1 delve in '+
+        Math.round(29/(u.w/tot))+'</span>', _raidLootEffect(u.id), ()=>openRaidItem(u.id));
+    }
+    note('<b>None of these have any combat stats.</b> Not one point of attack, strength or defence. They '
+      +'change how you PLAY \u2014 free casts, bones that bury themselves, a faster special \u2014 so '
+      +'nothing down here makes the Emberdeep\u2019s armour or weapons obsolete. All of them can be traded.');
+  }
+  else if(_raidLootTab==='pets'){
+    note('A pet has its <b>own</b> chance, separate from everything else in the box: about <b>1 delve in '
+      +Math.round(1/RAID_PET_CHANCE)+'</b>. You will never get one twice. It follows you around and does '
+      +'something useful while it is out. <b>Click one</b> to look at it properly.');
+    for(const id of RAID_PETS){
+      const it=ITEMS[id]; if(!it)continue;
+      const info=(typeof PET_INFO!=='undefined')?PET_INFO[id]:null;
+      const have=countItem(id)>0||(player.equip&&player.equip.pet&&player.equip.pet.id===id);
+      row(id, it.name+(have?' <span style="color:#2f6a1e">\u2713 found</span>':'')
+            +' <span style="color:#8a8172;font-size:11px">\u2192 click</span>',
+        (100/RAID_PETS.length).toFixed(0)+' out of every 100', info?info.perk:'',
+        ()=>{ if(typeof openPetExamine==='function')openPetExamine(id); });
+    }
+  }
+  else if(_raidLootTab==='commons'){
+    note('Every box holds <b>coins</b> and <b>two of these</b>, whatever else you get. Ordinary supplies '
+      +'\u2014 ore, bars, logs, fish, runes \u2014 but a lot of them, and they are what makes a delve '
+      +'worth the trip even when nothing rare turns up.');
+    const tot=RAID_COMMON_TABLE.reduce((a,x)=>a+x.w,0);
+    const sorted=RAID_COMMON_TABLE.slice().sort((a,b)=>b.w-a.w);
+    for(const c of sorted){
+      const it=ITEMS[c.id]; if(!it)continue;
+      row(c.id, it.name, (c.w/tot*100).toFixed(1)+'%',
+        c.q?('you get '+c.q[0]+'\u2013'+c.q[1]):'');
+    }
+  }
+  else if(_raidLootTab==='cosmetics'){
+    note('Hats. They do nothing whatsoever and they are worth a fortune. Every box gets a shot at one, '
+      +'about <b>1 in '+Math.round(1/RAID_COSMETIC_CHANCE)+'</b>, and your points make no difference '
+      +'\u2014 this one is pure luck.');
+    row('santa_hat','Santa hat','10 out of every 100 hats<br><span style="color:#8a8172;font-size:11px">about 1 delve in '
+      +Math.round(1/(RAID_COSMETIC_CHANCE*0.10))+'</span>','The rarest thing in the delve.');
+    for(const c of ['red','yellow','blue','green','white','purple']){
+      const id='party_hat_'+c;
+      if(!ITEMS[id])continue;
+      row(id, ITEMS[id].name, '15 out of every 100 hats<br><span style="color:#8a8172;font-size:11px">about 1 delve in '
+        +Math.round(1/(RAID_COSMETIC_CHANCE*0.90/6))+'</span>','');
+    }
+  }
+  else {
+    body.innerHTML=
+      '<p style="margin:0 0 9px;color:#9a8a6a">Never done one? It is a run of rooms under the school. '
+      +'You fight through them, and at the bottom everyone opens a strongbox. This is what is in it.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">You earn points for everything you do.</b> '
+      +'Damage dealt, puzzles solved, rooms cleared, caches picked. Your points are yours; the team\u2019s '
+      +'points are everyone\u2019s added together.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">The team\u2019s points buy the rolls.</b> Every '
+      +'<b>8,675</b> of them is one roll at a unique, up to six. So a longer, harder run is a better run.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Your own points decide whose it is.</b> When a '
+      +'roll hits, the winner is drawn by each delver\u2019s share of the points. Pull your weight and the '
+      +'purple is more likely yours.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Everyone opens their own box.</b> Coins and two '
+      +'commons each, always. A unique replaces two of those commons. Pets and cosmetics roll separately, '
+      +'on top.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#9c3512">Dying costs points, never gear.</b> You lose 40% '
+      +'of your own \u2014 unless you had almost none, in which case the team pays 5% instead. Nothing you '
+      +'carry is ever at risk down here.</p>'
+      +'<p style="margin:0;color:#8a8172;font-size:11px">Every number on these pages is read live from the '
+      +'game\u2019s own tables. If it says 26%, it is 26%.</p>';
+  }
+}
+/* ** WHAT EACH ONE ACTUALLY DOES. ** Specific numbers, not "boosts your prayer". Plus a line of lore and
+   the exact odds. This is the whole page for someone who has never opened the hatch. */
+const RAID_UNIQUE_INFO={
+  larder_charm:{
+    short:'Bones crumble where they fall. You get the Prayer XP without burying anything.',
+    long:'Every bone dropped by anything you kill turns to dust on the spot and the Prayer experience '
+        +'goes straight to you \u2014 the full amount, exactly as if you had buried it by hand. You never '
+        +'pick a bone up again, and your pack never fills with them. It works everywhere, not just down '
+        +'here.',
+    lore:'A kitchen charm from the Coit larder, worn by whoever had to deal with what came back on the '
+        +'plates. It has been doing this a long time and it is not fussy about whose bones.'},
+  thrift_gauntlets:{
+    short:'One cast in four costs no runes at all.',
+    long:'Every time you cast a spell there is a 25% chance the runes are simply not consumed. It is not '
+        +'a discount \u2014 the cast is free, and it can happen on any spell, including your most '
+        +'expensive. Over a long trip it is roughly a third off your rune bill.',
+    lore:'Issued to the boy who kept the chapel candles. He worked out that if you are careful enough '
+        +'with a thing, sometimes it simply does not run out.'},
+  ring_wealth:{
+    short:'+10% on every rare drop roll you make \u2014 outside the delve.',
+    long:'Whenever a monster rolls for a rare drop, your chance goes up by a tenth of itself. It does '
+        +'NOT work inside the delve (the strongbox has its own rules), so this is a ring you wear on '
+        +'everything else you do.',
+    lore:'The Bursar\u2019s ring. He was famously lucky, and famously unwilling to explain why.'},
+  ring_suffering:{
+    short:'A tenth of every hit you take goes straight back into whatever hit you.',
+    long:'Take a hit and 10% of the damage \u2014 rounded up, minimum 1 \u2014 is dealt back to the '
+        +'attacker automatically. It costs you nothing and needs no attention. It will not kill anything '
+        +'on its own, but over a long fight it adds up, and it works while you are doing something else '
+        +'entirely.',
+    lore:'Worn by a Rector who believed suffering should be shared. His staff did not disagree out loud.'},
+  lightbearer:{
+    short:'Your special attack bar refills twice as fast.',
+    long:'The special attack meter recharges at double rate \u2014 a full bar every 30 seconds instead of '
+        +'60. It changes nothing about the special itself; you simply get to use it twice as often.',
+    lore:'A lamp-ring from the tunnels. The boys who carried it said the dark got out of its way.'},
+  amulet_blood_fury:{
+    short:'One hit in five heals you for 30% of the damage you dealt.',
+    long:'Every fifth hit or so (20% chance), you are healed for 30% of that hit\u2019s damage. A 40 '
+        +'means 12 health back. It needs charging with a blood shard \u2014 one shard buys 1,000 hits '
+        +'\u2014 and it is the single best thing in the delve for staying alive somewhere with no food.',
+    lore:'Ohrstrom keeps a book about this amulet on a shelf nobody is allowed to reach. The book is '
+        +'shorter than you would like.'},
+};
+function _raidLootEffect(id){ const e=RAID_UNIQUE_INFO[id]; return e?e.short:''; }
+/* ---- the item page: Hirschfeld's luxury examine, for the delve's rewards ---- */
+let _raidItemRen=null, _raidItemRaf=0;
+function _raidCloseItemRen(){
+  if(_raidItemRaf)cancelAnimationFrame(_raidItemRaf); _raidItemRaf=0;
+  if(_raidItemRen){ try{ _raidItemRen.forceContextLoss&&_raidItemRen.forceContextLoss(); _raidItemRen.dispose(); }catch(_){} }
+  _raidItemRen=null;
+}
+function openRaidItem(id){
+  const it=ITEMS[id]; if(!it)return;
+  const info=RAID_UNIQUE_INFO[id]||{};
+  let el=document.getElementById('raiditem');
+  if(!el){
+    el=document.createElement('div'); el.id='raiditem'; el.className='gemodal'; el.style.zIndex='100002';
+    el.innerHTML='<div class="gepanel" style="width:440px;max-width:95vw;">'
+      +'<div class="gebar"><span id="raiditemname"></span><div class="gex" id="raiditemx" title="Close">\u2715</div></div>'
+      +'<canvas id="raiditemcv" style="width:100%;height:215px;display:block;background:radial-gradient(ellipse at 50% 38%,#2a211a 0%,#161210 78%);border-radius:6px;border:1px solid #0d0b08;cursor:grab"></canvas>'
+      +'<div id="raiditembody" style="padding:10px 12px;text-align:left;line-height:1.55;color:#e8e0c8"></div></div>';
+    document.body.appendChild(el);
+    el.addEventListener('click',(e)=>{ if(e.target===el){ _raidCloseItemRen(); el.classList.remove('on'); } });
+    const x=document.getElementById('raiditemx');
+    if(x)x.addEventListener('click',()=>{ _raidCloseItemRen(); el.classList.remove('on'); });
+  }
+  el.classList.add('on');
+  const nm=document.getElementById('raiditemname'); if(nm)nm.textContent=it.name;
+  /* the odds, computed from the real table */
+  const tot=RAID_UNIQUE_TABLE.reduce((a,x)=>a+x.w,0);
+  const row=RAID_UNIQUE_TABLE.find(x=>x.id===id);
+  const share=row?(row.w/tot):0;
+  const body=document.getElementById('raiditembody');
+  if(body)body.innerHTML=
+     '<p style="margin:0 0 9px;color:#c9b48c;font-style:italic">'+(info.lore||it.ex||'')+'</p>'
+    +'<div style="background:#1a1610;border:1px solid #2a241c;border-radius:4px;padding:8px;margin:0 0 9px">'
+      +'<div style="color:#2f6a1e;font-weight:bold;margin-bottom:3px">What it does</div>'
+      +'<div style="color:#e8e0c8">'+(info.long||'')+'</div></div>'
+    +(row?('<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
+      +'<span style="color:#8a8172">Share of the rare rewards</span><b style="color:#c9a23a">'+(share*100).toFixed(1)+'%</b></div>'
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
+      +'<span style="color:#8a8172">How often you would see one</span><b style="color:#c9a23a">about 1 delve in '
+      +Math.round(29/share)+'</b></div>'):'')
+    +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
+      +'<span style="color:#8a8172">Combat stats</span><b style="color:#8a8172">none at all \u2014 it is an effect, not armour</b></div>'
+    +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">You can trade it. Nothing in the delve is '
+    +'locked to you.</p>';
+  /* the model */
+  _raidCloseItemRen();
+  let cv=document.getElementById('raiditemcv');
+  if(cv&&cv.parentNode){   /* a canvas whose context was force-lost is dead for ever: build a new one */
+    const fresh=document.createElement('canvas'); fresh.id='raiditemcv'; fresh.style.cssText=cv.style.cssText;
+    cv.parentNode.replaceChild(fresh,cv); cv=fresh;
+  }
+  if(!cv)return;
+  try{
+    _raidItemRen=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
+    _raidItemRen.setSize(cv.clientWidth||420,215,false);
+    const sc=new THREE.Scene();
+    const cam=new THREE.PerspectiveCamera(34,(cv.clientWidth||420)/215,0.1,50);
+    cam.position.set(0,0.16,0.92); cam.lookAt(0,0,0);
+    sc.add(new THREE.HemisphereLight(0xffffff,0x404040,1.2));
+    const key=new THREE.DirectionalLight(0xfff0d0,1.0); key.position.set(2,3,2); sc.add(key);
+    const g=buildLuxuryModel(id); sc.add(g);
+    let yaw=0.5, drag=false, lx=0;
+    cv.onpointerdown=(e)=>{drag=true;lx=e.clientX;cv.style.cursor='grabbing';};
+    window.addEventListener('pointerup',()=>{drag=false;if(cv)cv.style.cursor='grab';});
+    cv.onpointermove=(e)=>{ if(!drag)return; yaw+=(e.clientX-lx)*0.01; lx=e.clientX; };
+    const tick=()=>{ if(!_raidItemRen)return;
+      if(!drag)yaw+=0.007;
+      g.rotation.y=yaw;
+      _raidItemRen.render(sc,cam);
+      _raidItemRaf=requestAnimationFrame(tick); };
+    tick();
+  }catch(e){ /* no WebGL: the text page still stands on its own */ }
 }
 function raidShowSign(){
   /* ** WRITTEN FOR A STRANGER. ** The old text said things like "the monsters size themselves to you" and
