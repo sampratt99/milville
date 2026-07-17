@@ -598,7 +598,12 @@
   .mktrow .qy{color:#b8a888;font:11px Verdana;flex:0 0 auto;}
   .mktempty{justify-content:center;color:#9a8c6e;cursor:default;padding:14px;font:12px Georgia,serif;text-align:center;}
   /* ---- offer setup overlay (item pick + qty/price steppers, OSRS-style) ---- */
-  #mktsetup{position:absolute;inset:0;background:#221a12;border-radius:2px;display:flex;flex-direction:column;z-index:5;padding:10px;box-sizing:border-box;}
+  /* ** AN OVERLAY HAS TO ACTUALLY COVER. ** z-index 5 was not enough: the offer slots underneath paint
+   their icons onto canvases, and a canvas in a sibling with its own stacking context happily draws
+   over a low overlay -- so the icon of the offer you were setting up appeared on top of every offer
+   you already had listed. `isolation:isolate` gives this panel its own stacking context and z-index
+   60 puts it unambiguously above the board it is covering. */
+#mktsetup{position:absolute;inset:0;background:#221a12;border-radius:2px;display:flex;flex-direction:column;z-index:60;isolation:isolate;padding:10px;box-sizing:border-box;}
   #mktsetuphead{display:flex;align-items:center;margin-bottom:8px;}
   #mktsetuptitle{flex:1;font:bold 15px Georgia,serif;color:#ffd98c;}
   #mktpicksearch{margin-bottom:6px;}
@@ -1779,15 +1784,15 @@ ITEMS.cindermaw_ignited={name:'Cindermaw, Ignited',ex:'Cindermaw set alight at t
 
 /* ===== Emberdeep consumables + luxury (Hirschfeld's shop) ===== */
 ITEMS.potion_attack={name:'Attack potion',ex:'A brew that sharpens your attack for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'attack'},doses:3,val:200,cat:'Consumable'};
-ITEMS.elixir_attack={name:'Attack elixir',ex:'A gilded four-dose elixir. It grants a greater attack boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'attack',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.elixir_attack={name:'Attack elixir',ex:'A gilded four-dose elixir. A greater boost that HOLDS FAST for five minutes \u2014 no decay at all \u2014 and only then begins fading a level a minute, so its timer runs on well past the five. Each sip costs a little vitality, and the vial empties as you drink.',prim:'Drink',potion:{skill:'attack',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
 ITEMS.potion_strength={name:'Strength potion',ex:'A brew that sharpens your strength for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'strength'},doses:3,val:200,cat:'Consumable'};
-ITEMS.elixir_strength={name:'Strength elixir',ex:'A gilded four-dose elixir. It grants a greater strength boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'strength',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.elixir_strength={name:'Strength elixir',ex:'A gilded four-dose elixir. A greater boost that HOLDS FAST for five minutes \u2014 no decay at all \u2014 and only then begins fading a level a minute, so its timer runs on well past the five. Each sip costs a little vitality, and the vial empties as you drink.',prim:'Drink',potion:{skill:'strength',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
 ITEMS.potion_defense={name:'Defence potion',ex:'A brew that sharpens your defence for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'defense'},doses:3,val:200,cat:'Consumable'};
-ITEMS.elixir_defense={name:'Defence elixir',ex:'A gilded four-dose elixir. It grants a greater defence boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'defense',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.elixir_defense={name:'Defence elixir',ex:'A gilded four-dose elixir. A greater boost that HOLDS FAST for five minutes \u2014 no decay at all \u2014 and only then begins fading a level a minute, so its timer runs on well past the five. Each sip costs a little vitality, and the vial empties as you drink.',prim:'Drink',potion:{skill:'defense',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
 ITEMS.potion_ranged={name:'Ranged potion',ex:'A brew that sharpens your ranged for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'ranged'},doses:3,val:200,cat:'Consumable'};
-ITEMS.elixir_ranged={name:'Ranged elixir',ex:'A gilded four-dose elixir. It grants a greater ranged boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'ranged',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.elixir_ranged={name:'Ranged elixir',ex:'A gilded four-dose elixir. A greater boost that HOLDS FAST for five minutes \u2014 no decay at all \u2014 and only then begins fading a level a minute, so its timer runs on well past the five. Each sip costs a little vitality, and the vial empties as you drink.',prim:'Drink',potion:{skill:'ranged',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
 ITEMS.potion_magic={name:'Magic potion',ex:'A brew that sharpens your magic for a while. A vial of three doses that empties as you sip.',prim:'Drink',potion:{skill:'magic'},doses:3,val:200,cat:'Consumable'};
-ITEMS.elixir_magic={name:'Magic elixir',ex:'A gilded four-dose elixir. It grants a greater magic boost that holds fast \u2014 it will not fade for five minutes \u2014 but each sip costs a little vitality. The vial empties as you drink.',prim:'Drink',potion:{skill:'magic',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
+ITEMS.elixir_magic={name:'Magic elixir',ex:'A gilded four-dose elixir. A greater boost that HOLDS FAST for five minutes \u2014 no decay at all \u2014 and only then begins fading a level a minute, so its timer runs on well past the five. Each sip costs a little vitality, and the vial empties as you drink.',prim:'Drink',potion:{skill:'magic',super:true,divine:true},doses:4,val:500,cat:'Consumable'};
 ITEMS.fire_rune={name:'Fire rune',ex:'An elemental rune that smoulders with contained flame \u2014 fuel for spells and alchemy.',val:5,stack:true,cat:'Rune'};
 ITEMS.nature_rune={name:'Nature rune',ex:'A rune of raw transmutation. The heart of every alchemy spell.',val:190,stack:true,cat:'Rune'};
 ITEMS.ember_brew={name:'Ember-brew',ex:'A flask of molten-spiced brew from the Deep. Drink deep \u2014 it knits flesh fast.',prim:'Eat',heal:22,val:400,cat:'Consumable'};
@@ -1899,17 +1904,17 @@ ITEMS.raw_lobster={name:'Raw lobster',ex:'Snappy about it.',val:60};
 ITEMS.lobster={name:'Lobster',ex:'A proper feast.',prim:'Eat',heal:12,val:120};
 ITEMS.raw_swordfish={name:'Raw swordfish',ex:'A long-billed terror of the deep.',val:90};
 ITEMS.swordfish={name:'Swordfish',ex:'Grilled bill and all. A champion\u2019s meal.',prim:'Eat',heal:14,val:180};
-ITEMS.proctor_helm={name:'Proctor\u2019s Helm',ex:'A slayer\u2019s helm. Your blows fall harder on the creature of your current contract.',val:2000,equip:{slot:'head',def:11,model:'slayerhelm',verb:'Wear',req:0,tint:0x4a4f57,trim:0x9aa3ad}};
-ITEMS.crimson_proctor_helm={name:'Crimson Proctor\u2019s Helm',ex:'Crested and dyed crimson. The hunt burns brighter.',val:4000,equip:{slot:'head',def:14,atk:2,str:1,model:'slayerhelm',verb:'Wear',req:0,tint:0x9a2f2a,trim:0xe0c050}};
+ITEMS.proctor_helm={name:'Proctor\u2019s Helm',ex:'A slayer\u2019s helm. Your blows fall harder on the creature of your current contract.',val:2000,equip:{slot:'head',def:11,model:'slayerhelm',verb:'Wear',req:0,tint:0x4a4f57,trim:0x9aa3ad},noTrade:true};
+ITEMS.crimson_proctor_helm={name:'Crimson Proctor\u2019s Helm',ex:'Crested and dyed crimson. The hunt burns brighter.',val:4000,equip:{slot:'head',def:14,atk:2,str:1,model:'slayerhelm',verb:'Wear',req:0,tint:0x9a2f2a,trim:0xe0c050},noTrade:true};
 ITEMS.gilded_warden_helm={name:'Gilded Warden\u2019s Helm',ex:'Gilt and visored \u2014 the mark of a master hunter.',val:7000,equip:{slot:'head',def:17,atk:4,str:3,model:'slayerhelm',verb:'Wear',req:0,tint:0xc99a3a,trim:0xf2e4a0}};
-ITEMS.hunter_signet={name:'Hunter\u2019s Signet',ex:'A slayer\u2019s ring. Right-click to check your contract or teleport to the Slayer Master or your task.',val:2500,equip:{slot:'ring',atk:2,str:1,model:'ring',verb:'Wear',req:0,tint:0x9a6fb0}};
+ITEMS.hunter_signet={name:'Hunter\u2019s Signet',ex:'A slayer\u2019s ring. Right-click to check your contract or teleport to the Slayer Master or your task.',val:2500,equip:{slot:'ring',atk:2,str:1,model:'ring',verb:'Wear',req:0,tint:0x9a6fb0},noTrade:true};
 ITEMS.scholar_crest={name:'Scholar\u2019s Crest',ex:'A helm fragment torn from a slayer creature. Fuse it to a Proctor\u2019s Helm with a Crimson Dye.',val:1500,prim:'Examine'};
 ITEMS.sentinel_visor={name:'Sentinel Visor',ex:'A rare helm fragment. Fuse it to a Crimson Proctor\u2019s Helm with a Gilt Dye.',val:3000,prim:'Examine'};
 ITEMS.crimson_dye={name:'Crimson Dye',ex:'Slayer dye. Apply it to a Proctor\u2019s Helm together with a Scholar\u2019s Crest.',val:1,prim:'Examine',applyHelm:true};
 ITEMS.gilt_dye={name:'Gilt Dye',ex:'Slayer dye. Apply it to a Crimson Proctor\u2019s Helm together with a Sentinel Visor.',val:1,prim:'Examine',applyHelm:true};
-ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u2019s wail \u2014 or just wear a Proctor\u2019s Helm.',val:1,noDrop:true,equip:{slot:'head',def:1,model:'earmuffs',verb:'Wear',req:0}};
-ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8}};
-ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,equip:{slot:'weapon',atk:0,str:0,model:'maul',verb:'Wield',req:0}};
+ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u2019s wail \u2014 or just wear a Proctor\u2019s Helm.',val:1,noDrop:true,equip:{slot:'head',def:1,model:'earmuffs',verb:'Wear',req:0},noTrade:true};
+ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8},noTrade:true};
+ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,equip:{slot:'weapon',atk:0,str:0,model:'maul',verb:'Wield',req:0},noTrade:true};
 ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:82,str:82,model:'whip',verb:'Wield',req:70,tint:0x1c1118,trim:0x7a2030}};
 ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft, swung two-handed. Slow to heave, but it lands like a rockfall.',val:90000,equip:{slot:'weapon',atk:62,str:120,spd:3400,model:'maul',twoHand:true,verb:'Wield',req:50,tint:0x6e6f73,trim:0x9a9ca0}};
 ITEMS.draconic_visage={name:'Draconic visage',ex:'The petrified face of an ancient wyrm. Collectors pay fortunes for it.',val:250000,prim:'Examine'};
@@ -1925,7 +1930,7 @@ ITEMS.dragon_shield={name:'Dragon Slayer shield',
   equip:{slot:'shield',def:20,str:3,model:'shieldM',verb:'Wear',
     tint:0xd9651f,trim:0xffd23a}};
 ITEMS.pelican_cape={name:'Pelican cape',ex:'Gold and crimson, cut for the school\u2019s guardian. The First Rector\u2019s bane.',val:4000,
-    equip:{slot:'cape',atk:2,str:2,def:2,model:'cape',verb:'Wear',tint:0xd9a531}};
+    equip:{slot:'cape',atk:2,str:2,def:2,model:'cape',verb:'Wear',tint:0xd9a531},noTrade:true};
 
 const OBJ_DEFS={
   treasure_x:{name:'Marked spot',action:'Dig',noBlock:true,ex:'A freshly-marked X in the earth. Something is buried here — dig it up.'},
@@ -7527,6 +7532,13 @@ async function loadSlot(id, preObj){
       if(typeof s.musicSel==='number')musicSel=s.musicSel%ALL_TRACKS.length;
       if(typeof s.musicManual==='boolean')musicManual=s.musicManual;
       if(typeof _updTrackName==='function')_updTrackName();
+      /* ** BACKFILL VIAL DOSES. ** A potion saved before the dose system has dose===undefined, and
+         drawItemIcon reads undefined as FULL -- so an old elixir showed a full vial for ever however
+         much you drank, which is exactly what Sam was seeing. Give every legacy vial its doses. */
+      for(const _sl of (player.inv||[])){
+        if(_sl&&ITEMS[_sl.id]&&ITEMS[_sl.id].potion&&ITEMS[_sl.id].doses&&_sl.dose===undefined)
+          _sl.dose=ITEMS[_sl.id].doses;
+      }
       if(typeof s.shrimpBurned==='number')player.shrimpBurned=s.shrimpBurned;
       else player.shrimpBurned=0;   /* start counting from now for existing characters */
       player.delves=(typeof s.delves==='number')?s.delves:0;   /* likewise: existing characters start at 0 */
@@ -7751,18 +7763,22 @@ function dropItem(i){
 SKILLS.forEach(sk=>{
   const col=parseInt(SKILL_META[sk].col.replace('#',''),16);
   const cstat=sk==='attack'?{atk:15,str:4}:sk==='strength'?{str:16}:sk==='defense'?{def:16}:sk==='ranged'?{ratk:15,rstr:4}:sk==='magic'?{matk:15,mdmg:5}:{};
+  /* ** noTrade: A SKILL CAPE IS PROOF YOU GOT THE 99. ** These are built in a LOOP, so the `ITEMS.x=`
+     edits that marked the rest of the earned gear could never reach them -- the same blind spot the
+     party hats had. Selling one makes the achievement purchasable, which is the single thing it must
+     never be. */
   ITEMS['mastercape_'+sk]={
     name:SKILL_META[sk].name+' Master Cape',
     ex:'The mark of a master of '+SKILL_META[sk].name+'. Worn, it greatly empowers the skill.',
-    val:1,
+    val:1, noTrade:true,
     equip:Object.assign({slot:'cape',def:3,model:'cape',verb:'Wear',tint:col,capeSkill:sk},cstat)
   };
   /* GRANDMASTER (hooded) cape at level 120: upgrades the master cape -- stronger stats + bigger boost + a hood */
   const gstat=sk==='attack'?{atk:22,str:6}:sk==='strength'?{str:24}:sk==='defense'?{def:24}:sk==='ranged'?{ratk:22,rstr:6}:sk==='magic'?{matk:22,mdmg:8}:{};
-  ITEMS['grandcape_'+sk]={
+  ITEMS['grandcape_'+sk]={   /* likewise: level 120 is not for sale */
     name:SKILL_META[sk].name+' Grandmaster Cape',
     ex:'A hooded cape earned at level 120 '+SKILL_META[sk].name+' \u2014 the pinnacle. Worn, it empowers the skill beyond mastery.',
-    val:1,
+    val:1, noTrade:true,
     equip:Object.assign({slot:'cape',def:6,model:'cape',verb:'Wear',tint:col,capeSkill:sk,grand:1,hood:1},gstat)
   };
 });
@@ -8099,9 +8115,15 @@ function itemTip(id){
   return t;
 }
 /* examine: prints lore, then stats + comparison + GE price to the message log */
-function examineItem(id){
+function examineItem(id, dose){
   const it=ITEMS[id];if(!it)return;
   msg(it.ex);
+  /* ** SAY HOW MUCH IS LEFT. ** Examine is per-ITEM, so it never knew about the vial in your hand -- you
+     could only count the pips under the icon. If we were handed the slot's dose, report it. */
+  if(it.doses&&dose!==undefined){
+    const d=Math.max(0,Math.min(it.doses,dose|0));
+    msg(d+' of '+it.doses+' doses left.', d>1?'#1a5a8c':'#9c4512');
+  }
   const eq=it.equip;
   if(eq&&(eq.atk||eq.str||eq.def||eq.ratk||eq.rstr||eq.rdef||eq.matk||eq.mdmg||eq.mdef||eq.req)){
     const b=[];if(eq.atk)b.push('Attack +'+eq.atk);if(eq.str)b.push('Strength +'+eq.str);if(eq.def)b.push('Defence +'+eq.def);
@@ -8238,7 +8260,7 @@ equipGrid.addEventListener('contextmenu',e=>{
   if(!it)return;
   const _eo=[{html:'Remove <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>unequipSlot(slot)}];
   if(it.id==='hunter_signet'){_eo.push({html:'Check task <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>signetCheckTask()});_eo.push({html:'Teleport: <span class="t">Slayer Master</span>',fn:()=>signetTeleMaster()});_eo.push({html:'Teleport: <span class="t">Slayer task</span>',fn:()=>signetTeleTask()});}
-  _eo.push({html:'Examine <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>examineItem(it.id)});
+  _eo.push({html:'Examine <span class="t">'+ITEMS[it.id].name+'</span>',fn:()=>examineItem(it.id, it.dose)});
   showMenu(e.clientX,e.clientY,_eo);
 });
 
@@ -26398,7 +26420,7 @@ function renderMarket(){
     var wh=document.createElement('span'); wh.className='who'; wh.textContent=o.name||''; r.appendChild(wh);
     // clicking a SELL offer sets up a matching BUY; a BUY offer sets up a matching SELL
     if(o.side==='sell'){ r.title='Buy from '+o.name;
-      r.addEventListener('click',function(){ _mktOpenSetup('buy',o.item,Math.min(o.qty,999999),o.price); }); }
+      r.addEventListener('click',function(){ _mktBuyFrom(o); }); }
     else { r.title='Sell to '+o.name;
       r.addEventListener('click',function(){ var have=countItem(o.item); _mktOpenSetup('sell',o.item,Math.min(o.qty,have||1),o.price); }); }
     boardEl.appendChild(r);
@@ -26413,6 +26435,49 @@ function _mktConfirmCancel(o){
 }
 
 /* ===== the offer-setup panel (item pick -> qty/price steppers) ===== */
+/* ** BUY IT, do not "offer" for it. ** You clicked a specific sell offer on the board: you have already
+   chosen the item, the seller and the price. All that is left is how many. This still places a matching
+   buy offer underneath (the market is offer-matched, and it fills instantly at their price) -- but the
+   question you are asked is the one you actually have. */
+function _mktBuyFrom(o){
+  if(!o||!ITEMS[o.item])return;
+  var it=ITEMS[o.item], max=Math.max(1,o.qty|0);
+  var gold=(typeof coinsCount==='function')?coinsCount():0;
+  var afford=Math.max(0,Math.floor(gold/Math.max(1,o.price)));
+  var n=Math.min(max,afford);
+  if(n<1){ msg('You cannot afford even one at '+fmt(o.price)+' gp.','#9c1f1f'); return; }
+  var html='<div style="text-align:left;line-height:1.6">'
+    +'<div style="display:flex;justify-content:space-between"><span style="color:#8a8172">Item</span><b>'+it.name+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span style="color:#8a8172">Seller</span><b>'+(o.name||'someone')+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span style="color:#8a8172">Their price</span><b>'+fmt(o.price)+' gp each</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span style="color:#8a8172">They have</span><b>'+fmt(max)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span style="color:#8a8172">You can afford</span><b>'+fmt(afford)+'</b></div>'
+    +'<hr style="border-color:#3a3226">'
+    +'<div style="display:flex;justify-content:space-between"><span>Buying</span>'
+      +'<b style="color:#ffd24a" id="mktbuyn">'+fmt(n)+'</b></div>'
+    +'<div style="display:flex;justify-content:space-between"><span>Total</span>'
+      +'<b style="color:#8a6a00" id="mktbuytot">'+fmt(n*o.price)+' gp</b></div>'
+    +'<div id="mktbuybtns" style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap"></div>'
+    +'</div>';
+  gameConfirm('Buy from '+(o.name||'a delver'), html, function(){
+    var q=_mktBuyN||1;
+    _mktOpenSetup('buy', o.item, q, o.price);
+    if(typeof _mktPlace==='function')_mktPlace();
+  }, 'Buy', null, 'Cancel');
+  _mktBuyN=n;
+  setTimeout(function(){
+    var bb=document.getElementById('mktbuybtns'); if(!bb)return;
+    var sync=function(){ var a=document.getElementById('mktbuyn'), b=document.getElementById('mktbuytot');
+      if(a)a.textContent=fmt(_mktBuyN); if(b)b.textContent=fmt(_mktBuyN*o.price)+' gp'; };
+    [['-1',-1],['+1',1],['+10',10],['+100',100],['All',0]].forEach(function(a){
+      var b=document.createElement('button'); b.className='btn'; b.textContent=a[0];
+      b.addEventListener('click',function(){
+        _mktBuyN = a[1]===0 ? Math.min(max,afford) : Math.max(1,Math.min(Math.min(max,afford), _mktBuyN+a[1]));
+        sync(); });
+      bb.appendChild(b); });
+  },0);
+}
+let _mktBuyN=1;
 function _mktOpenSetup(side, item, qty, price){
   _mktSetup={side:side, item:item||null, qty:qty||1, price:price||1};
   document.getElementById('mktsetup').style.display='';
@@ -26434,11 +26499,16 @@ function _mktRenderPickList(q){
   q=(q||'').trim().toLowerCase();
   var ids;
   if(_mktSetup.side==='sell'){
-    // only items in the pack that can be traded
+    /* ** ONLY WHAT CAN ACTUALLY BE TRADED. ** This comment used to say exactly that and the code never
+       checked -- isTradeable() was right there, the player-trade window has always used it, and the
+       market simply did not. So skill capes, Proctor's helms, quest items and clue scrolls could all be
+       listed. Anything you cannot hand to a player face to face cannot go on the board either. */
     var seen={}; ids=[];
-    for(var i=0;i<player.inv.length;i++){var sl=player.inv[i]; if(sl&&sl.id!=='coins'&&ITEMS[sl.id]&&!seen[sl.id]&&(!q||ITEMS[sl.id].name.toLowerCase().indexOf(q)>=0)){seen[sl.id]=1;ids.push(sl.id);}}
+    for(var i=0;i<player.inv.length;i++){var sl=player.inv[i];
+      if(sl&&sl.id!=='coins'&&ITEMS[sl.id]&&isTradeable(sl.id)&&!seen[sl.id]&&(!q||ITEMS[sl.id].name.toLowerCase().indexOf(q)>=0)){seen[sl.id]=1;ids.push(sl.id);}}
   } else {
-    ids=Object.keys(ITEMS).filter(function(id){ return id!=='coins'&&ITEMS[id].name&&(!q||ITEMS[id].name.toLowerCase().indexOf(q)>=0); });
+    /* and you cannot post a BUY for something nobody is allowed to sell */
+    ids=Object.keys(ITEMS).filter(function(id){ return id!=='coins'&&ITEMS[id].name&&isTradeable(id)&&(!q||ITEMS[id].name.toLowerCase().indexOf(q)>=0); });
     // sort by closeness of match then name, cap for perf
     ids.sort(function(a,b){ var an=ITEMS[a].name.toLowerCase(), bn=ITEMS[b].name.toLowerCase();
       var ai=an.indexOf(q), bi=bn.indexOf(q); if(q){ if(ai!==bi)return ai-bi; } return an<bn?-1:1; });
@@ -26469,11 +26539,15 @@ function _mktShowOfferControls(){
   // quantity buttons
   var qb=document.getElementById('mktqtybtns'); qb.innerHTML='';
   var qmax=(_mktSetup.side==='sell')?Math.max(1,countItem(_mktSetup.item)):100000;
-  var qadj=[['-','q',-1],['+','q',1],['1','qset',1],['10','qset',10],['100','qset',100],['1k','qset',1000]];
+  /* ** THE INCREMENTS ADD, they do not ASSIGN. ** These used to SET the quantity, so pressing 100 twice
+     left you on 100 and there was no way to reach 250 at all -- you had to hold '+'. OSRS's GE adds:
+     tap 100 three times and you have 300. 'All' and 'Clear' are the only buttons that assign. */
+  var qadj=[['-','q',-1],['+','q',1],['+1','q',1],['+10','q',10],['+100','q',100],['+1k','q',1000]];
   if(_mktSetup.side==='sell')qadj.push(['All','qset',qmax]);
+  qadj.push(['Clear','qset',1]);
   qadj.forEach(function(a){ var b=document.createElement('button'); b.textContent=a[0];
     b.addEventListener('click',function(){
-      if(a[1]==='q')_mktSetup.qty=Math.max(1,Math.min(qmax,_mktSetup.qty+a[2]));
+      if(a[1]==='q')_mktSetup.qty=Math.max(1,Math.min(qmax,(_mktSetup.qty|0)+a[2]));
       else _mktSetup.qty=Math.max(1,Math.min(qmax,a[2]));
       _mktSyncOffer(); }); qb.appendChild(b); });
   // price buttons
@@ -26499,6 +26573,12 @@ function _mktSyncOffer(){
   document.getElementById('mkttotalval').textContent=_mktFmt(_mktSetup.qty*_mktSetup.price)+' gp';
 }
 function _mktPlace(){
+  /* belt and braces: the picker filters, but nothing should be able to list an untradeable even if it
+     reaches here another way (a stale setup, a future entry point). */
+  if(_mktSetup&&_mktSetup.item&&typeof isTradeable==='function'&&!isTradeable(_mktSetup.item)){
+    msg('The '+(ITEMS[_mktSetup.item]?ITEMS[_mktSetup.item].name:'item')+' is not something you can trade.','#9c1f1f');
+    return;
+  }
   var s=_mktSetup;
   // client-side guards (no native alerts; use msg + stay on panel)
   if(s.side==='sell'){ if(countItem(s.item)<s.qty){ msg('You only have '+countItem(s.item)+' of that to sell.','#9c1f1f'); return; } }
@@ -37476,6 +37556,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     return ci === null && (r.in || null) === null && !_inInteriorFootprint(r.x, r.y);  /* beacon unknown: same-exterior only, and never a peer sitting inside an interior footprint (they are almost certainly inside it, sharing world coords with the wilderness) */
   }
   function frame(t, dt) {
+    /* pay out anything that died while our socket was down: the ONE 'mobdead' message that pays a
+       co-attacker is trivially missable on mobile, and missing it costs a whole boss kill. */
+    if (_coAttacked.size) _sweepCoAttacked();
     if (!active() || !conn) return;
     pushOutbound(t);
     { const _ci = curInterior(); if (_ci !== _roomSent || (t - _roomT > 1500)) { send({ t: 'iroom', r: _ci }); _roomSent = _ci; _roomT = t; } }   /* interior presence beacon: survives the relay, so interior peers see each other */
@@ -37857,9 +37940,29 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   /* Rector boss: award EXACTLY ONE signet to a random participant (only the owner runs this). Returns true if handled in-group. */
   function groupRectorSignet(mi) {
     if (!active() || !conn || !groupInGroup()) return false;   /* solo / no group -> caller does the solo award */
-    const ag = mobAggro.get(mi);
+    /* ** THE POOL WAS ALMOST ALWAYS JUST YOU. ** This read the aggro map and, if it was empty, fell back
+       to `[player.uid]` -- so the roll was over a pool of ONE and whoever's client ran it won every time.
+       mobAggro only has entries on the CLIENT THAT OWNS the mob and only where damage was tracked, so an
+       empty map is the NORMAL case for everyone else. Sam got the signet twice running and was right to
+       smell it: it was not routing to the group owner, it was routing to whoever rolled.
+       The pool is now everyone who was actually IN THE FIGHT: the aggro map if we have it, plus every
+       groupmate standing in the arena, plus us. */
     const parts = [];
+    const ag = mobAggro.get(mi);
     if (ag) for (const u of ag.acc.keys()) { if (u === player.uid || isGroupmate(u)) parts.push(u); }
+    /* everyone in the arena counts, whether or not THIS client tracked their damage */
+    if (typeof rectorArenaPlayers === 'function') {
+      for (const u of (rectorArenaPlayers() || [])) {
+        const id = (typeof u === 'string') ? u : (u && u.uid);
+        if (id && parts.indexOf(id) < 0 && (id === player.uid || isGroupmate(id))) parts.push(id);
+      }
+    }
+    /* and any groupmate we can see, so a disconnect at the moment of the kill cannot silently shrink
+       the pool to one */
+    for (const g of (groupSnapshot() || [])) {
+      const id = g && g.uid;
+      if (id && parts.indexOf(id) < 0) parts.push(id);
+    }
     if (!parts.includes(player.uid)) parts.push(player.uid);
     const winner = parts[Math.floor(Math.random() * parts.length)];
     if (winner === player.uid) {
@@ -37956,6 +38059,25 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     return true;
   }
 
+  /* ** THE MOBILE PLAYER WHO GOT NOTHING FROM THE RECTOR. **
+     _maybeGroupDrop fires from exactly ONE place: the inbound 'mobdead' message. So if your socket is
+     down at the instant the boss dies -- which on mobile happens constantly, a backgrounded tab or a
+     blink of signal is enough -- that message is simply never delivered, nothing else ever tells you the
+     thing died, and your loot evaporates. Everyone else saw them "log out and back in" at exactly the
+     moment of the kill, and they swore they did nothing. They were right: their phone dropped the socket
+     for a second and the one message that pays them out went past while it was down.
+     THE SWEEP: _coAttacked is our OWN record of what we fought, and it survives a reconnect. Walk it and
+     pay out anything that is now dead, whether or not we ever heard the message. Belt and braces on a
+     path where the cost of a miss is a whole boss kill. */
+  function _sweepCoAttacked() {
+    if (!_coAttacked.size || typeof rats === 'undefined') return;
+    for (const mi of Array.from(_coAttacked.keys())) {
+      const r = rats[mi];
+      if (!r) { _coAttacked.delete(mi); continue; }
+      if (r.alive) continue;                      /* still up: nothing owed yet */
+      _maybeGroupDrop(mi);                        /* dead, and we never heard: pay out now */
+    }
+  }
   /* co-attacker side: when a mob I was co-fighting dies, roll MY OWN instanced loot once. */
   function _maybeGroupDrop(mi) {
     if (!_coAttacked.has(mi)) return;
