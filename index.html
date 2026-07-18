@@ -2962,11 +2962,13 @@ const MOB_KINDS={
      final boss of the delve was literally two Emberdeep golems and a wizard wearing new names, and
      the golems dropped OBSIDIAN SHARDS, which is where Sam's mystery item came from. Its own kinds
      now, with their own models and NO drops: they are parts of a thing, not monsters. */
-  raid_cs_face:{name:'The Cornerstone',hp:190,acc:0.90,maxhit:18,cmb:220,resp:9e9,bones:0,coinP:0,coins:[0,0],aggro:1,
+  /* atkRange: it CANNOT MOVE, so it reaches the whole chamber. That is the trade -- you cannot kite a
+     thing that is part of the floor, and it does not miss you for standing at the back. */
+  raid_cs_face:{name:'The Cornerstone',hp:190,acc:0.90,maxhit:18,cmb:220,resp:9e9,bones:0,coinP:0,coins:[0,0],aggro:1,atkRange:16,
     ex:'The stone the school was laid on. It has a face. It has always had a face; they simply built on it anyway.'},
-  raid_cs_lhand:{name:'The Cornerstone (left hand)',hp:150,acc:0.86,maxhit:15,cmb:180,resp:9e9,bones:0,coinP:0,coins:[0,0],aggro:1,weak:'melee',
+  raid_cs_lhand:{name:'The Cornerstone (left hand)',hp:150,acc:0.86,maxhit:15,cmb:180,resp:9e9,bones:0,coinP:0,coins:[0,0],aggro:1,weak:'melee',atkRange:14,
     ex:'A hand of dressed masonry come up through the floor. Steel bites it best \u2014 magic mostly runs off the stone.'},
-  raid_cs_rhand:{name:'The Cornerstone (right hand)',hp:150,acc:0.88,maxhit:14,cmb:180,resp:9e9,bones:0,coinP:0,coins:[0,0],aggro:1,weak:'magic',
+  raid_cs_rhand:{name:'The Cornerstone (right hand)',hp:150,acc:0.88,maxhit:14,cmb:180,resp:9e9,bones:0,coinP:0,coins:[0,0],aggro:1,weak:'magic',atkRange:14,
     ex:'The other hand, and it glows from inside. Magic bites it best \u2014 steel skates off the glaze.'},
   raid_icedemon:{name:'The Ice Demon',ex:'The rink\u2019s refrigeration found something down here and froze it solid. It has been waiting for the thaw.',hp:150,acc:0.88,maxhit:14,cmb:150,resp:9e9,bigbones:1,slayer:false,weak:'magic'},
   raid_sexton:{name:'The Sexton',ex:'He has been digging under the Chapel since before the Chapel. He is not finished.',hp:110,acc:0.84,maxhit:12,cmb:120,resp:9e9,bigbones:1,slayer:false},
@@ -4952,7 +4954,10 @@ function openPetExamine(id){
     sc.add(new THREE.HemisphereLight(0xffffff,0x404040,1.15));
     const key=new THREE.DirectionalLight(0xfff0d0,0.9); key.position.set(2,3,2); sc.add(key);
     const g=makePet(id); g.position.y=-0.1; sc.add(g);
-    if(!have)g.traverse(o2=>{ if(o2.material){ o2.material=o2.material.clone(); o2.material.color&&o2.material.color.setHex(0x2a2620); } });
+    /* ** FULL COLOUR, FOUND OR NOT. ** This used to black out any pet you had not collected -- my idea,
+       and a bad one: a black silhouette just reads as a broken model, which is exactly how Sam read
+       it. This page is a catalogue of things to go and get, and you cannot want what you cannot see.
+       The header already says whether you have it. */
     let yaw=0.6, drag=false, lx=0;
     cv.onpointerdown=(e)=>{drag=true;lx=e.clientX;cv.style.cursor='grabbing';};
     window.addEventListener('pointerup',()=>{drag=false;if(cv)cv.style.cursor='grab';});
@@ -5589,7 +5594,19 @@ function walkTo(tx,ty,exact){
   player.path=p;return true;
 }
 /* large-mob standoff: stand on a ring at radius R from the mob centre so you fight outside its footprint */
-const _BIGREACH={dragon:3,greendragon:3,bluedragon:3,reddragon:3,blackdragon:3,wyvern:3,snowking:2,cinderwing:3,greater:2,obsidian_golem:2,slag_warden:2,forge_tyrant:2};
+const /* ** THE CORNERSTONE REACHES THE WHOLE ROOM. ** Its hands come up through the floor and its face IS the
+   floor -- none of them can take a step, so if their reach were 1 you could stand two tiles away and
+   plink them to death. They hit you anywhere in the chamber. That is the trade for them being rooted:
+   you cannot kite what cannot move, and it cannot miss you for standing back. */
+/* ** _BIGREACH IS THE PLAYER'S APPROACH, not the mob's attack. ** It is how close you have to get to
+   swing -- so for the Cornerstone it is the RADIUS OF THE MODEL. Sam was walking to the centre of a
+   thing three tiles wide and standing inside its head. These numbers put you on its edge, where you
+   can see yourself and it. (How far IT can hit YOU is MOB_KINDS[].atkRange, a completely separate
+   number -- do not confuse them again.) */
+_BIGREACH={dragon:3,greendragon:3,bluedragon:3,reddragon:3,blackdragon:3,wyvern:3,snowking:2,cinderwing:3,greater:2,obsidian_golem:2,slag_warden:2,forge_tyrant:2,
+  raid_cs_lhand:3, raid_cs_rhand:3, raid_cs_face:5};
+/* Rooted: it came up through the floor and it is not going anywhere. */
+function _raidRooted(r){ return !!(r&&(r.kind==='raid_cs_face'||r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand')); }
 function mobReach(r){return (r&&_BIGREACH[r.kind])||1;}
 function playerReach(){
   const w=player.equip.weapon,eq=w&&ITEMS[w.id]&&ITEMS[w.id].equip,ws=(typeof weaponStyle==='function')?weaponStyle(eq):'melee';
@@ -5624,6 +5641,17 @@ function setAction(a,tx,ty){
   player.action=a;player.actTick=0;
   followUid=null;
   if(tx!==undefined){
+    /* ** A BIG MOB IS NOT REACHED BY STANDING NEXT TO IT. ** This walked every attack with mode 'adj',
+       which demands a free tile IMMEDIATELY beside the target. The Cornerstone's hands come up through
+       holes -- every adjacent tile is void -- so adjTargets came back empty, walkTo said "I can't reach
+       that!" and killed the action BEFORE the attack handler (which knows all about reach) ever ran.
+       That is Sam's bug: the only way to fight them was to wander close enough to be aggroed.
+       If the thing has a standoff reach, walk to THAT ring instead. */
+    const _bigR=(a&&a.rat&&typeof mobReach==='function')?mobReach(a.rat):1;
+    if((a&&(a.type==='attack'||a.type==='datk'))&&_bigR>1){
+      if(!walkToReach(tx,ty,_bigR)){player.action=null;}
+      return;
+    }
     const mode=a&&a.exact?true:(a&&(a.type==='attack'||a.type==='datk'||a.type==='talk'||a.type==='talkn'||a.type==='bank'||a.type==='shop'||a.type==='ditch'||a.type==='pray'||a.type==='cook'||a.type==='partylever'||a.type==='partydrops'||a.type==='popballoon'||a.type==='duelff')?'adj':undefined);
     if(!walkTo(tx,ty,mode)){player.action=null;}
   }
@@ -7124,6 +7152,12 @@ function ratsTick(){
     if(r.kind==='ember_mote'){emberMoteTick(r,performance.now());continue;}
     const _ct=(player.action&&player.action.type==='attack'&&player.action.rat&&player.action.rat.alive)?player.action.rat:((engagedMob&&engagedMob.alive&&engagedMob.target===player)?engagedMob:null);
     if(r.target===player&&_ct&&_ct!==r&&!r.tame&&!MOB_KINDS[r.kind].minion){r.target=null;r._chaseStart=undefined;if(engagedMob===r)engagedMob=null;continue;}
+    /* ** THE CORNERSTONE DOES NOT MOVE. ** It is masonry: a face in the foundation and two hands up
+       through the floor. Letting the mob AI walk them around the arena after you was what made them
+       read as 'hands sliding all over the map' instead of hands coming OUT of it. They are pinned to
+       the tile they surfaced on, for ever. They still turn to face you, still swing, still use every
+       special -- they simply never take a step. */
+    if(_raidRooted(r)){ r.x=r.sx; r.y=r.sy; r.px=r.sx; r.py=r.sy; }
     if(!r.target&&!r.tame&&(r.gaunt||r.interior!=='volcano')&&(r.raid||MOB_KINDS[r.kind].aggro||r.gaunt||(inWild(r.x,r.y)&&r.kind!=='snowking'))
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
       /* EVERYTHING in the delve aggroes, whatever its level or yours. The out-levelled rule (a mob
@@ -8504,6 +8538,14 @@ function optionsAt(tx,ty){
       label:'Enter Party Room',fn:()=>setAction({type:'enterparty',o:dr,east:east},dr.x,dr.y)});
   }
   const rat=rats.find(r=>r.alive&&r.x===tx&&r.y===ty&&_mobOnCurFloor(r));
+  /* ** THE CORNERSTONE IS SCENERY UNTIL IT WAKES. ** While it is asleep in its hole you get Examine and
+     nothing else: an Attack option on a thing you cannot hurt is a lie, and it steals clicks from the
+     hands you are supposed to be fighting. */
+  if(rat&&rat._csAsleep){
+    opts.push({html:'Examine <span class="t">'+rat.name+'</span>',
+      fn:()=>msg('Only the crown of it is above the floor. Whatever it is, it is not finished sleeping.','#4a6a5a')});
+    return opts;
+  }
   if(rat)opts.push({html:'Attack <span class="t">'+rat.name+'</span>'+
     ' <span style="color:'+cmbColForVal(mobCmb(rat))+'">(level-'+
     mobCmb(rat)+')</span>',
@@ -8513,6 +8555,9 @@ function optionsAt(tx,ty){
   if(guide.x===tx&&guide.y===ty)opts.push(
     {html:'Talk-to <span class="t">Guide</span>',label:'Talk-to Guide',fn:startTalk},
     {html:'Examine <span class="t">Guide</span>',fn:()=>msg(guide.ex)});
+  /* ** THE CORNERSTONE IS NOT THERE UNTIL IT WAKES. ** While it is asleep in its hole it offers no
+     Attack option at all -- an option on something you cannot hurt is a lie, and worse, it steals
+     clicks from the hands you are supposed to be fighting. It is scenery until the hands are pinned. */
   /* ** AN INVISIBLE NPC MUST NOT BE CLICKABLE. ** optionsAt is TILE-based, and the delve's NPCs live on
      tiles that other floors reuse -- Ellison stands at (26,50), which is inside the Cornerstone's
      chamber on floor 3. So his menu came up in the boss room, off an NPC you could not see. If he is
@@ -19068,140 +19113,267 @@ function makeRat(r){
     r._m={group:g,demi:1,dk:'prefect',arms:[hm.lArm,hm.rArm],armBase:[0,0],head:hm.hairG,headBaseX:0,cane:cane};
     return;
   }else if(r.kind==='raid_cs_face'){
-    /* ===== THE CORNERSTONE'S FACE =====
-       ** Built like Olm: it comes UP THROUGH THE FLOOR and it is bigger than the room. ** The trick is
-       that you never see where it ends -- the jaw and the shoulders run down past the floor line and
-       keep going, so the eye reads "this continues under the building" rather than "this is a statue
-       standing here". It was an obsidian_golem: a boxy Emberdeep prop.
-       It is DRESSED MASONRY, not rock: courses, a chamfer, a datum mark -- the school cut it and built
-       on it, and it has been holding the weight ever since. The face is IN the stone, not carved onto
-       it: eyes are voids with a furnace behind them. */
-    const STONE=0x5a5148, STONE2=0x6a6156, DEEP=0x2a2620, FIRE=0xff6a24, GOLD=0xc9a23a, MOSS=0x3f5a3a;
+    /* ===== THE CORNERSTONE =====
+       ** REBUILT. ** The first pass was a sphere with courses stuck on it -- Sam: "sort of just looks
+       like a big blob". Olm works because it has a SILHOUETTE: a low massive skull, a heavy jutting
+       brow, a jaw that could take a room, and it reads at any angle. This takes that shape and makes it
+       MASONRY -- a face that was cut into a foundation stone and has been holding the school up ever
+       since. Every mass is a critterSweep loft, not a ball.
+       ** r._csRise drives the whole model's height. ** At 0 only the crown shows above the floor, a bump
+       in its hole while you fight the hands. At 1 it is fully up. raidBossTick lerps it. */
+    /* ** IT WAS ONE BEIGE. ** Sam: "a giant monochrome blob". Old granite is not beige -- it is grey
+       going green where the water runs, black in the shadow of every course, and the school's own
+       masonry sits on it in a different, warmer stone entirely. Three stones, moss, verdigris, and
+       the furnace. The colour IS the detail at this size. */
+    const GRANITE=0x4e5a58,        /* the thing itself: cold grey-green */
+          GRANITE2=0x5e6c68,       /* where it catches light */
+          SCHOOL=0x8a7a5a,         /* the school's warm sandstone, cut and laid ON it */
+          SCHOOL2=0x9c8c68,
+          DEEP=0x1e2422,           /* the shadow in every joint */
+          PALE=0xb8c4bc,           /* weathered, bone-pale where it has worn */
+          FIRE=0xff6a24, EMBER=0xc9452a, GOLD=0xc9a23a,
+          MOSS=0x3f6a4a, MOSS2=0x6a9a5a, VERD=0x3a8a7a;   /* verdigris in the wet */
+    const STONE=GRANITE, STONE2=GRANITE2;
     const sm=(geo,hex)=>new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:hex}));
     const gl=(geo,hex,op)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex,transparent:op!==undefined,opacity:op===undefined?1:op}));
-    /* NOTE: no `hm=null` here. `hm` is NOT declared anywhere in makeRat -- assigning to it under
-       'use strict' (which this file runs) throws ReferenceError and kills the whole model. These
-       branches set their own r._m and return, so hm is never needed. */
-    /* ---- THE MASS. Sunk deliberately: its base is BELOW the floor, so it has no visible bottom. ---- */
-    const mass=critterSweep([
-      {p:[0,-2.6,0],rx:3.4,ry:2.6},          /* under the floor -- you never see this end */
-      {p:[0,-0.6,0.1],rx:2.9,ry:2.2},
-      {p:[0,0.9,0.25],rx:2.3,ry:1.8},        /* the brow-line, where it breaks the floor */
-      {p:[0,2.0,0.5],rx:1.7,ry:1.35},
-      {p:[0,2.9,0.35],rx:0.9,ry:0.8}
-    ],STONE,18,true,true,{top:STONE2,bottom:DEEP});
-    g.add(mass);
-    /* ---- COURSES. It is DRESSED. This is the whole difference between "a rock" and "the thing the
-       school was built on top of". ---- */
-    for(let c=0;c<5;c++){
-      const yy=-1.2+c*0.95, rr=3.3-c*0.42;
-      for(let i=0;i<26;i++){
-        const a=i/26*Math.PI*2 + (c%2)*0.12;
-        if(Math.cos(a)>0.45&&Math.abs(Math.sin(a))<0.5&&yy>0.6)continue;   /* leave the face clear */
-        const b=sm(new THREE.BoxGeometry(0.78,0.30,0.30),(i%2)?STONE:STONE2);
-        b.position.set(Math.cos(a)*rr, yy, Math.sin(a)*rr);
-        b.rotation.y=-a; g.add(b);
+    /* everything hangs off `rig` so the rise can move the whole thing as one */
+    const rig=new THREE.Group(); g.add(rig); 
+
+    /* ---- THE SKULL: low, wide, massive. Widest at the brow, not the middle. ---- */
+    rig.add(critterSweep([
+      {p:[0,-3.2,-0.6],rx:3.5,ry:2.4},          /* under the floor: no visible bottom */
+      {p:[0,-1.4,-0.4],rx:3.2,ry:2.2},
+      {p:[0,0.3,-0.1],rx:2.9,ry:2.0},           /* the mass */
+      {p:[0,1.7,0.35],rx:2.5,ry:1.5},           /* the BROW: the widest thing on it */
+      {p:[0,2.5,0.15],rx:1.7,ry:0.85},
+      {p:[0,2.95,-0.3],rx:0.8,ry:0.45}          /* the crown -- the only bit you see while it sleeps */
+    ],STONE,20,true,true,{top:STONE2,bottom:DEEP}));
+
+    /* ---- THE BROW: a heavy shelf that juts. This is the silhouette. ---- */
+    rig.add(critterSweep([
+      {p:[-2.3,1.75,0.5],rx:0.42,ry:0.34},
+      {p:[-1.0,2.05,1.25],rx:0.55,ry:0.42},
+      {p:[0,2.15,1.5],rx:0.6,ry:0.44},
+      {p:[1.0,2.05,1.25],rx:0.55,ry:0.42},
+      {p:[2.3,1.75,0.5],rx:0.42,ry:0.34}
+    ],STONE2,12,true,true));
+
+    /* ---- THE JAW: a separate mass, heavy, set forward. It could take a room. ---- */
+    const jaw=new THREE.Group(); rig.add(jaw); jaw.position.set(0,0.15,0.35);
+    jaw.add(critterSweep([
+      {p:[-1.9,-0.15,0.1],rx:0.42,ry:0.40},
+      {p:[-1.1,-0.42,0.95],rx:0.58,ry:0.50},
+      {p:[0,-0.55,1.35],rx:0.72,ry:0.55},        /* the chin */
+      {p:[1.1,-0.42,0.95],rx:0.58,ry:0.50},
+      {p:[1.9,-0.15,0.1],rx:0.42,ry:0.40}
+    ],STONE,14,true,true,{top:STONE2,bottom:DEEP}));
+    /* teeth: broken courses along the jaw, not a row of cubes */
+    for(let i=0;i<9;i++){
+      const t=(i-4)/4;
+      const th=sm(new THREE.ConeGeometry(0.16-Math.abs(t)*0.04, 0.42-Math.abs(t)*0.12, 5),PALE);
+      th.position.set(t*1.75, 0.05-Math.abs(t)*0.18, 1.28-Math.abs(t)*0.5);
+      th.rotation.x=-0.2; th.rotation.z=t*0.18; jaw.add(th);
+    }
+    /* the furnace behind the jaw */
+    const mouth=gl(new THREE.SphereGeometry(1.1,12,10),FIRE,0.55);
+    mouth.position.set(0,0.05,0.6); mouth.scale.set(1.6,0.45,0.7); jaw.add(mouth);
+
+    /* ---- THE EYES: voids with a furnace behind them, set DEEP under the brow ---- */
+    for(const sx of [-1,1]){
+      const socket=sm(new THREE.SphereGeometry(0.62,12,10),DEEP);
+      socket.position.set(sx*1.15,1.55,1.32); socket.scale.set(1.25,0.85,0.6); rig.add(socket);
+      const eye=gl(new THREE.SphereGeometry(0.30,10,9),FIRE);
+      eye.position.set(sx*1.15,1.55,1.5); rig.add(eye);
+      const halo=gl(new THREE.SphereGeometry(0.72,10,9),EMBER,0.22);
+      halo.position.set(sx*1.15,1.55,1.5); rig.add(halo);
+      /* the cheekbone under each */
+      rig.add(critterSweep([
+        {p:[sx*0.7,0.85,1.1],rx:0.3,ry:0.22},
+        {p:[sx*1.9,1.05,0.5],rx:0.36,ry:0.26}
+      ],STONE2,10,true,true));
+    }
+    /* ---- THE SCHOOL'S MASONRY, LAID ON IT ----
+       ** These were baked at a FIXED radius while the skull TAPERS. ** One ring stuck out (Sam's spikes)
+       and the other four were buried 0.12-0.38 deep and invisible -- which is exactly why it read as a
+       featureless blob: the only detail on it could not be seen. Each course is now sized to the skull
+       AT ITS OWN HEIGHT, in the school's warm sandstone against the cold granite. That contrast is the
+       whole idea: somebody cut this thing and built on it. */
+    const _skullR=(y)=>{ const S2=[[-3.2,3.5],[-1.4,3.2],[0.3,2.9],[1.7,2.5],[2.5,1.7],[2.95,0.8]];
+      for(let i=0;i<S2.length-1;i++){ const [y0,r0]=S2[i],[y1,r1]=S2[i+1];
+        if(y>=y0&&y<=y1)return r0+(r1-r0)*((y-y0)/(y1-y0)); }
+      return y<S2[0][0]?S2[0][1]:S2[S2.length-1][1]; };
+    for(let c=0;c<6;c++){
+      const yy=-2.6+c*0.82;
+      const rr=_skullR(yy);
+      for(let i=0;i<30;i++){
+        const a=i/30*Math.PI*2 + (c%2)*0.10;
+        if(Math.cos(a)>0.30&&yy>0.4)continue;          /* leave the face clear */
+        const px=Math.cos(a)*rr*0.985, pz=Math.sin(a)*rr*0.72*0.985;
+        const b2=sm(new THREE.BoxGeometry(0.72,0.26,0.20),(i%2)?SCHOOL:SCHOOL2);
+        b2.position.set(px, yy, pz); b2.rotation.y=-a; rig.add(b2);
+        /* the shadow in the joint: what makes a course read as a course */
+        if(i%2===0){
+          const jt=sm(new THREE.BoxGeometry(0.72,0.05,0.16),DEEP);
+          jt.position.set(px, yy-0.14, pz); jt.rotation.y=-a; rig.add(jt);
+        }
+        /* moss and verdigris low down, where the water sits */
+        if(yy<-0.9 && (i*7+c)%4===0){
+          const m3=sm(new THREE.BoxGeometry(0.5,0.05,0.14),((i+c)%2)?MOSS2:VERD);
+          m3.position.set(px, yy+0.14, pz); m3.rotation.y=-a; rig.add(m3);
+        }
       }
     }
-    /* the school's datum mark, cut into it and painted over */
-    const dat=sm(new THREE.BoxGeometry(0.5,0.14,0.06),GOLD); dat.position.set(-1.5,1.5,2.05); dat.rotation.y=-0.5; g.add(dat);
-    /* ---- THE FACE. Voids, not features: two sockets and a seam, with a furnace behind them. ---- */
-    for(const sx of [-1,1]){
-      const socket=sm(new THREE.SphereGeometry(0.44,10,9),DEEP);
-      socket.position.set(sx*0.86,1.75,1.55); socket.scale.set(1.3,1,0.7); g.add(socket);
-      const eye=gl(new THREE.SphereGeometry(0.26,9,8),FIRE);
-      eye.position.set(sx*0.86,1.75,1.72); g.add(eye);
-      const halo=gl(new THREE.SphereGeometry(0.62,9,8),FIRE,0.22);
-      halo.position.set(sx*0.86,1.75,1.72); g.add(halo);
-      /* a brow of shifted masonry above each */
-      const brow=sm(new THREE.BoxGeometry(1.3,0.34,0.5),STONE2);
-      brow.position.set(sx*0.86,2.25,1.5); brow.rotation.z=sx*0.16; g.add(brow);
-    }
-    /* the mouth: a SEAM that has opened, not a jaw. The light is what is behind the stone. */
-    const seam=gl(new THREE.BoxGeometry(2.5,0.20,0.10),FIRE,0.9);
-    seam.position.set(0,0.72,1.85); seam.rotation.z=0.05; g.add(seam);
-    for(let i=0;i<9;i++){   /* the courses either side of the seam, shoved apart */
-      const t=(i/8-0.5);
-      const b=sm(new THREE.BoxGeometry(0.34,0.26,0.4),STONE);
-      b.position.set(t*2.4, 0.72+Math.abs(t)*0.34+0.26, 1.7); b.rotation.z=-t*0.5; g.add(b);
-      const b2=sm(new THREE.BoxGeometry(0.34,0.26,0.4),STONE2);
-      b2.position.set(t*2.4, 0.72-Math.abs(t)*0.34-0.26, 1.7); b2.rotation.z=t*0.5; g.add(b2);
-    }
-    /* moss in the joints on the old side -- it has been down here a very long time */
-    for(let i=0;i<10;i++){ const a=Math.PI*0.6+i*0.28;
-      const m2=sm(new THREE.BoxGeometry(0.5,0.06,0.3),MOSS);
-      m2.position.set(Math.cos(a)*2.7,-0.3+((i*5)%3)*0.7,Math.sin(a)*2.7); m2.rotation.y=-a; g.add(m2); }
-    /* ---- FLOOR SLABS TIPPED UP AROUND IT, so it reads as having come THROUGH rather than been placed ---- */
+    /* pale weathering high up, where nothing has touched it in 170 years */
     for(let i=0;i<12;i++){
-      const a=i/12*Math.PI*2, rr=3.1+((i*7)%3)*0.3;
-      const sl=sm(new THREE.BoxGeometry(1.4,0.2,1.0),0x4a443c);
-      sl.position.set(Math.cos(a)*rr,-1.1,Math.sin(a)*rr);
-      sl.rotation.set(0.5+((i*3)%4)*0.16, -a, 0.2*Math.sin(i)); g.add(sl);
+      const a=i/12*Math.PI*2, yy=1.9+((i*5)%3)*0.3, rr=_skullR(yy);
+      if(Math.cos(a)>0.3)continue;
+      const w=sm(new THREE.BoxGeometry(0.5,0.18,0.12),PALE);
+      w.position.set(Math.cos(a)*rr*0.99, yy, Math.sin(a)*rr*0.72*0.99); w.rotation.y=-a; rig.add(w);
     }
-    g.scale.setScalar(1.0);
-    /* ** FINISH THE BRANCH. ** makeRat's tail IS the rat -- no return meant the rat's body, head, ears
-       and nose were glued onto the Cornerstone's face and it got a rat-sized pick proxy. */
+    /* the datum mark, painted on and never removed */
+    const dat=sm(new THREE.BoxGeometry(0.5,0.14,0.06),GOLD);
+    dat.position.set(-1.9,0.55,1.5); dat.rotation.y=-0.4; rig.add(dat);
+    /* moss down the old side */
+    for(let i=0;i<12;i++){ const a=Math.PI*0.55+i*0.22;
+      const m2=sm(new THREE.BoxGeometry(0.5,0.06,0.3),MOSS);
+      m2.position.set(Math.cos(a)*2.9,-1.2+((i*5)%4)*0.7,Math.sin(a)*2.1); m2.rotation.y=-a; rig.add(m2); }
+    /* ---- THE CROWN RIDGE: what you see when it is still asleep in its hole ---- */
+    for(let i=0;i<7;i++){
+      const t=(i-3)/3;
+      const rdg=sm(new THREE.ConeGeometry(0.16,0.30+ (1-Math.abs(t))*0.22, 5),STONE2);
+      rdg.position.set(t*1.5, 2.9-Math.abs(t)*0.35, -0.3-Math.abs(t)*0.2);
+      rdg.rotation.x=-0.25; rig.add(rdg);
+    }
+    /* floor slabs tipped up all round: it came THROUGH, it was not placed */
+    for(let i=0;i<14;i++){
+      const a=i/14*Math.PI*2, rr=3.4+((i*7)%3)*0.35;
+      const sl=sm(new THREE.BoxGeometry(1.5,0.2,1.05),0x44544c);
+      sl.position.set(Math.cos(a)*rr,-1.3,Math.sin(a)*rr*0.8);
+      sl.rotation.set(0.45+((i*3)%4)*0.15,-a,0.18*Math.sin(i)); rig.add(sl);
+    }
+    r._csRig=rig; r._csJaw=jaw;
+    /* ** ASLEEP AT FIRST: only the crown shows above its hole. ** raidBossTick raises it. */
+    rig.position.y = (r._csRise!==undefined ? r._csRise : 0)*3.2 - 3.2;
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
-    addProxy(g,2.6,3.4,0,{kind:'rat',r});
+    addProxy(g,2.8,3.6,0,{kind:'rat',r});
     scene.add(g);
-    r._m={group:g, demi:1, dk:'cs_face'};
+    r._m={group:g, demi:1, dk:'cs_face', rig, jaw};
     return;
   }else if(r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand'){
-    /* ===== THE HANDS =====
-       Also up through the floor, wrist-deep, with the slabs broken around each. The LEFT is dead stone
-       (steel only); the RIGHT burns from inside (magic only) -- so you can tell at a glance which one
-       you are allowed to hit, which is the whole point of the mechanic. */
+    /* ===== THE CORNERSTONE'S HANDS =====
+       ** REBUILT SMOOTH. ** The first pass was stacks of BoxGeometry -- Sam: "boxy like minecraft
+       blocks". A hand is the least boxy thing there is. Every mass here is a critterSweep loft: the
+       wrist tapers, the palm is a shaped slab, the fingers are TAPERED and CURLED with real knuckles,
+       and the stone is dressed only where the school cut it. Left is dead granite; right burns violet
+       from inside, so you can tell at a glance which one you are looking at. */
     const mage=(r.kind==='raid_cs_rhand');
-    const STONE=mage?0x5a4a5a:0x5a5148, STONE2=mage?0x6a5a6a:0x6a6156, DEEP=0x2a2620;
-    const VEIN=mage?0x7b5cff:0x8a3a2a;
+    const STONE=mage?0x584a60:0x565049, STONE2=mage?0x6a5a72:0x6a6358, DEEP=0x2a2620;
+    const PALE_ARM=mage?0x8a7a96:0x847c6e;
+    const VEIN=mage?0x7b5cff:0x8a3a2a, MOSS=0x3f6a4a;
     const sm=(geo,hex)=>new THREE.Mesh(geo,new THREE.MeshLambertMaterial({color:hex}));
     const gl=(geo,hex,op)=>new THREE.Mesh(geo,new THREE.MeshBasicMaterial({color:hex,transparent:op!==undefined,opacity:op===undefined?1:op}));
-    /* NOTE: no `hm=null` here. `hm` is NOT declared anywhere in makeRat -- assigning to it under
-       'use strict' (which this file runs) throws ReferenceError and kills the whole model. These
-       branches set their own r._m and return, so hm is never needed. */
-    /* the wrist, coming up out of the floor and going down further than you can see */
+
+    /* ---- THE WRIST ----
+       ** SLIMMER, and no blocks punching through it. ** It was 1.05 thick and read as chubby, and the
+       "dressed courses" were baked at a FIXED radius while the sweep TAPERS -- so every one of them stuck
+       0.06-0.07 out through the surface. Those were Sam's spikes. A tendon-lined column instead: the
+       banding is cut INTO the silhouette by the sweep itself, not stuck on afterwards. */
     g.add(critterSweep([
-      {p:[0,-2.0,0],rx:0.95,ry:0.95},
-      {p:[0,-0.4,0],rx:0.75,ry:0.75},
-      {p:[0,0.7,0.05],rx:0.62,ry:0.62}
-    ],STONE,14,true,true,{top:STONE2,bottom:DEEP}));
-    /* the palm */
-    const palm=sm(new THREE.BoxGeometry(1.5,0.5,1.25),STONE2); palm.position.set(0,1.15,0.1); g.add(palm);
-    const heel=sm(new THREE.BoxGeometry(1.35,0.42,0.5),STONE); heel.position.set(0,1.0,-0.45); g.add(heel);
-    /* FOUR FINGERS + a thumb, each a stack of dressed blocks with a knuckle joint -- masonry, not a mitt */
+      {p:[0,-2.4,0],rx:0.80,ry:0.80},
+      {p:[0,-1.5,0],rx:0.66,ry:0.66},
+      {p:[0,-0.9,0],rx:0.60,ry:0.62},     /* a slight waist -- it is a wrist, not a pillar */
+      {p:[0,-0.3,0.02],rx:0.55,ry:0.58},
+      {p:[0,0.3,0.05],rx:0.50,ry:0.54},
+      {p:[0,0.62,0.06],rx:0.52,ry:0.56}   /* it swells again into the heel of the hand */
+    ],STONE,18,true,true,{top:STONE2,bottom:DEEP}));
+    /* ---- THE PALM: a shaped slab, wider than the wrist, cupped ---- */
+    g.add(critterSweep([
+      {p:[0,0.86,-0.30],rx:0.62,ry:0.20},
+      {p:[0,1.02,0.02],rx:0.80,ry:0.26},
+      {p:[0,1.06,0.34],rx:0.76,ry:0.22},
+      {p:[0,0.98,0.58],rx:0.58,ry:0.16}
+    ],STONE2,16,true,true,{top:STONE2,bottom:STONE}));
+    /* the heel of the hand */
+    g.add(critterSweep([
+      {p:[0,0.84,-0.44],rx:0.52,ry:0.24},
+      {p:[0,0.94,-0.18],rx:0.62,ry:0.24}
+    ],STONE,12,true,true));
+
+    /* ---- FOUR FINGERS: tapered, CURLED, with real knuckles. Not stacks of blocks. ---- */
     for(let fgr=0;fgr<4;fgr++){
-      const fx=-0.52+fgr*0.35;
-      const lean=(fgr-1.5)*0.10;
-      for(let k=0;k<3;k++){
-        const b=sm(new THREE.BoxGeometry(0.28,0.30,0.30),(k%2)?STONE:STONE2);
-        b.position.set(fx+lean*k, 1.45+k*0.34, 0.55+k*0.22-Math.abs(fgr-1.5)*0.05);
-        b.rotation.x=-0.30-k*0.12; b.rotation.z=lean*0.4; g.add(b);
-        if(k<2){ const kn=sm(new THREE.SphereGeometry(0.14,7,6),STONE); kn.position.copy(b.position); kn.position.y+=0.17; g.add(kn); }
+      const t=(fgr-1.5)/1.5;                 /* -1 .. 1 across the hand */
+      const fx=t*0.44;
+      const len=0.92-Math.abs(t)*0.16;       /* the middle fingers are longest */
+      const curl=0.9;
+      const secs=[];
+      for(let k=0;k<=4;k++){
+        const u=k/4;
+        const ang=-0.45 - u*curl;            /* it curls forward as it goes */
+        secs.push({ p:[ fx + t*0.10*u,
+                        1.06 + Math.sin(-ang)*len*u*0.9,
+                        0.56 + Math.cos(ang)*len*u*0.75 ],
+                    rx:0.155-u*0.075, ry:0.145-u*0.070 });
       }
-      const nail=sm(new THREE.ConeGeometry(0.10,0.26,4),DEEP);
-      nail.position.set(fx+lean*3, 2.42, 1.16); nail.rotation.x=1.1; g.add(nail);
+      g.add(critterSweep(secs,(fgr%2)?STONE:STONE2,10,true,true,{top:STONE2,bottom:STONE}));
+      /* knuckles: a swell at each joint, not a cube */
+      for(let k=1;k<=2;k++){
+        const u=k/3, ang=-0.45-u*curl;
+        const kn=sm(new THREE.SphereGeometry(0.135-u*0.03,9,8),STONE2);
+        kn.position.set(fx+t*0.10*u, 1.06+Math.sin(-ang)*len*u*0.9+0.03, 0.56+Math.cos(ang)*len*u*0.75);
+        kn.scale.z=0.8; g.add(kn);
+      }
+      /* the nail: a worn wedge, not a cone stuck on the end */
+      const uN=1, angN=-0.45-curl;
+      const nail=sm(new THREE.ConeGeometry(0.075,0.22,6),DEEP);
+      nail.position.set(fx+t*0.10, 1.06+Math.sin(-angN)*len*0.92, 0.56+Math.cos(angN)*len*0.80);
+      nail.rotation.x=Math.PI/2-angN; g.add(nail);
     }
-    { const tx=0.80;
-      for(let k=0;k<2;k++){
-        const b=sm(new THREE.BoxGeometry(0.30,0.30,0.30),(k%2)?STONE:STONE2);
-        b.position.set(tx+k*0.16, 1.30+k*0.28, 0.12+k*0.30); b.rotation.z=-0.5; b.rotation.x=-0.3; g.add(b);
-      } }
-    /* the VEIN: what tells you which hand this is. The mage hand burns; the melee hand is dead stone. */
-    for(let i=0;i<5;i++){
-      const v=gl(new THREE.BoxGeometry(0.07,0.5+((i*3)%3)*0.3,0.07),VEIN, mage?0.95:0.5);
-      v.position.set(-0.5+i*0.26, 0.4+((i*5)%3)*0.3, 0.42); v.rotation.z=(i-2)*0.14; g.add(v);
+    /* ---- THE THUMB: across the palm, shorter, thicker ---- */
+    { const secs=[];
+      for(let k=0;k<=3;k++){ const u=k/3;
+        secs.push({ p:[0.62+u*0.30, 0.98+u*0.30, 0.02+u*0.34], rx:0.19-u*0.075, ry:0.17-u*0.065 }); }
+      g.add(critterSweep(secs,STONE,10,true,true,{top:STONE2,bottom:STONE}));
+      const tn=sm(new THREE.ConeGeometry(0.07,0.20,6),DEEP);
+      tn.position.set(0.94,1.30,0.38); tn.rotation.set(1.0,0,-0.7); g.add(tn); }
+
+    /* ---- DRESSED BANDS ----
+       ** These used to be 42 loose boxes on a fixed circle, and the sweep tapers under them, so they all
+       stuck out: Sam's "weird spike things poking out of all sides". A TorusGeometry sized to the arm at
+       that exact height sits ON the surface instead of through it. */
+    const _armR=(y)=>{ const S2=[[-2.4,0.80],[-1.5,0.66],[-0.9,0.60],[-0.3,0.55],[0.3,0.50],[0.62,0.52]];
+      for(let i=0;i<S2.length-1;i++){ const [y0,r0]=S2[i],[y1,r1]=S2[i+1];
+        if(y>=y0&&y<=y1)return r0+(r1-r0)*((y-y0)/(y1-y0)); }
+      return y<S2[0][0]?S2[0][1]:S2[S2.length-1][1]; };
+    for(let c=0;c<4;c++){
+      const yy=-1.7+c*0.62;
+      const rr=_armR(yy);
+      const band=sm(new THREE.TorusGeometry(rr*0.99,0.045,6,20),(c%2)?STONE2:PALE_ARM);
+      band.rotation.x=Math.PI/2; band.position.y=yy; g.add(band);
+    }
+    /* ---- THE VEIN: what tells you which hand this is ---- */
+    for(let i=0;i<6;i++){
+      const t=(i-2.5)/2.5;
+      const v=gl(new THREE.CylinderGeometry(0.035,0.02,0.5+Math.abs(t)*0.3,6),VEIN, mage?0.95:0.5);
+      v.position.set(t*0.34, 0.5+Math.abs(t)*0.1, 0.38); v.rotation.x=0.4; v.rotation.z=t*0.3; g.add(v);
     }
     if(mage){
-      const halo=gl(new THREE.SphereGeometry(1.5,10,9),VEIN,0.13); halo.position.set(0,1.2,0.1); g.add(halo);
+      const halo=gl(new THREE.SphereGeometry(1.5,12,10),VEIN,0.12); halo.position.set(0,0.9,0.1); g.add(halo);
+      const core=gl(new THREE.SphereGeometry(0.30,10,9),VEIN,0.55); core.position.set(0,0.5,0.1); g.add(core);
     }
-    /* broken floor around the wrist */
-    for(let i=0;i<8;i++){ const a=i/8*Math.PI*2;
-      const sl=sm(new THREE.BoxGeometry(0.9,0.16,0.7),0x4a443c);
-      sl.position.set(Math.cos(a)*1.15,-0.75,Math.sin(a)*1.15);
-      sl.rotation.set(0.55+((i*3)%3)*0.2,-a,0.15*Math.sin(i)); g.add(sl); }
-    g.scale.setScalar(1.0);
-    /* ** FINISH THE BRANCH (see the Ice Demon above). ** No return here meant the rat tail ran and glued
-       a rat onto the Cornerstone's hand. The proxy is hand-sized, not rat-sized. */
+    /* moss in the joints on the old side */
+    for(let i=0;i<6;i++){ const a=2.0+i*0.5;
+      const m2=sm(new THREE.BoxGeometry(0.3,0.05,0.2),MOSS);
+      m2.position.set(Math.cos(a)*0.80,-0.4+((i*5)%3)*0.5,Math.sin(a)*0.80); m2.rotation.y=-a; g.add(m2); }
+    /* broken slabs round the wrist */
+    for(let i=0;i<9;i++){ const a=i/9*Math.PI*2;
+      const sl=sm(new THREE.BoxGeometry(1.0,0.16,0.75),0x44544c);
+      sl.position.set(Math.cos(a)*1.15,-0.9,Math.sin(a)*1.15);
+      sl.rotation.set(0.5+((i*3)%3)*0.18,-a,0.14*Math.sin(i)); g.add(sl); }
+    /* ** THEY FACE THE WAY YOU CAME IN. ** The model is built looking down +Z; the hands were left at
+       yaw 0, which points them at the Cornerstone behind them. They are reaching for whoever walked
+       through the door. */
+    g.rotation.y=Math.PI;
+    g.scale.setScalar(1.15);
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,1.2,2.6,0,{kind:'rat',r});
     scene.add(g);
@@ -23481,60 +23653,79 @@ function buildLuxuryModel(id){
   else if(id==='ring_wealth'){
     /* a heavy band with a coin set into it, edge-on */
     const GOLD=0xd9b04a, PALE=0xf0d78a, DARK=0x8a6a10;
+    /* ** THE BAND STANDS UP. ** A TorusGeometry is born in the XY plane -- already upright, like a wheel
+       facing you. rotation.x=PI/2 lays it FLAT on the floor like a dropped coin, and then the "gem on
+       top" floats above a plate. The luxury shop's own note warns about exactly this and I did it anyway:
+       no rotation is the correct rotation. */
     const band=new THREE.Mesh(TOR(0.20,0.045,26),new THREE.MeshLambertMaterial({color:GOLD}));
-    band.rotation.x=Math.PI/2; g.add(band);
+    g.add(band);
+    /* the coin, seated ON TOP of the band and facing you */
     const coin=new THREE.Mesh(CYL(0.115,0.115,0.028,20),new THREE.MeshLambertMaterial({color:PALE}));
-    coin.position.y=0.21; coin.rotation.x=Math.PI/2; g.add(coin);
+    coin.position.y=0.235; coin.rotation.x=Math.PI/2; g.add(coin);
     const rim=new THREE.Mesh(TOR(0.115,0.014,18),new THREE.MeshLambertMaterial({color:DARK}));
-    rim.position.y=0.21; g.add(rim);
-    /* the school's crest stamped on the coin */
+    rim.position.y=0.235; rim.position.z=0.015; g.add(rim);
+    /* the school's crest stamped on it */
     for(let i=0;i<6;i++){ const a=i/6*Math.PI*2;
-      const r=new THREE.Mesh(BOX(0.016,0.006,0.05),new THREE.MeshLambertMaterial({color:DARK}));
-      r.position.set(Math.cos(a)*0.05,0.225,Math.sin(a)*0.05); r.rotation.y=-a; g.add(r); }
-    /* four little coins caught in the band, as if it collects them */
-    for(let i=0;i<4;i++){ const a=0.8+i*1.4;
+      const r=new THREE.Mesh(BOX(0.016,0.05,0.006),new THREE.MeshLambertMaterial({color:DARK}));
+      r.position.set(Math.cos(a)*0.05,0.235+Math.sin(a)*0.05,0.016); r.rotation.z=-a; g.add(r); }
+    /* the shoulders where the coin meets the band */
+    for(const sx of [-1,1]){
+      const sh=new THREE.Mesh(CON(0.05,0.09,8),new THREE.MeshLambertMaterial({color:GOLD}));
+      sh.position.set(sx*0.10,0.175,0); sh.rotation.z=-sx*0.6; g.add(sh); }
+    /* little coins caught in the band, as if it collects them */
+    for(let i=0;i<4;i++){ const a=2.2+i*0.7;
       const c=new THREE.Mesh(CYL(0.035,0.035,0.012,10),new THREE.MeshLambertMaterial({color:PALE}));
-      c.position.set(Math.cos(a)*0.20,Math.sin(a)*0.05,Math.sin(a)*0.20); c.rotation.set(1.2,a,0.4); g.add(c); }
-    g.scale.setScalar(1.6);
+      c.position.set(Math.cos(a)*0.20,Math.sin(a)*0.20,0.03); c.rotation.set(0,0.4,a); g.add(c); }
+    g.scale.setScalar(1.5);
   }
   else if(id==='ring_suffering'){
     /* a black band grown through with thorns, pointing INWARD -- it hurts to wear */
     const IRON=0x2a2620, RED=0x8a1a20, DULL=0x4a4038;
+    /* upright: a torus is ALREADY standing up in the XY plane -- no rotation is the correct rotation */
     const band=new THREE.Mesh(TOR(0.20,0.05,26),new THREE.MeshLambertMaterial({color:IRON}));
-    band.rotation.x=Math.PI/2; g.add(band);
+    g.add(band);
+    /* the thorns point INWARD, at the finger. That is the whole joke. */
     for(let i=0;i<9;i++){ const a=i/9*Math.PI*2;
       const th=new THREE.Mesh(CON(0.022,0.10,6),new THREE.MeshLambertMaterial({color:DULL}));
-      th.position.set(Math.cos(a)*0.155,0,Math.sin(a)*0.155);
-      th.rotation.z=Math.PI/2; th.rotation.y=-a+Math.PI/2; g.add(th); }
-    /* the stone: a dark garnet, wet-looking */
+      th.position.set(Math.cos(a)*0.15,Math.sin(a)*0.15,0);
+      th.rotation.z=-a-Math.PI/2; g.add(th); }
+    /* the stone: a dark garnet, seated on top and facing you */
     const gem=new THREE.Mesh(OCT(0.085),new THREE.MeshBasicMaterial({color:RED}));
-    gem.position.y=0.22; g.add(gem);
+    gem.position.set(0,0.245,0); gem.scale.z=0.7; g.add(gem);
     const claw=new THREE.Mesh(TOR(0.075,0.016,14),new THREE.MeshLambertMaterial({color:IRON}));
-    claw.position.y=0.20; claw.rotation.x=Math.PI/2; g.add(claw);
-    for(let i=0;i<3;i++){ const a=i/3*Math.PI*2;
-      const d=new THREE.Mesh(SPH(0.018,7,6),new THREE.MeshBasicMaterial({color:RED}));
-      d.position.set(Math.cos(a)*0.07,0.13,Math.sin(a)*0.07); g.add(d); }   /* it beads */
-    g.scale.setScalar(1.6);
+    claw.position.set(0,0.235,0); claw.rotation.x=Math.PI/2; g.add(claw);
+    for(const sx of [-1,1]){
+      const sh=new THREE.Mesh(CON(0.045,0.08,7),new THREE.MeshLambertMaterial({color:IRON}));
+      sh.position.set(sx*0.10,0.18,0); sh.rotation.z=-sx*0.6; g.add(sh); }
+    /* it beads down the band */
+    for(let i=0;i<3;i++){ const a=1.9+i*0.75;
+      const d=new THREE.Mesh(SPH(0.02,7,6),new THREE.MeshBasicMaterial({color:RED}));
+      d.position.set(Math.cos(a)*0.20,Math.sin(a)*0.20,0.03); g.add(d); }
+    g.scale.setScalar(1.5);
   }
   else if(id==='lightbearer'){
     /* a plain band carrying a lamp that will not go out */
     const BRASS=0xc9a23a, GLASS=0xfff0b0, IRON=0x3a352d;
+    /* upright band; the lamp sits ON it */
     const band=new THREE.Mesh(TOR(0.19,0.038,26),new THREE.MeshLambertMaterial({color:BRASS}));
-    band.rotation.x=Math.PI/2; g.add(band);
-    /* the lantern */
+    g.add(band);
+    const LY=0.30;
     const cage=new THREE.Mesh(CYL(0.075,0.075,0.14,10,1,true),new THREE.MeshLambertMaterial({color:IRON}));
-    cage.position.y=0.25; g.add(cage);
+    cage.position.y=LY; g.add(cage);
     const flame=new THREE.Mesh(SPH(0.055,10,9),new THREE.MeshBasicMaterial({color:GLASS}));
-    flame.position.y=0.25; g.add(flame);
-    const halo=new THREE.Mesh(SPH(0.13,10,9),new THREE.MeshBasicMaterial({color:GLASS,transparent:true,opacity:0.30}));
-    halo.position.y=0.25; g.add(halo);
-    for(const sy of [0.18,0.32]){ const r=new THREE.Mesh(TOR(0.078,0.012,14),new THREE.MeshLambertMaterial({color:BRASS}));
+    flame.position.y=LY; g.add(flame);
+    const halo=new THREE.Mesh(SPH(0.14,10,9),new THREE.MeshBasicMaterial({color:GLASS,transparent:true,opacity:0.30}));
+    halo.position.y=LY; g.add(halo);
+    for(const sy of [LY-0.07,LY+0.07]){ const r=new THREE.Mesh(TOR(0.078,0.012,14),new THREE.MeshLambertMaterial({color:BRASS}));
       r.position.y=sy; r.rotation.x=Math.PI/2; g.add(r); }
     for(let i=0;i<4;i++){ const a=i/4*Math.PI*2;
       const b=new THREE.Mesh(BOX(0.012,0.15,0.012),new THREE.MeshLambertMaterial({color:IRON}));
-      b.position.set(Math.cos(a)*0.075,0.25,Math.sin(a)*0.075); g.add(b); }
+      b.position.set(Math.cos(a)*0.075,LY,Math.sin(a)*0.075); g.add(b); }
     const cap=new THREE.Mesh(CON(0.09,0.06,10),new THREE.MeshLambertMaterial({color:BRASS}));
-    cap.position.y=0.36; g.add(cap);
+    cap.position.y=LY+0.10; g.add(cap);
+    /* the stem down to the band */
+    const stem=new THREE.Mesh(CYL(0.02,0.02,0.07,8),new THREE.MeshLambertMaterial({color:BRASS}));
+    stem.position.y=LY-0.10; g.add(stem);
     g.scale.setScalar(1.5);
   }
   else if(id==='amulet_blood_fury'){
@@ -27849,7 +28040,11 @@ const RAID_RELIEF={
   /* tightrope stays flat for now: its void is carved as T_WALL, so a drop would fight the wall
      ramp. Making it a true chasm means a VOID tile type -- next pass. */
   tightrope:'flat',
-  stairhead:'flat', entrance:'flat', landing:'cave', cornerstone:'bowl',   /* the foundation trench: it dishes toward the thing */   /* RAID_ENTRANCE_ROOM's id is 'entrance'; 'landing' is floors 2-3's arrival chamber */
+  stairhead:'flat', entrance:'flat', landing:'cave',
+  /* ** NOT 'bowl'. ** _raidIsRound() reads THIS: 'bowl' or 'ring' makes _rbFloor call _rbRound, which
+     builds the circular arena and its dais. Setting the Cornerstone to 'bowl' is what kept the old
+     round room underneath everything I built on top of it. It is a big RECTANGULAR chamber. */
+  cornerstone:'flat',   /* RAID_ENTRANCE_ROOM's id is 'entrance'; 'landing' is floors 2-3's arrival chamber */
 };
 const _RAID_STEP=0.34;   /* one step of relief */
 /* Height at a tile CORNER. Everything downstream (the floor bake, the walls, groundH) reads this. */
@@ -28071,6 +28266,9 @@ const RAID_STYLE={
      Ohrstrom is oxblood carpet over a parquet border, oak panelling, and brass: it should read as a
      reading room the moment you walk in. */
   archive:{floor:0x5a2f2a, floor2:0x6a4a32, wall:0x6a4a2a, trim:0x8a6a3a, accent:0xc9a23a},
+  /* THE CORNERSTONE'S CHAMBER: wet stone gone green, cold blue light, moss in every joint. The oldest
+     and deepest room in the delve should not share a palette with the cellar you walked in through. */
+  crypt:  {floor:0x3a4a44, floor2:0x44544c, wall:0x2a3a38, trim:0x4a6a5a, accent:0x6a9a8a},
 };
 const RAID_WALL_H=2.6;
 const RAID_GATE_OPEN=0.34;   /* how much of the gate still hangs when raised. At 0.10 all you could see was the metal band on the lintel, so it never read as a gate. */
@@ -28394,73 +28592,126 @@ function _raidOnFloor(wx,wz){
   return raidTiles[ty][tx]===T_FLOOR;
 }
 function _raidRoomCornerstone(out, f, room){
-  const st=RAID_STYLE.stone;
+  /* ===================== THE CORNERSTONE'S CHAMBER =====================
+     ** REBUILT PROPERLY. ** Two things were wrong and the first caused the second:
+       1. RAID_RELIEF had cornerstone:'bowl'. _raidIsRound() reads that -- 'bowl' or 'ring' makes
+          _rbFloor call _rbRound, which builds the CIRCULAR ARENA and its dais. So every "bespoke boss
+          room" I wrote was drawn on top of the old round one, at course height, which is why Sam saw a
+          stone floor at shoulder height with the arena still underneath it. It is 'flat' now: a real
+          rectangle, and _rbFloor lays a rectangular floor for us to build on.
+       2. The bake loop called _raidRoomBoss directly and never reached the id dispatcher at all.
+     A big rectangular dungeon: wet green stone, cold blue light, moss in the joints. Three chasms where
+     the hands and the face come up. No dais, no pedestal, nothing in the middle to clip through. */
+  const st=RAID_STYLE.crypt || RAID_STYLE.stone;
   const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
   const g=_raidRoomGeom(f,room);
-  const FOUND=0x4a443c, OLD=0x3a352d, DARK=0x241f1a, MOSS=0x3f5a3a, GOLD=0xc9a23a, GLOW=0x8a3a2a;
+  const S=_CS_SPOTS(f);
+  const STONE=0x44544c, STONE2=0x3a4a44, DARK=0x1e2a26, MOSS=0x3f6a4a, MOSS2=0x54804a,
+        WET=0x2a3a3a, BLUE=0x4a7a9a, GLOW=0x5a8a9a, GOLD=0xc9a23a;
+
+  /* ---- 1) THE HOLES, CARVED BEFORE ANYTHING BAKES. ** _rbFloor lays a slab on every tile it is
+     allowed to, so the holes must exist FIRST or the floor renders straight over them. Third time this
+     ordering has bitten (the descent shaft, the chasm, now this). ---- */
+  const holes=[[S.lhand,2],[S.rhand,2],[S.face,3]];
+  for(const [c,rad] of holes){
+    for(let dy=-rad;dy<=rad;dy++)for(let dx=-rad;dx<=rad;dx++){
+      if(dx*dx+dy*dy>rad*rad+1)continue;
+      if(dx===0&&dy===0)continue;                     /* the centre stays: the thing stands there */
+      const tx=c[0]+dx, ty=c[1]+dy;
+      if(!inb(tx,ty)||tx<f.x0+1||tx>f.x1-1||ty<f.y0+1||ty>f.y1-1)continue;
+      if(raidTiles[ty])raidTiles[ty][tx]=T_WALL;
+      _raidVoid[tx+','+ty]=1;
+    }
+  }
   _rbFloor(out,f,st,room); _rbWalls(out,f,st,room);
 
-  /* ---- THE TRENCH. The school's foundation, cut straight down, ring after ring of it -- and every
-     course stops where the thing begins. This is what makes the room read as DUG rather than built. ---- */
-  const R=Math.min((f.x1-f.x0),(f.y1-f.y0))/2;
-  for(let ring=0; ring<4; ring++){
-    const rr=R-1.4-ring*1.15, yy=_raidFY+0.05+ring*0.42;
-    if(rr<3.2)break;
-    for(let i=0;i<34;i++){
-      const a=i/34*Math.PI*2;
-      /* the courses BREAK where the boss comes through the floor (north side) */
-      if(Math.sin(a)<-0.45 && Math.abs(Math.cos(a))<0.72)continue;
-      const px=g.cx+Math.cos(a)*rr, pz=g.cz+Math.sin(a)*rr;
-      /* ** ONLY ON REAL FLOOR. ** A bare radius assumes the room is a circle; it is not -- the mask bites
-         chunks out of it -- so an unchecked course buries itself in a wall. Same family as Hawley's
-         shelves and Foster's bikes. */
+  /* ---- 2) THE FLOOR: big wet flagstones, greened at the joints ---- */
+  for(let y=f.y0+1;y<=f.y1-1;y+=2)for(let x=f.x0+1;x<=f.x1-1;x+=2){
+    if(!_raidOnFloor(x+1,y+1))continue;
+    const h=tileHash(x,y);
+    bake(out, box(1.9,0.04,1.9), (h>0.5)?STONE:STONE2, x+1, _raidFY+0.025, y+1);
+    if(h>0.72)bake(out, box(1.9,0.012,0.14), MOSS, x+1, _raidFY+0.05, y+1);   /* moss in the joint */
+    if(h<0.12)bake(out, box(0.7,0.008,0.5), WET, x+1.2, _raidFY+0.05, y+0.8);  /* standing water */
+  }
+  /* slabs heaved up around each hole: the floor did not survive this */
+  for(const [c] of holes){
+    for(let i=0;i<10;i++){
+      const a=i/10*Math.PI*2, rr=3.0+((i*5)%3)*0.5;
+      const px=c[0]+0.5+Math.cos(a)*rr, pz=c[1]+0.5+Math.sin(a)*rr;
       if(!_raidOnFloor(px,pz))continue;
-      bake(out, box(0.92,0.40,0.62), (i%2)?FOUND:OLD, px, yy, pz, -a);
-      if(ring===0&&i%5===0)   /* the school's own datum marks, cut into the lowest course */
-        bake(out, box(0.16,0.05,0.16), GOLD, px, yy+0.21, pz, -a);
+      bake(out, box(1.4,0.14,1.0), STONE, px, _raidFY+0.18, pz, -a, 1, 0.32+((i*3)%4)*0.10, 0.12*Math.sin(i));
     }
   }
-  /* moss and water in the trench: it has been open a long time */
-  for(let i=0;i<22;i++){
-    const a=(i*2.399), rr=R-1.2-((i*7)%4)*1.15;
-    if(rr<3)continue;
-    const mx=g.cx+Math.cos(a)*rr, mz=g.cz+Math.sin(a)*rr;
-    if(!_raidOnFloor(mx,mz))continue;
-    bake(out, box(0.7,0.03,0.5), MOSS, mx, _raidFY+0.06+((i*7)%4)*0.42, mz, -a);
+  /* ---- 3) THE WALLS: courses of big blocks, greened from the bottom up, buttressed ---- */
+  const _wallRun=(x0,x1,z0,z1,along)=>{
+    for(let k=(along?x0:z0); k<=(along?x1:z1); k++){
+      for(const side of (along?[z0,z1]:[x0,x1])){
+        const px=along?k+0.5:side+0.5, pz=along?side+0.5:k+0.5;
+        for(let c=0;c<3;c++){
+          const wet=(c===0);
+          bake(out, box(along?0.98:0.5, 0.52, along?0.5:0.98),
+            ((k+c)%2)?STONE:STONE2, px, _raidFY+0.26+c*0.54, pz);
+          if(wet&&((k*7+c)%3===0))
+            bake(out, box(along?0.8:0.12, 0.06, along?0.12:0.8), MOSS2, px, _raidFY+0.53, pz);
+        }
+      }
+    }
+  };
+  _wallRun(f.x0+1,f.x1-1,f.y0+1,f.y1-1,true);
+  _wallRun(f.x0+1,f.x1-1,f.y0+1,f.y1-1,false);
+  /* buttresses down the long walls */
+  for(let k=f.x0+3;k<=f.x1-3;k+=5){
+    for(const zz of [f.y0+1.6,f.y1-1.6]){
+      bake(out, box(0.9,RAID_WALL_H-0.2,0.7), STONE2, k+0.5, _raidFY+(RAID_WALL_H-0.2)/2, zz);
+      bake(out, box(1.0,0.14,0.8), DARK, k+0.5, _raidFY+RAID_WALL_H-0.2, zz);
+    }
   }
-
-  /* ---- THE BROKEN FLOOR where it comes through. Slabs tipped up and shoved aside, like something
-     surfaced through them -- because it did. ---- */
-  for(let i=0;i<16;i++){
-    const a=Math.PI*1.5 + (i/16-0.5)*2.0;
-    const rr=4.6+((i*5)%3)*0.5;
-    const px=g.cx+Math.cos(a)*rr, pz=g.cz+Math.sin(a)*rr;
+  /* the school's datum marks, cut into the lowest course */
+  for(let i=0;i<3;i++){
+    const px=f.x0+4+i*((f.x1-f.x0-8)/2);
+    if(!_raidOnFloor(px,f.y1-1.4))continue;
+    bake(out, box(0.16,0.05,0.16), GOLD, px, _raidFY+0.30, f.y1-1.4);
+  }
+  /* ---- 4) THE HOLES: a rim of broken masonry, and cold light from a long way down ---- */
+  for(const [c,rad] of holes){
+    for(let i=0;i<Math.round(rad*9);i++){
+      const a=i/Math.round(rad*9)*Math.PI*2;
+      const px=c[0]+0.5+Math.cos(a)*(rad+0.45), pz=c[1]+0.5+Math.sin(a)*(rad+0.45);
+      bake(out, box(0.32,0.16,0.24), (i%2)?DARK:STONE, px, _raidFY+0.05, pz, -a, 1, 0, (Math.sin(i*2.1))*0.28);
+      if(i%3===0)bake(out, box(0.2,0.04,0.16), MOSS, px, _raidFY+0.14, pz, -a);
+    }
+    _raidGlowMesh(new THREE.SphereGeometry(rad*0.85,10,8), GLOW, c[0]+0.5, _raidFY-1.4, c[1]+0.5, 0.16);
+  }
+  /* ---- 5) MOSS AND WATER across the floor: it has been open a long time ---- */
+  for(let i=0;i<24;i++){
+    const a=i*2.399, rr=3+((i*7)%6)*1.4;
+    const px=g.cx+Math.cos(a)*rr, pz=g.cz+Math.sin(a)*rr*0.8;
     if(!_raidOnFloor(px,pz))continue;
-    bake(out, box(1.5,0.22,1.1), FOUND, px, _raidFY+0.30, pz, -a, 1, 0.5+((i*3)%4)*0.13, 0.2*Math.sin(i));
+    bake(out, box(0.9,0.02,0.7), (i%3)?MOSS:WET, px, _raidFY+0.05, pz, -a);
   }
-  /* the light that comes UP out of the break */
-  _raidGlowMesh(new THREE.SphereGeometry(2.4,12,10), GLOW, g.cx, _raidFY-1.2, g.cz-5.4, 0.20);
-
-  /* ---- THE VAULT. Springing only -- the crown is left open for the camera, same call as Drury. ---- */
-  for(let i=0;i<20;i++){
-    const a=i/20*Math.PI*2;
-    if(Math.sin(a)<-0.45 && Math.abs(Math.cos(a))<0.72)continue;   /* the thing broke this side */
-    bake(out, box(0.44,1.5,0.44), OLD,
-      g.cx+Math.cos(a)*(R+0.2), _raidFY+RAID_WALL_H+0.55, g.cz+Math.sin(a)*(R+0.2), -a, 1, 0.55, 0);
+  /* ---- 6) THE VAULT: springing only, open at the crown for the camera ---- */
+  for(let k=f.x0+2;k<=f.x1-2;k+=4){
+    for(const zz of [f.y0+1.4,f.y1-1.4])
+      bake(out, box(0.42,1.3,0.42), DARK, k+0.5, _raidFY+RAID_WALL_H+0.45, zz, 0, 1, (zz<g.cz?0.5:-0.5), 0);
   }
-  /* ---- CANDLES. Somebody still comes down here. That is the most frightening thing in the room. ---- */
-  for(let i=0;i<7;i++){
-    const a=Math.PI*0.25 + i/7*Math.PI*1.5, rr=R-2.6;
-    const px=g.cx+Math.cos(a)*rr, pz=g.cz+Math.sin(a)*rr;
+  /* ---- 7) COLD LIGHT. Blue lanterns, and candles somebody still lights. ---- */
+  for(let k=f.x0+4;k<=f.x1-4;k+=6){
+    for(const zz of [f.y0+1.9,f.y1-1.9]){
+      if(!_raidOnFloor(k+0.5,zz))continue;
+      bake(out, box(0.22,0.30,0.22), DARK, k+0.5, _raidFY+1.9, zz);
+      _raidGlowMesh(new THREE.SphereGeometry(0.19,8,7), BLUE, k+0.5, _raidFY+1.9, zz, 0.75);
+    }
+  }
+  for(let i=0;i<4;i++){
+    const px=g.cx-5+i*3.4, pz=g.cz+6.5;
     if(!_raidOnFloor(px,pz))continue;
-    bake(out, new THREE.CylinderGeometry(0.30,0.34,0.18,8), OLD, px, _raidFY+0.09, pz);
+    bake(out, new THREE.CylinderGeometry(0.26,0.30,0.14,8), DARK, px, _raidFY+0.07, pz);
     for(let c=0;c<3;c++){
-      const cx2=px+Math.cos(c*2.1)*0.13, cz2=pz+Math.sin(c*2.1)*0.13;
-      bake(out, new THREE.CylinderGeometry(0.05,0.055,0.26+((c*7)%3)*0.1,6), 0xe8e4d8, cx2, _raidFY+0.31, cz2);
-      _raidGlowMesh(new THREE.SphereGeometry(0.11,6,5), 0xffb14a, cx2, _raidFY+0.48, cz2, 0.85);
+      const cx2=px+Math.cos(c*2.1)*0.11, cz2=pz+Math.sin(c*2.1)*0.11;
+      bake(out, new THREE.CylinderGeometry(0.05,0.055,0.22+((c*7)%3)*0.08,6), 0xe8e4d8, cx2, _raidFY+0.26, cz2);
+      _raidGlowMesh(new THREE.SphereGeometry(0.09,6,5), 0xffb14a, cx2, _raidFY+0.40, cz2, 0.85);
     }
   }
-  for(const p of _raidWallRing(f,room,5,0.16,0.3))_rbTorchAt(out, p.x, p.z, 0xffb14a, p.yaw);
 }
 function _raidRoomStone(out, f, room){
   const st=RAID_STYLE.stone; _rbFloor(out,f,st,room); _rbWalls(out,f,st,room);
@@ -29183,7 +29434,12 @@ function raidBuildInterior(graph, fl){
     _raidGlow=[];
     const out={pos:[],nor:[],col:[]};
     if(room.type==='entrance')_raidRoomEntrance(out,f,room);
-    else if(room.type==='boss')_raidRoomBoss(out,f,room);
+    /* ** THE BOSS ROOM HAD ITS OWN BUILDER ALL ALONG. ** `_raidRoomBoss` -- the generic round arena with
+       the dais. Registering `cornerstone` in _RAID_ROOM_BUILDERS did NOTHING, because this branch never
+       reaches the dispatcher: it calls _raidRoomBoss directly and always has. That is why Sam kept
+       seeing 'the circular boss room from before' after I 'gave it a bespoke builder' twice.
+       Route it through _raidBuildRoom like every other room, so the id lookup actually happens. */
+    else if(room.type==='boss')_raidBuildRoom(out,f,room);
     else if(room.type==='resource'){ _raidBuildRoom(out,f,room);   /* was calling _raidRoomScavenger directly, which bypassed the per-room dispatch */
       const nx=Math.round(f.cx), ny=Math.round(f.cz);
       const node=addObj('raid_node',nx,ny,true); if(node){
@@ -29429,6 +29685,12 @@ const RAID_DEMI_DEF={
    that: two HANDS must be broken to expose the FACE, which is what you actually kill.
    Solo 3-lane total = 150+150+190 = 490; at 4-man x2.8 = 1,372 across three sequential targets, and
    no single target exceeds 532 -- all under the Rector's 720. */
+/* ** ONE TABLE, TWO READERS. ** The room builder carves the chasms and the spawner puts the hands in
+   them -- if these ever disagree, the hands stand on solid floor beside their own holes. */
+function _CS_SPOTS(f){
+  const cx=Math.round(f.cx), cz=Math.round(f.cz);
+  return { lhand:[cx-6, cz+1], rhand:[cx+6, cz+1], face:[cx, cz-4] };
+}
 const RAID_FINAL_DEF={
   cornerstone:{
     name:'The Cornerstone',
@@ -29593,9 +29855,30 @@ function raidEnterRoom(idx){
     const fd=RAID_FINAL_DEF[raid.boss]||RAID_FINAL_DEF.cornerstone;
     const bf=raidRoomFootprint(idx);
     stt.mobIdx=[]; stt.laneStage='hands';
-    const spots={lhand:[Math.round(bf.cx)-4,Math.round(bf.y0+3)], rhand:[Math.round(bf.cx)+4,Math.round(bf.y0+3)]};
+    /* ** THESE ARE THE ROOM. ** The arena is built AROUND these three tiles -- each one has a chasm
+       carved round it so the thing reads as coming UP THROUGH the floor. Keep them in step with
+       _raidRoomCornerstone's _CS_SPOTS or the holes and the hands part company. */
+    const spots=_CS_SPOTS(bf);
+    /* ** IT IS IN THE ROOM THE WHOLE TIME. ** The face used to spawn from nothing once the hands fell,
+       which wastes the best thing about the encounter. It surfaces NOW, asleep, with only the crown of
+       its head above the hole -- a bump you fight the hands beside, and cannot look away from. */
+    { const _fp=spots.face;
+      const face=_raidSpawnMob('raid_cs_face', _fp[0], _fp[1], idx);
+      if(face){
+        /* ** IT MUST CARRY THE LANE TAGS. ** raidBossTick's loop opens with
+           `if(!r || !(r.raidBoss||r.raidDemi) || !r.alive) continue;` -- so a face without raidBoss is
+           invisible to every mechanic in there, including its own wake. */
+        const _fl=fd.lanes.find(l=>l.id==='face');
+        face.raidBoss=true; face.raidLane='face';
+        if(_fl){ face.name=_fl.name; face.raidBase=Object.assign({},_fl.base); face._sig=_fl.sig; }
+        face._csRise=0;            /* 0 = sunk, only the crown shows. raidBossTick lerps this to 1. */
+        face._csAsleep=true;
+        face.alive=true; face._immune=true;   /* you cannot hurt what is still under the floor */
+        face.target=null; face._sigCd=performance.now()+9e9;
+        stt.mobIdx.push(face.i);
+      } }
     for(const lane of fd.lanes){
-      if(lane.id==='face')continue;                    /* the face is dormant until the hands fall */
+      if(lane.id==='face')continue;                    /* handled above: it is already asleep in its hole */
       const sp=spots[lane.id]||[Math.round(bf.cx),Math.round(bf.y0+3)];
       const b=_raidSpawnMob(lane.kind, sp[0], sp[1], idx);
       b.name=lane.name; b.raidBoss=true; b.raidLane=lane.id; b.raidBase=Object.assign({},lane.base);
@@ -29953,7 +30236,8 @@ function raidOnMobDead(r){
     const fd=RAID_FINAL_DEF[raid.boss]||RAID_FINAL_DEF.cornerstone;
     const lane=fd.lanes.find(l=>l.id==='face');
     const bf=raidRoomFootprint(r.raidRoom);
-    const b=_raidSpawnMob(lane.kind, Math.round(bf.cx), Math.round(bf.y0+3), r.raidRoom);
+    const _fs=_CS_SPOTS(bf).face;   /* the hole it has been sitting in the whole fight */
+    const b=_raidSpawnMob(lane.kind, _fs[0], _fs[1], r.raidRoom);
     b.name=lane.name; b.raidBoss=true; b.raidLane='face'; b.raidBase=Object.assign({},lane.base);
     b.ex='A face, half architecture, set into the foundation.';
     b.maxhp=mobMaxHp(b); b.hp=b.maxhp; b._sig=lane.sig; b._sigCd=performance.now()+4000;
@@ -30073,19 +30357,37 @@ function _raidPlacePuzzle(room, f){
        Now the chasm is cut PERPENDICULAR to the line between the two doorways, at their midpoint. That
        always separates them, whatever walls they are on: you arrive on one side, the keystone and the
        exit are on the other, and the pipe is the only way over. */
-    const doors=[];
+    /* ** THE CHASM MUST SEPARATE THE WAY IN FROM THE WAY OUT -- and it never asked which was which. **
+       This used to take A = doors[0] and B = whichever tile was furthest from it: completely arbitrary.
+       With three doorway tiles on one wall and the exit on another, it happily cut between two ENTRANCE
+       tiles and left the exit stranded on a wall the chasm had surrounded -- Sam's unreachable door.
+       The delve's rooms are a path: the neighbour with the LOWER index is where you came from, the HIGHER
+       one is where you are going. Split those two. */
+    const _ways={};
     for(const k in _raidDoorRooms){ const rr=_raidDoorRooms[k];
-      if(rr&&(rr[0]===room.idx||rr[1]===room.idx)){ const q=k.split(','); doors.push([+q[0],+q[1]]); } }
-    /* collapse the doorway tiles into two clusters (a doorway is 2 tiles wide) */
-    let A=doors[0]||[f.x0,Math.round(f.cz)], B=null, bd=-1;
-    for(const d of doors){ const dd=Math.hypot(d[0]-A[0],d[1]-A[1]); if(dd>bd){bd=dd;B=d;} }
-    if(!B||bd<3){ A=[f.x0,Math.round(f.cz)]; B=[f.x1,Math.round(f.cz)]; }
-    /* ** CENTRE IT ON THE ROOM, not on the doorways. ** The midpoint of two doorways can sit right up
-       against a wall -- which is why Sam got 4-5 tiles of chasm on one side and an enormous walkable
-       apron on the other. The doorways decide the AXIS; the room decides where the gap goes. */
-    const _dm=(A[0]+B[0])/2+0.5, _dn=(A[1]+B[1])/2+0.5;
-    const mx=(Math.abs(B[0]-A[0])>=Math.abs(B[1]-A[1])) ? (f.cx+0.5) : _dm;
-    const my=(Math.abs(B[0]-A[0])>=Math.abs(B[1]-A[1])) ? _dn : (f.cz+0.5);
+      if(!rr||(rr[0]!==room.idx&&rr[1]!==room.idx))continue;
+      const other=(rr[0]===room.idx)?rr[1]:rr[0];
+      const q=k.split(','); const t=[+q[0],+q[1]];
+      (_ways[other]=_ways[other]||[]).push(t);
+    }
+    const _nb=Object.keys(_ways).map(Number).sort((a,b)=>a-b);
+    const _mid=(ts)=>[Math.round(ts.reduce((s2,t)=>s2+t[0],0)/ts.length),
+                      Math.round(ts.reduce((s2,t)=>s2+t[1],0)/ts.length)];
+    let A, B;
+    if(_nb.length>=2){
+      A=_mid(_ways[_nb[0]]);                      /* the way IN  (the lower-numbered room) */
+      B=_mid(_ways[_nb[_nb.length-1]]);           /* the way OUT (the higher-numbered room) */
+    } else if(_nb.length===1){
+      A=_mid(_ways[_nb[0]]);
+      B=[2*Math.round(f.cx)-A[0], 2*Math.round(f.cz)-A[1]];   /* one door: aim across the room from it */
+    } else { A=[f.x0,Math.round(f.cz)]; B=[f.x1,Math.round(f.cz)]; }
+    if(Math.hypot(B[0]-A[0],B[1]-A[1])<3){ A=[f.x0,Math.round(f.cz)]; B=[f.x1,Math.round(f.cz)]; }
+    /* ** THE BAND GOES BETWEEN THE TWO DOORWAYS -- not down the middle of the room. **
+       Centring on the room looked tidier, and it was wrong: when the EXIT happened to sit near the room's
+       middle along the crossing axis, the chasm swallowed the doorway itself and the exit ended up in the
+       void, on a wall you could never reach. (Sam's unreachable door.) The band now sits at the midpoint
+       of the way IN and the way OUT, so both doorways are outside it by construction. */
+    const mx=(A[0]+B[0])/2+0.5, my=(A[1]+B[1])/2+0.5;
     const vx=B[0]-A[0], vy=B[1]-A[1];
     /* ** SNAP THE AXIS TO A CARDINAL. ** Two bugs, one cause: a diagonal axis gave a DIAGONAL band of
        wall tiles -- which is POROUS, because diagonally-adjacent walls leave a corner gap you can step
@@ -30104,12 +30406,11 @@ function _raidPlacePuzzle(room, f){
     /* ** LEAVE A REAL LEDGE. ** AL/2-3 left a ONE-TILE strip on a tight room: you spawned on a single
        row of floor with a chasm on one side and a wall on the other. AL/2-4.5 keeps at least three
        tiles of standing room at each end, which is what a landing has to be. */
-    /* ** A REAL GAP. ** This was clamped to AL/2-4.5 and capped at 3.5 -- measured between the DOORS,
-       so you got a 4-5 tile chasm hard against one side and an enormous walkable apron on the other
-       (Sam's exact report). Measure across the ROOM and leave 3 tiles of ledge at each end; every
-       tile between is gap. */
+    /* ** HOW WIDE. ** Wide enough to be a real chasm, and never so wide it eats a doorway: the doors sit
+       at +/-AL/2 along this axis, so leaving 3 tiles of landing at each end is the hard constraint. Take
+       as much of the room as that allows. */
     const _span=ux?(f.x1-f.x0):(f.y1-f.y0);
-    const HW=Math.max(2.5, _span/2-3.5);
+    const HW=Math.max(2.0, Math.min(_span/2-3.5, AL/2-3.0));
     for(let y=f.y0;y<=f.y1;y++)for(let x=f.x0;x<=f.x1;x++){
       if(!inb(x,y))continue;
       const t=(x+0.5-mx)*ux+(y+0.5-my)*uy;             /* distance along the doorway axis */
@@ -30747,9 +31048,46 @@ const _raidRing=(cx,cy,rad)=>{ const out=[[Math.round(cx),Math.round(cy)]];
   for(let a2=0;a2<8;a2++){ out.push([Math.round(cx+Math.cos(a2/8*6.283)*rad), Math.round(cy+Math.sin(a2/8*6.283)*rad)]); }
   return out; };
 /* per-frame miniboss + final-boss mechanics */
+/* ** THE RISE. ** It sits in its hole with only the crown showing for the whole hand fight, then comes
+   up over 4.5 seconds when they are both pinned. _csRise 0..1 drives the rig's height directly, so the
+   model needs to know nothing about the fight -- it just reads the number. */
+const CS_RISE_MS=4500;
+function raidCsRiseTick(){
+  if(!inRaid||!raid)return;
+  const now=performance.now();
+  for(const r of rats){
+    if(!r||!r.raid||r.kind!=='raid_cs_face'||!r._m||!r._m.rig)continue;
+    let rise=r._csRise||0;
+    if(r._csRiseT){
+      const u=Math.min(1,(now-r._csRiseT)/CS_RISE_MS);
+      /* ease out: it heaves, then settles */
+      rise=1-Math.pow(1-u,2.2);
+      r._csRise=rise;
+      /* dust and grit off the rim as it heaves out -- there is no screen-shake helper in this game, so
+         the particles do the work instead */
+      if(u<1&&typeof parts!=='undefined'&&(!r._csShakeT||now-r._csShakeT>90)){
+        r._csShakeT=now;
+        for(let k=0;k<3;k++){
+          const a=Math.random()*6.283, rr=2.6+Math.random()*1.2;
+          parts.push({wx:r.px+0.5+Math.cos(a)*rr, wy:_raidFY+0.2, wz:r.py+0.5+Math.sin(a)*rr,
+            vx:Math.cos(a)*0.4, vy:1.1+Math.random()*0.8, t:now, life:620+Math.random()*260, col:'#6a6156'});
+        }
+      }
+      if(u>=1){
+        r._csRiseT=0; r._immune=false;      /* all the way out: now you can hurt it */
+        r.target=player;
+      }
+    }
+    r._m.rig.position.y = rise*3.2 - 3.2;
+    /* the jaw works while it is awake */
+    if(r._m.jaw && !r._csAsleep)
+      r._m.jaw.rotation.x = Math.sin(now*0.0016)*0.06 + (r.swingT&&now-r.swingT<400 ? 0.28 : 0);
+  }
+}
 function raidBossTick(){
   if(!inRaid||!raid)return;
   const now=performance.now();
+  raidCsRiseTick();
   for(const r of rats){
     if(!r||!(r.raidBoss||r.raidDemi)||!r.alive)continue;
 
@@ -30863,8 +31201,20 @@ function raidBossTick(){
           /* BOTH down: the thing goes under, brings the ceiling with it, and comes back angrier */
           if(!raid._csSank){ raid._csSank=now;
             const face=rats.find(z=>z&&z.raid&&z.kind==='raid_cs_face');
-            if(face){ face._exposed=true; face._enraged=(face._enraged|0)+1; face._sigCd=now+2000; }
-            msg('Both hands are pinned. The Cornerstone goes down into the floor \u2014 and the ceiling comes with it. HIT THE FACE.','#7a3a0a');
+            if(face){
+              /* ** IT WAKES. ** It has been in that hole the whole fight with only its crown showing.
+                 Now it comes up. _csRiseT drives the animation; the tick lerps _csRise 0 -> 1 and the
+                 rig climbs with it. It cannot be hurt until it is all the way out. */
+              face._exposed=true; face._enraged=(face._enraged|0)+1;
+              face._csAsleep=false; face._csRiseT=now; face._immune=true;
+              face._sigCd=now+5200;                 /* it does not swing while it is still climbing */
+              if(typeof groundFrost==='function'){}
+              if(typeof sfx!=='undefined'&&sfx.dig)sfx.dig();
+            }
+            msg('Both hands are pinned. Something under the floor stops pretending to be a floor.','#7a3a0a');
+            setTimeout(()=>msg('The Cornerstone opens its eyes. It has been here since 1856, and it has been counting.','#9c3512'),1400);
+            setTimeout(()=>msg('THE CORNERSTONE RISES \u2014 hit the face, it cannot mend itself now.','#9c1f1f'),3400);
+            /* the ceiling lets go as it comes up */
             /* the falling masonry, exactly as Olm's crystals: telegraphed, all over the room */
             const f2=raidRoomFootprint(r.raidRoom);
             const tiles=[];
@@ -31416,9 +31766,8 @@ function _raidLootRender(){
         pct.toFixed(1)+' out of every 100<br><span style="color:#8a8172;font-size:11px">about 1 delve in '+
         Math.round(29/(u.w/tot))+'</span>', _raidLootEffect(u.id), ()=>openRaidItem(u.id));
     }
-    note('<b>None of these have any combat stats.</b> Not one point of attack, strength or defence. They '
-      +'change how you PLAY \u2014 free casts, bones that bury themselves, a faster special \u2014 so '
-      +'nothing down here makes the Emberdeep\u2019s armour or weapons obsolete. All of them can be traded.');
+    note('<b>None of these have any combat stats.</b> Not one point of attack, strength or defence \u2014 '
+      +'they change how you PLAY. All of them can be traded.');
   }
   else if(_raidLootTab==='pets'){
     note('A pet has its <b>own</b> chance, separate from everything else in the box: about <b>1 delve in '
@@ -31477,8 +31826,7 @@ function _raidLootRender(){
       +'<p style="margin:0 0 9px"><b style="color:#9c3512">Dying costs points, never gear.</b> You lose 40% '
       +'of your own \u2014 unless you had almost none, in which case the team pays 5% instead. Nothing you '
       +'carry is ever at risk down here.</p>'
-      +'<p style="margin:0;color:#8a8172;font-size:11px">Every number on these pages is read live from the '
-      +'game\u2019s own tables. If it says 26%, it is 26%.</p>';
+      ;
   }
 }
 /* ** WHAT EACH ONE ACTUALLY DOES. ** Specific numbers, not "boosts your prayer". Plus a line of lore and
@@ -31567,8 +31915,7 @@ function openRaidItem(id){
       +Math.round(29/share)+'</b></div>'):'')
     +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
       +'<span style="color:#8a8172">Combat stats</span><b style="color:#8a8172">none at all \u2014 it is an effect, not armour</b></div>'
-    +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">You can trade it. Nothing in the delve is '
-    +'locked to you.</p>';
+    +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">You can trade it.</p>';
   /* the model */
   _raidCloseItemRen();
   let cv=document.getElementById('raiditemcv');
@@ -31582,7 +31929,9 @@ function openRaidItem(id){
     _raidItemRen.setSize(cv.clientWidth||420,215,false);
     const sc=new THREE.Scene();
     const cam=new THREE.PerspectiveCamera(34,(cv.clientWidth||420)/215,0.1,50);
-    cam.position.set(0,0.16,0.92); cam.lookAt(0,0,0);
+    /* ** PULLED BACK. ** 0.92 with the models scaled 1.5-1.6 filled the canvas -- you could not see the
+       shape of the thing, which is the entire point of this page. */
+    cam.position.set(0,0.22,1.75); cam.lookAt(0,0.02,0);
     sc.add(new THREE.HemisphereLight(0xffffff,0x404040,1.2));
     const key=new THREE.DirectionalLight(0xfff0d0,1.0); key.position.set(2,3,2); sc.add(key);
     const g=buildLuxuryModel(id); sc.add(g);
