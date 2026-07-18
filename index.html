@@ -3656,7 +3656,9 @@ let inVolcano=false;
    graph/rooms hold the generated dungeon; boss is the seed-picked pool entry; points is the
    per-uid CoX-style scoreboard; party is the roster snapshot at start. */
 let inRaid=false;
-let raid=null;   /* when active: {seed, party:[uid], leaderUid, size, boss, graph, rooms, roomIdx, points:{}, startedAt, checkpoint} */
+let raid=null;   /* when active: {rid, seed, party:[uid], leaderUid, size, boss, graph, rooms, roomIdx, points:{}, startedAt, checkpoint} */
+let _raidPendingGo=null;   /* a groupmate pressed Begin while we were topside: {sd,lg,ld,cl,ps,rid,at} -- adopted on our next climb-down */
+let _raidPeerSpawn=false;  /* true while spawning a room BECAUSE a groupmate entered it: no reveal, no brief, no re-broadcast */
 function raidReset(){ inRaid=false; raid=null; }   /* full teardown; called on exit/wipe (B1+) */
 let followUid=null;   /* uid of the player we're following (session-only; cleared on any manual click) */
 function curInterior(){return inRaid?'raid':(inVolcano?'volcano':(inSos?'sos':(inMathes?'mathes':(inChapel?'chapel':(inParty?'party':(inRectory?'rectory':(inStPaul?'stpaul':null)))))));}
@@ -4249,6 +4251,16 @@ function dropMobLoot(r){
   }
 }
 
+/* ** A CORNERSTONE HAND IS NEVER KILLED BY DAMAGE. ** It is driven to 0 and PINNED -- raidBossTick's
+   'brought to 0 but still alive' branch owns that transition (Olm's rule: it works loose and comes
+   back whole, so you pin them TOGETHER). Every damage site funnels its kill through this gate;
+   true = the kill was converted to a pin, do not call mobDie. Without it, any killing blow -- 
+   melee, spell, arrow, DoT tick, recoil, or a groupmate's forwarded ghit -- set alive=false FIRST,
+   and the pin branch (which requires alive) was unreachable from that path. */
+function mobKillGate(r){
+  if(r&&(r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand')){ if(r.hp<0)r.hp=0; return true; }
+  return false;
+}
 function mobDie(r,groupKill){
   const mk3=MOB_KINDS[r.kind];
   r.alive=false;r.respawnAt=(r.minionOf!==undefined)?9e15:(performance.now()+mk3.resp);r.target=null;if(mk3.boss){r.spec=null;r.flying=false;r.flightDone=false;r._hopT=0;r.hopCd=undefined;}player.kills=(player.kills||0)+1;if(mk3.boss){player.bossKills=(player.bossKills||0)+1;if(typeof LB!=='undefined')setTimeout(function(){try{LB.submit(true);}catch(e){}},900);}if(r.kind==='brat')player.bratKills=(player.bratKills||0)+1;if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
@@ -5573,6 +5585,11 @@ function walkTo(tx,ty,exact){
   if(player.frozenUntil&&performance.now()<player.frozenUntil){
     if(!player._fzMsgT||performance.now()-player._fzMsgT>1500){player._fzMsgT=performance.now();msg('You are frozen solid!','#1a5a8c');}
     return;}
+  /* ** DOWN MEANS DOWN. ** The downed state used to be a flag and nothing else -- you could walk off
+     and keep fighting at 1 hp, which is Sam's 'it just reset my HP and I continued the fight'. */
+  if(inRaid&&raid&&raid.downed){
+    if(!player._dnMsgT||performance.now()-player._dnMsgT>1500){player._dnMsgT=performance.now();msg('You are down. A delver must haul you up.','#9c1f1f');}
+    return;}
   let targets;
   if(exact==='adj')targets=adjTargets(tx,ty);
   else if(exact===true&&!blockedStrict(tx,ty))targets=[[tx,ty]];
@@ -5637,6 +5654,7 @@ function walkToReach(tx,ty,R){
 
 /* ============================= actions ============================= */
 function setAction(a,tx,ty){
+  if(inRaid&&raid&&raid.downed){ msg('You are down. A delver must haul you up.','#9c1f1f'); return; }   /* DOWN MEANS DOWN */
   if(dlg)closeDialogue();
   player.action=a;player.actTick=0;
   followUid=null;
@@ -5806,7 +5824,7 @@ function playerTick(){
       msg('You come to your senses at the cellar steps.','#9a8a6a');
     }
   }
-  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); }
+  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); if(typeof raidTelIncomingTick==='function')raidTelIncomingTick(); }
   /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
   if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
   if(typeof raidTelFxTick==='function')raidTelFxTick();   /* the boss telegraphs have to be SEEN */
@@ -6118,6 +6136,14 @@ function playerTick(){
         msg('The mortar runs back into the crack as fast as you can open it \u2014 PIN BOTH HANDS FIRST.','#7a5a10'); }
       return;
     }
+    /* a PINNED hand is already beaten into the floor: hitting it further must not kill it (that
+       bypasses the work-loose clock and turns Olm's timing rule into a damage race) */
+    if((r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand')&&r._pinned){
+      splats.push({ent:r,dmg:0,t:performance.now()});
+      if(!r._pinHitMsg||performance.now()-r._pinHitMsg>2600){ r._pinHitMsg=performance.now();
+        msg('That hand is already beaten into the floor \u2014 the OTHER one, before this works loose!','#9a8a6a'); }
+      return;
+    }
     /* ** STYLE-AWARE IMMUNITY. ** _immune==='physical' (the Benefactor's bronze) turns steel and arrows
        but NOT magic -- so hardening is a style swap you can answer, rather than five seconds of
        standing still waiting for a seam. _immune===true is still a full block (the Rector's guards). */
@@ -6125,7 +6151,7 @@ function playerTick(){
       msg('Your blow rings off solid bronze \u2014 switch to magic!','#9a8a6a'); return; }
     if(r._immune===true){ splats.push({ent:r,dmg:0,t:performance.now()}); msg('Your blow rings off solid bronze.','#9a8a6a'); return; }   /* Guardians rule: nothing lands while he is hardened */
     if(r.raid&&typeof raidAwardPoints==='function')raidAwardPoints('damage',r.raidRoom,Math.min(dmg,r.hp)*RAID_PTS_PER_DAMAGE);   /* points BEFORE the group forward-return, so co-attackers bank their own damage (CoX: points are personal). Capped at remaining hp so overkill can't inflate. */
-    if(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dmg))return;
+    if(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dmg,wstyle))return;
     if(r.dormant){ if(rats.some(z=>z.kind==='committee_guard'&&z.alive)){ if(!r._dwT||performance.now()-r._dwT>2000){r._dwT=performance.now();msg('The Rector sits wreathed in the committee\u2019s ward \u2014 cut down his enforcers first.','#9a6fb0');}cancelAction();return; } else { /* enforcers already down (a groupmate felled the last one) but the wake never synced -> wake him now so we can actually deal damage */ r.dormant=false;r.enrageDone=false;r.target=player;if(r._siphonCd===undefined)r._siphonCd=performance.now()+10000; } }
     if(player.slayer&&player.slayer.unlocks&&player.slayer.unlocks.bigger&&!r.superiorRolled&&player.slayer.task===slayKindOf(r.kind)&&player.slayer.done<player.slayer.need&&inWild(r.sx,r.sy)){r.superiorRolled=true;if(Math.random()<0.14){r.superior=true;if(r._m&&r._m.group){if(r._supScale===undefined)r._supScale=r._m.group.scale.x;r._m.group.scale.setScalar(r._supScale*1.4);}msg('A superior '+r.name.toLowerCase()+' rises \u2014 bigger, and badder!','#9a6fb0');}}
     {const _wm=mobMaxHp(r);if(r.maxhp!==_wm){if(r.hp>=r.maxhp)r.hp=_wm;r.maxhp=_wm;if(r.hp>_wm)r.hp=_wm;}}
@@ -6135,7 +6161,7 @@ function playerTick(){
       if(r.hp<1){r.hp=1;if(!r._gw||performance.now()-r._gw>4000){r._gw=performance.now();msg('The gargoyle is battered to a sliver but its stone hide holds \u2014 wield a Rock Hammer to shatter it.','#7a5a10');}}
     }else{r.hp-=dmg;}
     if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dmg);
-    if(r.hp<=0){ mobDie(r,false); cancelAction(); }
+    if(r.hp<=0){ if(!mobKillGate(r))mobDie(r,false); cancelAction(); }
   }
 
   else if(a.type==='datk'){
@@ -7031,9 +7057,9 @@ function doSpecial(){
     splats.push({ent:r,dmg:dm,t:nowS+_ft});
     if(dm>0){ addXp('magic',0.9*dm); addXp('hitpoints',0.5*dm);
       if(dm>(player.maxMagicHit||0)){player.maxMagicHit=dm;dirty=true;}
-      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm))){
+      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm,'magic'))){
         r.hp-=dm; if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dm);
-        if(r.hp<=0){mobDie(r,false);cancelAction();} }
+        if(r.hp<=0){if(!mobKillGate(r))mobDie(r,false);cancelAction();} }
     }
     player.combatT=nowS; sfx.hit&&sfx.hit();
     return;
@@ -7066,9 +7092,9 @@ function doSpecial(){
     if(typeof cinderpointImpact==='function')cinderpointImpact(r,_kin,nowS+_ft);
     if(dm>0){ addXp('ranged',1.2*dm); addXp('hitpoints',0.5*dm);
       if(dm>(player.maxRangeHit||0)){player.maxRangeHit=dm;dirty=true;}
-      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm))){
+      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm,'ranged'))){
         r.hp-=dm; if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dm);
-        if(r.hp<=0){mobDie(r,false);cancelAction();} }
+        if(r.hp<=0){if(!mobKillGate(r))mobDie(r,false);cancelAction();} }
     }
     player.combatT=nowS; sfx.hit&&sfx.hit();
     return;
@@ -7091,10 +7117,10 @@ function doSpecial(){
     if(dm>0){
       addXp(player.style==='slash'?'strength':player.style==='block'?'defense':'attack',1.5*dm);addXp('hitpoints',0.5*dm);
       if(dm>(player.maxHit||0)){player.maxHit=dm;dirty=true;}
-      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm))){
+      if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,dm,'melee'))){
         r.hp-=dm;
         if(typeof MP!=='undefined'&&MP.groupAggroSelf)MP.groupAggroSelf(r.i,dm);
-        if(r.hp<=0){mobDie(r,false);cancelAction();break;}
+        if(r.hp<=0){if(!mobKillGate(r))mobDie(r,false);cancelAction();break;}
       }
     }
   }
@@ -7144,7 +7170,7 @@ function ratsTick(){
         const _mine=(_cd.uid===((typeof player!=='undefined'&&player.uid)||'me'));
         if(_mine&&r.alive){ const _ct=_cd.dmg; splats.push({ent:r,dmg:_ct,t:_nw});
           if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,_ct))){
-            r.hp-=_ct; if(r.hp<=0){r._cinderDot=null; if(typeof mobDie==='function')mobDie(r,false);}
+            r.hp-=_ct; if(r.hp<=0){r._cinderDot=null; if(!mobKillGate(r)&&typeof mobDie==='function')mobDie(r,false);}
           }
         }
       }
@@ -7157,7 +7183,7 @@ function ratsTick(){
         if(_mine&&r.alive){ const _bt=_bd.dmg;
           splats.push({ent:r,dmg:_bt,t:_nw});
           if(!(typeof MP!=='undefined'&&MP.groupForwardHit&&MP.groupForwardHit(r,_bt))){
-            r.hp-=_bt; if(r.hp<=0){r._brandDot=null; if(typeof mobDie==='function')mobDie(r,false);}
+            r.hp-=_bt; if(r.hp<=0){r._brandDot=null; if(!mobKillGate(r)&&typeof mobDie==='function')mobDie(r,false);}
           }
         }
       }
@@ -7175,12 +7201,13 @@ function ratsTick(){
        the tile they surfaced on, for ever. They still turn to face you, still swing, still use every
        special -- they simply never take a step. */
     if(_raidRooted(r)){ r.x=r.sx; r.y=r.sy; r.px=r.sx; r.py=r.sy; }
+    if(r.raid&&r.target===player&&raid&&raid.downed){ r.target=null; if(typeof engagedMob!=='undefined'&&engagedMob===r)engagedMob=null; }   /* a downed delver is not a target */
     if(!r.target&&!r.tame&&(r.gaunt||r.interior!=='volcano')&&(r.raid||MOB_KINDS[r.kind].aggro||r.gaunt||(inWild(r.x,r.y)&&r.kind!=='snowking'))
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
       /* EVERYTHING in the delve aggroes, whatever its level or yours. The out-levelled rule (a mob
          ignores you once cmb < yours) is right for a field and wrong for a dungeon that has already
          scaled itself to meet you -- at 119 a delve rat would simply have watched you walk past. */
-      &&(r.raid||MOB_KINDS[r.kind].minion||MOB_KINDS[r.kind].cmb>=cmbLvl())&&player.hp>0
+      &&(r.raid||MOB_KINDS[r.kind].minion||MOB_KINDS[r.kind].cmb>=cmbLvl())&&player.hp>0&&!(inRaid&&raid&&raid.downed)
       &&dist1(r.x,r.y,player.x,player.y)<=4
       &&dist1(r.x,r.y,r.sx,r.sy)<=8
       &&(!_ct||_ct===r||MOB_KINDS[r.kind].minion))r.target=player;
@@ -7211,7 +7238,11 @@ function ratsTick(){
          /* anti-SAFESPOT only: the 3s clock runs while the mob is pinned on
             the SAME tile; a kited mob is moving, so it walks all the way */
          if(r._chaseStart===undefined||r._csx!==r.x||r._csy!==r.y){r._chaseStart=performance.now();r._csx=r.x;r._csy=r.y;}
-         else if(performance.now()-r._chaseStart>3000&&!(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss)){
+         else if(performance.now()-r._chaseStart>3000&&!(MOB_KINDS[r.kind]&&MOB_KINDS[r.kind].boss)&&!_raidRooted(r)){
+           /* ^ the Cornerstone and its hands are rooted: they are ALWAYS 'pinned on the same tile',
+              so this clock fired every 3 seconds and teleported them onto the player -- then the
+              rooted-snap yanked them home next frame. Sam's 'they teleport to you to hit you and
+              teleport back'. A rooted boss reaches you with atkRange; it never walks, never ports. */
            for(const [dx,dy] of [[1,0],[-1,0],[0,1],[0,-1]]){
              const nx=player.x+dx,ny=player.y+dy;
              if(!blockedStrict(nx,ny)&&!(nx===player.x&&ny===player.y)){r.x=nx;r.y=ny;r.px=nx;r.py=ny;break;}
@@ -8159,7 +8190,7 @@ function delveOnDamageTaken(dmg, mi){
   const r=(mi!=null&&rats[mi])?rats[mi]:null;
   if(!r||!r.alive)return;
   r.hp-=back; splats.push({ent:r,dmg:back,t:performance.now()});
-  if(r.hp<=0&&typeof mobDie==='function')mobDie(r);
+  if(r.hp<=0&&!mobKillGate(r)&&typeof mobDie==='function')mobDie(r);
 }
 function eqStat(k){
   let t=0;
@@ -13473,14 +13504,19 @@ function buildObjModel(o){
   }else if(def==='raid_pipe'){
     const IRON=0x3a352d, LAG=0x8a8272, RUST=0x6a4a2a;
     const put=(m,x,y,z,ry)=>{ m.position.set(x,y,z); if(ry)m.rotation.y=ry; g.add(m); return m; };
-    /* the near end of the span, and a stanchion you can see it leave from */
-    const dir=(o.to&&o.to[0]>o.x)?1:-1;
+    /* ** THE STUB POINTS AT THE FAR LEDGE. ** It used to read only o.to[0]>o.x and lay the span along
+       X regardless -- so a north-south crossing rendered its pipe SIDEWAYS along the ledge (Sam's
+       sideways pipe room). Build along local +X, then yaw the whole group at the far end: in this
+       world a tile direction (dx,dy) is (x:dx, z:dy), and rotation.y=atan2(-dy,dx) points local +X
+       at it. Works for all four cardinals (and would for a diagonal, if the generator ever made one). */
+    const _pdx=(o.to?o.to[0]-o.x:1)||0, _pdy=(o.to?o.to[1]-o.y:0)||0;
+    g.rotation.y=Math.atan2(-_pdy, _pdx||1);
     const pipe=mesh(new THREE.CylinderGeometry(0.42,0.42,5.0,14),IRON);
-    pipe.rotation.z=Math.PI/2; put(pipe, dir*2.2,0.55,0);
+    pipe.rotation.z=Math.PI/2; put(pipe, 2.2,0.55,0);
     for(let i=0;i<3;i++){ const b=mesh(new THREE.CylinderGeometry(0.47,0.47,0.7,14),LAG);
-      b.rotation.z=Math.PI/2; put(b, dir*(0.8+i*1.6),0.55,0); }
+      b.rotation.z=Math.PI/2; put(b, 0.8+i*1.6,0.55,0); }
     put(mesh(new THREE.BoxGeometry(0.5,1.1,0.5),RUST), 0,0.3,0);            /* the stanchion */
-    put(mesh(new THREE.TorusGeometry(0.5,0.07,7,14),RUST), dir*0.35,0.55,0, Math.PI/2);
+    put(mesh(new THREE.TorusGeometry(0.5,0.07,7,14),RUST), 0.35,0.55,0, Math.PI/2);
     addProxy(g,1.2,1.3,0,{kind:'obj',o});
   }else if(def==='raid_rack'){
     const IRON=0x3a352d, WOOD=0x5a4327, MEAT=0x8a3a3a, FAT=0xc9a892;
@@ -21348,11 +21384,30 @@ function castPick(ev){
   }
   const hits=_rc.intersectObjects(inMathes?mathesProxies:(inParty?[]:(inChapel?chapelProxies:(inRectory?rectoryProxies:(inStPaul?stPaulProxies:proxies)))),false).filter(h=>{
     const d=h.object.userData;
+    if(d.kind==='rat'&&d.r.raid){
+      /* delve mobs: only inside the delve, only on MY current floor, only in a room the fog has
+         revealed. (Another player's INSTANCE never exists locally at all -- its mobs, objects and
+         drops are dropped at the message gate -- so this closes the remaining leaks: picking your
+         own instance's unrevealed rooms through walls, or its other floors, or from the overworld.) */
+      if(!d.r.alive)return false;
+      if(curInterior()!=='raid'||typeof raid==='undefined'||!raid)return false;
+      if(d.r.raidFloor!==undefined&&d.r.raidFloor!==(raid.floor|0))return false;
+      if(d.r.raidRoom!=null&&raid.seen&&!raid.seen[_raidRK(d.r.raidRoom,d.r.raidFloor)])return false;
+      return true;
+    }
     if(d.kind==='rat')return d.r.alive&&(d.r.interior||null)===curInterior();
     if(d.kind==='sosportal')return curInterior()==='sos';
     if(d.kind==='obj'&&(d.o.def==='sos_exit'||d.o.def==='sos_chest'))return curInterior()==='sos';   /* stronghold vault/exit: never hoverable from the schoolhouse lawn above (proxies live in the global list) */
-    if(d.kind==='obj'&&d.o.def==='raid_exit')return curInterior()==='raid';   /* raid exit: only inside the instance */
     if(d.kind==='obj'&&d.o.def==='raid_portal')return !curInterior();          /* raid portal: only from the overworld/Wilderness */
+    if(d.kind==='obj'&&typeof RAID_CAVE_OBJS!=='undefined'&&RAID_CAVE_OBJS[d.o.def]){
+      /* ALL delve apparatus (doors, braziers, prisms, chests, stairs, the exit...): only inside the
+         delve, only on my floor, only in revealed rooms. Only raid_exit and raid_portal were gated
+         before -- every OTHER prop was hoverable from the overworld at its dead-zone coordinates. */
+      if(curInterior()!=='raid'||typeof raid==='undefined'||!raid)return false;
+      if(d.o.raidFloor!==undefined&&d.o.raidFloor!==(raid.floor|0))return false;
+      if(d.o.raidRoom!=null&&raid.seen&&!raid.seen[_raidRK(d.o.raidRoom,d.o.raidFloor)])return false;
+      return true;
+    }
     if(d.kind==='obj'&&VOLC_CAVE_OBJS[d.o.def]){ if(curInterior()!=='volcano')return false; const _ch=(typeof _lastVolcFloor!=='undefined'&&typeof EMBER_CHAMBERS!=='undefined')?EMBER_CHAMBERS[_lastVolcFloor]:null; if(_ch&&(d.o.x<_ch.x0-1||d.o.x>_ch.x1+1||d.o.y<_ch.y0-1||d.o.y>_ch.y1+1))return false; return true; }   /* Emberdeep objects: hoverable only inside the volcano AND only in the chamber you're standing in (no picking distant rooms through walls) */
     if(d.kind==='item'){const _gi=ground.find(gi=>gi.uid===d.uid);return !!_gi&&(_gi.interior||null)===curInterior();}
     return !inSos&&!inVolcano;   /* inside the caves, ignore leaked overworld proxies so clicks land on the floor */
@@ -29506,6 +29561,7 @@ function raidBuildInterior(graph, fl){
          across the whole chasm and THEN dropped the void 7 units below it. That is exactly what Sam
          saw: 'no chasm underneath the pipe... I see it rendered wayyy underneath the floor'. */
       _raidPlacePuzzle(room, f);
+      { const _ps2=_raidRoomState(room.idx, room.floor); if(_ps2.cleared&&_ps2.puz)_ps2.puz.solved=true; }   /* solved on another floor/before a rebuild: the fresh puz must not un-solve it */
       _computeRaidWallDist();          /* the void changed the tiles, so the distance field must too */
       _raidBuildRoom(out,f,room);
     }
@@ -29587,8 +29643,8 @@ const RAID_DEATH_LOSS=0.40;        /* CoX-exact: dying costs 40% of YOUR points.
    Every 8,675 TEAM points = 1% at the unique table. Each roll caps at 570,000 points (=65.7%);
    teams beyond that earn ADDITIONAL rolls, up to 6. (A popular third-party calculator states the
    table's total weight as 148; the Wiki module sums to 69 -- we follow the Wiki.) */
-const RAID_UNIQUE_DIV=8675;          /* CoX-exact: points per 1% */
-const RAID_UNIQUE_ROLL_CAP=570000;   /* CoX-exact: points per roll (65.7%) */
+const RAID_UNIQUE_DIV=3000;          /* was CoX-exact 8675/1%. Milville-tuned 2026-07: a maxed ~30k solo run is now ~10% a purple (~1/10 runs, was ~1/29) -- CoX's rate assumes thousands of hours; ours assumes dozens. The SHAPE (points buy chance, cap+extra rolls, personal share splits it) stays CoX-exact. */
+const RAID_UNIQUE_ROLL_CAP=197100;   /* rescaled with DIV (same 65.7% per-roll cap: 3000*65.7) */
 const RAID_UNIQUE_MAX_ROLLS=6;       /* CoX-exact */
 /* Recalibrated to the new point scale so the payout is UNCHANGED (~60k for a maxed solo run): Sam has
    not ruled on the gold rate, so this deliberately holds the old value rather than silently retuning it.
@@ -29658,7 +29714,7 @@ function raidRollCommons(personal){
 /* PETS: their OWN roll, not gated behind a unique. At 1/29 for a purple, hanging pets off it would put
    them at 1/1,450 runs (~170 hours) -- fine for a game with a 20-year horizon, absurd for Milville,
    where endgame is 8-10 hours. Sam also cut the boss restriction, so it is a flat pick of the five. */
-const RAID_PET_CHANCE=1/50;
+const RAID_PET_CHANCE=1/30;   /* Sam 2026-07: was 1/50; ~10 runs to first pet on average across a full log */
 const RAID_PETS=['pet_gorger','pet_marrow','pet_magpie','pet_pebble','pet_hackles'];
 function raidRollPet(){
   if(Math.random()>=RAID_PET_CHANCE)return null;
@@ -29666,7 +29722,7 @@ function raidRollPet(){
   if(!pool.length)return null;
   return pool[rndi(0,pool.length-1)];
 }
-const RAID_COSMETIC_CHANCE=1/120;
+const RAID_COSMETIC_CHANCE=1/40;   /* Sam 2026-07: was 1/120 -- at Milville's 8-10h endgame horizon that was ~2 phats a YEAR of play; 1/40 is a hat every ~13 runs */
 function raidRollCosmetic(){
   if(Math.random()>=RAID_COSMETIC_CHANCE)return null;
   if(Math.random()<0.10)return 'santa_hat';
@@ -29858,8 +29914,10 @@ function _raidSpawnMob(kind, x, y, roomIdx){
   if(typeof makeRat==='function')makeRat(r);
   /* a guardian appears with its room, never before it: makeRat adds to `scene`, which raidRevealRoom
      does not touch -- so without this you saw the next room's mobs floating in the dark. */
-  if(r._m&&r._m.group&&raid&&raid.seen)r._m.group.visible=!!raid.seen[_raidRK(roomIdx,(raid&&raid.floor)||1)];
-  if(r._m&&r._m.group)r._m.group.visible=true;
+  /* visible ONLY if the room is revealed on THIS client: on a normal entry the room was revealed a
+     moment ago (so this is true); on a PEER-triggered spawn the room is still dark here and the
+     guardian must wait in it. (The old unconditional `visible=true` predates peer spawns.) */
+  if(r._m&&r._m.group)r._m.group.visible=!(raid&&raid.seen)||!!raid.seen[_raidRK(roomIdx,(raid&&raid.floor)||1)];
   return r;
 }
 /* spawn all guardians for a combat room the first time the player sets foot in it, and SEAL it. */
@@ -29867,6 +29925,7 @@ function _raidSpawnMob(kind, x, y, roomIdx){
    instruction that named nothing and washed out against the chat panel: lead with the PLACE (and the
    building above it) in a dark ink that actually reads. */
 function _raidRoomBrief(room, what){
+  if(_raidPeerSpawn)return;   /* the brief belongs to whoever is standing in the doorway */
   const where=room.name||'a chamber';
   msg('You step into '+where+(room.under?' - under '+room.under:'')+'.','#4a3a1e');
   if(what)msg(what,'#6a4a12');
@@ -29889,8 +29948,9 @@ function raidEnterRoom(idx){
   const stt=_raidRoomState(idx);
   if(room.type==='puzzle'){
     if(stt.spawned||stt.cleared)return; stt.spawned=true;
+    if(typeof MP!=='undefined'&&MP.sendRaidRoom&&!_raidPeerSpawn)MP.sendRaidRoom(idx, raid.floor|0);
     if(stt.puz&&!stt.puz.solved&&RAID_PUZZLE_IMPL[stt.puz.kind]){ _raidSealRoom(idx,true);
-      if(stt.puz.kind==='crabs'&&typeof raidShowCrabSign==='function'&&!player._sawCrabSign){ player._sawCrabSign=true; raidShowCrabSign(); }
+      if(stt.puz.kind==='crabs'&&typeof raidShowCrabSign==='function'&&!_raidPeerSpawn&&!player._sawCrabSign){ player._sawCrabSign=true; raidShowCrabSign(); }
       _raidRoomBrief(room, ({
         ice_demon:'Something is frozen into the ice. Chop the timbers, feed all four braziers, and thaw it out.',
         tightrope:'The floor is gone. Cross the pipe run, take the keystone, and then use it on the barred way on.',
@@ -29901,6 +29961,7 @@ function raidEnterRoom(idx){
   }
   if(room.type==='boss'){
     if(stt.spawned||stt.cleared)return; stt.spawned=true;
+    if(typeof MP!=='undefined'&&MP.sendRaidRoom&&!_raidPeerSpawn)MP.sendRaidRoom(idx, raid.floor|0);
     /* THE CORNERSTONE (CoX's Olm role). Olm is three targets -- two hands out of the walls and a head
        at the far end. Here: both HANDS spawn first; the FACE only wakes once both are broken. */
     const fd=RAID_FINAL_DEF[raid.boss]||RAID_FINAL_DEF.cornerstone;
@@ -29946,6 +30007,7 @@ function raidEnterRoom(idx){
     else if(room.type==='stair')_raidRoomBrief(room,'A well to drink from, and the stair going down. Floor '+(raid.floor||1)+' is behind you.');
     return; }
   if(stt.spawned)return; stt.spawned=true;
+  if(typeof MP!=='undefined'&&MP.sendRaidRoom&&!_raidPeerSpawn)MP.sendRaidRoom(idx, raid.floor|0);
   const f=raidRoomFootprint(idx);
   /* CoX shape: a combat room IS its demi-boss. The room's demi-boss spawns alongside a small guard of
      themed trash; the room clears when everything in it is dead. */
@@ -30176,6 +30238,7 @@ function _raidSyncMobVisibility(){
   }
 }
 function raidRevealRoom(idx){
+  if(_raidPeerSpawn)return;   /* a mate walked in over THERE; this room stays dark HERE until I do */
   /* re-seat this room's props on the graded floor: the relief differs per room AND per floor. */
   if(raid&&objects)for(const o of objects){ if(!RAID_CAVE_OBJS[o.def]||o.raidRoom!==idx)continue;
     if(o._m&&o._m.group&&typeof _raidObjY==='function')o._m.group.position.y=_raidObjY(o); }
@@ -30284,29 +30347,27 @@ function raidOnMobDead(r){
   r.respawnAt=9e15;
   if(r.raidRoom==null||!raid)return;
   const stt=_raidRoomState(r.raidRoom, r.raidFloor);
+  /* ** THE FACE IS THE BOSS. ** When it dies the fight is over: the hands -- pinned-alive or
+     standing -- crumble with it. Without this, a face killed inside the pin window (the INTENDED
+     kill) left two 'alive' pinned hands, anyAlive stayed true, and the room could never clear. */
+  if(r.kind==='raid_cs_face'){
+    for(const i of (stt.mobIdx||[])){ const h=rats[i];
+      if(h&&h!==r&&h.alive){ h.alive=false; h.target=null; h.respawnAt=9e15; h._pinned=0;
+        if(h._m&&h._m.group)h._m.group.visible=false; } }
+  }
   const anyAlive=stt.mobIdx.some(i=>rats[i]&&rats[i].alive);
   /* Ice Demon room (CoX): the room is solved when the thawed demon dies -- the braziers only wake it.
      The Tightrope's shooters must NOT solve their room; only seating the keystone does. */
   if(r.kind==='raid_icedemon'){ const ps=raid.roomState[_raidRK(r.raidRoom,r.raidFloor)]; if(ps&&ps.puz&&!ps.puz.solved){ _raidPuzzleSolved(r.raidRoom); return; } }
   if(stt.puz&&stt.puz.kind==='tightrope')return;   /* killing the Deathly shooters is not the solve */
-  /* THE CORNERSTONE: breaking both hands wakes the face. The room is NOT clear until the face dies. */
-  if(r.raidBoss && stt.laneStage==='hands' && !anyAlive){
-    stt.laneStage='face';
-    const fd=RAID_FINAL_DEF[raid.boss]||RAID_FINAL_DEF.cornerstone;
-    const lane=fd.lanes.find(l=>l.id==='face');
-    const bf=raidRoomFootprint(r.raidRoom);
-    const _fs=_CS_SPOTS(bf).face;   /* the hole it has been sitting in the whole fight */
-    const b=_raidSpawnMob(lane.kind, _fs[0], _fs[1], r.raidRoom);
-    b.name=lane.name; b.raidBoss=true; b.raidLane='face'; b.raidBase=Object.assign({},lane.base);
-    b.ex='A face, half architecture, set into the foundation.';
-    b.maxhp=mobMaxHp(b); b.hp=b.maxhp; b._sig=lane.sig; b._sigCd=performance.now()+4000;
-    stt.mobIdx=[b.i];
-    raidAwardPoints('clear', r.raidRoom);
-    msg('Both hands crumble. The wall opens its eyes.','#c9483a');
-    return;
-  }
+  /* (The old 'both hands dead -> spawn the face' branch lived here. It predates the face being
+     pre-spawned asleep in its hole at room spawn -- firing it now would conjure a SECOND face, and
+     with the face always alive in mobIdx its !anyAlive condition could only be met in exactly that
+     duplicate-spawning edge. raidCsRiseTick, keyed on csHandsPinned() -- pinned OR dead -- is the
+     one wake path.) */
   if(!anyAlive && !stt.cleared){
     stt.cleared=true; _raidSealRoom(r.raidRoom, false);
+    if(typeof MP!=='undefined'&&MP.sendRaidClear)MP.sendRaidClear(r.raidRoom, ((r.raidFloor!=null?r.raidFloor:(raid.floor||1))|0));
     if(r.raidBoss){ raidAwardPoints('boss', r.raidRoom); raidOnBossDown(r.raidRoom); return; }
     if(typeof raidAwardPoints==='function')raidAwardPoints('clear', r.raidRoom);
     msg('Guardians down - the way opens.','#2f6a1e');
@@ -30446,7 +30507,7 @@ function _raidPlacePuzzle(room, f){
        middle along the crossing axis, the chasm swallowed the doorway itself and the exit ended up in the
        void, on a wall you could never reach. (Sam's unreachable door.) The band now sits at the midpoint
        of the way IN and the way OUT, so both doorways are outside it by construction. */
-    const mx=(A[0]+B[0])/2+0.5, my=(A[1]+B[1])/2+0.5;
+    let mx=(A[0]+B[0])/2+0.5, my=(A[1]+B[1])/2+0.5;
     const vx=B[0]-A[0], vy=B[1]-A[1];
     /* ** SNAP THE AXIS TO A CARDINAL. ** Two bugs, one cause: a diagonal axis gave a DIAGONAL band of
        wall tiles -- which is POROUS, because diagonally-adjacent walls leave a corner gap you can step
@@ -30469,8 +30530,31 @@ function _raidPlacePuzzle(room, f){
        at +/-AL/2 along this axis, so leaving 3 tiles of landing at each end is the hard constraint. Take
        as much of the room as that allows. */
     const _span=ux?(f.x1-f.x0):(f.y1-f.y0);
-    const HW=Math.max(2.0, Math.min(_span/2-3.5, AL/2-3.0));
+    /* ** EVERY DOORWAY KEEPS A LANDING -- not just the two we aimed between. ** Project ALL of this
+       room's doorway tiles onto the crossing axis. The band may only occupy a gap between projected
+       doors, 2.5 tiles clear of each -- otherwise a THIRD door (on a side wall, between in and out)
+       has its landing cut to void and the door is unreachable. Slide the band centre to the middle of
+       the widest such gap between the way in and the way out, and shrink HW to fit. And if no honest
+       band of half-width >= 1.5 fits at all: ** FAIL OPEN. ** No chasm is a duller room; a stranded
+       doorway is a broken one. (The old Math.max(2.0, ...) floor did the opposite -- it GREW the band
+       past the doors whenever the room was tight.) */
+    const _tOf=(x2,y2)=>((x2+0.5-mx)*ux+(y2+0.5-my)*uy);
+    let _tA=_tOf(A[0],A[1]), _tB=_tOf(B[0],B[1]);
+    if(_tA>_tB){ const _sw=_tA; _tA=_tB; _tB=_sw; }
+    const _dts=[_tA,_tB];
+    for(const k2 in _raidDoorRooms){ const rr2=_raidDoorRooms[k2];
+      if(!rr2||(rr2[0]!==room.idx&&rr2[1]!==room.idx))continue;
+      const q2=k2.split(','); const dt=_tOf(+q2[0],+q2[1]);
+      if(dt>_tA+0.01&&dt<_tB-0.01)_dts.push(dt); }
+    _dts.sort((a2,b2)=>a2-b2);
+    let _bc=(_tA+_tB)/2, _bw=_tB-_tA;
+    for(let i2=0;i2+1<_dts.length;i2++){ const w2=_dts[i2+1]-_dts[i2];
+      if(i2===0||w2>_bw){ _bw=w2; _bc=(_dts[i2]+_dts[i2+1])/2; } }
+    let HW=Math.min(4.5, Math.min(_span/2-3.5, _bw/2-2.5));
+    const _noChasm=!(HW>=1.5);
+    if(!_noChasm){ mx+=ux*_bc; my+=uy*_bc; }          /* recentre the band into its gap */
     for(let y=f.y0;y<=f.y1;y++)for(let x=f.x0;x<=f.x1;x++){
+      if(_noChasm)break;
       if(!inb(x,y))continue;
       const t=(x+0.5-mx)*ux+(y+0.5-my)*uy;             /* distance along the doorway axis */
       if(Math.abs(t)<HW && raidTiles[y][x]===T_FLOOR){
@@ -30493,7 +30577,7 @@ function _raidPlacePuzzle(room, f){
       return null;
     };
     let nearL=null, farL=null;
-    { const home=ux?Math.round(my-0.5):Math.round(mx-0.5);   /* start on the doorway line, then fan out */
+    if(!_noChasm){ const home=ux?Math.round(my-0.5):Math.round(mx-0.5);   /* start on the doorway line, then fan out */
       const lo=ux?f.y0:f.x0, hi=ux?f.y1:f.x1;
       for(let off=0; off<=Math.max(hi-home,home-lo) && !(nearL&&farL); off++){
         for(const sd2 of (off?[-1,1]:[0])){
@@ -30508,6 +30592,11 @@ function _raidPlacePuzzle(room, f){
       /* a pipe at BOTH ledges: click it and you cross. `to` is the other ledge. */
       put('raid_pipe',nearL[0],nearL[1],{to:[farL[0],farL[1]]});
       put('raid_pipe',farL[0],farL[1],{to:[nearL[0],nearL[1]]});
+    } else if(!_noChasm){
+      /* ** NO LIPS, NO CHASM. ** The lane search came back empty: a cut you cannot cross is a softlock,
+         not a puzzle. Put this room's floor back exactly as it was and let the keystone be the solve. */
+      for(let y=f.y0;y<=f.y1;y++)for(let x=f.x0;x<=f.x1;x++){
+        if(_raidVoid[x+','+y]){ delete _raidVoid[x+','+y]; if(inb(x,y)&&raidTiles[y])raidTiles[y][x]=T_FLOOR; } }
     }
     /* THE KEYSTONE and THE BARRIER both live on B's SIDE -- across the pipe. Anchor them to the far
        LEDGE and search outward from there, so they can only ever land on ground that is reachable
@@ -30649,6 +30738,7 @@ function raidCutRack(o){
   msg('The larder rack comes down in a heap. The Chimera screams - it has nothing to feed on now.','#2f6a1e');
   /* tell every Chimera in this room that its larder is gone */
   for(const r of rats)if(r&&r.alive&&r.raid&&r.raidRoom===o.raidRoom&&r._sig==='feed'){ r._rackDown=true; r._feedUntil=0; }
+  if(typeof MP!=='undefined'&&MP.sendRaidRack)MP.sendRaidRack(o.x,o.y);   /* down on every screen -- and in the OWNER'S chimera, or it heals off a rack that is not there */
 }
 /* Wipe a prism back to clear glass. Without this the board is a one-way trip. */
 function raidClearPrism(o){
@@ -30656,7 +30746,7 @@ function raidClearPrism(o){
   o.col=null;
   if(o._crystalRef&&o._crystalRef.material)o._crystalRef.material.color.setHex(0xbfc6cf);
   msg('You wipe the prism clear. The stain runs out of it.','#1a5a8c');
-  if(typeof MP!=='undefined'&&MP.sendRaidSolve){}
+  if(typeof MP!=='undefined'&&MP.sendRaidPrism)MP.sendRaidPrism(o.x,o.y,null);
 }
 /* Strike a prism. CoX sets a crab's colour by the STYLE you hit it with -- red melee, blue magic,
    green ranged -- so you have to switch styles rather than click a menu. */
@@ -30671,6 +30761,7 @@ function raidStrikePrism(o){
   const col=RAID_CRAB_COL[ws]||'red';
   o.col=col;
   if(o._crystalRef&&o._crystalRef.material)o._crystalRef.material.color.setHex(RAID_COL_HEX[col]);
+  if(typeof MP!=='undefined'&&MP.sendRaidPrism)MP.sendRaidPrism(o.x,o.y,col);   /* one board, every screen */
   const how=ws==='magic'?'a spell':(ws==='ranged'?'an arrow':'your blade');
   msg('You strike the prism with '+how+' - it settles to '+col+'.','#4a3a1e');
 }
@@ -30682,6 +30773,7 @@ function raidChopSapling(o){
   if(!addItem('raid_kindling',1)){ msg('Your pack is too full to carry the kindling.'); return; }
   o.chops=(o.chops|0)-1;
   addXp('woodcutting',24);
+  if(typeof MP!=='undefined'&&MP.sendRaidSapling)MP.sendRaidSapling(o.x,o.y,o.chops|0);   /* chopped for everyone */
   if(o.chops<=0){ o.gone=true; o.noBlock=true; if(o._m&&o._m.group)o._m.group.visible=false; o.alive=false; }
   msg('You hack a length of frozen kindling free.','#2f6a1e');
 }
@@ -30769,20 +30861,33 @@ function raidPuzzleTick(){
          in this grid (x east, y south) that is (dx,dy) -> (-dy,dx) -- and takes that prism's colour.
          A bead that already has a colour CANNOT be recoloured: hitting a second coloured prism
          shatters it, exactly as in CoX. */
-      if(!puz.orb){
+      /* ** ONE BEAD, ONE SCHEDULER. ** This sim used to run on every client -- two delvers meant two
+         independent beads on two independent boards. The room's scheduler (lowest uid standing in it)
+         steps THE bead and streams every move (rdorb); everyone else mirrors it, and it goes through
+         whoever it lands on -- on THEIR client. */
+      if(typeof _raidRoomSchedMe==='function'&&!_raidRoomSchedMe(room.idx)){
+        if(puz.orb&&typeof _raidOrbMesh==='function')_raidOrbMesh(puz.orb);
+        if(!puz.orb&&_raidOrb){_raidOrb.visible=false;}
+      } else if(!puz.orb){
         if(now>=(puz.nextOrb||0)){
           puz.orb={x:puz.lens[0], y:puz.lens[1], dx:puz.dir[0], dy:puz.dir[1], col:null, t:now};
+          if(typeof MP!=='undefined'&&MP.sendRaidOrb)MP.sendRaidOrb(room.idx,puz.orb);
         }
       } else {
         const orb=puz.orb;
         if(now-orb.t>=RAID_ORB_MS){
           orb.t=now;
           const nx=orb.x+orb.dx, ny=orb.y+orb.dy;
-          const kill=(why)=>{ puz.orb=null; puz.nextOrb=now+1200; if(why)msg(why,'#6a4a12'); };
+          const kill=(why)=>{ puz.orb=null; puz.nextOrb=now+1200;
+            if(typeof MP!=='undefined'&&MP.sendRaidOrb)MP.sendRaidOrb(room.idx,null);
+            if(why)msg(why,'#6a4a12'); };
           if(!inb(nx,ny)||!raidTiles[ny]||raidTiles[ny][nx]!==T_FLOOR){ kill('The bead breaks against the wall.'); }
           else {
             orb.x=nx; orb.y=ny;
-            if(player.x===nx&&player.y===ny){
+            if(typeof MP!=='undefined'&&MP.sendRaidOrb)MP.sendRaidOrb(room.idx,orb);
+            if(typeof _raidRoomPlayers==='function'&&_raidRoomPlayers(room.idx).some(p2=>!p2.me&&p2.x===nx&&p2.y===ny)){
+              kill(null);   /* it went through a groupmate -- THEIR client takes the hit off the stream */
+            } else if(player.x===nx&&player.y===ny){
               const dmg=rndi(RAID_ORB_DMG[0],RAID_ORB_DMG[1]);
               player.hp-=dmg; splats.push({ent:'player',dmg:dmg,t:now}); player.combatT=now; updateOrb();
               msg('The bead goes straight through you!','#9c3512');
@@ -30799,6 +30904,7 @@ function raidPuzzleTick(){
                 if(sk.lit){ kill(null); }
                 else if(orb.col===sk.col){
                   sk.lit=true;
+                  if(typeof MP!=='undefined'&&MP.sendRaidSocket)MP.sendRaidSocket(nx,ny);
                   if(sk._crystalRef&&sk._crystalRef.material)sk._crystalRef.material.color.setHex(RAID_COL_HEX.white);
                   const st2=puz.socks.filter(z=>{const oo=objects.find(q=>q.def==='raid_socket'&&q.x===z.x&&q.y===z.y);return oo&&oo.lit;}).length;
                   msg('The socket burns clear. ('+st2+'/'+puz.n+')','#2f6a1e');
@@ -30909,15 +31015,45 @@ function _raidChestSpot(f, taken){
   }
   return [cx,cz];
 }
+/* Find a contiguous row of n chest tiles: every tile real flat floor, and the tile SOUTH of each
+   kept open as an approach lane -- so the boxes stand shoulder to shoulder and nobody's strongbox
+   walls off anybody else's (or the way out). Falls back to null; caller then ring-searches. */
+function _raidChestRow(f, n){
+  const cz=Math.round(f.cz);
+  const okT=(x,y)=>{
+    if(x<f.x0+1||x>f.x1-1||y<f.y0+1||y>f.y1-1)return false;
+    if(!inb(x,y)||!raidTiles[y]||raidTiles[y][x]!==T_FLOOR)return false;
+    if(blockedStrict(x,y))return false;
+    if(_raidVoid[x+','+y]||_raidNoFloor[x+','+y])return false;
+    if(objects.some(o=>o&&o.alive!==false&&o.x===x&&o.y===y&&o.def!=='raid_chest'))return false;
+    const h=groundH(x+0.5,y+0.5);
+    for(const [ax,ay] of [[1,0],[-1,0],[0,1],[0,-1]])
+      if(Math.abs(groundH(x+0.5+ax,y+0.5+ay)-h)>0.25)return false;
+    return true;
+  };
+  for(let dy=0;dy<=8;dy++)for(const sy of (dy?[-1,1]:[1])){
+    const y=cz+dy*sy; if(y<f.y0+1||y>f.y1-2)continue;
+    for(let x0=Math.round(f.cx)-Math.floor(n/2)-4;x0<=Math.round(f.cx)+4;x0++){
+      let good=true;
+      for(let i=0;i<n;i++){ if(!okT(x0+i,y)||!okT(x0+i,y+1)){good=false;break;} }   /* the row + its lane */
+      if(good)return Array.from({length:n},(_,i)=>[x0+i,y]);
+    }
+  }
+  return null;
+}
 function raidOnBossDown(roomIdx){
   const f=raidRoomFootprint(roomIdx);
   /* how many delvers are down here? one chest each. */
   const uids=[(player&&player.uid)||'me'];
-  if(typeof MP!=='undefined'&&MP.raidPeersHere)for(const u of (MP.raidPeersHere()||[]))if(uids.indexOf(u)<0)uids.push(u);
+  if(typeof MP!=='undefined'&&MP.raidPeersHere)for(const u of (MP.raidPeersHere()||[])){const _u=(u&&u.uid)?u.uid:u; if(_u&&uids.indexOf(_u)<0)uids.push(_u);}   /* raidPeersHere returns {uid,name,x,y} objects, not uid strings */
   else if(raid&&raid.peerPoints)for(const u in raid.peerPoints)if(uids.indexOf(u)<0)uids.push(u);
   const taken=[];
+  /* one ROW of strongboxes, shoulder to shoulder, each with its lane kept open. */
+  const row=(typeof _raidChestRow==='function')?_raidChestRow(f, uids.length):null;
+  let _ci=0;
   for(const uid of uids){
-    const spot=_raidChestSpot(f,taken); taken.push(spot);
+    const spot=(row&&row[_ci])?row[_ci]:_raidChestSpot(f,taken); _ci++; taken.push(spot);
+    if(row&&row[_ci-1])taken.push([spot[0],spot[1]+1]);   /* reserve the approach lane too */
     let ch=objects.find(z=>z.def==='raid_chest'&&z.forUid===uid);
     if(!ch){ ch=addObj('raid_chest',spot[0],spot[1],true);
       if(ch&&typeof buildObjModel==='function')buildObjModel(ch); }
@@ -30933,8 +31069,17 @@ function raidOnBossDown(roomIdx){
   /* ** A WAY OUT. ** You are three floors under the school with the boss dead and nothing to climb --
      the only exit was the ladder on floor 1. The break the Cornerstone came up through is now a way
      back: a shaft of daylight, and a climb. */
-  { const spot=_raidChestSpot(f,[]);
-    const ex=Math.max(f.x0+1,Math.min(f.x1-1, spot[0]+2)), ey=spot[1];
+  { /* the exit gets the SAME validated search as the chests (floor, no void, unblocked, flat).
+       The old placement was `chest spot + 2, clamped to the footprint` -- which shifted onto whatever
+       tile happened to be there, WALL OR VOID included: a ladder buried in masonry, and no way out of
+       a beaten delve. And its base spot was found with an empty taken-list, so it could sit on the
+       chest's own tile. `taken` holds every chest spot; the search lands beside them, on real floor. */
+    let spot=_raidChestSpot(f,taken), guard=0;
+    /* the ladder must never hug the chest row: re-search until it stands clear of every strongbox */
+    while(guard++<6 && objects.some(z=>z.def==='raid_chest'&&Math.max(Math.abs(z.x-spot[0]),Math.abs(z.y-spot[1]))<2)){
+      taken.push(spot); spot=_raidChestSpot(f,taken);
+    }
+    const ex=spot[0], ey=spot[1];
     let up=objects.find(z=>z.def==='raid_exit'&&z.raidFloor===raid.floor);
     if(!up){ up=addObj('raid_exit',ex,ey,true);
       if(up&&typeof buildObjModel==='function')buildObjModel(up); }
@@ -31019,6 +31164,8 @@ function raidTrioTick(){
   if(!inRaid||!raid||!raid.roomState)return;
   for(const key in raid.roomState){
     const stt=raid.roomState[key]; if(!stt||!stt.trio)continue;
+    const _tidx=+(String(key).split(':')[1]);
+    if(typeof _raidRoomSchedMe==='function'&&!_raidRoomSchedMe(_tidx))continue;   /* one referee, or every client re-heals them on its own clock */
     const live=stt.trio.members.map(i=>rats[i]).filter(m=>m&&m.alive);
     if(live.length<2)continue;                       /* down to one: no balance rule left to break */
     const fr=live.map(m=>m.hp/Math.max(1,m.maxhp));
@@ -31027,6 +31174,7 @@ function raidTrioTick(){
       for(const i of stt.trio.members){ const m=rats[i]; if(m&&m.alive){ m.hp=m.maxhp; } }
       msg('The Prefects close ranks and pull each other back up - keep their health level!','#c9483a');
       stt.trio.resets=(stt.trio.resets||0)+1;
+      if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'trio',ri:_tidx});
     }
   }
 }
@@ -31047,13 +31195,13 @@ const RAID_TEL_COL={grave:0x6a5a3a, surge:0x3a7a9a, collapse:0x8a6a4a, blink:0x8
                        they were looking at), the wake's masonry is dust-brown. */
                     drag:0x7b5cff, rise:0x8a6a4a};
 let _raidTelFx=[];
-function _raidTelegraph(r, tiles, fuse, lo, hi, warn, sigOverride){
+function _raidTelegraph(r, tiles, fuse, lo, hi, warn, sigOverride, localOnly){
   r._pending=r._pending||[];
   const at=performance.now()+fuse;
   r._pending.push({tiles:tiles.slice(), at, lo, hi});
   const sig=sigOverride||r._sig||'slam';
   _raidTelMark(tiles, at, sig);
-  if(typeof MP!=='undefined'&&MP.sendRaidTelegraph)MP.sendRaidTelegraph(tiles, fuse, sig);
+  if(!localOnly&&typeof MP!=='undefined'&&MP.sendRaidTelegraph)MP.sendRaidTelegraph(tiles, fuse, sig, lo, hi);   /* localOnly: every client already runs its own copy (the wake) -- streaming it would double the marks AND the armed damage */
   if(warn)msg(warn,'#c9483a');
 }
 /* draw the marked ground */
@@ -31142,7 +31290,7 @@ function raidCsRiseTick(){
       { const f2=raidRoomFootprint(r.raidRoom), tiles=[];
         for(let k=0;k<10;k++)tiles.push([Math.round(f2.cx+rnd(-6,6)), Math.round(f2.cz+rnd(-6,6))]);
         if(typeof _raidTelegraph==='function')
-          _raidTelegraph(r, tiles, 2000, 10, 20, 'The ceiling lets go \u2014 GET OFF THE LIT STONES. Anywhere clear will do.', 'collapse'); }
+          _raidTelegraph(r, tiles, 2000, 10, 20, 'The ceiling lets go \u2014 GET OFF THE LIT STONES. Anywhere clear will do.', 'collapse', true); }
     }
     let rise=r._csRise||0;
     if(r._csRiseT){
@@ -31165,10 +31313,39 @@ function raidCsRiseTick(){
         r.target=player;
       }
     }
-    r._m.rig.position.y = rise*3.2 - 3.2;
-    /* the jaw works while it is awake */
+    /* ===== THE GRIND-AND-SLAM: the face's basic attack, all of it ANCHORED. =====
+       It has no limbs, and any x/z translation reads as the whole boss drifting off its tile -- so the
+       attack is built from the three things a foundation stone CAN do: tilt on its base, gape, and
+       GRIND DOWN. Wind-up: it heaves back and up, jaw opening wide. Strike: it snaps forward and DOWN,
+       biting into the floor with a burst of grit off the base. Recover: it settles. The rig is a child
+       of the group and the render yaws the group at its target, so the whole motion aims at whoever it
+       is actually hitting -- with the base never leaving its tile. */
+    let _tilt=0, _dip=0, _gape=0;
+    const _aw=(!r._csAsleep&&!r._csRiseT&&r.alive&&r.swingT)?(now-r.swingT)/560:-1;
+    if(_aw>=0&&_aw<1){
+      if(_aw<0.42){ const k=_aw/0.42, e=k*k;              /* heave back and up, jaw gaping */
+        _tilt=-0.16*e; _dip=0.20*e; _gape=0.85*k;
+      } else if(_aw<0.62){ const k=(_aw-0.42)/0.20;       /* the SNAP: forward and DOWN */
+        _tilt=-0.16+0.27*k; _dip=0.20-0.46*k; _gape=0.85-0.80*k;
+        if(r._csSlamFx!==r.swingT){ r._csSlamFx=r.swingT;  /* one grit burst per swing */
+          if(typeof parts!=='undefined')for(let k2=0;k2<8;k2++){
+            const a2=Math.random()*6.283, rr2=2.2+Math.random()*1.6;
+            parts.push({wx:r.px+0.5+Math.cos(a2)*rr2, wy:_raidFY+0.15, wz:r.py+0.5+Math.sin(a2)*rr2,
+              vx:Math.cos(a2)*0.9, vy:0.7+Math.random()*0.9, t:now, life:480+Math.random()*220, col:'#6a6156'});
+          }
+          if(typeof sfx!=='undefined'&&sfx.thud)sfx.thud();
+        }
+      } else { const k=(_aw-0.62)/0.38;                    /* settle */
+        _tilt=0.11*(1-k); _dip=-0.26*(1-k); _gape=0.05*(1-k);
+      }
+    } else if(!r._csAsleep&&!r._csRiseT&&r.alive){
+      _tilt=Math.sin(now*0.0009+(r.i||0))*0.02;            /* the stone breathes between swings */
+    }
+    r._m.rig.rotation.x=_tilt;
+    r._m.rig.position.y = rise*3.2 - 3.2 + _dip;
+    /* the jaw works while it is awake; during a strike the gape/clamp curve owns it */
     if(r._m.jaw && !r._csAsleep)
-      r._m.jaw.rotation.x = Math.sin(now*0.0016)*0.06 + (r.swingT&&now-r.swingT<400 ? 0.28 : 0);
+      r._m.jaw.rotation.x = Math.sin(now*0.0016)*0.06 + _gape;
   }
   /* ** THE HANDS HAVE TO BE SEEN TO SWING. **
      They are rooted and they hit you from anywhere in the room -- so without an animation the damage
@@ -31177,6 +31354,11 @@ function raidCsRiseTick(){
   for(const r of rats){
     if(!r||!r.raid||!(r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand')||!r._m||!r._m.group)continue;
     const g2=r._m.group;
+    /* the render stamps rotation.y=heading (facing the player) every frame. With the default 'XYZ'
+       euler order our rotation.x pitch is applied in the WORLD frame -- the slap read correctly only
+       when the player stood due north or south. 'YXZ' applies yaw first, so the rear-and-drive
+       always swings AT whoever the hand is facing. */
+    g2.rotation.order='YXZ';
     if(r._pinned){ g2.rotation.z=0.5; continue; }        /* pinned: it lies over, beaten into the floor */
     /* ** ALL OF IT IN ROTATION. ** The mob render does `m.group.position.set(wx, groundH(..), wz)` every
        single frame, so any height I set here is stamped flat before it draws. Rotation survives -- and a
@@ -31213,7 +31395,7 @@ function raidBossTick(){
     }
 
     /* --- Tekton: The Custodian breaks off to repair at his boiler. Punish him or he out-heals you. --- */
-    if(r._sig==='repair'){
+    if(r._sig==='repair'&&(typeof _raidSchedMe!=='function'||_raidSchedMe(r))){
       if(r._repairUntil&&now<r._repairUntil){
         r.target=null;
         const to=r._repairTo;
@@ -31238,14 +31420,14 @@ function raidBossTick(){
               msg('He has the firebox open and is stoking himself back together \u2014 HIT HIM NOW!','#9c4512'); }
           }
         }
-        if(player.combatT && now-player.combatT<900){ r._repairUntil=0; r._repairTo=null;
+        if((player.combatT && now-player.combatT<900) || (r.lastHit && now-r.lastHit<900)){ r._repairUntil=0; r._repairTo=null;   /* ANY delver's hit breaks him off: groupmates' hits arrive as ghit, which stamps lastHit */
           msg('You break the Custodian off his boiler.','#2f6a1e'); }
         continue;
       }
       if(r._repairTo)r._repairTo=null;
     }
     /* --- Muttadile: the Chimera feeds off its larder rack; break the rack to stop the healing. --- */
-    if(r._sig==='feed' && r._feedUntil && now<r._feedUntil){
+    if(r._sig==='feed' && r._feedUntil && now<r._feedUntil && (typeof _raidSchedMe!=='function'||_raidSchedMe(r))){
       /* if the rack is down there is nothing to say: it kept shouting 'cut the rack down!' at Sam
          long after he had cut it, because the line hung off the feed window and not the rack. */
       if(r._rackDown){ r._feedUntil=0; }
@@ -31321,31 +31503,9 @@ function raidBossTick(){
       if(r._pinned){
         const left=CS_HAND_LOOSE-(now-r._pinned);
         if(csHandsPinned()){
-          /* BOTH down: the thing goes under, brings the ceiling with it, and comes back angrier */
-          if(!raid._csSank){ raid._csSank=now;
-            const face=rats.find(z=>z&&z.raid&&z.kind==='raid_cs_face');
-            if(face){
-              /* ** IT WAKES. ** It has been in that hole the whole fight with only its crown showing.
-                 Now it comes up. _csRiseT drives the animation; the tick lerps _csRise 0 -> 1 and the
-                 rig climbs with it. It cannot be hurt until it is all the way out. */
-              face._exposed=true; face._enraged=(face._enraged|0)+1;
-              face._csAsleep=false; face._csRiseT=now; face._immune=true;
-              face._sigCd=now+5200;                 /* it does not swing while it is still climbing */
-              if(typeof groundFrost==='function'){}
-              if(typeof sfx!=='undefined'&&sfx.dig)sfx.dig();
-            }
-            msg('Both hands are pinned. Something under the floor stops pretending to be a floor.','#7a3a0a');
-            setTimeout(()=>msg('The Cornerstone opens its eyes. It has been here since 1856, and it has been counting.','#9c3512'),1400);
-            setTimeout(()=>msg('THE CORNERSTONE RISES \u2014 hit the face, it cannot mend itself now.','#9c1f1f'),3400);
-            /* the ceiling lets go as it comes up */
-            /* the falling masonry, exactly as Olm's crystals: telegraphed, all over the room */
-            const f2=raidRoomFootprint(r.raidRoom);
-            const tiles=[];
-            for(let k=0;k<10;k++)tiles.push([Math.round(f2.cx+rnd(-6,6)), Math.round(f2.cz+rnd(-6,6))]);
-            const face2=rats.find(z=>z&&z.raid&&z.kind==='raid_cs_face');
-            if(face2&&typeof _raidTelegraph==='function')
-              _raidTelegraph(face2, tiles, 1800, 10, 20, 'The ceiling lets go \u2014 GET OFF THE LIT STONES. Anywhere clear will do.', 'collapse');
-          }
+          /* BOTH down: raidCsRiseTick (the face-side wake, keyed on csHandsPinned) owns everything
+             from here -- the wake, the messages, the collapse telegraphs. Running a second copy of
+             it from the hands' side is how the fight got two competing wake sequences. */
         } else if(left<=0){
           /* it worked loose. Full health, exactly as Olm's does. */
           r._pinned=0; r.hp=r.maxhp; r._sigCd=now+4000;
@@ -31387,12 +31547,18 @@ function raidBossTick(){
         if(typeof MP!=='undefined'&&MP.sendFreeze)MP.sendFreeze(4000);
         if(player.hp<=0){ die(); continue; }
       }
-      if(!r._rimeCd||now>=r._rimeCd){
-        const d=Math.max(Math.abs(Math.round(r.x)-player.x),Math.abs(Math.round(r.y)-player.y));
+      if((typeof _raidSchedMe!=='function'||_raidSchedMe(r))&&(!r._rimeCd||now>=r._rimeCd)){
+        const v2=(typeof _raidSigVictim==='function')?_raidSigVictim(r):{me:true,x:player.x,y:player.y};
+        const d=Math.max(Math.abs(Math.round(r.x)-v2.x),Math.abs(Math.round(r.y)-v2.y));
         if(d<=7&&!r._rimeAt&&r.target){
-          r._rimeCd=now+11000; r._rimeAt=now+1100;
-          if(typeof groundFrost==='function')groundFrost(player.x,player.y,true);
-          msg('The Ice Demon draws a long breath. This one you cannot dodge \u2014 brace, and keep your food ready.','#1a5a8c');
+          r._rimeCd=now+11000;
+          if(v2.me){ r._rimeAt=now+1100;
+            if(typeof groundFrost==='function')groundFrost(player.x,player.y,true);
+            msg('The Ice Demon draws a long breath. This one you cannot dodge \u2014 brace, and keep your food ready.','#1a5a8c');
+          } else if(typeof MP!=='undefined'&&MP.sendRaidSig){
+            MP.sendRaidSig({s:'rime',to:v2.uid,m:r.i});
+            msg('The Ice Demon turns its breath on a delver across the room.','#1a5a8c');
+          }
         }
       }
     }
@@ -31408,30 +31574,36 @@ function raidBossTick(){
       msg('The bronze softens. Hit him with anything you like.','#2f6a1e');
     }
 
+    /* ** ONE SCHEDULER (the First Rector rule, applied to every delve boss). ** Only the mob's claim
+       owner -- or, unclaimed, the lowest uid standing in its room -- may fire its specials. Everyone
+       else RECEIVES them: rdtel arms the marked-floor hit on their own client, rdsig carries the
+       state mechanics. Without this every client kept its own _sigCd and the party ate N copies of
+       everything, which is precisely the Rector's original four-schedulers bug. */
+    if(typeof _raidSchedMe==='function'&&!_raidSchedMe(r))continue;
     if(!r._sigCd||now<r._sigCd)continue;
-    /* ** IT HAS TO BE FIGHTING YOU. ** This was pure proximity -- 'is a player within 9 tiles' -- and
-       never asked whether this thing was actually after you. So Sam fought the right hand across the
-       room and ate the LEFT hand's specials at the same time, from a boss part that had never so much
-       as looked at him. A special is an attack: it belongs to whoever you are actually fighting. */
+    /* ** IT HAS TO BE FIGHTING SOMEONE. ** This was pure proximity -- 'is a player within 9 tiles' --
+       and never asked whether this thing was actually after you. A special is an attack: it belongs
+       to the fight. And its VICTIM is any delver standing in the room -- not always the scheduler. */
     if(!r.target)continue;
-    const d=Math.max(Math.abs(Math.round(r.x)-player.x),Math.abs(Math.round(r.y)-player.y));
+    const v=(typeof _raidSigVictim==='function')?_raidSigVictim(r):{me:true,uid:(player.uid||'me'),x:player.x,y:player.y};
+    const d=Math.max(Math.abs(Math.round(r.x)-v.x),Math.abs(Math.round(r.y)-v.y));
     if(d>9)continue;
     r._sigCd=now+11000;
 
     switch(r._sig){
       case 'grave':      /* The Sexton opens a grave under your feet */
-        _raidTelegraph(r,[[player.x,player.y]],1500,12,20,'The Sexton drives his spade into the floor beneath you - MOVE!');
+        _raidTelegraph(r,[[v.x,v.y]],1500,12,20,'The Sexton drives his spade into the floor - MOVE if it is under you!');
         break;
       case 'surge':      /* The Coxswain calls a stroke; the flood answers in a line */
-        _raidTelegraph(r,[[player.x,player.y],[player.x+1,player.y],[player.x-1,player.y]],1600,10,18,'The Coxswain calls the stroke - water piles up around you!');
+        _raidTelegraph(r,[[v.x,v.y],[v.x+1,v.y],[v.x-1,v.y]],1600,10,18,'The Coxswain calls the stroke - water piles up!');
         break;
       case 'collapse':   /* The Cornerstone's face brings the ceiling down */
-        _raidTelegraph(r,[[player.x,player.y]],1600,14,24,'THE CEILING IS COMING DOWN ON YOUR TILE \u2014 take one step in ANY direction.');
+        _raidTelegraph(r,[[v.x,v.y]],1600,14,24,'THE CEILING IS COMING DOWN \u2014 off the marked stone, one step in ANY direction.');
         break;
       case 'blink':      /* Vasa: The Astronomer steps through and drops a constellation on you */
         { const f=raidRoomFootprint(r.raidRoom); const nx=Math.round(f.cx+rnd(-4,4)), ny=Math.round(f.cz+rnd(-4,4));
           if(inb(nx,ny)&&raidTiles[ny]&&raidTiles[ny][nx]===T_FLOOR){ r.x=nx;r.y=ny;r.px=nx;r.py=ny; }
-          _raidTelegraph(r,_raidRing(player.x,player.y,1),1700,9,16,'The Astronomer steps sideways - stars fall where you stand!'); }
+          _raidTelegraph(r,_raidRing(v.x,v.y,1),1700,9,16,'The Astronomer steps sideways - stars fall!'); }
         break;
       case 'drag':
         /* ** OLM'S SWAP, and the one special that is not 'move'. ** It marks a tile and hauls you to it,
@@ -31441,7 +31613,8 @@ function raidBossTick(){
         { const f3=raidRoomFootprint(r.raidRoom);
           let tx=Math.round(f3.cx+rnd(-5,5)), ty=Math.round(f3.cz+rnd(-5,5));
           const sp=_raidFindSpawn(tx,ty,r.raidRoom); if(sp){tx=sp[0];ty=sp[1];}
-          r._dragAt=now+2000; r._dragX=tx; r._dragY=ty;
+          if(v.me){ r._dragAt=now+2000; r._dragX=tx; r._dragY=ty; }
+          else if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'drag',to:v.uid,m:r.i,x:tx,y:ty});   /* THEIR client hauls them */
           /* ** ONE PATH FOR EVERY TELEGRAPH. ** This used to hand-roll its own _raidTelMark + a direct
              MP.sendRaidTelegraph, while slam and collapse went through _raidTelegraph. Two code paths
              doing the same job is how they drift -- and they had: the drag was streaming under 'blink'
@@ -31454,10 +31627,10 @@ function raidBossTick(){
         }
         break;
       case 'slam':
-        _raidTelegraph(r,[[player.x,player.y]],1400,8,16,'The left hand is coming down where you STAND \u2014 step off this tile.');
+        _raidTelegraph(r,[[v.x,v.y]],1400,8,16,'The left hand is coming down \u2014 step off the marked tile.');
         break;
       case 'flare':
-        _raidTelegraph(r,_raidRing(player.x,player.y,1),1500,6,14,'It draws breath to vent flame - get clear!');
+        _raidTelegraph(r,_raidRing(v.x,v.y,1),1500,6,14,'It draws breath to vent flame - get clear!');
         break;
       case 'repair':     /* Tekton */
         /* ** HE ACTUALLY GOES NOW. ** The tell said he shuffles back to his boiler and he healed standing
@@ -31467,10 +31640,12 @@ function raidBossTick(){
           const bx=Math.round(bf.cx), by=Math.round(bf.y0+4.5);
           const sp=_raidFindSpawn(bx,by,r.raidRoom)||[bx,by];
           r._repairTo=sp; r._repairUntil=now+9000; r._repairMsg=0; r.target=null;
+          if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'repair',m:r.i,u:9000,x:sp[0],y:sp[1]});
           msg('The Custodian breaks off and shuffles back toward his boiler \u2014 CHASE HIM OFF IT before he mends!','#9c4512'); }
         break;
       case 'feed':       /* Muttadile */
         r._feedUntil=now+6000; r._feedMsg=0;
+        if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'feed',m:r.i,u:6000});
         msg('The Chimera turns for the larder rack \u2014 CUT THE RACK DOWN or it heals through you!','#7a3a0a');
         break;
       case 'harden':     /* Guardians */
@@ -31479,6 +31654,7 @@ function raidBossTick(){
            Now bronze does what bronze does: steel and arrows skate off it, but MAGIC still bites. It is
            a STYLE SWAP -- an actual instruction, and a reason to carry a staff into the delve. */
         r._hardUntil=now+5000; r._hardMsg=0;
+        if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'harden',m:r.i,u:5000});
         msg('The Benefactor sets hard as bronze \u2014 blades and arrows will skate off him. SWITCH TO MAGIC!','#7a5a10');
         break;
       case 'silence':
@@ -31487,6 +31663,7 @@ function raidBossTick(){
            nothing to react to. It is a real telegraph now: 1.6s, and it only takes your prayer if your
            prayers are still ON when the book closes. Turn them off and she gets nothing. */
         r._silenceAt=now+1600;
+        if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'silence',m:r.i,u:1600});
         msg('The Mad Archivist raises a book and calls for silence \u2014 TURN YOUR PRAYERS OFF!','#4a2f8a');
         break;
     }
@@ -31517,7 +31694,13 @@ function raidDeath(){
   }
   player.deaths=(player.deaths||0)+1; dirty=true;
   player.hp=maxHp(); player.pray=0; deactivateAllPrayers(); updatePrayOrb(); updateOrb();
-  const mates=(typeof MP!=='undefined'&&MP.raidPeersHere)?MP.raidPeersHere().length:0;
+  /* ** WHO CAN ACTUALLY HAUL YOU UP. ** raidPeersHere is instance+floor-scoped now (it used to count
+     any body in any raid anywhere -- which is why a death beside a soloing STRANGER took the downed
+     branch and 'nothing happened'). A downed mate is no reviver either. */
+  let mates=0, downedMates=0;
+  if(typeof MP!=='undefined'&&MP.raidPeersHere)for(const p of MP.raidPeersHere()){
+    if(raid&&raid.peerDown&&raid.peerDown[p.uid])downedMates++; else mates++;
+  }
   const room=raid.roomIdx;
   if(mates>0){
     /* downed: stay put, a mate revives you. Gear kept, points docked. */
@@ -31525,6 +31708,8 @@ function raidDeath(){
     msg('You go down - '+fmt(lost)+' points lost. A delver can still haul you up.','#9c1f1f');
     if(typeof MP!=='undefined'&&MP.sendRaidDown)MP.sendRaidDown(true);
   } else {
+    /* everyone else (if anyone) is already on the floor: this death is the party wipe -- tell them */
+    if(downedMates>0&&typeof MP!=='undefined'&&MP.sendRaidWipe)MP.sendRaidWipe();
     /* CoX's actual rule, now that floors exist: a death sends you back to THE START OF THE PREVIOUS
        FLOOR. The penalty is the points and the walk, never your gear.
        We must also reset the room you died in: ours SEAL, so leaving a sealed room behind with live
@@ -31559,6 +31744,7 @@ function raidResetRoom(idx){
   const stt=raid.roomState[_raidRK(idx)]; if(!stt)return;
   for(const i of (stt.mobIdx||[])){ const m=rats[i]; if(m){ m.alive=false; m.target=null; m.respawnAt=9e15; if(m._m&&m._m.group)m._m.group.visible=false; } }
   stt.mobIdx=[]; stt.spawned=false; stt.cleared=false;
+  if(raid&&raid._csSank)raid._csSank=0;   /* the Cornerstone's wake latch: a re-attempt must be able to wake it again */
   /* NOTE: stt.cacheLeft is deliberately NOT reset -- resetting a room must not refill its cache,
      or dying becomes a ration farm. */
   if(stt.puz){ stt.puz.solved=false; stt.puz.peerPlates={};
@@ -31589,6 +31775,20 @@ function raidCancelRevive(why){
 }
 /* per-frame: run the reviver's clock, enforce the cancel rules, finish at 10s. */
 function raidReviveTick(){
+  /* late join: the party's cleared-state had its beat to arrive; walk into the first chamber now */
+  if(inRaid&&raid&&raid._lateEnterTo!=null&&performance.now()>raid._lateEnterAt){
+    const _t2=raid._lateEnterTo; raid._lateEnterTo=null;
+    if(typeof raidEnterRoom==='function')raidEnterRoom(_t2);
+  }
+  /* down, and nobody in the instance is still on their feet (they wiped after me, left, or logged):
+     after 12s, stop waiting for a hand that cannot come and take the checkpoint fallback. */
+  if(inRaid&&raid&&raid.downed){
+    let up=0;
+    if(typeof MP!=='undefined'&&MP.raidPeersHere)for(const p of MP.raidPeersHere())if(!(raid.peerDown&&raid.peerDown[p.uid]))up++;
+    if(up===0){ if(!raid._downSolo)raid._downSolo=performance.now();
+      if(performance.now()-raid._downSolo>12000){ raid._downSolo=0; if(typeof MP!=='undefined'&&MP.sendRaidWipe)MP.sendRaidWipe(); raidWipe(true); return; } }
+    else raid._downSolo=0;
+  }
   if(raidBeingRevived && performance.now()-raidBeingRevived.t0>raidBeingRevived.ms+2500)raidBeingRevived=null;   /* stale guard */
   if(!raidRevive)return;
   if(!inRaid){ raidRevive=null; return; }
@@ -31617,12 +31817,216 @@ function raidDrawReviveBar(ctx,W,H){
   ctx.fillText(label+'  \u2014  '+left+'s', bx+bw/2, by+bh/2+1);
   ctx.restore();
 }
-function raidPeerRevived(){ raid.downed=false; raidBeingRevived=null; player.hp=Math.max(1,Math.round(maxHp()*0.5)); updateOrb(); msg('You are hauled back to your feet!','#2f6a1e'); }
+function raidPeerRevived(){ raid.downed=false; raidBeingRevived=null; raid._downSolo=0; player.hp=Math.max(1,Math.round(maxHp()*0.5)); updateOrb();
+  if(typeof MP!=='undefined'&&MP.sendRaidDown)MP.sendRaidDown(false);   /* everyone's peerDown[me] must clear, or the wipe math counts a standing delver as floored */
+  msg('You are hauled back to your feet!','#2f6a1e'); }
 /* visual toggles (a glow child mesh on the apparatus group) */
 function _raidSetPlateVisual(o,on){ if(o._raidGlowMesh)o._raidGlowMesh.visible=on; }
 function _raidSetBrazierVisual(o,on){ if(o._raidFlames)for(const fl of o._raidFlames)fl.visible=on; }
 /* ---- peer puzzle events (from MP handlers) ---- */
-function raidPeerSolve(idx){ if(!raid||!raid.roomState)return; const stt=raid.roomState[_raidRK(idx)]; if(stt&&stt.puz&&!stt.puz.solved){ stt.puz.solved=true; stt.cleared=true; _raidSealRoom(idx,false); } }
+function raidPeerSolve(idx, fl){ if(!raid||!raid.roomState)return;
+  /* floor-keyed: a mate can solve a room on a floor I have not reached yet; the state must land on
+     THAT floor's key, and only the CURRENT floor's tiles may be touched. */
+  const f2=(fl===undefined||fl===null)?(raid.floor||1):(fl|0);
+  const stt=_raidRoomState(idx, f2);
+  if(stt.cleared&&(!stt.puz||stt.puz.solved))return;
+  if(stt.puz)stt.puz.solved=true;
+  stt.cleared=true; stt.spawned=true;
+  if(f2===((raid.floor||1)|0))_raidSealRoom(idx,false);
+}
+/* a groupmate stepped into a fresh room on MY floor: spawn the identical guardians here, now, so the
+   party fights ONE set of mobs (deterministic slots) instead of each client spawning its own on its
+   own schedule. Reveal/brief stay suppressed -- the room is still dark until I walk in myself. */
+function raidPeerRoomEnter(idx, fl){
+  if(!inRaid||!raid||!raid.rooms)return;
+  const f2=(fl===undefined||fl===null)?(raid.floor||1):(fl|0);
+  if(f2!==((raid.floor||1)|0))return;   /* another floor: mob slots collide across floors; rdclear (floor-keyed) keeps the state honest instead */
+  const stt=_raidRoomState(idx, f2);
+  if(stt.spawned||stt.cleared)return;
+  const room=raid.rooms[idx]; if(!room)return;
+  if(room.type!=='combat'&&room.type!=='boss'&&room.type!=='puzzle')return;
+  _raidPeerSpawn=true;
+  try{ raidEnterRoom(idx); } finally{ _raidPeerSpawn=false; }
+  if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
+}
+/* a late joiner asked what stands cleared: raidAdoptState applies each 'floor:idx' key. Idempotent --
+   every member answers, and re-clearing a cleared room is a no-op. */
+function raidAdoptState(keys){
+  if(!raid||!Array.isArray(keys))return;
+  for(const k of keys){ const pr=String(k).split(':'); if(pr.length!==2)continue;
+    raidPeerClear(pr[1]|0, pr[0]|0); }
+}
+/* a groupmate's room fell (they were the mob owner; raidOnMobDead may never run here): mirror it. */
+function raidPeerClear(idx, fl){
+  if(!raid||!raid.roomState)return;
+  const f2=(fl===undefined||fl===null)?(raid.floor||1):(fl|0);
+  const stt=_raidRoomState(idx, f2);
+  if(stt.cleared)return;
+  stt.cleared=true; stt.spawned=true;
+  if(stt.puz)stt.puz.solved=true;
+  if(f2===((raid.floor||1)|0)){
+    for(const i of (stt.mobIdx||[])){ const m2=rats[i];
+      if(m2&&m2.raid){ m2.alive=false; m2.target=null; m2.respawnAt=9e15;
+        if(typeof engagedMob!=='undefined'&&engagedMob===m2)engagedMob=null;
+        if(m2._m&&m2._m.group)m2._m.group.visible=false; } }
+    _raidSealRoom(idx,false);
+    /* ** THE KILLER IS NOT THE ONLY ONE WHO BEAT THE DELVE. ** raidOnBossDown only ever ran on the
+       client that landed the killing blow -- every groupmate got the fanfare and NO chest and NO way
+       out. The boss room's clear lands here on their clients: raise the hoard and the exit HERE too
+       (one chest per delver, forUid keeps yours yours). */
+    const _brm=raid.rooms&&raid.rooms[idx|0];
+    if(_brm&&_brm.type==='boss'&&!raid.bossDown&&typeof raidOnBossDown==='function')raidOnBossDown(idx|0);
+  }
+}
+/* ===== The party wipe: everyone down together -> everyone back to the last checkpoint. =====
+   The LAST delver to fall takes the normal death fallback via raidDeath and tells the rest with
+   rdwipe; each receiver runs this. It deliberately mirrors raidDeath's solo branch floor-for-floor
+   (previous-floor start; on floor 1, the first chamber -- never the sealed lobby). */
+function raidWipe(local){
+  if(!inRaid||!raid)return;
+  raid.downed=false; raidBeingRevived=null; raidRevive=null; raid.peerDown={}; raid._downSolo=0;
+  player.hp=maxHp(); player.pray=0; deactivateAllPrayers(); updatePrayOrb(); updateOrb();
+  raidResetRoom(raid.roomIdx);
+  const from=raid.floor||1, back=Math.max(1, from-1);
+  if(back!==from){ raidGotoFloor(back); }
+  else {
+    const tgt=(raid.rooms&&raid.rooms[1])?1:0;
+    raidResetRoom(tgt); raid.roomIdx=tgt;
+    const e=_raidRoomInside(tgt);
+    player.x=e[0]; player.y=e[1]; player.px=e[0]; player.py=e[1];
+    player.path.length=0; cancelAction();
+    if(typeof raidRevealRoom==='function')raidRevealRoom(tgt);
+    if(typeof raidEnterRoom==='function')raidEnterRoom(tgt);
+    if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
+  }
+  msg('The whole party is down. You come to at the last checkpoint - the delve has re-armed.','#9c1f1f');
+}
+/* ===== WHO RUNS A ROOM'S CLOCKS (the First Rector rule, generalised to the whole delve) =====
+   Exactly ONE client may schedule a given mob's specials, step the bead, or fire a trio reset --
+   or every client keeps its own timer and the party eats N copies of everything (the Rector's
+   original four-schedulers bug, which we are NOT re-shipping down here). The owner of the mob's
+   claim schedules it; with no claim, the lowest uid standing in the room does. Every client
+   computes the same answer from the same synced inputs, so there is never zero and never two. */
+function _raidRoomPlayers(idx){
+  const out=[];
+  const f=(typeof raidRoomFootprint==='function')?raidRoomFootprint(idx):null; if(!f)return out;
+  if(inRaid && player.x>=f.x0&&player.x<=f.x1&&player.y>=f.y0&&player.y<=f.y1 && !(raid&&raid.downed))
+    out.push({uid:(player.uid||'me'), x:player.x, y:player.y, me:true});
+  if(typeof MP!=='undefined'&&MP.raidPeersHere)for(const p of MP.raidPeersHere()){
+    if(p.x>=f.x0&&p.x<=f.x1&&p.y>=f.y0&&p.y<=f.y1 && !(raid&&raid.peerDown&&raid.peerDown[p.uid]))
+      out.push({uid:p.uid, x:p.x, y:p.y});
+  }
+  return out;
+}
+function _raidRoomSchedMe(idx){
+  const ps=_raidRoomPlayers(idx);
+  if(!ps.length)return !!(inRaid&&raid&&raid.roomIdx===idx);   /* alone (maybe downed): still my show */
+  let low=null; for(const p of ps)if(low===null||p.uid<low)low=p.uid;
+  return low===(player.uid||'me');
+}
+function _raidSchedMe(r){
+  if(!r)return true;
+  if(typeof MP!=='undefined'&&MP._claims){ const c=MP._claims.get(r.i);
+    if(c&&c.uid&&c.uid!==player.uid&&(typeof MP.isGroupmate!=='function'||MP.isGroupmate(c.uid)))return false;
+    if(c&&c.uid===player.uid)return true; }
+  return _raidRoomSchedMe(r.raidRoom);
+}
+/* pick who a special goes after: any delver standing in the room, downed excluded. */
+function _raidSigVictim(r){
+  const ps=_raidRoomPlayers(r.raidRoom);
+  if(!ps.length)return {uid:(player.uid||'me'), x:player.x, y:player.y, me:true};
+  return ps[Math.floor(Math.random()*ps.length)];
+}
+/* ---- peer appliers: a groupmate did a thing; my world does the same thing ---- */
+function raidPeerPrism(x,y,c){ const o=objects.find(z=>z.def==='raid_prism'&&z.x===x&&z.y===y); if(!o)return;
+  o.col=c||null;
+  if(o._crystalRef&&o._crystalRef.material)o._crystalRef.material.color.setHex(c?RAID_COL_HEX[c]:0xbfc6cf);
+}
+function raidPeerSocket(x,y){ const o=objects.find(z=>z.def==='raid_socket'&&z.x===x&&z.y===y); if(!o)return;
+  o.lit=true;
+  if(o._crystalRef&&o._crystalRef.material)o._crystalRef.material.color.setHex(RAID_COL_HEX.white);
+}
+function raidPeerSapling(x,y,ch){ const o=objects.find(z=>z.def==='raid_sapling'&&z.x===x&&z.y===y); if(!o)return;
+  o.chops=ch|0;
+  if(o.chops<=0){ o.gone=true; o.noBlock=true; if(o._m&&o._m.group)o._m.group.visible=false; o.alive=false; }
+}
+function raidPeerRack(x,y){ const o=objects.find(z=>z.def==='raid_rack'&&z.x===x&&z.y===y); if(!o||o.down)return;
+  o.down=true;
+  if(o._m&&o._m.group){ o._m.group.rotation.z=1.35; o._m.group.position.y=_raidObjY(o)-0.25; }
+  /* CRITICAL: my Chimera must learn its larder is gone, or -- when I own it -- it heals through the
+     party forever off a rack a groupmate already cut. */
+  for(const r of rats)if(r&&r.alive&&r.raid&&r.raidRoom===o.raidRoom&&r._sig==='feed'){ r._rackDown=true; r._feedUntil=0; }
+  msg('The larder rack comes down in a heap.','#2f6a1e');
+}
+/* the scheduler fired a state mechanic: my copy of the fight keeps the same clock */
+function raidPeerSig(m){
+  const r=(m.m!=null&&typeof rats!=='undefined'&&rats[m.m])?rats[m.m]:null;
+  const now=performance.now();
+  const _inMobRoom=r&&r.raidRoom!=null&&(function(){const f=raidRoomFootprint(r.raidRoom);
+    return f&&player.x>=f.x0&&player.x<=f.x1&&player.y>=f.y0&&player.y<=f.y1;})();
+  switch(m.s){
+    case 'harden': if(r){ r._hardUntil=now+(m.u|0); r._hardMsg=0;
+      msg('The Benefactor sets hard as bronze \u2014 blades and arrows will skate off him. SWITCH TO MAGIC!','#7a5a10'); } break;
+    case 'repair': if(r){ r._repairUntil=now+(m.u|0); r._repairTo=(m.x!=null)?[m.x|0,m.y|0]:null; r._repairMsg=0;
+      msg('The Custodian breaks off and shuffles back toward his boiler \u2014 CHASE HIM OFF IT before he mends!','#9c4512'); } break;
+    case 'feed': if(r){ r._feedUntil=now+(m.u|0); r._feedMsg=0;
+      msg('The Chimera turns for the larder rack \u2014 CUT THE RACK DOWN or it heals through you!','#7a3a0a'); } break;
+    case 'silence': if(_inMobRoom){ if(r)r._silenceAt=now+(m.u|0);
+      msg('The Mad Archivist raises a book and calls for silence \u2014 TURN YOUR PRAYERS OFF!','#4a2f8a'); } break;
+    case 'rime': if(r){ r._rimeAt=now+1100;
+      if(typeof groundFrost==='function')groundFrost(player.x,player.y,true);
+      msg('The Ice Demon turns its breath on YOU \u2014 brace, and keep your food ready.','#1a5a8c'); } break;
+    case 'drag': if(r){ r._dragAt=now+2000; r._dragX=m.x|0; r._dragY=m.y|0; } break;
+    case 'trio': { const stt=raid&&raid.roomState&&raid.roomState[_raidRK(m.ri|0)];
+      if(stt&&stt.trio){
+        for(const i of stt.trio.members){ const z=rats[i]; if(z&&z.alive){
+          const c=(typeof MP!=='undefined'&&MP._claims)?MP._claims.get(z.i):null;
+          if(!(c&&c.uid&&c.uid!==player.uid))z.hp=z.maxhp;   /* heal every copy I am authoritative for */
+        } }
+        msg('The Prefects close ranks and pull each other back up - keep their health level!','#c9483a');
+      } break; }
+  }
+}
+/* an armed incoming telegraph: a groupmate's boss marked the floor, and standing on it must hurt ME
+   on MY client -- a special only its caster can be hit by is not a group mechanic. */
+let _raidTelIncoming=[];
+function raidPeerTelegraph(ts,f,sg,lo,hi){
+  if(typeof inRaid==='undefined'||!inRaid||!Array.isArray(ts))return;
+  const at=performance.now()+(f|0);
+  if(typeof _raidTelMark==='function')_raidTelMark(ts,at,sg);
+  if((hi|0)>0)_raidTelIncoming.push({tiles:ts.map(t=>[t[0]|0,t[1]|0]), at, lo:lo|0, hi:hi|0});
+}
+function raidTelIncomingTick(){
+  if(!_raidTelIncoming.length)return;
+  const now=performance.now();
+  for(let i=_raidTelIncoming.length-1;i>=0;i--){ const pn=_raidTelIncoming[i];
+    if(now<pn.at)continue;
+    _raidTelIncoming.splice(i,1);
+    if(!inRaid||(raid&&raid.downed))continue;
+    if(pn.tiles.some(t=>t[0]===player.x&&t[1]===player.y)){
+      const dmg=rndi(pn.lo,pn.hi);
+      player.hp-=dmg; splats.push({ent:'player',dmg:dmg,t:now}); player.combatT=now;
+      if(typeof updateOrb==='function')updateOrb();
+      if(player.hp<=0){die();return;}
+    } else msg('It crashes into the floor where you were standing.','#9a8a6a');
+  }
+}
+/* the bead, streamed: the room's scheduler steps it; I mirror it, and it goes through ME on MY client */
+function raidPeerOrb(ri,o){
+  const stt=raid&&raid.roomState&&raid.roomState[_raidRK(ri)]; if(!stt||!stt.puz||stt.puz.kind!=='crabs')return;
+  const puz=stt.puz;
+  if(!o){ puz.orb=null; if(typeof _raidOrb!=='undefined'&&_raidOrb)_raidOrb.visible=false; return; }
+  puz.orb=puz.orb||{t:0};
+  puz.orb.x=o.x; puz.orb.y=o.y; puz.orb.dx=o.dx; puz.orb.dy=o.dy; puz.orb.col=o.c||null; puz.orb.t=performance.now();
+  if(typeof _raidOrbMesh==='function')_raidOrbMesh(puz.orb);
+  if(inRaid&&player.x===o.x&&player.y===o.y&&!(raid&&raid.downed)){
+    const dmg=rndi(RAID_ORB_DMG[0],RAID_ORB_DMG[1]);
+    player.hp-=dmg; splats.push({ent:'player',dmg:dmg,t:performance.now()}); player.combatT=performance.now();
+    if(typeof updateOrb==='function')updateOrb();
+    msg('The bead goes straight through you!','#9c3512');
+    if(player.hp<=0){die();}
+  }
+}
 function raidPeerBrazier(x,y,ms){ const o=objects.find(z=>z.def==='raid_brazier'&&z.x===x&&z.y===y); if(o){ o.litUntil=performance.now()+(ms||RAID_BRAZIER_HOLD_MS); o.lit=true; _raidSetBrazierVisual(o,true); } }
 function raidPeerReviveStart(name,ms){ if(raid&&raid.downed)raidBeingRevived={name:name||'A delver',t0:performance.now(),ms:ms||RAID_REVIVE_MS}; }
 function raidPeerReviveCancel(){ raidBeingRevived=null; }
@@ -32212,11 +32616,22 @@ function raidOpenLobbyGate(){
   raidShowEntryPanel();
 }
 function raidBeginDelve(){
+  /* ** THE GO IS THE SYNC POINT. ** Freeze the inputs here -- seed, party size, party combat -- 
+     re-derive the graph locally from EXACTLY those inputs, and broadcast the same tuple as rdgo.
+     Every client then generates the identical dungeon from identical inputs, and rebuilds its
+     geometry from the adopted seed (the old flow updated the DATA and left the GEOMETRY on
+     whatever seed you happened to enter with). */
+  const _ps=_raidPartySize(), _cl=_raidPartyCombat();
+  const _sd=(raid&&raid.seed!==undefined)?(raid.seed>>>0):raidRollSeed();
+  const _lg=!!(raid&&raid.large);
+  raidApplySeed(_sd, _lg, (typeof player!=='undefined'?player.uid:null), false, _cl, _ps);
+  raidBuildInterior(raid.graph, 1);
+  if(inRaid)_raidFlatten();
   raid.started=true;
   for(const o of objects)if(o.def==='raid_lobbygate'&&o.alive){   /* it lifts, and stops blocking */
     o.alive=false; if(o._m&&o._m.group)o._m.group.visible=false; }
   msg('The gate grinds up. The tunnels have you.','#c9483a');
-  if(typeof MP!=='undefined'&&MP.sendRaidSeed)MP.sendRaidSeed(raid.seed, raid.large, raid.leaderUid, _raidPartyCombat());
+  if(typeof MP!=='undefined'&&MP.sendRaidGo)MP.sendRaidGo(raid.rid, _sd, _lg, raid.leaderUid, _ps, _cl);
   const to=(raid.rooms&&raid.rooms.length>1)?1:0;
   const e=_raidRoomEntryPoint(to);
   /* PUT them in the room. This used to walkTo(), which silently does nothing if the path is blocked --
@@ -32261,7 +32676,13 @@ function _raidRoomEntryPoint(idx){
 let _raidSkipPanel=false;
 function _raidEnterNow(){
   if(!RAID_ENABLED)return;
-  if(!raid||!raid.graph){ if(typeof raidStart==='function')raidStart(); }   /* solo/leader: roll a layout if none was shared */
+  /* a groupmate pressed Begin while we were still topside: join THEIR run, not a fresh one */
+  if(_raidPendingGo&&(Date.now()-_raidPendingGo.at)<30*60*1000
+     &&typeof MP!=='undefined'&&MP.isGroupmate&&MP.isGroupmate(_raidPendingGo.ld)){
+    const pg=_raidPendingGo; _raidPendingGo=null;
+    raidApplySeed(pg.sd, pg.lg, pg.ld, true, pg.cl, pg.ps, pg.rid);
+    raid.started=true; raid._lateJoin=true;
+  } else if(!raid||!raid.graph){ if(typeof raidStart==='function')raidStart(); }   /* solo/leader: roll a layout if none was shared */
   if(raid&&raid.graph)raidBuildInterior(raid.graph, raid.floor||1);
   inRaid=true; tiles=raidTiles; _raidFlatten(); _raidLightsOn();
   worldGroup.visible=false; raidGroup.visible=true;
@@ -32282,6 +32703,22 @@ function _raidEnterNow(){
   scene.fog.near=10; scene.fog.far=34;
   stopMusic();
   if(!inRaidRestore){msg('You descend the cellar steps into a cold vaulted undercroft. The passages wait beyond.','#8fb8d6');}
+  /* late join: the run already started -- the gate is up; go straight through to the first chamber */
+  if(raid&&raid._lateJoin&&!inRaidRestore){
+    raid._lateJoin=false;
+    for(const o of objects)if(o.def==='raid_lobbygate'&&o.alive){o.alive=false;if(o._m&&o._m.group)o._m.group.visible=false;}
+    const _to=(raid.rooms&&raid.rooms.length>1)?1:0;
+    const _e=_raidRoomEntryPoint(_to);
+    if(_e){player.x=_e[0];player.y=_e[1];player.px=_e[0];player.py=_e[1];player.path.length=0;
+      raid.roomIdx=_to;
+      if(typeof raidRevealRoom==='function')raidRevealRoom(_to);   /* SEE the room now... */
+      /* ...but do not ENTER it yet: our roomState is empty, and entering would spawn fresh guardians
+         into rooms the party may have cleared -- whose owner-streams would then raise the dead on
+         THEIR screens. Ask the party what stands cleared, give the answers ~1.2s to land, then enter. */
+      raid._lateEnterTo=_to; raid._lateEnterAt=performance.now()+1200;
+      if(typeof MP!=='undefined'&&MP.sendRaidStateReq)MP.sendRaidStateReq();}
+    msg('The gate stands open. Your group is already in the tunnels.','#c9483a');
+  }
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
 }
 /* Everything the delve hands you that must not follow you out. ONE list, used by exitRaid AND by
@@ -32535,10 +32972,18 @@ function _raidPartyCombat(){
   if(raid&&raid.peerCombat)for(const k in raid.peerCombat)hi=Math.max(hi, raid.peerCombat[k]|0);
   return hi;
 }
-function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl){
-  const ps=_raidPartySize();
+function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl, partySize, rid){
+  /* ** THE PARTY SIZE IS AN INPUT, NOT A GUESS. ** The graph and the scale both derive from it, and
+     each client used to compute it from its OWN roster view -- which can disagree mid-invite. The GO
+     broadcasts the starter's value; solo/local callers still fall back to the roster. */
+  const ps=(partySize&&(partySize|0)>0)?Math.max(1,Math.min(4,partySize|0)):_raidPartySize();
   const graph=raidGenGraph(seed>>>0, ps, !!large);   /* size is DERIVED from (seed, large) now -- variable, CoX-style */
   raid=raid||{};
+  /* ** EVERY DELVE RUN IS AN INSTANCE. ** raid.rid names THIS run; every raid-scoped MP message
+     carries it and is dropped on mismatch, so two parties (or two soloers) can never touch each
+     other's mobs, rooms, puzzles, or presence. Adopters (rdgo) pass the starter's rid in. */
+  raid.rid=rid||raid.rid||(((typeof player!=='undefined'&&player.uid)?player.uid:'x')+'-'+(seed>>>0)+'-'+Math.floor(Math.random()*0xFFFFFF).toString(36));
+  raid.started=false;   /* a (re)applied layout is an un-started run; the GO sets this, never a leftover */
   raid.seed=graph.seed; raid.size=graph.size; raid.large=graph.large; raid.boss=graph.bossId;
   raid.graph=graph; raid.floors=graph.floors;
   raid.floor=raid.floor||1;                       /* 1..3; floor 3 is The Cornerstone alone */
@@ -32556,12 +33001,14 @@ function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl){
   raid.checkpoint=0;
   return graph;
 }
-/* Leader entry point: roll a seed, apply it locally, and broadcast so the party matches. */
+/* Local entry point: roll a seed and apply it locally. ** NO BROADCAST. ** Climbing down the cellar
+   steps is a private act now: it used to sendRaidSeed here, which meant every lobby entrant pushed
+   their own layout at the whole room -- the seed race behind 'my HUD said Hawley but I saw Foster'.
+   The ONE broadcast is the GO (raidBeginDelve -> rdgo). */
 function raidStart(large){
   const seed=raidRollSeed();
   const cl=_raidPartyCombat();
   const g=raidApplySeed(seed, !!large, (typeof player!=='undefined'?player.uid:null), false, cl);
-  if(typeof MP!=='undefined'&&MP.sendRaidSeed)MP.sendRaidSeed(g.seed, g.large, raid.leaderUid, cl);
   return g;
 }
 
@@ -37300,7 +37747,7 @@ const MP = (function () {
   function selfApp() { const c = player.cosmetic || {}; return { skin: 0xd9a066, shirt: (typeof c.shirt === 'number' ? c.shirt : 0x8a8148), pants: (typeof c.pants === 'number' ? c.pants : 0x2f5d33), hair: (typeof c.hair === 'number' ? c.hair : 0x6b4423), hairstyle: c.hairstyle || 'short', shirtStyle: c.shirtStyle || 'tee', pantsStyle: c.pantsStyle || 'trousers', boots: 0x5a3a26, belt: 0x6e2419 }; }
   function _isDefaultApp(a) { return !!a && a.shirt === 0x8a8148 && a.pants === 0x2f5d33 && a.hair === 0x6b4423 && (a.hairstyle || 'short') === 'short' && (a.shirtStyle || 'tee') === 'tee' && (a.pantsStyle || 'trousers') === 'trousers'; }
   function _resolveApp(uid, pa) { const i = huid(uid); if (pa && typeof pa === 'object' && !_isDefaultApp(pa)) return Object.assign({}, BASE_APP, pa); return Object.assign({}, BASE_APP, { shirt: SHIRTS[i % SHIRTS.length], hair: HAIRS[(i >> 3) % HAIRS.length] }); }
-  function refreshApp() { if (!active() || !conn) return; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null, app: selfApp() }); }
+  function refreshApp() { if (!active() || !conn) return; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
   const HAIRS  = [0x6b4423, 0x2c2620, 0x8a6a3a, 0x4a3a2a, 0xb08040, 0x5a3a26];
 
@@ -37308,7 +37755,50 @@ const MP = (function () {
   function now() { return (typeof performance !== 'undefined') ? performance.now() : Date.now(); }
   function huid(s) { s = String(s || ''); let h = 0; for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) | 0; return Math.abs(h); }
 
+  /* ===== DELVE INSTANCES: the MP-side half =====
+     _mpRoom(): what presence beacons say. In the delve it is 'raid:<rid>:<floor>' (started) or a
+     per-group 'raidlobby:...' (gathering) -- so two runs, or two floors of one run, are DIFFERENT
+     rooms to _remoteHere and never see each other. Outside the delve it is plain curInterior().
+     _mpStamp()/_mpDropForeignRaid(): every raid-scoped outbound message is stamped with the
+     instance id + floor, and every raid-scoped inbound message from another instance (or, where
+     floor-scoped, another floor) is dropped BEFORE the switch -- one gate, so no handler can
+     forget. Mob-family types double as overworld traffic: untagged overworld messages still flow,
+     but may never address a raid-reserved rat index. */
+  const _RAID_MOBFAM = { mob:1, claim:1, release:1, mobdead:1, ghit:1, mobatk:1, dmg:1, brnd:1, cndr:1, frz:1 };
+  const _RAID_RDFAM = { rdsolve:1, rdbrz:1, rdplate:1, rdtel:1, rdpts:1, rddown:1, rdrvs:1, rdrvc:1, rdrev:1, rdbeam:1, rduniq:1, rdroom:1, rdclear:1, rdwipe:1, rdcs:1, rdstreq:1, rdstate:1, rdpr:1, rdsk:1, rdsap:1, rdrack:1, rdsig:1, rdorb:1 };
+  const _RAID_FLSCOPED = { mob:1, claim:1, release:1, mobdead:1, ghit:1, mobatk:1, dmg:1, brnd:1, cndr:1, frz:1, rdbrz:1, rdplate:1, rdtel:1, rdcs:1, rdpr:1, rdsk:1, rdsap:1, rdrack:1, rdsig:1, rdorb:1 };   /* rdsolve/rdroom/rdclear carry rfl and key state themselves */
+  function _mpRoom() {
+    const ci = curInterior();
+    if (ci === 'raid' && typeof raid !== 'undefined' && raid) {
+      if (raid.started && raid.rid) return 'raid:' + raid.rid + ':' + (raid.floor | 0);
+      let k = player.uid;
+      if (groupInGroup()) { let lo = player.uid; for (const m2 of group.roster) if (m2.uid < lo) lo = m2.uid; k = 'g' + lo; }
+      return 'raidlobby:' + k;   /* groupmates share a lobby; strangers each stand in their own */
+    }
+    return ci;
+  }
+  function _mpStamp(o) {
+    if (!o || !o.t || !(_RAID_MOBFAM[o.t] || _RAID_RDFAM[o.t])) return;
+    if (typeof inRaid !== 'undefined' && inRaid && typeof raid !== 'undefined' && raid && raid.rid) { o.rid = raid.rid; o.rfl = raid.floor | 0; }
+  }
+  function _mpDropForeignRaid(m) {
+    const isMob = _RAID_MOBFAM[m.t], isRd = _RAID_RDFAM[m.t];
+    if (!isMob && !isRd) return false;
+    const mine = (typeof inRaid !== 'undefined' && inRaid && typeof raid !== 'undefined' && raid && raid.rid) ? raid.rid : null;
+    if (m.rid) {
+      if (!mine || m.rid !== mine) return true;                                   /* another instance: never crosses */
+      if (_RAID_FLSCOPED[m.t] && (m.rfl | 0) !== (raid.floor | 0)) return true;   /* same run, another floor: slots/coords collide across floors */
+      return false;
+    }
+    if (isRd) return true;                                                         /* rd* is only ever raid traffic; untagged = stale/foreign */
+    /* untagged mob-family (overworld) traffic may never address a raid-reserved index -- whether I
+       am in the delve (protects my run) or outside it (protects the dead slot rats a past run left) */
+    const mi = (m.m !== undefined) ? (m.m | 0) : -1;
+    const base = (typeof _raidWorldMobs !== 'undefined' && _raidWorldMobs != null) ? _raidWorldMobs : 1e9;
+    return mi >= base;
+  }
   function send(o) {
+    _mpStamp(o);
     _sent.push(o); if (_sent.length > 240) _sent.shift();
     if (ws && conn) { try { ws.send(JSON.stringify(o)); } catch (e) {} }
   }
@@ -37336,13 +37826,13 @@ const MP = (function () {
     sock.onopen = function () {
       if (ws !== sock) { try { sock.close(); } catch (e) {} return; }
       conn = true; backoff = 1000;
-      send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: selfApp(), gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), snap: 1 });
+      send({ t: 'join', uid: player.uid, name: player.name, x: player.x, y: player.y, h: player.heading, app: selfApp(), gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), snap: 1 });
       lastGear = ''; lastAct = ''; /* force a state push next frame */
       if (keepAlive) clearInterval(keepAlive);
       keepAlive = setInterval(function () {
         if (!conn) return;
-        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() });
-        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null, app: selfApp() });
+        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() });
+        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() });
       }, 2000);
       if (typeof console !== 'undefined') console.log('[Millville MP]', MP_VERSION, 'connected to', wsURL());
       if (!_announced) { _announced = true; if (typeof logSystem === 'function') logSystem('Multiplayer connected (' + MP_VERSION + ').'); }
@@ -37372,17 +37862,17 @@ const MP = (function () {
 
   /* ---------------- outbound (called from frame) ---------------- */
   function pushOutbound(t) {
-    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() }); }
+    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); }
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct || (a !== 'null' && t - _stKeep > 4000)) { lastGear = g; lastAct = a; _stKeep = t; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
-    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null, app: selfApp() }); }
+    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
   }
-  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: curInterior() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: curInterior(), title: player.title || null, app: selfApp() }); }
+  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120), title: player.title || null }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
-  function onFireLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'fire', x: x | 0, y: y | 0, burn: burn | 0, in: curInterior() }); }
+  function onFireLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'fire', x: x | 0, y: y | 0, burn: burn | 0, in: _mpRoom() }); }
   function onBrazierLit(x, y, burn) { if (!active() || !conn) return; send({ t: 'brz', x: x | 0, y: y | 0, burn: burn | 0 }); }
   function emberSync(w) {
     if (!active() || !conn) return;
@@ -37482,7 +37972,9 @@ const MP = (function () {
     if (Date.now() - e.t > 3000) { remoteMobs.delete(r.i); claims.delete(r.i); return false; }
     if (e.dead) {
       r.alive = false;
-      r.respawnAt = now() + ((typeof MOB_KINDS !== 'undefined' && MOB_KINDS[r.kind] && MOB_KINDS[r.kind].resp) || 4000);
+      /* ** NOTHING IN THE DELVE RESPAWNS. ** Raid guardians are spawned pinned at 9e15; the generic
+         resp||4000 here is what re-filled group rooms every 4 seconds on co-attackers' screens. */
+      r.respawnAt = r.raid ? 9e15 : (now() + ((typeof MOB_KINDS !== 'undefined' && MOB_KINDS[r.kind] && MOB_KINDS[r.kind].resp) || 4000));
       remoteMobs.delete(r.i); claims.delete(r.i);
       return true;
     }
@@ -38097,6 +38589,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     try { scene.remove(r.rig.g); } catch (e) {}
     RP.delete(uid);
     delete _peerRoom[uid];
+    if (typeof raid !== 'undefined' && raid && raid.peerDown) delete raid.peerDown[uid];   /* a leaver is not 'down' for the wipe/revive math */
     for (const [m, c] of claims) if (c.uid === uid) claims.delete(m);
     for (const [mi, e] of remoteMobs) if (e.owner === uid) remoteMobs.delete(mi);
   }
@@ -38113,6 +38606,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   /* ---------------- inbound ---------------- */
   function handle(m) {
     if (!m || typeof m !== 'object') return;
+    if (_mpDropForeignRaid(m)) return;   /* raid traffic never crosses an instance (or, where scoped, a floor) boundary */
     switch (m.t) {
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
@@ -38155,8 +38649,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
           remoteMobs.set(mi, { x: m.x, y: m.y, hp: m.hp, mhp: m.mhp, fighting: !!m.a, owner: m.uid, t: Date.now() });
           claims.set(mi, { uid: m.uid, t: Date.now() });
           /* owner is authoritative for a mob they're fighting: if my local copy is dead /
-             respawning, revive it so ratsTick's mobOverride can sync it (ratsTick skips !alive). */
-          if (typeof rats !== 'undefined' && rats[mi] && !rats[mi].alive) { rats[mi].alive = true; rats[mi].respawnAt = 0; }
+             respawning, revive it so ratsTick's mobOverride can sync it (ratsTick skips !alive).
+             ** NEVER a bare _slot placeholder: ** those are kind-'rat' husks with no mesh -- reviving
+             one is exactly the 'invisible mob attacking me' bug. If I have not spawned the room, the
+             stream has nothing of mine to animate. */
+          if (typeof rats !== 'undefined' && rats[mi] && !rats[mi].alive && !rats[mi]._slot) { rats[mi].alive = true; rats[mi].respawnAt = rats[mi].raid ? 9e15 : 0; }
         }
         break;
       }
@@ -38226,7 +38723,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         if (m.uid === player.uid) break;
         if (typeof objects === 'undefined') break;
         const fx = m.x | 0, fy = m.y | 0;
-        if ((m.in || null) !== curInterior()) break;
+        if ((m.in || null) !== _mpRoom()) break;
         if (objects.some(o0 => o0 && o0.def === 'fire' && o0.x === fx && o0.y === fy)) break;
         const fo = { def: 'fire', x: fx, y: fy, alive: true, tmp: true, burnAt: performance.now() + (m.burn | 0 || 60000) };
         objects.push(fo);
@@ -38252,25 +38749,52 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
           const _col = (typeof m.c === 'string' && m.c) ? m.c : (_k === 'magic' ? '#b06fe0' : '#cfd6da');
           spawnProjectile((_rp.px|0) + 0.5, (_rp.py|0) + 0.5, { px: m.tx | 0, py: m.ty | 0 }, _k, _col, 320);
         } break; }
-      case 'rdseed': { if (m.uid === player.uid) break;   /* a groupmate/leader shared the raid layout + difficulty */
+      case 'rdgo': { if (m.uid === player.uid) break;   /* the leader opened the gate: the whole party runs THE SAME delve */
+        /* rdseed is retired: it conflated 'here is a layout' with 'GO', so any entrant's seed
+           broadcast could teleport lobby bystanders, and adopters never rebuilt their geometry
+           (data on one seed, eyes on another). rdgo carries the frozen inputs -- seed, size,
+           combat, instance id -- and the adopter re-derives AND re-builds from exactly those. */
         if (typeof isGroupmate === 'function' && !isGroupmate(m.uid)) break;
-        if (typeof raidApplySeed === 'function') raidApplySeed(m.sd >>> 0, !!m.lg, m.ld || m.uid, true, m.cl | 0);
-        /* ** AND ACTUALLY GO. ** This used to stop at applying the seed, so a leader could open the gate
-           and nobody moved -- the party had the same layout and were still standing in the lobby.
-           If you are down here in the lobby when someone opens the gate, the gate opens for you too. */
-        if (typeof inRaid !== 'undefined' && inRaid && typeof raid !== 'undefined' && raid && !raid.started
-            && typeof raidBeginDelve === 'function') {
+        if (typeof raidApplySeed !== 'function') break;
+        if (typeof inRaid !== 'undefined' && inRaid) {
+          raidApplySeed(m.sd >>> 0, !!m.lg, m.ld || m.uid, true, m.cl | 0, m.ps | 0, m.rid);
+          if (typeof raidBuildInterior === 'function') raidBuildInterior(raid.graph, 1);   /* the geometry MUST come from the adopted seed */
+          if (typeof _raidFlatten === 'function') _raidFlatten();
           raid.started = true;
+          if (typeof objects !== 'undefined') for (const o of objects) if (o.def === 'raid_lobbygate' && o.alive) { o.alive = false; if (o._m && o._m.group) o._m.group.visible = false; }
+          raid.seen = {};
+          if (typeof raidRevealRoom === 'function') raidRevealRoom(0);
           const to = (raid.rooms && raid.rooms.length > 1) ? 1 : 0;
           const e = (typeof _raidRoomEntryPoint === 'function') ? _raidRoomEntryPoint(to) : null;
           if (e) { player.x = e[0]; player.y = e[1]; player.px = e[0]; player.py = e[1];
                    player.path.length = 0; raid.roomIdx = to;
                    if (typeof raidEnterRoom === 'function') raidEnterRoom(to); }
-          if (typeof msg === 'function') msg('The gate grinds up. Someone has started the delve.', '#c9483a');
+          if (typeof msg === 'function') msg('The gate grinds up. Your group has started the delve.', '#c9483a');
+          pingPresence();   /* beacon the new instance room immediately, not on the next heartbeat */
+        } else if (typeof _raidPendingGo !== 'undefined') {
+          /* not in the cellar yet: remember the go; adopted the moment we climb down */
+          _raidPendingGo = { sd: m.sd >>> 0, lg: !!m.lg, ld: m.ld || m.uid, cl: m.cl | 0, ps: m.ps | 0, rid: m.rid, at: Date.now() };
+          if (typeof msg === 'function') msg('Your group has started a delve under Coit. Climb down to join them.', '#c9483a');
         }
         break; }
       case 'rdsolve': { if (m.uid === player.uid) break;   /* a groupmate solved a puzzle room */
-        if (typeof raidPeerSolve === 'function') raidPeerSolve(m.ri | 0);
+        if (typeof raidPeerSolve === 'function') raidPeerSolve(m.ri | 0, (m.rfl !== undefined) ? (m.rfl | 0) : undefined);
+        break; }
+      case 'rdroom': { if (m.uid === player.uid) break;    /* a groupmate stepped into a fresh room: spawn the SAME guardians NOW */
+        if (typeof raidPeerRoomEnter === 'function') raidPeerRoomEnter(m.ri | 0, (m.fl !== undefined) ? (m.fl | 0) : ((m.rfl !== undefined) ? (m.rfl | 0) : undefined));
+        break; }
+      case 'rdclear': { if (m.uid === player.uid) break;   /* a groupmate's room fell: mark it cleared here too */
+        if (typeof raidPeerClear === 'function') raidPeerClear(m.ri | 0, (m.fl !== undefined) ? (m.fl | 0) : ((m.rfl !== undefined) ? (m.rfl | 0) : undefined));
+        break; }
+      case 'rdwipe': { if (m.uid === player.uid) break;    /* the whole party went down together */
+        if (typeof raidWipe === 'function') raidWipe(false);
+        break; }
+      case 'rdstreq': { if (m.uid === player.uid) break;   /* a late joiner asked what stands cleared */
+        sendRaidState(m.uid);
+        break; }
+      case 'rdstate': { if (m.uid === player.uid) break;   /* the party's cleared rooms, for a late joiner */
+        if (m.to !== player.uid) break;
+        if (typeof raidAdoptState === 'function') raidAdoptState(m.cl);
         break; }
       case 'rdbrz': { if (m.uid === player.uid) break;   /* a groupmate lit a brazier */
         if (typeof raidPeerBrazier === 'function') raidPeerBrazier(m.x | 0, m.y | 0, m.ms | 0);
@@ -38278,15 +38802,36 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'rdplate': { if (m.uid === player.uid) break;   /* a groupmate's plate occupancy */
         if (typeof raidPeerPlate === 'function') raidPeerPlate(m.x | 0, m.y | 0, !!m.on);
         break; }
+      case 'rdpr': { if (m.uid === player.uid) break;      /* a groupmate struck/cleared a prism */
+        if (typeof raidPeerPrism === 'function') raidPeerPrism(m.x | 0, m.y | 0, m.c || null);
+        break; }
+      case 'rdsk': { if (m.uid === player.uid) break;      /* a socket burned clear on a groupmate's bead */
+        if (typeof raidPeerSocket === 'function') raidPeerSocket(m.x | 0, m.y | 0);
+        break; }
+      case 'rdsap': { if (m.uid === player.uid) break;     /* a groupmate chopped a frozen timber */
+        if (typeof raidPeerSapling === 'function') raidPeerSapling(m.x | 0, m.y | 0, m.ch | 0);
+        break; }
+      case 'rdrack': { if (m.uid === player.uid) break;    /* a groupmate cut the larder rack down */
+        if (typeof raidPeerRack === 'function') raidPeerRack(m.x | 0, m.y | 0);
+        break; }
+      case 'rdsig': { if (m.uid === player.uid) break;     /* the scheduler fired a boss mechanic */
+        if (m.to && m.to !== player.uid) break;            /* targeted sigs (rime/drag) are for one delver */
+        if (typeof raidPeerSig === 'function') raidPeerSig(m);
+        break; }
+      case 'rdorb': { if (m.uid === player.uid) break;     /* the bead, streamed by its room's scheduler */
+        if (typeof raidPeerOrb === 'function') raidPeerOrb(m.ri | 0, m.o || null);
+        break; }
       case 'frz': { if (m.uid === player.uid) break;     /* a groupmate has been frozen: show their block */
         const _rf = RP.get(m.uid);
         if (_rf) _rf.frozenUntil = now() + (m.ms | 0);
         break; }
-      case 'rdtel': { if (m.uid === player.uid) break;   /* a groupmate's boss is winding up: light the same floor */
-        if (typeof _raidTelMark === 'function' && typeof inRaid !== 'undefined' && inRaid && Array.isArray(m.ts))
+      case 'rdtel': { if (m.uid === player.uid) break;   /* a groupmate's boss is winding up: light the same floor AND arm the hit */
+        if (typeof raidPeerTelegraph === 'function') raidPeerTelegraph(m.ts, m.f | 0, m.s, m.lo | 0, m.hi | 0);
+        else if (typeof _raidTelMark === 'function' && typeof inRaid !== 'undefined' && inRaid && Array.isArray(m.ts))
           _raidTelMark(m.ts, performance.now() + (m.f | 0), m.s);
         break; }
       case 'rdcl': { if (m.uid === player.uid) break;    /* a delver's combat level, for max-of-party scaling */
+        if (typeof isGroupmate === 'function' && !isGroupmate(m.uid)) break;   /* group-scoped: a stranger's level must not scale MY delve */
         if (typeof raid !== 'undefined' && raid) { raid.peerCombat = raid.peerCombat || {}; raid.peerCombat[m.uid] = m.c | 0; }
         break; }
       case 'rdpts': { if (m.uid === player.uid) break;   /* a groupmate's running point total */
@@ -38554,9 +39099,17 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         const c = claims.get(mi); if (!(c && c.uid === player.uid)) break;   /* only the owner applies */
         let d = Math.max(0, m.d | 0);
         if (r.kind === 'master_reforged' && typeof rectorShielded === 'function' && rectorShielded()) d = 0;
+        /* ** THE OWNER IS THE AUTHORITY. ** A forwarded hit obeys the same rules as a local one --
+           otherwise a groupmate's arrows land on the hardened Benefactor, the still-buried face,
+           or a pinned hand, and only on MY screen. */
+        if (r._immune === true) d = 0;
+        if (r._immune === 'physical' && (m.st || 'melee') !== 'magic') d = 0;
+        if (r._pinned) d = 0;
+        if (r.kind === 'raid_cs_face' && typeof csHandsPinned === 'function' && !csHandsPinned()) d = 0;   /* the mortar mends: pin both hands first */
         groupAggroHit(mi, m.uid, d);
+        if (d > 0) r.lastHit = performance.now();   /* a groupmate's hit counts as a hit (Custodian break-off etc.) */
         r.hp -= d;
-        if (r.hp <= 0 && typeof mobDie === 'function') mobDie(r, true);
+        if (r.hp <= 0 && !(typeof mobKillGate === 'function' && mobKillGate(r)) && typeof mobDie === 'function') mobDie(r, true);
         break;
       }
       case 'mobatk': {
@@ -38674,7 +39227,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   const _peerRoom = {};                 /* uid -> interior id ('party'|'mathes'|'chapel'|null), learned from 'iroom' beacons */
   let _roomSent, _roomT = 0;            /* the interior I last broadcast, and when */
   function _remoteHere(r) {
-    const ci = curInterior();
+    const ci = _mpRoom();
     const pr = _peerRoom[r.uid];
     if (pr !== undefined) return (pr || null) === ci;        /* beacon known -> exact room match (separates Party / Cage / Chapel, which overlap in world space) */
     return ci === null && (r.in || null) === null && !_inInteriorFootprint(r.x, r.y);  /* beacon unknown: same-exterior only, and never a peer sitting inside an interior footprint (they are almost certainly inside it, sharing world coords with the wilderness) */
@@ -38685,7 +39238,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     if (_coAttacked.size) _sweepCoAttacked();
     if (!active() || !conn) return;
     pushOutbound(t);
-    { const _ci = curInterior(); if (_ci !== _roomSent || (t - _roomT > 1500)) { send({ t: 'iroom', r: _ci }); _roomSent = _ci; _roomT = t; } }   /* interior presence beacon: survives the relay, so interior peers see each other */
+    { const _ci = _mpRoom(); if (_ci !== _roomSent || (t - _roomT > 1500)) { send({ t: 'iroom', r: _ci }); _roomSent = _ci; _roomT = t; } }   /* interior presence beacon: survives the relay, so interior peers see each other */
     manageClaims();
     if (groupInGroup() && mobAggro.size) { const _t = now(); for (const [mi, ag] of mobAggro) { const dt = _t - ag.t; ag.t = _t; if (dt > 0) _aggroDecay(ag, dt); if (ag.acc.size === 0) mobAggro.delete(mi); } }
     if (groupInGroup() && t - (group._hbT || 0) > 4000) { group._hbT = t; send({ t: 'gsync', roster: group.roster.map(m2 => ({ uid: m2.uid, name: m2.name })) }); }
@@ -39113,12 +39666,12 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 
   /* a hit I just landed: if a groupmate owns this mob, forward the damage to them (shared hp,
      owner-authoritative) and return true so the caller skips the local hp/death path. */
-  function groupForwardHit(r, dmg) {
+  function groupForwardHit(r, dmg, st) {
     if (!active() || !conn || !r || !groupInGroup()) return false;
     const c = claims.get(r.i); const owner = c && c.uid;
     if (!owner || owner === player.uid) return false;   /* I own it (or it's unclaimed) -> apply locally */
     if (!isGroupmate(owner)) return false;              /* a non-groupmate owns it -> not my path */
-    send({ t: 'ghit', m: r.i, d: dmg | 0 });
+    send({ t: 'ghit', m: r.i, d: dmg | 0, st: st || 'melee' });
     _coAttacked.set(r.i, now());
     return true;
   }
@@ -39145,15 +39698,30 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function sendShot(kind, tx, ty, col) { if (active() && conn) send({ t: 'shot', k: (kind === 'magic' ? 'magic' : 'arrow'), tx: tx | 0, ty: ty | 0, c: (typeof col === 'string' ? col.slice(0, 9) : '') }); }
   /* raid: the party leader broadcasts the layout seed + size so every client regenerates the
      identical dungeon (deterministic). B2 wiring; consumed by raidApplySeed on the game side. */
-  function sendRaidSeed(seed, large, leaderUid, combatLvl) { if (active() && conn) send({ t: 'rdseed', sd: (seed >>> 0), lg: large ? 1 : 0, ld: leaderUid || player.uid, cl: combatLvl | 0 }); }
+  function sendRaidSeed(seed, large, leaderUid, combatLvl) { if (active() && conn) send({ t: 'rdseed', sd: (seed >>> 0), lg: large ? 1 : 0, ld: leaderUid || player.uid, cl: combatLvl | 0 }); }   /* retired: no senders; kept only so old references cannot throw */
+  function sendRaidGo(rid, seed, large, leaderUid, ps, cl) { if (active() && conn) send({ t: 'rdgo', rid: String(rid || ''), sd: (seed >>> 0), lg: large ? 1 : 0, ld: leaderUid || player.uid, ps: ps | 0, cl: cl | 0 }); }
+  function sendRaidRoom(idx, fl) { if (active() && conn) send({ t: 'rdroom', ri: idx | 0, fl: fl | 0 }); }
+  function sendRaidClear(idx, fl) { if (active() && conn) send({ t: 'rdclear', ri: idx | 0, fl: fl | 0 }); }
+  function sendRaidWipe() { if (active() && conn) send({ t: 'rdwipe' }); }
+  function sendRaidStateReq() { if (active() && conn) send({ t: 'rdstreq' }); }
+  function sendRaidState(toUid) { if (!active() || !conn) return;
+    const cl = [];
+    if (typeof raid !== 'undefined' && raid && raid.roomState) for (const k in raid.roomState) if (raid.roomState[k] && raid.roomState[k].cleared) cl.push(k);
+    send({ t: 'rdstate', to: toUid, cl: cl }); }
   /* raid puzzles: broadcast a puzzle solve, a brazier light, and this client's plate occupancy. */
   function sendRaidSolve(roomIdx) { if (active() && conn) send({ t: 'rdsolve', ri: roomIdx | 0 }); }
   function sendRaidBrazier(x, y, ms) { if (active() && conn) send({ t: 'rdbrz', x: x | 0, y: y | 0, ms: ms | 0 }); }
   function sendRaidPlate(x, y, on) { if (active() && conn) send({ t: 'rdplate', x: x | 0, y: y | 0, on: on ? 1 : 0 }); }
+  function sendRaidPrism(x, y, c) { if (active() && conn) send({ t: 'rdpr', x: x | 0, y: y | 0, c: c || null }); }
+  function sendRaidSocket(x, y) { if (active() && conn) send({ t: 'rdsk', x: x | 0, y: y | 0 }); }
+  function sendRaidSapling(x, y, ch) { if (active() && conn) send({ t: 'rdsap', x: x | 0, y: y | 0, ch: ch | 0 }); }
+  function sendRaidRack(x, y) { if (active() && conn) send({ t: 'rdrack', x: x | 0, y: y | 0 }); }
+  function sendRaidSig(p) { if (active() && conn) send(Object.assign({ t: 'rdsig' }, p || {})); }
+  function sendRaidOrb(ri, o) { if (active() && conn) send({ t: 'rdorb', ri: ri | 0, o: o ? { x: o.x | 0, y: o.y | 0, dx: o.dx | 0, dy: o.dy | 0, c: o.col || null } : null }); }
   function sendRaidPoints(pts) { if (active() && conn) send({ t: 'rdpts', p: pts | 0 }); }
   function sendRaidCombat(cl) { if (active() && conn) send({ t: 'rdcl', c: cl | 0 }); }   /* CoX scales to the party's HIGHEST combat level */
   /* a boss telegraph must light up on EVERY screen, or a groupmate cannot dodge what he cannot see */
-  function sendRaidTelegraph(tiles, fuse, sig) { if (active() && conn) send({ t: 'rdtel', ts: tiles, f: fuse | 0, s: String(sig || '') }); }
+  function sendRaidTelegraph(tiles, fuse, sig, lo, hi) { if (active() && conn) send({ t: 'rdtel', ts: tiles, f: fuse | 0, s: String(sig || ''), lo: lo | 0, hi: hi | 0 }); }
   /* ** THE BLOCK HAS TO SHOW ON EVERY SCREEN. ** A frozen groupmate that just stops moving reads as a
      disconnect; encased in ice it reads as a mechanic, and tells the others to expect a stationary
      target for four seconds. */
@@ -39317,7 +39885,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidTelegraph, sendFreeze, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidGo, sendRaidRoom, sendRaidClear, sendRaidWipe, sendRaidStateReq, sendRaidState, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPrism, sendRaidSocket, sendRaidSapling, sendRaidRack, sendRaidSig, sendRaidOrb, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidTelegraph, sendFreeze, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
