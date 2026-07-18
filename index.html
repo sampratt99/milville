@@ -6392,11 +6392,28 @@ function playerTick(){
     raidLightBrazier(a.o);cancelAction();
   }
   else if(a.type==='raidgate'){
-    /* step onto the doorway, then carry on into the middle of the room beyond, so one click takes you
-       through rather than leaving you standing in the gateway */
-    if(player.x!==a.x||player.y!==a.y){ if(!player.path.length)walkTo(a.x,a.y); return; }
-    const e=_raidRoomEntryPoint(a.to);   /* just inside the doorway, not dumped in the middle */
-    if(inb(e[0],e[1])&&raidTiles[e[1]]&&raidTiles[e[1]][e[0]]===T_FLOOR)walkTo(e[0],e[1]);
+    /* ** YOU GO THROUGH DOORS, NOT OVER THEM. ** This used to walkTo(the doorway tile) and rely on it
+       being walkable -- which is exactly why you could skip the click and just path across. The tiles
+       are solid now, so: walk ADJACENT to the door, check whether the room you are LEAVING will let you
+       out, and only then carry you through. */
+    if(!adjacentTo(a.x,a.y)){ if(!player.path.length)walkTo(a.x,a.y,'adj'); return; }
+    const from=raid&&raid.roomIdx;
+    const st0=(raid&&raid.roomState)?raid.roomState[_raidRK(from)]:null;
+    if(st0&&st0.sealed){
+      /* the room is not finished. Say WHY -- the door is the only place a player asks. */
+      const room=raid.rooms&&raid.rooms[from];
+      const why=(room&&room.puzzle)?'The way on is barred until this room is solved.'
+               :'The way on is barred. Something in here is still standing.';
+      msg(why,'#9c3512');
+      cancelAction(); return;
+    }
+    const e=_raidRoomEntryPoint(a.to);
+    if(inb(e[0],e[1])&&raidTiles[e[1]]&&raidTiles[e[1]][e[0]]===T_FLOOR){
+      player.x=e[0]; player.y=e[1]; player.px=e[0]; player.py=e[1]; player.path.length=0;
+      raid.roomIdx=a.to;
+      if(typeof raidRevealRoom==='function')raidRevealRoom(a.to);
+      if(typeof raidEnterRoom==='function')raidEnterRoom(a.to);
+    }
     cancelAction();
   }
   else if(a.type==='raidbank'){
@@ -28238,6 +28255,18 @@ function _raidCarveTiles(fl){
   const inRoom=(x,y)=>fps.some(f=>x>=f.x0&&x<=f.x1&&y>=f.y0&&y<=f.y1);
   for(let y=RAID.y0;y<=RAID.y1;y++)for(let x=RAID.x0;x<=RAID.x1;x++)
     if(inb(x,y)&&raidTiles[y][x]===T_FLOOR&&!inRoom(x,y))_raidDoorSet.add(x+','+y);
+  /* ** SHUT EVERY DOORWAY. **
+     _raidCarveDoor has to lay the doorway tiles as FLOOR -- that is how _raidDoorSet finds them, two
+     lines above. But leaving them floor is what let Sam walk out of the Lindsay lab without touching a
+     prism: the doorway was ordinary ground and the pathfinder went straight over it. Now that the set is
+     built, shut them: a doorway is a DOOR, and you click it.
+     Only the tiles in _raidDoorRooms are sealed -- those are the ones _raidCarveDoor tagged as real
+     doorways. The corridor tiles in _raidDoorSet stay walkable, or the delve would have no floor
+     between its rooms at all. */
+  for(const key in _raidDoorRooms){
+    const q=key.split(','), dx2=+q[0], dy2=+q[1];
+    if(inb(dx2,dy2)&&raidTiles[dy2])raidTiles[dy2][dx2]=T_WALL;
+  }
 }
 
 /* ===================== B3: raid interior GEOMETRY (rich, per-style rooms) =====================
@@ -30210,10 +30239,18 @@ function _raidSetDoors(idx, shut){
 }
 function _raidSealRoom(idx, seal){
   const stt=_raidRoomState(idx);
+  /* ** THE DOORWAY TILES ARE ALWAYS SOLID. **
+     This used to set them to T_FLOOR when a room cleared -- so the moment you finished a room the
+     doorway was ordinary floor and you could simply WALK through it. Clicking the door was never
+     required; it was a convenience that walked you across a gap you could already cross. Sam found the
+     hole from the other end: someone strolled out of the Lindsay lab without touching the prisms,
+     because the doorway there was walkable for a different reason and nothing else was stopping them.
+     A door you can walk through is not a door. The tiles stay WALL for ever; `sealed` now means only
+     "will this door LET you through", and the portcullis and the click both read it. */
   for(const [x,y] of _raidDoorTiles(idx)){
-    raidTiles[y][x]= seal ? T_WALL : T_FLOOR;
+    raidTiles[y][x]=T_WALL;
   }
-  if(typeof _raidSetDoors==='function')_raidSetDoors(idx, seal);   /* the portcullis follows the tile seal */
+  if(typeof _raidSetDoors==='function')_raidSetDoors(idx, seal);   /* the portcullis still shows the state */
   stt.sealed=!!seal;
 }
 /* on a raid mob death, check whether its room is now cleared -> unseal + mark cleared. */
@@ -30982,7 +31019,11 @@ function raidTrioTick(){
    the party (rdtel) so groupmates see the same floor light up -- a mechanic only the caster can see is
    worse than useless in a group. */
 const RAID_TEL_COL={grave:0x6a5a3a, surge:0x3a7a9a, collapse:0x8a6a4a, blink:0x8f6fd6,
-                    slam:0xc9483a, flare:0xff6a24, rime:0x8fd0ff};
+                    slam:0xc9483a, flare:0xff6a24, rime:0x8fd0ff,
+                    /* the Cornerstone's own: the drag is violet (it borrowed 'blink' before, which
+                       worked but meant a groupmate's screen and the caster's disagreed about what
+                       they were looking at), the wake's masonry is dust-brown. */
+                    drag:0x7b5cff, rise:0x8a6a4a};
 let _raidTelFx=[];
 function _raidTelegraph(r, tiles, fuse, lo, hi, warn, sigOverride){
   r._pending=r._pending||[];
@@ -31057,6 +31098,30 @@ function raidCsRiseTick(){
   const now=performance.now();
   for(const r of rats){
     if(!r||!r.raid||r.kind!=='raid_cs_face'||!r._m||!r._m.rig)continue;
+    /* ** THE WAKE LIVES HERE, ON THE FACE. **
+       It used to live inside `if(r._pinned)` on the HANDS -- and _pinned is only ever set by the
+       "brought to 0 but still alive" branch. When you actually KILL a hand the normal death path sets
+       alive=false FIRST, so _pinned never gets set, that entire branch is unreachable, and the face
+       sleeps for ever -- while csHandsPinned() sits there returning true and nothing asks it.
+       That is exactly what Sam hit: both hands dead, boss still in its hole, "it has not finished
+       sleeping" and "your blow rings off solid bronze".
+       Ask the question on the FACE, every tick, whatever happened to the hands. Pinned or dead, down is
+       down. The `_csAsleep && !_csRiseT` guard makes it idempotent, so the old pin path firing too is
+       harmless. */
+    if(r._csAsleep && !r._csRiseT && typeof csHandsPinned==='function' && csHandsPinned()){
+      r._csAsleep=false; r._csRiseT=now; r._immune=true;   /* immune until it is all the way out */
+      r._exposed=true; r._enraged=(r._enraged|0)+1;
+      r._sigCd=now+CS_RISE_MS+800;                          /* it does not swing while it climbs */
+      raid._csSank=now;
+      if(typeof sfx!=='undefined'&&sfx.dig)sfx.dig();
+      msg('Both hands are down. Something under the floor stops pretending to be a floor.','#7a3a0a');
+      setTimeout(()=>msg('The Cornerstone opens its eyes. It has been here since 1856, and it has been counting.','#9c3512'),1500);
+      setTimeout(()=>msg('THE CORNERSTONE RISES \u2014 hit the face. It cannot mend itself now.','#9c1f1f'),3600);
+      { const f2=raidRoomFootprint(r.raidRoom), tiles=[];
+        for(let k=0;k<10;k++)tiles.push([Math.round(f2.cx+rnd(-6,6)), Math.round(f2.cz+rnd(-6,6))]);
+        if(typeof _raidTelegraph==='function')
+          _raidTelegraph(r, tiles, 2000, 10, 20, 'The ceiling lets go \u2014 GET OFF THE LIT STONES. Anywhere clear will do.', 'collapse'); }
+    }
     let rise=r._csRise||0;
     if(r._csRiseT){
       const u=Math.min(1,(now-r._csRiseT)/CS_RISE_MS);
@@ -31082,6 +31147,28 @@ function raidCsRiseTick(){
     /* the jaw works while it is awake */
     if(r._m.jaw && !r._csAsleep)
       r._m.jaw.rotation.x = Math.sin(now*0.0016)*0.06 + (r.swingT&&now-r.swingT<400 ? 0.28 : 0);
+  }
+  /* ** THE HANDS HAVE TO BE SEEN TO SWING. **
+     They are rooted and they hit you from anywhere in the room -- so without an animation the damage
+     arrives from a thing that never moved, which reads as a bug rather than a boss. On a swing the hand
+     rears back and drives forward, and it breathes the rest of the time so it never looks like scenery. */
+  for(const r of rats){
+    if(!r||!r.raid||!(r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand')||!r._m||!r._m.group)continue;
+    const g2=r._m.group;
+    if(r._pinned){ g2.rotation.z=0.5; continue; }        /* pinned: it lies over, beaten into the floor */
+    /* ** ALL OF IT IN ROTATION. ** The mob render does `m.group.position.set(wx, groundH(..), wz)` every
+       single frame, so any height I set here is stamped flat before it draws. Rotation survives -- and a
+       hand hinged in the floor swings from the wrist anyway, which is what this is. */
+    const sw=(r.swingT&&now-r.swingT<520)?(now-r.swingT)/520:-1;
+    if(sw>=0){
+      /* rear back fast, drive forward hard, settle */
+      const u=sw<0.28 ? -(sw/0.28)*0.5 : Math.sin((sw-0.28)/0.72*Math.PI)*1.0-0.08;
+      g2.rotation.x=u;
+      g2.rotation.z=Math.sin(sw*Math.PI)*0.12*((r.kind==='raid_cs_lhand')?1:-1);
+    } else {
+      g2.rotation.x=Math.sin(now*0.0011+(r.i||0))*0.045;   /* it breathes, so it never reads as scenery */
+      g2.rotation.z=0;
+    }
   }
 }
 function raidBossTick(){
@@ -31149,6 +31236,20 @@ function raidBossTick(){
       const tx=r._dragX, ty=r._dragY; r._dragAt=0;
       const away=Math.max(Math.abs(player.x-tx),Math.abs(player.y-ty));
       if(inb(tx,ty)&&raidTiles[ty]&&raidTiles[ty][tx]===T_FLOOR){
+        /* ** SHOW THE HAUL. ** The drag used to just teleport you -- one frame you are here, the next you
+           are there, with nothing to read. Lay a trail of violet along the path it dragged you, so you
+           can SEE what happened to you and so can everyone else. */
+        if(typeof parts!=='undefined'){
+          const steps=Math.max(2,Math.round(Math.hypot(tx-player.x,ty-player.y)));
+          for(let k2=0;k2<=steps;k2++){
+            const u=k2/steps;
+            const wx=player.x+0.5+(tx-player.x)*u, wz=player.y+0.5+(ty-player.y)*u;
+            for(let j=0;j<2;j++)
+              parts.push({wx:wx+rnd(-0.25,0.25), wy:(typeof _raidFY!=='undefined'?_raidFY:0)+0.15,
+                wz:wz+rnd(-0.25,0.25), vx:rnd(-0.1,0.1), vy:rnd(0.5,1.1),
+                t:now+k2*18, life:420+rnd(0,160), col:'#7b5cff'});
+          }
+        }
         player.x=tx; player.y=ty; player.px=tx; player.py=ty; player.path.length=0;
         if(typeof cancelAction==='function')cancelAction();
       }
@@ -31319,9 +31420,16 @@ function raidBossTick(){
           let tx=Math.round(f3.cx+rnd(-5,5)), ty=Math.round(f3.cz+rnd(-5,5));
           const sp=_raidFindSpawn(tx,ty,r.raidRoom); if(sp){tx=sp[0];ty=sp[1];}
           r._dragAt=now+2000; r._dragX=tx; r._dragY=ty;
-          if(typeof _raidTelMark==='function')_raidTelMark([[tx,ty]], r._dragAt, 'blink');
-          if(typeof MP!=='undefined'&&MP.sendRaidTelegraph)MP.sendRaidTelegraph([[tx,ty]],2000,'blink');
-          msg('THE DRAG: the right hand has marked a stone and will haul you onto it. STAND ON THE MARK \u2014 the further away you are when it closes, the harder it hits.','#4a2f8a'); }
+          /* ** ONE PATH FOR EVERY TELEGRAPH. ** This used to hand-roll its own _raidTelMark + a direct
+             MP.sendRaidTelegraph, while slam and collapse went through _raidTelegraph. Two code paths
+             doing the same job is how they drift -- and they had: the drag was streaming under 'blink'
+             for a while, so a groupmate's floor lit up a different colour from the caster's. Route it
+             through the one function. It marks, it streams, it prints the tell, and it can never fall
+             out of step with the other two again. */
+          _raidTelegraph(r, [[tx,ty]], 2000, 0, 0,
+            'THE DRAG: the right hand has marked a stone and will haul you onto it. STAND ON THE MARK \u2014 the further away you are when it closes, the harder it hits.',
+            'drag');
+        }
         break;
       case 'slam':
         _raidTelegraph(r,[[player.x,player.y]],1400,8,16,'The left hand is coming down where you STAND \u2014 step off this tile.');
