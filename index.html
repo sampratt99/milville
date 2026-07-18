@@ -28174,8 +28174,15 @@ function _raidPaintMinimap(F){
     if(!(raid&&raid.seen&&raid.seen[(F.floor||1)+':'+room.idx]))continue;   /* fog: unvisited rooms stay dark */
     const f=raidRoomFootprint(room.idx);
     g.fillStyle=TINT[room.type]||'#4a443c';
-    for(let y=f.y0;y<=f.y1;y++)for(let x=f.x0;x<=f.x1;x++){
-      if(inb(x,y)&&raidTiles[y]&&raidTiles[y][x]===T_FLOOR)g.fillRect(x*4,y*4,4,4);
+    /* ** ONE TILE WIDER THAN THE ROOM. ** The doorways sit just OUTSIDE each footprint, so a loop bounded
+       by f.x0..f.x1 could never paint them -- and now that they are T_WALL (you use the door, you do not
+       walk through it) the map would draw every room as a sealed box with no way between them. Widen by
+       one and paint the doorways: they are the thing you actually navigate by. */
+    for(let y=f.y0-1;y<=f.y1+1;y++)for(let x=f.x0-1;x<=f.x1+1;x++){
+      if(!inb(x,y)||!raidTiles[y])continue;
+      const _isDoorTile=!!(typeof _raidDoorRooms!=='undefined'&&_raidDoorRooms[x+','+y]);
+      const _inRoom=(x>=f.x0&&x<=f.x1&&y>=f.y0&&y<=f.y1);
+      if((_inRoom&&raidTiles[y][x]===T_FLOOR)||_isDoorTile)g.fillRect(x*4,y*4,4,4);
     }
     /* a marker so the boss and the cache are findable */
     if(room.type==='boss'||room.type==='resource'||room.type==='stair'){
@@ -28490,13 +28497,28 @@ function _rbWallBlock(out, st, x, y, f){
 function _rbWalls(out, f, st, room){
   if(room&&_raidIsRound(room))return;   /* the cylinder in _rbRound IS the wall */
   const box=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
-  const isDoor=(x,y)=>inb(x,y)&&raidTiles[y]&&raidTiles[y][x]===T_FLOOR;
+  /* ** A DOORWAY IS NOT 'A FLOOR TILE' ANY MORE. **
+     This inferred "there is a door here" from the tile being T_FLOOR -- which worked only for as long as
+     doorways WERE floor. Last round I made them T_WALL so you cannot walk through a door, and this line
+     stopped recognising them: the wall builder no longer saw a doorway anywhere and cheerfully baked a
+     wall straight across every one of them. Sam saw it immediately -- the cellar gate and the boiler
+     room door both bricked up.
+     Ask the door map, which is what actually knows. A tile is an opening if it is walkable OR if it was
+     carved as a doorway. */
+  const isDoor=(x,y)=>inb(x,y)&&raidTiles[y]&&(raidTiles[y][x]===T_FLOOR
+    || !!(typeof _raidDoorRooms!=='undefined'&&_raidDoorRooms[x+','+y])
+    || !!(typeof _raidDoorSet!=='undefined'&&_raidDoorSet&&_raidDoorSet.has(x+','+y)));
   /* Rooms are shaped now, so the wall follows the CARVED EDGE: every rock tile in (or touching) the
      footprint that borders floor gets a face. A bounding-box ring would leave a round room's cut
      corners open to the void. */
   for(let y=f.y0-1;y<=f.y1+1;y++)for(let x=f.x0-1;x<=f.x1+1;x++){
     if(!inb(x,y)||!raidTiles[y])continue;
     if(raidTiles[y][x]===T_FLOOR)continue;                    /* it's floor: no wall here */
+    /* ** AND NO WALL IN A DOORWAY. ** The doorway tiles are T_WALL now (so you cannot walk through a
+       door) -- which means this loop would happily build a wall block in the gap the door lives in.
+       The door map is the authority on what is an opening, not the tile type. */
+    if(typeof _raidDoorRooms!=='undefined'&&_raidDoorRooms[x+','+y])continue;
+    if(typeof _raidDoorSet!=='undefined'&&_raidDoorSet&&_raidDoorSet.has(x+','+y))continue;
     if(_raidWallOpen[x+','+y])continue;                       /* the room knocked this one out on purpose */
     if(_raidNoFloor[x+','+y])continue;                        /* a render-only hole (the descent shaft): solid to stand on, but no slab over it */
     if(_raidVoid[x+','+y])continue;                           /* void: there is nothing to build here */
@@ -31513,9 +31535,21 @@ function raidDeath(){
       raidGotoFloor(back);
       msg('You come to at the head of floor '+back+' - '+fmt(lost)+' points lost. The way down is still there.','#9c1f1f');
     } else {
-      player.x=RAID_ENTRY.x; player.y=RAID_ENTRY.y; player.px=RAID_ENTRY.x; player.py=RAID_ENTRY.y;
+      /* ** NEVER THE LOBBY. ** Floor 1 has no floor below it, so this used to dump you at RAID_ENTRY --
+         the cellar. But the lobby gate SEALS the moment the delve starts, so you woke up locked out of
+         your own run with no way back in and nothing to do but abandon it. Sam hit exactly that.
+         Floor 1's "start" is not the cellar; it is the first real chamber. Go there. */
+      const first=1;                       /* room 0 on floor 1 is the lobby; room 1 is the delve proper */
+      const tgt=(raid.rooms&&raid.rooms[first])?first:0;
+      raidResetRoom(tgt);                  /* it may be the room you just died in */
+      raid.roomIdx=tgt;
+      const e=_raidRoomInside(tgt);
+      player.x=e[0]; player.y=e[1]; player.px=e[0]; player.py=e[1];
       player.path.length=0; cancelAction();
-      msg('You wake at the cellar steps - '+fmt(lost)+' points lost. The chamber has reset.','#9c1f1f');
+      if(typeof raidRevealRoom==='function')raidRevealRoom(tgt);
+      if(typeof raidEnterRoom==='function')raidEnterRoom(tgt);
+      if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
+      msg('You come to at the top of the first chamber - '+fmt(lost)+' points lost. It has reset; go again.','#9c1f1f');
     }
   }
 }
@@ -31598,6 +31632,15 @@ function raidPeerPlate(x,y,on){ if(!raid||!raid.rooms)return; /* record a peer s
 let inRaidRestore=false;   /* set true during a silent state-restore so enter doesn't spam messages */
 /* Go to a floor of the delve. Mirrors the Emberdeep's gotoVolcFloor: repaint the shared region for
    that floor, then drop the player at its entrance. Floors ARE the checkpoints (CoX). */
+/* Somewhere unambiguously INSIDE a room -- not on its threshold. _raidRoomEntryPoint aims for 'just
+   inside the doorway', which can land ON the doorway tile itself; that belongs to neither room, and
+   for a death respawn or a floor arrival it left you standing in a wall-gap between two chambers. */
+function _raidRoomInside(idx){
+  const f=raidRoomFootprint(idx);
+  const c=[Math.round(f.cx), Math.round(f.cz)];
+  if(typeof _raidFindSpawn==='function'){ const sp=_raidFindSpawn(c[0],c[1],idx); if(sp)return sp; }
+  return c;
+}
 function raidGotoFloor(n){
   if(!raid||!raid.graph)return;
   n=Math.max(1,Math.min(raid.graph.floors.length,n|0));
@@ -31616,11 +31659,15 @@ function raidGotoFloor(n){
      tile. So descending dropped you back beside Ellison, in front of the gate, and you had to open
      it again: the whole lobby ceremony, once per floor. The lobby is FLOOR 1 ONLY. Below that you
      have already committed -- you drop straight into the first chamber. */
-  if(n===1){ player.x=RAID_ENTRY.x; player.y=RAID_ENTRY.y; }
-  else {
-    /* floors below 1 have no arrival room: room 0 IS the first real chamber, so land in it. */
-    const _to=0;
-    const _e=_raidRoomEntryPoint(_to);
+  /* ** NEVER THE CELLAR. ** This used to read `if(n===1){ player.x=RAID_ENTRY.x; ... }` -- i.e. "going
+     to floor 1" meant "go to the lobby". The only thing that ever calls raidGotoFloor(1) is a DEATH on
+     floor 2, and the lobby gate SEALS the moment a delve starts -- so dying on floor 2 woke you up
+     locked out of your own run with nothing to do but abandon it. Exactly the soft-lock Sam hit one
+     floor higher. Floor 1's arrival is room 1, the first real chamber; floor 1's room 0 is the lobby and
+     is never an arrival. On floors below, room 0 IS the first chamber. */
+  {
+    const _to=(n===1)?1:0;
+    const _e=_raidRoomInside(_to);
     player.x=_e[0]; player.y=_e[1];
     raid.roomIdx=_to; raid.started=true;   /* you are past the gate; there is no gate down here */
   }
