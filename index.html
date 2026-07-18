@@ -5824,7 +5824,7 @@ function playerTick(){
       msg('You come to your senses at the cellar steps.','#9a8a6a');
     }
   }
-  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); if(typeof raidTelIncomingTick==='function')raidTelIncomingTick(); }
+  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); if(typeof raidTelIncomingTick==='function')raidTelIncomingTick(); if(!raid.started){ if(!raid._lobT||performance.now()-raid._lobT>2500){ raid._lobT=performance.now(); if(typeof MP!=='undefined'&&MP.sendRaidLobby)MP.sendRaidLobby(_raidMyCombat()); } } }
   /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
   if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
   if(typeof raidTelFxTick==='function')raidTelFxTick();   /* the boss telegraphs have to be SEEN */
@@ -7099,7 +7099,7 @@ function doSpecial(){
     player.combatT=nowS; sfx.hit&&sfx.hit();
     return;
   }
-  if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>1){msg('Close with your target first.','#e8801f');return;}
+  if(Math.max(Math.abs(r.x-player.x),Math.abs(r.y-player.y))>((typeof mobReach==='function')?mobReach(r):1)){msg('Close with your target first.','#e8801f');return;}   /* the main attack closes to mobReach (the hands are 3 wide, the face 5) -- the special must accept the same distance, or it can NEVER fire on the Cornerstone */
   player.specCdT=nowS+(hasDelveItem('lightbearer')?30000:60000);   /* LIGHTBEARER: spec recharges twice as fast. Milville's spec is a 60s COOLDOWN, not an energy bar, so 2x regen = half the cooldown. */
   player.swingT=nowS;if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
   msg('VOLCANIC REND \u2014 the blade erupts!','#ff6a2a');
@@ -29844,6 +29844,28 @@ function _raidTileSpawnable(x,y,f){
 /* Nearest legal tile to (x,y), spiralling outward. Callers hand us hand-picked spots like
    (cx, y0+3) -- fine when every room was a 16x16 rectangle, but rooms are SHAPED now, so that spot is
    quite happily inside a wall, in the void, or on top of a brazier. */
+/* Can you WALK from this room's entry to (tx,ty)? BFS over real floor. A tile can be perfectly
+   legal -- flat, non-void, unblocked -- and still be an ISLAND: the boss arena's carved pits cut
+   little pockets of floor off the main area, and hauling a delver onto one is a soft-lock. Sam had
+   to abandon a delve for exactly this. Legal is not enough; it has to be CONNECTED. */
+function _raidReachable(tx,ty,idx){
+  const f=raidRoomFootprint(idx); if(!f)return false;
+  const walk=(x,y)=>x>=f.x0&&x<=f.x1&&y>=f.y0&&y<=f.y1&&inb(x,y)&&raidTiles[y]&&raidTiles[y][x]===T_FLOOR&&!(_raidVoid&&_raidVoid[x+','+y]);
+  if(!walk(tx,ty))return false;
+  const st=(typeof _raidRoomEntryPoint==='function')?_raidRoomEntryPoint(idx):null; if(!st)return false;
+  if(st[0]===tx&&st[1]===ty)return true;
+  const seen={}; const q=[st]; seen[st[0]+','+st[1]]=1; let n=0;
+  while(q.length&&n++<2500){
+    const c2=q.shift();
+    for(const dxy of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nx2=c2[0]+dxy[0], ny2=c2[1]+dxy[1], k=nx2+','+ny2;
+      if(seen[k]||!walk(nx2,ny2))continue;
+      if(nx2===tx&&ny2===ty)return true;
+      seen[k]=1; q.push([nx2,ny2]);
+    }
+  }
+  return false;
+}
 function _raidFindSpawn(x,y,roomIdx){
   const f=(roomIdx!=null)?raidRoomFootprint(roomIdx):null;
   if(_raidTileSpawnable(x,y,f))return [x,y];
@@ -31439,7 +31461,8 @@ function raidBossTick(){
     if(r._dragAt && now>=r._dragAt){
       const tx=r._dragX, ty=r._dragY; r._dragAt=0;
       const away=Math.max(Math.abs(player.x-tx),Math.abs(player.y-ty));
-      if(inb(tx,ty)&&raidTiles[ty]&&raidTiles[ty][tx]===T_FLOOR){
+      /* second lock on the same door: whatever chose this tile, never land a delver anywhere they cannot walk back from */
+      if(inb(tx,ty)&&raidTiles[ty]&&raidTiles[ty][tx]===T_FLOOR&&!(_raidVoid&&_raidVoid[tx+','+ty])&&(typeof _raidReachable!=='function'||_raidReachable(tx,ty,r.raidRoom))){
         /* ** SHOW THE HAUL. ** The drag used to just teleport you -- one frame you are here, the next you
            are there, with nothing to read. Lay a trail of violet along the path it dragged you, so you
            can SEE what happened to you and so can everyone else. */
@@ -31611,8 +31634,18 @@ function raidBossTick(){
            run from it. Every other telegraph in the delve trains you to dodge; this one punishes the
            reflex, which is exactly why it is worth having. */
         { const f3=raidRoomFootprint(r.raidRoom);
-          let tx=Math.round(f3.cx+rnd(-5,5)), ty=Math.round(f3.cz+rnd(-5,5));
-          const sp=_raidFindSpawn(tx,ty,r.raidRoom); if(sp){tx=sp[0];ty=sp[1];}
+          /* ** LEGAL IS NOT ENOUGH -- IT HAS TO BE CONNECTED. ** _raidFindSpawn only proved the tile
+             was standable; in the boss arena that includes the floor pockets the carved pits cut off
+             from the main area, and being hauled onto one is a soft-lock (Sam abandoned a delve to
+             it). Roll until the mark is walkable-back-from; failing that, the drag closes on the
+             victim where they stand -- zero distance, zero damage, no stone unturned. */
+          let tx=v.x, ty=v.y;
+          for(let _t=0;_t<12;_t++){
+            const cx2=Math.round(f3.cx+rnd(-5,5)), cy2=Math.round(f3.cz+rnd(-5,5));
+            const sp=_raidFindSpawn(cx2,cy2,r.raidRoom); if(!sp)continue;
+            if(typeof _raidReachable==='function'&&!_raidReachable(sp[0],sp[1],r.raidRoom))continue;
+            tx=sp[0]; ty=sp[1]; break;
+          }
           if(v.me){ r._dragAt=now+2000; r._dragX=tx; r._dragY=ty; }
           else if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'drag',to:v.uid,m:r.i,x:tx,y:ty});   /* THEIR client hauls them */
           /* ** ONE PATH FOR EVERY TELEGRAPH. ** This used to hand-roll its own _raidTelMark + a direct
@@ -32026,6 +32059,13 @@ function raidPeerOrb(ri,o){
     msg('The bead goes straight through you!','#9c3512');
     if(player.hp<=0){die();}
   }
+}
+/* a lobby-stander announced themselves (rdlob): name + combat for the gate panel, live. */
+function raidPeerLobby(uid,name,c){
+  if(!inRaid||!raid||raid.started)return;
+  raid.lobbyPeers=raid.lobbyPeers||{};
+  raid.lobbyPeers[uid]={name:name||null,c:c|0,t:performance.now()};
+  if(raid._gatePanelOpen&&typeof raidShowEntryPanel==='function')raidShowEntryPanel();
 }
 function raidPeerBrazier(x,y,ms){ const o=objects.find(z=>z.def==='raid_brazier'&&z.x===x&&z.y===y); if(o){ o.litUntil=performance.now()+(ms||RAID_BRAZIER_HOLD_MS); o.lit=true; _raidSetBrazierVisual(o,true); } }
 function raidPeerReviveStart(name,ms){ if(raid&&raid.downed)raidBeingRevived={name:name||'A delver',t0:performance.now(),ms:ms||RAID_REVIVE_MS}; }
@@ -32556,29 +32596,48 @@ function raidShowSign(){
   gameConfirm('Notice board', html, null, 'Close', null, null);
 }
 function raidShowEntryPanel(){
-  /* THE LOBBY BOARD. This used to be a wall of lore -- which belongs on a signpost you read once, not
-     on the button you press every single run. What you actually need at this moment is: who is coming,
-     what level they are, and what that does to the delve. */
-  const ps=_raidPartySize(), cl=_raidPartyCombat(), mine=_raidMyCombat();
+  /* THE GATE PANEL. The party is assembled HERE, from whoever is standing in the lobby -- no manual
+     group-wrangling first. Add them off the list, watch the scaling move, hit Start: the group forms
+     itself (one gsync stroke) and the GO teleports everyone in together. Strictly beacon-scoped:
+     someone mid-delve beacons raid:<rid>:<floor> and can never appear in this list, whatever their
+     coordinates render as. */
+  raid.delvers=raid.delvers||[];
+  const lp=(typeof MP!=='undefined'&&MP.lobbyPeers)?MP.lobbyPeers():[];
+  raid.delvers=raid.delvers.filter(d=>lp.some(p2=>p2.uid===d.uid));   /* walked out = out of the party */
+  const lob=raid.lobbyPeers||{};
+  const mine=_raidMyCombat();
+  for(const d of raid.delvers)if(lob[d.uid])d.c=lob[d.uid].c|0;       /* keep combat fresh */
+  const party=[{uid:(player.uid||'me'), name:(player.name||'You'), c:mine, me:1}].concat(raid.delvers);
+  const ps=Math.min(4,party.length);
+  let cl=mine; for(const m2 of party)cl=Math.max(cl,m2.c|0);
   const sc=raidComputeScale(ps,cl);
-  const roster=[{name:(player.name||'You'), cl:mine, me:1}];
-  if(raid&&raid.peerCombat)for(const uid in raid.peerCombat){
-    let nm=uid;
-    if(typeof MP!=='undefined'&&MP._RP&&MP._RP.get(uid)&&MP._RP.get(uid).name)nm=MP._RP.get(uid).name;
-    roster.push({name:nm, cl:raid.peerCombat[uid]|0});
-  }
-  const rows=roster.map(r=>{
-    const top=(r.cl===cl);
+  raid._gatePanelOpen=true;
+  const esc=(t)=>String(t==null?'':t).replace(/[<>&"']/g,'');
+  const btn='padding:2px 10px;border:1px solid #3a3226;border-radius:3px;background:#241f16;color:#d8cdb4;cursor:pointer';
+  const rows=party.map(r=>{
+    const top=(r.c===cl);
     return '<div style="display:flex;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid #2a241c">'
-      +'<div style="flex:1">'+(r.me?'<b>':'')+r.name+(r.me?'</b>':'')
+      +'<div style="flex:1">'+(r.me?'<b>':'')+esc(r.name)+(r.me?'</b>':'')
       +(top?' <span style="color:#c9a23a;font-size:11px">\u2014 the delve reads this one</span>':'')+'</div>'
-      +'<div style="color:'+(top?'#ffd24a':'#8a8172')+';white-space:nowrap">combat '+r.cl+'</div></div>';
+      +'<div style="color:'+(top?'#ffd24a':'#8a8172')+';white-space:nowrap">combat '+(r.c||'?')+'</div>'
+      +(r.me?'':'<button data-lobdel="'+esc(r.uid)+'" style="'+btn+'">Remove</button>')+'</div>';
   }).join('');
+  const waiting=lp.filter(p2=>!raid.delvers.some(d=>d.uid===p2.uid));
+  const lobRows=waiting.length?waiting.map(p2=>{
+    const c2=lob[p2.uid]?(lob[p2.uid].c|0):0;
+    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid #2a241c">'
+      +'<div style="flex:1">'+esc(p2.name)+'</div>'
+      +'<div style="color:#8a8172;white-space:nowrap">combat '+(c2||'?')+'</div>'
+      +(party.length>=4?'<span style="color:#6a614f;font-size:11px">party full</span>'
+                       :'<button data-lobadd="'+esc(p2.uid)+'" style="'+btn+'">Add</button>')+'</div>';
+  }).join(''):'<div style="padding:4px 2px;color:#6a614f">No one else is standing in the lobby.</div>';
   const pct=(x)=>Math.round(x*100)+'%';
   const html=
     '<div style="text-align:left;line-height:1.5">'
     +'<b style="color:#8fd0ff">Your party ('+ps+'/4)</b>'
     +'<div style="margin:4px 0 10px">'+rows+'</div>'
+    +'<b style="color:#8fd0ff">Standing in the lobby</b>'
+    +'<div style="margin:4px 0 10px">'+lobRows+'</div>'
     +'<b style="color:#8fd0ff">What the tunnels will be, for you</b>'
     +'<div style="margin:4px 0 10px;padding:8px;background:#1a1610;border:1px solid #2a241c;border-radius:4px">'
     +'<div style="display:flex;justify-content:space-between"><span>Scaled to combat</span>'
@@ -32600,7 +32659,32 @@ function raidShowEntryPanel(){
     +'<p style="margin:0;color:#c9a23a"><b>This locks when you open the gate.</b> If someone else is '
     +'coming, wait for them.</p>'
     +'</div>';
-  gameConfirm('The Delve', html, function(){ raidBeginDelve(); }, 'Enter the delve', null, 'Not yet');
+  gameConfirm('The Delve', html,
+    function(){ raid._gatePanelOpen=false; raidBeginDelve(); },
+    (party.length>1?'Start the delve ('+ps+' delvers)':'Enter the delve'),
+    function(){ raid._gatePanelOpen=false; }, 'Not yet');
+  /* the buttons live in innerHTML: bind them now that they exist */
+  try{ const bm=document.getElementById('gconfirmmsg');
+    if(bm&&bm.querySelectorAll){
+      bm.querySelectorAll('[data-lobadd]').forEach(function(b){ b.addEventListener('click',function(){ _raidLobbyAdd(b.getAttribute('data-lobadd')); }); });
+      bm.querySelectorAll('[data-lobdel]').forEach(function(b){ b.addEventListener('click',function(){ _raidLobbyDel(b.getAttribute('data-lobdel')); }); });
+    } }catch(e){}
+}
+function _raidLobbyAdd(uid){
+  raid.delvers=raid.delvers||[];
+  if(raid.delvers.length>=3){ msg('The delve takes four at most.','#9a8a6a'); return; }
+  const lp=(typeof MP!=='undefined'&&MP.lobbyPeers)?MP.lobbyPeers():[];
+  const p2=lp.find(z=>z.uid===uid); if(!p2)return;
+  if(!raid.delvers.some(d=>d.uid===uid)){
+    const lob=raid.lobbyPeers||{};
+    raid.delvers.push({uid:uid,name:p2.name,c:(lob[uid]&&lob[uid].c)||0});
+    msg(p2.name+' will delve with you.','#8fd0ff');
+  }
+  raidShowEntryPanel();
+}
+function _raidLobbyDel(uid){
+  raid.delvers=(raid.delvers||[]).filter(d=>d.uid!==uid);
+  raidShowEntryPanel();
 }
 /* Going down the ladder just puts you in the LOBBY -- a safe room with Mr. Ellison in it, where you
    gather your group and get told how this works. The delve proper does not begin until someone opens
@@ -32621,7 +32705,16 @@ function raidBeginDelve(){
      Every client then generates the identical dungeon from identical inputs, and rebuilds its
      geometry from the adopted seed (the old flow updated the DATA and left the GEOMETRY on
      whatever seed you happened to enter with). */
-  const _ps=_raidPartySize(), _cl=_raidPartyCombat();
+  /* the assembled lobby party becomes a real GROUP in one stroke, BEFORE the GO broadcasts --
+     message order per sender is preserved, so every added delver is a groupmate by the time their
+     client sees rdgo (whose handler requires it). */
+  const _dl=(raid&&raid.delvers)?raid.delvers.slice(0,3):[];
+  if(_dl.length&&typeof MP!=='undefined'&&MP.raidFormGroup)
+    MP.raidFormGroup([{uid:player.uid,name:player.name}].concat(_dl));
+  raid._gatePanelOpen=false;
+  let _ps=_raidPartySize(), _cl=_raidPartyCombat();
+  _ps=Math.max(_ps, 1+_dl.length);
+  for(const d of _dl)_cl=Math.max(_cl, d.c|0);   /* their lobby-reported combat: rdcl only flows once inside */
   const _sd=(raid&&raid.seed!==undefined)?(raid.seed>>>0):raidRollSeed();
   const _lg=!!(raid&&raid.large);
   raidApplySeed(_sd, _lg, (typeof player!=='undefined'?player.uid:null), false, _cl, _ps);
@@ -37771,9 +37864,12 @@ const MP = (function () {
     const ci = curInterior();
     if (ci === 'raid' && typeof raid !== 'undefined' && raid) {
       if (raid.started && raid.rid) return 'raid:' + raid.rid + ':' + (raid.floor | 0);
-      let k = player.uid;
-      if (groupInGroup()) { let lo = player.uid; for (const m2 of group.roster) if (m2.uid < lo) lo = m2.uid; k = 'g' + lo; }
-      return 'raidlobby:' + k;   /* groupmates share a lobby; strangers each stand in their own */
+      /* ** ONE SHARED LOBBY. ** This used to be per-group ('raidlobby:g<uid>') so strangers could not
+         see each other -- but the lobby IS where you assemble a party now (the gate panel lists
+         everyone standing in it), so everyone still topside of a run shares the one room. Anyone
+         mid-delve beacons 'raid:<rid>:<floor>' instead and can NEVER read as being in the lobby,
+         whatever their world coordinates happen to be. */
+      return 'raidlobby';
     }
     return ci;
   }
@@ -37953,12 +38049,21 @@ const MP = (function () {
     }
     for (const [mi, c] of claims) { if (c.uid === player.uid && mi !== mine) { claims.delete(mi); send({ t: 'release', m: mi }); } }
   }
+  /* is this peer inside MY started delve instance (any floor)? A co-delver is a co-delver whether
+     or not the group roster currently agrees -- someone who fat-fingers Leave Group mid-run keeps
+     fighting normally and can be re-invited, instead of the run quietly breaking around them. */
+  function _sameDelve(uid) {
+    if (typeof raid === 'undefined' || !raid || !raid.started || !raid.rid) return false;
+    if (typeof inRaid === 'undefined' || !inRaid) return false;
+    const pr = _peerRoom[uid];
+    return !!pr && typeof pr === 'string' && pr.indexOf('raid:' + raid.rid + ':') === 0;
+  }
   function isClaimedByOther(rat) {
     if (!active() || !conn || !rat) return false;
     if (rat.target === player) return false;           /* it's fighting me -> I may retaliate */
     const c = claims.get(rat.i);
     if (!c || c.uid === player.uid || (Date.now() - c.t) >= CFG.claimMs) return false;
-    if (isGroupmate(c.uid)) return false;              /* PHASE 3: a groupmate owns it -> I may co-fight */
+    if (isGroupmate(c.uid) || _sameDelve(c.uid)) return false;   /* PHASE 3: a groupmate owns it -> I may co-fight. A co-delver in my instance counts even if the roster disagrees. */
     return true;
   }
 
@@ -38801,6 +38906,9 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
         break; }
       case 'rdplate': { if (m.uid === player.uid) break;   /* a groupmate's plate occupancy */
         if (typeof raidPeerPlate === 'function') raidPeerPlate(m.x | 0, m.y | 0, !!m.on);
+        break; }
+      case 'rdlob': { if (m.uid === player.uid) break;     /* a lobby-stander's name + combat, for the gate panel */
+        if (typeof raidPeerLobby === 'function') raidPeerLobby(m.uid, m.n || null, m.c | 0);
         break; }
       case 'rdpr': { if (m.uid === player.uid) break;      /* a groupmate struck/cleared a prism */
         if (typeof raidPeerPrism === 'function') raidPeerPrism(m.x | 0, m.y | 0, m.c || null);
@@ -39667,10 +39775,10 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   /* a hit I just landed: if a groupmate owns this mob, forward the damage to them (shared hp,
      owner-authoritative) and return true so the caller skips the local hp/death path. */
   function groupForwardHit(r, dmg, st) {
-    if (!active() || !conn || !r || !groupInGroup()) return false;
+    if (!active() || !conn || !r) return false;
     const c = claims.get(r.i); const owner = c && c.uid;
     if (!owner || owner === player.uid) return false;   /* I own it (or it's unclaimed) -> apply locally */
-    if (!isGroupmate(owner)) return false;              /* a non-groupmate owns it -> not my path */
+    if (!isGroupmate(owner) && !_sameDelve(owner)) return false;   /* not my path -- unless we share a delve instance, roster or no roster */
     send({ t: 'ghit', m: r.i, d: dmg | 0, st: st || 'melee' });
     _coAttacked.set(r.i, now());
     return true;
@@ -39678,11 +39786,11 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 
   /* owner-side: which player should my mob swing at this tick? null => me (owner) / solo path. */
   function groupMobSwingTarget(mi) {
-    if (!active() || !conn || !groupInGroup()) return null;
+    if (!active() || !conn) return null;
     const ag = mobAggro.get(mi); if (!ag) return null;
     const tgt = _aggroPick(ag);
     if (!tgt || tgt === player.uid) return null;
-    if (!isGroupmate(tgt)) return null;
+    if (!isGroupmate(tgt) && !_sameDelve(tgt)) return null;
     return tgt;
   }
   function sendMobAtk(mi, toUid) { if (active() && conn) send({ t: 'mobatk', m: mi, to: toUid }); }
@@ -39733,6 +39841,32 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function sendRaidBeam(c) { if (active() && conn) send({ t: 'rdbeam', c: String(c||''), n: player.name }); }
   function sendRaidUnique(id) { if (active() && conn) send({ t: 'rduniq', id: String(id || '') }); }
   /* positions of raid-mates currently in the instance (for plate occupancy) */
+  /* everyone standing in the shared lobby RIGHT NOW -- strictly by beacon, never by coordinates. */
+  function lobbyPeers() {
+    const out = [];
+    if (typeof RP !== 'undefined') for (const r of RP.values()) {
+      if (_peerRoom[r.uid] !== 'raidlobby') continue;
+      if (Date.now() - (r.last || 0) > 6000) continue;
+      out.push({ uid: r.uid, name: r.name || 'a delver' });
+    }
+    return out;
+  }
+  function sendRaidLobby(c) { if (active() && conn) send({ t: 'rdlob', c: c | 0, n: player.name || null }); }
+  /* the gate panel's Start: stamp the assembled delvers into a group in ONE stroke (the same
+     last-write-wins gsync snapshot an invite-accept broadcasts), so grouped combat, revives and
+     loot all work exactly as if they had invited each other by hand. */
+  function raidFormGroup(list) {
+    if (!active() || !conn || !Array.isArray(list)) return false;
+    const set = new Map();
+    set.set(player.uid, { uid: player.uid, name: player.name });
+    for (const m of list) if (m && m.uid && m.uid !== player.uid) set.set(m.uid, { uid: m.uid, name: m.name || 'a delver' });
+    if (set.size < 2 || set.size > GROUP_MAX) return false;   /* nothing to form / more than the delve takes */
+    group.roster = [...set.values()];
+    group.invitesIn.clear(); group.invitesOut.clear();
+    send({ t: 'gsync', roster: group.roster.map(m => ({ uid: m.uid, name: m.name })) });
+    if (typeof renderFriends === 'function') renderFriends();
+    return true;
+  }
   function raidPeersHere() { const out = []; if (typeof RP !== 'undefined') for (const r of RP.values()) if (_remoteHere(r) && (Date.now() - (r.last || 0) < 5000)) out.push({ uid: r.uid, name: r.name || 'a delver', x: Math.round(r.px), y: Math.round(r.py) }); return out; }
   function skSpec(ph, x, y, ms, en) { if (active() && conn) send({ t: 'sksp', ph: ph, x: x | 0, y: y | 0, ms: ms | 0, en: en ? 1 : 0 }); }
   function wardSpec(w, ph, x, y, ms) { if (active() && conn) send({ t: 'wdsp', w: w, ph: ph, x: x | 0, y: y | 0, ms: ms | 0 }); }
@@ -39885,7 +40019,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
-    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidGo, sendRaidRoom, sendRaidClear, sendRaidWipe, sendRaidStateReq, sendRaidState, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPrism, sendRaidSocket, sendRaidSapling, sendRaidRack, sendRaidSig, sendRaidOrb, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidTelegraph, sendFreeze, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, sendMobAtk, clearMobAggro, groupParticipants,
+    groupForwardHit, groupAggroSelf, emberPillarSync, forwardPillarHit, iOwnRector, rectorOwnedByGroupmate, rectorArenaPlayers, rectorChainWarn, rectorChainFire, rectorHandoff, groupMobSwingTarget, groupmatePos, groupBossHandoff, groupRectorSignet, groupIcefiends, groupIcefiendsGone, onBrazierLit, sendFreeze, sendBrand, sendCinder, skSpec, dbSpec, cwSpec, wardSpec, wardLine, groupMotes, emberSync, sendSwing, sendShot, sendRaidSeed, sendRaidGo, sendRaidRoom, sendRaidClear, sendRaidWipe, sendRaidStateReq, sendRaidState, sendRaidSolve, sendRaidBrazier, sendRaidPlate, sendRaidPrism, sendRaidSocket, sendRaidSapling, sendRaidRack, sendRaidSig, sendRaidOrb, sendRaidPoints, sendRaidCombat, sendRaidBeam, sendRaidTelegraph, sendFreeze, sendRaidDown, sendRaidRevive, sendRaidReviveStart, sendRaidReviveCancel, sendRaidUnique, raidPeersHere, lobbyPeers, sendRaidLobby, raidFormGroup, sameDelve: _sameDelve, sendMobAtk, clearMobAggro, groupParticipants,
     tradeRequest, tradeSetOffer, tradeAccept, tradeDecline, tradeSnapshot,
     duelChallenge, duelReqFrom, duelSetToggle, duelSetCycleMap, duelSetStake, duelEscrow, duelSetAccept, duelSetDecline, duelSetupSnapshot, duelSwing, duelStats, duelHp, duelConcede, duelClear,
     partySnap, partyPop, partyEnd,
