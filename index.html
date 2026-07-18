@@ -8123,7 +8123,7 @@ function _petThreatNear(){
      - a pinned hand WORKS LOOSE after 30s and comes back at FULL health -- so you bring both low and
        drop them together. That is the whole dance in CoX and it translates exactly.
    The Cornerstone's version of "regenerates" is the school's: it does not heal, it REPAIRS. */
-const CS_HAND_LOOSE=30000;      /* how long a pinned hand stays pinned */
+/* CS_HAND_LOOSE retired 2026-07: pinned hands never work loose any more (Sam cut the mend mechanic). */
 function csHandFor(kind){ return kind==='raid_cs_lhand'?'melee':(kind==='raid_cs_rhand'?'magic':null); }
 /* ** NO STYLE LOCKS -- deliberately. ** The hands were briefly IMMUNE to the wrong style (Olm's actual
    rule). That dictates your loadout, and a melee-only player simply could not finish the room. Sam's
@@ -29643,8 +29643,8 @@ const RAID_DEATH_LOSS=0.40;        /* CoX-exact: dying costs 40% of YOUR points.
    Every 8,675 TEAM points = 1% at the unique table. Each roll caps at 570,000 points (=65.7%);
    teams beyond that earn ADDITIONAL rolls, up to 6. (A popular third-party calculator states the
    table's total weight as 148; the Wiki module sums to 69 -- we follow the Wiki.) */
-const RAID_UNIQUE_DIV=3000;          /* was CoX-exact 8675/1%. Milville-tuned 2026-07: a maxed ~30k solo run is now ~10% a purple (~1/10 runs, was ~1/29) -- CoX's rate assumes thousands of hours; ours assumes dozens. The SHAPE (points buy chance, cap+extra rolls, personal share splits it) stays CoX-exact. */
-const RAID_UNIQUE_ROLL_CAP=197100;   /* rescaled with DIV (same 65.7% per-roll cap: 3000*65.7) */
+const RAID_UNIQUE_DIV=2000;          /* was CoX-exact 8675/1%, then 3000. Sam's floor 2026-07: a maxed ~30k solo run = 15% a purple (~1/6.7 runs). CoX's rate assumes thousands of hours; Milville assumes dozens. The SHAPE (points buy chance, cap+extra rolls, personal share splits it) stays CoX-exact. */
+const RAID_UNIQUE_ROLL_CAP=131400;   /* rescaled with DIV (same 65.7% per-roll cap: 2000*65.7) */
 const RAID_UNIQUE_MAX_ROLLS=6;       /* CoX-exact */
 /* Recalibrated to the new point scale so the payout is UNCHANGED (~60k for a maxed solo run): Sam has
    not ruled on the gold rate, so this deliberately holds the old value rather than silently retuning it.
@@ -30390,8 +30390,9 @@ function raidOnMobDead(r){
   if(!anyAlive && !stt.cleared){
     stt.cleared=true; _raidSealRoom(r.raidRoom, false);
     if(typeof MP!=='undefined'&&MP.sendRaidClear)MP.sendRaidClear(r.raidRoom, ((r.raidFloor!=null?r.raidFloor:(raid.floor||1))|0));
-    if(r.raidBoss){ raidAwardPoints('boss', r.raidRoom); raidOnBossDown(r.raidRoom); return; }
-    if(typeof raidAwardPoints==='function')raidAwardPoints('clear', r.raidRoom);
+    const _stp=raid.roomState[_raidRK(r.raidRoom,r.raidFloor)];
+    if(r.raidBoss){ if(_stp&&!_stp._ptsPaid){_stp._ptsPaid=1; raidAwardPoints('boss', r.raidRoom);} raidOnBossDown(r.raidRoom); return; }
+    if(_stp&&!_stp._ptsPaid){ _stp._ptsPaid=1; if(typeof raidAwardPoints==='function')raidAwardPoints('clear', r.raidRoom); }
     msg('Guardians down - the way opens.','#2f6a1e');
   }
 }
@@ -30854,7 +30855,7 @@ function raidPuzzleTick(){
           if(_raidIceCore&&_raidIceCore.parent){
             _raidIceCore.scale.setScalar(1+Math.min(0.25,t*0.25));   /* it swells as the ice lets go */
           }
-          if(t<1)return;
+          if(t<1)continue;   /* mid-melt: skip THIS room's spawn this frame. This was `return` -- which exited raidPuzzleTick wholesale and froze every other room's puzzle (the plates, the bead stream) for the whole 2.6s melt. */
           if(_raidIceBulge&&_raidIceBulge.parent)_raidIceBulge.parent.remove(_raidIceBulge);
           if(_raidIceCore&&_raidIceCore.parent)_raidIceCore.parent.remove(_raidIceCore);
           _raidIceBulge=null; _raidIceCore=null;
@@ -30953,7 +30954,10 @@ function raidPuzzleTick(){
 function _raidPuzzleSolved(idx){
   const stt=raid.roomState[_raidRK(idx)]; if(!stt||!stt.puz||stt.puz.solved)return;
   stt.puz.solved=true; stt.cleared=true; _raidSealRoom(idx,false);
-  if(typeof raidAwardPoints==='function')raidAwardPoints('puzzle', idx, 20);
+  /* the explicit `20` was the OLD point scale (pre 30-per-damage) surviving a rescale: a solved
+     puzzle paid twenty points in a system where one swing pays ninety. The constant (600) applies. */
+  const _stq=raid.roomState[_raidRK(idx)];
+  if(_stq&&!_stq._ptsPaid){ _stq._ptsPaid=1; if(typeof raidAwardPoints==='function')raidAwardPoints('puzzle', idx); }
   msg('Mechanism satisfied - the way grinds open.','#1a5a8c');
   if(typeof MP!=='undefined'&&MP.sendRaidSolve)MP.sendRaidSolve(idx);
 }
@@ -31166,7 +31170,6 @@ function raidClaimChest(o){
   if(typeof raidSetChestBeam==='function')raidSetChestBeam(o,beams);
   /* CoX broadcasts a purple to the whole raid -- the beam is the group moment, not a private one */
   if(typeof MP!=='undefined'&&MP.sendRaidBeam)for(const b of beams)if(b!=='white')MP.sendRaidBeam(b);
-  if(typeof raidAwardPoints==='function'){}
   /* ** A DELVE IS COMPLETED WHEN YOU TAKE YOUR SHARE. ** Not when the boss dies (you might never loot
      it) and not on exit (you might have walked out). Claiming the chest is the one unambiguous moment
      you finished one. */
@@ -31512,32 +31515,22 @@ function raidBossTick(){
         msg('The book closes on nothing. She looks almost disappointed.','#2f6a1e');
       }
     }
-    /* --- THE CORNERSTONE'S HANDS: pin them, and pin them TOGETHER. ---
-       Olm's rule, and the best thing in that fight: a downed hand is not dead. It works loose after 30s
-       and comes back at FULL health. So bringing one down early achieves nothing -- you take both low
-       and drop them together. It turns a damage race into a piece of timing. */
+    /* --- THE CORNERSTONE'S HANDS: pin them. A pinned hand STAYS pinned. ---
+       The Olm-style work-loose timer is CUT (Sam's call). It was broken anyway: the pin branch had no
+       !r._pinned guard, so a hand at 0 hp re-pinned EVERY TICK -- resetting its own loose-clock (it
+       could never actually work loose), reprinting its warning every frame (Sam's chat spam), and
+       sinking the model half a tile per tick. One hand down stays down; take the other and the face
+       wakes. Simpler, and honestly a better fight for a 2-4 player delve. */
     if((r.kind==='raid_cs_lhand'||r.kind==='raid_cs_rhand')){
-      if(r.alive&&r.hp<=0){
-        /* it does not die -- it is PINNED, and the clock starts */
+      if(r.alive&&r.hp<=0&&!r._pinned){
+        /* it does not die -- it is PINNED, for good */
         r.hp=0; r._pinned=now; r.alive=true; r.target=null; r._sigCd=now+9e9;
         if(r._m&&r._m.group){ r._m.group.rotation.z=0.5; r._m.group.position.y-=0.5; }
-        msg(ITEMS&&0?'':'You drive '+(r.kind==='raid_cs_lhand'?'the left':'the right')+' hand back into the floor. It will work loose \u2014 get the other one NOW.','#2f6a1e');
+        msg('You drive '+(r.kind==='raid_cs_lhand'?'the left':'the right')+' hand back into the floor \u2014 for good. Now the other.','#2f6a1e');
       }
       if(r._pinned){
-        const left=CS_HAND_LOOSE-(now-r._pinned);
-        if(csHandsPinned()){
-          /* BOTH down: raidCsRiseTick (the face-side wake, keyed on csHandsPinned) owns everything
-             from here -- the wake, the messages, the collapse telegraphs. Running a second copy of
-             it from the hands' side is how the fight got two competing wake sequences. */
-        } else if(left<=0){
-          /* it worked loose. Full health, exactly as Olm's does. */
-          r._pinned=0; r.hp=r.maxhp; r._sigCd=now+4000;
-          if(r._m&&r._m.group){ r._m.group.rotation.z=0; r._m.group.position.y+=0.5; }
-          msg('The '+(r.kind==='raid_cs_lhand'?'left':'right')+' hand works loose and comes back whole. You needed both down together.','#9c3512');
-        } else if(!r._looseMsg||now-r._looseMsg>5000){
-          r._looseMsg=now;
-          msg('The '+(r.kind==='raid_cs_lhand'?'left':'right')+' hand is grinding loose \u2014 '+Math.ceil(left/1000)+'s.','#7a5a10');
-        }
+        /* pinned: nothing more runs on the hands' side. When BOTH are down, raidCsRiseTick (the
+           face-side wake, keyed on csHandsPinned) owns everything from here. */
         continue;
       }
     }
@@ -31725,6 +31718,9 @@ function raidDeath(){
     lost=Math.round(mine*RAID_DEATH_LOSS);
     raid.points[uid]=Math.max(0,mine-lost);
   }
+  /* the dock has to reach the team, or every peer's view of the total -- and so the chest math --
+     overstates until your next award happens to broadcast. */
+  if(typeof MP!=='undefined'&&MP.sendRaidPoints)MP.sendRaidPoints(raid.points[uid]||0);
   player.deaths=(player.deaths||0)+1; dirty=true;
   player.hp=maxHp(); player.pray=0; deactivateAllPrayers(); updatePrayOrb(); updateOrb();
   /* ** WHO CAN ACTUALLY HAUL YOU UP. ** raidPeersHere is instance+floor-scoped now (it used to count
@@ -31866,6 +31862,10 @@ function raidPeerSolve(idx, fl){ if(!raid||!raid.roomState)return;
   if(stt.puz)stt.puz.solved=true;
   stt.cleared=true; stt.spawned=true;
   if(f2===((raid.floor||1)|0))_raidSealRoom(idx,false);
+  /* ** THE BONUS BELONGS TO THE ROOM, NOT THE LAST CLICK. ** Only the solver's client used to bank
+     the puzzle points -- in a group, whoever lifted the keystone quietly pocketed the whole bonus and
+     everyone else's chest odds fell behind. Every member banks it, once per room. */
+  if(!stt._ptsPaid){ stt._ptsPaid=1; if(typeof raidAwardPoints==='function')raidAwardPoints('puzzle', idx); }
 }
 /* a groupmate stepped into a fresh room on MY floor: spawn the identical guardians here, now, so the
    party fights ONE set of mobs (deterministic slots) instead of each client spawning its own on its
@@ -31887,10 +31887,10 @@ function raidPeerRoomEnter(idx, fl){
 function raidAdoptState(keys){
   if(!raid||!Array.isArray(keys))return;
   for(const k of keys){ const pr=String(k).split(':'); if(pr.length!==2)continue;
-    raidPeerClear(pr[1]|0, pr[0]|0); }
+    raidPeerClear(pr[1]|0, pr[0]|0, true); }   /* silent: you are not paid for rooms cleared before you joined */
 }
 /* a groupmate's room fell (they were the mob owner; raidOnMobDead may never run here): mirror it. */
-function raidPeerClear(idx, fl){
+function raidPeerClear(idx, fl, silent){
   if(!raid||!raid.roomState)return;
   const f2=(fl===undefined||fl===null)?(raid.floor||1):(fl|0);
   const stt=_raidRoomState(idx, f2);
@@ -31909,6 +31909,13 @@ function raidPeerClear(idx, fl){
        (one chest per delver, forUid keeps yours yours). */
     const _brm=raid.rooms&&raid.rooms[idx|0];
     if(_brm&&_brm.type==='boss'&&!raid.bossDown&&typeof raidOnBossDown==='function')raidOnBossDown(idx|0);
+    /* ** THE COMPLETION BONUS IS EVERYONE'S. ** Same rule as the puzzle bonus above: the last-hitter's
+       client was the only one banking CLEAR (750) / BOSS (7,500) -- in a 4-man the boss bonus alone is
+       worth ~250 swings of damage points, all silently pocketed by whoever landed the blow. Each member
+       banks it on their own client, exactly once per room (adoption of pre-join state pays nothing --
+       see raidAdoptState). */
+    if(!silent&&stt&&!stt._ptsPaid){ stt._ptsPaid=1;
+      if(typeof raidAwardPoints==='function')raidAwardPoints(_brm&&_brm.type==='boss'?'boss':'clear', idx|0); }
   }
 }
 /* ===== The party wipe: everyone down together -> everyone back to the last checkpoint. =====
@@ -32298,10 +32305,12 @@ function raidShowLootTable(){
   let el=document.getElementById('raidloot');
   if(!el){
     el=document.createElement('div'); el.id='raidloot'; el.className='gemodal'; el.style.zIndex='100001';
-    el.innerHTML='<div class="gepanel" style="width:470px;max-width:95vw;">'
-      +'<div class="gebar"><span>The Delve \u2014 everything it can give you</span><div class="gex" id="raidlootx" title="Close">\u2715</div></div>'
-      +'<div id="raidloottabs" style="display:flex;gap:4px;padding:8px 10px 0"></div>'
-      +'<div id="raidlootbody" style="padding:8px 12px 12px;text-align:left;line-height:1.5;color:#e8e0c8;max-height:56vh;overflow:auto"></div></div>';
+    el.innerHTML='<div class="gepanel" style="width:520px;max-width:95vw;">'
+      +'<div class="gebar"><span>The Delvers\u2019 Reliquary</span><div class="gex" id="raidlootx" title="Close">\u2715</div></div>'
+      +'<div style="padding:8px 12px 0;text-align:left">'
+      +'<div style="color:#c9a23a;font-style:italic;font-size:12px">A hundred and seventy years of things people carried up out of the dark \u2014 and the true odds on every one of them, straight off the tables.</div></div>'
+      +'<div id="raidloottabs" style="display:flex;gap:0;margin:9px 12px 0;background:#14110d;border:1px solid #2a241c;border-radius:4px;overflow:hidden"></div>'
+      +'<div id="raidlootbody" style="padding:9px 12px 12px;text-align:left;line-height:1.5;color:#e8e0c8;max-height:54vh;overflow:auto"></div></div>';
     document.body.appendChild(el);
     el.addEventListener('click',(e)=>{ if(e.target===el)el.classList.remove('on'); });
     const x=document.getElementById('raidlootx');
@@ -32319,26 +32328,33 @@ function _raidLootRender(){
               ['cosmetics','Hats'],['how','How it works']];
   tabs.innerHTML='';
   for(const [k,label] of TABS){
-    const b=document.createElement('button'); b.className='btn'; b.textContent=label;
-    b.style.cssText='padding:3px 9px;font-size:12px'+(_raidLootTab===k?';background:#5a4327;color:#ffd24a':'');
+    const b=document.createElement('button'); b.textContent=label;
+    const on=(_raidLootTab===k);
+    b.style.cssText='flex:1;padding:6px 4px;font-size:12px;border:none;cursor:pointer;'
+      +'background:'+(on?'#2a2117':'transparent')+';color:'+(on?'#ffd24a':'#9a8a6a')+';'
+      +'border-bottom:2px solid '+(on?'#c9a23a':'transparent');
     b.addEventListener('click',()=>{ _raidLootTab=k; _raidLootRender(); });
     tabs.appendChild(b);
   }
   body.innerHTML='';
   const row=(id,left,right,sub,onClick)=>{
     const r=document.createElement('div');
-    r.style.cssText='display:flex;align-items:center;gap:9px;padding:5px 2px;border-bottom:1px solid #2a241c'
+    r.style.cssText='display:flex;align-items:center;gap:10px;padding:6px 9px;margin-bottom:4px;'
+      +'background:#171310;border:1px solid #2a241c;border-radius:4px'
       +(onClick?';cursor:pointer':'');
     if(onClick){
       r.addEventListener('click',onClick);
-      r.addEventListener('mouseenter',()=>{r.style.background='rgba(201,162,58,0.10)';});
-      r.addEventListener('mouseleave',()=>{r.style.background='';});
+      r.addEventListener('mouseenter',()=>{r.style.background='#1f1a13';r.style.borderColor='#5a4327';});
+      r.addEventListener('mouseleave',()=>{r.style.background='#171310';r.style.borderColor='#2a241c';});
     }
     if(id&&ITEMS[id]){
+      const fr=document.createElement('div');
+      fr.style.cssText='flex:0 0 38px;width:38px;height:38px;display:flex;align-items:center;justify-content:center;'
+        +'background:#241f16;border:1px solid #3a3226;border-radius:4px';
       const cv=document.createElement('canvas'); cv.width=32; cv.height=32;
-      cv.style.cssText='width:32px;height:32px;flex:0 0 32px';
+      cv.style.cssText='width:30px;height:30px';
       try{ drawItemIcon(cv.getContext('2d'), id, 32); }catch(e){}
-      r.appendChild(cv);
+      fr.appendChild(cv); r.appendChild(fr);
     }
     const L=document.createElement('div'); L.style.cssText='flex:1;min-width:0';
     L.innerHTML='<div style="color:#e8e0c8">'+left+'</div>'+(sub?'<div style="color:#8a8172;font-size:11px">'+sub+'</div>':'');
@@ -32347,14 +32363,21 @@ function _raidLootRender(){
     R.innerHTML=right; r.appendChild(R);
     body.appendChild(r);
   };
-  const note=(t)=>{ const p=document.createElement('p');
-    p.style.cssText='margin:0 0 9px;color:#9a8a6a;font-size:12px'; p.innerHTML=t; body.appendChild(p); };
+  const note=(t)=>{ const p=document.createElement('div');
+    p.style.cssText='margin:0 0 9px;padding:7px 11px;color:#c9b98a;font-size:12px;line-height:1.55;'
+      +'background:#1a1610;border:1px solid #2a241c;border-left:3px solid #c9a23a;border-radius:4px';
+    p.innerHTML=t; body.appendChild(p); };
 
   if(_raidLootTab==='uniques'){
+    /* ** NO HARDCODED ODDS. ** These numbers went stale the first time Sam retuned the drop rate
+       (the page swore 8,675/1% and 1-in-29 long after both had changed). Derive everything from
+       RAID_UNIQUE_DIV: a maxed solo pace is ~30,000 points, so runs-per-rare = DIV/300. */
+    const _base=RAID_UNIQUE_DIV/300;
     note('These are the rare rewards \u2014 the reason people come down here. Your team\u2019s points buy '
-      +'the chances at them: <b>one chance per 8,675 points</b>, up to six. A rare reward takes the place '
-      +'of two of the ordinary things in your box. At a strong solo pace you would see one about '
-      +'<b>every 29 delves</b>. <b>Click any of them</b> to see exactly what it does.');
+      +'the chances at them: every <b>'+fmt(RAID_UNIQUE_DIV)+' points is 1%</b> of a chance, and long, '
+      +'hard runs earn up to six separate chances. A rare reward takes the place of two of the ordinary '
+      +'things in your box. At a strong solo pace you would see one about <b>every '
+      +Math.round(_base)+' delves</b>. <b>Click any of them</b> to see exactly what it does.');
     const tot=RAID_UNIQUE_TABLE.reduce((a,x)=>a+x.w,0);
     for(const u of RAID_UNIQUE_TABLE){
       const it=ITEMS[u.id]; if(!it)continue;
@@ -32363,7 +32386,7 @@ function _raidLootRender(){
          never heard of a raid. Say what it is. */
       row(u.id, it.name+' <span style="color:#8a8172;font-size:11px">\u2192 click</span>',
         pct.toFixed(1)+' out of every 100<br><span style="color:#8a8172;font-size:11px">about 1 delve in '+
-        Math.round(29/(u.w/tot))+'</span>', _raidLootEffect(u.id), ()=>openRaidItem(u.id));
+        Math.round((RAID_UNIQUE_DIV/300)/(u.w/tot))+'</span>', _raidLootEffect(u.id), ()=>openRaidItem(u.id));
     }
     note('<b>None of these have any combat stats.</b> Not one point of attack, strength or defence \u2014 '
       +'they change how you PLAY. All of them can be traded.');
@@ -32414,8 +32437,10 @@ function _raidLootRender(){
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">You earn points for everything you do.</b> '
       +'Damage dealt, puzzles solved, rooms cleared, caches picked. Your points are yours; the team\u2019s '
       +'points are everyone\u2019s added together.</p>'
-      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">The team\u2019s points buy the rolls.</b> Every '
-      +'<b>8,675</b> of them is one roll at a unique, up to six. So a longer, harder run is a better run.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">The team\u2019s points buy the chances.</b> Every '
+      +'<b>'+fmt(RAID_UNIQUE_DIV)+'</b> of them is one percent of a chance at a rare reward. A single '
+      +'chance tops out at 65.7%; points past that earn the team another chance, up to six. So a longer, '
+      +'harder run is a better run.</p>'
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Your own points decide whose it is.</b> When a '
       +'roll hits, the winner is drawn by each delver\u2019s share of the points. Pull your weight and the '
       +'purple is more likely yours.</p>'
@@ -32511,7 +32536,7 @@ function openRaidItem(id){
       +'<span style="color:#8a8172">Share of the rare rewards</span><b style="color:#c9a23a">'+(share*100).toFixed(1)+'%</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
       +'<span style="color:#8a8172">How often you would see one</span><b style="color:#c9a23a">about 1 delve in '
-      +Math.round(29/share)+'</b></div>'):'')
+      +Math.round((RAID_UNIQUE_DIV/300)/share)+'</b></div>'):'')   /* derived, never hardcoded: DIV/300 = runs-per-rare at a maxed (~30k) solo pace */
     +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
       +'<span style="color:#8a8172">Combat stats</span><b style="color:#8a8172">none at all \u2014 it is an effect, not armour</b></div>'
     +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">You can trade it.</p>';
@@ -32551,49 +32576,58 @@ function raidShowSign(){
      "more of you means more of them, never harder ones" -- which is precise, and completely opaque unless
      you already know how the delve works. This is the first thing a new player ever reads about it, so it
      explains the mechanics in plain English and says what they mean FOR YOU. */
+  /* pinned note-cards on a board, not a wall of prose. Each card tips a hair off square, the way a
+     real pinned notice does; the section colour was #1a5a8c (dark blue on a dark panel -- nearly
+     unreadable) and is now the standard section blue. */
+  const CARD=(tilt,inner,extra)=>'<div style="background:#1f1a13;border:1px solid #3a3226;border-radius:4px;'
+    +'padding:9px 12px;margin:0 0 8px;box-shadow:0 2px 5px rgba(0,0,0,0.35);transform:rotate('+tilt+'deg);'+(extra||'')+'">'
+    +'<span style="position:absolute;margin:-14px 0 0 -6px;font-size:10px">\ud83d\udccc</span>'+inner+'</div>';
+  const HED=(t)=>'<div style="color:#8fd0ff;font-size:11px;letter-spacing:1.4px;text-transform:uppercase;margin:0 0 4px">'+t+'</div>';
   const html=
-    '<div style="text-align:left;max-height:52vh;overflow:auto;line-height:1.55">'
-    +'<div style="color:#7a5a10;font-style:italic;margin-bottom:8px">'
-    +'They laid the first stone in 1856. They did not ask what was already here.</div>'
-    +'<p style="margin:0 0 8px">Every building on these grounds is joined underneath by steam tunnels '
-    +'\u2014 brick, pipework, and a hundred and seventy years of things the school would rather forget. '
-    +'You can walk from one end of Milville to the other and never see the sky.</p>'
-    +'<p style="margin:0 0 10px">Something down there has had a long time to think about being built on.</p>'
-    +'<hr style="border-color:#3a3226">'
-    +'<b style="color:#1a5a8c">What a delve actually is</b>'
-    +'<p style="margin:4px 0 8px">A run of rooms under the school, put together fresh every time \u2014 you '
-    +'will never get the same one twice. You go down through them one at a time, and at the bottom is the '
-    +'thing the school was built on top of. It takes about ten minutes. You can go alone or with up to '
-    +'three friends.</p>'
-    +'<b style="color:#1a5a8c">How you get through it</b>'
-    +'<ul style="margin:4px 0 8px;padding-left:18px">'
-    +'<li><b>The cellar is safe.</b> Nothing starts until somebody opens the gate, so bank, eat, and wait '
-    +'for whoever is coming.</li>'
-    +'<li><b>Each room shuts behind you.</b> Some have something to kill, some have a problem to work out. '
-    +'You finish the room or you stand in it \u2014 there is no walking past.</li>'
-    +'<li><b>Three floors down</b>, each one worse than the last.</li>'
-    +'</ul>'
-    +'<b style="color:#1a5a8c">Can I do this at my level?</b>'
-    +'<p style="margin:4px 0 8px"><b>Yes.</b> Whatever your combat level is, the delve builds itself to '
-    +'match it \u2014 a level 30 and a level 120 both get a fight they can actually win. It looks at the '
-    +'<b>highest</b> level in your group and sizes everything to that one, so bringing a strong friend '
-    +'makes it harder for everyone, not easier.</p>'
-    +'<p style="margin:0 0 8px">Bringing more people does <b>not</b> make the monsters hit harder. It just '
-    +'means there are <b>more of them</b> \u2014 enough to keep four of you busy instead of one.</p>'
-    +'<b style="color:#1a5a8c">What happens if I die?</b>'
-    +'<p style="margin:4px 0 8px"><b>You keep everything you are carrying.</b> Dying costs you points, not '
-    +'your gear. If a friend is with you they can pick you back up; alone, you wake one floor higher and '
-    +'walk it again.</p>'
-    +'<b style="color:#1a5a8c">What do I get?</b>'
-    +'<p style="margin:4px 0 8px">You earn points for everything you do down there \u2014 damage, puzzles, '
-    +'rooms cleared. At the bottom your points decide what is in your strongbox: coins always, and a '
-    +'chance at something rare. Everyone gets their own box. <b>Bring food</b>; there is a little to '
-    +'scavenge and not much.</p>'
-    +'<hr style="border-color:#3a3226">'
-    +'<p style="margin:0;color:#9a8a6a">Beneath, in a different hand: <i>\u201cthe shipments are not lost. '
-    +'ask the kitchens.\u201d</i></p>'
+    '<div style="text-align:left;max-height:58vh;overflow:auto;line-height:1.55;padding:4px 2px 2px">'
+    +CARD(-0.5,
+      '<div style="color:#c9a23a;font-style:italic">They laid the first stone in 1856. They did not ask what was already here.</div>'
+      +'<p style="margin:6px 0 0;font-size:12.5px;color:#c9b98a">Every building on these grounds is joined underneath by steam tunnels '
+      +'\u2014 brick, pipework, and a hundred and seventy years of things the school would rather forget. '
+      +'Something down there has had a long time to think about being built on.</p>',
+      'border-color:#5a4327')
+    +CARD(0.4,
+      HED('What a delve actually is')
+      +'<p style="margin:0;font-size:12.5px">A run of rooms under the school, put together fresh every time \u2014 you '
+      +'will never get the same one twice. You go down through them one at a time, and at the bottom is the '
+      +'thing the school was built on top of. About ten minutes; alone or with up to three friends.</p>')
+    +CARD(-0.35,
+      HED('How you get through it')
+      +'<ul style="margin:0;padding-left:17px;font-size:12.5px">'
+      +'<li style="margin-bottom:3px"><b>The cellar is safe.</b> Nothing starts until somebody opens the gate \u2014 bank, eat, wait for your friends.</li>'
+      +'<li style="margin-bottom:3px"><b>Each room shuts behind you.</b> Something to kill, or a problem to work out. There is no walking past.</li>'
+      +'<li><b>Three floors down</b>, each one worse than the last.</li>'
+      +'</ul>')
+    +CARD(0.45,
+      HED('Can I do this at my level?')
+      +'<p style="margin:0 0 5px;font-size:12.5px"><b style="color:#9fd06a">Yes.</b> The delve builds itself to your combat level '
+      +'\u2014 a level 30 and a level 120 both get a fight they can win. In a group it sizes everything to the '
+      +'<b>strongest</b> member, so a strong friend makes it harder for everyone, not easier.</p>'
+      +'<p style="margin:0;font-size:12.5px">More people never makes the monsters hit harder \u2014 it just means '
+      +'<b>more of them</b>, enough to keep four of you busy.</p>')
+    +CARD(-0.4,
+      HED('If you die down there')
+      +'<p style="margin:0;font-size:12.5px"><b style="color:#9fd06a">You keep everything you are carrying.</b> Dying costs points, '
+      +'never gear. A friend can pick you back up; alone, you wake one floor higher and walk it again.</p>')
+    +CARD(0.3,
+      HED('What you get')
+      +'<p style="margin:0 0 7px;font-size:12.5px">Points for everything you do \u2014 damage, puzzles, rooms. At the bottom your '
+      +'points decide what is in your strongbox: coins always, and a chance at something rare. Everyone opens '
+      +'their own. <b>Bring food</b>; there is little to scavenge.</p>'
+      +'<button id="raidsignloot" style="padding:4px 13px;border:1px solid #5a4327;border-radius:3px;'
+      +'background:#241f16;color:#ffd24a;cursor:pointer;font-size:12px">Everything it can give you \u2192</button>')
+    +'<div style="margin:2px 0 0;padding:7px 12px;color:#9a8a6a;font-style:italic;transform:rotate(-0.8deg)">'
+    +'Beneath, in a different hand: \u201cthe shipments are not lost. ask the kitchens.\u201d</div>'
     +'</div>';
   gameConfirm('Notice board', html, null, 'Close', null, null);
+  try{ const b=document.getElementById('raidsignloot');
+    if(b&&b.addEventListener)b.addEventListener('click',function(){ if(typeof raidShowLootTable==='function')raidShowLootTable(); });
+  }catch(e){}
 }
 function raidShowEntryPanel(){
   /* THE GATE PANEL. The party is assembled HERE, from whoever is standing in the lobby -- no manual
@@ -32613,51 +32647,57 @@ function raidShowEntryPanel(){
   const sc=raidComputeScale(ps,cl);
   raid._gatePanelOpen=true;
   const esc=(t)=>String(t==null?'':t).replace(/[<>&"']/g,'');
-  const btn='padding:2px 10px;border:1px solid #3a3226;border-radius:3px;background:#241f16;color:#d8cdb4;cursor:pointer';
+  /* who actually sets the difficulty (ties go to the first, which is fine -- same number) */
+  const strongest=party.reduce((a,b)=>(((b.c|0)>(a.c|0))?b:a),party[0]);
+  const SEC='margin:12px 0 5px;color:#8fd0ff;font-size:11px;letter-spacing:1.4px;text-transform:uppercase';
+  const ROW='display:flex;align-items:center;gap:9px;padding:6px 9px;background:#171310;border:1px solid #2a241c;border-radius:4px;margin-bottom:4px';
+  const PILL='padding:1px 8px;border-radius:9px;background:#241f16;border:1px solid #3a3226;color:#c9b98a;font-size:12px;white-space:nowrap';
+  const BTNA='padding:3px 12px;border:1px solid #2f6a1e;border-radius:3px;background:#1b2a14;color:#9fd06a;cursor:pointer;font-size:12px';
+  const BTND='padding:3px 12px;border:1px solid #5a2a20;border-radius:3px;background:#241412;color:#c98a7a;cursor:pointer;font-size:12px';
   const rows=party.map(r=>{
-    const top=(r.c===cl);
-    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid #2a241c">'
-      +'<div style="flex:1">'+(r.me?'<b>':'')+esc(r.name)+(r.me?'</b>':'')
-      +(top?' <span style="color:#c9a23a;font-size:11px">\u2014 the delve reads this one</span>':'')+'</div>'
-      +'<div style="color:'+(top?'#ffd24a':'#8a8172')+';white-space:nowrap">combat '+(r.c||'?')+'</div>'
-      +(r.me?'':'<button data-lobdel="'+esc(r.uid)+'" style="'+btn+'">Remove</button>')+'</div>';
+    const top=(r===strongest&&party.length>1);
+    return '<div style="'+ROW+(top?';border-color:#5a4327':'')+'">'
+      +'<div style="flex:1;min-width:0">'+(r.me?'<b>':'')+esc(r.name)+(r.me?' (you)</b>':'')
+      +(top?'<div style="color:#c9a23a;font-size:11px">strongest delver \u2014 the monsters are tuned to this combat level</div>':'')+'</div>'
+      +'<span style="'+PILL+(top?';color:#ffd24a;border-color:#5a4327':'')+'">combat '+(r.c||'?')+'</span>'
+      +(r.me?'':'<button data-lobdel="'+esc(r.uid)+'" style="'+BTND+'">Remove</button>')+'</div>';
   }).join('');
   const waiting=lp.filter(p2=>!raid.delvers.some(d=>d.uid===p2.uid));
   const lobRows=waiting.length?waiting.map(p2=>{
     const c2=lob[p2.uid]?(lob[p2.uid].c|0):0;
-    return '<div style="display:flex;align-items:center;gap:8px;padding:4px 2px;border-bottom:1px solid #2a241c">'
-      +'<div style="flex:1">'+esc(p2.name)+'</div>'
-      +'<div style="color:#8a8172;white-space:nowrap">combat '+(c2||'?')+'</div>'
+    return '<div style="'+ROW+'">'
+      +'<div style="flex:1;min-width:0">'+esc(p2.name)+'</div>'
+      +'<span style="'+PILL+'">combat '+(c2||'?')+'</span>'
       +(party.length>=4?'<span style="color:#6a614f;font-size:11px">party full</span>'
-                       :'<button data-lobadd="'+esc(p2.uid)+'" style="'+btn+'">Add</button>')+'</div>';
-  }).join(''):'<div style="padding:4px 2px;color:#6a614f">No one else is standing in the lobby.</div>';
+                       :'<button data-lobadd="'+esc(p2.uid)+'" style="'+BTNA+'">+ Add</button>')+'</div>';
+  }).join(''):'<div style="padding:7px 9px;color:#6a614f;background:#14110d;border:1px dashed #2a241c;border-radius:4px">'
+    +'No one else is down here. Anyone standing in the lobby will show up on this list \u2014 add them, and the delve grows to fit.</div>';
   const pct=(x)=>Math.round(x*100)+'%';
+  const STAT='display:flex;justify-content:space-between;padding:2px 0';
   const html=
     '<div style="text-align:left;line-height:1.5">'
-    +'<b style="color:#8fd0ff">Your party ('+ps+'/4)</b>'
-    +'<div style="margin:4px 0 10px">'+rows+'</div>'
-    +'<b style="color:#8fd0ff">Standing in the lobby</b>'
-    +'<div style="margin:4px 0 10px">'+lobRows+'</div>'
-    +'<b style="color:#8fd0ff">What the tunnels will be, for you</b>'
-    +'<div style="margin:4px 0 10px;padding:8px;background:#1a1610;border:1px solid #2a241c;border-radius:4px">'
-    +'<div style="display:flex;justify-content:space-between"><span>Scaled to combat</span>'
-    +'<b style="color:#ffd24a">'+cl+(cl<RAID_CL_PLATEAU?'':' (full strength)')+'</b></div>'
-    +'<div style="display:flex;justify-content:space-between"><span>Monster health</span>'
-    +'<b>'+pct(sc.hpMul)+'</b></div>'
-    +'<div style="display:flex;justify-content:space-between"><span>Monster damage</span>'
-    +'<b>'+pct(sc.dmgMul)+'</b></div>'
-    +'<div style="display:flex;justify-content:space-between"><span>How many of them</span>'
-    +'<b>'+pct(sc.countMul)+'</b></div>'
+    +'<div style="'+SEC+';margin-top:0">Your party \u2014 '+ps+' of 4</div>'
+    +rows
+    +'<div style="'+SEC+'">In the lobby</div>'
+    +lobRows
+    +'<div style="'+SEC+'">How hard it will be</div>'
+    +'<div style="padding:9px 11px;background:#1a1610;border:1px solid #2a241c;border-left:3px solid #c9a23a;border-radius:4px">'
+    +'<div style="'+STAT+'"><span>Monsters tuned for</span>'
+    +'<b style="color:#ffd24a">combat '+cl+(cl>=RAID_CL_PLATEAU?' \u2014 full strength':'')+'</b></div>'
+    +'<div style="'+STAT+'"><span>Monster health</span><b>'+pct(sc.hpMul)+'</b></div>'
+    +'<div style="'+STAT+'"><span>Monster damage</span><b>'+pct(sc.dmgMul)+'</b></div>'
+    +'<div style="'+STAT+'"><span>Monsters per room</span><b>'+pct(sc.countMul)+'</b></div>'
     +'</div>'
-    +(cl<RAID_CL_PLATEAU
-       ? '<p style="margin:0 0 6px;color:#9fd06a">The delve is <b>holding back</b> for you. You are not too low to come.</p>'
-       : '<p style="margin:0 0 6px;color:#c9483a">Nothing is held back at this level.</p>')
+    +'<p style="margin:8px 0 5px;font-size:12.5px">'
     +(ps>1
-       ? '<p style="margin:0 0 6px">It reads <b>the highest combat level in the party</b>, so it is sized for '
-        +'whoever is strongest. More of you means more of them \u2014 <b>never harder ones</b>.</p>'
-       : '<p style="margin:0 0 6px;color:#8a8172">Going alone. It is sized for one.</p>')
-    +'<p style="margin:0;color:#c9a23a"><b>This locks when you open the gate.</b> If someone else is '
-    +'coming, wait for them.</p>'
+       ? 'The monsters are tuned to your <b>strongest delver</b> \u2014 '+esc(strongest.name)+', at combat '
+        +(strongest.c||'?')+'. Adding more people adds <b>more monsters, never stronger ones</b>.'
+       : 'Going alone: the delve is sized for one, tuned to your combat level. Adding people from the lobby adds more monsters \u2014 never stronger ones.')
+    +'</p>'
+    +(cl<RAID_CL_PLATEAU
+       ? '<p style="margin:0 0 5px;font-size:12.5px;color:#9fd06a">Below combat '+RAID_CL_PLATEAU+' the monsters are <b>weakened to match you</b>. You are not too low to come.</p>'
+       : '<p style="margin:0 0 5px;font-size:12.5px;color:#c9483a">At this level, nothing is weakened.</p>')
+    +'<p style="margin:0;font-size:12.5px;color:#c9a23a"><b>These numbers lock in the moment you start.</b> If someone else is coming, add them first.</p>'
     +'</div>';
   gameConfirm('The Delve', html,
     function(){ raid._gatePanelOpen=false; raidBeginDelve(); },
