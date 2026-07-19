@@ -30032,7 +30032,13 @@ function _raidRoomBrief(room, what){
   msg('You step into '+where+(room.under?' - under '+room.under:'')+'.','#4a3a1e');
   if(what)msg(what,'#6a4a12');
 }
+/* ===== THE FLIGHT RECORDER. ===== A capped ring of every state-changing raid call. Costs nothing;
+   when the next impossible thing happens, the room prints its own black box instead of leaving Sam
+   describing symptoms from memory. */
+let _raidCallLog=[];
+function _raidLog(s2){ _raidCallLog.push(s2+' @fl'+((typeof raid!=='undefined'&&raid)?raid.floor:'-')); if(_raidCallLog.length>60)_raidCallLog.shift(); }
 function raidEnterRoom(idx){
+  if(typeof _raidLog==='function')_raidLog('enter('+idx+')');
   if(!raid||!raid.rooms)return;
   const room=raid.rooms[idx]; if(!room)return;
   raidRevealRoom(idx);   /* you only see a room once you are standing in it */
@@ -30049,6 +30055,18 @@ function raidEnterRoom(idx){
   if(room.type==='entrance'||room.type==='landing'){ const st0=_raidRoomState(idx); st0.cleared=true; return; }
   const stt=_raidRoomState(idx);
   if(room.type==='puzzle'){
+    /* ** THE TRIPWIRE. ** A puzzle room must not arrive cleared unless its puzzle was SOLVED (or a
+       groupmate/adoption legitimately cleared it). If one does, that is the ghost Sam keeps meeting --
+       so instead of accepting the corruption, RE-ARM the room (a fresh, playable puzzle) and print the
+       whole black box so the next occurrence diagnoses itself. */
+    if(stt.cleared&&stt.puz&&!stt.puz.solved&&!stt._peerCleared){
+      try{ console.log('[DELVE-DIAG] puzzle room arrived cleared-without-solved',
+        JSON.stringify({seed:raid.seed>>>0, fl:raid.floor, idx:idx, kind:stt.puz.kind,
+          spawned:!!stt.spawned, sealed:!!stt.sealed, pts:!!stt._ptsPaid}),
+        (typeof _raidCallLog!=='undefined')?_raidCallLog.join(' | '):''); }catch(e){}
+      msg('[delve] This room arrived broken (cleared but never solved) \u2014 re-arming it. Tell Sam: seed '+(raid.seed>>>0)+', floor '+raid.floor+', room '+idx+'.','#c9483a');
+      stt.cleared=false; stt.spawned=false; stt.sealed=false; stt._ptsPaid=0;
+    }
     if(stt.spawned||stt.cleared)return; stt.spawned=true;
     if(typeof MP!=='undefined'&&MP.sendRaidRoom&&!_raidPeerSpawn)MP.sendRaidRoom(idx, raid.floor|0);
     if(stt.puz&&!stt.puz.solved&&RAID_PUZZLE_IMPL[stt.puz.kind]){ _raidSealRoom(idx,true);
@@ -30058,7 +30076,14 @@ function raidEnterRoom(idx){
         tightrope:'The floor is gone. Cross the pipe run, take the keystone, and then use it on the barred way on.',
         crabs:'Bend the lens-beam into all three wall sockets, matching each one\u2019s colour. Strike a prism to stain it; right-click to CLEAR one if you stain it wrong. Read the lab notice.'
       })[stt.puz.kind]||'Solve it and the way opens.'); }
-    else { stt.cleared=true; _raidSealRoom(idx,false); }   /* FAIL OPEN: an unsolvable/unknown puzzle must never seal the party in */
+    else { stt.cleared=true; _raidSealRoom(idx,false);
+      /* FAIL OPEN -- but LOUDLY. This branch used to fire in silence, which is exactly how a broken
+         room could masquerade as a finished one. If it ever fires in live play, Sam knows in-frame. */
+      const _why=!stt.puz?'no puzzle state':(stt.puz.solved?'already marked solved':('unknown kind: '+stt.puz.kind));
+      try{ console.log('[DELVE-DIAG] FAIL-OPEN', JSON.stringify({seed:raid.seed>>>0, fl:raid.floor, idx:idx, why:_why}),
+        (typeof _raidCallLog!=='undefined')?_raidCallLog.join(' | '):''); }catch(e){}
+      msg('[delve] This puzzle could not arm ('+_why+') \u2014 the door is left open. Tell Sam: seed '+(raid.seed>>>0)+', floor '+raid.floor+', room '+idx+'.','#c9483a');
+    }
     return;
   }
   if(room.type==='boss'){
@@ -31987,6 +32012,7 @@ function raidPeerClear(idx, fl, silent){
   if(!raid||!raid.roomState)return;
   const f2=(fl===undefined||fl===null)?(raid.floor||1):(fl|0);
   const stt=_raidRoomState(idx, f2);
+  stt._peerCleared=1;   /* a mate/adoption cleared this: cleared state here is LEGITIMATE (tripwire exempt) */
   if(stt.cleared)return;
   stt.cleared=true; stt.spawned=true;
   if(stt.puz)stt.puz.solved=true;
@@ -32545,10 +32571,12 @@ function _raidLootRender(){
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Your share of the points is your share of the chance.</b> '
       +'Same example: you earned 60,000 of that 180,000 \u2014 a third \u2014 so your personal chance is a '
       +'third of 30%, which is 10%. Pull more of the weight and more of the chance is yours.</p>'
-      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">This is why groups are worth it.</b> A full group '
-      +'faces more, tougher monsters \u2014 which means far more points in the run. Each member of a party '
-      +'of four typically earns about <b>1.75\u00d7</b> the points they would alone, and their odds of a '
-      +'rare reward rise by exactly that much.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">What a group changes.</b> Everyone\u2019s points go '
+      +'into one pot, so the chance that a rare reward drops AT ALL stacks up fast \u2014 a full party of '
+      +'four at high level sees one in nearly <b>half its runs</b>, where a soloist sees one in ten. Your '
+      +'own odds stay close to what your own effort buys (measured: a four-man member earns roughly '
+      +'5\u201310% more points than solo) \u2014 so nobody\u2019s chance is diluted, nobody rides free, and '
+      +'the delve is faster and safer with friends.</p>'
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Everyone opens their own box.</b> Coins and two '
       +'commons each, always. A unique replaces two of those commons. Pets and cosmetics roll separately, '
       +'on top.</p>'
@@ -32723,7 +32751,7 @@ function raidShowSign(){
       HED('What you get')
       +'<p style="margin:0 0 7px;font-size:12.5px">Points for everything you do \u2014 damage, puzzles, rooms. At the bottom your '
       +'points decide what is in your strongbox: coins always, and a chance at something rare \u2014 '
-      +'<b>about 1 delve in '+Math.round(RAID_UNIQUE_DIV/604)+'</b> at a strong solo pace, better in a group. Everyone opens '
+      +'<b>about 1 delve in '+Math.round(RAID_UNIQUE_DIV/604)+'</b> at a strong solo pace; a full group sees one land for SOMEBODY most nights. Everyone opens '
       +'their own. <b>Bring food</b>; there is little to scavenge.</p>'
       +'<button id="raidsignloot" style="padding:4px 13px;border:1px solid #5a4327;border-radius:3px;'
       +'background:#241f16;color:#ffd24a;cursor:pointer;font-size:12px">Everything it can give you \u2192</button>')
