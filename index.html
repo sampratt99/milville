@@ -1480,17 +1480,17 @@ ITEMS.raid_lab_wand={name:'Calibration wand',ex:'A glass wand off the lab bench.
    Every one of these is an EFFECT, not a stat line. They deliberately carry little or no combat
    bonus: the Ember set stays the best armour and the Cinderforge weapons stay the best weapons, and
    nothing here can out-stat them because they are not competing on that axis at all. All tradeable. */
-ITEMS.larder_charm={name:'Larder Charm',ex:'A greasy little charm on a bootlace, smelling faintly of the Coit kitchens. Bones crumble to dust near it, and something in you is the better for it.',val:1400000,cat:'Raid',
+ITEMS.larder_charm={name:'Larder Charm',ex:'Worn on the neck: bones you pick up are consumed on the spot for their full burial Prayer XP \u2014 no burying needed.',val:1400000,cat:'Raid',
   equip:{slot:'neck',model:'charm',verb:'Wear',req:0,tint:0x6a5330,trim:0xd8cfb4}};
-ITEMS.thrift_gauntlets={name:'Thrift Gauntlets',ex:'Lab gloves, chalk-stained and singed. A quarter of your spells cost you nothing at all \u2014 the Archivist never did explain how.',val:1600000,cat:'Raid',
+ITEMS.thrift_gauntlets={name:'Thrift Gauntlets',ex:'Worn on the hands: 25% of your spell casts consume no runes. +3 Defence.',val:1600000,cat:'Raid',
   equip:{slot:'hands',def:3,model:'gauntlets',verb:'Wear',req:0,tint:0x3b2a55,trim:0xc9a23a}};
-ITEMS.ring_wealth={name:'Ring of Wealth',ex:'A plain gold band that makes the world slightly more generous. Nobody agrees on how.',val:2000000,cat:'Raid',
+ITEMS.ring_wealth={name:'Ring of Wealth',ex:'Worn as a ring: monsters are 10% more likely to give their rare drops. Does not affect the delve\u2019s own reward chest.',val:2000000,cat:'Raid',
   equip:{slot:'ring',model:'ring',verb:'Wear',req:0,tint:0xd9b04a}};
-ITEMS.ring_suffering={name:'Ring of Suffering',ex:'Cold iron, and it hurts to wear. Whatever hits you shares the feeling.',val:1800000,cat:'Raid',
+ITEMS.ring_suffering={name:'Ring of Suffering',ex:'Worn as a ring: attackers take back 10% of the damage they deal to you. +6 Defence in every style, +4 Prayer.',val:1800000,cat:'Raid',
   equip:{slot:'ring',def:6,rdef:6,mdef:6,pray:4,model:'ring',verb:'Wear',req:0,tint:0x8a2a3a}};
-ITEMS.lightbearer={name:'The Lightbearer',ex:'The Sexton\u2019s lamp, worn down to a ring. It gives no protection whatsoever \u2014 it simply will not let you tire.',val:2600000,cat:'Raid',
+ITEMS.lightbearer={name:'The Lightbearer',ex:'Worn as a ring: your special attack recharges in half the time \u2014 30 seconds instead of 60. No other stats.',val:2600000,cat:'Raid',
   equip:{slot:'ring',model:'ring',verb:'Wear',req:0,tint:0xffe08a}};
-ITEMS.amulet_blood_fury={name:'Amulet of Blood Fury',ex:'A shard of something red, strung on sinew. It drinks what you spill and gives a little back. Needs blood shards to keep its thirst.',val:3400000,cat:'Raid',
+ITEMS.amulet_blood_fury={name:'Amulet of Blood Fury',ex:'Worn on the neck: melee hits have a 20% chance to heal you for 30% of the damage dealt. Each heal spends one charge; a blood shard adds 1,000 charges.',val:3400000,cat:'Raid',
   equip:{slot:'neck',model:'amulet',verb:'Wear',req:0,tint:0x8a1020,trim:0xd23b4e}};
 /* ============ PETS ============
    Called from the inventory rather than worn in a slot, so the equipment panel is untouched. You hold
@@ -5824,7 +5824,7 @@ function playerTick(){
       msg('You come to your senses at the cellar steps.','#9a8a6a');
     }
   }
-  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); if(typeof raidTelIncomingTick==='function')raidTelIncomingTick(); if(!raid.started){ if(!raid._lobT||performance.now()-raid._lobT>2500){ raid._lobT=performance.now(); if(typeof MP!=='undefined'&&MP.sendRaidLobby)MP.sendRaidLobby(_raidMyCombat()); } } }
+  if(inRaid&&raid&&raid.rooms){ const _ri=raidRoomAt(player.x,player.y); if(_ri!=null&&_ri!==raid.roomIdx){ raid.roomIdx=_ri; raidEnterRoom(_ri); } else if(_ri!=null&&raid.started){ const _st8=_raidRoomState(_ri); if(!_st8.spawned&&!_st8.cleared&&!_st8.sealed)raidEnterRoom(_ri); } /* ^ ENTRY BY STATE, NOT ONLY BY EDGE. If you are STANDING in a room that is neither spawned, cleared nor sealed, it arms -- whatever raid.roomIdx says and whichever state path put you there. The whole 'inert puzzle, open door' class (Sam hit it via at least two different routes) dies here structurally: an un-armed room can no longer coexist with a player inside it. Idempotent: arming sets sealed/spawned/cleared on the first call, so this fires at most once per room. */ if(typeof raidPuzzleTick==='function')raidPuzzleTick(); if(typeof raidBossTick==='function')raidBossTick(); if(typeof raidTrioTick==='function')raidTrioTick(); if(typeof raidReviveTick==='function')raidReviveTick(); if(typeof raidBeamTick==='function')raidBeamTick(); if(typeof raidTelIncomingTick==='function')raidTelIncomingTick(); if(!raid.started){ if(!raid._lobT||performance.now()-raid._lobT>2500){ raid._lobT=performance.now(); if(typeof MP!=='undefined'&&MP.sendRaidLobby)MP.sendRaidLobby(_raidMyCombat()); } } }
   /* pets tick on their own clock: `_dt` is not in scope here, and reading it would have thrown. */
   if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();
   if(typeof raidTelFxTick==='function')raidTelFxTick();   /* the boss telegraphs have to be SEEN */
@@ -18110,7 +18110,8 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;
+const cinStaffM=buildCindermawStaff(gmesh,TT); tool.add(cinStaffM); cinStaffM.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;cinStaffM.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -18498,6 +18499,50 @@ function _tintTool(grp,skill){
   if(tint===null||tint===undefined)tint=(we&&we.tint!==undefined&&we.model===(skill==='mining'?'pick':'axe'))?we.tint:(skill==='mining'?0x8f949c:0xb9bdc4);
   grp.userData.head.material.color.setHex(tint);
 }
+/* ===== CINDERMAW: the ember staff, held. =====
+   The item existed, the icon existed, the ground model existed -- and the LOCAL show-dispatch had no
+   'cindermaw' branch, so the best staff in the game rendered as empty hands (remotes at least got a
+   generic staff). Built once here; both the local rig and the remote-player rig call it with their
+   own gmesh/TT helpers. A staff cut from Cinderwing's breastbone: charred-bone haft split by molten
+   cracks, vertebra knuckles, a talon ferrule -- and at the head THE MAW: five inward-curved fangs
+   caging a living ember, flame licking up between them and cinders drifting off it. */
+function buildCindermawStaff(gmesh,TT){
+  const g=new THREE.Group();
+  const shaft=TT(gmesh(new THREE.CylinderGeometry(0.019,0.027,1.12,7),0x1c0f0a),'tint'); shaft.position.y=0.28; g.add(shaft);
+  for(const cy of [0.02,0.30,0.58]){   /* molten cracks: the heat inside shows through */
+    const rg=TT(new THREE.Mesh(new THREE.TorusGeometry(0.027,0.006,6,10),new THREE.MeshBasicMaterial({color:0xff5a1e})),'trim');
+    rg.position.y=cy; rg.rotation.x=Math.PI/2; g.add(rg);
+  }
+  for(let i=0;i<3;i++){                /* vertebra knuckles, slightly off-axis like real bone */
+    const v=TT(gmesh(new THREE.SphereGeometry(0.032,7,6),0x241109),'tint');
+    v.position.set((i%2?0.008:-0.008),0.14+i*0.26,0.006); v.scale.y=0.8; g.add(v);
+  }
+  const fer=TT(gmesh(new THREE.ConeGeometry(0.03,0.13,6),0x241109),'tint');   /* the talon ferrule */
+  fer.position.y=-0.335; fer.rotation.x=Math.PI; g.add(fer);
+  /* THE MAW: five fangs on a ring, curving inward over the ember */
+  for(let i=0;i<5;i++){ const a=i/5*Math.PI*2;
+    const fang=TT(gmesh(new THREE.ConeGeometry(0.026,0.19,5),0x2b1a10),'tint');
+    fang.position.set(Math.cos(a)*0.082,0.945,Math.sin(a)*0.082);
+    fang.rotation.z=Math.cos(a)*0.62; fang.rotation.x=-Math.sin(a)*0.62; g.add(fang);
+    const tip=gmesh(new THREE.ConeGeometry(0.011,0.055,5),0xe7dcc0);
+    tip.position.set(Math.cos(a)*0.052,1.035,Math.sin(a)*0.052);
+    tip.rotation.z=Math.cos(a)*0.62; tip.rotation.x=-Math.sin(a)*0.62; g.add(tip);
+  }
+  /* the caged ember: white-hot core, ember shell, breathing glow */
+  const core=new THREE.Mesh(new THREE.SphereGeometry(0.042,9,8),new THREE.MeshBasicMaterial({color:0xfff2c8})); core.position.y=0.99; g.add(core);
+  const emb=TT(new THREE.Mesh(new THREE.SphereGeometry(0.072,10,9),new THREE.MeshBasicMaterial({color:0xff6a2a,transparent:true,opacity:0.92})),'trim'); emb.position.y=0.99; g.add(emb);
+  const glow=TT(new THREE.Mesh(new THREE.SphereGeometry(0.125,10,9),new THREE.MeshBasicMaterial({color:0xff8a3a,transparent:true,opacity:0.30,depthWrite:false,blending:THREE.AdditiveBlending})),'trim'); glow.position.y=0.99; g.add(glow);
+  for(let i=0;i<3;i++){ const a=i/3*Math.PI*2+0.5;   /* flame licking up between the fangs */
+    const fl=new THREE.Mesh(new THREE.ConeGeometry(0.021,0.12,5),new THREE.MeshBasicMaterial({color:i%2?0xffd24a:0xff8a1e,transparent:true,opacity:0.85}));
+    fl.position.set(Math.cos(a)*0.045,1.10,Math.sin(a)*0.045);
+    fl.rotation.z=Math.cos(a)*0.28; fl.rotation.x=-Math.sin(a)*0.28; g.add(fl);
+  }
+  for(let i=0;i<3;i++){ const a=i/3*Math.PI*2+1.7;   /* cinders drifting off it */
+    const mote=new THREE.Mesh(new THREE.SphereGeometry(0.012,6,5),new THREE.MeshBasicMaterial({color:0xffa24a}));
+    mote.position.set(Math.cos(a)*(0.13+i*0.02),1.06+i*0.075,Math.sin(a)*(0.13+i*0.02)); g.add(mote);
+  }
+  return g;
+}
 function applyGearTint(){
   try{
     const tg=(grp,t9,r9)=>{grp.traverse(o9=>{
@@ -18513,6 +18558,7 @@ function applyGearTint(){
     {const _so=we&&we.orb!==undefined?we.orb:(we&&we.trim!==undefined?we.trim:0xb98fd0);
      if(staffM.userData.orb){staffM.userData.orb.material.color.setHex(_so);staffM.userData.orb.material.emissive.setHex(_so);}
      if(staffM.userData.orbGlow)staffM.userData.orbGlow.material.color.setHex(_so);}
+    if(typeof cinStaffM!=='undefined')tg(cinStaffM,we&&we.tint!==undefined?we.tint:0x1c0f0a,we&&we.trim!==undefined?we.trim:0xff6a2a);
     const se=player.equip.shield?ITEMS[player.equip.shield.id].equip:null;
     tg(shieldM,se&&se.tint!==undefined?se.tint:0x7a5a36,
       se&&se.trim!==undefined?se.trim:0x4f3a22);
@@ -29677,8 +29723,8 @@ const RAID_DEATH_LOSS=0.40;        /* CoX-exact: dying costs 40% of YOUR points.
    Every 8,675 TEAM points = 1% at the unique table. Each roll caps at 570,000 points (=65.7%);
    teams beyond that earn ADDITIONAL rolls, up to 6. (A popular third-party calculator states the
    table's total weight as 148; the Wiki module sums to 69 -- we follow the Wiki.) */
-const RAID_UNIQUE_DIV=2000;          /* was CoX-exact 8675/1%, then 3000. Sam's floor 2026-07: a maxed ~30k solo run = 15% a purple (~1/6.7 runs). CoX's rate assumes thousands of hours; Milville assumes dozens. The SHAPE (points buy chance, cap+extra rolls, personal share splits it) stays CoX-exact. */
-const RAID_UNIQUE_ROLL_CAP=131400;   /* rescaled with DIV (same 65.7% per-roll cap: 2000*65.7) */
+const RAID_UNIQUE_DIV=6000;          /* Sam 2026-07, tuned on MEASURED points: a real maxed solo run banks ~60,400 (the old '30k' anchor was stale -- at DIV 2000 the true rate had drifted to 30%). 60,400/6,000 = ~10% max-solo; cl-30 full clears ~4%. The SHAPE (points buy chance, 65.7% cap + extra rolls, personal share) stays CoX-exact. */
+const RAID_UNIQUE_ROLL_CAP=394200;   /* rescaled with DIV (same 65.7% per-roll cap: 6000*65.7) */
 const RAID_UNIQUE_MAX_ROLLS=6;       /* CoX-exact */
 /* Recalibrated to the new point scale so the payout is UNCHANGED (~60k for a maxed solo run): Sam has
    not ruled on the gold rate, so this deliberately holds the old value rather than silently retuning it.
@@ -31160,7 +31206,19 @@ function raidClaimChest(o){
   const mine=raidMyPoints(), total=raidTotalPoints();
   if(mine<=0){ msg('You did nothing to earn a share of this.','#9a8a6a'); return; }
   o.claimed=true;
-  const give=(id,n)=>{ if(typeof addItem!=='function'||!addItem(id,n))dropGround(player.x,player.y,id,n); };
+  const give=(id,n)=>{ n=n||1;
+    const it=ITEMS[id];
+    /* ** BULK GOES AS BANKNOTES. ** 22 big bones is 22 slots nobody has after a delve -- addItem
+       part-filled what it could and the rest vanished into a drop under the chest (Sam: 'it said I
+       got 22 big bones but they didn't go to my inventory'). Non-stackables in quantity arrive as
+       ONE noted slot; if the pack is completely full even for that, the lot drops at your feet. */
+    if(it&&!it.stack&&n>1&&typeof addNote==='function'){
+      if(addNote(id,n))return;
+      dropGround(player.x,player.y,id,n);
+      msg('No room in your pack \u2014 the strongbox\u2019s '+it.name+' banknote falls at your feet.','#caa23a');
+      return;
+    }
+    if(typeof addItem!=='function'||!addItem(id,n))dropGround(player.x,player.y,id,n); };
 
   /* COINS ALWAYS. The one deliberate break from CoX (where coins are just another common): the delve
      is meant to be Milville's repeatable combat gold, and a coin-flip would undermine that. */
@@ -31704,6 +31762,7 @@ function raidBossTick(){
           msg('The Custodian breaks off and shuffles back toward his boiler \u2014 CHASE HIM OFF IT before he mends!','#9c4512'); }
         break;
       case 'feed':       /* Muttadile */
+        if(r._rackDown){ break; }   /* the larder is DOWN: its gimmick is spent -- no run, no heal, and above all NO nagging the chat about a rack that is a heap on the floor */
         r._feedUntil=now+6000; r._feedMsg=0;
         if(typeof MP!=='undefined'&&MP.sendRaidSig)MP.sendRaidSig({s:'feed',m:r.i,u:6000});
         msg('The Chimera turns for the larder rack \u2014 CUT THE RACK DOWN or it heals through you!','#7a3a0a');
@@ -32208,7 +32267,13 @@ function restoreRaid(ss){
     const rx=ss.rx|0, ry=ss.ry|0;
     if(inb(rx,ry)&&raidTiles[ry]&&raidTiles[ry][rx]===T_FLOOR&&!blockedStrict(rx,ry)){
       player.x=rx;player.y=ry;player.px=rx;player.py=ry;
-      if(ss.ri!=null)raid.roomIdx=ss.ri|0;
+      /* ** THE RESUMED ROOM MUST RE-ARM. ** This used to restore roomIdx=ss.ri -- and the frame's
+         entry only fires when roomIdx CHANGES, so the room you logged back into (or next walked
+         into, if you quit in its corridor) never sealed, never woke its sleepers, never armed its
+         puzzle: door open, apparatus inert, shooters missing. Sam's pipe-run, ice-room and bead-room
+         ghosts were all this one bug (he hard-refreshes mid-delve on every deploy). The sentinel
+         forces the first frame's entry for whichever room you actually stand in. */
+      raid.roomIdx=-1;
       /* ...and reveal wherever we actually landed. This is THE bug Sam hit: _raidEnterNow reveals room
          0, then we teleport you to (rx,ry) which may be room 3 -- so you stand in an unrendered room
          and it looks like the void. */
@@ -32403,14 +32468,14 @@ function _raidLootRender(){
     p.innerHTML=t; body.appendChild(p); };
 
   if(_raidLootTab==='uniques'){
-    /* ** NO HARDCODED ODDS. ** These numbers went stale the first time Sam retuned the drop rate
-       (the page swore 8,675/1% and 1-in-29 long after both had changed). Derive everything from
-       RAID_UNIQUE_DIV: a maxed solo pace is ~30,000 points, so runs-per-rare = DIV/300. */
-    const _base=RAID_UNIQUE_DIV/300;
+    /* ** NO HARDCODED ODDS. ** Derive everything from RAID_UNIQUE_DIV. The pace anchor is the
+       MEASURED full-clear solo total (~60,400 pts at 115+, levelaudit 2026-07 -- the old 30k figure
+       was stale and had the whole page overstating the grind), so runs-per-rare = DIV/604. */
+    const _base=RAID_UNIQUE_DIV/604;
     note('These are the rare rewards \u2014 the reason people come down here. The team\u2019s points set '
       +'the odds: <b>every '+fmt(RAID_UNIQUE_DIV)+' team points = a 1% chance</b> that a rare reward is '
-      +'in a strongbox at the end. A strong solo run earns about 30,000 points \u2014 a <b>'
-      +Math.round(30000/RAID_UNIQUE_DIV)+'% chance</b>, roughly one rare every '+Math.round(_base)
+      +'in a strongbox at the end. A full solo clear earns about 60,000 points \u2014 a <b>'
+      +Math.round(60400/RAID_UNIQUE_DIV)+'% chance</b>, roughly one rare every '+Math.round(_base)
       +' delves. When one lands, it replaces two of the ordinary items in that delver\u2019s box. '
       +'<b>Click any of them</b> to see exactly what it does.');
     const tot=RAID_UNIQUE_TABLE.reduce((a,x)=>a+x.w,0);
@@ -32421,7 +32486,7 @@ function _raidLootRender(){
          never heard of a raid. Say what it is. */
       row(u.id, it.name+' <span style="color:#8a8172;font-size:11px">\u2192 click</span>',
         pct.toFixed(1)+' out of every 100<br><span style="color:#8a8172;font-size:11px">about 1 delve in '+
-        Math.round((RAID_UNIQUE_DIV/300)/(u.w/tot))+'</span>', _raidLootEffect(u.id), ()=>openRaidItem(u.id));
+        Math.round((RAID_UNIQUE_DIV/604)/(u.w/tot))+'</span>', _raidLootEffect(u.id), ()=>openRaidItem(u.id));
     }
     note('<b>None of these have any combat stats.</b> Not one point of attack, strength or defence \u2014 '
       +'they change how you PLAY. All of them can be traded.');
@@ -32474,12 +32539,12 @@ function _raidLootRender(){
       +'points are everyone\u2019s added together.</p>'
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">The team\u2019s points set the odds of a rare reward.</b> '
       +'Every <b>'+fmt(RAID_UNIQUE_DIV)+' team points = a 1% chance</b> that one drops. Example: a team '
-      +'finishes with 120,000 points \u2014 about a 60% chance of a rare reward. (The chance cannot pass '
+      +'finishes with 180,000 points \u2014 a 30% chance of a rare reward. (The chance cannot pass '
       +'65.7%; on a truly enormous run, points beyond that start building a chance at a <i>second</i> rare '
       +'reward instead.)</p>'
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Your share of the points is your share of the chance.</b> '
-      +'Same example: you earned 30,000 of that 120,000 \u2014 a quarter \u2014 so your personal chance is a '
-      +'quarter of 60%, which is 15%. Pull more of the weight and more of the chance is yours.</p>'
+      +'Same example: you earned 60,000 of that 180,000 \u2014 a third \u2014 so your personal chance is a '
+      +'third of 30%, which is 10%. Pull more of the weight and more of the chance is yours.</p>'
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">This is why groups are worth it.</b> A full group '
       +'faces more, tougher monsters \u2014 which means far more points in the run. Each member of a party '
       +'of four typically earns about <b>1.75\u00d7</b> the points they would alone, and their odds of a '
@@ -32576,7 +32641,7 @@ function openRaidItem(id){
       +'<span style="color:#8a8172">Share of the rare rewards</span><b style="color:#c9a23a">'+(share*100).toFixed(1)+'%</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
       +'<span style="color:#8a8172">How often you would see one</span><b style="color:#c9a23a">about 1 delve in '
-      +Math.round((RAID_UNIQUE_DIV/300)/share)+'</b></div>'):'')   /* derived, never hardcoded: DIV/300 = runs-per-rare at a maxed (~30k) solo pace */
+      +Math.round((RAID_UNIQUE_DIV/604)/share)+'</b></div>'):'')   /* derived, never hardcoded: DIV/604 = runs-per-rare at the MEASURED (~60,400-pt) full-clear solo pace */
     +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
       +'<span style="color:#8a8172">Combat stats</span><b style="color:#8a8172">none at all \u2014 it is an effect, not armour</b></div>'
     +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">You can trade it.</p>';
@@ -32657,7 +32722,8 @@ function raidShowSign(){
     +CARD(0.3,
       HED('What you get')
       +'<p style="margin:0 0 7px;font-size:12.5px">Points for everything you do \u2014 damage, puzzles, rooms. At the bottom your '
-      +'points decide what is in your strongbox: coins always, and a chance at something rare. Everyone opens '
+      +'points decide what is in your strongbox: coins always, and a chance at something rare \u2014 '
+      +'<b>about 1 delve in '+Math.round(RAID_UNIQUE_DIV/604)+'</b> at a strong solo pace, better in a group. Everyone opens '
       +'their own. <b>Bring food</b>; there is little to scavenge.</p>'
       +'<button id="raidsignloot" style="padding:4px 13px;border:1px solid #5a4327;border-radius:3px;'
       +'background:#241f16;color:#ffd24a;cursor:pointer;font-size:12px">Everything it can give you \u2192</button>')
@@ -33159,7 +33225,11 @@ function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl, partySize, r
   raid.started=false;   /* a (re)applied layout is an un-started run; the GO sets this, never a leftover */
   raid.seed=graph.seed; raid.size=graph.size; raid.large=graph.large; raid.boss=graph.bossId;
   raid.graph=graph; raid.floors=graph.floors;
-  raid.floor=raid.floor||1;                       /* 1..3; floor 3 is The Cornerstone alone */
+  raid.floor=1;   /* ** NORMALISE BEFORE PICKING. ** This used to keep a leftover raid.floor (2 or 3)
+                     while choosing rooms from THAT floor -- then reset floor to 1 further down, leaving
+                     raid.rooms describing one floor and raid.floor naming another. Every room lookup
+                     (entry, seals, puzzles) then silently missed. A fresh apply is floor 1, full stop;
+                     restoreRaid re-picks its own floor immediately after. */
   const _f0=graph.floors[raid.floor-1]||graph.floors[0];
   raid.rooms=_f0.rooms; raid.edges=_f0.edges;     /* raid.rooms always means THIS FLOOR's rooms */
   raid.roomIdx=0; raid.leaderUid=leaderUid||(typeof player!=='undefined'?player.uid:null);
@@ -33169,6 +33239,20 @@ function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl, partySize, r
   raid.scale=raidComputeScale(ps, cl);
   raid.points=raid.points||{};
   raid.roomState={};   /* fresh clear/seal state; keys are 'floor:idx' so floors cannot collide */
+  raid.seen={};   /* (floor already normalised to 1 above, before rooms were picked) */
+  raid.bossDown=false; raid.downed=false; raid.peerDown={}; raid._csSank=0;
+  if(typeof _raidTelIncoming!=='undefined')_raidTelIncoming.length=0;
+  /* ** A NEW RUN INHERITS NO FURNITURE. ** exitRaid never removed the previous run's boss-down
+     spawns, and the boss room is ALWAYS keyed floor-last:0 -- so a finished run's exit ladder aliased
+     perfectly into every later run's boss room ('the ladder had already spawned'). Purge exits and
+     strongboxes -- objects, models AND their pick proxies -- at the one gate every run passes through. */
+  if(typeof objects!=='undefined')for(let _i=objects.length-1;_i>=0;_i--){ const _o=objects[_i];
+    if(_o&&(_o.def==='raid_exit'||_o.def==='raid_chest')){
+      if(_o._m&&_o._m.group&&_o._m.group.parent)_o._m.group.parent.remove(_o._m.group);
+      if(typeof proxies!=='undefined')for(let _j=proxies.length-1;_j>=0;_j--)
+        if(proxies[_j]&&proxies[_j].userData&&proxies[_j].userData.o===_o)proxies.splice(_j,1);
+      objects.splice(_i,1);
+    } }
   raid.floor=1;
   raid.startedAt=raid.startedAt||Date.now();
   raid.checkpoint=0;
@@ -36440,7 +36524,7 @@ function render(now){
   const swing=Math.sin(now*0.012)*0.7*walkBlend;
   pm.lLeg.rotation.x=swing;pm.rLeg.rotation.x=-swing;
   let armL=-swing*0.5,armR=swing*0.5;
-  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;
+  axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;cinStaffM.visible=false;
   const wEq=player.equip.weapon?ITEMS[player.equip.weapon.id].equip.model:null;
   let showTool=wEq;
   const act=player.action;let _swRest=true,_swT=-1.5,_wpT=-0.6,_wpSwA=-1;
@@ -36504,6 +36588,7 @@ function render(now){
   else if(showTool==='leafax'){leafAxM.visible=true;leafAxM.rotation.x=_swRest?-1.5:_swT;}
   else if(showTool==='bow'){((player.equip.weapon&&isAshfang(player.equip.weapon.id))?ashBowM:bowM).visible=true;}
   else if(showTool==='staff')staffM.visible=true;
+  else if(showTool==='cindermaw')cinStaffM.visible=true;
   function tintG(grp,t9,r9){grp.traverse(o9=>{
     if(!o9.isMesh)return;
     if(o9.userData.t==='tint'&&t9!==undefined)o9.material.color.setHex(t9);
@@ -36630,7 +36715,7 @@ function render(now){
   }
   {const _ce=player.emote&&EMOTES_BY_ID[player.emote];   /* costume emotes (jack/xmas/chef) strip worn gear so the costume isn't covered */
    if(_ce&&_ce.build){
-     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;
+     axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;cinStaffM.visible=false;
      shieldM.visible=capeM.visible=capeEmblem.visible=neckM.visible=false;leafDagM.visible=false;elemM.visible=false;
      bodyM.visible=armPL.visible=armPR.visible=hideBodyM.visible=robeBodyM.visible=chainM.visible=false;
      legL.visible=legR.visible=hideLegL.visible=hideLegR.visible=robeSkirtM.visible=false;
@@ -38340,7 +38425,8 @@ const staffM=new THREE.Group();
  const orbGlow=new THREE.Mesh(new THREE.SphereGeometry(0.17,12,10),new THREE.MeshBasicMaterial({color:0xffffff,transparent:true,opacity:0.26,depthWrite:false,blending:THREE.AdditiveBlending}));orbGlow.position.y=1.0;staffM.add(orbGlow);staffM.userData.orbGlow=orbGlow;
  const cap=TT(gmesh(new THREE.SphereGeometry(0.028,6,5),0x4a3420),'trim');cap.position.y=-0.32;staffM.add(cap);}
 tool.add(staffM);
-axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;
+const cinStaffM=buildCindermawStaff(gmesh,TT); tool.add(cinStaffM); cinStaffM.visible=false;
+axe.visible=pick.visible=sword.visible=scim.visible=bowM.visible=staffM.visible=false;maul.visible=false;fmaul.visible=false;whipM.visible=false;leafSwM.visible=false;leafAxM.visible=false;emberSwM.visible=false;ashBowM.visible=false;cinStaffM.visible=false;
 const capeM=new THREE.Group();
 {const cb2=TT(gmesh(new THREE.BoxGeometry(0.36,0.56,0.035),0xb3241f),'tint');
  cb2.position.set(0,1.03,-0.185);cb2.rotation.x=0.1;capeM.add(cb2);
@@ -38639,7 +38725,7 @@ const santaHatM=new THREE.Group();
  const pom=mesh(new THREE.SphereGeometry(0.062,8,7),0xf6f6f6);
  pom.position.set(0.24,2.02,0);santaHatM.add(pom);}
 santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
-    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,emberSwM,ashBowM,bowM,staffM,capeM,capeEmblem,shieldM,crownM,grimoireM,mountainShieldM,leafDagM,elemM,helmM,slayerHelmM,bodyM,armPL,armPR,luxGloveL,luxGloveR,luxBootL,luxBootR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM,frostHelmG,frostBodyG,frostLegL,frostLegR,iceCrownM,moltCrownM,hoodM,emberHelmG,emberBodyG,emberLegL,emberLegR,emberBootL,emberBootR,emberGauntL,emberGauntR};
+    return {tool,axe,pick,sword,scim,maul,fmaul,whipM,leafSwM,leafAxM,emberSwM,ashBowM,bowM,staffM,cinStaffM,capeM,capeEmblem,shieldM,crownM,grimoireM,mountainShieldM,leafDagM,elemM,helmM,slayerHelmM,bodyM,armPL,armPR,luxGloveL,luxGloveR,luxBootL,luxBootR,neckM,legL,legR,bootL,bootR,coifM,wizHatM,hideBodyM,robeBodyM,hideLegL,hideLegR,robeSkirtM,chefHatM,pumpkinM,partyHatM,santaHatM,frostHelmG,frostBodyG,frostLegL,frostLegR,iceCrownM,moltCrownM,hoodM,emberHelmG,emberBodyG,emberLegL,emberLegR,emberBootL,emberBootR,emberGauntL,emberGauntR};
   }
   function applyRemoteGear(G, rig, gear, act, shirtHex) {
     if (!G || !gear) return;
@@ -38652,16 +38738,16 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     const EQ = id => (id && ITEMS[id] && ITEMS[id].equip) ? ITEMS[id].equip : null;
     G.axe.visible = G.pick.visible = G.sword.visible = G.scim.visible = G.bowM.visible = G.staffM.visible = false;
     G.maul.visible = G.fmaul.visible = false;
-    G.whipM.visible = false; G.leafSwM.visible = G.leafAxM.visible = false; G.emberSwM.visible = G.ashBowM.visible = false;
+    G.whipM.visible = false; G.leafSwM.visible = G.leafAxM.visible = false; G.emberSwM.visible = G.ashBowM.visible = false; G.cinStaffM.visible = false;
     const we = EQ(gear.weapon), wmod = we ? we.model : null;
     if (wmod === 'axe') G.axe.visible = true;
     else if (wmod === 'pick') G.pick.visible = true;
     else if (wmod === 'sword') G.sword.visible = true;
     else if (wmod === 'scim') G.scim.visible = true;
     else if (wmod === 'bow') G.bowM.visible = true;
-    else if (wmod === 'staff' || wmod === 'cindermaw') { G.staffM.visible = true;
-      if (wmod === 'cindermaw' && G.staffM) { /* recolor the shared staff orb/haft to ember */
-        G.staffM.traverse(function(o9){ if(o9.material&&o9.material.color){ /* orb is the bright child */ } }); } }
+    else if (wmod === 'cindermaw') { G.cinStaffM.visible = true;
+      if (we) tintG(G.cinStaffM, we.tint !== undefined ? we.tint : 0x1c0f0a, we.trim !== undefined ? we.trim : 0xff6a2a); }
+    else if (wmod === 'staff') { G.staffM.visible = true; }
     else if (wmod === 'maul') { if (gear.weapon === 'frostmaul') G.fmaul.visible = true; else G.maul.visible = true; }
     if ((wmod === 'sword' || wmod === 'scim') && we) tintG(wmod === 'scim' ? G.scim : G.sword, we.tint !== undefined ? we.tint : 0xc7ccd4, we.trim !== undefined ? we.trim : 0x8a6a2a);
     const _rShe = gear.shield ? EQ(gear.shield) : null; const _rShMod = _rShe ? _rShe.model : null;
@@ -39588,7 +39674,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       else if (r.act && r.act.k === 'cook') _wm = null;
       _G.axe.visible = _wm === 'axe'; _G.pick.visible = _wm === 'pick';
       _G.sword.visible = _wm === 'sword' && r.gear.weapon !== 'emberbrand'; _G.emberSwM.visible = _wm === 'sword' && r.gear.weapon === 'emberbrand'; _G.scim.visible = _wm === 'scim';
-      _G.bowM.visible = _wm === 'bow' && r.gear.weapon !== 'ashfang'; _G.ashBowM.visible = _wm === 'bow' && r.gear.weapon === 'ashfang'; _G.staffM.visible = _wm === 'staff';
+      _G.bowM.visible = _wm === 'bow' && r.gear.weapon !== 'ashfang'; _G.ashBowM.visible = _wm === 'bow' && r.gear.weapon === 'ashfang'; _G.staffM.visible = _wm === 'staff'; _G.cinStaffM.visible = _wm === 'cindermaw';
       _G.maul.visible = _wm === 'maul' && r.gear.weapon !== 'frostmaul'; _G.fmaul.visible = _wm === 'maul' && r.gear.weapon === 'frostmaul';
       _G.whipM.visible = _wm === 'whip';
       _G.leafSwM.visible = _wm === 'leafsw'; _G.leafAxM.visible = _wm === 'leafax';
