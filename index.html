@@ -4518,11 +4518,11 @@ const ENCY_SRC={
   food_magpie:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Magpie to a full 30 minutes'}],
   food_pebble:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Pebble to a full 30 minutes'}],
   food_hackles:[{label:'Mr. Ellison',sub:'Bought in the delve lobby \u2014 restores Hackles to a full 30 minutes'}],
-  pet_gorger:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: food heals +3'}],
-  pet_marrow:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: bones give +20% Prayer XP'}],
-  pet_magpie:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: +10% coins from drops'}],
-  pet_pebble:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: blocks the first hit in each room'}],
-  pet_hackles:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 50 runs. While called: things hesitate before attacking you'}],
+  pet_gorger:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 30 runs. While called: food heals +3'}],
+  pet_marrow:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 30 runs. While called: bones give +20% Prayer XP'}],
+  pet_magpie:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 30 runs. While called: +10% coins from drops'}],
+  pet_pebble:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 30 runs. While called: blocks the first hit in each room'}],
+  pet_hackles:[{label:'The Delve',sub:'Pet \u2014 roughly 1 in 30 runs. While called: things hesitate before attacking you'}],
   larder_charm:[{label:'The Delve',sub:'Unique reward \u2014 26% of the unique table'}],
   thrift_gauntlets:[{label:'The Delve',sub:'Unique reward \u2014 23% of the unique table'}],
   ring_wealth:[{label:'The Delve',sub:'Unique reward \u2014 19% of the unique table'}],
@@ -4939,7 +4939,7 @@ function openPetExamine(id){
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
       +'<span style="color:#8a8172">Its food</span><b style="color:#e8e0c8">'+(info.food||'')+' \u2014 from Mr. Ellison</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
-      +'<span style="color:#8a8172">How to get one</span><b style="color:#ffd24a">The Delve \u2014 about 1 run in 50</b></div>'
+      +'<span style="color:#8a8172">How to get one</span><b style="color:#ffd24a">The Delve \u2014 about 1 run in '+Math.round(1/RAID_PET_CHANCE)+'</b></div>'
     +'<p style="margin:8px 0 0;color:#8a8172;font-size:11px">Its perk only works while it is out, and it '
     +'only stays out while it has Vigour. Feed it its own food to fill that back up.</p>';
   /* the model */
@@ -11681,34 +11681,57 @@ function makePet(id){
   const parts={};
 
   if(id==='pet_gorger'){
-    /* MOSTLY STOMACH. Narrow at the snout, ballooning to a very wide belly, tapering to a stub -- the
-       countershade does the work: dusty hide on top, pale pink under, so the belly reads as HEAVY. */
-    const HIDE=0x8a7a5a, BACK=0x6a5c42, BELLY=0xc9a892, DARK=0x2a2018, TUSK=0xe7dcc0;
+    /* ** A BOAR, per Sam. ** The first pass ballooned the mid-body until it read as a plump walrus.
+       A boar's mass sits FORWARD: a high shoulder hump falling away to lean hindquarters, a bristle
+       crest down the spine, a long wedge head ending in a flat snout disc, upright ears, and tusks
+       that curve UP past the snout. Still hefty -- he is the Gorger -- but unmistakably pig. */
+    const HIDE=0x6a5340, BACK=0x453629, BELLY=0x9a8570, CREST=0x35291e, DARK=0x2a2018, TUSK=0xe7dcc0, SNOUT=0xc98f7a;
     const belly=new THREE.Group(); g.add(belly); parts.belly=belly;
     belly.add(critterSweep([
-      {p:[0,0.20,0.30],rx:0.075,ry:0.070},
-      {p:[0,0.19,0.16],rx:0.115,ry:0.105},
-      {p:[0,0.17,-0.02],rx:0.205,ry:0.180},   /* the balloon */
-      {p:[0,0.16,-0.18],rx:0.215,ry:0.190},
-      {p:[0,0.18,-0.32],rx:0.130,ry:0.120},
-      {p:[0,0.20,-0.42],rx:0.045,ry:0.045}
+      {p:[0,0.22,0.30],rx:0.085,ry:0.085},     /* neck, thick */
+      {p:[0,0.26,0.16],rx:0.135,ry:0.150},     /* THE SHOULDER HUMP -- the mass is here */
+      {p:[0,0.24,-0.02],rx:0.145,ry:0.145},
+      {p:[0,0.21,-0.18],rx:0.125,ry:0.115},    /* falling away */
+      {p:[0,0.19,-0.32],rx:0.095,ry:0.090},    /* lean hindquarters */
+      {p:[0,0.20,-0.40],rx:0.040,ry:0.040}
     ],HIDE,16,true,true,{top:BACK,bottom:BELLY}));
-    /* the head: low, forward, and a jaw that opens wider than the skull */
-    const head=new THREE.Group(); head.position.set(0,0.20,0.30); g.add(head); parts.head=head;
-    const skull=sm(new THREE.SphereGeometry(0.085,14,12),HIDE); skull.scale.set(1.0,0.9,1.15); head.add(skull);
-    const jaw=new THREE.Group(); jaw.position.set(0,-0.03,0.02); head.add(jaw); parts.jaw=jaw;
+    /* the bristle crest, nape to rump, tallest over the hump */
+    for(let i=0;i<7;i++){ const u=i/6;
+      const b=sm(new THREE.BoxGeometry(0.022,0.055-0.022*Math.abs(u-0.25)*2,0.10),CREST);
+      b.position.set(0, 0.30+0.10*(1-Math.abs(u-0.25)*1.6), 0.22-u*0.60);
+      b.rotation.x=-0.25+u*0.5; belly.add(b);
+    }
+    /* the head: a long wedge, carried low, ending in the snout disc */
+    const head=new THREE.Group(); head.position.set(0,0.22,0.32); g.add(head); parts.head=head;
+    head.add(critterSweep([
+      {p:[0,0.02,-0.02],rx:0.080,ry:0.085},    /* skull */
+      {p:[0,-0.01,0.08],rx:0.058,ry:0.060},    /* the wedge */
+      {p:[0,-0.03,0.15],rx:0.042,ry:0.044}
+    ],HIDE,12,true,true,{top:BACK,bottom:BELLY}));
+    const disc=sm(new THREE.CylinderGeometry(0.038,0.038,0.022,12),SNOUT);   /* the flat snout disc */
+    disc.rotation.x=Math.PI/2-0.18; disc.position.set(0,-0.035,0.165); head.add(disc);
+    for(const sx of [-1,1]){ const nz=glow(new THREE.SphereGeometry(0.006,6,5),0x2a1410);
+      nz.position.set(sx*0.013,-0.030,0.176); head.add(nz); }
+    for(const sx of [-1,1]){                    /* upright triangular ears */
+      const ear=sm(new THREE.ConeGeometry(0.028,0.065,4),BACK);
+      ear.position.set(sx*0.052,0.085,-0.03); ear.rotation.z=sx*-0.30; ear.rotation.x=-0.15; head.add(ear);
+    }
+    const jaw=new THREE.Group(); jaw.position.set(0,-0.05,0.03); head.add(jaw); parts.jaw=jaw;
     jaw.add(critterSweep([
-      {p:[0,0,0.02],rx:0.080,ry:0.030},
-      {p:[0,-0.01,0.10],rx:0.065,ry:0.026}
+      {p:[0,0,0.02],rx:0.052,ry:0.024},
+      {p:[0,-0.008,0.11],rx:0.040,ry:0.020}
     ],DARK,12,true,true,{top:0x3a2c22,bottom:DARK}));
-    for(const sx of [-1,1]){                    /* under-tusks */
-      const t=sm(new THREE.ConeGeometry(0.014,0.055,6),TUSK);
-      t.position.set(sx*0.045,0.01,0.10); t.rotation.x=-0.5; jaw.add(t);
+    for(const sx of [-1,1]){                    /* tusks: out of the lower jaw, curving UP past the snout */
+      const t=sm(new THREE.ConeGeometry(0.013,0.075,6),TUSK);
+      t.position.set(sx*0.045,0.025,0.115); t.rotation.x=0.85; t.rotation.z=sx*0.28; jaw.add(t);
     }
-    for(const sx of [-1,1]){                    /* tiny, unbothered eyes, set far apart */
-      const e=glow(new THREE.SphereGeometry(0.012,7,6),0x14110d);
-      e.position.set(sx*0.062,0.04,0.055); head.add(e);
+    for(const sx of [-1,1]){                    /* small dark eyes, deep-set */
+      const e=glow(new THREE.SphereGeometry(0.011,7,6),0x14110d);
+      e.position.set(sx*0.055,0.035,0.045); head.add(e);
     }
+    const tail=new THREE.Group(); tail.position.set(0,0.22,-0.40); g.add(tail); parts.tail=tail;
+    tail.add(critterSweep([{p:[0,0,0],rx:0.010,ry:0.010},{p:[0,0.03,-0.05],rx:0.008,ry:0.008}],BACK,6,true,true));
+    const tuft=sm(new THREE.SphereGeometry(0.016,6,5),CREST); tuft.position.set(0,0.032,-0.055); tail.add(tuft);
     /* HINGED legs: each is a group pivoting at the HIP, so it swings rather than slides. */
     parts.legs=[];
     for(const [sx,sz] of [[-1,0.16],[1,0.16],[-1,-0.22],[1,-0.22]]){
@@ -23807,6 +23830,17 @@ function buildLuxuryModel(id){
       const l=new THREE.Mesh(TOR(0.022,0.008,8),new THREE.MeshLambertMaterial({color:CHAIN}));
       l.position.set(Math.cos(a)*0.30,Math.sin(a)*0.30+0.06,0);
       l.rotation.y=(i%2)?Math.PI/2:0; l.rotation.z=-a; g.add(l); }
+    /* ** THE CHAIN HAS TO REACH THE PENDANT. ** The arc above ends in mid-air at (\u00b10.253, 0.221)
+       while the bail hangs at (0, -0.18) -- Sam's 'gap between the gem and the chain'. Run links down
+       both sides from each arc end to the bail, laid along the run, alternating weave like the arc. */
+    for(const sx of [-1,1]){
+      const x0=sx*0.253, y0=0.221, x1=sx*0.030, y1=-0.150;
+      const ang=Math.atan2(y1-y0, x1-x0);
+      for(let j=0;j<7;j++){ const t2=(j+0.5)/7;
+        const l=new THREE.Mesh(TOR(0.022,0.008,8),new THREE.MeshLambertMaterial({color:CHAIN}));
+        l.position.set(x0+(x1-x0)*t2, y0+(y1-y0)*t2, 0);
+        l.rotation.y=(j%2)?Math.PI/2:0; l.rotation.z=ang; g.add(l); }
+    }
     const bail=new THREE.Mesh(TOR(0.035,0.012,12),new THREE.MeshLambertMaterial({color:GOLD}));
     bail.position.y=-0.18; g.add(bail);
     /* the stone: a dark shell with a live core */
@@ -32373,11 +32407,12 @@ function _raidLootRender(){
        (the page swore 8,675/1% and 1-in-29 long after both had changed). Derive everything from
        RAID_UNIQUE_DIV: a maxed solo pace is ~30,000 points, so runs-per-rare = DIV/300. */
     const _base=RAID_UNIQUE_DIV/300;
-    note('These are the rare rewards \u2014 the reason people come down here. Your team\u2019s points buy '
-      +'the chances at them: every <b>'+fmt(RAID_UNIQUE_DIV)+' points is 1%</b> of a chance, and long, '
-      +'hard runs earn up to six separate chances. A rare reward takes the place of two of the ordinary '
-      +'things in your box. At a strong solo pace you would see one about <b>every '
-      +Math.round(_base)+' delves</b>. <b>Click any of them</b> to see exactly what it does.');
+    note('These are the rare rewards \u2014 the reason people come down here. The team\u2019s points set '
+      +'the odds: <b>every '+fmt(RAID_UNIQUE_DIV)+' team points = a 1% chance</b> that a rare reward is '
+      +'in a strongbox at the end. A strong solo run earns about 30,000 points \u2014 a <b>'
+      +Math.round(30000/RAID_UNIQUE_DIV)+'% chance</b>, roughly one rare every '+Math.round(_base)
+      +' delves. When one lands, it replaces two of the ordinary items in that delver\u2019s box. '
+      +'<b>Click any of them</b> to see exactly what it does.');
     const tot=RAID_UNIQUE_TABLE.reduce((a,x)=>a+x.w,0);
     for(const u of RAID_UNIQUE_TABLE){
       const it=ITEMS[u.id]; if(!it)continue;
@@ -32437,13 +32472,18 @@ function _raidLootRender(){
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">You earn points for everything you do.</b> '
       +'Damage dealt, puzzles solved, rooms cleared, caches picked. Your points are yours; the team\u2019s '
       +'points are everyone\u2019s added together.</p>'
-      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">The team\u2019s points buy the chances.</b> Every '
-      +'<b>'+fmt(RAID_UNIQUE_DIV)+'</b> of them is one percent of a chance at a rare reward. A single '
-      +'chance tops out at 65.7%; points past that earn the team another chance, up to six. So a longer, '
-      +'harder run is a better run.</p>'
-      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Your own points decide whose it is.</b> When a '
-      +'roll hits, the winner is drawn by each delver\u2019s share of the points. Pull your weight and the '
-      +'purple is more likely yours.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">The team\u2019s points set the odds of a rare reward.</b> '
+      +'Every <b>'+fmt(RAID_UNIQUE_DIV)+' team points = a 1% chance</b> that one drops. Example: a team '
+      +'finishes with 120,000 points \u2014 about a 60% chance of a rare reward. (The chance cannot pass '
+      +'65.7%; on a truly enormous run, points beyond that start building a chance at a <i>second</i> rare '
+      +'reward instead.)</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Your share of the points is your share of the chance.</b> '
+      +'Same example: you earned 30,000 of that 120,000 \u2014 a quarter \u2014 so your personal chance is a '
+      +'quarter of 60%, which is 15%. Pull more of the weight and more of the chance is yours.</p>'
+      +'<p style="margin:0 0 9px"><b style="color:#c9a23a">This is why groups are worth it.</b> A full group '
+      +'faces more, tougher monsters \u2014 which means far more points in the run. Each member of a party '
+      +'of four typically earns about <b>1.75\u00d7</b> the points they would alone, and their odds of a '
+      +'rare reward rise by exactly that much.</p>'
       +'<p style="margin:0 0 9px"><b style="color:#c9a23a">Everyone opens their own box.</b> Coins and two '
       +'commons each, always. A unique replaces two of those commons. Pets and cosmetics roll separately, '
       +'on top.</p>'
@@ -32553,9 +32593,9 @@ function openRaidItem(id){
     _raidItemRen.setSize(cv.clientWidth||420,215,false);
     const sc=new THREE.Scene();
     const cam=new THREE.PerspectiveCamera(34,(cv.clientWidth||420)/215,0.1,50);
-    /* ** PULLED BACK. ** 0.92 with the models scaled 1.5-1.6 filled the canvas -- you could not see the
-       shape of the thing, which is the entire point of this page. */
-    cam.position.set(0,0.22,1.75); cam.lookAt(0,0.02,0);
+    /* ** PULLED BACK, AGAIN. ** 1.75 still crowded the frame with the models scaled 1.5-1.6 (Sam:
+       'the camera is too close'). 2.3 gives every piece air around it, and the rotation stays readable. */
+    cam.position.set(0,0.28,2.3); cam.lookAt(0,0.0,0);
     sc.add(new THREE.HemisphereLight(0xffffff,0x404040,1.2));
     const key=new THREE.DirectionalLight(0xfff0d0,1.0); key.position.set(2,3,2); sc.add(key);
     const g=buildLuxuryModel(id); sc.add(g);
