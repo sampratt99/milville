@@ -23168,6 +23168,33 @@ function cineClearSplatsProjectiles(){
 /* ============================== THE SCENES ============================== */
 /* Each scene: {name, dur(s), setup(now), update(t,now), cam(t)->{pos,look}, teardown()} */
 CINE.scenes=[
+  /* ---------- SCENE 0: OPENING TITLE CARD ----------
+     A calm, slow push over the pond & campus while the Milville HERO logo fades in from black,
+     holds, then fades out into the mining scene. Mirrors the finale's logo, but at the top. */
+  {
+    name:'Milville \\u2014 Title',
+    dur:6.5,
+    setup(now){ const el=document.getElementById('cineLogo'); if(el)el.classList.remove('show'); this._logoDrawn=false; },
+    update(t,now){
+      const el=document.getElementById('cineLogo'); if(!el)return;
+      /* logo in ~0.6s, hold, out by ~1s before the scene ends */
+      const inAt=0.6, outAt=this.dur-1.2;
+      if(t>=inAt && t<outAt){
+        if(!this._logoDrawn){ try{ if(typeof drawLogo==='function')drawLogo('cineLogoCv'); }catch(e){} this._logoDrawn=true; }
+        el.classList.add('show');
+      } else { el.classList.remove('show'); if(t>=outAt)this._logoDrawn=false; }
+    },
+    cam(t){
+      /* slow push over the pond east of Hargate, looking WEST across the Grounds (as the finale settles) */
+      const k=Math.min(1,t/this.dur);
+      const ez=k*k*(3-2*k);                 /* smoothstep */
+      const px=236 - ez*7;                  /* drift gently west */
+      const py=20  - ez*4;                  /* and descend a touch */
+      const pz=58;
+      return { pos:[px,py,pz], look:[px-24, 9, pz-1] };
+    },
+    teardown(){ const el=document.getElementById('cineLogo'); if(el)el.classList.remove('show'); }
+  },
   /* ---------- SCENE 1: mining at the Swenson Granite Quarry ----------
      Open with a flyover from the EAST over the quarry (its furnace/anvil + the pit of ore),
      descend down into the pit toward the miner, then settle into a slow player-level ORBIT as
