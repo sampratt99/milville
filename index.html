@@ -43,34 +43,6 @@
     text-shadow:0 2px 0 #000, 0 0 14px rgba(255,184,61,.25);
   }
   #title small{color:#bba37a; font-size:11px; letter-spacing:2px;}
-  /* cinematic finale logo: the hero logo (transparent bg) fades into the centre over the wide shot */
-  #cineLogo{ position:fixed; inset:0; display:flex; align-items:center; justify-content:center;
-    pointer-events:none; opacity:0; z-index:60; transition:opacity 1.6s ease; }
-  #cineLogoCv{ width:min(760px,80vw); height:auto;
-    filter:drop-shadow(0 6px 22px rgba(0,0,0,.75)) drop-shadow(0 0 40px rgba(255,184,61,.25));
-    transform:translateY(16px) scale(.94); transition:transform 1.8s cubic-bezier(.16,.9,.28,1); }
-  #cineLogo.show{ opacity:1; }
-  #cineLogo.show #cineLogoCv{ transform:translateY(0) scale(1); }
-  /* cinematic scrubber (only shown while the reel plays; hideable for recording) */
-  #cineScrub{ position:fixed; left:50%; bottom:22px; transform:translateX(-50%);
-    display:none; align-items:center; gap:12px; z-index:70;
-    background:rgba(13,10,7,.82); border:1px solid rgba(255,184,61,.35); border-radius:10px;
-    padding:9px 14px; box-shadow:0 6px 24px rgba(0,0,0,.5); backdrop-filter:blur(3px);
-    font-family:Georgia,serif; color:#e9dcc0; width:min(620px,86vw); }
-  #cineScrub.on{ display:flex; }
-  #cineScrub.hidden{ display:none !important; }
-  #cinePauseBtn,#cineHideBtn{ font:inherit; font-size:13px; color:#e9dcc0; cursor:pointer;
-    background:rgba(255,184,61,.14); border:1px solid rgba(255,184,61,.4); border-radius:6px;
-    padding:4px 9px; letter-spacing:1px; white-space:nowrap; }
-  #cinePauseBtn:hover,#cineHideBtn:hover{ background:rgba(255,184,61,.28); }
-  #cineTrack{ position:relative; flex:1; height:16px; cursor:pointer; display:flex; align-items:center; }
-  #cineTrack::before{ content:''; position:absolute; left:0; right:0; height:5px; border-radius:3px;
-    background:rgba(255,255,255,.18); }
-  #cineFill{ position:absolute; left:0; height:5px; border-radius:3px; width:0%;
-    background:linear-gradient(90deg,#ffb83d,#ff8c28); pointer-events:none; }
-  #cineHandle{ position:absolute; width:14px; height:14px; border-radius:50%; left:0; margin-left:-7px;
-    background:#ffe14a; border:2px solid #7a5a12; box-shadow:0 1px 4px rgba(0,0,0,.6); pointer-events:none; }
-  #cineTime{ font-size:12px; color:#cdbb96; white-space:nowrap; min-width:78px; text-align:right; }
   #layout{display:flex; gap:8px; align-items:stretch; flex-wrap:nowrap;}
   #main{flex:1 1 0; min-width:0; display:flex; flex-direction:column; gap:8px;}
   #viewwrap{
@@ -908,13 +880,6 @@
 <body>
 <div id="frame">
   <div id="title">Millville <small>· an old school adventure ·</small></div>
-  <div id="cineLogo"><canvas id="cineLogoCv" width="600" height="210"></canvas></div>
-  <div id="cineScrub">
-    <button id="cinePauseBtn" title="Play / pause (Space)">❚❚</button>
-    <div id="cineTrack"><div id="cineFill"></div><div id="cineHandle"></div></div>
-    <span id="cineTime">0:00 / 0:00</span>
-    <button id="cineHideBtn" title="Hide this bar for recording (H)">Hide</button>
-  </div>
   <div id="layout">
     <div id="main">
       <div id="viewwrap">
@@ -2034,7 +1999,7 @@ const OBJ_DEFS={
   raid_sign:{name:'Notice board',action:'Read',noBlock:true,ex:'A board of school notices. Most are about laundry. One is not.'},
   raid_sign_lawn:{name:'Notice board',action:'Read',noBlock:true,ex:'A board of school notices. Most are about laundry. One is not.'},
   raid_portal:{name:'Cellar stair',action:'Descend',ex:'A slanted bulkhead door set into the lawn north of the dining hall, just east of Larry\u2019s kitchen, propped open over stone steps that drop into the cellars below Coit. The passages down there run far deeper \u2014 and far stranger \u2014 than any root cellar has a right to. Gather your party before you go down.'},
-  raid_exit:{name:'Ladder up',action:'Climb',ex:'An iron ladder bolted to the brick, climbing to the bulkhead door and the lawn behind the dining hall. Daylight, somewhere up there.'},   /* flush against the lobby's south wall at (26,60) */
+  raid_exit:{name:'Ladder up',action:'Climb',ex:'An iron ladder bolted to the brick, climbing to the bulkhead door and the lawn behind the dining hall. Daylight, somewhere up there.'},   /* on the lobby's south floor row at (28,59), by the arrival stairs */
   raid_chest:{name:'Delvers\u2019 hoard',action:'Open',ex:'A strongbox that rises out of the flagstones when the delve is beaten. It opens once for each delver.'},
   raid_node:{name:'Scavenger cache',action:'Search',ex:'A heap of crates, nests and root-tangles in the warren. Search it for delvers\u2019 rations \u2014 until it is picked clean.'},
   raid_plate:{name:'Pressure plate',action:'Examine',noBlock:true,ex:'A worn stone plate set flush in the floor. It sinks under weight and springs back slowly. Hold every plate down at once to open the way \u2014 easier with company.'},
@@ -2774,7 +2739,7 @@ addObj('raid_portal',142,49,true);
 /* ** TAG THE FLOOR. ** raidRevealRoom matches raidRoom AND raidFloor -- and with no floor set, these
    leaked into every OTHER room 0 in the delve. Floor 3's boss room is also room 0, which is exactly
    why Sam could see the cellar's ladder and notice board standing in the Cornerstone's chamber. */
-{ const _rx=addObj('raid_exit',26,60,true); if(_rx){_rx.raidRoom=0; _rx.raidFloor=1;} }
+{ const _rx=addObj('raid_exit',28,59,true); if(_rx){_rx.raidRoom=0; _rx.raidFloor=1;} }   /* on the south FLOOR row (y1-1), two tiles E of the arrival stairs, clear of Ellison + notice board -- NOT the y=60 wall row, which buried it in masonry */
 /* The lore board, twice: one on the lawn by the hatch, one in the lobby by Ellison for anyone who came
    down without reading it.
    ** TWO DEFS, deliberately. ** INT_DEFS is per-DEF, not per-object:
@@ -5413,7 +5378,6 @@ function stopMusic(){
   musicMaster=null;
 }
 function updateMusic(){
-  if(typeof CINE!=='undefined'&&CINE.on){ return; }   /* cinematic owns the music; don't let scene changes restart it */
   if(musicOff||inChapel||inStPaul||inSos){ if(musicMode)stopMusic(); return; }
   if(inRectory){ startMusic('rectory'); return; }
   if(inParty){ startMusic('party'); return; }
@@ -22958,699 +22922,6 @@ function castPick(ev){
 /* ------------------------------ input ----------------------------- */
 let camYaw=0,camPitch=0.62,camDist=11;
 
-/* ============================ CINEMATIC MODE ============================
-   A hands-off camera flythrough that showcases the whole world: it hides the
-   HUD, detaches the camera from the player, and flies an authored path over
-   the campus and wilderness. Toggle with ?cinematic=1 in the URL, or press C
-   in-game. Doubles as the animated title-screen background + trailer capture.
-   Coordinates are RUNTIME world coords (x east, z=y south, y up). Each
-   keyframe is {p:[x,y,z] camera position, l:[x,y,z] look-at, d:seconds to
-   reach this key from the previous one, e:optional easing name}. ---------- */
-/* ======================= CINEMATIC MODE (scene system) =======================
-   A hands-off showcase reel. It plays an ordered list of SCENES, then loops.
-   Staged scenes (scripted actors doing real animations) come first, and the
-   grand map FLYTHROUGH is the finale -- so the whole reel can be recorded in
-   one pass. Toggle with ?cinematic=1 or press C in-game; Esc exits.
-   Actors reuse the multiplayer avatar rig (MP.buildGearRig/applyRemoteGear)
-   and are animated by the same MP.poseRemote used for real remote players,
-   so every attack/skilling motion is the genuine in-game animation. --------- */
-const CINE={
-  on:false, hudHidden:false, prevFar:150,
-  si:0,            /* current scene index */
-  st:0,            /* time within the current scene (s) */
-  actors:[],       /* live scene actors, torn down on scene exit */
-  mobProps:[],     /* visual mob props (e.g. enforcers) for combat scenes */
-  mobLabels:[],    /* floating nameplates (name + combat level) drawn on the overlay */
-  scenes:[],       /* filled in below */
-};
-/* the grand map flythrough (the finale). Waypoints: {p:cam pos, l:look-at, d:s, e:ease}. */
-const CINE_FLYTHROUGH=[
-    /* 1. OPEN: low behind Pat's Peak (NW), then rise to reveal the icy summit + wyverns */
-    {p:[16,26,-14], l:[16,11,6],  d:0.001},
-    {p:[16,30,-6],  l:[16,10,10], d:4.5, e:'io'},
-    {p:[34,26,20],  l:[20,9,14],  d:4.0, e:'io'},   // drift SE over the snowfield & wyverns
-    /* 2. SWEEP south down the wilderness, past the gargoyles, to the volcano (SW) */
-    {p:[54,30,64],  l:[40,6,80],  d:4.5, e:'io'},
-    {p:[40,26,104], l:[22,8,120], d:4.0, e:'io'},   // approach the cone
-    {p:[20,30,150], l:[18,10,128],d:4.5, e:'io'},   // bank around the glowing summit (from the south)
-    /* 3. The big EAST reveal: pull up high and cross the whole map west->east */
-    {p:[70,46,132], l:[150,6,90], d:4.5, e:'io'},
-    {p:[150,52,120],l:[190,6,60], d:5.0, e:'io'},   // soaring over mid-map toward campus
-    /* 4. Descend into the QUAD (NE dorm cluster): glide low over Warren/Ford/Simpson */
-    {p:[188,20,64], l:[190,4,40], d:4.5, e:'io'},
-    {p:[210,15,52], l:[190,4,38], d:4.0, e:'io'},   // low pass across the quad
-    /* 5. Pan south-east past Sheldon, Coit & the Hockey Center -- LOW 3/4 views (not birds-eye) */
-    {p:[220,11,54], l:[220,4,42], d:3.5, e:'io'},   // Sheldon, low from the south (shallow angle)
-    {p:[250,12,66], l:[252,4,52], d:4.0, e:'io'},   // Coit dining hall from the south-east, low
-    /* 6. Swing down to the CHAPEL (the tall spire) and circle it, past the Library */
-    {p:[232,26,86], l:[204,6,100],d:4.5, e:'io'},
-    {p:[204,18,118],l:[204,6,100],d:4.0, e:'io'},   // face the chapel's south front, spire centred
-    {p:[184,22,108],l:[204,6,100],d:3.5, e:'io'},   // orbit past the spire toward Schoolhouse/Lindsay
-    /* 7. Sweep east over the dragons (SE), then pull up for a wide hero shot */
-    {p:[248,26,110],l:[285,3,122],d:4.5, e:'io'},   // reveal the dragon dens
-    {p:[296,22,110],l:[284,3,124],d:3.5, e:'io'},   // low pass along the dragon dens (shallower angle)
-    {p:[240,70,150],l:[170,2,70], d:6.0, e:'io'},   // rise into a wide hero shot of the grounds
-    /* 8. CLOSING RUN: SW of the chapel looking NE, then Sheldon+pond from the S, then E to hall & rink */
-    {p:[182,16,120],l:[214,5,92], d:5.0, e:'io'},   // SW of the chapel, gazing NE over it toward campus
-    {p:[200,13,116],l:[228,5,80], d:4.0, e:'io'},   // glide north-east, chapel & library sliding past
-    {p:[224,11,80], l:[228,4,58], d:4.5, e:'io'},   // Sheldon + the pond, seen low from the south
-    {p:[240,11,78], l:[240,3,60], d:3.5, e:'io'},   // track east along the pond's south shore
-    {p:[252,12,80], l:[252,4,54], d:4.0, e:'io'},   // the dining hall (Coit) from the south, low
-    {p:[262,13,82], l:[260,4,66], d:4.0, e:'io'},   // on to the Hockey Center / rink on its peninsula
-    {p:[250,40,96], l:[236,3,64], d:5.0, e:'io'},   // lift into a closing look back over pond & campus
-    /* 9. THE FINALE: settle low over the pond just east of Hargate looking WEST across the whole
-          campus, then rise up-and-back into a grand wide reveal of the entire map (the logo fades in). */
-    {p:[231,7,58],  l:[200,4,58],  d:3.5, e:'io'},   // low over the pond east of Hargate, gazing due west
-    {p:[250,34,60], l:[150,3,66],  d:4.0, e:'io'},   // begin the pull-up, the campus opening out west
-    {p:[300,86,66], l:[130,0,68],  d:6.5, e:'io'},   // rise high & back: the WHOLE map laid out below (logo pops)
-    {p:[314,104,68],l:[120,-2,68], d:4.0, e:'io'},   // hold the grand wide -- full map in frame under the logo
-];
-function cineEase(name,t){                      // t in 0..1
-  if(name==='io')return t<0.5?2*t*t:1-Math.pow(-2*t+2,2)/2;   // easeInOutQuad
-  if(name==='out')return 1-(1-t)*(1-t);
-  if(name==='in')return t*t;
-  return t;                                     // linear
-}
-/* total duration of a keyframe path (array of {d}) */
-function cinePathDur(P){ let s=0; for(let i=1;i<P.length;i++)s+=P[i].d; return s; }
-/* sample a keyframe path at time t -> {pos:[x,y,z], look:[x,y,z]} */
-function cineSamplePath(P,t){
-  let acc=0;
-  for(let i=1;i<P.length;i++){
-    const seg=P[i].d;
-    if(t<=acc+seg||i===P.length-1){
-      let u=seg>0?(t-acc)/seg:1; u=Math.max(0,Math.min(1,u));
-      const e=cineEase(P[i].e||'io',u);
-      const a=P[i-1], b=P[i];
-      const lerp3=(p,q)=>[p[0]+(q[0]-p[0])*e,p[1]+(q[1]-p[1])*e,p[2]+(q[2]-p[2])*e];
-      return {pos:lerp3(a.p,b.p), look:lerp3(a.l,b.l)};
-    }
-    acc+=seg;
-  }
-  const last=P[P.length-1]; return {pos:last.p.slice(), look:last.l.slice()};
-}
-
-/* ---- scene actors: a scripted, geared avatar posed by the MP animation code ---- */
-let _cineUid=0;
-function cineSpawnActor(gear, x, y, heading, act){
-  /* build the same rig the multiplayer layer uses for other players */
-  if(typeof MP==='undefined'||!MP.buildGearRig||!MP.applyRemoteGear||typeof makeHumanoid!=='function'){ return null; }
-  const rig=makeHumanoid({skin:0xe0b48a,shirt:0x3a5ad0,pants:0x2b3550,hair:0x5a3d22,belt:0x4a3520});
-  const G=MP.buildGearRig(rig);
-  const A={
-    _cineActor:true, uid:'cine'+(++_cineUid),
-    rig, gearRig:G, gear:gear||null, _gearKey:'',
-    x:x, y:y, px:x, py:y, h:heading||0, run:false, moving:false,
-    act:act||null, swingT:undefined, hp:99, mhp:99, in:null, tint:0x3a5ad0, last:Date.now(),
-  };
-  try{ MP.applyRemoteGear(G, rig, A.gear, A.act, A.tint); }catch(e){}
-  if(rig&&rig.g){ rig.g.position.set(x+0.5,groundH(x+0.5,y+0.5),y+0.5); rig.g.rotation.y=A.h; scene.add(rig.g); }
-  CINE.actors.push(A);
-  return A;
-}
-function cineActorSwing(A,now){ A.swingT=now; A._swActT=now; }     /* trigger one attack swing */
-function cineClearActors(){
-  for(const A of CINE.actors){ try{ if(A.rig&&A.rig.g)scene.remove(A.rig.g); }catch(e){} }
-  CINE.actors.length=0;
-}
-/* pose every live actor with the real MP animation each frame */
-function cinePoseActors(now){
-  const pose=(MP&&MP._test&&MP._test.poseRemote)?MP._test.poseRemote:null;
-  for(const A of CINE.actors){
-    A.px=A.x; A.py=A.y;
-    if(pose){ try{ pose(A, now); }catch(e){} }
-    if(A.rig&&A.rig.g){ A.rig.g.position.x=A.x+0.5; A.rig.g.position.z=A.y+0.5; }
-  }
-}
-/* ---- a scripted BOSS prop for combat scenes: a standalone mob model + a splat-target entity ---- */
-let _cineBoss=null;
-function cineSpawnBoss(kind, x, y, scale, heading, extra){
-  const grp=cineBuildMobMesh(kind, extra);
-  if(!grp) return null;
-  grp.scale.setScalar(scale||2.0);
-  grp.position.set(x+0.5, groundH(x+0.5,y+0.5), y+0.5);
-  grp.rotation.y=heading||0;
-  scene.add(grp);
-  /* the boss doubles as a splat 'ent': the splat renderer reads ent.px/ent.py */
-  _cineBoss={ _cineBoss:true, grp, px:x+0.0, py:y+0.0, x, y, kind };
-  return _cineBoss;
-}
-/* build a mob model like buildBestiaryMesh, but merge `extra` into the fake mob first so we can
-   set state that the model reads at build time (e.g. _csRise:1 to raise the sunk Cornerstone face). */
-function cineBuildMobMesh(kind, extra){
-  if(typeof makeRat!=='function'||typeof MOB_KINDS==='undefined'||!MOB_KINDS[kind])return null;
-  const fake=Object.assign({kind:kind,i:-9999,sx:165,sy:124,x:0,y:0,px:0,py:0,heading:0,alive:true,hp:1,maxhp:1,name:(MOB_KINDS[kind].name||kind)}, extra||{});
-  let grp=null;
-  try{ makeRat(fake); grp=fake._m&&fake._m.group; }catch(e){ return null; }
-  if(grp&&grp.parent)grp.parent.remove(grp);
-  for(let i=proxies.length-1;i>=0;i--){const p=proxies[i];if(p.userData&&p.userData.r===fake){if(p.parent)p.parent.remove(p);proxies.splice(i,1);}}
-  return grp;
-}
-/* a plain visual mob prop (e.g. the enforcers) -- model only, no splat target needed */
-function cineSpawnMobProp(kind, x, y, scale, heading, extra){
-  const grp=cineBuildMobMesh(kind, extra);
-  if(!grp) return null;
-  grp.scale.setScalar(scale||1.0);
-  grp.position.set(x+0.5, groundH(x+0.5,y+0.5), y+0.5);
-  grp.rotation.y=heading||0;
-  scene.add(grp);
-  const m={ _cineMob:true, grp, px:x, py:y, x, y, kind };
-  CINE.mobProps.push(m);
-  return m;
-}
-/* register a floating nameplate (name + combat level) drawn on the overlay each frame */
-function cineAddNameplate(ent, name, lvl, h){
-  CINE.mobLabels.push({ ent, name, lvl, h:(h!==undefined?h:2.6) });
-}
-function cineDrawNameplates(){
-  if(typeof octx==='undefined'||!CINE.mobLabels.length)return;
-  for(const L of CINE.mobLabels){
-    const e=L.ent; if(!e)continue;
-    const ax=(e.px!==undefined?e.px:e.x)+0.5, az=(e.py!==undefined?e.py:e.y)+0.5;
-    const gy=(typeof groundH==='function')?groundH(ax,az):0;
-    const p=(typeof proj==='function')?proj(ax, gy+L.h, az):null;
-    if(!p)continue;
-    octx.save();
-    octx.font='bold 13px Georgia'; octx.textAlign='center'; octx.textBaseline='middle';
-    const txt=L.name, sub='Level '+L.lvl;
-    octx.lineWidth=3; octx.strokeStyle='rgba(0,0,0,0.85)';
-    octx.strokeText(txt, p.x, p.y-8); octx.fillStyle='#ffe14a'; octx.fillText(txt, p.x, p.y-8);
-    octx.font='bold 11px Georgia';
-    octx.lineWidth=3; octx.strokeStyle='rgba(0,0,0,0.85)';
-    octx.strokeText(sub, p.x, p.y+7); octx.fillStyle='#ff8a6a'; octx.fillText(sub, p.x, p.y+7);
-    octx.restore();
-  }
-}
-function cineClearBoss(){
-  if(_cineBoss&&_cineBoss.grp){ try{ scene.remove(_cineBoss.grp); }catch(e){} }
-  _cineBoss=null;
-  for(const m of CINE.mobProps){ try{ if(m.grp)scene.remove(m.grp); }catch(e){} }
-  CINE.mobProps.length=0;
-  CINE.mobLabels.length=0;
-}
-/* push a hitsplat onto the cine boss (renders on the overlay via proj()) */
-function cineBossSplat(dmg, delay){
-  if(!_cineBoss||typeof splats==='undefined')return;
-  splats.push({ent:_cineBoss, dmg:dmg|0, t:performance.now()+(delay||0)});
-}
-/* fire a projectile from an actor toward the cine boss (arrow/spell), rendered on the overlay */
-function cineShootAtBoss(fromActor, kind, col, dur){
-  if(!_cineBoss||typeof spawnProjectile!=='function'||!fromActor)return;
-  spawnProjectile(fromActor.x+0.5, fromActor.y+0.5, _cineBoss, kind, col, dur||320);
-}
-/* clear any lingering splats/projectiles between scenes so nothing bleeds across cuts */
-function cineClearSplatsProjectiles(){
-  try{ if(typeof splats!=='undefined')splats.length=0; }catch(e){}
-  try{ if(typeof projectiles!=='undefined')projectiles.length=0; }catch(e){}
-  cineClearBoss();
-}
-
-/* ============================== THE SCENES ============================== */
-/* Each scene: {name, dur(s), setup(now), update(t,now), cam(t)->{pos,look}, teardown()} */
-CINE.scenes=[
-  /* ---------- SCENE 0: OPENING TITLE CARD ----------
-     A calm, slow push over the pond & campus while the Milville HERO logo fades in from black,
-     holds, then fades out into the mining scene. Mirrors the finale's logo, but at the top. */
-  {
-    name:'Milville \\u2014 Title',
-    dur:6.5,
-    setup(now){ const el=document.getElementById('cineLogo'); if(el)el.classList.remove('show'); this._logoDrawn=false; },
-    update(t,now){
-      const el=document.getElementById('cineLogo'); if(!el)return;
-      /* logo in ~0.6s, hold, out by ~1s before the scene ends */
-      const inAt=0.6, outAt=this.dur-1.2;
-      if(t>=inAt && t<outAt){
-        if(!this._logoDrawn){ try{ if(typeof drawLogo==='function')drawLogo('cineLogoCv'); }catch(e){} this._logoDrawn=true; }
-        el.classList.add('show');
-      } else { el.classList.remove('show'); if(t>=outAt)this._logoDrawn=false; }
-    },
-    cam(t){
-      /* slow push over the pond east of Hargate, looking WEST across the Grounds (as the finale settles) */
-      const k=Math.min(1,t/this.dur);
-      const ez=k*k*(3-2*k);                 /* smoothstep */
-      const px=236 - ez*7;                  /* drift gently west */
-      const py=20  - ez*4;                  /* and descend a touch */
-      const pz=58;
-      return { pos:[px,py,pz], look:[px-24, 9, pz-1] };
-    },
-    teardown(){ const el=document.getElementById('cineLogo'); if(el)el.classList.remove('show'); }
-  },
-  /* ---------- SCENE 1: mining at the Swenson Granite Quarry ----------
-     Open with a flyover from the EAST over the quarry (its furnace/anvil + the pit of ore),
-     descend down into the pit toward the miner, then settle into a slow player-level ORBIT as
-     they swing a rune pickaxe at the berrite rock. */
-  {
-    name:'Swenson Quarry \\u2014 Mining',
-    dur:11,
-    _miner:null,
-    setup(now){
-      const rx=85, ry=114;                           /* one tile south of the berrite rock (85,113) */
-      const gear={ weapon:'rune_pickaxe', head:'rune_full_helm', body:'rune_platebody',
-                   legs:'rune_platelegs', feet:'fighting_boots', cape:'cape_red', hands:'leather_vambraces' };
-      this._miner=cineSpawnActor(gear, rx, ry, Math.PI, {k:'gather',sk:'mining'});   /* face north (+ toward rock) */
-    },
-    update(t,now){ /* mining pose driven by MP.poseRemote via act.k==='gather' */ },
-    cam(t){
-      /* a slow player-level ORBIT around the miner (radius ~4.6, eye height) */
-      const cx=85.5, cz=114.5, gy=groundH(cx,cz);
-      const ang=-0.55 + t*0.34;
-      const R=4.6, camY=gy+2.3;
-      return { pos:[cx+Math.sin(ang)*R, camY, cz+Math.cos(ang)*R], look:[cx, gy+1.1, cz] };
-    },
-    teardown(){ cineClearActors(); }
-  },
-  /* ---------- SCENE 2: woodcutting in Drury Orchard ----------
-     A woodcutter chops a tree on the SOUTH EDGE of the orchard (so nothing blocks him), and the
-     camera ORBITS him at player level -- panning the whole orchard, White Farm to the north, and
-     the surrounding grounds. */
-  {
-    name:'Drury Orchard \\u2014 Woodcutting',
-    dur:12,
-    _wc:null,
-    setup(now){
-      /* chop the LONE corner tree (242,36) at the SW edge of the orchard -- clear of the birches,
-         unobstructed from every angle. Plain clothes + hair (no armour), just an axe in hand. */
-      const gear={ weapon:'rune_axe' };   /* only a weapon -> base humanoid shirt/pants/hair show */
-      this._wc=cineSpawnActor(gear, 242, 37, Math.PI, {k:'gather',sk:'woodcutting'});   /* face north at the tree */
-    },
-    update(t,now){ /* woodcutting chop driven by MP.poseRemote via act.k==='gather' */ },
-    cam(t){
-      const ax=242.5, az=37.5, gy=groundH(ax,az);     /* the woodcutter */
-      /* slow player-level ORBIT so the whole area pans behind him: orchard rows + Drury to the NE,
-         White Farm to the N, open grounds around. */
-      const ang=2.4 - t*0.34;
-      const R=5.0, camY=gy+2.4;
-      return { pos:[ax+Math.sin(ang)*R, camY, az+Math.cos(ang)*R], look:[ax, gy+1.2, az] };
-    },
-    teardown(){ cineClearActors(); }
-  },
-  /* ---------- SCENE 3: fishing south of Sheldon ----------
-     An angler on the shore just south of Sheldon fishes the pond. The camera pans/orbits so the
-     landmarks sweep behind them: Hargate to the SOUTH-WEST, then Sheldon to the NORTH. */
-  {
-    name:'By the Pond \\u2014 Fishing',
-    dur:14,
-    _ang:null,
-    setup(now){
-      /* stand the angler on the shore WEST of the fishing spot (222,52), facing EAST toward the
-         water. Plain clothes + a fishing rod. */
-      const gear={ /* no weapon -> hands free; the fishing rod is shown by the 'fishing' act */ };
-      this._ang=cineSpawnActor(gear, 221, 52, Math.PI/2, {k:'gather',sk:'fishing'});   /* face east (+x) at the water */
-    },
-    update(t,now){ /* fishing pose (rod out, gentle bob) driven by MP.poseRemote via act.sk==='fishing' */ },
-    cam(t){
-      const ax=221.5, az=52.5, gy=groundH(ax,az);     /* the angler */
-      /* PHASE A (0-6s): from the NORTH-EAST looking SW past the angler, so HARGATE (209,61, SW) sits
-         behind them across the water; slow drift. */
-      if(t<6){ const u=cineEase('io',t/6);
-        const ang=-2.3 + 0.5*u;                        /* camera roughly NE of the angler, easing round */
-        const R=6.2, camY=gy+2.6;
-        return { pos:[ax+Math.sin(ang)*R, camY, az+Math.cos(ang)*R], look:[ax-1.5, gy+1.2, az+1.5] }; }
-      /* PHASE B (6s+): swing around to the SOUTH looking NORTH, so SHELDON (220,41, N) rises behind
-         the angler. */
-      const u=cineEase('io',(t-6)/8);
-      const ang=-1.8 + (Math.PI+0.4)*u;                /* sweep around to south-of-angler */
-      const R=6.2-0.6*u, camY=gy+2.6-0.3*u;
-      return { pos:[ax+Math.sin(ang)*R, camY, az+Math.cos(ang)*R], look:[ax, gy+1.2, az-1.0] };
-    },
-    teardown(){ cineClearActors(); }
-  },
-  /* ---------- SCENE 4: the First Rector boss fight (Emberdeep arena) ----------
-     Three endgame players fight the First Rector in the Heart of the Emberdeep: a full-dragon melee
-     with the Emberbrand + Shield of the Mountain, an enchanted-robes mage with the Cindermaw and an
-     Aurora cape, and a black-d'hide ranger wielding Ashfang. Real combat animations; hitsplats land
-     on the boss; the mage/ranger loose spells and arrows. The camera sweeps the arena.
-     NOTE: this scene briefly enters the volcano floor-4 render state (silently) so the arena shows;
-     the live boss stays dormant/hidden -- all the combat here is scripted for the camera. */
-  {
-    name:'The Heart of the Emberdeep \\u2014 Rector',
-    dur:16,
-    combat:true,                                     /* keep #overlay visible so splats/projectiles render */
-    _saved:null, _boss:null, _melee:null, _mage:null, _ranger:null, _lastShot:0,
-    setup(now){
-      /* --- remember the world state so teardown can restore it exactly --- */
-      this._saved={ inV:(typeof inVolcano!=='undefined'&&inVolcano), floor:(typeof _lastVolcFloor!=='undefined'?_lastVolcFloor:0),
-                    px:player.x, py:player.y, fogN:scene.fog.near, fogF:scene.fog.far, silent:(typeof _volcSilentRestore!=='undefined'&&_volcSilentRestore) };
-      /* --- silently drop into the Emberdeep and show the arena (chamber 4) --- */
-      try{
-        if(typeof _volcSilentRestore!=='undefined')_volcSilentRestore=true;
-        if(typeof enterVolcano==='function' && !this._saved.inV)enterVolcano();
-        if(typeof _volcApplyFloor==='function'){ _volcApplyFloor(4); if(typeof _lastVolcFloor!=='undefined')_lastVolcFloor=4; }
-        /* hide the live (dormant) boss + enforcers so only our staged fight shows */
-        if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=false;
-        if(typeof _rectorGuards!=='undefined')for(const gd of _rectorGuards)if(gd&&gd._m&&gd._m.group)gd._m.group.visible=false;
-      }catch(e){}
-      /* --- the boss, centre arena, facing the melee (south) --- */
-      this._boss=cineSpawnBoss('master_reforged', 219, 96, 2.2, 0);
-      /* --- two Discipline Committee Enforcers flanking the throne behind the boss (north) --- */
-      cineSpawnMobProp('committee_guard', 215, 91, 1.5, Math.PI);
-      cineSpawnMobProp('committee_guard', 223, 91, 1.5, Math.PI);
-      /* --- floating nameplates (name + combat level) for the boss + enforcers --- */
-      if(this._boss)cineAddNameplate(this._boss, (MOB_KINDS.master_reforged&&MOB_KINDS.master_reforged.name)||'The First Rector', MOB_KINDS.master_reforged.cmb, 4.6);
-      for(const m of CINE.mobProps)cineAddNameplate(m, (MOB_KINDS.committee_guard&&MOB_KINDS.committee_guard.name)||'Discipline Committee Enforcer', MOB_KINDS.committee_guard.cmb, 3.2);
-      /* --- three BIS attackers spaced around the boss --- */
-      const melee={ weapon:'emberbrand', shield:'shield_mountain', head:'dragon_full_helm', body:'dragon_platebody',
-                    legs:'dragon_platelegs', feet:'ember_boots', cape:'ember_cape', hands:'ember_gauntlets' };
-      const mage ={ weapon:'cindermaw', head:'enchanted_hat', body:'enchanted_top', legs:'enchanted_robe',
-                    feet:'ember_boots', cape:'aurora_cape' };
-      const ranger={ weapon:'ashfang', head:'black_dhide_coif', body:'black_dhide_body', legs:'black_dhide_chaps',
-                     feet:'fighting_boots', cape:'cape_green', hands:'black_dhide_vambraces' };
-      /* melee SOUTH (in the boss's face), mage NW, ranger NE -- spaced around the centre (219,96) */
-      /* melee SOUTH close-in, mage WEST flank, ranger EAST flank -- all clear of the 4 siphon pillars
-         (213/225, 93/103) and near the boss at (219,96); each faces the boss. */
-      this._melee =cineSpawnActor(melee,  219, 99, Math.PI,     {k:'attack'});                /* faces N at boss */
-      this._mage  =cineSpawnActor(mage,   216, 97, 1.893,       {k:'attack',st:'magic'});     /* W flank, faces boss */
-      this._ranger=cineSpawnActor(ranger, 222, 97, -1.893,      {k:'attack',st:'ranged'});    /* E flank, faces boss */
-      /* give each a starting swing time on a stagger */
-      const nowP=(typeof performance!=='undefined')?performance.now():0;
-      if(this._melee)this._melee.swingT=nowP;
-      if(this._mage)this._mage.swingT=nowP+800;
-      if(this._ranger)this._ranger.swingT=nowP+1600;
-      this._lastShot=nowP;
-    },
-    update(t,now){
-      const nowP=now||((typeof performance!=='undefined')?performance.now():0);   /* SAME clock poseRemote uses */
-      /* each attacker swings on its own cadence; each swing lands a hitsplat on the boss. Cadences are
-         kept short & lively for the camera (the melee swing anim window is ~720ms, so <=1600ms reads well). */
-      const swing=(A,period,dmgLo,dmgHi,delay)=>{ if(!A)return; if(nowP-(A.swingT||-1e9)>=period){ A.swingT=nowP; A._swActT=nowP; cineBossSplat(dmgLo+((Math.random()*(dmgHi-dmgLo))|0), delay||0); } };
-      swing(this._melee, 1500, 18, 42, 0);            /* frequent, visible sword swings */
-      swing(this._mage,  2000, 12, 30, 340);          /* spell traveltime before the splat */
-      swing(this._ranger,1800, 14, 34, 300);          /* arrow traveltime before the splat */
-      /* fire projectiles from the mage (fire spell) + ranger (arrow) on their cadence */
-      if(this._mage && nowP-(this._mage._projT||0)>2000){ this._mage._projT=nowP; cineShootAtBoss(this._mage,'magic','#ff6a2a',360); }
-      if(this._ranger && nowP-(this._ranger._projT||0)>1800){ this._ranger._projT=nowP; cineShootAtBoss(this._ranger,'arrow','#e8e0c0',300); }
-    },
-    cam(t){
-      /* a slow orbit around the fight, set a touch high so all three attackers + the towering boss
-         read; dips lower as it comes round the front. Arena centre ~ (219.5, 96.5). */
-      const cx=219.5, cz=96.5, gy=(typeof _volcFY!=='undefined'?_volcFY:groundH(cx,cz));
-      const ang=0.6 + t*0.30;                          /* ~ 275 degrees over 16s */
-      const R=11.5, camY=gy+6.5 - 1.5*Math.sin(cineEase('io',Math.min(1,t/8)));
-      return { pos:[cx+Math.sin(ang)*R, camY, cz+Math.cos(ang)*R], look:[cx, gy+2.4, cz] };
-    },
-    teardown(){
-      cineClearActors();
-      cineClearBoss();
-      try{ if(typeof splats!=='undefined')splats.length=0; if(typeof projectiles!=='undefined')projectiles.length=0; }catch(e){}
-      /* restore the world state we saved in setup */
-      const s=this._saved;
-      try{
-        if(s){
-          if(s.inV){ if(typeof _volcApplyFloor==='function'){ _volcApplyFloor(s.floor); if(typeof _lastVolcFloor!=='undefined')_lastVolcFloor=s.floor; } }
-          else if(typeof exitVolcano==='function' && typeof inVolcano!=='undefined' && inVolcano){ exitVolcano(); }
-          player.x=s.px; player.y=s.py; player.px=s.px; player.py=s.py;
-          scene.fog.near=s.fogN; scene.fog.far=s.fogF;
-          if(typeof _volcSilentRestore!=='undefined')_volcSilentRestore=s.silent;
-        }
-      }catch(e){}
-      this._boss=this._melee=this._mage=this._ranger=null;
-    }
-  },
-  /* ---------- SCENE 5: a tour of the Delve (raid) ----------
-     ~5s each of a PUZZLE room, a COMBAT room, and the CORNERSTONE boss chamber, each framed from a
-     medium overhead angle (looking down into the room, not straight above). Enters the raid render
-     state silently, builds floor 1 for the puzzle+combat rooms, then floor 3 for the cornerstone. */
-  {
-    name:'The Delve \\u2014 Rooms',
-    dur:18,
-    combat:true,                                     /* boss sub-shot wants splats/overlay visible */
-    _saved:null, _phase:-1, _puz:null, _com:null, _boss:null, _bossF:null,
-    _enterRaidFloor(fl){
-      try{
-        if(typeof raidBuildInterior==='function' && raid && raid.graph){
-          if(raid.floor!==fl){ raid.floor=fl; raid.rooms=raid.graph.floors[fl-1].rooms; raid.edges=raid.graph.floors[fl-1].edges; }
-          raidBuildInterior(raid.graph, fl);
-          if(typeof _raidFlatten==='function')_raidFlatten();
-          raid.seen={};
-          for(const rm of raid.rooms){ if(typeof raidRevealRoom==='function')raidRevealRoom(rm.idx); }
-        }
-      }catch(e){}
-    },
-    _roomOfType(type){
-      if(!raid||!raid.rooms)return null;
-      const rm=raid.rooms.find(r=>r.type===type); if(!rm)return null;
-      return {rm, f:raidRoomFootprint(rm.idx)};
-    },
-    setup(now){
-      this._saved={ inR:(typeof inRaid!=='undefined'&&inRaid), px:player.x, py:player.y,
-                    fogN:scene.fog.near, fogF:scene.fog.far,
-                    raidRestore:(typeof inRaidRestore!=='undefined'&&inRaidRestore) };
-      try{
-        if(typeof inRaidRestore!=='undefined')inRaidRestore=true;
-        /* seed 7 -> floor 1 has the ICE PLANT puzzle (ice/brazier room), not the spike-pit pipe run */
-        if(typeof raidApplySeed==='function')raidApplySeed(7, false, (player&&player.uid)||'cine', false, 90, 1);
-        if(typeof inRaid!=='undefined')inRaid=true;
-        if(typeof raidTiles!=='undefined')tiles=raidTiles;
-        if(typeof worldGroup!=='undefined')worldGroup.visible=false;
-        if(typeof raidGroup!=='undefined')raidGroup.visible=true;
-        if(typeof volcGroup!=='undefined')volcGroup.visible=false;
-        if(typeof waterMesh!=='undefined'&&waterMesh)waterMesh.visible=false;
-        if(typeof _raidLightsOn==='function')_raidLightsOn();
-        raid.floor=1;
-        this._enterRaidFloor(1);
-        /* hide raid NPCs (Mr. Ellison lives in the lobby) so none stand around in the toured rooms */
-        try{ if(typeof npcs!=='undefined')for(const n of npcs){ if(n.interior==='raid'&&n._g)n._g.visible=false; } }catch(e){}
-        /* pick the ice-plant puzzle room specifically; combat = the first combat room */
-        const puz=raid.rooms.find(r=>r.type==='puzzle');
-        this._puz=puz?{rm:puz,f:raidRoomFootprint(puz.idx)}:this._roomOfType('puzzle');
-        this._com=this._roomOfType('combat');
-      }catch(e){}
-      this._phase=-1;
-    },
-    /* geared delver loadouts (rotated so each shot has variety) */
-    _delverGear(role){
-      if(role==='melee') return {weapon:'dragon_scimitar',shield:'rune_kiteshield',head:'rune_full_helm',body:'rune_platebody',legs:'rune_platelegs',feet:'fighting_boots',cape:'cape_red',hands:'leather_vambraces'};
-      if(role==='range') return {weapon:'ashfang',head:'black_dhide_coif',body:'black_dhide_body',legs:'black_dhide_chaps',feet:'fighting_boots',cape:'cape_green',hands:'black_dhide_vambraces'};
-      if(role==='mage')  return {weapon:'cindermaw',head:'enchanted_hat',body:'enchanted_top',legs:'enchanted_robe',feet:'ember_boots',cape:'aurora_cape'};
-      return {weapon:'rune_pickaxe',head:'rune_full_helm',body:'rune_platebody',legs:'rune_platelegs',feet:'fighting_boots',cape:'cape_blue',hands:'leather_vambraces'};
-    },
-    _stage(f, specs){
-      cineClearActors();
-      const cx=Math.round(f.cx), cz=Math.round(f.cz);
-      for(const sp of specs){ cineSpawnActor(this._delverGear(sp.role), cx+sp.dx, cz+sp.dz, sp.h, sp.act); }
-    },
-    update(t,now){
-      const nowP=now||((typeof performance!=='undefined')?performance.now():0);
-      const phase=t<5?0:(t<10?1:2);
-      if(phase!==this._phase){
-        this._phase=phase;
-        cineClearBoss(); cineClearActors();
-        if(phase===0 && this._puz){
-          /* PUZZLE (ice plant): a geared delver works the brazier mechanism, another watches */
-          this._stage(this._puz.f, [
-            {role:'melee', dx:0,  dz:2, h:Math.PI,       act:{k:'gather',sk:'mining'}},
-            {role:'mage',  dx:-2, dz:1, h:Math.PI*0.82,  act:null} ]);
-        } else if(phase===1 && this._com){
-          /* COMBAT: two geared delvers fight a pair of spawned mobs */
-          const f=this._com.f, cx=Math.round(f.cx), cz=Math.round(f.cz);
-          this._stage(f, [
-            {role:'melee', dx:-1, dz:2, h:Math.PI,      act:{k:'attack'}},
-            {role:'range', dx:2,  dz:2, h:-Math.PI*0.85,act:{k:'attack',st:'ranged'}} ]);
-          /* spawn the actual room mobs so there's something to fight (visual props) */
-          cineSpawnMobProp('ember_imp', cx-1, cz-1, 1.0, 0);
-          cineSpawnMobProp('committee_guard', cx+2, cz-1, 1.1, Math.PI*0.2);
-        } else if(phase===2){
-          /* CORNERSTONE: build floor 3, spawn the real Olm-style targets (two hands + the face),
-             and three geared delvers attacking it */
-          try{ this._enterRaidFloor(3); }catch(e){}
-          const b=this._roomOfType('boss'); this._bossF=b?b.f:(this._puz&&this._puz.f);
-          if(this._bossF){
-            const sp=(typeof _CS_SPOTS==='function')?_CS_SPOTS(this._bossF):null;
-            const cx=Math.round(this._bossF.cx), cz=Math.round(this._bossF.cz);
-            const face=sp?sp.face:[cx,cz-4], lh=sp?sp.lhand:[cx-6,cz+1], rh=sp?sp.rhand:[cx+6,cz+1];
-          /* the face is the splat target + carries the nameplate; RAISE it (_csRise:1) so it's fully
-             out of its hole and awake, not the sunk 'sleeping' crown-only default. */
-          this._boss=cineSpawnBoss('raid_cs_face', face[0], face[1], 1.7, 0, {_csRise:1});
-          cineSpawnMobProp('raid_cs_lhand', lh[0], lh[1], 1.5, 0.4);
-          cineSpawnMobProp('raid_cs_rhand', rh[0], rh[1], 1.5, -0.4);
-          if(this._boss&&typeof MOB_KINDS!=='undefined')cineAddNameplate(this._boss, (MOB_KINDS.raid_cs_face&&MOB_KINDS.raid_cs_face.name)||'The Cornerstone', MOB_KINDS.raid_cs_face.cmb, 3.4);
-          /* hide raid NPCs (Ellison) AND all lobby/raid apparatus (the lore signpost, hoard, exit,
-             portal, banks, etc.) so the arena is clean -- these are room-0/floor-1 props bleeding in. */
-          try{ if(typeof npcs!=='undefined')for(const n of npcs){ if(n.interior==='raid'&&n._g)n._g.visible=false; } }catch(e){}
-          try{ if(typeof objects!=='undefined')for(const o of objects){ if(/^raid_/.test(o.def)&&o._m&&o._m.group)o._m.group.visible=false; } }catch(e){}
-            /* the same three endgame delvers, SIDE BY SIDE in a row facing the face (like the Rector fight) */
-            cineClearActors();
-            const _row=cz+3;                          /* one row, south of the face, all facing north */
-            this._d1=cineSpawnActor(this._delverGear('melee'), cx-3, _row, Math.PI, {k:'attack'});
-            this._d2=cineSpawnActor(this._delverGear('mage'),  cx,   _row, Math.PI, {k:'attack',st:'magic'});
-            this._d3=cineSpawnActor(this._delverGear('range'), cx+3, _row, Math.PI, {k:'attack',st:'ranged'});
-          }
-        }
-      }
-      if(phase>=1){ for(const A of CINE.actors){ if(A.act&&A.act.k==='attack'&&nowP-(A.swingT||-1e9)>=1600){ A.swingT=nowP; A._swActT=nowP; if(phase===2&&this._boss)cineBossSplat(8+((Math.random()*22)|0), 260); } } }
-      /* keep the lobby signpost/apparatus hidden every frame of the cornerstone shot (in case a reveal re-shows it) */
-      if(phase===2){ try{ if(typeof objects!=='undefined')for(const o of objects){ if(/^raid_/.test(o.def)&&o._m&&o._m.group&&o._m.group.visible)o._m.group.visible=false; } }catch(e){} }
-    },
-    cam(t){
-      /* medium overhead: look down into the current room from a raised 3/4 angle. */
-      let f=this._puz&&this._puz.f;
-      if(t>=10)f=this._bossF||f; else if(t>=5)f=this._com&&this._com.f||f;
-      if(!f)return {pos:[150,40,70],look:[150,4,70]};
-      const cx=f.cx, cz=f.cz, gy=(typeof groundH==='function')?groundH(cx,cz):0;
-      /* ----- CORNERSTONE shot (t>=10, 8s): ONE steady MEDIUM-DISTANCE OVERHEAD shot of the fight from
-         the entrance side (south) looking north at the boss + the three delvers, with a gentle pan. ----- */
-      if(t>=10){
-        const u=(t-10)/8;                                   /* 0..1 across the 8s */
-        const fz=cz-4;                                      /* the face sits ~4 tiles north of centre */
-        const ang=-0.28 + cineEase('io',u)*0.56;            /* slow pan: arc gently from SW to SE, staying south */
-        const R=12.0, camY=gy+10.0;                         /* medium distance, overhead (~40deg down) */
-        return { pos:[cx+Math.sin(ang)*R, camY, cz+Math.cos(ang)*R], look:[cx, gy+1.4, fz+1.5] };
-      }
-      const local=(t<5?t:(t-5))/5;                          /* 0..1 within the current 5s shot */
-      const ang=(t<5?0.4:2.2) + local*0.5;
-      /* COMBAT shot pulls UP & OUT over its last ~1.5s so the adjacent rooms come into view */
-      let R=9.5, camY=gy+8.0;
-      if(t>=5&&t<10){ const zoom=Math.max(0,(local-0.6)/0.4); R=9.5+zoom*16; camY=gy+8.0+zoom*10; }
-      return { pos:[cx+Math.sin(ang)*R, camY, cz+Math.cos(ang)*R], look:[cx, gy+0.8, cz] };
-    },
-    teardown(){
-      cineClearActors(); cineClearBoss();
-      try{ if(typeof splats!=='undefined')splats.length=0; if(typeof projectiles!=='undefined')projectiles.length=0; }catch(e){}
-      const s=this._saved;
-      try{
-        if(s && !s.inR && typeof inRaid!=='undefined' && inRaid){
-          /* use the game's OWN full raid-exit: restores tiles, world objects, water, and crucially the
-             OUTDOOR LIGHTING + fog via _raidLightsOff (my hand-rolled restore left it 'night' + showed
-             interior props). */
-          if(typeof exitRaid==='function')exitRaid();
-          else { inRaid=false; if(typeof TILES_MAIN!=='undefined')tiles=TILES_MAIN; if(typeof _raidLightsOff==='function')_raidLightsOff(); if(typeof worldGroup!=='undefined')worldGroup.visible=true; if(typeof raidGroup!=='undefined')raidGroup.visible=false; if(typeof waterMesh!=='undefined'&&waterMesh)waterMesh.visible=true; if(typeof raidReset==='function')raidReset(); }
-        }
-        if(s){
-          if(typeof inRaidRestore!=='undefined')inRaidRestore=s.raidRestore;
-          player.x=s.px; player.y=s.py; player.px=s.px; player.py=s.py;
-          scene.fog.near=s.fogN; scene.fog.far=s.fogF;
-        }
-      }catch(e){}
-      this._puz=this._com=this._boss=this._bossF=null;
-    }
-  },
-  /* ---------- FINALE: the grand map flythrough ---------- */
-  {
-    name:'The Grounds \\u2014 Flythrough',
-    dur:cinePathDur(CINE_FLYTHROUGH),
-    setup(now){ const el=document.getElementById('cineLogo'); if(el)el.classList.remove('show'); this._logoDrawn=false; },
-    update(t,now){
-      /* fade the Milville HERO logo (from the loading screen) in over the final wide reveal (last ~9s) */
-      const el=document.getElementById('cineLogo'); if(!el)return;
-      const showFrom=this.dur-6.5;   /* logo fades in during the wide reveal and holds ~6.5s to the end */
-      if(t>=showFrom){
-        if(!this._logoDrawn){ try{ if(typeof drawLogo==='function')drawLogo('cineLogoCv'); }catch(e){} this._logoDrawn=true; }
-        el.classList.add('show');
-      } else { el.classList.remove('show'); this._logoDrawn=false; }
-    },
-    cam(t){ return cineSamplePath(CINE_FLYTHROUGH,t); },
-    teardown(){ const el=document.getElementById('cineLogo'); if(el)el.classList.remove('show'); }
-  },
-];
-function cineSceneDur(i){ const s=CINE.scenes[i]; return s?(s.dur||cinePathDur(CINE_FLYTHROUGH)):0; }
-/* ---- scrubber helpers: treat the whole reel as one timeline ---- */
-function cineTotalDur(){ let d=0; for(let i=0;i<CINE.scenes.length;i++)d+=cineSceneDur(i); return d; }
-function cineGlobalTime(){ let d=0; for(let i=0;i<CINE.si;i++)d+=cineSceneDur(i); return d+Math.min(CINE.st,cineSceneDur(CINE.si)); }
-function cineSeekTo(globalT){
-  if(!CINE.on)return;
-  const total=cineTotalDur();
-  globalT=Math.max(0,Math.min(total-0.001,globalT));
-  /* find the scene that contains globalT */
-  let acc=0, target=0, local=0;
-  for(let i=0;i<CINE.scenes.length;i++){ const d=cineSceneDur(i); if(globalT<acc+d){ target=i; local=globalT-acc; break; } acc+=d; target=i; local=d; }
-  const now=(typeof performance!=='undefined')?performance.now():0;
-  if(target!==CINE.si){ cineEnterScene(target, now); }   /* rebuilds scene state (teardown prev + setup new) */
-  CINE.st=local;
-  /* run the scene once at the new time so visuals/actors snap to it immediately */
-  const s=CINE.scenes[CINE.si];
-  if(s){ if(s.update){ try{ s.update(CINE.st, now); }catch(e){} } cinePoseActors(now); }
-}
-function cineTogglePause(){ CINE.paused=!CINE.paused; cineUpdateBar(); }
-function _cineFmt(s){ s=Math.max(0,Math.floor(s)); return Math.floor(s/60)+':'+String(s%60).padStart(2,'0'); }
-function cineUpdateBar(){
-  const wrap=document.getElementById('cineScrub'); if(!wrap)return;
-  wrap.classList.toggle('on', !!CINE.on && !CINE._barHidden);
-  if(!CINE.on)return;
-  const total=cineTotalDur(), cur=cineGlobalTime(), pct=total>0?(cur/total*100):0;
-  const fill=document.getElementById('cineFill'), handle=document.getElementById('cineHandle'),
-        tlabel=document.getElementById('cineTime'), pb=document.getElementById('cinePauseBtn');
-  if(fill)fill.style.width=pct+'%';
-  if(handle)handle.style.left=pct+'%';
-  if(tlabel)tlabel.textContent=_cineFmt(cur)+' / '+_cineFmt(total);
-  if(pb)pb.textContent=CINE.paused?'▶':'❚❚';   /* play triangle / pause bars */
-}
-function cineToggleBarHidden(){ CINE._barHidden=!CINE._barHidden; cineUpdateBar(); }
-function cineInitScrub(){
-  const track=document.getElementById('cineTrack'); if(!track||track._wired)return; track._wired=true;
-  const pb=document.getElementById('cinePauseBtn'), hb=document.getElementById('cineHideBtn');
-  if(pb)pb.addEventListener('click',e=>{ e.stopPropagation(); cineTogglePause(); });
-  if(hb)hb.addEventListener('click',e=>{ e.stopPropagation(); cineToggleBarHidden(); });
-  let dragging=false, wasPaused=false;
-  const seekFromEvent=(clientX)=>{
-    const r=track.getBoundingClientRect(); const f=Math.max(0,Math.min(1,(clientX-r.left)/r.width));
-    cineSeekTo(f*cineTotalDur()); cineUpdateBar();
-  };
-  const down=(x)=>{ dragging=true; wasPaused=CINE.paused; CINE.paused=true; seekFromEvent(x); };
-  const move=(x)=>{ if(dragging)seekFromEvent(x); };
-  const up=()=>{ if(dragging){ dragging=false; CINE.paused=wasPaused; cineUpdateBar(); } };
-  track.addEventListener('mousedown',e=>{ e.preventDefault(); down(e.clientX); });
-  window.addEventListener('mousemove',e=>move(e.clientX));
-  window.addEventListener('mouseup',up);
-  track.addEventListener('touchstart',e=>{ if(e.touches[0]){ down(e.touches[0].clientX); } },{passive:true});
-  window.addEventListener('touchmove',e=>{ if(dragging&&e.touches[0])move(e.touches[0].clientX); },{passive:true});
-  window.addEventListener('touchend',up);
-}
-function setCinematicHUD(hide, keepOverlay){
-  const ids=['title','side','chat','chatinputrow','chattabs','overlay','hovertext','partytimer'];
-  for(const id of ids){ const el=document.getElementById(id); if(!el)continue;
-    /* #overlay carries hitsplats + projectiles; combat scenes need it VISIBLE even while the rest of the HUD is hidden */
-    const keep=(id==='overlay'&&keepOverlay);
-    el.style.display=(hide&&!keep)?'none':''; }
-  const vw=document.getElementById('viewwrap'); if(vw)vw.style.cursor=hide?'none':'';
-  CINE.hudHidden=hide;
-}
-function cineApplyHUDForScene(i){
-  const s=CINE.scenes[i]; setCinematicHUD(true, !!(s&&s.combat));
-}
-function cineEnterScene(i,now){
-  if(CINE.scenes[i-1]&&CINE.scenes[i-1].teardown){ try{CINE.scenes[i-1].teardown();}catch(e){} }
-  cineClearActors();
-  cineClearSplatsProjectiles();
-  CINE.si=i; CINE.st=0;
-  const s=CINE.scenes[i];
-  if(CINE.on)cineApplyHUDForScene(i);   /* show/hide the overlay per this scene's combat flag */
-  if(s&&s.setup){ try{ s.setup(now);}catch(e){} }
-}
-function startCinematic(){
-  if(CINE.on)return;
-  CINE.on=true;
-  CINE.paused=false; CINE._barHidden=false;
-  CINE.prevFar=camera.far;
-  camera.far=520; camera.updateProjectionMatrix();     // see the whole map, not just nearby
-  setCinematicHUD(true);
-  cineInitScrub();
-  /* score the reel with the school hymn (Love Divine); remember the player's music choice to restore. */
-  try{ CINE._prevMusicSel=musicSel; CINE._prevMusicManual=musicManual; CINE._musicKey='love_divine';
-    if(typeof TRACKS!=='undefined'&&TRACKS.love_divine){ musicManual=true; musicSel=ALL_TRACKS.indexOf('love_divine');
-      if(typeof startMusic==='function')startMusic('love_divine'); } }catch(e){}
-  cineEnterScene(0, (typeof performance!=='undefined'?performance.now():0));
-  cineUpdateBar();
-  try{ if(typeof msg==='function')msg('Cinematic reel — Space pauses, drag to seek, H hides the bar, Esc exits.','#caa23a'); }catch(e){}
-}
-function stopCinematic(){
-  if(!CINE.on)return;
-  CINE.on=false; CINE.paused=false;
-  const _sb=document.getElementById('cineScrub'); if(_sb)_sb.classList.remove('on');
-  if(CINE.scenes[CINE.si]&&CINE.scenes[CINE.si].teardown){ try{CINE.scenes[CINE.si].teardown();}catch(e){} }
-  cineClearActors();
-  const _lg=document.getElementById('cineLogo'); if(_lg)_lg.classList.remove('show');
-  camera.far=CINE.prevFar||150; camera.updateProjectionMatrix();
-  setCinematicHUD(false);
-  /* restore the player's prior music selection */
-  try{ if(CINE._prevMusicManual!==undefined){ musicManual=CINE._prevMusicManual; musicSel=CINE._prevMusicSel||0; }
-    if(typeof updateMusic==='function')updateMusic(); }catch(e){}
-}
-function toggleCinematic(){ CINE.on?stopCinematic():startCinematic(); }
-/* auto-start if the page was opened with ?cinematic=1 (or #cinematic) */
-try{
-  const _cq=(location.search+location.hash);
-  if(/[?#&]cinematic(=1)?\b/.test(_cq)){ window.addEventListener('load',()=>{ setTimeout(startCinematic,600); }); }
-}catch(e){}
 
 let lastTouch=0;
 const keys=new Set();
@@ -23658,11 +22929,6 @@ let chatTyping=false;
 const KEYMAP={arrowleft:'L',a:'L',arrowright:'R',d:'R',arrowup:'U',w:'U',arrowdown:'D',s:'D'};
 window.addEventListener('keydown',e=>{
   if(chatTyping)return;
-  if(e.key==='c'||e.key==='C'){ toggleCinematic(); return; }
-  if(CINE.on&&(e.key===' '||e.code==='Space')){ e.preventDefault(); cineTogglePause(); return; }
-  if(CINE.on&&(e.key==='h'||e.key==='H')){ cineToggleBarHidden(); return; }
-  if(e.key==='Escape'&&CINE.on){ stopCinematic(); return; }
-  if(CINE.on)return;                    // swallow movement keys while flying
   const k=KEYMAP[e.key.toLowerCase()];
   if(k){
     if(e.key.startsWith('Arrow'))e.preventDefault();
@@ -34429,6 +33695,13 @@ function raidDrinkWell(o){
    cellar door, which saveObject already wrote as x/y. Never the wilderness. */
 function restoreRaid(ss){
   if(!ss||!RAID_ENABLED)return false;
+  /* ** LOBBY LOGOFF -> SURFACE, NEVER THE BOSS ROOM. ** If the delve was never started (you were
+     still in the assembly lobby, gate shut), there is no run to resume. Rebuilding a floor here is
+     what dropped Sam into the Cornerstone: the lobby and every floor share room 0's tiles, and a
+     stale raid.floor (from a previous run on this raid object) could be floor-last, so "resume where
+     you stood" = room 0 of the last floor = the boss. A player who quit in the LOBBY has committed to
+     nothing; put them back at the cellar door on the surface (x/y already written there by saveGame). */
+  if(!(ss.st|0)){ return false; }
   try{
     inRaidRestore=true;
     const g=raidApplySeed(ss.sd>>>0, !!ss.lg, player.uid, true, ss.cl|0);
@@ -35431,19 +34704,19 @@ function raidApplySeed(seed, large, leaderUid, fromPeer, combatLvl, partySize, r
      perfectly into every later run's boss room ('the ladder had already spawned'). Purge exits and
      strongboxes -- objects, models AND their pick proxies -- at the one gate every run passes through. */
   if(typeof objects!=='undefined')for(let _i=objects.length-1;_i>=0;_i--){ const _o=objects[_i];
-    /* ** SPARE THE LOBBY'S LEAVE-LADDER. ** The permanent cellar-exit at (26,60) is created once at
+    /* ** SPARE THE LOBBY'S LEAVE-LADDER. ** The permanent cellar-exit at (28,59) is created once at
        world init; purging it (as we do the boss-room exit) left players with no way out of the lobby.
        Only clear the boss-room exit ladder + strongboxes, never the fixed lobby ladder. */
-    const _isLobbyLadder=(_o&&_o.def==='raid_exit'&&_o.x===26&&_o.y===60);
+    const _isLobbyLadder=(_o&&_o.def==='raid_exit'&&_o.x===28&&_o.y===59);
     if(_o&&(_o.def==='raid_exit'||_o.def==='raid_chest')&&!_isLobbyLadder){
       if(_o._m&&_o._m.group&&_o._m.group.parent)_o._m.group.parent.remove(_o._m.group);
       if(typeof proxies!=='undefined')for(let _j=proxies.length-1;_j>=0;_j--)
         if(proxies[_j]&&proxies[_j].userData&&proxies[_j].userData.o===_o)proxies.splice(_j,1);
       objects.splice(_i,1);
     } }
-  /* belt-and-braces: if the lobby ladder ever went missing, put it back at (26,60). */
-  if(typeof objects!=='undefined'&&!objects.some(_o=>_o&&_o.def==='raid_exit'&&_o.x===26&&_o.y===60)){
-    const _lx=addObj('raid_exit',26,60,true); if(_lx){_lx.raidRoom=0;_lx.raidFloor=1;
+  /* belt-and-braces: if the lobby ladder ever went missing, put it back at (28,59). */
+  if(typeof objects!=='undefined'&&!objects.some(_o=>_o&&_o.def==='raid_exit'&&_o.x===28&&_o.y===59)){
+    const _lx=addObj('raid_exit',28,59,true); if(_lx){_lx.raidRoom=0;_lx.raidFloor=1;
       if(typeof buildObjModel==='function')buildObjModel(_lx); } }
   raid.floor=1;
   raid.startedAt=raid.startedAt||Date.now();
@@ -37216,7 +36489,6 @@ function drawBar(wx,wz,h,ratio){
 }
 function drawOverlay(now){
   octx.clearRect(0,0,ow,oh);
-  if(CINE.on&&CINE.mobLabels&&CINE.mobLabels.length&&typeof cineDrawNameplates==='function')cineDrawNameplates();
   if(inRaid&&typeof raidDrawReviveBar==='function')raidDrawReviveBar(octx,ow,oh);
   if(typeof drawWinter==='function')drawWinter();
   if(typeof drawFall==='function')drawFall();
@@ -39434,40 +38706,6 @@ function render(now){
 
 
   /* camera + sun + fog */
-  if(CINE.on){
-    /* ---- CINEMATIC: play the current scene; advance to the next when it ends ---- */
-    if(!CINE.paused)CINE.st+=dts;      /* frozen while paused (or while scrubbing) */
-    let sc=CINE.scenes[CINE.si];
-    if(sc && !CINE.paused && CINE.st>=cineSceneDur(CINE.si)){
-      const ni=(CINE.si+1)%CINE.scenes.length;   /* loop the whole reel */
-      cineEnterScene(ni, now);
-      sc=CINE.scenes[CINE.si];
-    }
-    if(sc){
-      if(sc.update){ try{ sc.update(CINE.st, now); }catch(e){} }
-      cinePoseActors(now);
-      const cam=sc.cam?sc.cam(CINE.st, now):{pos:[150,40,70],look:[150,4,70]};
-      camera.position.set(cam.pos[0],cam.pos[1],cam.pos[2]);
-      camera.lookAt(cam.look[0],cam.look[1],cam.look[2]);
-      /* sun follows the look target so the lit side always faces camera */
-      sun.position.set(cam.look[0]+30,cam.look[1]+50,cam.look[2]+20);
-      sun.target.position.set(cam.look[0],cam.look[1],cam.look[2]);
-    }
-    /* push the fog far out so distant landmarks read across the whole map */
-    scene.fog.color.setHex(0x9fb8cf);          /* soft daylight haze, not black */
-    scene.fog.near=120; scene.fog.far=460;
-    /* score: Love Divine for the first 45s, then hand off to Milville Grounds for the rest */
-    if(typeof cineGlobalTime==='function'){
-      const gt=cineGlobalTime();
-      const want=(gt>=45)?'map_grounds':'love_divine';
-      if(CINE._musicKey!==want){
-        CINE._musicKey=want;
-        try{ if(typeof TRACKS!=='undefined'&&TRACKS[want]){ musicManual=true; musicSel=ALL_TRACKS.indexOf(want);
-          if(typeof startMusic==='function')startMusic(want); } }catch(e){}
-      }
-    }
-    if(typeof cineUpdateBar==='function')cineUpdateBar();
-  } else {
   camera.position.set(
     pwx+Math.sin(camYaw)*Math.cos(camPitch)*camDist,
     pwy+0.9+Math.sin(camPitch)*camDist,
@@ -39483,7 +38721,7 @@ function render(now){
     scene.fog.near=camDist+20;
     scene.fog.far=camDist+46;
   }
-  }
+
 
   syncGroundItems();
   if(dlg){
