@@ -28353,8 +28353,22 @@ const Market = (function(){
         msg('The market could not place your offer'+(d&&d.error?(' ('+d.error+')'):'')+'. Your '+(side==='sell'?'items':'coins')+' were returned.','#9c1f1f');
         return;
       }
-      var mseg = d.matched>0 ? (' \u2014 '+d.matched+' filled instantly!') : '';
-      msg((side==='sell'?'Sell':'Buy')+' offer placed for '+ITEMS[item].name+mseg+' Collect your '+(side==='sell'?'coins':'items')+' from the market tab.','#2f6a2f');
+      /* Use the server's remaining/matched so the message matches reality: a fully-filled offer does
+         NOT rest on the board (nothing to see there), a partial fill both fills and rests, and an
+         unmatched offer just rests. Reporting "offer placed" for a fully-filled order is what made it
+         look like a silent loss -- the offer was never meant to appear on the board. */
+      var rem = (typeof d.remaining==='number') ? d.remaining : qty;
+      var mfilled = d.matched|0;
+      var collectWord = (side==='sell'?'coins':'items');
+      var line;
+      if(rem<=0 && mfilled>0){
+        line = 'Your '+(side==='sell'?'sale':'purchase')+' of '+mfilled+' '+ITEMS[item].name+' filled instantly \u2014 collect your '+collectWord+' from the market tab. (Nothing is left resting on the board.)';
+      } else if(mfilled>0){
+        line = (side==='sell'?'Sell':'Buy')+' offer placed for '+ITEMS[item].name+' \u2014 '+mfilled+' filled instantly, '+rem+' now resting on the board. Collect your '+collectWord+' from the market tab.';
+      } else {
+        line = (side==='sell'?'Sell':'Buy')+' offer placed for '+rem+' '+ITEMS[item].name+' \u2014 now resting on the board until it fills.';
+      }
+      msg(line,'#2f6a2f');
       dirty=true; refresh();
     });
   }
@@ -31476,11 +31490,33 @@ function _raidRoomBrief(room, what){
    describing symptoms from memory. */
 let _raidCallLog=[];
 function _raidLog(s2){ _raidCallLog.push(s2+' @fl'+((typeof raid!=='undefined'&&raid)?raid.floor:'-')); if(_raidCallLog.length>60)_raidCallLog.shift(); }
+/* Show/hide the LOBBY set (room 0, floor 1): Ellison + the signpost, reliquary chest, exit ladder,
+   gate, bank and gear table. These are keyed to the lobby room, not the whole floor -- otherwise they
+   render through into room 1 the instant you leave the cellar. Called from raidEnterRoom with
+   show=(idx===0). Only ever shows on floor 1 (room 0 exists on every floor at the same tiles). */
+const _RAID_LOBBY_DEFS={ raid_exit:1, raid_sign:1, raid_hoard:1, raid_lobbygate:1, raid_bank:1, raid_geartable:1 };
+function _raidSetLobbyObjVis(show){
+  const on = !!show && !!(raid && raid.floor===1);
+  if(typeof objects!=='undefined')for(const o of objects){
+    if(!o||!_RAID_LOBBY_DEFS[o.def]||o.raidRoom!==0||o.raidFloor!==1)continue;
+    if(o._m&&o._m.group)o._m.group.visible = on && (o.alive!==false);
+  }
+  /* Ellison the lobby-keeper (an NPC, not an object) */
+  if(typeof npcs!=='undefined')for(const n of npcs){
+    if(n&&n.interior==='raid'&&n._g)n._g.visible = on;
+  }
+}
 function raidEnterRoom(idx){
   if(typeof _raidLog==='function')_raidLog('enter('+idx+')');
   if(!raid||!raid.rooms)return;
   const room=raid.rooms[idx]; if(!room)return;
   raidRevealRoom(idx);   /* you only see a room once you are standing in it */
+  /* ** THE LOBBY PROPS ARE ROOM 0 ONLY. ** Rooms reveal fog-of-war style and STAY revealed, which is
+     right for real chambers (walls hide them) but wrong for the lobby: Ellison, the signpost, the
+     collect chest and the exit ladder are tall/near the gate, so once you cross into room 1 they poke
+     through into the room you are now standing in. Show the lobby set only while you are actually in
+     room 0; hide it the moment you step into any other room. (Returning to the lobby re-shows them.) */
+  if(typeof _raidSetLobbyObjVis==='function')_raidSetLobbyObjVis(idx===0);
   if(typeof _raidSyncMobVisibility==='function')_raidSyncMobVisibility();   /* ...and its guardians appear WITH it, not before */
   /* ** WAKE THE SLEEPERS -- BEFORE any early return. ** _raidPlacePuzzle spawns the Pipe Run's shooters
      at FLOOR BUILD time, so they are laid down dormant and wake with the room. This has to run before
