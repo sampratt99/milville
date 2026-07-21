@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install Milville — Old School Adventure</title>
+<meta name="description" content="Install Milville to your device — play offline, launch from your home screen.">
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0b08">
+<link rel="apple-touch-icon" href="icon-192.png">
+<style>
+  :root{ --bg:#0d0b08; --panel:#1a1611; --gold:#d8a93c; --gold-lt:#ffd98c; --cream:#f2e9d2;
+         --crest:#7a1414; --edge:rgba(216,169,60,.35); }
+  *{ box-sizing:border-box; }
+  html,body{ margin:0; height:100%; }
+  body{ background:radial-gradient(120% 90% at 50% 0%, #241d15 0%, var(--bg) 60%);
+        color:var(--cream); font-family:Georgia,'Times New Roman',serif;
+        display:flex; align-items:center; justify-content:center; padding:24px; min-height:100%; }
+  .card{ width:min(520px,94vw); background:rgba(26,22,17,.92); border:1px solid var(--edge);
+         border-radius:16px; padding:34px 30px 28px; text-align:center;
+         box-shadow:0 18px 60px rgba(0,0,0,.55); }
+  .logo{ width:128px; height:128px; border-radius:22px; display:block; margin:0 auto 18px;
+         box-shadow:0 6px 22px rgba(0,0,0,.6); }
+  h1{ font-size:26px; margin:0 0 6px; letter-spacing:.5px; color:var(--cream); }
+  h1 .sub{ display:block; font-size:14px; color:var(--gold); letter-spacing:3px;
+           text-transform:uppercase; margin-top:6px; font-weight:normal; }
+  p.lead{ color:#cdbb96; font-size:15px; line-height:1.5; margin:14px 4px 22px; }
+  .btn{ display:inline-block; border:0; cursor:pointer; font-family:inherit; font-size:18px;
+        font-weight:bold; letter-spacing:.5px; color:#2a1e06; text-decoration:none;
+        background:linear-gradient(180deg,#ffd98c,#d8a93c); border:1px solid #7a5a12;
+        border-radius:10px; padding:14px 26px; box-shadow:0 4px 0 #7a5a12, 0 8px 18px rgba(0,0,0,.4);
+        transition:transform .08s ease, box-shadow .08s ease; }
+  .btn:active{ transform:translateY(2px); box-shadow:0 2px 0 #7a5a12, 0 5px 12px rgba(0,0,0,.4); }
+  .btn[disabled]{ opacity:.55; cursor:default; box-shadow:0 4px 0 #7a5a12; }
+  .status{ min-height:20px; margin:16px 2px 0; font-size:14px; color:var(--gold-lt); }
+  .play{ display:block; margin-top:18px; color:#cdbb96; font-size:14px; }
+  .play a{ color:var(--gold); }
+  .steps{ display:none; text-align:left; margin:20px auto 0; max-width:400px;
+          background:rgba(0,0,0,.28); border:1px solid var(--edge); border-radius:12px; padding:16px 18px; }
+  .steps.show{ display:block; }
+  .steps h2{ font-size:15px; color:var(--gold); margin:0 0 10px; letter-spacing:1px; text-transform:uppercase; }
+  .steps ol{ margin:0; padding-left:20px; line-height:1.7; font-size:15px; color:var(--cream); }
+  .share{ display:inline-block; width:16px; height:16px; vertical-align:-3px;
+           border:2px solid var(--gold-lt); border-top:0; border-radius:3px; position:relative; margin:0 2px; }
+  .share::before{ content:''; position:absolute; left:5px; top:-8px; width:2px; height:9px; background:var(--gold-lt); }
+  .share::after{ content:''; position:absolute; left:1.5px; top:-6px; width:9px; height:9px;
+                 border-top:2px solid var(--gold-lt); border-right:2px solid var(--gold-lt); transform:rotate(-45deg); }
+  .foot{ margin-top:22px; font-size:12px; color:#7c6f58; }
+</style>
+</head>
+<body>
+  <main class="card">
+    <img class="logo" src="icon-512.png" alt="Milville">
+    <h1>Install Milville<span class="sub">Old School Adventure</span></h1>
+    <p class="lead">Add the game to your device — launch it from your home screen and play even when you're offline.</p>
+
+    <button id="installBtn" class="btn">Install Milville</button>
+    <div id="status" class="status"></div>
+
+    <!-- iOS: Apple gives no auto-install; show the manual steps -->
+    <div id="iosSteps" class="steps">
+      <h2>Add to your iPhone / iPad</h2>
+      <ol>
+        <li>Tap the <strong>Share</strong> button <span class="share"></span> at the bottom of Safari.</li>
+        <li>Scroll down and tap <strong>Add to Home Screen</strong>.</li>
+        <li>Tap <strong>Add</strong> — Milville appears on your home screen.</li>
+      </ol>
+    </div>
+
+    <!-- Fallback for browsers without a direct install prompt (e.g. Firefox desktop) -->
+    <div id="genSteps" class="steps">
+      <h2>Install from your browser</h2>
+      <ol>
+        <li>On <strong>desktop Chrome or Edge</strong>: click the install icon (a monitor with a down-arrow) at the right end of the address bar.</li>
+        <li>On <strong>Android</strong>: open the browser menu (⋮) and choose <strong>Install app</strong> / <strong>Add to Home screen</strong>.</li>
+      </ol>
+    </div>
+
+    <span class="play">or <a href="index.html">play in your browser instead →</a></span>
+    <div class="foot">Free · No account · Works on desktop &amp; mobile</div>
+  </main>
+
+<script>
+(function () {
+  var btn = document.getElementById('installBtn');
+  var status = document.getElementById('status');
+  var iosSteps = document.getElementById('iosSteps');
+  var genSteps = document.getElementById('genSteps');
+  var deferredPrompt = null;
+
+  // Register the service worker so the app is installable + offline (no-op on failure).
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  }
+
+  var isIOS = /iphone|ipad|ipod/i.test(navigator.userAgent) ||
+              (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  var isStandalone = window.matchMedia('(display-mode: standalone)').matches ||
+                     window.navigator.standalone === true;
+
+  function show(el){ el.classList.add('show'); }
+  function hide(el){ el.classList.remove('show'); }
+
+  // Already installed / launched as an app.
+  if (isStandalone) {
+    btn.textContent = 'Open Milville';
+    btn.onclick = function () { location.href = 'index.html'; };
+    status.textContent = "You've already installed Milville. You're all set.";
+    return;
+  }
+
+  if (isIOS) {
+    // Apple provides no programmatic install; the button reveals the manual steps.
+    btn.textContent = 'How to Install on iPhone';
+    btn.onclick = function () { show(iosSteps); btn.setAttribute('disabled', 'true'); };
+    status.textContent = 'On iPhone & iPad, adding to the Home Screen takes two taps.';
+    return;
+  }
+
+  // Chromium (Chrome/Edge/Android): capture the native install prompt.
+  window.addEventListener('beforeinstallprompt', function (e) {
+    e.preventDefault();
+    deferredPrompt = e;
+    status.textContent = 'Ready to install — one click.';
+  });
+
+  window.addEventListener('appinstalled', function () {
+    deferredPrompt = null;
+    btn.textContent = 'Open Milville';
+    btn.removeAttribute('disabled');
+    btn.onclick = function () { location.href = 'index.html'; };
+    status.textContent = 'Installed! Milville is on your device.';
+    hide(genSteps);
+  });
+
+  btn.onclick = function () {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then(function (choice) {
+        if (choice && choice.outcome === 'accepted') {
+          status.textContent = 'Installing…';
+        } else {
+          status.textContent = 'Install cancelled — you can try again anytime.';
+        }
+        deferredPrompt = null;
+      });
+    } else {
+      // Prompt not available yet (browser heuristic) or unsupported browser → show manual steps.
+      show(genSteps);
+      status.textContent = 'Use your browser to finish installing (steps below).';
+    }
+  };
+})();
+</script>
+</body>
+</html>
