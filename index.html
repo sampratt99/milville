@@ -16,6 +16,23 @@
 <meta name="twitter:description" content="An Old School-style browser RPG set at St. Paul's School.">
 <meta name="twitter:image" content="aldervale-og.png">
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2032%2032%22%3E%3Crect%20width%3D%2232%22%20height%3D%2232%22%20rx%3D%226%22%20fill%3D%22%232a241c%22%2F%3E%3Cpath%20d%3D%22M9%2025%20Q27%2017%2019%204%22%20fill%3D%22none%22%20stroke%3D%22%23ffb83d%22%20stroke-width%3D%223.6%22%20stroke-linecap%3D%22round%22%2F%3E%3Cpath%20d%3D%22M7.5%2022%20l5%205%22%20stroke%3D%22%235a4226%22%20stroke-width%3D%223.4%22%20stroke-linecap%3D%22round%22%2F%3E%3C%2Fsvg%3E">
+<!-- PWA: installable + offline (manifest + service worker) -->
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d0b08">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Milville">
+<link rel="apple-touch-icon" href="icon-192.png">
+<script>
+/* Register the service worker so the game can be installed and played offline.
+   No-op on failure (e.g. opened via file://); never blocks the game. */
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', function () {
+    navigator.serviceWorker.register('sw.js').catch(function () {});
+  });
+}
+</script>
 <style>
   :root{
     --frame:#2a241c; --panel:#4d4338; --panel-hi:#6b5d4b; --panel-lo:#241f18;
