@@ -5927,8 +5927,6 @@ function playerTick(){
   if(typeof raidTelFxTick==='function')raidTelFxTick();   /* the boss telegraphs have to be SEEN */
   if(typeof _syncFrozenShell==='function')_syncFrozenShell();   /* the block of ice you are standing in */
   if(typeof raidHudTick==='function')raidHudTick();
-  if(typeof petTick==='function'){ const _pn=performance.now();
-    petTick(Math.min(200,_pn-(_petLastT||_pn))); _petLastT=_pn; }
   if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.alive&&!_rectorBoss.dormant&&typeof inVolcano!=='undefined'&&inVolcano&&_lastVolcFloor===4){ if(typeof rectorLavaTick==='function')rectorLavaTick(_rectorBoss,performance.now()); }
   if(typeof rectorChainTick==='function')rectorChainTick();
   if(player.regen>=50){player.regen=0;
@@ -8137,8 +8135,10 @@ function _petMove(st,g,id,cx,cz,heading,dt){
   if(st.ltx!==undefined && Math.hypot(tx-st.ltx,tz-st.ltz)>5){ g.position.x=tx; g.position.z=tz; st.stuck=0; }
   st.ltx=tx; st.ltz=tz;
   const dx=tx-g.position.x, dz=tz-g.position.z, gap=Math.hypot(dx,dz);
-  const prof={pet_gorger:0.85,pet_marrow:1.15,pet_magpie:1.00,pet_pebble:0.66,pet_hackles:1.05}[id]||1;
-  const spd=(0.0028+Math.min(0.0052,Math.max(0,gap-0.55)*0.0035))*prof;   /* units/ms: amble near, trot behind */
+  const prof={pet_gorger:0.95,pet_marrow:1.10,pet_magpie:1.00,pet_pebble:0.92,pet_hackles:1.05}[id]||1;
+  /* amble near the heel; the catch-up cap (~0.0095) clearly beats run speed (0.0067 u/ms), so every
+     pet KEEPS PACE with a sprinting owner -- it sits a stride behind, it never falls away */
+  const spd=(0.0030+Math.min(0.0065,Math.max(0,gap-0.45)*0.006))*prof;
   const step=Math.min(gap, spd*dt);
   if(gap>1e-4){ g.position.x+=dx/gap*step; g.position.z+=dz/gap*step; }
   if(gap>6){ st.stuck=(st.stuck||0)+dt; if(st.stuck>1500){ g.position.x=tx; g.position.z=tz; st.stuck=0; } }
@@ -8193,7 +8193,7 @@ function _petGait(P,id,t,moving,g,gy,dt,x){
     const hit=x.tuckT!==undefined && (performance.now()-x.tuckT)<600;
     const k=hit?1:0;
     if(P.limbs)P.limbs.position.z=-k*0.10, P.limbs.scale.setScalar(1-k*0.5);
-    if(P.shell)P.shell.position.y=0.175-k*0.03;
+    if(P.shell)P.shell.position.y=(P.shellY!==undefined?P.shellY:0.175)-k*0.03;
     const fl=hit?(1-(performance.now()-x.tuckT)/600):0;
     if(P.vein)P.vein.material.opacity=0.85*(0.5+0.5*Math.sin(t*2))+fl*1.5;
     if(P.vein2)P.vein2.material.opacity=0.85*(0.5+0.5*Math.sin(t*2+1))+fl*1.5;
@@ -11979,76 +11979,85 @@ function makePet(id){
   }
 
   else if(id==='pet_pebble'){
-    /* A ROCK READS AS CUT, NOT SMOOTH -- hand-placed facets, not a swept surface. Rebuilt with a
-       proper BODY joining the limbs to the shell (no more floating dome), ~30% bigger, and an
-       ORNATE shell: ringed hex scutes, a bronze inlay rosette + chevrons, the moss seam, and the
-       quartz veins that flash when it eats a hit. */
-    const STONE=0x6a6156, STONE2=0x7f776a, DARK=0x4a4038, PLAST=0x8a8172, MOSS=0x6a9a4a,
-          QUARTZ=0xcfe0ff, INLAY=0xd8a93c, INLAY2=0xb8862e;
-    const sc=new THREE.Group(); sc.scale.setScalar(1.30); g.add(sc);   /* the whole pet, a third bigger */
-    /* ---- the BODY: a stone tortoise torso the legs and neck grow out of ---- */
-    const body=sm(new THREE.SphereGeometry(0.115,12,9),STONE);
-    body.scale.set(1.02,0.60,1.22); body.position.y=0.105; sc.add(body);
-    const plast=sm(new THREE.BoxGeometry(0.15,0.028,0.20),PLAST);      /* the plastron under-plate */
-    plast.position.y=0.058; sc.add(plast);
-    const plast2=sm(new THREE.BoxGeometry(0.11,0.026,0.24),PLAST);
-    plast2.position.y=0.058; sc.add(plast2);
-    /* ---- the SHELL: faceted dome ringed with carved scutes and bronze inlay ---- */
-    const shell=new THREE.Group(); shell.position.y=0.175; sc.add(shell); parts.shell=shell;
-    for(let i=0;i<9;i++){                       /* the outer facet ring, as before but seated on the body */
-      const a=i/9*Math.PI*2, r=0.135;
-      const f=sm(new THREE.BoxGeometry(0.115,0.045,0.105),(i%2)?STONE:STONE2);
-      f.position.set(Math.cos(a)*r*0.72,0.030+Math.sin(i*1.7)*0.012,Math.sin(a)*r*0.72);
-      f.rotation.set(0.5+Math.sin(i)*0.18,-a,0.22*Math.cos(i*2.1));
+    /* A STONE TORTOISE, built like a tortoise: the shell is the animal -- a wide mossy dome that
+       COVERS the body -- and the head, four legs and tail poke out from UNDER its rim. Colour comes
+       from the moss-green scutes, bronze inlay, sand plastron, olive skin and amber eyes; the teal
+       quartz veins still flash when it eats a hit. */
+    const SHELL_A=0x5d7a3f, SHELL_B=0x74915a, STONEB=0x6f6a5c, RIMD=0x4a4038,
+          INLAY=0xd8a93c, INLAY2=0xb8862e, MOSS=0x86b45e, QUARTZ=0x9fe2e8,
+          SKIN=0x8a8a6a, SKIND=0x6e6e52, PLASTC=0xc9b98a, CLAW=0xe8dcc0;
+    const sc=new THREE.Group(); sc.scale.setScalar(1.30); g.add(sc);
+    /* ---- the SHELL: a broad dome that overhangs everything beneath it ---- */
+    const shell=new THREE.Group(); shell.position.y=0.135; sc.add(shell);
+    parts.shell=shell; parts.shellY=0.135;
+    const dome=sm(new THREE.SphereGeometry(0.150,14,10),STONEB);      /* the underlying rock dome */
+    dome.scale.set(1.02,0.55,1.14); dome.position.y=0.030; shell.add(dome);
+    for(let i=0;i<10;i++){                      /* mossy facet plates around the flank */
+      const a=i/10*Math.PI*2, r=0.150;
+      const f=sm(new THREE.BoxGeometry(0.115,0.045,0.100),(i%2)?SHELL_A:SHELL_B);
+      f.position.set(Math.cos(a)*r*0.74,0.038+Math.sin(i*1.7)*0.010,Math.sin(a)*r*0.74);
+      f.rotation.set(0.52+Math.sin(i)*0.16,-a,0.20*Math.cos(i*2.1));
       shell.add(f);
     }
-    for(let i=0;i<6;i++){                       /* carved HEX SCUTES: the ornate middle ring */
-      const a=i/6*Math.PI*2+0.26, r=0.082;
-      const hx=sm(new THREE.CylinderGeometry(0.040,0.046,0.022,6),(i%2)?STONE2:PLAST);
-      hx.position.set(Math.cos(a)*r,0.066,Math.sin(a)*r);
+    for(let i=0;i<6;i++){                       /* the carved hex-scute ring, green with bronze chevrons */
+      const a=i/6*Math.PI*2+0.26, r=0.088;
+      const hx=sm(new THREE.CylinderGeometry(0.042,0.048,0.024,6),(i%2)?SHELL_B:SHELL_A);
+      hx.position.set(Math.cos(a)*r,0.078,Math.sin(a)*r);
       hx.rotation.y=a; hx.rotation.z=Math.cos(a)*0.30; hx.rotation.x=-Math.sin(a)*0.30;
       shell.add(hx);
-      const ch=sm(new THREE.BoxGeometry(0.030,0.005,0.008),INLAY2);    /* a bronze chevron on each scute */
-      ch.position.set(Math.cos(a)*r,0.080,Math.sin(a)*r); ch.rotation.y=a+Math.PI/2;
+      const ch=sm(new THREE.BoxGeometry(0.030,0.005,0.008),INLAY2);
+      ch.position.set(Math.cos(a)*r,0.093,Math.sin(a)*r); ch.rotation.y=a+Math.PI/2;
       ch.rotation.z=Math.cos(a)*0.30; ch.rotation.x=-Math.sin(a)*0.30;
       shell.add(ch);
     }
-    const crown=sm(new THREE.CylinderGeometry(0.052,0.062,0.030,6),STONE2);  /* the crest scute */
-    crown.position.y=0.088; crown.rotation.y=0.4; shell.add(crown);
-    const rose=sm(new THREE.TorusGeometry(0.036,0.006,5,12),INLAY);          /* bronze rosette inlay */
-    rose.rotation.x=Math.PI/2; rose.position.y=0.104; shell.add(rose);
-    const roseDot=sm(new THREE.SphereGeometry(0.011,7,6),INLAY); roseDot.position.y=0.106; shell.add(roseDot);
-    for(let i=0;i<6;i++){                       /* radial inlay spokes out of the rosette */
+    const crown=sm(new THREE.CylinderGeometry(0.054,0.064,0.032,6),SHELL_A);   /* the crest scute */
+    crown.position.y=0.100; crown.rotation.y=0.4; shell.add(crown);
+    const rose=sm(new THREE.TorusGeometry(0.037,0.006,5,12),INLAY);            /* bronze rosette */
+    rose.rotation.x=Math.PI/2; rose.position.y=0.118; shell.add(rose);
+    const roseDot=sm(new THREE.SphereGeometry(0.011,7,6),INLAY); roseDot.position.y=0.120; shell.add(roseDot);
+    for(let i=0;i<6;i++){                       /* radial inlay spokes */
       const a=i/6*Math.PI*2+0.26;
-      const sp=sm(new THREE.BoxGeometry(0.004,0.004,0.042),INLAY2);
-      sp.position.set(Math.cos(a)*0.055,0.092,Math.sin(a)*0.055);
+      const sp=sm(new THREE.BoxGeometry(0.004,0.004,0.044),INLAY2);
+      sp.position.set(Math.cos(a)*0.058,0.104,Math.sin(a)*0.058);
       sp.rotation.y=Math.atan2(Math.cos(a),Math.sin(a));
       sp.rotation.x=0.34; shell.add(sp);
     }
-    const rim=sm(new THREE.TorusGeometry(0.148,0.017,6,16),DARK); rim.rotation.x=Math.PI/2; shell.add(rim);
-    const moss=sm(new THREE.TorusGeometry(0.153,0.008,5,18),MOSS); moss.rotation.x=Math.PI/2; moss.position.y=0.004; shell.add(moss);
-    const vein=glow(new THREE.BoxGeometry(0.024,0.006,0.21),QUARTZ,0.85);   /* flashes when it eats a hit */
-    vein.position.set(0.012,0.052,0); vein.rotation.y=0.5; shell.add(vein); parts.vein=vein;
-    const vein2=glow(new THREE.BoxGeometry(0.016,0.006,0.13),QUARTZ,0.85);
-    vein2.position.set(-0.052,0.048,0.04); vein2.rotation.y=-0.9; shell.add(vein2); parts.vein2=vein2;
-    /* ---- LIMBS grow out of the body (head, tail, four stone legs) ---- */
+    const rim=sm(new THREE.TorusGeometry(0.162,0.020,6,18),RIMD);   /* the dark overhanging rim */
+    rim.rotation.x=Math.PI/2; rim.position.y=-0.004; shell.add(rim);
+    const moss=sm(new THREE.TorusGeometry(0.168,0.008,5,20),MOSS);  /* bright moss along the seam */
+    moss.rotation.x=Math.PI/2; moss.position.y=-0.012; shell.add(moss);
+    const vein=glow(new THREE.BoxGeometry(0.024,0.006,0.22),QUARTZ,0.85);   /* flashes on a blocked hit */
+    vein.position.set(0.014,0.058,0); vein.rotation.y=0.5; shell.add(vein); parts.vein=vein;
+    const vein2=glow(new THREE.BoxGeometry(0.016,0.006,0.14),QUARTZ,0.85);
+    vein2.position.set(-0.054,0.052,0.05); vein2.rotation.y=-0.9; shell.add(vein2); parts.vein2=vein2;
+    /* ---- the BODY: low, flat, and HIDDEN under the dome -- only its underside shows ---- */
+    const body=sm(new THREE.SphereGeometry(0.100,12,8),SKIND);
+    body.scale.set(0.92,0.46,1.04); body.position.y=0.085; sc.add(body);
+    const plast=sm(new THREE.BoxGeometry(0.140,0.026,0.190),PLASTC);   /* the sand plastron */
+    plast.position.y=0.050; sc.add(plast);
+    const plast2=sm(new THREE.BoxGeometry(0.104,0.024,0.230),PLASTC);
+    plast2.position.y=0.050; sc.add(plast2);
+    /* ---- LIMBS: everything sticks out from UNDER the rim ---- */
     const limbs=new THREE.Group(); sc.add(limbs); parts.limbs=limbs;
-    const neck=critterSweep([{p:[0,0.095,0.11],rx:0.034,ry:0.030},{p:[0,0.108,0.165],rx:0.032,ry:0.030}],DARK,10,true,true);
+    const neck=critterSweep([{p:[0,0.082,0.10],rx:0.030,ry:0.027},{p:[0,0.096,0.185],rx:0.027,ry:0.025}],SKIN,10,true,true);
     limbs.add(neck);
-    const head=critterSweep([{p:[0,0.105,0.16],rx:0.034,ry:0.031},{p:[0,0.112,0.225],rx:0.040,ry:0.035}],DARK,10,true,true);
+    const head=critterSweep([{p:[0,0.094,0.175],rx:0.030,ry:0.028},{p:[0,0.100,0.245],rx:0.037,ry:0.032}],SKIN,10,true,true);
     limbs.add(head);
-    for(const sx of [-1,1]){ const e=glow(new THREE.SphereGeometry(0.009,6,5),0x14110d); e.position.set(sx*0.020,0.126,0.245); limbs.add(e); }
-    const tail=sm(new THREE.ConeGeometry(0.020,0.062,7),DARK);
-    tail.position.set(0,0.085,-0.155); tail.rotation.x=Math.PI*0.62; limbs.add(tail); parts.tail=tail;
-    /* stone legs: thick, planted, emerging FROM the body sides */
+    const beak=sm(new THREE.ConeGeometry(0.014,0.022,6),SKIND);
+    beak.position.set(0,0.092,0.272); beak.rotation.x=Math.PI/2; limbs.add(beak);
+    for(const sx of [-1,1]){ const e=glow(new THREE.SphereGeometry(0.0095,6,5),0xe8b13c);   /* amber eyes */
+      e.position.set(sx*0.021,0.112,0.252); limbs.add(e); }
+    const tail=sm(new THREE.ConeGeometry(0.019,0.058,7),SKIND);
+    tail.position.set(0,0.068,-0.170); tail.rotation.x=Math.PI*0.62; limbs.add(tail); parts.tail=tail;
+    /* four stumpy tortoise legs at the corners, splayed slightly outward from under the rim */
     parts.legs=[];
-    for(const [sx,sz] of [[-1,0.085],[1,0.085],[-1,-0.095],[1,-0.095]]){
-      const hip=new THREE.Group(); hip.position.set(sx*0.105,0.092,sz); limbs.add(hip);
-      const th=sm(new THREE.BoxGeometry(0.044,0.056,0.052),DARK); th.position.y=-0.024; hip.add(th);
-      const foot=new THREE.Group(); foot.position.y=-0.055; hip.add(foot);
-      const fm=sm(new THREE.BoxGeometry(0.050,0.022,0.058),0x5a5248); fm.position.y=-0.011; foot.add(fm);
-      for(let c=0;c<3;c++){ const cl=sm(new THREE.ConeGeometry(0.006,0.016,5),PLAST);
-        cl.position.set((c-1)*0.014,-0.016,0.030); cl.rotation.x=Math.PI*0.55; foot.add(cl); }
+    for(const [sx,sz] of [[-1,0.100],[1,0.100],[-1,-0.108],[1,-0.108]]){
+      const hip=new THREE.Group(); hip.position.set(sx*0.118,0.086,sz); hip.rotation.z=-sx*0.16; limbs.add(hip);
+      const th=sm(new THREE.CylinderGeometry(0.024,0.028,0.058,8),SKIN); th.position.y=-0.026; hip.add(th);
+      const foot=new THREE.Group(); foot.position.y=-0.056; hip.add(foot);
+      const fm=sm(new THREE.CylinderGeometry(0.030,0.033,0.022,8),SKIND); fm.position.y=-0.010; foot.add(fm);
+      for(let c=0;c<3;c++){ const cl=sm(new THREE.ConeGeometry(0.0062,0.017,5),CLAW);
+        cl.position.set((c-1)*0.015,-0.014,0.031); cl.rotation.x=Math.PI*0.55; foot.add(cl); }
       parts.legs.push({hip,knee:foot,phase:((sx>0?0:1)+(sz>0?0:1))%2*Math.PI});
     }
   }
@@ -38161,6 +38170,10 @@ function render(now){
   const pMoving=lerpEnt(player,(player._slideT&&performance.now()<player._slideT)?70:((player.run&&player.stamina>0&&!inParty&&duel.state==='none')?150:300),dt);
   for(const r of rats)lerpEnt(r,600,dt);
   if(typeof MP!=='undefined')MP.frame(now,dt);
+  /* the pet walks in THIS loop, every frame, off the same dt as everything else that glides --
+     it used to tick inside playerTick (the slow game tick), which advanced its position in
+     ~150ms chunks: mathematically smooth, visibly a stutter-teleport. */
+  if(typeof petTick==='function')petTick(dt);
 
   /* player transform + heading */
   const pwx=player.px+0.5,pwz=player.py+0.5,pwy=groundH(pwx,pwz);
