@@ -1157,6 +1157,8 @@ if ('serviceWorker' in navigator) {
   <div id="geview-market" style="display:none;">
     <div id="mkthdr">
       <span id="mkthdrttl">Grand Exchange</span>
+      <span id="mktslotcount" title="How many of your 8 offer slots are in use"></span>
+      <button id="mktcancelall" class="geicnbtn" title="Cancel ALL your resting offers (items/coins return to the Collection Box)" style="display:none;">Cancel all</button>
       <button id="mktrefresh" class="geicnbtn" title="Refresh offers">&#8635;</button>
       <div id="mktcollectbox" title="Collect completed offers">
         <span id="mktcollectlabel">Collection Box</span><span id="mktcollectn"></span>
@@ -28381,6 +28383,26 @@ const Market = (function(){
     });
   }
 
+  // ---- cancel EVERY resting offer (escape hatch when your slots are full). Cancels them one by
+  //      one; each cancelled offer's items/coins land in the Collection Box to be collected. ----
+  function cancelAll(){
+    if(!_url()){ msg('The market is offline right now.','#9c1f1f'); return; }
+    var ids=(_mine.offers||[]).map(function(o){return o.id;});
+    if(!ids.length){ msg('You have no resting offers to cancel.','#6b4800'); return; }
+    var remaining=ids.length, failed=0;
+    msg('Cancelling '+ids.length+' offer'+(ids.length>1?'s':'')+'\u2026','#6b4800');
+    ids.forEach(function(id){
+      _api('/mkt/cancel',{uid:_uid(),id:id},function(d,e){
+        if(e||!d||!d.ok)failed++;
+        if(--remaining===0){
+          msg(failed? ('Cancelled '+(ids.length-failed)+' of '+ids.length+' offers \u2014 check the Collection Box.')
+                    : ('All offers cancelled \u2014 your items and coins are in the Collection Box.'),'#2f6a2f');
+          refresh();
+        }
+      });
+    });
+  }
+
   // ---- collect everything owed into the pack ----
   function collect(){
     if(!_url()){ msg('The market is offline right now.','#9c1f1f'); return; }
@@ -28403,7 +28425,7 @@ const Market = (function(){
   }
 
   // ---- the "new offer" flow: pick side, item, qty, price ----
-  return { refresh:refresh, listOffer:listOffer, cancel:cancel, collect:collect,
+  return { refresh:refresh, listOffer:listOffer, cancel:cancel, cancelAll:cancelAll, collect:collect,
     board:function(){return _board;}, mine:function(){return _mine;}, state:function(){return {loading:_loading,err:_err};},
     setFilter:function(f){_filter=(f||'').trim().toLowerCase();}, getFilter:function(){return _filter;} };
 })();
@@ -28443,6 +28465,11 @@ function renderMarket(){
   var owed=(mine.collect||[]).length, cbox=document.getElementById('mktcollectbox'), cn=document.getElementById('mktcollectn');
   if(cn)cn.textContent=owed?(' \u00b7 '+owed):'';
   if(cbox)cbox.classList.toggle('has',owed>0);
+  // live slot-usage readout so the "no free slots" state is never a mystery, plus a cancel-all escape hatch
+  var used=(mine.offers||[]).length, scEl=document.getElementById('mktslotcount'), caEl=document.getElementById('mktcancelall');
+  if(scEl)scEl.textContent='Slots: '+used+' / '+SLOTS+(used>=SLOTS?' (full)':'');
+  if(scEl)scEl.style.color=(used>=SLOTS)?'#c0392b':'#8a7a55';
+  if(caEl)caEl.style.display=used>0?'':'none';
 
   slotsEl.innerHTML='';
   if(st.err==='noserver'){ var e=document.createElement('div'); e.className='mktempty'; e.style.gridColumn='1 / -1'; e.textContent='The market server is not set up yet.'; slotsEl.appendChild(e); }
@@ -28680,6 +28707,10 @@ function _wireMarketTabs(){
   });
   var cb=document.getElementById('mktcollectbox'); if(cb)cb.addEventListener('click',function(){Market.collect();});
   var rb=document.getElementById('mktrefresh'); if(rb)rb.addEventListener('click',function(){Market.refresh();});
+  var ca=document.getElementById('mktcancelall'); if(ca)ca.addEventListener('click',function(){
+    if(typeof gameConfirm==='function'){ gameConfirm('Cancel all your offers?','Every resting market offer is aborted \u2014 your items and coins return to the Collection Box.',function(){Market.cancelAll();},'Cancel all'); }
+    else { Market.cancelAll(); }
+  });
   var ms=document.getElementById('mktsearch'); if(ms)ms.addEventListener('input',function(){Market.setFilter(ms.value);renderMarket();});
   var bk=document.getElementById('mktsetupback'); if(bk)bk.addEventListener('click',function(){ _mktCloseSetup(); });
 }
