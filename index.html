@@ -28313,7 +28313,9 @@ const Market = (function(){
 
   function _api(path, body, cb){
     var u=_url(); if(!u){ cb&&cb(null,'noserver'); return; }
-    var opts={method:body?'POST':'GET',headers:{'Content-Type':'application/json'}};
+    /* cache:'no-store' -- market data must NEVER be served stale (a caching service worker
+       once froze the whole GE at a days-old snapshot; this also bypasses any straggler SW/browser cache). */
+    var opts={method:body?'POST':'GET',headers:{'Content-Type':'application/json'},cache:'no-store'};
     if(body)opts.body=JSON.stringify(body);
     var full=u+path+(path.indexOf('?')<0?('?world='+encodeURIComponent(_world())):('&world='+encodeURIComponent(_world())));
     try{

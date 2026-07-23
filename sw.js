@@ -1,7 +1,7 @@
 /* Milville service worker — makes the game installable + playable offline.
    Bump CACHE_VERSION whenever you deploy a new build (same idea as your ?v= cache-bust);
    the old cache is deleted on activate, so returning players pull the fresh files. */
-const CACHE_VERSION = 'milville-v1';
+const CACHE_VERSION = 'milville-v2';   // v2: PURGES v1, which had wrongly cached market API responses
 
 /* The game shell + its one external dependency (Three.js from cdnjs).
    Caching the CDN file is what lets the game run with NO network after the first visit. */
@@ -35,6 +35,15 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const req = event.request;
   if (req.method !== 'GET') return;
+
+  /* ** NEVER TOUCH API CALLS. ** Only same-origin requests (the game shell, icons) and the
+     explicitly precached CDN script are served from cache. Everything else -- above all the
+     multiplayer/market/leaderboard workers on workers.dev -- goes straight to the network,
+     uncached. v1 of this worker cache-first'd those API GETs, which froze the Grand Exchange
+     board/slots at a days-old snapshot on every installed device: listings, cancels and
+     collects (POSTs) all worked live while every read showed the stale cache. */
+  const sameOrigin = new URL(req.url).origin === self.location.origin;
+  if (!sameOrigin && !PRECACHE.includes(req.url)) return;   // browser handles it normally
 
   /* Navigations (loading the page): network-first so a fresh deploy shows immediately when
      online, but fall back to the cached shell when offline. */
