@@ -28372,6 +28372,23 @@ const Market = (function(){
       }
       msg(line,'#2f6a2f');
       dirty=true; refresh();
+      /* ** LISTING WATCHDOG. ** A resting offer MUST be visible in /mkt/mine immediately.
+         If it is not, something between this client and the order book is broken -- say so
+         LOUDLY with a diagnostic code instead of letting the item silently disappear. */
+      if(rem>0 && d.id){
+        setTimeout(function(){
+          _api('/mkt/mine?uid='+encodeURIComponent(_uid()),null,function(md,me){
+            try{
+              if(me||!md){ msg('MARKET WARNING: could not verify your new offer (code L-NET). If it is missing from your slots, tell the admin \u2014 the server accepted it (offer #'+d.id+').','#c0392b'); return; }
+              var seen=(md.offers||[]).some(function(o){return (o.id|0)===(d.id|0);});
+              if(!seen){
+                msg('MARKET FAULT: the server accepted offer #'+d.id+' ('+(ITEMS[item]?ITEMS[item].name:item)+') but it is NOT visible in your slots (code L-GHOST'+((md.v!==undefined)?('/'+md.v):'/old-server')+'). Your item is recorded server-side \u2014 report this code.','#c0392b');
+                try{ console.warn('[market watchdog] ghost offer', {id:d.id, item:item, mine:md}); }catch(_e){}
+              }
+            }catch(_e){}
+          });
+        }, 900);
+      }
     });
   }
 
@@ -28406,7 +28423,9 @@ const Market = (function(){
   // ---- collect everything owed into the pack ----
   function collect(){
     if(!_url()){ msg('The market is offline right now.','#9c1f1f'); return; }
-    _api('/mkt/collect',{uid:_uid()},function(d,e){
+    /* twophase: the server holds the delivery until we ACK it below, so a lost response
+       can never burn the payouts -- the next collect simply re-delivers them. */
+    _api('/mkt/collect',{uid:_uid(),twophase:true},function(d,e){
       if(e||!d||!d.ok){ msg('Could not collect right now \u2014 try again.','#9c1f1f'); return; }
       var pay=d.payouts||[]; if(!pay.length){ msg('Nothing to collect right now.','#6b4800'); refresh(); return; }
       var got=[], dropped=0;
@@ -28415,9 +28434,11 @@ const Market = (function(){
         if(p.item){ var q=p.qty|0;
           if(ITEMS[p.item]&&ITEMS[p.item].stack){ if(!addItem(p.item,q)){dropGround(player.x,player.y,p.item,q);dropped++;} }
           else { for(var k=0;k<q;k++){ if(!addItem(p.item,1)){dropGround(player.x,player.y,p.item,1);dropped++;} } }
-          got.push((q>1?q+' \u00d7 ':'')+ITEMS[p.item].name);
+          got.push((q>1?q+' \u00d7 ':'')+(ITEMS[p.item]?ITEMS[p.item].name:p.item));
         }
       }
+      /* everything credited (dropGround caught any pack overflow) -> release the delivery */
+      if(d.nonce)_api('/mkt/ack',{uid:_uid(),nonce:d.nonce},function(){});
       sfx.pickup&&sfx.pickup();
       msg('Collected: '+got.join(', ')+(dropped?' (some fell to the ground \u2014 pack was full)':'')+'.','#2f6a2f');
       renderInv(); if(typeof renderShopCoins==='function')renderShopCoins(); dirty=true; refresh();
@@ -28472,6 +28493,7 @@ function renderMarket(){
   if(caEl)caEl.style.display=used>0?'':'none';
 
   slotsEl.innerHTML='';
+  if(st.err&&st.err!=='noserver'){ var ee=document.createElement('div'); ee.className='mktempty'; ee.style.gridColumn='1 / -1'; ee.style.color='#c0392b'; ee.textContent='Could not load YOUR offers \u2014 the slots below may be out of date. Tap \u21bb to retry.'; slotsEl.appendChild(ee); }
   if(st.err==='noserver'){ var e=document.createElement('div'); e.className='mktempty'; e.style.gridColumn='1 / -1'; e.textContent='The market server is not set up yet.'; slotsEl.appendChild(e); }
   else {
     var offers=(mine.offers||[]).slice(0,SLOTS);
