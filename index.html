@@ -462,6 +462,15 @@ if ('serviceWorker' in navigator) {
     border-radius:50%; box-shadow:0 0 5px rgba(255,230,109,.4);}
   #activebuffs{position:absolute; right:3px; top:27px; display:flex;
     flex-direction:row-reverse; flex-wrap:wrap; gap:3px; max-width:120px; z-index:6;}
+  #pethud{position:absolute; right:3px; top:52px; display:flex;
+    flex-direction:row-reverse; flex-wrap:wrap; gap:3px; max-width:120px; z-index:6;}
+  #pethud .petchip{display:flex;flex-direction:column;align-items:center;gap:1px;}
+  #pethud .petchip canvas{width:20px;height:20px;background:rgba(20,16,10,.82);
+    border:1px solid #8fd18f; border-radius:50%; box-shadow:0 0 5px rgba(120,220,120,.35);}
+  #pethud .petchip.hungry canvas{border-color:#e0a23c; box-shadow:0 0 6px rgba(224,162,60,.55);}
+  #pethud .petchip span{font-size:9px; line-height:1; color:#bfe6bf; text-shadow:0 1px 2px #000;
+    background:rgba(20,16,10,.72); padding:1px 3px; border-radius:3px;}
+  #pethud .petchip.hungry span{color:#ffc966;}
   .buffchip{display:flex;flex-direction:column;align-items:center;gap:1px;}
   .buffchip canvas{width:20px;height:20px;background:rgba(14,20,24,.85); border:1px solid #8fd6ff;
     border-radius:50%; box-shadow:0 0 5px rgba(143,214,255,.4);}
@@ -934,6 +943,7 @@ if ('serviceWorker' in navigator) {
         <div id="compass" title="Face north"><span id="compassN">N</span></div>
         <div id="activeprayers"></div>
         <div id="activebuffs"></div>
+        <div id="pethud"></div>
         <div id="orbs">
           <div id="hporbwrap" title="Hitpoints"><canvas id="hpheart" width="14" height="14"></canvas><div id="hporb">10</div></div>
           <div id="prorbwrap" title="Prayer points"><div id="prorb">100</div></div>
@@ -8112,6 +8122,111 @@ function ellisonPetShop(){
   },0);
 }
 /* Drain + animate. ONE MOVING PART EACH -- that is what makes it read as alive. */
+let _petSt={bob:0};
+/* ---- SHARED PET LOCOMOTION (local player AND remote players' pets) -------------------------------
+   Moves group g toward a heel position behind-and-beside a carrier at (cx,cz,heading). SPEED-CAPPED:
+   the pet covers at most spd*dt world units per frame, so it lags behind a running carrier and trots
+   to catch up when they stop -- it can NEVER cross the whole gap in one frame (the old code moved a
+   FRACTION of the gap, so any laggy frame past ~90ms teleported the pet). The only snaps allowed:
+   (a) the CARRIER teleported (door/ladder/raid room -- the heel target jumps >5 tiles in one frame),
+   (b) genuinely stuck: >6 tiles behind for 1.5s. Each pet has its own stride via prof. */
+function _petMove(st,g,id,cx,cz,heading,dt){
+  const back=heading+Math.PI;
+  const tx=cx+0.5+Math.sin(back)*0.75+Math.cos(back)*0.35;
+  const tz=cz+0.5+Math.cos(back)*0.75-Math.sin(back)*0.35;
+  if(st.ltx!==undefined && Math.hypot(tx-st.ltx,tz-st.ltz)>5){ g.position.x=tx; g.position.z=tz; st.stuck=0; }
+  st.ltx=tx; st.ltz=tz;
+  const dx=tx-g.position.x, dz=tz-g.position.z, gap=Math.hypot(dx,dz);
+  const prof={pet_gorger:0.85,pet_marrow:1.15,pet_magpie:1.00,pet_pebble:0.66,pet_hackles:1.05}[id]||1;
+  const spd=(0.0028+Math.min(0.0052,Math.max(0,gap-0.55)*0.0035))*prof;   /* units/ms: amble near, trot behind */
+  const step=Math.min(gap, spd*dt);
+  if(gap>1e-4){ g.position.x+=dx/gap*step; g.position.z+=dz/gap*step; }
+  if(gap>6){ st.stuck=(st.stuck||0)+dt; if(st.stuck>1500){ g.position.x=tx; g.position.z=tz; st.stuck=0; } }
+  else st.stuck=0;
+  if(gap>0.10){ const want=Math.atan2(dx,dz); let d=want-g.rotation.y;
+    while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2;
+    g.rotation.y += d*Math.min(1,dt*0.010); }
+  const moving=gap>0.16 && step>0.0006;
+  /* the walk clock advances with DISTANCE, not wall time: legs that walk, not windmill */
+  st.bob += moving ? step*3.4 : dt*0.0016;
+  return {gap:gap, moving:moving, t:st.bob};
+}
+/* ---- the bespoke gaits, one per pet (shared by local + remote instances) ---- */
+function _petGait(P,id,t,moving,g,gy,dt,x){
+  x=x||{};
+  if(P.legs&&P.legs.length){
+    const amp=moving?({pet_gorger:0.55,pet_marrow:0.75,pet_magpie:0.30,pet_pebble:0.44,pet_hackles:0.70}[id]||0.6):0.06;
+    for(const L of P.legs){
+      const ph=t+L.phase;
+      if(id==='pet_magpie'){
+        const hop=Math.max(0,Math.sin(t*1.0));
+        L.hip.rotation.x = -hop*0.9;
+        L.knee.rotation.x = hop*1.3;
+      } else {
+        const sw=Math.sin(ph);
+        L.hip.rotation.x = sw*amp;
+        L.knee.rotation.x = Math.max(0,-Math.cos(ph))*amp*(id==='pet_hackles'?1.25:0.9);
+      }
+    }
+    if(moving&&id!=='pet_magpie')g.position.y=gy+Math.abs(Math.sin(t*2))*(id==='pet_pebble'?0.020:0.012);
+    else if(id!=='pet_magpie')g.position.y=gy;
+    g.rotation.z=moving?Math.sin(t*2)*(id==='pet_gorger'?0.055:0.03):0;   /* the gorger WADDLES */
+  }
+  if(id==='pet_magpie'){
+    const hop=moving?Math.max(0,Math.sin(t*1.0))*0.14:0;
+    g.position.y=gy+hop;
+    if(P.body)P.body.rotation.x=-hop*0.9;
+    if(P.shine)P.shine.material.opacity=0.14+0.30*hop;
+    if(P.tail)P.tail.rotation.x=-0.2+hop*0.7;
+  }
+  if(id==='pet_gorger'&&P.belly){
+    P.belly.rotation.z=Math.sin(t*1.6)*0.10;
+    P.belly.position.y=Math.abs(Math.sin(t*1.6))*0.012;
+    if(P.jaw)P.jaw.rotation.x=0.18+Math.sin(t*3.1)*0.18;
+  }
+  if(id==='pet_marrow'){
+    if(P.tail)P.tail.rotation.y=Math.sin(t*3.4)*0.5;
+    if(P.bone)P.bone.rotation.z=Math.sin(t*2.2)*0.22;
+    if(P.head)P.head.rotation.x=Math.sin(t*1.7)*0.06;
+  }
+  if(id==='pet_pebble'){
+    const hit=x.tuckT!==undefined && (performance.now()-x.tuckT)<600;
+    const k=hit?1:0;
+    if(P.limbs)P.limbs.position.z=-k*0.10, P.limbs.scale.setScalar(1-k*0.5);
+    if(P.shell)P.shell.position.y=0.175-k*0.03;
+    const fl=hit?(1-(performance.now()-x.tuckT)/600):0;
+    if(P.vein)P.vein.material.opacity=0.85*(0.5+0.5*Math.sin(t*2))+fl*1.5;
+    if(P.vein2)P.vein2.material.opacity=0.85*(0.5+0.5*Math.sin(t*2+1))+fl*1.5;
+    if(P.tail)P.tail.rotation.z=Math.sin(t*1.4)*0.18;                    /* the stone tail sways */
+  }
+  if(id==='pet_hackles'&&P.quills){
+    const want=x.threat?0.15:-0.9;
+    for(const q of P.quills.children)q.rotation.x += (want-q.rotation.x)*Math.min(1,dt*0.008);
+    if(P.tail)P.tail.rotation.y = x.threat?0:Math.sin(t*2.0)*0.35;
+  }
+}
+let _petHudKey='';
+/* The hunger clock: how long the called pet has left before it wants feeding. Lives with the active
+   prayers/boosts in the top-right so it reads as a status effect. */
+function renderPetHud(){
+  const el=document.getElementById('pethud'); if(!el)return;
+  const id=(typeof petCalled==='function')?petCalled():null;
+  if(!id||!player.pet){ if(_petHudKey!==''){ _petHudKey=''; el.innerHTML=''; } return; }
+  const ms=Math.max(0,player.pet.vig|0);
+  const mm=Math.floor(ms/60000), ss=Math.floor((ms%60000)/1000);
+  const hungry=(typeof petIsHungry==='function')&&petIsHungry();
+  const key=id+':'+mm+':'+ss+':'+(hungry?1:0);
+  if(key===_petHudKey)return;
+  _petHudKey=key;
+  el.innerHTML='';
+  const chip=document.createElement('div'); chip.className='petchip'+(hungry?' hungry':'');
+  chip.title=ITEMS[id].name+(hungry?' is getting hungry \u2014 Mr. Ellison sells its food in the delve lobby.':' \u2014 time until it needs feeding.');
+  const c=document.createElement('canvas'); c.width=c.height=22;
+  if(typeof drawItemIcon==='function')drawItemIcon(c.getContext('2d'),id,22);
+  const tspan=document.createElement('span'); tspan.textContent=mm+':'+(ss<10?'0':'')+ss;
+  chip.appendChild(c); chip.appendChild(tspan);
+  el.appendChild(chip);
+}
 function petTick(dt){
   const id=petCalled();
   if(!id){ if(_petGroup){ scene.remove(_petGroup); _petGroup=null; } return; }
@@ -8122,85 +8237,10 @@ function petTick(dt){
   if(player.pet.vig<=0){ msg(ITEMS[id].name+' is worn out and goes back in your pack. Feed it and call it again.','#9a8a6a'); player.pet.saved=0; petDismiss(true); return; }
   if(!_petGroup)_petBuild(id);
   const g=_petGroup, P=g.userData.parts||{};
-  /* FOLLOW: trail the player at a heel position that sits behind-and-beside them, so the pet never
-     stands underfoot and never teleports. It closes the gap at a speed proportional to the distance,
-     which is what makes it look like it is keeping up rather than being dragged. */
-  const back=(player.heading||0)+Math.PI;
-  const tx=player.px+0.5+Math.sin(back)*0.75+Math.cos(back)*0.35;
-  const tz=player.py+0.5+Math.cos(back)*0.75-Math.sin(back)*0.35;
-  const dx=tx-g.position.x, dz=tz-g.position.z;
-  const gap=Math.hypot(dx,dz);
-  /* speed scales with how far behind it is: it trots to catch up, ambles when close */
-  const spd=Math.min(0.011, 0.0035+gap*0.004);
-  g.position.x += dx*Math.min(1,dt*spd);
-  g.position.z += dz*Math.min(1,dt*spd);
+  const mv=_petMove(_petSt,g,id,player.px,player.py,(player.heading||0),dt);
   const gy=groundH(g.position.x,g.position.z);
-  const moving=gap>0.18;
-  if(gap>0.10){                                     /* face the way it is actually travelling */
-    const want=Math.atan2(dx,dz);
-    let d=want-g.rotation.y; while(d>Math.PI)d-=Math.PI*2; while(d<-Math.PI)d+=Math.PI*2;
-    g.rotation.y += d*Math.min(1,dt*0.010);
-  }
-  /* THE WALK CLOCK advances with DISTANCE COVERED, not wall time -- that is the difference between
-     legs that walk and legs that windmill while the body slides. */
-  const step=Math.min(0.35, gap*dt*0.010);
-  _petBob += moving ? step*3.4 : dt*0.0016;
-  const t=_petBob;
-  /* ---- the gait ---- */
-  if(P.legs&&P.legs.length){
-    const amp=moving?({pet_gorger:0.55,pet_marrow:0.75,pet_magpie:0.30,pet_pebble:0.40,pet_hackles:0.70}[id]||0.6):0.06;
-    for(const L of P.legs){
-      const ph=t+L.phase;
-      if(id==='pet_magpie'){
-        /* a hop: both legs TUCK at the top and reach for the landing */
-        const hop=Math.max(0,Math.sin(t*1.0));
-        L.hip.rotation.x = -hop*0.9;
-        L.knee.rotation.x = hop*1.3;
-      } else {
-        const sw=Math.sin(ph);
-        L.hip.rotation.x = sw*amp;                                   /* the swing */
-        /* the knee only bends on the RETURN stroke -- a leg that bends on the push looks broken */
-        L.knee.rotation.x = Math.max(0,-Math.cos(ph))*amp*(id==='pet_hackles'?1.25:0.9);
-      }
-    }
-    /* the body rises and falls with the gait -- pets that stay at a fixed height read as sliding */
-    if(moving&&id!=='pet_magpie')g.position.y=gy+Math.abs(Math.sin(t*2))*0.012;
-    else if(id!=='pet_magpie')g.position.y=gy;
-    /* and it leans into a turn */
-    g.rotation.z=moving?Math.sin(t*2)*0.03:0;
-  }
-  if(id==='pet_magpie'){                       /* HOPS rather than walks; the coin catches the light */
-    const hop=moving?Math.max(0,Math.sin(t*1.0))*0.14:0;
-    g.position.y=gy+hop;
-    if(P.body)P.body.rotation.x=-hop*0.9;      /* it pitches forward as it launches */
-    if(P.shine)P.shine.material.opacity=0.14+0.30*hop;
-    if(P.tail)P.tail.rotation.x=-0.2+hop*0.7;
-  }
-  if(id==='pet_gorger'&&P.belly){              /* the belly swings OUT OF PHASE with the legs */
-    P.belly.rotation.z=Math.sin(t*1.6)*0.10;
-    P.belly.position.y=Math.abs(Math.sin(t*1.6))*0.012;
-    if(P.jaw)P.jaw.rotation.x=0.18+Math.sin(t*3.1)*0.18;   /* chewing whether or not there is food */
-  }
-  if(id==='pet_marrow'){
-    if(P.tail)P.tail.rotation.y=Math.sin(t*3.4)*0.5;        /* vertebrae wag */
-    if(P.bone)P.bone.rotation.z=Math.sin(t*2.2)*0.22;       /* the bone rocks */
-    if(P.head)P.head.rotation.x=Math.sin(t*1.7)*0.06;
-  }
-  if(id==='pet_pebble'){
-    const hit=(performance.now()-(player._petTuckT||-9e9))<600;
-    const k=hit?1:0;
-    if(P.limbs)P.limbs.position.z=-k*0.10, P.limbs.scale.setScalar(1-k*0.5);
-    if(P.shell)P.shell.position.y=0.16-k*0.03;
-    const fl=hit?(1-(performance.now()-player._petTuckT)/600):0;
-    if(P.vein)P.vein.material.opacity=0.85*(0.5+0.5*Math.sin(t*2))+fl*1.5;
-    if(P.vein2)P.vein2.material.opacity=0.85*(0.5+0.5*Math.sin(t*2+1))+fl*1.5;
-  }
-  if(id==='pet_hackles'&&P.quills){            /* THE QUILLS RISE when something is about to aggro */
-    const near=_petThreatNear();
-    const want=near?0.15:-0.9;
-    for(const q of P.quills.children)q.rotation.x += (want-q.rotation.x)*Math.min(1,dt*0.008);
-    if(P.tail)P.tail.rotation.y = near?0:Math.sin(t*2.0)*0.35;   /* ...and the tail STOPS */
-  }
+  _petGait(P,id,mv.t,mv.moving,g,gy,dt,{tuckT:player._petTuckT, threat:(id==='pet_hackles')?_petThreatNear():false});
+  if(typeof renderPetHud==='function')renderPetHud();
 }
 function _petThreatNear(){
   if(typeof rats==='undefined')return false;
@@ -11939,35 +11979,76 @@ function makePet(id){
   }
 
   else if(id==='pet_pebble'){
-    /* A ROCK READS AS CUT, NOT SMOOTH -- so this is the one place I deliberately do NOT sweep a surface.
-       Hand-placed facets, a moss line on the seam, and a quartz vein that catches the light. */
-    const STONE=0x6a6156, STONE2=0x7f776a, DARK=0x4a4038, MOSS=0x6a9a4a, QUARTZ=0xcfe0ff;
-    const shell=new THREE.Group(); shell.position.y=0.16; g.add(shell); parts.shell=shell;
-    for(let i=0;i<9;i++){                       /* faceted dome: overlapping cut planes */
-      const a=i/9*Math.PI*2, r=0.13;
-      const f=sm(new THREE.BoxGeometry(0.11,0.045,0.10),(i%2)?STONE:STONE2);
-      f.position.set(Math.cos(a)*r*0.72,0.035+Math.sin(i*1.7)*0.012,Math.sin(a)*r*0.72);
+    /* A ROCK READS AS CUT, NOT SMOOTH -- hand-placed facets, not a swept surface. Rebuilt with a
+       proper BODY joining the limbs to the shell (no more floating dome), ~30% bigger, and an
+       ORNATE shell: ringed hex scutes, a bronze inlay rosette + chevrons, the moss seam, and the
+       quartz veins that flash when it eats a hit. */
+    const STONE=0x6a6156, STONE2=0x7f776a, DARK=0x4a4038, PLAST=0x8a8172, MOSS=0x6a9a4a,
+          QUARTZ=0xcfe0ff, INLAY=0xd8a93c, INLAY2=0xb8862e;
+    const sc=new THREE.Group(); sc.scale.setScalar(1.30); g.add(sc);   /* the whole pet, a third bigger */
+    /* ---- the BODY: a stone tortoise torso the legs and neck grow out of ---- */
+    const body=sm(new THREE.SphereGeometry(0.115,12,9),STONE);
+    body.scale.set(1.02,0.60,1.22); body.position.y=0.105; sc.add(body);
+    const plast=sm(new THREE.BoxGeometry(0.15,0.028,0.20),PLAST);      /* the plastron under-plate */
+    plast.position.y=0.058; sc.add(plast);
+    const plast2=sm(new THREE.BoxGeometry(0.11,0.026,0.24),PLAST);
+    plast2.position.y=0.058; sc.add(plast2);
+    /* ---- the SHELL: faceted dome ringed with carved scutes and bronze inlay ---- */
+    const shell=new THREE.Group(); shell.position.y=0.175; sc.add(shell); parts.shell=shell;
+    for(let i=0;i<9;i++){                       /* the outer facet ring, as before but seated on the body */
+      const a=i/9*Math.PI*2, r=0.135;
+      const f=sm(new THREE.BoxGeometry(0.115,0.045,0.105),(i%2)?STONE:STONE2);
+      f.position.set(Math.cos(a)*r*0.72,0.030+Math.sin(i*1.7)*0.012,Math.sin(a)*r*0.72);
       f.rotation.set(0.5+Math.sin(i)*0.18,-a,0.22*Math.cos(i*2.1));
       shell.add(f);
     }
-    const cap=sm(new THREE.DodecahedronGeometry(0.10,0),STONE2); cap.position.y=0.055; cap.scale.set(1.15,0.62,1.15); shell.add(cap);
-    const rim=sm(new THREE.TorusGeometry(0.135,0.016,6,14),DARK); rim.rotation.x=Math.PI/2; shell.add(rim);
-    const moss=sm(new THREE.TorusGeometry(0.140,0.008,5,16),MOSS); moss.rotation.x=Math.PI/2; moss.position.y=0.006; shell.add(moss);
-    const vein=glow(new THREE.BoxGeometry(0.024,0.006,0.20),QUARTZ,0.85);   /* flashes when it eats a hit */
-    vein.position.set(0.01,0.075,0); vein.rotation.y=0.5; shell.add(vein); parts.vein=vein;
-    const vein2=glow(new THREE.BoxGeometry(0.016,0.006,0.12),QUARTZ,0.85);
-    vein2.position.set(-0.05,0.070,0.04); vein2.rotation.y=-0.9; shell.add(vein2); parts.vein2=vein2;
-    const limbs=new THREE.Group(); g.add(limbs); parts.limbs=limbs;
-    const head=critterSweep([{p:[0,0.10,0.10],rx:0.030,ry:0.028},{p:[0,0.105,0.19],rx:0.036,ry:0.032}],DARK,10,true,true);
+    for(let i=0;i<6;i++){                       /* carved HEX SCUTES: the ornate middle ring */
+      const a=i/6*Math.PI*2+0.26, r=0.082;
+      const hx=sm(new THREE.CylinderGeometry(0.040,0.046,0.022,6),(i%2)?STONE2:PLAST);
+      hx.position.set(Math.cos(a)*r,0.066,Math.sin(a)*r);
+      hx.rotation.y=a; hx.rotation.z=Math.cos(a)*0.30; hx.rotation.x=-Math.sin(a)*0.30;
+      shell.add(hx);
+      const ch=sm(new THREE.BoxGeometry(0.030,0.005,0.008),INLAY2);    /* a bronze chevron on each scute */
+      ch.position.set(Math.cos(a)*r,0.080,Math.sin(a)*r); ch.rotation.y=a+Math.PI/2;
+      ch.rotation.z=Math.cos(a)*0.30; ch.rotation.x=-Math.sin(a)*0.30;
+      shell.add(ch);
+    }
+    const crown=sm(new THREE.CylinderGeometry(0.052,0.062,0.030,6),STONE2);  /* the crest scute */
+    crown.position.y=0.088; crown.rotation.y=0.4; shell.add(crown);
+    const rose=sm(new THREE.TorusGeometry(0.036,0.006,5,12),INLAY);          /* bronze rosette inlay */
+    rose.rotation.x=Math.PI/2; rose.position.y=0.104; shell.add(rose);
+    const roseDot=sm(new THREE.SphereGeometry(0.011,7,6),INLAY); roseDot.position.y=0.106; shell.add(roseDot);
+    for(let i=0;i<6;i++){                       /* radial inlay spokes out of the rosette */
+      const a=i/6*Math.PI*2+0.26;
+      const sp=sm(new THREE.BoxGeometry(0.004,0.004,0.042),INLAY2);
+      sp.position.set(Math.cos(a)*0.055,0.092,Math.sin(a)*0.055);
+      sp.rotation.y=Math.atan2(Math.cos(a),Math.sin(a));
+      sp.rotation.x=0.34; shell.add(sp);
+    }
+    const rim=sm(new THREE.TorusGeometry(0.148,0.017,6,16),DARK); rim.rotation.x=Math.PI/2; shell.add(rim);
+    const moss=sm(new THREE.TorusGeometry(0.153,0.008,5,18),MOSS); moss.rotation.x=Math.PI/2; moss.position.y=0.004; shell.add(moss);
+    const vein=glow(new THREE.BoxGeometry(0.024,0.006,0.21),QUARTZ,0.85);   /* flashes when it eats a hit */
+    vein.position.set(0.012,0.052,0); vein.rotation.y=0.5; shell.add(vein); parts.vein=vein;
+    const vein2=glow(new THREE.BoxGeometry(0.016,0.006,0.13),QUARTZ,0.85);
+    vein2.position.set(-0.052,0.048,0.04); vein2.rotation.y=-0.9; shell.add(vein2); parts.vein2=vein2;
+    /* ---- LIMBS grow out of the body (head, tail, four stone legs) ---- */
+    const limbs=new THREE.Group(); sc.add(limbs); parts.limbs=limbs;
+    const neck=critterSweep([{p:[0,0.095,0.11],rx:0.034,ry:0.030},{p:[0,0.108,0.165],rx:0.032,ry:0.030}],DARK,10,true,true);
+    limbs.add(neck);
+    const head=critterSweep([{p:[0,0.105,0.16],rx:0.034,ry:0.031},{p:[0,0.112,0.225],rx:0.040,ry:0.035}],DARK,10,true,true);
     limbs.add(head);
-    for(const sx of [-1,1]){ const e=glow(new THREE.SphereGeometry(0.008,6,5),0x14110d); e.position.set(sx*0.018,0.12,0.21); limbs.add(e); }
-    /* stone legs: a slow, heavy trudge -- they lift and plant, they never slide */
+    for(const sx of [-1,1]){ const e=glow(new THREE.SphereGeometry(0.009,6,5),0x14110d); e.position.set(sx*0.020,0.126,0.245); limbs.add(e); }
+    const tail=sm(new THREE.ConeGeometry(0.020,0.062,7),DARK);
+    tail.position.set(0,0.085,-0.155); tail.rotation.x=Math.PI*0.62; limbs.add(tail); parts.tail=tail;
+    /* stone legs: thick, planted, emerging FROM the body sides */
     parts.legs=[];
-    for(const [sx,sz] of [[-1,0.07],[1,0.07],[-1,-0.08],[1,-0.08]]){
-      const hip=new THREE.Group(); hip.position.set(sx*0.10,0.085,sz); limbs.add(hip);
-      const l=sm(new THREE.BoxGeometry(0.036,0.050,0.048),DARK); l.position.y=-0.025; hip.add(l);
-      const foot=new THREE.Group(); foot.position.y=-0.050; hip.add(foot);
-      const fm=sm(new THREE.BoxGeometry(0.042,0.020,0.052),0x5a5248); fm.position.y=-0.010; foot.add(fm);
+    for(const [sx,sz] of [[-1,0.085],[1,0.085],[-1,-0.095],[1,-0.095]]){
+      const hip=new THREE.Group(); hip.position.set(sx*0.105,0.092,sz); limbs.add(hip);
+      const th=sm(new THREE.BoxGeometry(0.044,0.056,0.052),DARK); th.position.y=-0.024; hip.add(th);
+      const foot=new THREE.Group(); foot.position.y=-0.055; hip.add(foot);
+      const fm=sm(new THREE.BoxGeometry(0.050,0.022,0.058),0x5a5248); fm.position.y=-0.011; foot.add(fm);
+      for(let c=0;c<3;c++){ const cl=sm(new THREE.ConeGeometry(0.006,0.016,5),PLAST);
+        cl.position.set((c-1)*0.014,-0.016,0.030); cl.rotation.x=Math.PI*0.55; foot.add(cl); }
       parts.legs.push({hip,knee:foot,phase:((sx>0?0:1)+(sz>0?0:1))%2*Math.PI});
     }
   }
@@ -39672,7 +39753,7 @@ const MP = (function () {
       if (keepAlive) clearInterval(keepAlive);
       keepAlive = setInterval(function () {
         if (!conn) return;
-        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() });
+        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom(), pet: (typeof petCalled==='function'&&petCalled())||0 });
         send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() });
       }, 2000);
       if (typeof console !== 'undefined') console.log('[Millville MP]', MP_VERSION, 'connected to', wsURL());
@@ -39703,13 +39784,13 @@ const MP = (function () {
 
   /* ---------------- outbound (called from frame) ---------------- */
   function pushOutbound(t) {
-    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); }
+    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom(), pet: (typeof petCalled==='function'&&petCalled())||0 }); }
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct || (a !== 'null' && t - _stKeep > 4000)) { lastGear = g; lastAct = a; _stKeep = t; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
     if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
   }
-  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
+  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom(), pet: (typeof petCalled==='function'&&petCalled())||0 }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120), title: player.title || null }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
@@ -40438,6 +40519,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function despawn(uid) {
     const r = RP.get(uid); if (!r) return;
     try { scene.remove(r.rig.g); } catch (e) {}
+    if (r.petG) { try { scene.remove(r.petG); } catch (e) {} r.petG = null; }
     RP.delete(uid);
     delete _peerRoom[uid];
     if (typeof raid !== 'undefined' && raid && raid.peerDown) delete raid.peerDown[uid];   /* a leaver is not 'down' for the wipe/revive math */
@@ -40462,7 +40544,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
       case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); duelReqIn.delete(m.uid); duelReqOut.delete(m.uid); if (duel.state !== 'none' && duel.oppUid === m.uid && typeof endDuel === 'function') endDuel('forfeit-win'); if (duelSetup.active && duelSetup.withUid === m.uid) { logSystem((duelSetup.withName || 'The other player') + ' left before the duel began.'); _duelSetupClose(); } despawn(m.uid); break; }
-      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h, in: m.in }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.last = Date.now(); } break; }
+      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h, in: m.in }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.pet = m.pet || null; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
         if (!m.uid || m.uid === player.uid) break;
@@ -41180,12 +41262,32 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       const fresh = (Date.now() - r.last) < CFG.hideMs;
       const inView = _remoteHere(r) && (curInterior() ? true : dist1(player.px, player.py, r.px, r.py) <= CFG.viewR);
       r.rig.g.visible = inView && fresh;
+      if (r.petG) r.petG.visible = r.rig.g.visible && !!r.pet;
       if (!inView || !fresh) continue;
       const wx = r.px + 0.5, wz = r.py + 0.5, wy = groundH(wx, wz);
       r.rig.g.position.set(wx, wy, wz);
       r.rig.g.rotation.y = r.h;
       if (r.gearRig && r.gear) { const _gk = r.gear.weapon+'|'+r.gear.shield+'|'+r.gear.cape+'|'+r.gear.head+'|'+r.gear.body+'|'+r.gear.legs+'|'+r.gear.feet+'|'+r.gear.neck; if (_gk !== r._gearKey) { r._gearKey = _gk; applyRemoteGear(r.gearRig, r.rig, r.gear, r.act, r.tint); } }
       poseRemote(r, t);
+      /* ---- the peer's PET: built from the same makePet models, moved by the same speed-capped
+         _petMove and animated by the same bespoke _petGait as your own -- so everyone sees everyone's
+         pet trotting at their heel, lagging when they run and catching up when they stand. ---- */
+      if (r.pet && typeof ITEMS !== 'undefined' && ITEMS[r.pet] && ITEMS[r.pet].pet
+          && typeof makePet === 'function' && typeof _petMove === 'function') {
+        if (!r.petG || r.petGId !== r.pet) {
+          if (r.petG) { try { scene.remove(r.petG); } catch (e) {} }
+          r.petG = makePet(r.pet); r.petGId = r.pet; r.petSt = { bob: Math.random() * 6 };
+          r.petG.position.set(r.px + 0.7, groundH(r.px + 0.7, r.py + 0.7), r.py + 0.7);
+          scene.add(r.petG);
+        }
+        r.petG.visible = true;
+        const _pmv = _petMove(r.petSt, r.petG, r.pet, r.px, r.py, r.h || 0, dt);
+        const _pgy = groundH(r.petG.position.x, r.petG.position.z);
+        _petGait(r.petG.userData.parts || {}, r.pet, _pmv.t, _pmv.moving, r.petG, _pgy, dt, {});
+      } else if (r.petG) {
+        try { scene.remove(r.petG); } catch (e) {}
+        r.petG = null; r.petGId = null; r.petSt = null;
+      }
     }
   }
 
