@@ -34,6 +34,33 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 <style>
+  /* ===== THE REAL OLD SCHOOL RUNESCAPE FACES ==========================================
+     Built from RuneStar/fonts (CC0), which extracts them straight from the game cache, so
+     these are the actual in-game bitmaps rather than a lookalike. Wired to the SAME jobs
+     OSRS gives them:
+        Plain 12 / Bold 12 -> almost every interface, including the chatbox  (family RSFont)
+        Plain 11           -> inventory item amounts                        (RSFontSmall)
+        Quill 8            -> the dialogue box                              (RSFontQuill)
+     Bold 12 is registered as the BOLD WEIGHT of RSFont, so every existing `bold` in CSS and
+     in canvas ctx.font strings picks it up automatically -- exactly as the client does.
+     Single-word family names so they need no quotes inside JS strings. WOFF2 keeps all four
+     to ~15KB. Verdana stays as the fallback -- OSRS itself uses Verdana for the world map.
+     These faces are drawn on a 16px pixel grid: at font-size 12px, size-adjust 133.33%
+     scales them to exactly 16px, so the pixels land on whole pixels and stay CRISP.
+     ** size-adjust IS THE TUNING KNOB if the text reads too large or small. ** */
+  @font-face{ font-family:RSFont; font-weight:normal; font-style:normal;
+    src:url(data:font/woff2;base64,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) format('woff2');
+    font-display:block; size-adjust:133.33%; }
+  @font-face{ font-family:RSFont; font-weight:bold; font-style:normal;
+    src:url(data:font/woff2;base64,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) format('woff2');
+    font-display:block; size-adjust:133.33%; }
+  @font-face{ font-family:RSFontSmall;
+    src:url(data:font/woff2;base64,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) format('woff2');
+    font-display:block; size-adjust:160%; }
+  @font-face{ font-family:RSFontQuill;
+    src:url(data:font/woff2;base64,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) format('woff2');
+    font-display:block; size-adjust:133.33%; }
+
   :root{
     --frame:#2a241c; --panel:#4d4338; --panel-hi:#6b5d4b; --panel-lo:#241f18;
     --parch:#d8c9a3; --parch-lo:#c4b48c; --gold:#ffb83d; --ink:#1d1812;
@@ -43,7 +70,7 @@ if ('serviceWorker' in navigator) {
   html,body{margin:0;padding:0;background:#17130e;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none;}
   input,textarea{-webkit-user-select:text;user-select:text;}
   body{
-    font:13px/1.35 Verdana, Geneva, sans-serif; color:var(--ink);
+    font:13px/1.35 RSFont,Verdana, Geneva, sans-serif; color:var(--ink);
     display:flex; justify-content:center; padding:14px 8px 40px;
     min-height:100vh;
   }
@@ -55,7 +82,7 @@ if ('serviceWorker' in navigator) {
   }
   #title{
     text-align:center; color:var(--gold);
-    font-family:Georgia,'Times New Roman',serif; font-variant:small-caps;
+    font-family:RSFont,Georgia,'Times New Roman',serif; font-variant:small-caps;
     letter-spacing:3px; font-size:20px; margin:2px 0 8px;
     text-shadow:0 2px 0 #000, 0 0 14px rgba(255,184,61,.25);
   }
@@ -72,7 +99,7 @@ if ('serviceWorker' in navigator) {
   }
   #chatentry{
     flex:1; min-width:0;
-    font:13px Georgia,serif; padding:5px 9px; color:#1d1812;
+    font:13px RSFont,Georgia,serif; padding:5px 9px; color:#1d1812;
     background:#f3e7c8; border:2px solid #0d0b08; border-radius:3px;
     box-shadow:0 0 0 1px #b8a87a inset; outline:none;
   }
@@ -80,7 +107,7 @@ if ('serviceWorker' in navigator) {
   #chatentry::placeholder{color:#8a7a5a; font-style:italic;}
   #chatsend{
     display:none;
-    font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1px;
+    font:bold 11px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px;
     padding:6px 12px; cursor:pointer; color:#ffe8b0; white-space:nowrap;
     background:linear-gradient(#2e5b3a,#1f4329); border:2px solid #0d0b08; border-radius:3px;
     box-shadow:0 0 0 1px #4f8a5f inset;
@@ -92,7 +119,7 @@ if ('serviceWorker' in navigator) {
   #overlay{position:absolute; inset:0; width:100%; height:100%; pointer-events:none;}
   #hovertext{
     position:absolute; top:6px; left:8px; pointer-events:none; z-index:2;
-    font:bold 13px Verdana,sans-serif; color:#fff;
+    font:bold 13px RSFont,Verdana,sans-serif; color:#fff;
     text-shadow:1px 1px 0 #000, -1px 1px 0 #000, 1px -1px 0 #000, -1px -1px 0 #000;
     max-width:75%;
   }
@@ -113,7 +140,7 @@ if ('serviceWorker' in navigator) {
     width:34px; height:34px; border-radius:50%;
     border:2px solid #0d0b08; box-shadow:0 0 0 2px #6b5d4b inset;
     display:flex; align-items:center; justify-content:center;
-    font:bold 13px Verdana,sans-serif; color:#fff; text-shadow:1px 1px 0 #000;
+    font:bold 13px RSFont,Verdana,sans-serif; color:#fff; text-shadow:1px 1px 0 #000;
     background:radial-gradient(circle at 35% 30%, #6fdc6f, #1d7a1d 70%);
   }
   #hpheart{position:absolute; right:-5px; top:-5px; z-index:2;}
@@ -122,13 +149,13 @@ if ('serviceWorker' in navigator) {
     width:26px; height:26px; border-radius:50%;
     border:2px solid #0d0b08; box-shadow:0 0 0 2px #6b5d4b inset;
     display:flex; align-items:center; justify-content:center;
-    font:bold 11px Verdana,sans-serif; color:#fff; text-shadow:1px 1px 0 #000;
+    font:bold 11px RSFont,Verdana,sans-serif; color:#fff; text-shadow:1px 1px 0 #000;
     background:radial-gradient(circle at 35% 30%, #7ab8e8, #1d4a7a 70%);
   }
   #xporb{
     background:linear-gradient(#3a3128,#241f18);
     border:2px solid #0d0b08; border-radius:10px;
-    color:#ffd98c; font:bold 9px Verdana,sans-serif; padding:2px 7px;
+    color:#ffd98c; font:bold 9px RSFont,Verdana,sans-serif; padding:2px 7px;
     box-shadow:0 0 0 1px #5d5141 inset; white-space:nowrap;
   }
   /* chat */
@@ -155,14 +182,14 @@ if ('serviceWorker' in navigator) {
   #wildbadge{position:absolute; top:5px; left:50%; transform:translateX(-50%); display:none; align-items:center; gap:2px; padding:1px 6px 1px 1px; background:rgba(26,10,8,0.86); border:2px solid #9a2820; border-radius:11px; z-index:4; pointer-events:none; box-shadow:0 1px 4px rgba(0,0,0,0.55);}
   #wildbadge.on{display:flex;}
   #wildbadge canvas{width:18px; height:18px;}
-  #wildbadge span{font:bold 12px Georgia,serif; color:#ff5a4a; text-shadow:1px 1px 0 #000; padding-bottom:1px;}
+  #wildbadge span{font:bold 12px RSFont,Georgia,serif; color:#ff5a4a; text-shadow:1px 1px 0 #000; padding-bottom:1px;}
   #compass{
     position:absolute; top:4px; left:10px; width:30px; height:30px; border-radius:50%;
     background:radial-gradient(circle at 35% 30%, #6b5d4b, #241f18);
     border:2px solid #0d0b08; box-shadow:0 0 0 1px #6b5d4b inset;
     display:flex; align-items:center; justify-content:center; cursor:pointer; z-index:3;
   }
-  #compassN{color:#ffe66d; font:bold 13px Georgia,serif; text-shadow:0 1px 0 #000; display:block;}
+  #compassN{color:#ffe66d; font:bold 13px RSFont,Georgia,serif; text-shadow:0 1px 0 #000; display:block;}
   #tabs{display:flex; flex-wrap:wrap; gap:3px; padding:4px;}
   .tab{
     flex:1; text-align:center; padding:6px 1px; cursor:pointer;
@@ -184,15 +211,15 @@ if ('serviceWorker' in navigator) {
   .panel.on{display:block;}
   #tabsbot{display:flex; flex-wrap:wrap; gap:3px; padding:4px;}
   #tabsbot .tab{border-radius:0 0 3px 3px;}
-  #cbtweapon{text-align:center; color:#ffe9c4; font:bold 14px Georgia,serif; padding:9px 0 1px;}
-  #combatlvlbox{text-align:center; color:#c4ad80; font:11px Georgia,serif; margin:0 0 4px;}
+  #cbtweapon{text-align:center; color:#ffe9c4; font:bold 14px RSFont,Georgia,serif; padding:9px 0 1px;}
+  #combatlvlbox{text-align:center; color:#c4ad80; font:11px RSFont,Georgia,serif; margin:0 0 4px;}
   #retalbtn{margin:9px 10px 4px; text-align:center; cursor:pointer; color:#d2bd99;
-    font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1px;
+    font:bold 11px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px;
     padding:9px 0; border:2px solid #15110c; border-radius:4px;
     background:linear-gradient(#46342a,#352720); box-shadow:0 0 0 1px #5a4a38 inset;}
   #retalbtn.on{color:#eafbe6; background:linear-gradient(#3a5b3a,#274327); box-shadow:0 0 0 1px #5fa15f inset, 0 0 8px rgba(95,200,95,.3);}
   #retalbtn:active{transform:translateY(1px);}
-  #emotehead,.subhead{text-align:center; color:#ffe8b0; font:bold 13px Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin:4px 0 8px;}
+  #emotehead,.subhead{text-align:center; color:#ffe8b0; font:bold 13px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin:4px 0 8px;}
   #emotegrid{display:grid; grid-template-columns:repeat(3,1fr); gap:5px; padding:0 4px 6px;}
   .emotebtn{
     display:flex; flex-direction:column; align-items:center; gap:2px;
@@ -204,13 +231,13 @@ if ('serviceWorker' in navigator) {
 .emotebtn.locked{opacity:.5; filter:grayscale(.65); cursor:default;}
 .emotebtn.locked:hover{background:linear-gradient(#3a342a,#2e2920); box-shadow:none;}
   .emotebtn canvas{display:block;}
-  .emotebtn span{font:9px Verdana,sans-serif; color:#d8c89a; text-align:center; line-height:1.05;}
+  .emotebtn span{font:9px RSFont,Verdana,sans-serif; color:#d8c89a; text-align:center; line-height:1.05;}
   #friendslist{padding:4px;}
-  #panel-friends h4{margin:2px 2px 7px; text-align:center; color:var(--gold); font:bold 13px Georgia,serif; font-variant:small-caps; letter-spacing:2px; text-shadow:0 1px 0 #14110b; border-bottom:1px solid #14110b; padding-bottom:6px;}
+  #panel-friends h4{margin:2px 2px 7px; text-align:center; color:var(--gold); font:bold 13px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:2px; text-shadow:0 1px 0 #14110b; border-bottom:1px solid #14110b; padding-bottom:6px;}
   #friendslist{background:#211b14; border:1px solid #0d0b08; border-radius:3px; padding:3px; min-height:120px; max-height:300px; overflow-y:auto;}
-  .friendsempty{color:#b8a87a; font:12px Verdana,sans-serif; line-height:1.55; text-align:center; padding:18px 10px;}
-  .friendsub{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1.5px; text-align:center; margin:9px 0 3px; opacity:.9;}
-  .friendrow{display:flex; flex-wrap:wrap; align-items:center; gap:3px 7px; font:12px Verdana,sans-serif; padding:5px 8px; border-radius:2px;}
+  .friendsempty{color:#b8a87a; font:12px RSFont,Verdana,sans-serif; line-height:1.55; text-align:center; padding:18px 10px;}
+  .friendsub{color:var(--gold); font:bold 11px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1.5px; text-align:center; margin:9px 0 3px; opacity:.9;}
+  .friendrow{display:flex; flex-wrap:wrap; align-items:center; gap:3px 7px; font:12px RSFont,Verdana,sans-serif; padding:5px 8px; border-radius:2px;}
   .friendrow:nth-child(odd){background:rgba(0,0,0,.16);}
   .friendrow:hover{background:rgba(202,168,60,.13);}
   .friendrow .fname{flex:1 0 100%; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; font-weight:bold;}
@@ -223,13 +250,13 @@ if ('serviceWorker' in navigator) {
   .friendrow .fradd{cursor:pointer; color:#9fcf7a; font-size:11px; padding:0 2px;}
   .friendrow .fradd:hover{color:#c0ef9a;}
   .friendrow .ginv{color:#cbb35a;} .friendrow .ginv:hover{color:#ecd06a;}
-  .ginviterow{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font:12px Verdana,sans-serif; padding:6px 8px; margin:3px 0; background:rgba(202,168,60,.14); border:1px solid var(--gold); border-radius:3px;}
+  .ginviterow{display:flex; align-items:center; gap:6px; flex-wrap:wrap; font:12px RSFont,Verdana,sans-serif; padding:6px 8px; margin:3px 0; background:rgba(202,168,60,.14); border:1px solid var(--gold); border-radius:3px;}
   .ginviterow .ginvtxt{flex:1; min-width:90px; color:#e8dcb0;}
-  .gbtn{cursor:pointer; font:bold 10.5px Verdana,sans-serif; padding:3px 9px; border-radius:3px; border:1px solid #0d0b08; color:#10100c;}
+  .gbtn{cursor:pointer; font:bold 10.5px RSFont,Verdana,sans-serif; padding:3px 9px; border-radius:3px; border:1px solid #0d0b08; color:#10100c;}
   .gbtn.gacc{background:#6cae5a;} .gbtn.gacc:hover{background:#82c66f;}
   .gbtn.gdec{background:#c07a6f;} .gbtn.gdec:hover{background:#d28a7f;}
-  .ghead{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1.5px; margin:9px 0 2px; padding:0 2px;}
-  .grow{display:flex; align-items:center; gap:7px; font:12px Verdana,sans-serif; padding:4px 8px; border-radius:2px;}
+  .ghead{color:var(--gold); font:bold 11px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1.5px; margin:9px 0 2px; padding:0 2px;}
+  .grow{display:flex; align-items:center; gap:7px; font:12px RSFont,Verdana,sans-serif; padding:4px 8px; border-radius:2px;}
   .grow:nth-child(odd){background:rgba(0,0,0,.12);}
   .grow .gname{flex:1; color:#d8cba0; font-weight:bold;}
   .gbtn.gleave{display:block; width:100%; margin:6px 0 2px; background:#8a4a40; color:#f0e0d8;}
@@ -249,7 +276,7 @@ if ('serviceWorker' in navigator) {
     background:linear-gradient(135deg, transparent 46%, #8d7a52 46%, #8d7a52 54%, transparent 54%);
   }
   .lvls .lv,.lvls .lvb{
-    position:absolute; font:bold 11px Verdana,sans-serif;
+    position:absolute; font:bold 11px RSFont,Verdana,sans-serif;
     color:#ffe66d; text-shadow:1px 1px 0 #000;
   }
   .lvls .lv{left:1px; top:-1px;}
@@ -280,7 +307,7 @@ if ('serviceWorker' in navigator) {
   .slot:hover{box-shadow:0 0 0 1px #8a7a5d inset;}
   .slot canvas{width:30px; height:30px; image-rendering:pixelated; pointer-events:none;}
   .slot .qty{
-    position:absolute; top:1px; left:3px; font:bold 10px Verdana; color:#ffe66d;
+    position:absolute; top:1px; left:3px; font:bold 10px RSFontSmall,RSFont,Verdana; color:#ffe66d;
     text-shadow:1px 1px 0 #000; pointer-events:none;
   }
   /* settings */
@@ -290,7 +317,7 @@ if ('serviceWorker' in navigator) {
   .sbtn{
     display:block; width:100%; margin:6px 0; padding:6px; cursor:pointer;
     background:#3a3128; color:#ffd98c; border:1px solid #0d0b08; border-radius:3px;
-    box-shadow:0 0 0 1px #5d5141 inset; font:bold 12px Verdana; text-align:center;
+    box-shadow:0 0 0 1px #5d5141 inset; font:bold 12px RSFont,Verdana; text-align:center;
   }
   .sbtn:hover{background:#473c30;}
   .sbtn.danger{color:#ff9b8a;}
@@ -305,7 +332,7 @@ if ('serviceWorker' in navigator) {
     position:fixed; z-index:50; display:none; min-width:150px;
     background:#251f18; border:1px solid #0d0b08; border-radius:3px;
     box-shadow:0 0 0 1px #5d5141 inset, 0 6px 16px rgba(0,0,0,.6);
-    font:12.5px Verdana; overflow:hidden;
+    font:12.5px RSFont,Verdana; overflow:hidden;
   }
   #ctx .hd{background:#0d0b08; color:#7d6c54; padding:3px 8px; font-size:11px;}
   #ctx .opt{padding:4px 10px; color:#fff; cursor:pointer; white-space:nowrap;}
@@ -318,13 +345,13 @@ if ('serviceWorker' in navigator) {
     text-align:center; padding:20px;
   }
   #splash h1{
-    color:var(--gold); font-family:Georgia,serif; font-variant:small-caps;
+    color:var(--gold); font-family:RSFont,Georgia,serif; font-variant:small-caps;
     letter-spacing:6px; font-size:42px; margin:0;
     text-shadow:0 3px 0 #000, 0 0 30px rgba(255,184,61,.35);
   }
   #splash p{color:#cdbb96; max-width:440px; margin:0; font-size:13px; line-height:1.5;}
   #playbtn{
-    font:bold 16px Georgia,serif; font-variant:small-caps; letter-spacing:2px;
+    font:bold 16px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:2px;
     padding:10px 34px; cursor:pointer; color:#ffe8b0;
     background:linear-gradient(#7a2e22,#5b1f16); border:2px solid #0d0b08; border-radius:4px;
     box-shadow:0 0 0 2px #a8553f inset, 0 4px 12px rgba(0,0,0,.5);
@@ -338,29 +365,29 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 1px #5d5141 inset;
   }
   .slotrow .sinfo{flex:1; text-align:left; min-width:0;}
-  .slotrow .sname{color:#ffd98c; font:bold 15px Georgia,serif; letter-spacing:1px;
+  .slotrow .sname{color:#ffd98c; font:bold 15px RSFont,Georgia,serif; letter-spacing:1px;
     white-space:nowrap; overflow:hidden; text-overflow:ellipsis;}
-  .slotrow .smeta{color:#bda87e; font:11px Verdana,sans-serif; margin-top:2px;}
+  .slotrow .smeta{color:#bda87e; font:11px RSFont,Verdana,sans-serif; margin-top:2px;}
   .slotrow .sload{
-    font:bold 12px Georgia,serif; font-variant:small-caps; letter-spacing:1px;
+    font:bold 12px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px;
     padding:7px 16px; cursor:pointer; color:#ffe8b0;
     background:linear-gradient(#2f6b3a,#1f4a26); border:2px solid #0d0b08; border-radius:4px;
     box-shadow:0 0 0 1px #4a9c5a inset;
   }
   .slotrow .sdel{
-    font:bold 13px Verdana,sans-serif; cursor:pointer; color:#e8a090;
+    font:bold 13px RSFont,Verdana,sans-serif; cursor:pointer; color:#e8a090;
     background:#3a2018; border:1px solid #0d0b08; border-radius:4px;
     width:26px; height:26px; line-height:1;
   }
   #newchar{display:flex; gap:8px;}
   #namefield{
-    flex:1; font:14px Georgia,serif; padding:9px 12px; color:#ffe8b0;
+    flex:1; font:14px RSFont,Georgia,serif; padding:9px 12px; color:#ffe8b0;
     background:#241f18; border:2px solid #0d0b08; border-radius:4px;
     box-shadow:0 0 0 1px #5d5141 inset; outline:none;
   }
   #namefield::placeholder{color:#8a7a5a;}
   #newbtn{
-    font:bold 13px Georgia,serif; font-variant:small-caps; letter-spacing:1px;
+    font:bold 13px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px;
     padding:9px 18px; cursor:pointer; color:#ffe8b0; white-space:nowrap;
     background:linear-gradient(#7a2e22,#5b1f16); border:2px solid #0d0b08; border-radius:4px;
     box-shadow:0 0 0 1px #a8553f inset;
@@ -373,14 +400,14 @@ if ('serviceWorker' in navigator) {
   }
   #importfield::placeholder{color:#8a7a5a;}
   #importbtn{
-    font:bold 13px Georgia,serif; font-variant:small-caps; letter-spacing:1px;
+    font:bold 13px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px;
     padding:9px 18px; cursor:pointer; color:#ffe8b0; white-space:nowrap;
     background:linear-gradient(#2e5b3a,#1f4329); border:2px solid #0d0b08; border-radius:4px;
     box-shadow:0 0 0 1px #4f8a5f inset; align-self:flex-start;
   }
   #importbtn:hover{filter:brightness(1.15);}
   #importbtn:disabled{opacity:0.6; cursor:default;}
-  #importmsg{font:11px Verdana,sans-serif; min-height:14px;}
+  #importmsg{font:11px RSFont,Verdana,sans-serif; min-height:14px;}
   #codeoverlay{
     position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:99999;
     display:flex; align-items:center; justify-content:center; padding:16px;
@@ -390,8 +417,8 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 1px #5d5141 inset, 0 12px 40px rgba(0,0,0,0.5);
     padding:16px; max-width:520px; width:100%; color:#ffe8b0;
   }
-  #codehd{font:bold 15px Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin-bottom:6px;}
-  #codesub{font:11px Verdana,sans-serif; color:#b8a87a; margin-bottom:8px;}
+  #codehd{font:bold 15px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin-bottom:6px;}
+  #codesub{font:11px RSFont,Verdana,sans-serif; color:#b8a87a; margin-bottom:8px;}
   #codearea{
     width:100%; box-sizing:border-box; height:120px; resize:vertical;
     font:11px Menlo,Consolas,monospace; padding:8px 10px; color:#ffe8b0;
@@ -399,22 +426,22 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 1px #5d5141 inset; outline:none; word-break:break-all;
   }
   #codebtns{display:flex; gap:8px; margin-top:10px;}
-  #charhint{color:#9a8a6a; font:11px Verdana,sans-serif;}
+  #charhint{color:#9a8a6a; font:11px RSFont,Verdana,sans-serif;}
   #playbtn:hover{filter:brightness(1.15);}
   #chattabs{display:flex; gap:3px; margin-top:4px;}
   .ctab{
     flex:1; text-align:center; cursor:pointer;
     background:linear-gradient(#4a4036,#332b22);
     border:1px solid #0d0b08; border-radius:3px;
-    color:#e8dcc0; font:bold 10px Verdana,sans-serif; padding:3px 0 2px;
+    color:#e8dcc0; font:bold 10px RSFont,Verdana,sans-serif; padding:3px 0 2px;
     box-shadow:0 0 0 1px #5d5141 inset;
   }
   .ctab span{display:block; color:#52d452; font-size:8px; font-weight:normal;}
   .ctab.on{background:linear-gradient(#6e6353,#4a4036); color:#fff;}
   .ctab.report{background:linear-gradient(#7a2e22,#5b1f16); color:#ffe8b0;}
-  #equiphead{text-align:center; color:#ffd98c; font:bold 13px Georgia,serif; margin:4px 0 8px;}
+  #equiphead{text-align:center; color:#ffd98c; font:bold 13px RSFont,Georgia,serif; margin:4px 0 8px;}
   #equipgrid{display:grid; grid-template-columns:repeat(3,46px); gap:6px; justify-content:center;}
-  #stylehead{color:#ffd98c; font:bold 12px Georgia,serif; text-align:center; padding:10px 0 5px;}
+  #stylehead{color:#ffd98c; font:bold 12px RSFont,Georgia,serif; text-align:center; padding:10px 0 5px;}
   #stylebar{display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px 10px 2px;}
   #specbtn{grid-column:1 / -1; display:none; flex-direction:column; align-items:stretch; justify-content:center;
     cursor:pointer; padding:6px 8px 5px; border-radius:8px; user-select:none;
@@ -427,10 +454,10 @@ if ('serviceWorker' in navigator) {
   #specbtn.cooling .specfill{background:#c96a2a;}
   .stylebtn{display:flex; flex-direction:column; align-items:center; justify-content:center;
     gap:3px; min-height:56px; background:linear-gradient(#42392c,#332b21); border:1px solid #15110c; border-radius:4px;
-    box-shadow:0 0 0 1px #5a4c39 inset; padding:6px 2px; cursor:pointer; color:#cbbd9d; font:11px Georgia,serif;}
+    box-shadow:0 0 0 1px #5a4c39 inset; padding:6px 2px; cursor:pointer; color:#cbbd9d; font:11px RSFont,Georgia,serif;}
   .stylebtn:hover{background:#4a4234;}
   .stylebtn.on{background:#5d5141; box-shadow:0 0 0 1px #c9a23d inset; color:#ffe9c4;}
-  #prayhead,#spellhead{color:#ffd98c; font:bold 12px Georgia,serif; text-align:center; padding:2px 0 7px;}
+  #prayhead,#spellhead{color:#ffd98c; font:bold 12px RSFont,Georgia,serif; text-align:center; padding:2px 0 7px;}
   #praylist{display:grid; grid-template-columns:repeat(4,1fr); gap:5px; padding:6px;}
   .prayrow{display:flex; align-items:center; gap:8px; background:#3a3328;
     border:1px solid #15110c; border-radius:3px; padding:5px 7px; cursor:pointer;}
@@ -440,7 +467,7 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 1px #15110c;}
   .prayrow.on canvas{box-shadow:0 0 0 1px #ffe66d;}
   .prinfo{display:flex; flex-direction:column; line-height:1.25;}
-  .prinfo b{color:#ffe9c4; font:bold 12px Georgia,serif;}
+  .prinfo b{color:#ffe9c4; font:bold 12px RSFont,Georgia,serif;}
   .prinfo span{color:#bba98a; font-size:10px;}
   #prayfoot{color:#8d8068; font-size:9.5px; text-align:center; padding:9px 8px 2px; line-height:1.45;}
   #praybarwrap{width:34px; height:7px; background:#241f17; border:1px solid #0d0b08;
@@ -452,7 +479,7 @@ if ('serviceWorker' in navigator) {
     width:26px; height:26px; border-radius:50%;
     border:2px solid #0d0b08; box-shadow:0 0 0 2px #6b5d4b inset;
     display:flex; align-items:center; justify-content:center;
-    font:bold 10px Verdana,sans-serif; color:#1a1308;
+    font:bold 10px RSFont,Verdana,sans-serif; color:#1a1308;
     background:radial-gradient(circle at 35% 30%, #9a9082, #4f483c 70%);
   }
   #runorbwrap.on #runorb{background:radial-gradient(circle at 35% 30%, #ffe14a, #b8901a 70%);}
@@ -474,7 +501,7 @@ if ('serviceWorker' in navigator) {
   .buffchip{display:flex;flex-direction:column;align-items:center;gap:1px;}
   .buffchip canvas{width:20px;height:20px;background:rgba(14,20,24,.85); border:1px solid #8fd6ff;
     border-radius:50%; box-shadow:0 0 5px rgba(143,214,255,.4);}
-  .buffchip span{font:bold 9px Verdana;color:#bfe6ff;text-shadow:0 1px 2px #000;
+  .buffchip span{font:bold 9px RSFont,Verdana;color:#bfe6ff;text-shadow:0 1px 2px #000;
     background:rgba(10,12,16,.72);padding:0 3px;border-radius:6px;}
   .eslot{
     width:46px; height:46px; background:#3a3128;
@@ -491,9 +518,9 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 2px #5d5141 inset, 0 14px 44px rgba(0,0,0,.75); padding:7px;
     max-width:95vw;}
   #wmapbar{display:flex; align-items:center; justify-content:space-between;
-    color:#ffd98c; font:bold 13px Georgia,serif; padding:1px 3px 7px;}
+    color:#ffd98c; font:bold 13px RSFont,Georgia,serif; padding:1px 3px 7px;}
   #wmapclose{width:20px; height:20px; background:#c8402a; border:1px solid #0d0b08;
-    border-radius:3px; color:#fff; font:bold 12px Verdana,sans-serif; display:flex;
+    border-radius:3px; color:#fff; font:bold 12px RSFont,Verdana,sans-serif; display:flex;
     align-items:center; justify-content:center; cursor:pointer;
     box-shadow:0 0 0 1px #e8765f inset;}
   #wmapc{display:block; image-rendering:pixelated; max-width:91vw; max-height:72vh;
@@ -506,18 +533,18 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 2px #5d5141 inset, 0 14px 44px rgba(0,0,0,.75);
     padding:8px; width:392px; max-width:94vw;}
   .gebar{display:flex;justify-content:space-between;align-items:center;
-    color:#ffd98c; font:bold 13px Georgia,serif; padding:0 2px 7px; gap:8px;}
-  #slpts{color:#c79be0;font:bold 12px Georgia,serif;}
+    color:#ffd98c; font:bold 13px RSFont,Georgia,serif; padding:0 2px 7px; gap:8px;}
+  #slpts{color:#c79be0;font:bold 12px RSFont,Georgia,serif;}
   .slrow{display:flex;align-items:center;gap:9px;padding:7px 4px;border-bottom:1px solid #3d3528;}
   .slrow canvas{flex:0 0 auto;background:#1c1813;border:1px solid #0d0b08;border-radius:3px;image-rendering:pixelated;}
-  .sln{color:#ffe0a0;font:bold 12.5px Georgia,serif;}
-  .sld{color:#c9bfa8;font:11px Georgia,serif;margin-top:2px;line-height:1.3;}
-  .slbtn{background:#3a5a32;color:#eafbe2;border:1px solid #0d0b08;border-radius:3px;padding:6px 9px;font:bold 11px Georgia,serif;cursor:pointer;white-space:nowrap;user-select:none;}
+  .sln{color:#ffe0a0;font:bold 12.5px RSFont,Georgia,serif;}
+  .sld{color:#c9bfa8;font:11px RSFont,Georgia,serif;margin-top:2px;line-height:1.3;}
+  .slbtn{background:#3a5a32;color:#eafbe2;border:1px solid #0d0b08;border-radius:3px;padding:6px 9px;font:bold 11px RSFont,Georgia,serif;cursor:pointer;white-space:nowrap;user-select:none;}
   .slbtn:hover{filter:brightness(1.12);}
   .slbtn.confirm{background:#9a6a1f;}
   .slbtn.cant{background:#4a2828;color:#c9a;cursor:default;}
   .gex{width:20px;height:20px;background:#c8402a;border:1px solid #0d0b08;
-    border-radius:3px;color:#fff;font:bold 12px Verdana,sans-serif;display:flex;
+    border-radius:3px;color:#fff;font:bold 12px RSFont,Verdana,sans-serif;display:flex;
     align-items:center;justify-content:center;cursor:pointer;flex:0 0 auto;
     box-shadow:0 0 0 1px #e8765f inset;}
   #banksearch{width:100%;box-sizing:border-box;margin:0 0 6px;padding:6px 9px;
@@ -539,15 +566,19 @@ if ('serviceWorker' in navigator) {
   #dlgface{width:84px;height:84px;background:#9a8c6e;border:1px solid #4a3a24;
     flex:0 0 auto;image-rendering:pixelated;}
   #dlgmain{flex:1;display:flex;flex-direction:column;min-height:84px;}
-  #dlgname{font:bold 13px Verdana;color:#7a1212;text-align:center;
-    margin-bottom:4px;}
-  #dlgtext{font:12px Verdana;color:#1d1812;text-align:center;flex:1;
+  #dlghdr{display:flex;align-items:center;justify-content:center;gap:7px;margin-bottom:4px;}
+  #dlgname{font:bold 13px RSFontQuill,RSFont,Verdana;color:#7a1212;text-align:center;}
+  /* the two swords point INWARD at the question, as the OSRS option box does. They are hidden
+     on ordinary speech pages and revealed only when you are being asked to choose. */
+  .dsw{width:20px;height:20px;flex:0 0 auto;display:none;image-rendering:pixelated;}
+  #dlghdr.ask .dsw{display:block;}
+  #dlgtext{font:12px RSFontQuill,RSFont,Verdana;color:#1d1812;text-align:center;flex:1;
     line-height:1.45;}
   #dlgopts{display:flex;flex-direction:column;gap:2px;align-items:center;}
-  #dlgopts .dopt{font:12px Verdana;color:#1d1812;cursor:pointer;
+  #dlgopts .dopt{font:12px RSFontQuill,RSFont,Verdana;color:#1d1812;cursor:pointer;
     padding:3px 16px;border-radius:3px;}
   #dlgopts .dopt:hover{color:#a01616;background:rgba(0,0,0,.08);}
-  #dlgcont{font:bold 11px Verdana;color:#2a4a8c;text-align:center;
+  #dlgcont{font:bold 11px RSFontQuill,RSFont,Verdana;color:#2a4a8c;text-align:center;
     cursor:pointer;margin-top:4px;display:none;}
   #dlgcont:hover{color:#a01616;}
   #sgrows{display:flex;flex-direction:column;gap:4px;padding:2px;
@@ -555,27 +586,27 @@ if ('serviceWorker' in navigator) {
   .sgrow{display:flex;gap:8px;align-items:center;background:#3a3328;
     border:1px solid #15110c;border-radius:3px;padding:5px 8px;opacity:.55;}
   .sgrow.got{opacity:1;}
-  .sgl{font:bold 12px Verdana;color:#ffe66d;width:40px;text-align:center;
+  .sgl{font:bold 12px RSFont,Verdana;color:#ffe66d;width:40px;text-align:center;
     background:#2a241c;border:1px solid #15110c;border-radius:3px;
     padding:2px 0;flex:0 0 auto;}
-  .sgt{font:11px Verdana;color:#e8dcc0;}
+  .sgt{font:11px RSFont,Verdana;color:#e8dcc0;}
   #logocv{width:min(560px,92vw);height:auto;margin-bottom:4px;}
-  #gesellhead{color:#ffd98c;font:bold 12px Georgia,serif;padding:7px 3px 3px;}
+  #gesellhead{color:#ffd98c;font:bold 12px RSFont,Georgia,serif;padding:7px 3px 3px;}
   #gesell{max-height:132px;overflow-y:auto;}
   #getabs{display:flex;gap:4px;margin:2px 0 6px;}
-  .getab{flex:1;font:bold 12px Georgia,serif;padding:6px 4px;cursor:pointer;color:#d8c49a;
+  .getab{flex:1;font:bold 12px RSFont,Georgia,serif;padding:6px 4px;cursor:pointer;color:#d8c49a;
     background:#241d15;border:1px solid #0d0b08;border-radius:4px 4px 0 0;}
   .getab.on{background:#3a2f20;color:#ffe08a;border-bottom-color:#caa23a;}
   /* ---- OSRS-style Grand Exchange market ---- */
   #mkthdr{display:flex;align-items:center;gap:8px;margin:2px 0 7px;}
-  #mkthdrttl{font:bold 15px Georgia,serif;color:#ffd98c;flex:1;letter-spacing:0.3px;}
-  .geicnbtn{font:14px Georgia,serif;padding:4px 9px;cursor:pointer;color:#e8dcc0;background:#2a2016;
+  #mkthdrttl{font:bold 15px RSFont,Georgia,serif;color:#ffd98c;flex:1;letter-spacing:0.3px;}
+  .geicnbtn{font:14px RSFont,Georgia,serif;padding:4px 9px;cursor:pointer;color:#e8dcc0;background:#2a2016;
     border:1px solid #5a4426;border-radius:4px;}
   .geicnbtn:hover{background:#3a2c1a;color:#ffe08a;}
   #mktcollectbox{display:flex;align-items:center;gap:5px;padding:5px 11px;cursor:pointer;
-    background:#2a2016;border:2px solid #6a512c;border-radius:5px;font:bold 12px Georgia,serif;color:#cdbb96;}
+    background:#2a2016;border:2px solid #6a512c;border-radius:5px;font:bold 12px RSFont,Georgia,serif;color:#cdbb96;}
   #mktcollectbox.has{border-color:#caa23a;color:#ffe08a;background:#3a2c14;box-shadow:0 0 8px rgba(202,162,58,0.4);}
-  #mktcollectn{font:bold 12px Georgia,serif;}
+  #mktcollectn{font:bold 12px RSFont,Georgia,serif;}
   /* the 8-slot grid, 2 columns like OSRS */
   #mktslots{display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-bottom:8px;}
   .geslot{position:relative;background:linear-gradient(180deg,#241c12,#1a140c);border:2px solid #4a3826;
@@ -583,25 +614,25 @@ if ('serviceWorker' in navigator) {
   /* empty slot: big Buy / Sell buttons */
   .geslot.empty{align-items:stretch;justify-content:center;flex-direction:row;gap:0;border-style:dashed;border-color:#3a2c1a;}
   .geslotbuy,.geslotsell{flex:1;display:flex;align-items:center;justify-content:center;gap:5px;
-    font:bold 13px Georgia,serif;cursor:pointer;color:#e8dcc0;}
+    font:bold 13px RSFont,Georgia,serif;cursor:pointer;color:#e8dcc0;}
   .geslotbuy:hover{background:rgba(60,110,150,0.22);color:#bfe6ff;}
   .geslotsell:hover{background:rgba(150,70,70,0.22);color:#ffcaca;}
   .geslotdiv{width:2px;background:#3a2c1a;}
   .geslotbadge{font-size:16px;}
   /* filled slot: header (buy/sell + item), body (icon + qty/price), progress bar */
   .geslothead{display:flex;align-items:center;gap:6px;padding:4px 7px 2px;}
-  .geslothead .tag{font:bold 9.5px Verdana;padding:1px 5px;border-radius:3px;letter-spacing:0.4px;}
+  .geslothead .tag{font:bold 9.5px RSFont,Verdana;padding:1px 5px;border-radius:3px;letter-spacing:0.4px;}
   .geslothead .tag.buy{background:#274a66;color:#bfe6ff;}
   .geslothead .tag.sell{background:#5a3030;color:#ffcaca;}
-  .geslothead .snm{flex:1;font:12px Georgia,serif;color:#f0e6d2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .geslotcancel{font:11px Verdana;color:#9a8c6e;cursor:pointer;padding:0 3px;flex:0 0 auto;}
+  .geslothead .snm{flex:1;font:12px RSFont,Georgia,serif;color:#f0e6d2;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .geslotcancel{font:11px RSFont,Verdana;color:#9a8c6e;cursor:pointer;padding:0 3px;flex:0 0 auto;}
   .geslotcancel:hover{color:#ff8a6a;}
   .geslotbody{display:flex;align-items:center;gap:8px;padding:1px 8px 4px;}
   .geslotbody canvas{flex:0 0 auto;image-rendering:pixelated;}
   .geslotinfo{flex:1;display:flex;flex-direction:column;line-height:1.35;}
-  .geslotinfo .qp{font:11.5px Verdana;color:#cdbb96;}
+  .geslotinfo .qp{font:11.5px RSFont,Verdana;color:#cdbb96;}
   .geslotinfo .qp b{color:#ffe08a;font-weight:bold;}
-  .geslotinfo .st{font:10.5px Verdana;color:#9a8c6e;}
+  .geslotinfo .st{font:10.5px RSFont,Verdana;color:#9a8c6e;}
   /* progress bar along the bottom: blue while pending, green when fully done */
   .geslotbar{height:7px;background:#0d0b08;position:relative;}
   .geslotbar .fill{height:100%;transition:width 0.4s ease;}
@@ -611,18 +642,18 @@ if ('serviceWorker' in navigator) {
   .geslot.done .geslotbar .fill{background:linear-gradient(90deg,#2f8a3a,#5ad65a)!important;}
   .geslot.done .st{color:#7ad67a;}
   /* the live market board (other players' offers) */
-  .mkthead{color:#ffd98c;font:bold 12px Georgia,serif;padding:6px 3px 3px;}
+  .mkthead{color:#ffd98c;font:bold 12px RSFont,Georgia,serif;padding:6px 3px 3px;}
   #mktboard{max-height:170px;overflow-y:auto;margin-top:3px;}
   .mktrow{display:flex;align-items:center;gap:7px;padding:5px 7px;border-radius:5px;cursor:pointer;}
   .mktrow:hover{background:rgba(255,255,255,0.05);}
-  .mktrow .side{font:bold 10px Verdana;padding:2px 5px;border-radius:4px;flex:0 0 auto;}
+  .mktrow .side{font:bold 10px RSFont,Verdana;padding:2px 5px;border-radius:4px;flex:0 0 auto;}
   .mktrow .side.buy{background:#264a66;color:#bfe6ff;}
   .mktrow .side.sell{background:#5a3030;color:#ffcaca;}
-  .mktrow .nm{flex:1;color:#e8dcc0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px Georgia,serif;}
-  .mktrow .who{color:#9a8c6e;font:11px Verdana;flex:0 0 auto;}
-  .mktrow .pr{color:#ffe08a;font:bold 12px Georgia,serif;flex:0 0 auto;}
-  .mktrow .qy{color:#b8a888;font:11px Verdana;flex:0 0 auto;}
-  .mktempty{justify-content:center;color:#9a8c6e;cursor:default;padding:14px;font:12px Georgia,serif;text-align:center;}
+  .mktrow .nm{flex:1;color:#e8dcc0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font:13px RSFont,Georgia,serif;}
+  .mktrow .who{color:#9a8c6e;font:11px RSFont,Verdana;flex:0 0 auto;}
+  .mktrow .pr{color:#ffe08a;font:bold 12px RSFont,Georgia,serif;flex:0 0 auto;}
+  .mktrow .qy{color:#b8a888;font:11px RSFont,Verdana;flex:0 0 auto;}
+  .mktempty{justify-content:center;color:#9a8c6e;cursor:default;padding:14px;font:12px RSFont,Georgia,serif;text-align:center;}
   /* ---- offer setup overlay (item pick + qty/price steppers, OSRS-style) ---- */
   /* ** AN OVERLAY HAS TO ACTUALLY COVER. ** z-index 5 was not enough: the offer slots underneath paint
    their icons onto canvases, and a canvas in a sibling with its own stacking context happily draws
@@ -631,36 +662,36 @@ if ('serviceWorker' in navigator) {
    60 puts it unambiguously above the board it is covering. */
 #mktsetup{position:absolute;inset:0;background:#221a12;border-radius:2px;display:flex;flex-direction:column;z-index:60;isolation:isolate;padding:10px;box-sizing:border-box;}
   #mktsetuphead{display:flex;align-items:center;margin-bottom:8px;}
-  #mktsetuptitle{flex:1;font:bold 15px Georgia,serif;color:#ffd98c;}
+  #mktsetuptitle{flex:1;font:bold 15px RSFont,Georgia,serif;color:#ffd98c;}
   #mktpicksearch{margin-bottom:6px;}
   #mktpicklist{max-height:330px;overflow-y:auto;}
   .mktpickrow{display:flex;align-items:center;gap:8px;padding:5px 7px;border-radius:5px;cursor:pointer;}
   .mktpickrow:hover{background:rgba(255,255,255,0.06);}
-  .mktpickrow .nm{flex:1;color:#e8dcc0;font:13px Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .mktpickrow .gv{color:#9a8c6e;font:11px Verdana;flex:0 0 auto;}
-  .mktpickrow .hv{color:#b8a888;font:11px Verdana;flex:0 0 auto;}
+  .mktpickrow .nm{flex:1;color:#e8dcc0;font:13px RSFont,Georgia,serif;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .mktpickrow .gv{color:#9a8c6e;font:11px RSFont,Verdana;flex:0 0 auto;}
+  .mktpickrow .hv{color:#b8a888;font:11px RSFont,Verdana;flex:0 0 auto;}
   #mktofferitem{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
   #mktofferitem canvas{image-rendering:pixelated;}
-  #mktoffername{font:bold 15px Georgia,serif;color:#ffe08a;}
+  #mktoffername{font:bold 15px RSFont,Georgia,serif;color:#ffe08a;}
   .mktctrlrow{display:flex;align-items:baseline;justify-content:space-between;margin:9px 0 4px;}
-  .mktctrllbl{font:12px Georgia,serif;color:#cdbb96;}
-  .mktctrlval{font:bold 15px Georgia,serif;color:#fff;}
+  .mktctrllbl{font:12px RSFont,Georgia,serif;color:#cdbb96;}
+  .mktctrlval{font:bold 15px RSFont,Georgia,serif;color:#fff;}
   .mktbtnrow{display:flex;gap:4px;}
-  .mktbtnrow button{flex:1;font:bold 11px Georgia,serif;padding:6px 2px;cursor:pointer;color:#e8dcc0;
+  .mktbtnrow button{flex:1;font:bold 11px RSFont,Georgia,serif;padding:6px 2px;cursor:pointer;color:#e8dcc0;
     background:#2f2416;border:1px solid #5a4426;border-radius:4px;}
   .mktbtnrow button:hover{background:#43331f;color:#ffe08a;}
-  #mkttotalrow{display:flex;justify-content:space-between;align-items:baseline;margin:12px 0 8px;padding-top:9px;border-top:1px solid #4a3826;font:13px Georgia,serif;color:#cdbb96;}
-  #mkttotalval{font:bold 16px Georgia,serif;color:#ffe08a;}
-  .mktconfirmbtn{width:100%;font:bold 14px Georgia,serif;padding:9px;cursor:pointer;color:#fff;
+  #mkttotalrow{display:flex;justify-content:space-between;align-items:baseline;margin:12px 0 8px;padding-top:9px;border-top:1px solid #4a3826;font:13px RSFont,Georgia,serif;color:#cdbb96;}
+  #mkttotalval{font:bold 16px RSFont,Georgia,serif;color:#ffe08a;}
+  .mktconfirmbtn{width:100%;font:bold 14px RSFont,Georgia,serif;padding:9px;cursor:pointer;color:#fff;
     background:#2f6a2f;border:1px solid #4aa34a;border-radius:6px;}
   .mktconfirmbtn:hover{background:#3a7d3a;}
   .mktconfirmbtn.sell{background:#8a5a1e;border-color:#caa23a;}
   .mktconfirmbtn.sell:hover{background:#a36c24;}
-  #gconfirmmsg{padding:14px 16px 6px;color:#e8dcc0;font:13.5px Georgia,serif;line-height:1.5;}
+  #gconfirmmsg{padding:14px 16px 6px;color:#e8dcc0;font:13.5px RSFont,Georgia,serif;line-height:1.5;}
   #gconfirmmsg b{color:#ffe08a;}
   #gconfirmmsg .sub{display:block;margin-top:7px;color:#b8a888;font-size:12px;}
   #gconfirmbtns{display:flex;gap:8px;padding:6px 14px 14px;}
-  .gcbtn{flex:1;font:bold 13px Georgia,serif;padding:9px;cursor:pointer;color:#fff;border-radius:6px;border:1px solid #0d0b08;}
+  .gcbtn{flex:1;font:bold 13px RSFont,Georgia,serif;padding:9px;cursor:pointer;color:#fff;border-radius:6px;border:1px solid #0d0b08;}
   .gcno{background:#5a3030;border-color:#7a4a4a;}
   .gcno:hover{background:#6b3a3a;}
   .gcyes{background:#2f6a2f;border-color:#4aa34a;}
@@ -668,29 +699,29 @@ if ('serviceWorker' in navigator) {
   #gnumdisp{margin:12px 14px 6px;padding:9px;background:#1a140c;border:1px solid #4a3826;border-radius:5px;
     font:bold 22px 'Courier New',monospace;color:#ffe08a;letter-spacing:1px;min-height:26px;}
   #gnumquick{display:flex;gap:5px;padding:0 14px 8px;}
-  #gnumquick button{flex:1;font:bold 11px Georgia,serif;padding:6px 2px;cursor:pointer;color:#e8dcc0;
+  #gnumquick button{flex:1;font:bold 11px RSFont,Georgia,serif;padding:6px 2px;cursor:pointer;color:#e8dcc0;
     background:#2f2416;border:1px solid #5a4426;border-radius:4px;}
   #gnumquick button:hover{background:#43331f;color:#ffe08a;}
   #gnumpad{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;padding:0 14px 8px;}
-  #gnumpad button{font:bold 18px Georgia,serif;padding:11px 0;cursor:pointer;color:#f0e6d2;
+  #gnumpad button{font:bold 18px RSFont,Georgia,serif;padding:11px 0;cursor:pointer;color:#f0e6d2;
     background:#2a2016;border:1px solid #5a4426;border-radius:5px;}
   #gnumpad button:hover{background:#3a2c1a;color:#ffe08a;}
   #gnumpad button.wide{grid-column:span 1;color:#cdbb96;}
   #gnumbtns{display:flex;gap:8px;padding:4px 14px 14px;}
   #wmaplegend{width:210px;gap:6px;}
-  .wmlrow{gap:10px;padding:6px 9px;font:12px Verdana;}
+  .wmlrow{gap:10px;padding:6px 9px;font:12px RSFont,Verdana;}
   .wmlrow canvas{flex:0 0 auto;}
-  #qhead{font:bold 13px Georgia,serif;color:#ffd98c;padding:2px 0 6px;flex:0 0 auto;}
+  #qhead{font:bold 13px RSFont,Georgia,serif;color:#ffd98c;padding:2px 0 6px;flex:0 0 auto;}
   #panel-quests.on{display:flex;flex-direction:column;min-height:0;}
   #qlist{flex:1 1 auto;min-height:0;overflow-y:auto;overflow-x:hidden;}
   .qrow{background:#3a3328;border:1px solid #15110c;border-radius:3px;
     padding:5px 8px;margin-bottom:4px;cursor:pointer;}
   .qrow:hover{background:#453d2f;}
-  .qnm{font:bold 12px Verdana;}
+  .qnm{font:bold 12px RSFont,Verdana;}
   .q0 .qnm{color:#e04a3a;}
   .q1 .qnm{color:#e8c93f;}
   .q2 .qnm{color:#46d45a;}
-  .qdet{display:none;padding-top:4px;font:11px Verdana;color:#e8dcc0;}
+  .qdet{display:none;padding-top:4px;font:11px RSFont,Verdana;color:#e8dcc0;}
   .qrow.open .qdet{display:block;}
   .qsub{color:#bdb09a;font-size:10px;padding-top:3px;}
   .smlist{display:flex;flex-direction:column;gap:4px;padding:2px;
@@ -701,56 +732,56 @@ if ('serviceWorker' in navigator) {
    .smrow.dim .capebuy.dis{background:#4a4036;border-color:#15110c;color:#b8ad96;}
   .smrow canvas{flex:0 0 auto;image-rendering:pixelated;}
   .smtx{flex:1;min-width:0;}
-  .smnm{font:bold 11px Verdana;color:#ffd98c;}
-  .smsub{font:10px Verdana;color:#bdb09a;}
-  .smmsg{font:11px Verdana;color:#cfc0a0;text-align:center;
+  .smnm{font:bold 11px RSFont,Verdana;color:#ffd98c;}
+  .smsub{font:10px RSFont,Verdana;color:#bdb09a;}
+  .smmsg{font:11px RSFont,Verdana;color:#cfc0a0;text-align:center;
     min-height:15px;padding-top:7px;}
   .capegrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:2px;}
   .capecard{background:#3a3328;border:1px solid #15110c;border-radius:3px;
     padding:9px 6px;display:flex;flex-direction:column;align-items:center;gap:6px;}
   .capecard canvas{width:46px;height:46px;image-rendering:pixelated;}
-  .capecard .cnm{font:bold 11px Verdana;color:#ffd98c;text-align:center;min-height:26px;}
-  .capecard .cpr{font:11px Verdana;color:#ffe14a;}
+  .capecard .cnm{font:bold 11px RSFont,Verdana;color:#ffd98c;text-align:center;min-height:26px;}
+  .capecard .cpr{font:11px RSFont,Verdana;color:#ffe14a;}
   #fashionui{align-items:center;}
   .fashpanel{background:linear-gradient(180deg,#2b2620,#201c17);border:2px solid #0b0907;border-radius:13px;width:424px;max-width:95vw;max-height:93vh;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 20px 64px rgba(0,0,0,.62);}
   .fashhead{display:flex;justify-content:space-between;align-items:center;padding:11px 15px;background:linear-gradient(180deg,#3c3127,#2c241c);border-bottom:1px solid #0b0907;}
-  .fashtitle{font:bold 14px Georgia,serif;color:#ffd98c;letter-spacing:.3px;}
-  .fashclose{width:27px;height:27px;display:flex;align-items:center;justify-content:center;font:19px Verdana;color:#d8c8a8;cursor:pointer;border-radius:7px;}
+  .fashtitle{font:bold 14px RSFont,Georgia,serif;color:#ffd98c;letter-spacing:.3px;}
+  .fashclose{width:27px;height:27px;display:flex;align-items:center;justify-content:center;font:19px RSFont,Verdana;color:#d8c8a8;cursor:pointer;border-radius:7px;}
   .fashclose:hover{background:rgba(255,255,255,.08);color:#fff;}
   .fashstage{position:relative;height:272px;background:radial-gradient(125% 95% at 50% 18%,#615847 0%,#36302a 52%,#191611 100%);border-bottom:1px solid #0b0907;touch-action:none;}
   #fashav{display:block;width:100%;height:100%;cursor:grab;}
   #fashav:active{cursor:grabbing;}
-  .fashhint{position:absolute;left:0;right:0;bottom:9px;text-align:center;font:10px Verdana;color:rgba(255,255,255,.5);pointer-events:none;letter-spacing:.6px;}
-  .fashrand{position:absolute;top:11px;right:11px;background:rgba(18,14,10,.72);border:1px solid rgba(255,217,140,.45);color:#ffd98c;font:bold 10px Verdana;padding:6px 11px;border-radius:20px;cursor:pointer;letter-spacing:.3px;}
+  .fashhint{position:absolute;left:0;right:0;bottom:9px;text-align:center;font:10px RSFont,Verdana;color:rgba(255,255,255,.5);pointer-events:none;letter-spacing:.6px;}
+  .fashrand{position:absolute;top:11px;right:11px;background:rgba(18,14,10,.72);border:1px solid rgba(255,217,140,.45);color:#ffd98c;font:bold 10px RSFont,Verdana;padding:6px 11px;border-radius:20px;cursor:pointer;letter-spacing:.3px;}
   .fashrand:hover{background:rgba(107,90,46,.9);color:#fff;}
   .fashctrls{flex:1;overflow-y:auto;padding:13px 15px;display:flex;flex-direction:column;gap:13px;}
   .fashsec{display:flex;flex-direction:column;gap:7px;}
-  .fashlbl{font:bold 10px Verdana;color:#c8a86a;text-transform:uppercase;letter-spacing:.9px;}
+  .fashlbl{font:bold 10px RSFont,Verdana;color:#c8a86a;text-transform:uppercase;letter-spacing:.9px;}
   .fashopts{display:flex;flex-wrap:wrap;gap:7px;}
   .fashsw{width:27px;height:27px;border-radius:50%;border:2px solid rgba(0,0,0,.5);cursor:pointer;position:relative;transition:transform .08s;box-shadow:inset 0 -4px 7px rgba(0,0,0,.32);}
   .fashsw:hover{transform:scale(1.13);}
   .fashsw.sel{border-color:#ffe14a;box-shadow:0 0 0 2px rgba(255,225,74,.4),inset 0 -4px 7px rgba(0,0,0,.32);}
   .fashsw.sel::after{content:'';position:absolute;inset:0;margin:auto;width:8px;height:8px;border-radius:50%;background:#fff;box-shadow:0 0 3px rgba(0,0,0,.7);}
-  .fashhs{font:bold 11px Verdana;color:#d8cdb8;background:#3a3328;border:1px solid #14110c;border-radius:18px;padding:6px 13px;cursor:pointer;transition:background .1s,color .1s;text-transform:capitalize;}
+  .fashhs{font:bold 11px RSFont,Verdana;color:#d8cdb8;background:#3a3328;border:1px solid #14110c;border-radius:18px;padding:6px 13px;cursor:pointer;transition:background .1s,color .1s;text-transform:capitalize;}
   .fashhs:hover{background:#48402f;color:#fff;}
   .fashhs.sel{background:linear-gradient(180deg,#d4ad44,#9c7a2b);color:#241c10;border-color:#ffe14a;}
   .fashfoot{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:11px 15px;background:#241f18;border-top:1px solid #0b0907;}
-  #fashmsg{font:11px Verdana;color:#ffe14a;flex:1;line-height:1.35;}
-  .fashconfirm{background:linear-gradient(180deg,#72904a,#516c32);border:1px solid #0d0b08;border-radius:9px;color:#fff;font:bold 12px Verdana;padding:10px 17px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 0 #2e3e1c;}
+  #fashmsg{font:11px RSFont,Verdana;color:#ffe14a;flex:1;line-height:1.35;}
+  .fashconfirm{background:linear-gradient(180deg,#72904a,#516c32);border:1px solid #0d0b08;border-radius:9px;color:#fff;font:bold 12px RSFont,Verdana;padding:10px 17px;cursor:pointer;white-space:nowrap;box-shadow:0 2px 0 #2e3e1c;}
   .fashconfirm:hover{background:linear-gradient(180deg,#82a056,#5c7a3a);}
   .fashconfirm:active{transform:translateY(1px);box-shadow:0 1px 0 #2e3e1c;}
   .capebuy{background:#5d7a3a;border:1px solid #0d0b08;border-radius:3px;
-    color:#fff;font:bold 11px Verdana;padding:3px 16px;cursor:pointer;}
+    color:#fff;font:bold 11px RSFont,Verdana;padding:3px 16px;cursor:pointer;}
   .capebuy:hover{background:#6f9148;}
-  #capemsg,#swenmsg{font:11px Verdana;color:#cfc0a0;text-align:center;min-height:15px;padding-top:7px;}
+  #capemsg,#swenmsg{font:11px RSFont,Verdana;color:#cfc0a0;text-align:center;min-height:15px;padding-top:7px;}
   #wmaprow{display:flex;gap:8px;align-items:stretch;}
   #wmaplegend{width:158px;background:#352e24;border:1px solid #15110c;
     border-radius:3px;padding:7px;display:flex;flex-direction:column;
     gap:5px;align-self:flex-start;}
-  #wmlhead{font:bold 11px Verdana;color:#ffd98c;padding-bottom:2px;}
+  #wmlhead{font:bold 11px RSFont,Verdana;color:#ffd98c;padding-bottom:2px;}
   .wmlrow{display:flex;align-items:center;gap:8px;background:#3a3328;
     border:1px solid #15110c;border-radius:3px;padding:4px 7px;
-    cursor:pointer;font:11px Verdana;color:#e8dcc0;}
+    cursor:pointer;font:11px RSFont,Verdana;color:#e8dcc0;}
   .wmlrow:hover{background:#46402f;}
   .wmlrow.off{opacity:.38;}
   .bslot{position:relative;background:#3a3328;border:1px solid #15110c;
@@ -758,11 +789,11 @@ if ('serviceWorker' in navigator) {
     justify-content:center;cursor:pointer;}
   .bslot:hover{background:#4a4234;}
   .bslot .qty{position:absolute;top:0;left:2px;color:#ffe66d;
-    font:bold 9px Verdana,sans-serif;text-shadow:1px 1px 0 #000;}
+    font:bold 9px RSFontSmall,RSFont,Verdana,sans-serif;text-shadow:1px 1px 0 #000;}
   .gefoot{display:flex;justify-content:space-between;align-items:center;
     padding-top:7px;color:#bba98a;font-size:10px;gap:6px;flex-wrap:wrap;}
   .gebtn{background:#5d5141;border:1px solid #0d0b08;color:#ffe9c4;
-    font:bold 11px Georgia,serif;border-radius:3px;padding:4px 9px;cursor:pointer;}
+    font:bold 11px RSFont,Georgia,serif;border-radius:3px;padding:4px 9px;cursor:pointer;}
   .gebtn:hover{background:#6d5f4c;}
   #gelist{background:#1d1812;border:1px solid #0d0b08;max-height:50vh;
     overflow-y:auto;padding:4px;}
@@ -770,37 +801,37 @@ if ('serviceWorker' in navigator) {
     border-bottom:1px solid #15110c;cursor:pointer;}
   .gerow:hover{background:#2c261d;}
   .gerow .nm{flex:1;color:#e8dcc0;font-size:11px;}
-  .gerow .pr{color:#ffe66d;font:bold 11px Verdana,sans-serif;}
-  #gecoins{color:#ffe66d;font:bold 11px Verdana,sans-serif;}
-#logbtn{margin-top:7px;text-align:center;font:bold 11px Georgia,serif;color:#ffd98c;
+  .gerow .pr{color:#ffe66d;font:bold 11px RSFont,Verdana,sans-serif;}
+  #gecoins{color:#ffe66d;font:bold 11px RSFont,Verdana,sans-serif;}
+#logbtn{margin-top:7px;text-align:center;font:bold 11px RSFont,Georgia,serif;color:#ffd98c;
     cursor:pointer;padding:4px 0;border:1px solid #6b5a2e;border-radius:3px;
     background:linear-gradient(#3a3322,#2a2418);text-shadow:1px 1px 0 #000;}
   #logbtn:hover{background:linear-gradient(#4a4230,#332c1d);color:#fff;}
   #logbody{background:#1d1812;border:1px solid #0d0b08;max-height:64vh;overflow-y:auto;padding:10px 12px;}
-  .logstat{display:flex;justify-content:space-between;font:13px Verdana;color:#e8dcc0;padding:5px 2px;border-bottom:1px solid #2a2118;}
+  .logstat{display:flex;justify-content:space-between;font:13px RSFont,Verdana;color:#e8dcc0;padding:5px 2px;border-bottom:1px solid #2a2118;}
   .logstat b{color:#ffd98c;}
-  .logsec{font:bold 12px Georgia,serif;color:#c79be0;margin:13px 2px 7px;}
+  .logsec{font:bold 12px RSFont,Georgia,serif;color:#c79be0;margin:13px 2px 7px;}
   .logcat{display:grid;grid-template-columns:repeat(auto-fill,minmax(80px,1fr));gap:8px;}
   .logcell{background:#2a241a;border:1px solid #15110c;border-radius:4px;padding:7px 2px 5px;text-align:center;}
   .logcell canvas{display:block;margin:0 auto 3px;}
-  .logcell .ln{font:10px Verdana;line-height:1.15;word-break:break-word;}
+  .logcell .ln{font:10px RSFont,Verdana;line-height:1.15;word-break:break-word;}
   .logcell.got .ln{color:#9fe0a0;}
   .logcell.miss .ln{color:#9a9082;letter-spacing:1px;}
   /* encyclopedia */
   #encui .gepanel{width:560px;}
   #tradeoffers{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:6px 0;}
   .tradecol{display:flex; flex-direction:column;}
-  .tradehd{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin:2px 0 4px;}
+  .tradehd{color:var(--gold); font:bold 11px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px; margin:2px 0 4px;}
   .tradegrid{display:grid; grid-template-columns:repeat(4,1fr); gap:3px; background:#1c1812; border:1px solid #15110c; border-radius:3px; padding:4px; min-height:124px; align-content:start;}
   .tradegrid.wide{grid-template-columns:repeat(8,1fr); min-height:84px;}
   .tradeempty{color:#6f6552; font-size:11px; padding:10px 6px; text-align:center; align-self:start;}
-  .duelstakehd{color:var(--gold); font:bold 11px Georgia,serif; font-variant:small-caps; letter-spacing:1px; text-align:center; margin:7px 4px 2px; border-top:1px solid #4a3a22; padding-top:7px;}
+  .duelstakehd{color:var(--gold); font:bold 11px RSFont,Georgia,serif; font-variant:small-caps; letter-spacing:1px; text-align:center; margin:7px 4px 2px; border-top:1px solid #4a3a22; padding-top:7px;}
   .duelstakeoffers{display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:2px 4px 6px;}
   #duelstakeinvwrap{margin:0 4px 6px;}
-  .tradestatus{min-height:18px; text-align:center; font:12px Verdana,sans-serif; color:#7fe07f; margin:2px 0 4px;}
+  .tradestatus{min-height:18px; text-align:center; font:12px RSFont,Verdana,sans-serif; color:#7fe07f; margin:2px 0 4px;}
   .duelsub{font-size:12px; color:#b9b0a0; text-align:center; padding:6px 6px 9px;}
   .duelrules{display:flex; flex-direction:column; gap:6px; margin:0 4px 8px;}
-  .duelrule{display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid #4a4334; border-radius:5px; background:#211d16; cursor:pointer; font:14px Verdana,sans-serif; color:#d8cfbf; user-select:none;}
+  .duelrule{display:flex; align-items:center; gap:10px; padding:9px 12px; border:1px solid #4a4334; border-radius:5px; background:#211d16; cursor:pointer; font:14px RSFont,Verdana,sans-serif; color:#d8cfbf; user-select:none;}
   .duelrule:hover{border-color:#7a6c4f; background:#272118;}
   .duelrule .rbox{width:18px; height:18px; border:2px solid #6a5f48; border-radius:3px; flex:0 0 auto; display:flex; align-items:center; justify-content:center; font-size:13px; line-height:1; color:#15110a;}
   .duelrule.on{border-color:#caa23a; background:#2e2716;}
@@ -811,47 +842,47 @@ if ('serviceWorker' in navigator) {
   .gebtn.tradeacc.on{background:#2a5a24; color:#bfe6b6; box-shadow:inset 0 0 0 2px #1a3d16;}
   .gebtn.tradedec{background:#8a4a40; color:#f0e0d8; flex:1;}
   .gebtn.tradedec:hover{background:#a45a4e;}
-  .encsearch{width:100%;box-sizing:border-box;font:12px Georgia,serif;color:#f0e6cf;
+  .encsearch{width:100%;box-sizing:border-box;font:12px RSFont,Georgia,serif;color:#f0e6cf;
     background:#1c1810;border:1px solid #5d5141;border-radius:4px;padding:6px 9px;margin-bottom:7px;outline:none;}
   .encsearch:focus{border-color:#caa23a;}
   .encsearch::placeholder{color:#8a7d63;}
   .enctabs{display:flex;gap:6px;margin:0 0 9px;}
-  .enctab{flex:1;font:bold 12px Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);border:1px solid #5a4d2e;border-radius:6px;padding:7px 0;cursor:pointer;}
+  .enctab{flex:1;font:bold 12px RSFont,Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);border:1px solid #5a4d2e;border-radius:6px;padding:7px 0;cursor:pointer;}
   .enctab:hover{color:#ffd98c;border-color:#7a6a3e;}
   .enctab.on{color:#1c1710;background:linear-gradient(#e8c878,#caa23a);border-color:#caa23a;}
   .bcell{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;padding:9px 4px;background:#241f15;border:1px solid #3a3322;border-radius:5px;cursor:pointer;min-height:46px;}
   .bcell:hover{border-color:#caa23a;background:#2c2618;}
-  .bcell .bn{font:bold 11px Georgia,serif;color:#e8dcc0;text-align:center;line-height:1.15;}
-  .bcell .bl{font:bold 10px Georgia,serif;}
+  .bcell .bn{font:bold 11px RSFont,Georgia,serif;color:#e8dcc0;text-align:center;line-height:1.15;}
+  .bcell .bl{font:bold 10px RSFont,Georgia,serif;}
   .bview{width:100%;height:210px;display:block;background:radial-gradient(circle at 50% 36%,#2c2740,#0f0c12);border-radius:8px;border:1px solid #463c2b;touch-action:none;cursor:grab;}
   .bview:active{cursor:grabbing;}
   .barrows{display:flex;justify-content:center;gap:20px;margin:9px 0 2px;}
-  .barrow{font:bold 19px Georgia,serif;color:#1c1710;background:linear-gradient(#e8c878,#caa23a);border:1px solid #caa23a;border-radius:6px;width:58px;height:33px;cursor:pointer;line-height:1;}
+  .barrow{font:bold 19px RSFont,Georgia,serif;color:#1c1710;background:linear-gradient(#e8c878,#caa23a);border:1px solid #caa23a;border-radius:6px;width:58px;height:33px;cursor:pointer;line-height:1;}
   .barrow:hover{background:linear-gradient(#ffd98c,#e0b850);}
-  .bhint{text-align:center;font:italic 10.5px Georgia,serif;color:#9a8b6a;margin-bottom:9px;}
-  .encempty{grid-column:1/-1;text-align:center;color:#9a8b6a;font:italic 12px Georgia,serif;padding:24px 8px;}
+  .bhint{text-align:center;font:italic 10.5px RSFont,Georgia,serif;color:#9a8b6a;margin-bottom:9px;}
+  .encempty{grid-column:1/-1;text-align:center;color:#9a8b6a;font:italic 12px RSFont,Georgia,serif;padding:24px 8px;}
   .encfilters{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:7px;}
-  .encchip{font:bold 11px Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);
+  .encchip{font:bold 11px RSFont,Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);
     border:1px solid #5d5141;border-radius:11px;padding:3px 10px;cursor:pointer;}
   .encchip:hover{color:#ffd98c;border-color:#7a6a3e;}
   .encchip.on{color:#1c1710;background:linear-gradient(#e8c878,#caa23a);border-color:#caa23a;}
-  .enccount{font:11px Georgia,serif;color:#8a7d63;margin-bottom:6px;}
+  .enccount{font:11px RSFont,Georgia,serif;color:#8a7d63;margin-bottom:6px;}
   .encgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(76px,1fr));gap:6px;
     max-height:60vh;overflow-y:auto;padding:2px;}
   .enccell{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px;
     background:#211c14;border:1px solid #463c2b;border-radius:4px;cursor:pointer;}
   .enccell:hover{border-color:#caa23a;background:#2c2618;}
   .encicon{width:46px;height:46px;}
-  .encname{font:10px Georgia,serif;color:#cdbf9a;text-align:center;line-height:1.15;
+  .encname{font:10px RSFont,Georgia,serif;color:#cdbf9a;text-align:center;line-height:1.15;
     max-width:100%;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;}
   .encdetail{max-height:64vh;overflow-y:auto;}
   #guidewrap{display:flex; gap:10px; max-height:66vh;}
   #guidenav{flex:0 0 148px; display:flex; flex-direction:column; gap:4px; overflow-y:auto; padding-right:4px;}
-  .gnav{display:flex; align-items:center; gap:7px; font:bold 12px Georgia,serif; color:#cdbf9a; background:linear-gradient(#332d1e,#282216); border:1px solid #514627; border-radius:6px; padding:7px 8px; cursor:pointer; text-align:left;}
+  .gnav{display:flex; align-items:center; gap:7px; font:bold 12px RSFont,Georgia,serif; color:#cdbf9a; background:linear-gradient(#332d1e,#282216); border:1px solid #514627; border-radius:6px; padding:7px 8px; cursor:pointer; text-align:left;}
   .gnav:hover{background:linear-gradient(#3f3726,#2f2818);}
   .gnav.on{color:#ffe08a; border-color:#c9a23a; background:linear-gradient(#4a3f22,#382f1a);}
   .gnav canvas{flex:0 0 18px;}
-  #guidebody{flex:1; overflow-y:auto; padding:2px 8px 8px 2px; color:#e8dfc8; font:13px/1.5 Georgia,serif;}
+  #guidebody{flex:1; overflow-y:auto; padding:2px 8px 8px 2px; color:#e8dfc8; font:13px/1.5 RSFont,Georgia,serif;}
   #guidebody h2{color:#ffe08a; font-size:17px; margin:2px 0 8px; border-bottom:1px solid #514627; padding-bottom:5px;}
   #guidebody h3{color:#ffcf6a; font-size:14px; margin:14px 0 5px;}
   #guidebody p{margin:6px 0;} #guidebody ul{margin:5px 0 5px 2px; padding-left:18px;} #guidebody li{margin:3px 0;}
@@ -859,27 +890,27 @@ if ('serviceWorker' in navigator) {
   #guidebody .gcard{background:rgba(30,25,15,.5); border:1px solid #4a4027; border-radius:7px; padding:8px 11px; margin:8px 0;}
   #guidebody .gtri{color:#7fae3f;} #guidebody .gnote{color:#c9b98a; font-style:italic; font-size:12px;}
   #skillsub{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0 10px;}
-  .sksub{display:flex; align-items:center; gap:5px; font:bold 11px Georgia,serif; color:#cdbf9a; background:#302a1c; border:1px solid #4a4027; border-radius:5px; padding:4px 7px; cursor:pointer;}
+  .sksub{display:flex; align-items:center; gap:5px; font:bold 11px RSFont,Georgia,serif; color:#cdbf9a; background:#302a1c; border:1px solid #4a4027; border-radius:5px; padding:4px 7px; cursor:pointer;}
   .sksub.on{color:#ffe08a; border-color:#c9a23a;} .sksub canvas{flex:0 0 15px;}
-  .encback{font:bold 11px Georgia,serif;color:#ffd98c;background:none;border:none;cursor:pointer;padding:2px 0 8px;}
+  .encback{font:bold 11px RSFont,Georgia,serif;color:#ffd98c;background:none;border:none;cursor:pointer;padding:2px 0 8px;}
   .encback:hover{text-decoration:underline;}
   .enchd{display:flex;align-items:center;gap:12px;margin-bottom:8px;}
   .encbigicon{width:84px;height:84px;background:#211c14;border:1px solid #463c2b;border-radius:5px;flex:none;}
   .enchtext{display:flex;flex-direction:column;gap:3px;}
-  .enctitle{font:bold 17px Georgia,serif;color:#ffd98c;}
-  .enccat{font:11px Georgia,serif;color:#9a8b6a;text-transform:uppercase;letter-spacing:.5px;}
-  .encex{font:italic 12px Georgia,serif;color:#b8a988;margin-bottom:9px;line-height:1.4;}
+  .enctitle{font:bold 17px RSFont,Georgia,serif;color:#ffd98c;}
+  .enccat{font:11px RSFont,Georgia,serif;color:#9a8b6a;text-transform:uppercase;letter-spacing:.5px;}
+  .encex{font:italic 12px RSFont,Georgia,serif;color:#b8a988;margin-bottom:9px;line-height:1.4;}
   .encrows{display:flex;flex-direction:column;gap:1px;margin-bottom:10px;}
-  .encrow{display:flex;justify-content:space-between;gap:10px;font:12px Georgia,serif;color:#cdbf9a;
+  .encrow{display:flex;justify-content:space-between;gap:10px;font:12px RSFont,Georgia,serif;color:#cdbf9a;
     padding:4px 6px;background:#211c14;border-radius:3px;}
   .encrow b{color:#ffd98c;text-align:right;}
-  .encsrch{font:bold 12px Georgia,serif;color:#ffd98c;margin-bottom:5px;
+  .encsrch{font:bold 12px RSFont,Georgia,serif;color:#ffd98c;margin-bottom:5px;
     border-bottom:1px solid #463c2b;padding-bottom:3px;}
   .encsrcs{display:flex;flex-direction:column;gap:5px;}
   .encsrc{display:flex;flex-direction:column;gap:1px;padding:6px 8px;
     background:#211c14;border-left:3px solid #caa23a;border-radius:0 3px 3px 0;}
-  .encsrc b{font:bold 12px Georgia,serif;color:#e8c878;}
-  .encsrc span{font:11px Georgia,serif;color:#b8a988;line-height:1.35;}
+  .encsrc b{font:bold 12px RSFont,Georgia,serif;color:#e8c878;}
+  .encsrc span{font:11px RSFont,Georgia,serif;color:#b8a988;line-height:1.35;}
   @media (max-width:580px){
     #layout{flex-wrap:wrap;}
     .encgrid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));max-height:54vh;}
@@ -902,6 +933,18 @@ if ('serviceWorker' in navigator) {
 #signclose{margin-top:12px;text-align:center;background:#123038;border:1px solid #2fe0d6;color:#2fe0d6;padding:9px;border-radius:6px;cursor:pointer;font-weight:600;letter-spacing:.05em;}
 #signclose:hover{background:#1a4650;}
 </style>
+<script>
+/* Kick the pixel face off the moment the head is parsed. DOM text re-flows by itself when a
+   font arrives, but canvas text does NOT -- a texture baked before the face is ready keeps the
+   fallback forever. The game builds its world (and bakes its signage) synchronously further
+   down the document, so we start the load here and expose a promise anything can await. */
+try{
+  window.FONT_READY = (document.fonts && document.fonts.load)
+    ? Promise.all([document.fonts.load('16px RSFont'),document.fonts.load('bold 16px RSFont'),
+                   document.fonts.load('16px RSFontSmall'),document.fonts.load('16px RSFontQuill')]).catch(function(){})
+    : Promise.resolve();
+}catch(e){ window.FONT_READY = Promise.resolve(); }
+</script>
 </head>
 <body>
 <div id="frame">
@@ -917,7 +960,7 @@ if ('serviceWorker' in navigator) {
         <div id="dlgui"><div id="dlgbox">
   <canvas id="dlgface" width="100" height="100"></canvas>
   <div id="dlgmain">
-    <div id="dlgname"></div>
+    <div id="dlghdr"><canvas id="dlgswl" class="dsw" width="20" height="20"></canvas><div id="dlgname"></div><canvas id="dlgswr" class="dsw" width="20" height="20"></canvas></div>
     <div id="dlgtext"></div>
     <div id="dlgopts"></div>
     <div id="dlgcont">Click here to continue</div>
@@ -987,7 +1030,7 @@ if ('serviceWorker' in navigator) {
           <h4>Options</h4>
           <label><input type="checkbox" id="sndchk" checked> Sound effects</label>
           <label><input type="checkbox" id="muschk" checked> Music</label>
-          <label id="mtrackrow" style="display:flex;align-items:center;gap:6px;">Soundtrack: <span id="mtrackname" style="color:#ffe08a;">Milville Grounds</span> <button id="mtracknext" style="font:11px Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);border:1px solid #5a4d2e;border-radius:5px;padding:2px 8px;cursor:pointer;">Next &#9834;</button></label>
+          <label id="mtrackrow" style="display:flex;align-items:center;gap:6px;">Soundtrack: <span id="mtrackname" style="color:#ffe08a;">Milville Grounds</span> <button id="mtracknext" style="font:11px RSFont,Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);border:1px solid #5a4d2e;border-radius:5px;padding:2px 8px;cursor:pointer;">Next &#9834;</button></label>
           <label id="winterrow" style="display:none"><input type="checkbox" id="winterchk"> Winter scenery</label>
           <label id="fallrow" style="display:none"><input type="checkbox" id="fallchk"> Fall scenery</label>
           <div id="savestatus">Checking autosave…</div>
@@ -1002,7 +1045,7 @@ if ('serviceWorker' in navigator) {
             bury bones for Prayer. The guide by the fire can help.
           </div>
         </div>
-        <div class="panel" id="panel-friends"><h4>Friends</h4><button id="lbbtn" style="display:block;width:100%;margin:0 0 8px;font-family:Georgia,serif;font-size:13px;font-weight:bold;padding:7px 10px;border-radius:7px;border:1px solid #caa23a;background:#3a5a30;color:#fff;cursor:pointer;">View Leaderboard</button><div id="friendslist"></div></div>
+        <div class="panel" id="panel-friends"><h4>Friends</h4><button id="lbbtn" style="display:block;width:100%;margin:0 0 8px;font-family:RSFont,Georgia,serif;font-size:13px;font-weight:bold;padding:7px 10px;border-radius:7px;border:1px solid #caa23a;background:#3a5a30;color:#fff;cursor:pointer;">View Leaderboard</button><div id="friendslist"></div></div>
         <div class="panel" id="panel-emotes"><div id="emotehead">Emotes</div><div id="emotegrid"></div><div class="subhead" style="margin-top:7px">Titles</div><div id="titlebar" style="display:flex;flex-wrap:wrap;padding:0 4px 8px"></div></div>
         <div id="tabsbot">
           <div class="tab" data-p="friends" data-icon="friends" title="Friends"><canvas width="22" height="22"></canvas></div>
@@ -1018,7 +1061,7 @@ if ('serviceWorker' in navigator) {
 <div id="ctx"></div>
 <div id="wildui" class="gemodal"><div class="gepanel" style="width:340px;text-align:center;">
   <div style="font-size:34px;line-height:1;">&#9760;</div>
-  <div style="color:#ff6a5a;font:bold 16px Georgia,serif;padding:6px 0;">THE WILDERNESS</div>
+  <div style="color:#ff6a5a;font:bold 16px RSFont,Georgia,serif;padding:6px 0;">THE WILDERNESS</div>
   <div style="color:#e8dcc0;font-size:12px;line-height:1.5;padding:0 6px 12px;">
     Beyond this ditch lies the Wilderness &mdash; a lawless waste.<br>
     <b style="color:#ff6a5a;">If you die out there, you will LOSE the items you carry.</b></div>
@@ -8487,7 +8530,7 @@ function renderEquip(){applyGearTint();
       drawItemIcon(g,it.id,34);
       d.title=itemTip(it.id)+'\n(click to remove)';
       if(it.qty&&it.qty>1){const fs=fmtStack(it.qty);
-        g.font='bold 11px Verdana';g.textAlign='left';g.textBaseline='top';
+        g.font='bold 11px RSFont,Verdana';g.textAlign='left';g.textBaseline='top';
         g.fillStyle='#000';g.fillText(fs.t,2,2);
         g.fillStyle=fs.c;g.fillText(fs.t,1,1);}
     }else{
@@ -9655,7 +9698,7 @@ function drawItemIcon(g,id,S,dose){
     g.fillStyle='#6e5430';g.fillRect(-10,-9,20,4);
     g.fillStyle='#4a3a22';g.fillRect(-9,0,18,2.5);
     g.fillStyle='rgba(0,0,0,.5)';
-    g.font='bold 6px Verdana';g.textAlign='center';g.textBaseline='middle';
+    g.font='bold 6px RSFont,Verdana';g.textAlign='center';g.textBaseline='middle';
     g.fillText('COIT',0,-4.5);
     g.restore();return;
   }
@@ -10773,7 +10816,7 @@ function drawItemIcon(g,id,S,dose){
       break;
     }
     default:
-      g.fillStyle='#888';g.font='bold 16px Verdana';g.textAlign='center';g.fillText('?',0,6);
+      g.fillStyle='#888';g.font='bold 16px RSFont,Verdana';g.textAlign='center';g.fillText('?',0,6);
   }
   g.restore();
 }
@@ -11715,7 +11758,7 @@ function drawUiIcon(g,name,S){
       g.strokeStyle='#c0241f';g.lineWidth=1.8;g.beginPath();g.moveTo(-1.5,-1.5);g.lineTo(1.5,1.5);g.moveTo(1.5,-1.5);g.lineTo(-1.5,1.5);g.stroke();
       break; }
     case 'question': {
-      g.fillStyle='#ffe38a';g.font='bold '+(S*0.86)+'px Georgia,serif';g.textAlign='center';g.textBaseline='middle';
+      g.fillStyle='#ffe38a';g.font='bold '+(S*0.86)+'px RSFont,Georgia,serif';g.textAlign='center';g.textBaseline='middle';
       g.fillText('?',0,S*0.05);
       break; }
   }
@@ -23399,7 +23442,7 @@ miniBase.width=W*4;miniBase.height=H*4;
   /* THE WILDERNESS, lettered down the wasteland */
   g.save();
   g.translate(25*4,64*4);g.rotate(-Math.PI/2);
-  g.textAlign='center';g.font='bold 21px Georgia,serif';
+  g.textAlign='center';g.font='bold 21px RSFont,Georgia,serif';
   g.lineWidth=4;g.strokeStyle='rgba(18,12,6,0.82)';
   g.strokeText('T H E   W I L D E R N E S S',0,0);
   g.fillStyle='#cf9d62';
@@ -23809,19 +23852,19 @@ let partyDropsEl=null;
 function openPartyDrops(){
   if(!partyDropsEl){
     partyDropsEl=document.createElement('div');partyDropsEl.id='partydrops';
-    partyDropsEl.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;width:330px;max-height:80vh;overflow:auto;background:linear-gradient(#efe3bf,#e2d29c);border:6px solid #7a5a2e;border-radius:10px;padding:14px 16px;box-shadow:0 12px 44px rgba(0,0,0,.55);font-family:Georgia,serif;color:#3a2a14;display:none;';
+    partyDropsEl.style.cssText='position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:80;width:330px;max-height:80vh;overflow:auto;background:linear-gradient(#efe3bf,#e2d29c);border:6px solid #7a5a2e;border-radius:10px;padding:14px 16px;box-shadow:0 12px 44px rgba(0,0,0,.55);font-family:RSFont,Georgia,serif;color:#3a2a14;display:none;';
     document.body.appendChild(partyDropsEl);
   }
   let h='<div style="text-align:center;font-weight:bold;font-size:18px;">Balloon Drop Table</div>';
   h+='<div style="text-align:center;font-size:11px;margin:2px 0 10px;opacity:.7;">Chance per balloon you pop</div><div id="pdrows"></div>';
   h+='<div style="text-align:center;font-size:10px;margin-top:8px;opacity:.6;">A round costs one 30,000-coin Party token.</div>';
-  h+='<div style="text-align:center;margin-top:10px;"><button id="pdclose" style="font-family:Georgia,serif;font-size:13px;padding:5px 18px;background:#7a5a2e;color:#f3e9c8;border:none;border-radius:6px;cursor:pointer;">Close</button></div>';
+  h+='<div style="text-align:center;margin-top:10px;"><button id="pdclose" style="font-family:RSFont,Georgia,serif;font-size:13px;padding:5px 18px;background:#7a5a2e;color:#f3e9c8;border:none;border-radius:6px;cursor:pointer;">Close</button></div>';
   partyDropsEl.innerHTML=h;
   const rows=partyDropsEl.querySelector('#pdrows');
   for(const t of PARTY_LOOT){
     const row=document.createElement('div');row.style.cssText='display:flex;align-items:center;gap:10px;padding:5px 2px;border-bottom:1px solid rgba(122,90,46,.22);';
     const cv=document.createElement('canvas');cv.width=30;cv.height=30;cv.style.cssText='width:30px;height:30px;flex:0 0 30px;image-rendering:pixelated;';
-    if(t.icon){try{drawItemIcon(cv.getContext('2d'),t.icon,30);}catch(e){}}else{const x=cv.getContext('2d');x.fillStyle='#b9a877';x.font='20px Georgia';x.textAlign='center';x.fillText('\u2014',15,22);}
+    if(t.icon){try{drawItemIcon(cv.getContext('2d'),t.icon,30);}catch(e){}}else{const x=cv.getContext('2d');x.fillStyle='#b9a877';x.font='20px RSFont,Georgia';x.textAlign='center';x.fillText('\u2014',15,22);}
     row.appendChild(cv);
     const lab=document.createElement('div');lab.style.cssText='flex:1;font-size:13px;line-height:1.15;';
     lab.innerHTML=t.label+(t.special==='cos'?'<div style="font-size:10px;opacity:.65;">~10% Santa hat, else a party hat</div>':'');
@@ -23896,7 +23939,7 @@ let partyChatT=2500;
 function partySay(a,text,dur){a.chat=text;a.chatT=performance.now()+(dur||3000);}
 function drawPartyChats(){
   const now=performance.now();
-  octx.save();octx.textAlign='center';octx.font='bold 13px Georgia';
+  octx.save();octx.textAlign='center';octx.font='bold 13px RSFont,Georgia';
   const draw=(g,yoff,a)=>{
     if(!a.chat||!(a.chatT>now))return;
     const pp=proj(g.position.x,g.position.y+yoff,g.position.z);if(!pp)return;
@@ -23909,7 +23952,7 @@ function drawPartyChats(){
 }
 function drawSayText(wx,wz,yoff,text){
   const p=proj(wx,groundH(wx,wz)+yoff,wz);if(!p)return;
-  octx.save();octx.textAlign='center';octx.font='bold 13px Georgia';
+  octx.save();octx.textAlign='center';octx.font='bold 13px RSFont,Georgia';
   octx.lineWidth=3;octx.strokeStyle='rgba(0,0,0,0.85)';octx.strokeText(text,p.x,p.y);
   octx.fillStyle='#ffff2a';octx.fillText(text,p.x,p.y);
   octx.restore();
@@ -24180,7 +24223,7 @@ function buildWmLegend(){
   const box=document.getElementById('wmlrows');
   if(!box)return;
   const hint=document.createElement('div');
-  hint.style.cssText='font:10px Verdana;color:#9a8d74;padding-bottom:3px;';
+  hint.style.cssText='font:10px RSFont,Verdana;color:#9a8d74;padding-bottom:3px;';
   hint.textContent='Click a feature to show or hide it on both maps.';
   box.appendChild(hint);
   for(const[cat,col,label]of MM_CATS){
@@ -24311,7 +24354,7 @@ function openWorldMap(){
   g.clearRect(0,0,c.width,c.height);
   g.drawImage(miniBase,0,0,c.width,c.height);
   g.textAlign='center';
-  g.font='bold 9px Verdana,sans-serif';
+  g.font='bold 9px RSFont,Verdana,sans-serif';
   BUILDINGS.forEach((b,i)=>{
     const bx=(b.x+b.w/2)*6;
     const by=(i%2)?b.y*6-5:(b.y+b.h)*6+10;
@@ -24489,6 +24532,24 @@ const dlgNameEl=document.getElementById('dlgname');
 const dlgTextEl=document.getElementById('dlgtext');
 const dlgOptsEl=document.getElementById('dlgopts');
 const dlgContEl=document.getElementById('dlgcont');
+const dlgHdrEl=document.getElementById('dlghdr');
+const dlgSwL=document.getElementById('dlgswl'), dlgSwR=document.getElementById('dlgswr');
+/* The option-box swords. Drawn once, as pixel art on a 20x20 grid so they sit happily beside the
+   Quill header; dir=-1 mirrors the sprite so the right-hand sword points back inward. */
+function _drawDlgSword(cv,dir){
+  if(!cv||!cv.getContext)return;
+  const g=cv.getContext('2d'); g.clearRect(0,0,20,20); g.save();
+  if(dir<0){ g.translate(20,0); g.scale(-1,1); }
+  g.fillStyle='#c9932f'; g.fillRect(1,8,2,4);      /* pommel   */
+  g.fillStyle='#6b4a2e'; g.fillRect(3,9,4,2);      /* grip     */
+  g.fillStyle='#e0b544'; g.fillRect(7,5,2,10);     /* crossguard */
+  g.fillStyle='#d8dee6'; g.fillRect(9,8,8,4);      /* blade    */
+  g.fillStyle='#eef2f6'; g.fillRect(9,8,8,1);      /* highlight */
+  g.fillStyle='#aeb6c0'; g.fillRect(9,11,8,1);     /* shade    */
+  g.fillStyle='#d8dee6'; g.fillRect(17,9,2,2);     /* tip      */
+  g.restore();
+}
+try{ _drawDlgSword(dlgSwL,1); _drawDlgSword(dlgSwR,-1); }catch(e){}
 let dlg=null;
 const FACES={
   serg:{skin:0x8a5a3c,hair:0x181310,robe:0x3a4a63,hairstyle:'short'},
@@ -24930,7 +24991,7 @@ function slayerShopRows(){const sl=player.slayer,u=sl.unlocks||{},rows=[];
   return rows;}
 function slDrawIcon(cv,icon){const g=cv.getContext('2d');g.clearRect(0,0,cv.width,cv.height);
   if(icon==='_skull'){g.save();g.translate(16,16);g.fillStyle='#d8d2c0';g.beginPath();g.arc(0,-2,8.5,Math.PI,0);g.fill();g.fillRect(-8.5,-2,17,7);g.fillStyle='#b6291f';g.beginPath();g.arc(-3.8,-1,2.5,0,7);g.arc(3.8,-1,2.5,0,7);g.fill();g.fillStyle='#1c1813';g.fillRect(-1.3,3,2.6,4);g.fillRect(-5,5,3,2);g.fillRect(2,5,3,2);g.restore();return;}
-  if(icon==='_coin'){g.save();g.translate(16,16);g.fillStyle='#e8c84a';g.beginPath();g.arc(0,0,9,0,7);g.fill();g.lineWidth=2;g.strokeStyle='#b9942a';g.stroke();g.fillStyle='#fff3b0';g.font='bold 12px Georgia';g.textAlign='center';g.textBaseline='middle';g.fillText('$',0,1);g.restore();return;}
+  if(icon==='_coin'){g.save();g.translate(16,16);g.fillStyle='#e8c84a';g.beginPath();g.arc(0,0,9,0,7);g.fill();g.lineWidth=2;g.strokeStyle='#b9942a';g.stroke();g.fillStyle='#fff3b0';g.font='bold 12px RSFont,Georgia';g.textAlign='center';g.textBaseline='middle';g.fillText('$',0,1);g.restore();return;}
   if(icon==='_block'){g.save();g.translate(16,16);g.strokeStyle='#c0584a';g.lineWidth=2.5;g.beginPath();g.arc(0,0,9,0,7);g.stroke();g.beginPath();g.moveTo(-6.4,-6.4);g.lineTo(6.4,6.4);g.stroke();g.restore();return;}
   drawItemIcon(g,icon,32);}
 function slMakeRow(r,onBuy,confirmKey,btnLabel,confirmLabel){const row=document.createElement('div');row.className='slrow';
@@ -25199,7 +25260,7 @@ function renderEmberShop(){
     for(const c of ['Luxury','Consumable','All']){
       const b=document.createElement('div'); b.textContent=(c==='Consumable'?'Consumables':c);
       const on=emberShopCat===c;
-      b.style.cssText='padding:5px 13px;border-radius:4px;cursor:pointer;font:bold 11.5px Georgia,serif;border:1px solid #0d0b08;'+(on?'background:#9a6a1f;color:#fff;':'background:#2a2118;color:#c9a98a;');
+      b.style.cssText='padding:5px 13px;border-radius:4px;cursor:pointer;font:bold 11.5px RSFont,Georgia,serif;border:1px solid #0d0b08;'+(on?'background:#9a6a1f;color:#fff;':'background:#2a2118;color:#c9a98a;');
       b.onclick=()=>{emberShopCat=c;emberBuyConfirm=null;renderEmberShop();}; tabs.appendChild(b);
     }
   }
@@ -25212,9 +25273,9 @@ function renderEmberShop(){
     row.appendChild(cv);
     const info=document.createElement('div'); info.style.flex='1';
     const cb=[]; if(e.coins)cb.push(e.coins.toLocaleString()+' gp'); if(e.warrants)cb.push(e.warrants+' warrants'); if(e.cinders)cb.push(e.cinders.toLocaleString()+' cinders');
-    info.innerHTML='<div class="sln"></div><div class="sld"></div><div class="slc" style="color:#ffcf6a;font:bold 11px Georgia,serif;margin-top:3px;"></div>';
+    info.innerHTML='<div class="sln"></div><div class="sld"></div><div class="slc" style="color:#ffcf6a;font:bold 11px RSFont,Georgia,serif;margin-top:3px;"></div>';
     info.querySelector('.sln').textContent=it.name;
-    if(e.cat==='Luxury'){ const _sd=info.querySelector('.sld'); _sd.textContent='Click to examine \u203a'; _sd.style.cssText='color:#8fd0ff;font:italic 11px Georgia,serif;margin-top:2px;'; }
+    if(e.cat==='Luxury'){ const _sd=info.querySelector('.sld'); _sd.textContent='Click to examine \u203a'; _sd.style.cssText='color:#8fd0ff;font:italic 11px RSFont,Georgia,serif;margin-top:2px;'; }
     else info.querySelector('.sld').textContent=emberItemDesc(e.id);
     info.querySelector('.slc').textContent=cb.join('   +   ');
     row.appendChild(info);
@@ -25620,12 +25681,12 @@ function openExaminePlayer(rec){
     '<div style="font-size:19px;font-weight:bold;color:#c7b0ff;text-align:center;">'+_esc(name)+_esc(title)+'</div>'+
     '<div style="text-align:center;color:#9a8ac0;font-size:12px;margin:2px 0 9px;">'+(cmb!=null?('Combat level '+cmb):'A fellow adventurer of Millville')+'</div>'+
     '<div style="display:flex;gap:6px;margin-bottom:9px;">'+
-      '<div id="explTabG" style="flex:1;text-align:center;padding:6px;border-radius:6px;cursor:pointer;font:bold 13px Georgia,serif;background:#2c2246;color:#e0d4ff;">Equipment</div>'+
-      '<div id="explTabS" style="flex:1;text-align:center;padding:6px;border-radius:6px;cursor:pointer;font:bold 13px Georgia,serif;background:#1d1830;color:#9a8ac0;">Skills</div>'+
+      '<div id="explTabG" style="flex:1;text-align:center;padding:6px;border-radius:6px;cursor:pointer;font:bold 13px RSFont,Georgia,serif;background:#2c2246;color:#e0d4ff;">Equipment</div>'+
+      '<div id="explTabS" style="flex:1;text-align:center;padding:6px;border-radius:6px;cursor:pointer;font:bold 13px RSFont,Georgia,serif;background:#1d1830;color:#9a8ac0;">Skills</div>'+
     '</div>'+
     '<div id="explPageG"></div>'+
     '<div id="explPageS" style="display:none;"></div>'+
-    '<div style="display:flex;justify-content:center;margin-top:11px;"><button id="explClose" style="font:bold 13px Georgia,serif;padding:7px 18px;border-radius:7px;border:1px solid #6a4fb0;background:#241c38;color:#c7b0ff;cursor:pointer;">Close</button></div>';
+    '<div style="display:flex;justify-content:center;margin-top:11px;"><button id="explClose" style="font:bold 13px RSFont,Georgia,serif;padding:7px 18px;border-radius:7px;border:1px solid #6a4fb0;background:#241c38;color:#c7b0ff;cursor:pointer;">Close</button></div>';
   ov.appendChild(box); document.body.appendChild(ov);
   ov.addEventListener('click',e=>{if(e.target===ov)closeExaminePlayer();});
   box.querySelector('#explClose').onclick=closeExaminePlayer;
@@ -25648,7 +25709,7 @@ function openExaminePlayer(rec){
     cell.style.cssText='display:flex;align-items:center;gap:6px;background:#201a30;border:1px solid #352a52;border-radius:6px;padding:4px 6px;min-height:40px;'+(worn?'cursor:pointer;':'opacity:0.5;');
     const ic=document.createElement('canvas'); ic.width=34; ic.height=34; ic.style.cssText='width:34px;height:34px;flex:0 0 34px;';
     if(worn){ try{drawItemIcon(ic.getContext('2d'),worn,34);}catch(e){} }
-    const nm=document.createElement('div'); nm.style.cssText='font:11px Georgia,serif;color:'+(worn?'#e0d4ff':'#6a5f88')+';line-height:1.15;overflow:hidden;';
+    const nm=document.createElement('div'); nm.style.cssText='font:11px RSFont,Georgia,serif;color:'+(worn?'#e0d4ff':'#6a5f88')+';line-height:1.15;overflow:hidden;';
     nm.textContent=worn?ITEMS[worn].name:label;
     cell.appendChild(ic); cell.appendChild(nm);
     if(worn){ cell.title='Examine '+ITEMS[worn].name; cell.onclick=()=>{ if(typeof openLuxExamine==='function')openLuxExamine(worn,true); else if(typeof examineItem==='function')examineItem(worn); else if(typeof msg==='function')msg(ITEMS[worn].name+' \u2014 '+(ITEMS[worn].ex||''),'#c7b0ff'); }; }
@@ -25665,16 +25726,16 @@ function openExaminePlayer(rec){
     const grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:1fr 1fr 1fr;gap:5px;';
     for(let i=0;i<SKILLS.length;i++){
       const lv=lvls[i]||1; total+=lv;
-      const c=document.createElement('div'); c.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#201a30;border:1px solid #352a52;border-radius:5px;padding:4px 7px;font:12px Georgia,serif;';
+      const c=document.createElement('div'); c.style.cssText='display:flex;justify-content:space-between;align-items:center;background:#201a30;border:1px solid #352a52;border-radius:5px;padding:4px 7px;font:12px RSFont,Georgia,serif;';
       c.innerHTML='<span style="color:#b7a8d8;">'+(SKN[SKILLS[i]]||SKILLS[i])+'</span><span style="color:'+(lv>=99?'#ffd24a':'#e0d4ff')+';font-weight:bold;">'+lv+'</span>';
       grid.appendChild(c);
     }
     pageS.appendChild(grid);
-    const tot=document.createElement('div'); tot.style.cssText='text-align:center;color:#c7b0ff;font:bold 13px Georgia,serif;margin-top:9px;border-top:1px solid #352a52;padding-top:8px;';
+    const tot=document.createElement('div'); tot.style.cssText='text-align:center;color:#c7b0ff;font:bold 13px RSFont,Georgia,serif;margin-top:9px;border-top:1px solid #352a52;padding-top:8px;';
     tot.textContent=(cmb!=null?('Combat level '+cmb+'  \u00b7  '):'')+'Total level '+total;
     pageS.appendChild(tot);
   } else {
-    const nf=document.createElement('div'); nf.style.cssText='text-align:center;color:#9a8ac0;font:italic 12px/1.5 Georgia,serif;padding:26px 10px;';
+    const nf=document.createElement('div'); nf.style.cssText='text-align:center;color:#9a8ac0;font:italic 12px/1.5 RSFont,Georgia,serif;padding:26px 10px;';
     nf.textContent=_esc(name)+"\u2019s skill levels aren\u2019t visible right now \u2014 they may be out of range or on an older version.";
     pageS.appendChild(nf);
   }
@@ -25732,9 +25793,9 @@ function openLuxExamine(id,hideBuy){
       +'<div class="gebar"><span id="luxexname"></span><div class="gex" id="luxexclose" title="Close">\u2715</div></div>'
       +'<canvas id="luxexcv" style="width:100%;height:210px;display:block;background:radial-gradient(ellipse at 50% 38%,#2a211a 0%,#161210 78%);border-radius:6px;border:1px solid #0d0b08;cursor:grab;"></canvas>'
       +'<div id="luxexstats" style="margin:11px 2px 0;"></div>'
-      +'<div id="luxexlore" style="margin:9px 2px 2px;font:italic 12px/1.6 Georgia,serif;color:#c9b48c;"></div>'
+      +'<div id="luxexlore" style="margin:9px 2px 2px;font:italic 12px/1.6 RSFont,Georgia,serif;color:#c9b48c;"></div>'
       +'<div id="luxexbuywrap" style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:11px;border-top:1px solid #3a2c1a;padding-top:10px;">'
-        +'<span id="luxexcost" style="color:#ffcf6a;font:bold 11.5px Georgia,serif;"></span>'
+        +'<span id="luxexcost" style="color:#ffcf6a;font:bold 11.5px RSFont,Georgia,serif;"></span>'
         +'<div id="luxexbuy" class="slbtn" style="min-width:96px;text-align:center;">Buy</div>'
       +'</div></div>';
     document.body.appendChild(el);
@@ -25746,7 +25807,7 @@ function openLuxExamine(id,hideBuy){
   /* stats */
   const st=el.querySelector('#luxexstats'); st.innerHTML='';
   for(const [k,v] of luxStatLines(id)){
-    const r=document.createElement('div'); r.style.cssText='display:flex;justify-content:space-between;padding:2.5px 4px;border-bottom:1px solid #2a2016;font:12px Georgia,serif;';
+    const r=document.createElement('div'); r.style.cssText='display:flex;justify-content:space-between;padding:2.5px 4px;border-bottom:1px solid #2a2016;font:12px RSFont,Georgia,serif;';
     r.innerHTML='<span style="color:#b7a483;">'+k+'</span><span style="color:#ffe0a0;font-weight:bold;">'+v+'</span>'; st.appendChild(r);
   }
   el.querySelector('#luxexlore').textContent=LUX_LORE[id]||it.ex||'';
@@ -27083,8 +27144,15 @@ function dlgRender(){
   if(!node){closeDialogue();return;}
   dlgOptsEl.innerHTML='';
   if(node.opts){
-    if(node.text&&!dlg.reveal){dlgNameEl.textContent=node.who==='player'?'You':dlg.npc.name;dlgTextEl.style.display='';dlgTextEl.textContent=(node.text||'').replace(/\{name\}/g,player.name);dlgContEl.style.display='block';dlgContEl.textContent='Click here to continue';dlg.talkT=performance.now();return;}
-    dlgNameEl.textContent='Choose an option';dlgTextEl.style.display='none';
+    if(node.text&&!dlg.reveal){if(dlgHdrEl)dlgHdrEl.classList.remove('ask');dlgNameEl.textContent=node.who==='player'?'You':dlg.npc.name;dlgTextEl.style.display='';dlgTextEl.textContent=(node.text||'').replace(/\{name\}/g,player.name);dlgContEl.style.display='block';dlgContEl.textContent='Click here to continue';dlg.talkT=performance.now();return;}
+    /* ** THE OSRS OPTION PAGE. ** Your replies never share a page with the NPC's line: whatever the
+       node carried is shown first (above) and clicking through lands here, on a page that asks the
+       question in red between two inward-pointing swords and lists nothing but your replies.
+       Because every option in the game renders through this one branch, this is uniform across
+       every dialogue. A node may override the wording with `ask:'...'`. */
+    dlgNameEl.textContent=node.ask||'What would you like to do?';
+    if(dlgHdrEl)dlgHdrEl.classList.add('ask');
+    dlgTextEl.style.display='none';
     dlgContEl.style.display='none';
     for(const o of node.opts){
       const d=document.createElement('div');d.className='dopt';
@@ -27097,6 +27165,7 @@ function dlgRender(){
       dlgOptsEl.appendChild(d);
     }
   }else{
+    if(dlgHdrEl)dlgHdrEl.classList.remove('ask');
     dlgNameEl.textContent=node.who==='player'?'You':dlg.npc.name;
     dlgTextEl.style.display='';
     dlgTextEl.textContent=(node.text||'').replace(/\{name\}/g,player.name);
@@ -28334,7 +28403,7 @@ function renderSell(){
   });
   if(!ls.children.length){
     const d=document.createElement('div');
-    d.style.cssText='color:#9a8a6a;font:11px Verdana;padding:6px;';
+    d.style.cssText='color:#9a8a6a;font:11px RSFont,Verdana;padding:6px;';
     d.textContent='Nothing in your pack worth selling.';
     ls.appendChild(d);
   }
@@ -29011,7 +29080,7 @@ let spellTip=null;
 function ensureSpellTip(){
   if(spellTip)return spellTip;
   spellTip=document.createElement('div');spellTip.id='spelltip';
-  spellTip.style.cssText='position:fixed;z-index:99999;display:none;pointer-events:none;max-width:210px;background:#1a1610;border:1px solid #d8b33a;border-radius:4px;padding:6px 9px;font:11px Verdana,sans-serif;color:#e8dcc0;line-height:1.45;box-shadow:0 3px 12px rgba(0,0,0,.6);';
+  spellTip.style.cssText='position:fixed;z-index:99999;display:none;pointer-events:none;max-width:210px;background:#1a1610;border:1px solid #d8b33a;border-radius:4px;padding:6px 9px;font:11px RSFont,Verdana,sans-serif;color:#e8dcc0;line-height:1.45;box-shadow:0 3px 12px rgba(0,0,0,.6);';
   document.body.appendChild(spellTip);return spellTip;
 }
 function moveSpellTip(ev){
@@ -29111,7 +29180,7 @@ function renderBuffHud(){
     const c=document.createElement('canvas'); c.width=20;c.height=20;
     const g=c.getContext('2d');
     g.save();g.translate(2,1);drawUiIcon(g,SKILL_META[sk].ui,16);g.restore();
-    g.fillStyle='#bfe6ff';g.font='bold 8px Verdana';g.textAlign='right';g.textBaseline='alphabetic';
+    g.fillStyle='#bfe6ff';g.font='bold 8px RSFont,Verdana';g.textAlign='right';g.textBaseline='alphabetic';
     g.fillText('+'+cur,19.5,19.5);
     const t=document.createElement('span'); t.textContent=mm+':'+String(ss).padStart(2,'0');
     chip.appendChild(c); chip.appendChild(t); el.appendChild(chip);
@@ -33580,7 +33649,7 @@ function raidDrawReviveBar(ctx,W,H){
   ctx.fillStyle='#241f18'; ctx.fillRect(bx,by,bw,bh);
   ctx.fillStyle='#8fd0ff'; ctx.fillRect(bx,by,bw*frac,bh);
   ctx.strokeStyle='#0d0b08'; ctx.lineWidth=2; ctx.strokeRect(bx,by,bw,bh);
-  ctx.fillStyle='#fff'; ctx.font='bold 12px Georgia, serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+  ctx.fillStyle='#fff'; ctx.font='bold 12px RSFont,Georgia, serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
   ctx.fillText(label+'  \u2014  '+left+'s', bx+bw/2, by+bh/2+1);
   ctx.restore();
 }
@@ -33956,7 +34025,7 @@ function raidHudTick(){
     _raidHud.id='raidhud';
     _raidHud.style.cssText='position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:40;'
       +'background:rgba(20,17,13,0.88);border:1px solid #3a3226;border-radius:6px;padding:6px 10px;'
-      +'font:12px Georgia,serif;color:#e8e0c8;display:none;align-items:center;gap:10px;pointer-events:auto';
+      +'font:12px RSFont,Georgia,serif;color:#e8e0c8;display:none;align-items:center;gap:10px;pointer-events:auto';
     _raidHud.innerHTML='<span style="color:#8a8172">The Delve</span>'
       +'<b id="raidhudpts" style="color:#ffd24a">0</b><span style="color:#8a8172">pts</span>'
       +'<span id="raidhudfl" style="color:#8fd0ff"></span>'
@@ -36428,7 +36497,7 @@ function drawDuelOverlay(){
   if(duel.state==='count'){const left=Math.ceil((duel.startAt-now)/1000);if(left>0)txt=String(left);}
   if(duel.flash&&now<duel.flash)txt='FIGHT!';
   if(!txt)return;
-  octx.save();octx.textAlign='center';octx.font='bold 52px Georgia,serif';
+  octx.save();octx.textAlign='center';octx.font='bold 52px RSFont,Georgia,serif';
   octx.fillStyle='rgba(0,0,0,0.55)';octx.fillText(txt,ow/2+2,oh*0.42+2);
   octx.fillStyle=txt==='FIGHT!'?'#ff5a48':'#ffe14a';octx.fillText(txt,ow/2,oh*0.42);
   octx.restore();
@@ -36502,7 +36571,7 @@ function animateRectoryFire(now){
 }
 function drawRectoryChats(){
   const now=performance.now();
-  octx.save(); octx.textAlign='center'; octx.font='bold 13px Georgia';
+  octx.save(); octx.textAlign='center'; octx.font='bold 13px RSFont,Georgia';
   for(const st of rectoryStudents){
     if(st.chat&&st.chatT>now){
       const pp=proj(st.g.position.x,st.g.position.y+2.25,st.g.position.z);
@@ -36566,7 +36635,7 @@ function tickChapelChildren(dt){
 function drawChapelChats(){
   if(!chapelChildren.length)return;
   const now=performance.now();
-  octx.save(); octx.textAlign='center'; octx.font='bold 12px Georgia';
+  octx.save(); octx.textAlign='center'; octx.font='bold 12px RSFont,Georgia';
   for(const st of chapelChildren){
     if(st.chat&&st.chatT>now){
       const pp=proj(st.g.position.x,st.g.position.y+1.7,st.g.position.z);
@@ -36592,7 +36661,7 @@ function drawMathesChats(){
       sp.chat=MATHES_SPECTATOR_LINES[Math.floor(Math.random()*MATHES_SPECTATOR_LINES.length)];
       sp.chatUntil=nowp+2600;
     }
-    octx.save();octx.textAlign='center';octx.font='bold 12px Georgia';
+    octx.save();octx.textAlign='center';octx.font='bold 12px RSFont,Georgia';
     for(const sp of mathesSpectators){
       if(sp.chat&&sp.chatUntil>nowp){
         const pp=proj(sp.x,sp.y+1.05,sp.z);
@@ -36701,7 +36770,7 @@ function drawOverlay(now){
   if(typeof MP!=='undefined')MP.drawOverlays();
   if(!curInterior()&&inWild(player.x,player.y)){
     octx.save();octx.textAlign='center';
-    octx.font='bold 14px Georgia,serif';
+    octx.font='bold 14px RSFont,Georgia,serif';
     octx.fillStyle='rgba(0,0,0,0.5)';
     octx.fillText('\u2620  THE WILDERNESS  \u2620',ow/2+1,23);
     octx.fillStyle='#ff5a48';
@@ -36734,7 +36803,7 @@ function drawOverlay(now){
       const pN=proj(r.px+0.5,groundH(r.px+0.5,r.py+0.5)+_mobNameY(r),r.py+0.5);
       if(pN){
         const tN=r.name+' (level-'+mobCmb(r)+')';
-        octx.font='bold 11px Verdana';octx.textAlign='center';
+        octx.font='bold 11px RSFont,Verdana';octx.textAlign='center';
         octx.fillStyle='rgba(0,0,0,0.65)';octx.fillText(tN,pN.x+1,pN.y+1);
         octx.fillStyle=cmbColForVal(mobCmb(r));octx.fillText(tN,pN.x,pN.y);
       }
@@ -36781,7 +36850,7 @@ function drawOverlay(now){
     octx.fillStyle=s.dmg>0?'#b3241f':'#2f5bbf';
     octx.beginPath();octx.arc(p.x,p.y,10,0,7);octx.fill();
     octx.strokeStyle='rgba(0,0,0,.45)';octx.lineWidth=1.5;octx.stroke();
-    octx.fillStyle='#fff';octx.font='bold 12px Verdana';octx.textAlign='center';
+    octx.fillStyle='#fff';octx.font='bold 12px RSFont,Verdana';octx.textAlign='center';
     octx.fillText(s.dmg,p.x,p.y+4);
     octx.globalAlpha=1;
   }
@@ -36791,7 +36860,7 @@ function drawOverlay(now){
     const p=proj(player.px+0.5,groundH(player.px+0.5,player.py+0.5)+1.9,player.py+0.5);
     if(!p)continue;
     octx.globalAlpha=age>1000?1-(age-1000)/400:1;
-    octx.font='bold 12px Verdana';octx.textAlign='center';
+    octx.font='bold 12px RSFont,Verdana';octx.textAlign='center';
     const yy=p.y-14-(age/1400)*36-(d.lane||0)*15;
     octx.lineWidth=3;octx.strokeStyle='rgba(0,0,0,.8)';
     octx.strokeText(d.txt,p.x,yy);
@@ -37397,11 +37466,11 @@ function openPiano(){
   const ov=document.createElement('div'); ov.id='pnModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
   const box=document.createElement('div');
-  box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:16px 18px;max-width:520px;width:96%;font-family:Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);';
+  box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:16px 18px;max-width:520px;width:96%;font-family:RSFont,Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);';
   box.innerHTML='<div style="font-size:18px;font-weight:bold;color:#ffe08a;margin-bottom:4px;">The Parlour Piano</div>'+
     '<div id="pnHint" style="font-size:12.5px;margin-bottom:12px;color:#e8dcc0;min-height:16px;">Tap the keys to play. (The Rectory carol opens with two notes\u2026)</div>'+
     '<div id="pnKeys" style="position:relative;height:132px;margin:0 auto 12px;width:100%;max-width:450px;"></div>'+
-    '<button id="pnClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 18px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;">Close</button>';
+    '<button id="pnClose" style="font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 18px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;">Close</button>';
   ov.appendChild(box); document.body.appendChild(ov);
   const keys=box.querySelector('#pnKeys'), hint=box.querySelector('#pnHint');
   const ww=100/NOTES.filter(x=>!x.b).length; let widx=0;
@@ -37410,7 +37479,7 @@ function openPiano(){
     if(nt.b){
       k.style.cssText='position:absolute;top:0;height:82px;width:'+(ww*0.62)+'%;left:'+(widx*ww-ww*0.31)+'%;background:linear-gradient(#3a3a42,#141418);border:1px solid #000;border-radius:0 0 4px 4px;cursor:pointer;z-index:2;';
     } else {
-      k.style.cssText='position:absolute;top:0;height:132px;width:'+(ww-0.5)+'%;left:'+(widx*ww)+'%;background:linear-gradient(#fff,#ece8de);border:1px solid #b6b0a2;border-radius:0 0 5px 5px;cursor:pointer;color:#a89878;font-family:Georgia,serif;font-size:11px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;';
+      k.style.cssText='position:absolute;top:0;height:132px;width:'+(ww-0.5)+'%;left:'+(widx*ww)+'%;background:linear-gradient(#fff,#ece8de);border:1px solid #b6b0a2;border-radius:0 0 5px 5px;cursor:pointer;color:#a89878;font-family:RSFont,Georgia,serif;font-size:11px;display:flex;align-items:flex-end;justify-content:center;padding-bottom:8px;';
       k.textContent=nt.disp||nt.n; widx++;
     }
     k.onclick=()=>play(nt);
@@ -37651,13 +37720,13 @@ function openOrgan(){
   const ov=document.createElement('div'); ov.id='orModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
   const box=document.createElement('div');
-  box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:16px 18px;max-width:460px;width:96%;font-family:Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);';
+  box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:16px 18px;max-width:460px;width:96%;font-family:RSFont,Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 12px 40px rgba(0,0,0,0.6);';
   box.innerHTML='<div style=\"font-size:18px;font-weight:bold;color:#ffe08a;margin-bottom:4px;\">The Chapel Organ</div>'+
     '<div id=\"orHint\" style=\"font-size:12.5px;margin-bottom:12px;color:#e8dcc0;min-height:18px;\">Press Begin, watch the carol the organ plays, then echo it back. It grows each round.</div>'+
     '<div id=\"orKeys\" style=\"display:flex;gap:10px;justify-content:center;margin-bottom:12px;\"></div>'+
     '<div style=\"display:flex;gap:8px;justify-content:center;\">'+
-      '<button id=\"orStart\" style=\"font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 16px;border-radius:7px;border:1px solid #caa23a;background:#3a5a30;color:#fff;cursor:pointer;\">Begin the carol</button>'+
-      '<button id=\"orClose\" style=\"font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 16px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;\">Close</button>'+
+      '<button id=\"orStart\" style=\"font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 16px;border-radius:7px;border:1px solid #caa23a;background:#3a5a30;color:#fff;cursor:pointer;\">Begin the carol</button>'+
+      '<button id=\"orClose\" style=\"font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 16px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;\">Close</button>'+
     '</div>';
   ov.appendChild(box); document.body.appendChild(ov);
   const keysEl=box.querySelector('#orKeys'), hint=box.querySelector('#orHint');
@@ -37699,12 +37768,12 @@ function openBook(id){
   if(document.getElementById('bkModal'))return;
   const bk=RECTORY_BOOKS[id]; if(!bk)return; let spread=0;
   const esc=x=>String(x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
-  const BS='font-family:Georgia,serif;font-size:13px;font-weight:bold;padding:7px 16px;border-radius:6px;border:1px solid #8a6a30;cursor:pointer;background:#caa23a;color:#2a2018;';
+  const BS='font-family:RSFont,Georgia,serif;font-size:13px;font-weight:bold;padding:7px 16px;border-radius:6px;border:1px solid #8a6a30;cursor:pointer;background:#caa23a;color:#2a2018;';
   const ov=document.createElement('div'); ov.id='bkModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.66);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
   const book=document.createElement('div');
   book.style.cssText='display:flex;max-width:660px;width:96%;background:linear-gradient(#6e4a2c,#42301c);padding:14px;border-radius:10px 14px 14px 10px;box-shadow:0 16px 46px rgba(0,0,0,0.72),inset 0 0 0 2px #36240f;';
-  const pageCss='flex:1;background:#f3ead2;color:#2a2018;font-family:Georgia,serif;padding:20px 22px;min-height:300px;max-height:70vh;overflow:auto;box-sizing:border-box;line-height:1.55;';
+  const pageCss='flex:1;background:#f3ead2;color:#2a2018;font-family:RSFont,Georgia,serif;padding:20px 22px;min-height:300px;max-height:70vh;overflow:auto;box-sizing:border-box;line-height:1.55;';
   book.innerHTML=
     '<div id="bkL" style="'+pageCss+'border-radius:5px 0 0 5px;box-shadow:inset -18px 0 24px -16px rgba(70,46,22,0.55);"></div>'+
     '<div style="width:13px;background:linear-gradient(90deg,#2a1c10,#5a3c24 50%,#2a1c10);"></div>'+
@@ -37712,7 +37781,7 @@ function openBook(id){
   const bar=document.createElement('div');
   bar.style.cssText='display:flex;align-items:center;gap:14px;margin-top:14px;flex-wrap:wrap;justify-content:center;';
   bar.innerHTML='<button id="bkPrev" style="'+BS+'">\u2190 Prev</button>'+
-    '<span id="bkPage" style="font-family:Georgia,serif;color:#f0e6d2;font-size:13px;"></span>'+
+    '<span id="bkPage" style="font-family:RSFont,Georgia,serif;color:#f0e6d2;font-size:13px;"></span>'+
     '<button id="bkNext" style="'+BS+'">Next \u2192</button>'+
     '<button id="bkClose" style="'+BS+'background:#5a3030;color:#fff;">Close</button>';
   ov.appendChild(book); ov.appendChild(bar); document.body.appendChild(ov);
@@ -37745,14 +37814,14 @@ function jellybeanGuess(){
   }
   if(document.getElementById('jbModal'))return;
   const target=_jarCount();
-  const BS='font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 14px;border-radius:7px;border:1px solid #caa23a;cursor:pointer;';
+  const BS='font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 14px;border-radius:7px;border:1px solid #caa23a;cursor:pointer;';
   const ov=document.createElement('div'); ov.id='jbModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.55);display:flex;align-items:center;justify-content:center;z-index:99999;';
   const bx=document.createElement('div');
-  bx.style.cssText='background:#2a2018;border:3px solid #caa23a;border-radius:12px;padding:18px 20px;max-width:320px;width:84%;font-family:Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.6);';
+  bx.style.cssText='background:#2a2018;border:3px solid #caa23a;border-radius:12px;padding:18px 20px;max-width:320px;width:84%;font-family:RSFont,Georgia,serif;color:#f0e6d2;text-align:center;box-shadow:0 8px 30px rgba(0,0,0,0.6);';
   bx.innerHTML='<div style="font-size:18px;font-weight:bold;margin-bottom:6px;color:#ffe08a;">The Jellybean Jar</div>'+
     '<div style="font-size:13px;margin-bottom:12px;line-height:1.4;">Guess exactly how many jellybeans are in the jar (1\u2013200) to win the prize:</div>'+
-    '<input id="jbInput" type="number" inputmode="numeric" min="1" max="200" placeholder="?" style="width:96px;font-size:20px;text-align:center;padding:7px;border-radius:7px;border:1px solid #caa23a;background:#1a1410;color:#fff;font-family:Georgia,serif;" />'+
+    '<input id="jbInput" type="number" inputmode="numeric" min="1" max="200" placeholder="?" style="width:96px;font-size:20px;text-align:center;padding:7px;border-radius:7px;border:1px solid #caa23a;background:#1a1410;color:#fff;font-family:RSFont,Georgia,serif;" />'+
     '<div id="jbFeed" style="min-height:22px;font-size:13px;margin:12px 0 4px;color:#ffd23a;line-height:1.4;"></div>'+
     '<div style="display:flex;gap:10px;justify-content:center;margin-top:6px;">'+
     '<button id="jbGuess" style="'+BS+'background:#3a6a3a;color:#fff;">Guess</button>'+
@@ -41420,7 +41489,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       const wx = r.px + 0.5, wz = r.py + 0.5, gh = groundH(wx, wz);
       const np = proj(wx, gh + 2.05, wz);
       if (np) {
-        octx.save(); octx.textAlign = 'center'; octx.font = 'bold 12px Georgia';
+        octx.save(); octx.textAlign = 'center'; octx.font = 'bold 12px RSFont,Georgia';
         octx.lineWidth = 3; octx.strokeStyle = 'rgba(0,0,0,0.85)'; octx.strokeText(r.name, np.x, np.y);
         octx.fillStyle = '#bfe3ff'; octx.fillText(r.name, np.x, np.y); octx.restore();
       }
@@ -41478,7 +41547,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       octx.fillStyle = s.d > 0 ? '#b3241f' : '#2f5bbf';
       octx.beginPath(); octx.arc(pp.x, pp.y, 10, 0, 7); octx.fill();
       octx.strokeStyle = 'rgba(0,0,0,.45)'; octx.lineWidth = 1.5; octx.stroke();
-      octx.fillStyle = '#fff'; octx.font = 'bold 12px Verdana'; octx.textAlign = 'center';
+      octx.fillStyle = '#fff'; octx.font = 'bold 12px RSFont,Verdana'; octx.textAlign = 'center';
       octx.fillText(s.d, pp.x, pp.y + 4);
       octx.restore();
     }
@@ -41860,7 +41929,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   }
   function drawWorldMapMarkers(g) {
     if (!active() || !conn) return;
-    g.textAlign = 'center'; g.font = 'bold 9px Verdana,sans-serif';
+    g.textAlign = 'center'; g.font = 'bold 9px RSFont,Verdana,sans-serif';
     for (const r of RP.values()) {
       if (Date.now() - r.last > CFG.hideMs) continue;
       if (!_remoteHere(r)) continue;
@@ -41958,7 +42027,7 @@ function openRectorInfo(){
         '\u2022 <b>First Rector\u2019s signet</b> \u2014 exactly one per kill, to one random member'+
       '</div></div>'+
     '<div style="border-top:1px solid #5a2e1a;margin-top:8px;padding-top:8px;font-size:12px;color:#c8a488;text-align:center;">The machine takes about four hours to knit him back together.</div>'+
-    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="rcClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #ff6a2a;background:#2a160c;color:#ffb060;cursor:pointer;">Close</button></div>';
+    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="rcClose" style="font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #ff6a2a;background:#2a160c;color:#ffb060;cursor:pointer;">Close</button></div>';
   ov.appendChild(box); document.body.appendChild(ov);
   var raf=0, ren=null;
   function cleanup(){ if(raf)cancelAnimationFrame(raf); if(ren){try{ren.forceContextLoss&&ren.forceContextLoss();ren.dispose();}catch(e){}} if(ov.parentNode)ov.parentNode.removeChild(ov); }
@@ -41998,7 +42067,7 @@ function openDragonInfo(){
   var ov=document.createElement('div'); ov.id='dragModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.62);display:flex;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
   var box=document.createElement('div');
-  box.style.cssText='background:#1b1410;border:3px solid #e07a1e;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:Georgia,serif;color:#f0e6d2;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
+  box.style.cssText='background:#1b1410;border:3px solid #e07a1e;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:RSFont,Georgia,serif;color:#f0e6d2;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
   box.innerHTML=
     '<div style="font-size:20px;font-weight:bold;color:#ff9a3a;text-align:center;margin-bottom:2px;">Black Dragon</div>'+
     '<div style="text-align:center;color:#b8a888;font-size:12px;margin-bottom:8px;font-style:italic;">The apex of the chromatic brood \u2014 its dragonfire melts stone.</div>'+
@@ -42027,7 +42096,7 @@ function openDragonInfo(){
         '\u2022 Wear a <b>Dragon Slayer shield</b> &mdash; reduces it to a normal hit.'+
       '</div></div>'+
     '<div style="border-top:1px solid #4a3a26;margin-top:8px;padding-top:8px;font-size:12px;color:#b8a888;text-align:center;">Respawns roughly 30 minutes after it is slain.</div>'+
-    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="dragClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #e07a1e;background:#5a3322;color:#fff;cursor:pointer;">Close</button></div>';
+    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="dragClose" style="font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #e07a1e;background:#5a3322;color:#fff;cursor:pointer;">Close</button></div>';
   ov.appendChild(box); document.body.appendChild(ov);
   var raf=0, ren=null;
   function cleanup(){ if(raf)cancelAnimationFrame(raf); if(ren){try{ren.forceContextLoss&&ren.forceContextLoss();ren.dispose();}catch(e){}} if(ov.parentNode)ov.parentNode.removeChild(ov); }
@@ -42081,7 +42150,7 @@ function openCinderwingInfo(){
   var ov=document.createElement('div'); ov.id='cwModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(18,8,4,0.66);display:flex;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
   var box=document.createElement('div');
-  box.style.cssText='background:#180f0a;border:3px solid #ff6a2a;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:Georgia,serif;color:#f4e3d2;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
+  box.style.cssText='background:#180f0a;border:3px solid #ff6a2a;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:RSFont,Georgia,serif;color:#f4e3d2;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
   box.innerHTML=
     '<div style="font-size:20px;font-weight:bold;color:#ffa24a;text-align:center;margin-bottom:2px;">Cinderwing, the Ash Roc</div>'+
     '<div style="text-align:center;color:#c8a488;font-size:12px;margin-bottom:8px;font-style:italic;">A colossal ember roc whose molten quills punch through plate \u2014 bring food, not just armour.</div>'+
@@ -42115,7 +42184,7 @@ function openCinderwingInfo(){
         '<span style="color:#9fc8e6;">Her molten quills pierce armour \u2014 defence helps far less than usual. Water spells strike her hardest.</span>'+
       '</div></div>'+
     '<div style="border-top:1px solid #5a2e1a;margin-top:8px;padding-top:8px;font-size:12px;color:#c8a488;text-align:center;">Respawns about two hours after she is slain.</div>'+
-    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="cwClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #ff6a2a;background:#5a2e1a;color:#fff;cursor:pointer;">Close</button></div>';
+    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="cwClose" style="font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #ff6a2a;background:#5a2e1a;color:#fff;cursor:pointer;">Close</button></div>';
   ov.appendChild(box); document.body.appendChild(ov);
   var raf=0, ren=null;
   function cleanup(){ if(raf)cancelAnimationFrame(raf); if(ren){try{ren.forceContextLoss&&ren.forceContextLoss();ren.dispose();}catch(e){}} if(ov.parentNode)ov.parentNode.removeChild(ov); }
@@ -42155,7 +42224,7 @@ function openSnowKingInfo(){
   var ov=document.createElement('div'); ov.id='skModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(6,12,20,0.66);display:flex;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
   var box=document.createElement('div');
-  box.style.cssText='background:#0e1822;border:3px solid #6fb8e6;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:Georgia,serif;color:#e6f2fb;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
+  box.style.cssText='background:#0e1822;border:3px solid #6fb8e6;border-radius:12px;padding:14px 16px;max-width:440px;width:96%;max-height:88vh;overflow-y:auto;font-family:RSFont,Georgia,serif;color:#e6f2fb;box-shadow:0 12px 40px rgba(0,0,0,0.7);box-sizing:border-box;';
   box.innerHTML=
     '<div style="font-size:20px;font-weight:bold;color:#bfe9ff;text-align:center;margin-bottom:2px;">The Snow King</div>'+
     '<div style="text-align:center;color:#8fb4cc;font-size:12px;margin-bottom:8px;font-style:italic;">A colossus of living ice and frost-matted fur \u2014 lord of Pat\u2019s Peak.</div>'+
@@ -42187,7 +42256,7 @@ function openSnowKingInfo(){
         '\u2022 <b>The cold</b> &mdash; the summit saps your health unless you wear the <b>full Glacial set</b> or stand by a <b>lit brazier</b>.'+
       '</div></div>'+
     '<div style="border-top:1px solid #2f4a5e;margin-top:8px;padding-top:8px;font-size:12px;color:#8fb4cc;text-align:center;">Respawns about an hour after it is slain.</div>'+
-    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="skClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #6fb8e6;background:#1f3a52;color:#fff;cursor:pointer;">Close</button></div>';
+    '<div style="display:flex;justify-content:center;margin-top:12px;"><button id="skClose" style="font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 20px;border-radius:7px;border:1px solid #6fb8e6;background:#1f3a52;color:#fff;cursor:pointer;">Close</button></div>';
   ov.appendChild(box); document.body.appendChild(ov);
   var raf=0, ren=null;
   function cleanup(){ if(raf)cancelAnimationFrame(raf); if(ren){try{ren.forceContextLoss&&ren.forceContextLoss();ren.dispose();}catch(e){}} if(ov.parentNode)ov.parentNode.removeChild(ov); }
@@ -42287,11 +42356,11 @@ const LB = (function(){
     var ov=document.createElement('div'); ov.id='lbModal';
     ov.style.cssText='position:fixed;inset:0;background:rgba(0,0,0,0.6);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
     var box=document.createElement('div');
-    box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:14px 16px;max-width:470px;width:96%;max-height:86vh;display:flex;flex-direction:column;font-family:Georgia,serif;color:#f0e6d2;box-shadow:0 12px 40px rgba(0,0,0,0.6);box-sizing:border-box;';
+    box.style.cssText='background:#241a12;border:3px solid #caa23a;border-radius:12px;padding:14px 16px;max-width:470px;width:96%;max-height:86vh;display:flex;flex-direction:column;font-family:RSFont,Georgia,serif;color:#f0e6d2;box-shadow:0 12px 40px rgba(0,0,0,0.6);box-sizing:border-box;';
     box.innerHTML='<div style="font-size:18px;font-weight:bold;color:#ffe08a;text-align:center;margin-bottom:8px;">Millville Leaderboard</div>'+
       '<div id="lbTabs" style="display:flex;gap:5px;flex-wrap:wrap;justify-content:center;margin-bottom:8px;"></div>'+
       '<div id="lbList" style="overflow-y:auto;flex:1 1 auto;min-height:140px;border-top:1px solid #4a3a26;border-bottom:1px solid #4a3a26;padding:6px 2px;"></div>'+
-      '<div style="display:flex;justify-content:center;margin-top:10px;"><button id="lbClose" style="font-family:Georgia,serif;font-size:14px;font-weight:bold;padding:8px 18px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;">Close</button></div>';
+      '<div style="display:flex;justify-content:center;margin-top:10px;"><button id="lbClose" style="font-family:RSFont,Georgia,serif;font-size:14px;font-weight:bold;padding:8px 18px;border-radius:7px;border:1px solid #caa23a;background:#5a3030;color:#fff;cursor:pointer;">Close</button></div>';
     ov.appendChild(box); document.body.appendChild(ov);
     function close(){ if(ov.parentNode)ov.parentNode.removeChild(ov); }
     ov.addEventListener('click',function(e){ if(e.target===ov)close(); });
@@ -42302,7 +42371,7 @@ const LB = (function(){
     function renderTabs(){ tabsEl.innerHTML='';
       CATS.forEach(function(c){ var b=document.createElement('button');
         b.textContent=c.label;
-        b.style.cssText='font-family:Georgia,serif;font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #caa23a;cursor:pointer;color:#fff;background:'+(c.id===cur?'#3a5a30':'#33271a')+';';
+        b.style.cssText='font-family:RSFont,Georgia,serif;font-size:12px;padding:5px 10px;border-radius:6px;border:1px solid #caa23a;cursor:pointer;color:#fff;background:'+(c.id===cur?'#3a5a30':'#33271a')+';';
         b.onclick=function(){ cur=c.id; renderTabs(); load(); };
         tabsEl.appendChild(b); });
     }
