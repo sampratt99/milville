@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <title>Millville — Old School Adventure</title>
 <meta name="description" content="Millville — an Old School-style browser RPG set at St. Paul's School: mine, smith, fish, cook, and quest through the grounds.">
 <meta property="og:type" content="website">
@@ -149,31 +149,33 @@ if ('serviceWorker' in navigator) {
   #partytimer.low{ color:#ff5252; border-color:#ff5252; }
   #hovertext .act{color:#fff;} #hovertext .tgt{color:#ffe66d;}
   #orbs{
-    position:absolute; left:0; top:42px; z-index:3;
-    display:flex; flex-direction:column; gap:6px; align-items:flex-start;
+    position:absolute; left:-48px; top:22px; z-index:5;
+    display:flex; flex-direction:column; gap:7px; align-items:flex-start;
   }
-  #hporbwrap{position:relative;}
-  #hporb{
-    width:34px; height:34px; border-radius:50%;
-    border:2px solid #0d0b08; box-shadow:0 0 0 2px #6b5d4b inset;
+  /* each orb is a horizontal unit: a dark rounded number-PILL on the left, the orb DISC on its
+     right sitting ON the minimap's left edge. The disc is anchored and the pill flows to its left
+     with a FIXED width, so the disc never moves as the number changes 100 -> 99 -> 9. */
+  .orbrow{ position:relative; display:flex; align-items:center; }
+  .orblabel{
+    width:42px; box-sizing:border-box; height:20px;
+    padding:0 13px 0 4px; margin-right:-11px;   /* fixed width: the disc never moves as digits change */
     display:flex; align-items:center; justify-content:center;
-    font:bold 13px RSFont,Verdana,sans-serif; color:#fff; text-shadow:1px 1px 0 #000;
-    background:radial-gradient(circle at 35% 30%, #6fdc6f, #1d7a1d 70%);
+    background:#4B4335; border:1px solid #0d0b08; border-radius:10px;
+    box-shadow:inset 1px 1px 0 #6E6048, inset -1px -1px 0 #2A251B;
+    font:bold 12px RSFont,Verdana,sans-serif; color:#00FF00;
+    text-shadow:1px 1px 0 #000,-1px 0 0 #000,1px 0 0 #000,0 1px 0 #000;
+    line-height:1;
   }
-  #hpheart{position:absolute; right:-5px; top:-5px; z-index:2;}
-  #prorbwrap{position:relative;}
-  #prorb{
-    width:26px; height:26px; border-radius:50%;
-    border:2px solid #0d0b08; box-shadow:0 0 0 2px #6b5d4b inset;
-    display:flex; align-items:center; justify-content:center;
-    font:bold 11px RSFont,Verdana,sans-serif; color:#fff; text-shadow:1px 1px 0 #000;
-    background:radial-gradient(circle at 35% 30%, #7ab8e8, #1d4a7a 70%);
+  .orbdisc{
+    width:34px; height:34px; flex:0 0 auto; position:relative; z-index:2;
+    border-radius:50%; image-rendering:pixelated;
   }
+  #runorbwrap{ cursor:pointer; }
   #xporb{
-    background:linear-gradient(#3a3128,#241f18);
-    border:2px solid #0d0b08; border-radius:0;
-    color:#ffd98c; font:bold 9px RSFont,Verdana,sans-serif; padding:2px 7px;
-    box-shadow:0 0 0 1px #5d5141 inset; white-space:nowrap;
+    background:#4B4335; border:1px solid #0d0b08; border-radius:10px;
+    color:#ffd98c; font:bold 9px RSFont,Verdana,sans-serif; padding:3px 8px;
+    box-shadow:inset 1px 1px 0 #6E6048, inset -1px -1px 0 #2A251B; white-space:nowrap;
+    align-self:flex-start; margin:0 0 2px 11px;
   }
   /* chat */
   #chat{
@@ -194,7 +196,8 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 1px #6e6048 inset, 0 0 0 3px #1a160f, 0 2px 8px rgba(0,0,0,.5);
     padding:6px;
   }
-  #minimapwrap{display:flex; justify-content:center; position:relative;}
+  #minimapwrap{display:flex; justify-content:flex-end; position:relative; overflow:visible;}
+  #mmcore{position:relative; width:174px; height:174px; flex:0 0 auto; overflow:visible;}
   #minimap{border:3px solid #14110b; border-radius:50%; cursor:pointer; width:168px; height:168px; background:#1a2a14; box-shadow:0 0 0 2px #5a4f3a, 0 0 0 4px #2a2418;}
   #wildbadge{position:absolute; top:5px; left:50%; transform:translateX(-50%); display:none; align-items:center; gap:2px; padding:1px 6px 1px 1px; background:rgba(26,10,8,0.86); border:2px solid #9a2820; border-radius:0; z-index:4; pointer-events:none; box-shadow:0 1px 4px rgba(0,0,0,0.55);}
   #wildbadge.on{display:flex;}
@@ -457,6 +460,23 @@ if ('serviceWorker' in navigator) {
   .ctab.on{background:linear-gradient(#6e6353,#4a4036); color:#fff;}
   .ctab.report{background:linear-gradient(#7a2e22,#5b1f16); color:#ffe8b0;}
   #equiphead{text-align:center; color:#ffd98c; font:bold 13px RSFont,Georgia,serif; margin:4px 0 8px;}
+  #eqstatsbtn{display:flex;align-items:center;justify-content:center;gap:7px;width:100%;margin:8px 0 2px;
+    font-family:RSFont,Georgia,serif;font-size:13px;font-weight:bold;padding:6px 10px;border-radius:0;
+    border:1px solid #caa23a;background:linear-gradient(#4a4436,#332e24);color:#ffe4a6;cursor:pointer;
+    box-shadow:inset 1px 1px 0 #6e6048, inset -1px -1px 0 #1a160f;}
+  #eqstatsbtn:hover{background:linear-gradient(#565040,#3c362a);color:#fff;}
+  #eqstatsbtn canvas{image-rendering:pixelated;flex:0 0 auto;}
+  #eqstatbody{padding:2px;}
+  .eqsecthd{color:#ffd98c;font:bold 12px RSFont,Georgia,serif;text-align:center;
+    padding:6px 0 4px;margin-top:6px;border-bottom:1px solid #4a4032;}
+  .eqsecthd:first-child{margin-top:0;}
+  .eqstatrow{display:flex;justify-content:space-between;align-items:center;
+    padding:3px 6px;font:12px RSFont,Georgia,serif;color:#e8e0cc;border-bottom:1px solid #221d16;}
+  .eqstatrow .k{color:#b8ad94;}
+  .eqstatrow .v{font-weight:bold;color:#fff;font-variant-numeric:tabular-nums;}
+  .eqstatrow .v.pos{color:#7fd06a;}
+  .eqstatrow .v.neg{color:#e07a4a;}
+  .eqstatrow .v.zero{color:#8a8172;}
   #equipgrid{display:grid; grid-template-columns:repeat(3,46px); gap:6px; justify-content:center;}
   #stylehead{color:#ffd98c; font:bold 12px RSFont,Georgia,serif; text-align:center; padding:10px 0 5px;}
   #stylebar{display:grid; grid-template-columns:1fr 1fr; gap:6px; padding:4px 10px 2px;}
@@ -487,19 +507,7 @@ if ('serviceWorker' in navigator) {
   .prinfo b{color:#ffe9c4; font:bold 12px RSFont,Georgia,serif;}
   .prinfo span{color:#bba98a; font-size:10px;}
   #prayfoot{color:#8d8068; font-size:9.5px; text-align:center; padding:9px 8px 2px; line-height:1.45;}
-  #praybarwrap{width:34px; height:7px; background:#241f17; border:1px solid #0d0b08;
-    border-radius:0; overflow:hidden;}
-  #praybarfill{height:100%; width:100%; background:linear-gradient(#7ab8e8,#2d6a9e);}
-  #runorbwrap{position:relative; cursor:pointer;}
-  #runboot{position:absolute; left:-6px; top:-6px; z-index:2; pointer-events:none;}
-  #runorb{
-    width:26px; height:26px; border-radius:50%;
-    border:2px solid #0d0b08; box-shadow:0 0 0 2px #6b5d4b inset;
-    display:flex; align-items:center; justify-content:center;
-    font:bold 10px RSFont,Verdana,sans-serif; color:#1a1308;
-    background:radial-gradient(circle at 35% 30%, #9a9082, #4f483c 70%);
-  }
-  #runorbwrap.on #runorb{background:radial-gradient(circle at 35% 30%, #ffe14a, #b8901a 70%);}
+  #runorbwrap{cursor:pointer;}
   #activeprayers{position:absolute; right:3px; top:3px; display:flex;
     flex-direction:row-reverse; flex-wrap:wrap; gap:3px; max-width:120px; z-index:6;}
   #activeprayers canvas{width:20px;height:20px;background:rgba(20,16,10,.82); border:1px solid #ffe66d;
@@ -929,13 +937,10 @@ if ('serviceWorker' in navigator) {
   .encsrc b{font:bold 12px RSFont,Georgia,serif;color:#e8c878;}
   .encsrc span{font:11px RSFont,Georgia,serif;color:#b8a988;line-height:1.35;}
   @media (max-width:580px){
-    #layout{flex-wrap:wrap;}
     .encgrid{grid-template-columns:repeat(auto-fill,minmax(64px,1fr));max-height:54vh;}
     .encicon{width:40px;height:40px;}
     .encbigicon{width:68px;height:68px;}
     .enctitle{font-size:15px;}
-    #side{flex:1 1 100%; width:auto;}
-    .panel{min-height:0;}
   }
 
 #signui{position:fixed;inset:0;background:rgba(4,8,12,.66);display:none;align-items:center;justify-content:center;z-index:60;}
@@ -1079,8 +1084,8 @@ if ('serviceWorker' in navigator) {
   .geslotdiv{background:var(--os-border);}
 
   /* the real client compass: one sprite that rotates bodily, rather than an N orbiting a disc */
-  #compass{background:none; border:none; box-shadow:none; width:34px; height:34px;
-    top:2px; left:8px;}
+  #compass{background:none; border:none; box-shadow:none; width:40px; height:40px;
+    top:-8px; left:-8px; z-index:6;}
   /* ===== THE CHATBOX, measured off a real client screenshot ==========================
      Body parchment #C4B392 (the client's is a mottled #CBBA95/#BBAB8B/#B2A384; this is its
      mean), inside the brown bevelled frame #4F4835 / #332619 that surrounds it. */
@@ -1091,12 +1096,12 @@ if ('serviceWorker' in navigator) {
   /* NB: deliberately NOT forcing a text colour here -- the message palette was written for a
      parchment background in the first place, and overriding it would flatten every coloured line. */
 
-  /* the world-map globe, top-right of the minimap frame -- where the client puts it */
-  #mapglobe{position:absolute; top:4px; right:8px; width:28px; height:28px; cursor:pointer;
-    z-index:3; background-repeat:no-repeat; background-position:center;
+  /* the world-map globe, sitting on the BOTTOM-RIGHT edge of the minimap */
+  #mapglobe{position:absolute; bottom:-6px; right:-6px; width:40px; height:40px; cursor:pointer;
+    z-index:6; background-repeat:no-repeat; background-position:center;
     background-size:contain; image-rendering:pixelated;}
   #mapglobe:hover{filter:brightness(1.2);}
-  #compassN{width:30px; height:30px; font-size:0; text-shadow:none;
+  #compassN{width:40px; height:40px; font-size:0; text-shadow:none;
     background-repeat:no-repeat; background-position:center; background-size:contain;
     image-rendering:pixelated;}
 
@@ -1202,6 +1207,214 @@ if ('serviceWorker' in navigator) {
   #retalbtn.on{
     background:#8A211E !important; color:#FFD9A0 !important;
     box-shadow:inset -1px -1px 0 #A02623, inset 1px 1px 0 #5F1614 !important;}
+
+  /* ===== THE MINIMAP ORBS ================================================================
+     The client's orbs are single 34px sprites that already contain their own icon and ring,
+     so the CSS discs and the separate heart/boot canvases beside them are both redundant --
+     the sprite replaces the lot and the value just sits on top. */
+  /* The orb art is OPAQUE, so the drain cannot sit behind it -- it is stacked as the FIRST
+     background layer, painting OVER the sprite, and the value (normal content) paints above
+     every background layer automatically. No pseudo-elements, nothing for .textContent to
+     wipe out, and no inline background for the JS to fight over. */
+  /* the orb DISC carries the sprite and drains its interior against BLACK from the top down as the
+     stat falls -- the number lives in the pill to the left, not on the orb. */
+  .orbdisc{
+    width:34px !important; height:34px !important;
+    border:0 !important; border-radius:50% !important; box-shadow:none !important;
+    background-color:transparent !important;
+    background-image:
+      linear-gradient(to top,
+        transparent 0 var(--orbp,100%),
+        rgba(0,0,0,.86) var(--orbp,100%) 100%),
+      var(--orbsprite, none) !important;
+    background-size:34px 34px, 34px 34px !important;
+    background-position:center, center !important;
+    background-repeat:no-repeat, no-repeat !important;
+    image-rendering:pixelated;}
+  /* run energy tints its drained fill faintly yellow while you are actually running */
+  .orbdisc.running{
+    background-image:
+      linear-gradient(to top,
+        rgba(232,197,58,.28) 0 var(--orbp,100%),
+        rgba(0,0,0,.86) var(--orbp,100%) 100%),
+      var(--orbsprite, none) !important;}
+  #orbs{gap:4px !important;}
+
+  /* ===== THE INVENTORY ===================================================================
+     Old School draws NO slot boxes: the 28 items sit straight on the panel, and only the
+     hover highlight tells you where a cell is. Ours were bevelled discs with a radial
+     gradient and a border, which is the most obvious remaining difference in that panel.
+     (If this reads too bare in play it is one block to delete.) */
+  .slot{
+    background:none !important; border:1px solid transparent !important;
+    box-shadow:none !important; border-radius:0 !important;}
+  .slot:hover{
+    background:rgba(255,255,255,.06) !important;
+    box-shadow:inset 0 0 0 1px rgba(255,255,255,.16) !important;}
+  .slot.sel,.slot.on{
+    background:rgba(255,152,31,.10) !important;
+    box-shadow:inset 0 0 0 1px var(--gold) !important;}
+  /* the item itself gets the OSRS drop shadow instead */
+  .slot canvas{filter:drop-shadow(1px 1px 0 rgba(0,0,0,.65));}
+
+  /* ===== TUTORIAL (dialogue-styled panel) ================================================
+     Mirrors the NPC dialogue box (#dlgbox): parchment, the Rector's portrait, centred text.
+     z-index sits ABOVE popups so a step can narrate over an open Wiki/World Map, and .overpopup
+     shifts it to the top so it never covers the popup or its close button. */
+  #tutdlg{
+    position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+    display:none; gap:10px; z-index:44; width:min(540px,92%);
+    background:#cfc0a0; border:2px solid #4a3a24; border-radius:0;
+    box-shadow:0 4px 14px rgba(0,0,0,.5); padding:10px; pointer-events:auto;}
+  #tutdlg.overpopup{ bottom:auto; top:10px; }   /* out of the way while a popup is open */
+  #tutface{width:84px;height:84px;background:#9a8c6e;border:1px solid #4a3a24;
+    flex:0 0 auto;image-rendering:pixelated;}
+  #tutdlgmain{flex:1;display:flex;flex-direction:column;min-height:84px;}
+  #tutdlgname{font:bold 13px RSFontQuill,RSFont,Verdana;color:#7a1212;text-align:center;margin-bottom:4px;}
+  #tutdlgtext{font:12px RSFontQuill,RSFont,Verdana;color:#1d1812;text-align:center;flex:1;line-height:1.5;}
+  #tutdlgbtns{display:flex; gap:8px; justify-content:center; margin-top:8px; flex-wrap:wrap;}
+  .tutbtn{
+    background:#b6a986; border:1px solid #4a3a24; border-radius:0; cursor:pointer;
+    box-shadow:inset 1px 1px 0 #e2d6b6, inset -1px -1px 0 #8a7c5c;
+    color:#2a1c0e; font:bold 12px RSFontQuill,RSFont,Verdana; padding:4px 14px;}
+  .tutbtn:hover{background:#c6b994; color:#7a1212;}
+  .tutbtn.tutskip{color:#6a5c44; font-weight:normal;}
+  .tutbtn.tutback{color:#3a2c14; font-weight:normal;}
+  #tutuiarrow{
+    position:fixed; z-index:131; color:#ffe11a; font-size:26px; pointer-events:none;
+    text-shadow:0 0 4px #000,0 0 9px #000,0 0 3px #000; animation:tutbob .8s ease-in-out infinite;}
+  @keyframes tutbob{0%,100%{transform:translate(0,0);}50%{transform:translate(-6px,0);}}
+  .tutglow{
+    outline:3px solid #ffe11a !important; outline-offset:1px;
+    box-shadow:0 0 12px 3px rgba(255,225,26,.75) !important;}
+  /* ===== LEVEL-UP BOX (OSRS-style, in the dialogue area) ===== */
+  #lubox{
+    position:absolute; left:50%; bottom:14px; transform:translateX(-50%);
+    display:none; gap:10px; align-items:center; z-index:46; width:min(460px,90%);
+    background:#cfc0a0; border:2px solid #4a3a24; border-radius:0;
+    box-shadow:0 4px 14px rgba(0,0,0,.5); padding:10px 12px; cursor:pointer;}
+  #luicon{width:48px;height:48px;flex:0 0 auto;image-rendering:pixelated;}
+  #lumain{flex:1;display:flex;flex-direction:column;}
+  #lutext{font:13px RSFontQuill,RSFont,Verdana;color:#1d1812;text-align:center;line-height:1.5;}
+  #lucont{font:bold 11px RSFontQuill,RSFont,Verdana;color:#2a4a8c;text-align:center;margin-top:6px;}
+  #lubox:hover #lucont{color:#a01616;}
+
+  /* ===== THE "CHOOSE OPTION" MENU ========================================================
+     Measured off the supplied client shots: a 1px #5D5447 outline, a BLACK title bar whose
+     "Choose Option" text is that same tan, and a body in #5D5447 -- ours was a dark brown
+     panel, which is the biggest single difference since this menu is on screen constantly.
+     Option text is white; the highlighted subject of an option (the item, object or monster
+     you right-clicked) is OSRS orange #FF9040. */
+  #ctx{
+    background:#5D5447 !important; border:1px solid #5D5447 !important; border-radius:0;
+    box-shadow:0 4px 14px rgba(0,0,0,.55) !important;
+    font:12.5px RSFont,Verdana,sans-serif;}
+  #ctx .hd{
+    background:#000000 !important; color:#5D5447 !important;
+    padding:2px 6px !important; font-size:12px !important;
+    text-align:left; letter-spacing:0;}
+  #ctx .opt{
+    padding:2px 6px !important; color:#FFFFFF !important;
+    text-shadow:1px 1px 0 rgba(0,0,0,.55);}
+  #ctx .opt .t{color:#FF9040 !important;}
+  /* the client inverts the row you are pointing at rather than tinting the text */
+  #ctx .opt:hover{background:#7A7060 !important; color:#FFFFFF !important;}
+  #ctx .opt:hover .t{color:#FFC080 !important;}
+
+  /* ===== THE CHAT TAB STRIP ==============================================================
+     Measured off the client shot: the strip itself is BLACK and the tabs are brown bevelled
+     buttons (#524432 face, #625443 highlight, #423522 shade). The SELECTED tab is DARKER and
+     pressed IN (#3A2D1A) -- the opposite of the sidebar tabs, and the opposite of what I had
+     it doing. Report sits on the right in red, as it does in the client. */
+  #chattabs{background:#000000 !important; gap:2px !important; padding:2px !important;}
+  .ctab{
+    background:#524432 !important; border:1px solid #15110C !important; border-radius:0;
+    box-shadow:inset 1px 1px 0 #625443, inset -1px -1px 0 #423522 !important;
+    color:#FEFAF2 !important; font:bold 11px RSFont,Verdana,sans-serif;
+    text-shadow:1px 1px 0 rgba(0,0,0,.6); padding:2px 6px !important;}
+  .ctab:hover{background:#5E4F3B !important;}
+  .ctab.on{
+    background:#3A2D1A !important;
+    box-shadow:inset -1px -1px 0 #625443, inset 1px 1px 0 #262015 !important;}
+  .ctab.report{color:#FF3030 !important; margin-left:auto;}
+
+  /* ==========================================================================================
+     MOBILE LAYOUT. Placed last so it wins the cascade. Two regimes:
+       * PORTRAIT phones  -> stack: big game view on top, then a compact status strip
+                             (minimap + orbs), then the tab bar + active panel, then chat.
+       * LANDSCAPE phones -> use the full viewport height with the game beside a scrollable
+                             sidebar; keep it close to desktop but taller and tighter.
+     The desktop layout is untouched above ~760px. ======================================= */
+
+  /* ---- shared phone tweaks (either orientation, coarse pointer / small screens) ---- */
+  @media (max-width:760px){
+    body{ padding:0; min-height:100dvh; display:block; }
+    #frame{ max-width:none; width:100%; padding:6px; border-width:0; box-shadow:none;
+      min-height:100dvh; box-sizing:border-box; }
+    #title{ font-size:16px; letter-spacing:2px; margin:2px 0 6px; }
+    /* bigger tap targets on the tab strips */
+    .tab{ padding:9px 1px; }
+    .tab canvas{ width:24px; height:24px; }
+    /* the tutorial + level-up boxes should never exceed the view width on a phone */
+    #tutdlg, #lubox{ width:min(94%,520px); }
+  }
+
+  /* ---- PORTRAIT: the stacked layout ---- */
+  @media (max-width:760px) and (orientation:portrait){
+    #layout{ flex-direction:column; gap:6px; flex-wrap:nowrap; }
+    #main{ flex:0 0 auto; width:100%; }
+    /* the game view takes a healthy slice of the screen height (not a tiny sliver) */
+    #viewwrap{ aspect-ratio:auto; height:46dvh; min-height:240px; width:100%; }
+    #chat{ height:74px; font-size:12px; }
+    #chattabs{ flex-wrap:wrap; }
+
+    #side{ width:100%; flex:1 1 auto; flex-direction:column; gap:6px; }
+    /* the minimap stone becomes a horizontal status bar: map on the left, orbs to its right */
+    #minimapwrap{ justify-content:flex-start; align-items:center; gap:10px;
+      padding:8px; flex-wrap:wrap; }
+    #mmcore{ width:120px; height:120px; }
+    #minimap{ width:120px; height:120px; }
+    /* on a phone the orbs move to a horizontal strip beside the map; drop the edge-anchoring */
+    #orbs{ position:static; flex-direction:row; flex-wrap:wrap; gap:8px 12px; align-items:center;
+      margin-left:6px; left:auto; top:auto; }
+    #compass{ top:-6px; left:-6px; width:34px; height:34px; }
+    #compassN{ width:34px; height:34px; }
+    #mapglobe{ bottom:-4px; right:-4px; width:34px; height:34px; }
+    /* the tabs + active panel: panel no longer forces a tall min-height on a phone */
+    .panel{ min-height:0; }
+    #tabs, #tabsbot{ gap:4px; }
+    /* the active panel scrolls internally instead of pushing the page miles down */
+    .panel.on{ max-height:52dvh; overflow-y:auto; }
+  }
+
+  /* ---- LANDSCAPE: fill the viewport height, game beside a scrollable rail ---- */
+  @media (max-height:520px) and (orientation:landscape){
+    body{ padding:0; }
+    #frame{ padding:4px; }
+    #title{ display:none; }   /* reclaim vertical space on short screens */
+    #layout{ flex-direction:row; gap:6px; align-items:stretch; height:100dvh; }
+    #main{ flex:1 1 0; min-width:0; }
+    #viewwrap{ aspect-ratio:auto; height:calc(100dvh - 118px); min-height:180px; }
+    #chat{ height:64px; }
+    #side{ width:210px; flex:0 0 210px; overflow-y:auto; max-height:100dvh; }
+    #mmcore{ width:150px; height:150px; }
+    #minimap{ width:150px; height:150px; }
+    #compass{ width:34px; height:34px; top:-6px; left:-6px; }
+    #compassN{ width:34px; height:34px; }
+    #mapglobe{ width:34px; height:34px; bottom:-4px; right:-4px; }
+    .panel{ min-height:0; }
+    .panel.on{ max-height:none; }
+  }
+
+  /* very small / notched phones: respect the safe area so nothing hides under the notch/home bar */
+  @supports(padding:max(0px)){
+    @media (max-width:760px){
+      #frame{ padding-left:max(6px,env(safe-area-inset-left));
+              padding-right:max(6px,env(safe-area-inset-right));
+              padding-bottom:max(6px,env(safe-area-inset-bottom)); }
+    }
+  }
+
 </style>
 <script>
 /* Kick the pixel face off the moment the head is parsed. DOM text re-flows by itself when a
@@ -1251,6 +1464,7 @@ try{
     </div>
     <div id="side">
       <div class="stone" id="minimapwrap">
+        <div id="mmcore">
         <canvas id="minimap" width="168" height="168"></canvas>
         <div id="wildbadge" title="Wilderness level"><canvas id="wildskull" width="20" height="20"></canvas><span id="wildlvl">1</span></div>
         <div id="compass" title="Face north"><span id="compassN">N</span></div>
@@ -1259,11 +1473,11 @@ try{
         <div id="activebuffs"></div>
         <div id="pethud"></div>
         <div id="orbs">
-          <div id="hporbwrap" title="Hitpoints"><canvas id="hpheart" width="14" height="14"></canvas><div id="hporb">10</div></div>
-          <div id="prorbwrap" title="Prayer points"><div id="prorb">100</div></div>
-          <div id="praybarwrap" title="Prayer points"><div id="praybarfill"></div></div>
-          <div id="runorbwrap" title="Toggle Run (click)"><canvas id="runboot" width="16" height="16"></canvas><div id="runorb">100</div></div>
           <div id="xporb" title="Total experience">0 xp</div>
+          <div id="hporbwrap" class="orbrow" title="Hitpoints"><div class="orblabel" id="hporb">10</div><div class="orbdisc" id="hporbdisc"></div></div>
+          <div id="prorbwrap" class="orbrow" title="Prayer points"><div class="orblabel" id="prorb">100</div><div class="orbdisc" id="prorbdisc"></div></div>
+          <div id="runorbwrap" class="orbrow" title="Toggle Run (click)"><div class="orblabel" id="runorb">100</div><div class="orbdisc" id="runorbdisc"></div></div>
+        </div>
         </div>
       </div>
       <div class="stone" style="flex:1;">
@@ -1284,7 +1498,7 @@ try{
         <div class="panel" id="panel-magic"><div id="spellhead">Spellbook</div><div id="spelllist"></div></div>
         <div class="panel" id="panel-quests"><div id="qhead">Quest Journal</div><div id="qlist"></div></div>
         <div class="panel on" id="panel-inv"><div id="invgrid"></div></div>
-        <div class="panel" id="panel-equip"><div id="equiphead">Worn Equipment</div><div id="equipgrid"></div></div>
+        <div class="panel" id="panel-equip"><div id="equiphead">Worn Equipment</div><div id="equipgrid"></div><button id="eqstatsbtn" title="Equipment Stats"><canvas id="eqstatsicon" width="20" height="20"></canvas><span>Equipment Stats</span></button></div>
         <div class="panel" id="panel-combat">
           <div id="cbtweapon">Unarmed</div>
           <div id="combatlvlbox"></div>
@@ -1299,6 +1513,7 @@ try{
         </div>
         <div class="panel" id="panel-settings">
           <h4>Options</h4>
+          <button id="tuthelpbtn" style="display:block;width:100%;margin:0 0 8px;font-family:RSFont,Georgia,serif;font-size:13px;font-weight:bold;padding:7px 10px;border-radius:0;border:1px solid #caa23a;background:#3a4a5a;color:#fff;cursor:pointer;">Replay the interface tour</button>
           <label><input type="checkbox" id="sndchk" checked> Sound effects</label>
           <label><input type="checkbox" id="muschk" checked> Music</label>
           <label id="mtrackrow" style="display:flex;align-items:center;gap:6px;">Soundtrack: <span id="mtrackname" style="color:#ffe08a;">Milville Grounds</span> <button id="mtracknext" style="font:11px RSFont,Georgia,serif;color:#cdbf9a;background:linear-gradient(#3a3322,#2a2417);border:1px solid #5a4d2e;border-radius:0;padding:2px 8px;cursor:pointer;">Next &#9834;</button></label>
@@ -1457,6 +1672,10 @@ try{
 <div id="logui" class="gemodal"><div class="gepanel" style="width:496px;">
   <div class="gebar"><span>Adventurer’s Log</span><div class="gex" id="logclose" title="Close">&#10005;</div></div>
   <div id="logbody"></div>
+</div></div>
+<div id="eqstatui" class="gemodal"><div class="gepanel" style="width:360px;">
+  <div class="gebar"><span>Equipment Stats</span><div class="gex" id="eqstatclose" title="Close">&#10005;</div></div>
+  <div id="eqstatbody"></div>
 </div></div>
 <div id="encui" class="gemodal"><div class="gepanel" style="width:560px;">
   <div class="gebar"><span>Wiki</span><div class="gex" id="encclose" title="Close">&#10005;</div></div>
@@ -5347,7 +5566,13 @@ function openPetExamine(id){
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
       +'<span style="color:#8a8172">While it is out</span><b style="color:#9fd06a">'+(info.perk||'')+'</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
-      +'<span style="color:#8a8172">Vigour</span><b style="color:#e8e0c8">30 minutes, and only while called</b></div>'
+      +'<span style="color:#8a8172">Vigour</span><b style="color:#e8e0c8">'+(function(){
+        try{ if((typeof petSlotId==='function')&&petSlotId()===id&&player.pet){
+          if((player.pet.vig|0)<=0)return '<span style="color:#e07a4a">Hungry \u2014 feed it to bring it out</span>';
+          return Math.ceil((player.pet.vig|0)/60000)+' minutes left';
+        } }catch(_e){}
+        return '30 minutes, and only while called';
+      })()+'</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #2a241c">'
       +'<span style="color:#8a8172">Its food</span><b style="color:#e8e0c8">'+(info.food||'')+' \u2014 from Mr. Ellison</b></div>'
     +'<div style="display:flex;justify-content:space-between;padding:3px 0">'
@@ -5932,6 +6157,7 @@ function mobMaxhit(r){
    Hitpoints is paid on every hit regardless, as in Old School. */
 function awardStyleXp(dmg,wstyle){
   if(!(dmg>0))return;
+  if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('hitmob');
   if(wstyle==='ranged'){
     if(player.style==='longrange'){addXp('ranged',0.75*dmg);addXp('defense',0.75*dmg);}
     else addXp('ranged',1.5*dmg);
@@ -5960,6 +6186,71 @@ function cmbColForVal(cmb){
   if(d>=-9)return '#40ff00';
   return '#00ff00';
 }
+/* ============================ OSRS-STYLE LEVEL-UP DIALOGUE ============================
+   When a skill levels up: fireworks (kept) + a level-up BOX in the dialogue area showing the SKILL
+   ICON and "Congratulations, you just advanced a <Skill> level. You are now level X." Click Continue
+   and, if that level unlocked something, a second page says so ("You can now cook swordfish."). A
+   queue handles several levels landing at once (e.g. a multi-skill combat hit). */
+var _luQueue=[], _luPage=0;
+/* Curated unlocks worth announcing, keyed by skill then level. Only levels listed here show a second
+   "you can now..." page; everything else just congratulates. */
+var SKILL_UNLOCKS={
+  cooking:{15:'You can now cook trout.',40:'You can now cook lobster.',45:'You can now cook swordfish.'},
+  fishing:{5:'You can now net sardine.',20:'You can now fish trout.',40:'You can now catch lobster.',50:'You can now harpoon swordfish.'},
+  mining:{15:'You can now mine iron ore.',35:'You can now mine berrite.',55:'You can now mine mithril ore.',70:'You can now mine adamantite ore.',85:'You can now mine runite ore.'},
+  smithing:{15:'You can now smith iron bars and iron gear.',30:'You can now smith steel.',35:'You can now smith berrite.',50:'You can now smith mithril.',70:'You can now smith adamant.',85:'You can now smith rune.'},
+  woodcutting:{15:'You can now chop oak trees.',30:'You can now chop willow trees.'},
+  magic:{1:'You can now cast Wind Strike.',5:'You can now cast Water Strike.',9:'You can now cast Earth Strike.',13:'You can now cast Fire Strike.',17:'You can now cast Bolt spells.',21:'You can now cast Low Alchemy.',41:'You can now cast Blast spells.',55:'You can now cast High Alchemy.',62:'You can now cast Wave spells.',81:'You can now cast Surge spells.'},
+  prayer:{10:'You can now use Rock Skin.',28:'You can now use Steel Skin.',43:'You can now use Protect from Melee.',44:'You can now use Eagle Eye.',45:'You can now use Mystic Might.',70:'You can now use the top-tier boost prayers.'},
+  agility:{35:'You can now enter the lava volcano to reach the Emberdeep.'},
+  attack:{5:'You can now wield iron weapons.',10:'You can now wield steel weapons.',20:'You can now wield mithril weapons.',30:'You can now wield adamant weapons.',40:'You can now wield rune weapons.'},
+  defense:{5:'You can now wear iron armour.',10:'You can now wear steel armour.',20:'You can now wear mithril armour.',30:'You can now wear adamant armour.',40:'You can now wear rune armour.'},
+  ranged:{20:'You can now use willow bows and better arrows.',40:'You can now wear green d\u2019hide.',60:'You can now wear black d\u2019hide.'}
+};
+function skillUnlockAt(skill,level){ const t=SKILL_UNLOCKS[skill]; return (t&&t[level])||null; }
+
+/* enqueue a level-up (called from addXp) */
+function queueLevelUp(skill,level){ _luQueue.push({skill,level}); if(!_luActive())_luShow(); }
+function _luActive(){ const el=document.getElementById('lubox'); return !!(el&&el.style.display!=='none'&&el.style.display!==''); }
+function _luBuild(){
+  let el=document.getElementById('lubox'); if(el)return el;
+  el=document.createElement('div'); el.id='lubox';
+  el.innerHTML='<canvas id="luicon" width="48" height="48"></canvas>'+
+    '<div id="lumain"><div id="lutext"></div><div id="lucont">Click here to continue</div></div>';
+  const host=document.getElementById('viewwrap')||document.body;
+  host.appendChild(el);
+  el.addEventListener('click',_luClick);
+  return el;
+}
+function _luShow(){
+  if(!_luQueue.length){ const el=document.getElementById('lubox'); if(el)el.style.display='none'; return; }
+  const el=_luBuild(); el.style.display='flex'; _luPage=0; _luRender();
+}
+function _luRender(){
+  const cur=_luQueue[0]; if(!cur){ _luShow(); return; }
+  const el=document.getElementById('lubox');
+  const icon=document.getElementById('luicon');
+  try{ const g=icon.getContext('2d'); g.clearRect(0,0,48,48); if(typeof drawUiIcon==='function')drawUiIcon(g,SKILL_META[cur.skill].ui,48); }catch(_e){}
+  const nm=SKILL_META[cur.skill].name;
+  const unlock=skillUnlockAt(cur.skill,cur.level);
+  const tx=document.getElementById('lutext');
+  if(_luPage===0){
+    tx.innerHTML='<b style="color:#7a1212">Congratulations!</b><br>You just advanced a '+nm+' level.<br>You are now level <b>'+cur.level+'</b>.';
+    document.getElementById('lucont').textContent = unlock ? 'Click here to continue' : 'Click here to close';
+  } else {
+    tx.innerHTML=unlock;
+    document.getElementById('lucont').textContent='Click here to close';
+  }
+}
+function _luClick(){
+  audio&&audio();
+  const cur=_luQueue[0]; if(!cur){ _luShow(); return; }
+  const unlock=skillUnlockAt(cur.skill,cur.level);
+  if(_luPage===0 && unlock){ _luPage=1; _luRender(); return; }
+  _luQueue.shift(); _luPage=0;
+  if(_luQueue.length)_luRender(); else { const el=document.getElementById('lubox'); if(el)el.style.display='none'; }
+}
+
 function fireworks(){
   const gw=player.px+0.5,gz=player.py+0.5,gy=groundH(gw,gz)+1.5;
   const cols=['#ffd84a','#ff5a4a','#57a0ff','#57e389'];
@@ -5971,14 +6262,22 @@ function fireworks(){
   }
 }
 function addXp(skill,amt){
+  /* tutorial: the gathering/cooking steps complete when the matching skill earns xp */
+  if(typeof TUT!=='undefined'&&TUT.active){
+    if(skill==='fishing')tutAdvance('fish');
+    else if(skill==='woodcutting')tutAdvance('woodcut');
+    else if(skill==='firemaking')tutAdvance('fire');
+    else if(skill==='cooking')tutAdvance('cook');
+  }
   const before=levelFor(player.skills[skill]);
   player.skills[skill]+=amt;
-  xpdrops.push({txt:'+'+(Math.round(amt*10)/10)+' '+SKILL_META[skill].name,
+  xpdrops.push({txt:'+'+(Math.round(amt*10)/10),skill:skill,
     col:SKILL_META[skill].col,t:performance.now(),
     lane:xpdrops.filter(d2=>performance.now()-d2.t<450).length});
   const after=levelFor(player.skills[skill]);
   if(after>before){
     msg('Congratulations! Your '+SKILL_META[skill].name+' level is now '+after+'.','#9c1f1f');
+    if(typeof queueLevelUp==='function')queueLevelUp(skill,after);
     sfx.level();
     if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();
     if(skill==='prayer'&&Math.floor(after/10)>Math.floor(before/10))msg('Your faith deepens \u2014 your prayers now drain more slowly.','#7a4a0a');
@@ -6034,6 +6333,7 @@ function adjTargets(x,y){
   return out;
 }
 function walkTo(tx,ty,exact){
+  if(typeof TUT!=='undefined'&&TUT.active&&Math.hypot(tx-player.px,ty-player.py)>=3)tutAdvance('move');
   if(player.frozenUntil&&performance.now()<player.frozenUntil){
     if(!player._fzMsgT||performance.now()-player._fzMsgT>1500){player._fzMsgT=performance.now();msg('You are frozen solid!','#1a5a8c');}
     return;}
@@ -7420,7 +7720,7 @@ function playerTick(){
     if(ground.indexOf(g)<0){cancelAction();return;}
     if(player.x!==g.x||player.y!==g.y){if(!player.path.length)walkTo(g.x,g.y,true);return;}
     if(ITEMS[g.id].stack){
-      if(addItem(g.id,g.qty)){ground.splice(ground.indexOf(g),1);sfx.pickup();}
+      if(addItem(g.id,g.qty)){ground.splice(ground.indexOf(g),1);sfx.pickup();if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('loot');}
       else msg("You don't have enough room in your pack.");
     }else{
       let _free=0;for(const _s of player.inv)if(!_s)_free++;
@@ -7428,6 +7728,7 @@ function playerTick(){
       if(_take<=0)msg("You don't have enough room in your pack.");
       else{
         addItem(g.id,_take);
+        if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('loot');
         g.qty=(g.qty||1)-_take;
         if(g.qty<=0)ground.splice(ground.indexOf(g),1);
         else msg('You take '+_take+' \u2014 the rest is still on the ground.','#caa23a');
@@ -7915,7 +8216,7 @@ function saveObject(){
     raidSess:(inRaid&&raid&&raid.graph)?{sd:raid.seed>>>0,lg:raid.large?1:0,cl:raid.scaleCL|0,ps:raid.scalePS|0,fl:raid.floor|0,sn:Object.keys(raid.seen||{}),st:raid.started?1:0,
       pts:(raid.points&&raid.points[player.uid||'me'])|0,rx:player.x,ry:player.y,ri:raid.roomIdx|0}:null,
     playMs:player.playMs,kills:player.kills,shrimpBurned:player.shrimpBurned||0,delves:player.delves||0,musicSel:musicSel,musicManual:musicManual,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,volc:(inVolcano?{fl:_lastVolcFloor,x:player.x,y:player.y}:null),
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,mapv:'sps4',xpv:2};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,tutorial:player.tutorial||null,pet:player.pet||null,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -8067,6 +8368,8 @@ async function loadSlot(id, preObj){
       player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;player.bossKills=s.bossKills||0;player.bratKills=s.bratKills||0;
   if(player.pouch&&player.pouch.ore){const _po=player.pouch.ore;for(const _k3 in _po){if(!ITEMS[_k3]||(_po[_k3]|0)<=0)delete _po[_k3];else _po[_k3]=_po[_k3]|0;}}player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
       player.cosmetic=normCos(s.cosmetic);if(typeof pm!=='undefined'&&typeof applyCosmetic==='function')applyCosmetic(pm,player.cosmetic);
+      player.tutorial=(s.tutorial&&typeof s.tutorial==='object')?s.tutorial:null;
+      if(s.pet&&typeof s.pet==='object')player.pet=s.pet;   /* vigour/hunger persists across sessions */
       player.winter=!!s.winter; player.fall=!!s.fall; player.fallUnlocked=!!s.fallUnlocked;
       if(s.name)player.name=s.name;
       if(s.mmf)Object.assign(player.mmf,s.mmf);
@@ -8124,6 +8427,25 @@ async function loadSlot(id, preObj){
       if(s.raidSess&&typeof restoreRaid==='function')restoreRaid(s.raidSess);
       if(typeof ensureWalkable==='function')ensureWalkable();
       try{renderPrayers();}catch(_e){}   /* the prayer grid locks are level-dependent; re-render with the loaded skills */
+      /* RE-CALL THE EQUIPPED PET on login. The 12th slot restores from the save; player.pet (vigour +
+         hunger) is now persisted too. Restore vigour honestly: a saved value of 0 means the pet is
+         HUNGRY and must stay so (no free refill). Only build the following model if it is not hungry. */
+      try{
+        const _pid=petSlotId();
+        if(_pid){
+          player.pet=player.pet||{};
+          if(player.pet.wasId!==_pid || player.pet.saved==null || (player.pet.saved|0)<0){
+            /* no honest saved vigour for THIS pet -> treat as freshly called: full */
+            player.pet.vig=PET_VIGOUR_MAX;
+          } else {
+            player.pet.vig=player.pet.saved|0;   /* may be 0 == hungry */
+          }
+          player.pet.wasId=_pid; player.pet.saved=player.pet.vig|0;
+          if((player.pet.vig|0)>0 && typeof _petBuild==='function')_petBuild(_pid);
+          if(typeof MP!=='undefined'&&MP.sendPetId)MP.sendPetId(true);
+          if(typeof renderPetHud==='function')renderPetHud();
+        }
+      }catch(_e){}
       return true;
     }
   }catch(e){}
@@ -8160,21 +8482,20 @@ function updatePrayOrb(){
   const v=Math.ceil(player.pray);
   e.textContent=v;
   e.style.opacity=v>0?'1':'0.45';
-  const b=document.getElementById('praybarfill');
-  if(b){
-    const _mp=Math.max(1,maxPray());
-    b.style.width=Math.max(0,Math.min(100,player.pray/_mp*100))+'%';
-    b.style.background=player.pray>_mp*0.25?'linear-gradient(#7ab8e8,#2d6a9e)'
-      :'linear-gradient(#e87a6f,#8c2a1d)';
-  }
+  const _mpz=Math.max(1,maxPray());
+  const _pf=clamp(player.pray/_mpz,0,1);
+  const disc=document.getElementById('prorbdisc');
+  if(disc)disc.style.setProperty('--orbp',(_pf*100).toFixed(1)+'%');
+  e.style.color=_pf>0.5?'#00FF00':_pf>0.25?'#FFFF00':'#FF3030';
 }
 function updateOrb(){
   const p=clamp(player.hp/maxHp(),0,1);
   orbEl.textContent=player.hp;
-  const hue=p>.5?'radial-gradient(circle at 35% 30%, #6fdc6f, #1d7a1d 70%)':
-    p>.25?'radial-gradient(circle at 35% 30%, #e8d36f, #8c7a1d 70%)':
-    'radial-gradient(circle at 35% 30%, #e87a6f, #8c2a1d 70%)';
-  orbEl.style.background=hue;
+  const disc=document.getElementById('hporbdisc');
+  if(disc)disc.style.setProperty('--orbp',(p*100).toFixed(1)+'%');
+  /* Old School keeps the orb ARTWORK (a red heart) and drains its interior against black; the
+     NUMBER in the pill to the left runs green -> yellow -> red as your health falls. */
+  orbEl.style.color = p>0.5?'#00FF00' : p>0.25?'#FFFF00' : '#FF3030';
 }
 function drawRunBoot(){
   const c=document.getElementById('runboot'); if(!c)return;
@@ -8195,9 +8516,15 @@ function drawRunBoot(){
 function updateRunOrb(){
   const e=document.getElementById('runorb'); if(!e)return;
   e.textContent=Math.ceil(player.stamina);
+  const _on=!!(player.run&&player.stamina>0&&!inParty);
+  const _rf=clamp(player.stamina/100,0,1);
+  const disc=document.getElementById('runorbdisc');
+  if(disc){ disc.style.setProperty('--orbp',(_rf*100).toFixed(1)+'%'); disc.classList.toggle('running',_on); }
+  /* running turns the energy number YELLOW, as the client does; walking leaves it graded */
+  if(_on)e.style.color='#FFE14A';
+  else e.style.color=_rf>0.5?'#00FF00':_rf>0.25?'#FFFF00':'#FF3030';
   const w=document.getElementById('runorbwrap');
-  if(w)w.classList.toggle('on',!!(player.run&&player.stamina>0&&!inParty));
-  drawRunBoot();
+  if(w)w.classList.toggle('on',_on);
 }
 {const _rw=document.getElementById('runorbwrap');
  if(_rw)_rw.addEventListener('click',()=>{ player.run=!player.run; updateRunOrb(); });}
@@ -8278,6 +8605,7 @@ function renderInv(){
 /* item primary actions */
 function itemPrimary(i){
   const s=player.inv[i];if(!s)return;
+  if(typeof TUT!=='undefined'&&TUT.active&&ITEMS[s.id]&&ITEMS[s.id].prim==='Eat')tutAdvance('cook');
   if(s.noted){if(bankOpen)depositSlot(i,s.qty);else msg('A banknote. Take it to a bank to deposit it.');return;}
   const id=s.id,prim=ITEMS[id].prim;
   if(id==='mining_pouch'){if(bankOpen)emptyPouchToBank();else fillPouch();return;}
@@ -8296,6 +8624,7 @@ function itemPrimary(i){
     else { const heal=ITEMS[id].heal||0; removeSlot(i); if(heal){player.hp=clamp(player.hp+heal,0,maxHp());updateOrb();} if(sfx.eat)sfx.eat(); msg('You drink the '+ITEMS[id].name.toLowerCase()+'.'); }
   }else if(prim==='Bury'){
     removeSlot(i);addXp('prayer',{big_bones:30,small_bones:5,ectoplasm:14,infernal_ashes:40}[id]||10);sfx.bury();
+    if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('bury');
     msg(id==='ectoplasm'?'You disperse the ectoplasm.':id==='infernal_ashes'?'You scatter the infernal ashes.':'You bury the bones.');
   }else if(prim==='Season'){
     const ch=player.quests.chef;
@@ -8375,17 +8704,30 @@ let _petGroup=null, _petBob=0, _petLastT=0;
 /* ** THE SLOT IS THE TRUTH. ** A pet is equipment now: worn in the 12th slot, which means the panel,
    the save, buildGearRig and every `for(const sl in player.equip)` loop all see it for free. player.pet
    holds only its VIGOUR, which is state the slot cannot carry. */
+/* A pet in the 12th slot is "yours" whether or not it is hungry. Its VIGOUR (time until hungry)
+   lives in player.pet.vig; when that hits zero the pet is HUNGRY -- still equipped, but it wanders
+   off to find food (its world model despawns) and gives nothing until you feed it. Re-equipping a
+   hungry pet does NOT refill it: only feeding does. */
 function petSlotId(){ const it=player.equip&&player.equip.pet; return it?it.id:null; }
-function petCalled(){ const id=petSlotId(); return (id&&(player.pet&&player.pet.vig|0)>0)?id:null; }
-function hasPet(id){ return petCalled()===id; }
+function petCalled(){ return petSlotId(); }
+function petOut(){ const id=petSlotId(); return (id && !petIsHungry())?id:null; }   /* actually following you */
+function hasPet(id){ return petOut()===id; }   /* benefits apply only while it is actually out (fed) */
 /* Called when a pet is EQUIPPED into the 12th slot. The slot holds which pet; player.pet holds only
    its Vigour, which the slot cannot carry. */
 function petOnEquip(id){
   player.pet=player.pet||{};
-  const saved=(player.pet.wasId===id&&player.pet.saved)?player.pet.saved:PET_VIGOUR_MAX;
-  player.pet.vig=saved; player.pet.wasId=id;
-  _petBuild(id);
-  msg(ITEMS[id].name+(saved<PET_VIGOUR_MAX*0.2?' pads out, and looks at you hopefully.':' trots out and looks up at you.'),'#2f6a1e');
+  /* A brand-new pet (or a different one than last time) trots out full. The SAME pet returning keeps
+     whatever vigour it had -- INCLUDING zero, i.e. it comes back out still Hungry. player.pet.saved
+     uses -1 as "unknown" so a genuine saved value of 0 is respected and never silently refilled. */
+  let vig;
+  if(player.pet.wasId===id && player.pet.saved!=null && player.pet.saved>=0) vig=player.pet.saved;
+  else vig=PET_VIGOUR_MAX;
+  player.pet.vig=vig; player.pet.wasId=id; player.pet.saved=vig;
+  if(vig>0){ _petBuild(id);
+    msg(ITEMS[id].name+(vig<PET_VIGOUR_MAX*0.2?' pads out, and looks at you hopefully.':' trots out and looks up at you.'),'#2f6a1e'); }
+  else { _petDespawn();
+    msg(ITEMS[id].name+' is hungry and hangs back. Feed it to bring it out.','#9a8a6a'); }
+  if(typeof renderPetHud==='function')renderPetHud();
   dirty=true;
 }
 function _petDespawn(){ if(_petGroup){ scene.remove(_petGroup); _petGroup=null; } }
@@ -8416,6 +8758,7 @@ function petFeed(foodId){
     msg(ITEMS[id].name+' sniffs the '+ITEMS[foodId].name.toLowerCase()+' and turns its back. That is not for it.','#9a8a6a');
     return false;
   }
+  const wasHungry=petIsHungry();
   takeItems(foodId,1);
   if(foodId===want){
     player.pet.vig=PET_VIGOUR_MAX;   /* the proper tin: back to a full 30 minutes */
@@ -8424,11 +8767,16 @@ function petFeed(foodId){
     player.pet.vig=Math.min(PET_VIGOUR_MAX,(player.pet.vig|0)+4*60*1000);
     msg(ITEMS[id].name+' eats it, unimpressed. It would rather have its own food.','#9a8a6a');
   }
-  dirty=true; if(typeof renderInv==='function')renderInv(); return true;
+  player.pet.saved=player.pet.vig|0;
+  /* if it had wandered off hungry, feeding brings it back out */
+  if(wasHungry && (player.pet.vig|0)>0){ _petBuild(id); msg(ITEMS[id].name+' bounds back to your side.','#2f6a1e'); }
+  dirty=true; if(typeof renderInv==='function')renderInv(); if(typeof renderPetHud==='function')renderPetHud(); return true;
 }
-/* A hungry pet says so, in its name and out loud. */
+/* HUNGRY = out of vigour entirely (vig<=0). A hungry pet wanders off (no world model) and shows
+   "(Hungry)" until fed. The soft "getting peckish" nudge fires earlier, at 20% left. */
 const PET_HUNGRY_AT=0.20;
-function petIsHungry(){ const id=petCalled(); return !!(id && (player.pet.vig|0) < PET_VIGOUR_MAX*PET_HUNGRY_AT); }
+function petIsHungry(){ const id=petSlotId(); return !!(id && player.pet && (player.pet.vig|0)<=0); }
+function petIsPeckish(){ const id=petSlotId(); return !!(id && player.pet && (player.pet.vig|0)>0 && (player.pet.vig|0) < PET_VIGOUR_MAX*PET_HUNGRY_AT); }
 function petDisplayName(){
   const id=petCalled(); if(!id)return '';
   return ITEMS[id].name + (petIsHungry()?' (Hungry)':'');
@@ -8560,21 +8908,28 @@ function renderPetHud(){
   _petHudKey=key;
   el.innerHTML='';
   const chip=document.createElement('div'); chip.className='petchip'+(hungry?' hungry':'');
-  chip.title=ITEMS[id].name+(hungry?' is getting hungry \u2014 Mr. Ellison sells its food in the delve lobby.':' \u2014 time until it needs feeding.');
+  chip.title=ITEMS[id].name+(hungry?' is HUNGRY \u2014 feed it to bring it back (Mr. Ellison sells its food in the delve lobby).':' \u2014 time until it needs feeding.');
   const c=document.createElement('canvas'); c.width=c.height=22;
   if(typeof drawItemIcon==='function')drawItemIcon(c.getContext('2d'),id,22);
-  const tspan=document.createElement('span'); tspan.textContent=mm+':'+(ss<10?'0':'')+ss;
+  const tspan=document.createElement('span'); tspan.textContent=hungry?'Hungry':(mm+':'+(ss<10?'0':'')+ss);
   chip.appendChild(c); chip.appendChild(tspan);
   el.appendChild(chip);
 }
 function petTick(dt){
-  const id=petCalled();
+  const id=petSlotId();
   if(!id){ if(_petGroup){ scene.remove(_petGroup); _petGroup=null; } return; }
-  const _wasHungry=petIsHungry();
   if(!player.pet)player.pet={};
+  /* already hungry: stay equipped but keep the model gone until fed */
+  if((player.pet.vig|0)<=0){ if(_petGroup){ scene.remove(_petGroup); _petGroup=null; } if(typeof renderPetHud==='function')renderPetHud(); return; }
+  const _wasPeckish=petIsPeckish();
   player.pet.vig=Math.max(0,(player.pet.vig|0)-dt);
-  if(!_wasHungry&&petIsHungry())msg(ITEMS[id].name+' is getting hungry. Mr. Ellison sells its food in the lobby.','#7a5a10');
-  if(player.pet.vig<=0){ msg(ITEMS[id].name+' is worn out and goes back in your pack. Feed it and call it again.','#9a8a6a'); player.pet.saved=0; petDismiss(true); return; }
+  player.pet.saved=player.pet.vig|0;
+  if(!_wasPeckish&&petIsPeckish())msg(ITEMS[id].name+' is getting hungry. Mr. Ellison sells its food in the delve lobby.','#7a5a10');
+  if((player.pet.vig|0)<=0){   /* JUST went hungry: it wanders off to look for food, but stays yours */
+    msg(ITEMS[id].name+' is hungry and wanders off to look for food. Feed it to bring it back.','#9a8a6a');
+    if(_petGroup){ scene.remove(_petGroup); _petGroup=null; }
+    if(typeof renderPetHud==='function')renderPetHud(); return;
+  }
   if(!_petGroup)_petBuild(id);
   const g=_petGroup, P=g.userData.parts||{};
   const mv=_petMove(_petSt,g,id,player.px,player.py,(player.heading||0),dt);
@@ -8743,6 +9098,13 @@ function reqSkillFor(eq){
   return eq.armStyle==='ranged'?'ranged':eq.armStyle==='magic'?'magic':'defense';
 }
 function equipFromInv(i){
+  if(typeof TUT!=='undefined'&&TUT.active)setTimeout(()=>{
+    /* normal run: wield a weapon (the bronze set) + a shield. Redo run: any weapon equipped counts,
+       since a returning player may no longer own the bronze kit. */
+    if(!player.equip)return;
+    if(TUT._redo){ if(player.equip.weapon)tutAdvance('equip'); }
+    else if(player.equip.weapon&&player.equip.shield)tutAdvance('equip');
+  },0);
   const s=player.inv[i];if(!s)return;
   const eq=ITEMS[s.id].equip;if(!eq)return;
   if(eq.slot==='weapon'&&typeof duel!=='undefined'&&duel.state&&duel.state!=='none'&&duel.rules&&duel.rules.noWeapons){msg('No weapons are allowed in this duel.');return;}
@@ -8818,6 +9180,83 @@ for(const row of EQUIP_LAYOUT)for(const slot of row){
   d.appendChild(c);equipGrid.appendChild(d);
   equipEls[slot]=d;
 }
+/* ============================ EQUIPMENT STATS (OSRS-style popup) ============================
+   The "Equipment Stats" button in the Worn Equipment tab opens a popup listing every combat bonus
+   your worn gear provides -- attack, defence, strength/damage and the utility bonuses -- summed from
+   eqStat() (which already folds in the full-Ember-set bonus). Milville tracks attack/defence per STYLE
+   (melee/ranged/magic) rather than OSRS's stab/slash/crush split, so the popup shows those three
+   families the way OSRS groups its bonuses. */
+function _eqStatsEmblem(g,S){
+  /* a little crossed-swords-over-kiteshield emblem, in the OSRS equipment-stats spirit */
+  g.clearRect(0,0,S,S); const u=S/20;
+  /* two crossed blades behind the shield */
+  g.strokeStyle='#c9c4bb'; g.lineWidth=Math.max(1,1.6*u);
+  g.beginPath(); g.moveTo(3*u,3*u); g.lineTo(17*u,17*u); g.moveTo(17*u,3*u); g.lineTo(3*u,17*u); g.stroke();
+  g.strokeStyle='#8a5a2a'; g.lineWidth=Math.max(1,1*u);
+  g.beginPath(); g.moveTo(3*u,3*u); g.lineTo(6*u,6*u); g.moveTo(17*u,3*u); g.lineTo(14*u,6*u); g.stroke();
+  /* kiteshield */
+  g.fillStyle='#7a1f1a'; g.strokeStyle='#e9d9a0'; g.lineWidth=Math.max(1,1*u);
+  g.beginPath();
+  g.moveTo(10*u,5*u); g.lineTo(15*u,7*u); g.lineTo(15*u,12*u);
+  g.quadraticCurveTo(15*u,16*u,10*u,18*u);
+  g.quadraticCurveTo(5*u,16*u,5*u,12*u);
+  g.lineTo(5*u,7*u); g.closePath(); g.fill(); g.stroke();
+  g.strokeStyle='#e9d9a0'; g.lineWidth=Math.max(1,0.8*u);
+  g.beginPath(); g.moveTo(10*u,5*u); g.lineTo(10*u,18*u); g.moveTo(5*u,10*u); g.lineTo(15*u,10*u); g.stroke();
+}
+
+function openEquipStats(){
+  const el=document.getElementById('eqstatui'); if(!el)return;
+  const body=document.getElementById('eqstatbody'); if(!body)return;
+  const S=k=>(typeof eqStat==='function')?eqStat(k):0;
+  const row=(label,val,unit)=>{
+    const cls=val>0?'pos':(val<0?'neg':'zero');
+    const sign=val>0?'+':'';
+    return '<div class="eqstatrow"><span class="k">'+label+'</span>'
+      +'<span class="v '+cls+'">'+sign+val+(unit||'')+'</span></div>';
+  };
+  let h='';
+  /* ATTACK bonuses (accuracy) */
+  h+='<div class="eqsecthd">Attack bonus</div>';
+  h+=row('Melee',S('atk'));
+  h+=row('Ranged',S('ratk'));
+  h+=row('Magic',S('matk'));
+  /* DEFENCE bonuses */
+  h+='<div class="eqsecthd">Defence bonus</div>';
+  h+=row('Melee',S('def'));
+  h+=row('Ranged',S('rdef'));
+  h+=row('Magic',S('mdef'));
+  /* OTHER bonuses (strength / damage / utility) */
+  h+='<div class="eqsecthd">Other bonuses</div>';
+  h+=row('Melee strength',S('str'));
+  h+=row('Ranged strength',S('rstr'));
+  h+=row('Magic damage',S('mdmg'));
+  h+=row('Prayer',S('pray'));
+  h+=row('Hitpoints',S('hp'));
+  /* extra utility bonuses only shown when non-zero, to avoid clutter */
+  const extra=[['prayregen','Prayer regen','/min'],['hpregen','Hitpoint regen','/min']];
+  let anyExtra=false, ex='';
+  for(const [k,lab,u] of extra){ const v=S(k); if(v){ anyExtra=true; ex+=row(lab,v,u); } }
+  if(anyExtra){ h+='<div class="eqsecthd">Regeneration</div>'+ex; }
+  /* weapon line: attack range + speed, read off the equipped weapon */
+  const wpn=player.equip&&player.equip.weapon?ITEMS[player.equip.weapon.id]:null;
+  if(wpn&&wpn.equip){
+    h+='<div class="eqsecthd">Weapon</div>';
+    h+='<div class="eqstatrow"><span class="k">Weapon</span><span class="v" style="color:#e8e0cc">'+wpn.name+'</span></div>';
+    const rng=(typeof playerReach==='function')?playerReach():((wpn.equip.range)||1);
+    h+='<div class="eqstatrow"><span class="k">Attack range</span><span class="v" style="color:#e8e0cc">'+rng+'</span></div>';
+    const spd=wpn.equip.spd||(wpn.equip.slow?3000:2400);
+    h+='<div class="eqstatrow"><span class="k">Attack speed</span><span class="v" style="color:#e8e0cc">'+(spd/1000).toFixed(1)+'s</span></div>';
+    if(wpn.equip.spec)h+='<div class="eqstatrow"><span class="k">Special attack</span><span class="v pos">Yes</span></div>';
+  }
+  /* full-set note */
+  if(typeof hasEmberSet==='function'&&hasEmberSet())
+    h+='<div class="eqstatrow" style="border:0;margin-top:6px"><span class="k" style="color:#ffb84a">Full Ember set</span><span class="v pos">bonus active</span></div>';
+  body.innerHTML=h;
+  el.classList.add('on');
+}
+function closeEquipStats(){ const el=document.getElementById('eqstatui'); if(el)el.classList.remove('on'); }
+
 function renderEquip(){applyGearTint();
   for(const slot in equipEls){
     const d=equipEls[slot],c=d.firstChild,g=c.getContext('2d');
@@ -8862,6 +9301,7 @@ document.querySelectorAll('.tab').forEach(t=>{
     document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
     t.classList.add('on');
     document.getElementById('panel-'+t.dataset.p).classList.add('on');
+    if(typeof TUT!=='undefined'&&TUT.active){ tutAdvance('tabs'); if(t.dataset.p==='combat')tutAdvance('style'); }
     if(t.dataset.p==='quests')renderQuests();
     if(t.dataset.p==='prayer'){try{renderPrayers();}catch(_e){}}
     if(t.dataset.p==='magic')renderSpellbook();
@@ -8893,6 +9333,11 @@ document.getElementById('sndchk').addEventListener('change',e=>{muted=!e.target.
 (function(){var _fc=document.getElementById('fallchk'); if(_fc)_fc.addEventListener('change',function(e){ if(player){player.fall=e.target.checked; if(player.fall)player.winter=false;} if(typeof applyFall==='function')applyFall(); dirty=true; });})();
 document.getElementById('muschk').addEventListener('change',e=>{musicOff=!e.target.checked;updateMusic();});
 {const _mtn=document.getElementById('mtracknext'); if(_mtn)_mtn.addEventListener('click',cycleTrack);}
+{const _thb=document.getElementById('tuthelpbtn'); if(_thb)_thb.addEventListener('click',function(){ if(typeof tutRedoNav==='function')tutRedoNav(); });}
+{const _esb=document.getElementById('eqstatsbtn'); if(_esb)_esb.addEventListener('click',function(){ if(typeof openEquipStats==='function')openEquipStats(); });
+ const _esx=document.getElementById('eqstatclose'); if(_esx)_esx.addEventListener('click',function(){ if(typeof closeEquipStats==='function')closeEquipStats(); });
+ const _esm=document.getElementById('eqstatui'); if(_esm)_esm.addEventListener('click',function(e){ if(e.target===_esm)closeEquipStats(); });
+ const _esi=document.getElementById('eqstatsicon'); if(_esi&&typeof _eqStatsEmblem==='function'){ try{_eqStatsEmblem(_esi.getContext('2d'),20);}catch(_e){} }}
 document.getElementById('savebtn').addEventListener('click',()=>{
   if(storageOK)saveGame(false);else msg('Autosave is not available here.','#103a8c');});
 document.getElementById('exportbtn').addEventListener('click',()=>{exportSaveToClipboard();});
@@ -9091,6 +9536,9 @@ function optionsAt(tx,ty){
      fn:()=>setAction({type:'talkn',n:np2},np2.x,np2.y)},
     {html:'Examine <span class="t">'+np2.name+'</span>',
      fn:()=>msg(np2.ex||'A St. Paul\'s student, between classes.')});
+  /* Rector Matthews will re-run the whole tutorial on request (any time, any gear). */
+  if(np2&&np2.id==='matthews'&&!(typeof TUT!=='undefined'&&TUT.active))opts.splice(1,0,
+    {html:'Redo <span class="t">tutorial</span>',label:'Redo tutorial',fn:()=>{ if(typeof tutRedo==='function')tutRedo(); }});
   if(np2&&np2.id==='ellison')opts.splice(1,0,{html:'Buy <span class="t">pet food</span>',label:'Buy pet food',
     fn:()=>{ if(typeof ellisonPetShop==='function')ellisonPetShop(); }});
   if(np2&&np2.id==='slayer'&&player.quests.m5.s>=2)opts.splice(1,0,{html:'Shop <span class="t">Slayer Master</span>',label:'Shop',fn:openSlayerShop});
@@ -9547,6 +9995,42 @@ function optionsAt(tx,ty){
    Attribution as above: OSRS Wiki, CC BY-NC-SA 3.0, via github.com/Dava96/osrs-icons.
    ==================================================================================== */
 var ITEM_ICON_PNG={
+  glacial_platelegs:'iVBORw0KGgoAAAANSUhEUgAAAAwAAAAdCAYAAACe/43ZAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAIpSURBVDiNbZTBa9RAFMZ/k5nsuLuN7WIRFUFZD9WDit6EHkSKpQgW/CO8KIge+jdJoSdPivUkeBD0pOtFRXottLp0k+xOMh4mmZ1s8yAkb/K+N9/38mUEjRCW1rDCV4TF611LDuRAlkJavTlAeJAK+/x6+hw7nVKcnFBmOWWaUuY5vNv3NVHd/fLOK4SUEMl2Vk0AWGOwReHgSrkrVggpeZBYry8CYS+9eIYtCqwpWrt+ubfR3MGaqrh0V6Q1QkmEihHKyax3cVlZYP7+o8xS7MxgjaF34zrm+BhrZpDnjE2oIZK+ozWGOx/fBnpihJTokJI8m6AGA+RSH5kkfF3fJNIamSTIpT5qMGC0tR3sULSLrYdgjcHOzOJYC6wxLSDTuCuAyeiH5z41zho/laLMc+5+es+4WjtCOED/9i3KyYTR1St+Wr21NWyeM7o29FZhd89RElK6eVfTqnWV+dxXh7t7gBWVW4U99+QxZZp5WqOtbZ+PDXxOnWPnomfOS7WGxbzVfGplhW/3Nx3AGOLVVb5vPCJLWwCdixf8YpbCmeHQ50H93K1tIZRExIrxwwW3Lsb5blWslPdS7VY/Vmdp9+P8SU+vHYZuFVrPHRsrDhCN7yJixVEaAqRsUABgYa0+OSIAtbxMpLWn4JsEtJqilYTqxKitEdrl5pvXIcCK3y93iDodIt2Z76C1p/VhPD/I/FijXhehFJHWvltNq/FtgsfgXLXidO7iP8BM/gl+dRtqAAAAAElFTkSuQmCC',
+  glacial_platebody:'iVBORw0KGgoAAAANSUhEUgAAAB8AAAAaCAYAAABPY4eKAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAASHSURBVEiJlZbPa1RXFMc/9907P16TMTPWUURsVy4KWmigCyGV2iQGLCoVCmIhC8GFGxct9F9w4T9Q6E6oCIUWXTSoEwtVGrHF1LrsSoxVTMtMZqIvL3Pfu13c9+vOTLQeuMzcd358zzn3nHMvZCQMW5Iwr+a/iewQT5ipB7+bXNFdH/qY933+hwNWdi9saWv/jZ8yOyJV+qRm7S5PzWGiCIDJpRYAmxoeBVbycaqyBU35hucBBCN47/oQAr8FAjAiA99+7CiipDB9jdEawHFipZcb7B2ZYf/tFiGwlgA1fNgIYMK3MiF2n1IA+EDVhz8TcC9lqkYdOT6OKCmESpaUCCm5f3AmM7KvBvtvt7J91bdGU/rroxkqQAXrSDVh+gxnIwE34vmlywil8Ko+nu8jSgrPryKU4p3bLQLg5ckT3D84Q1lBWZGBVJOoqz4IKQnJeSk/daBd8EClad91Zh7PfytLeZEqyW8cbCCk5MHsiWxvoojJpRb/JADNhevUarluqPMMbQyE7jFAcmwMoSRetZKkv8SzwBaaUApZsJwezf2DM+xQOcjy1BybOnc8db7qu1gKhNl97ixxGCKUxGhrFEC3O8RhyGMEb588jvfzLxYUMLPTCFUiDgLU3Xs8VA0O0OZWT7BdKcoKejoHriRFOBS5XusSb4RsPn3G5tO/0Z0OutPBaM3kUotmo54Bp1RqNhE3Fyk1d2TfHqoGzUYdeedXlqfmqADdpCPWgjztezGAMB6QpFjmBVf12bNwlebCdW71BOLY0aE60O22/e10nO8HdJvdG228cplu0m7Pj8yw07fV30gWxSGTKu8+dxa91iXq9YjDkM6NRfZ8eT7r+f6l7+x5nT6FvnwF77PjxD9eg+QojO7z3sJVHgVgvv6K6MVLol6XaH2df3+4VnAz63Mj7AJRLtsslBSdG4tOVCkwALF1JgUGEDcXMX1baVtPwhxrqNpJq1iV3L2UlOa/yNN+5XvX5Ow08eFDriEps+OM1l8M4QyBGx1htMbo/ki/1elTVM6eAcicUac+d2S6xUCkxGjNvsJUHAEuzM750/RXV9HtjuuplMRBQNTrEfW6hCtPMLPTbD59Rnz4EOHKE8tbf0EchtkUW7lw0XZOuzMEPBS5jbqftZgj6PtJRqKCfN+5iLyK7Wp73vZcjdZ4vk9NvRZcW2NRNCRooghZ24aa2DbyWIRSxGHoXDrFgJan5l4NLsfHkLUacnyMPz7+dFSmrFLVRphGnQJPLrWc8wZQE9vwqj5CKepHpp22dpLhVSqJsVLSkzZ1Kxcuml1n5rO0Fy8fE0V8cOc6mxp6A7eWNWrvCavrXlpqUNC2WTHt+ex3o/cxyjUW4t7tNqAyxBHxRojnV11ecSOUHFC1wIOUpj2l4mODwuwGEJUKolxORnjJkXMidyZYQnqt6xSYqtdH3vllBRQ+78XwGIGs1Qi/+daGMhjaYKT5f+PM/cacjU5OTGB0P3tIZJpSou7ey/ar7U5iY/DFazLMVz9FRzjWbNS3lFh1hol5re03AHedGE2vByzSf8OJHKhX89ZKAAAAAElFTkSuQmCC',
+  /* --- master/grand skill capes, anti-dragon shield, recoloured dragon-helm glacial/ember --- */
+  dragon_shield:'iVBORw0KGgoAAAANSUhEUgAAABsAAAAdCAMAAABsU+d6AAAA1VBMVEVMaXFhWlq0bhVYUlKuahWfdxGoZhUAAAGraRWxbBWOaxHTgBpdV1e/dBhlXl3QfxhWUFClZBVqYmJsZGTCdhi9cxh7cnLLexi6cRXFeBjIehhjXFu3bxVMOQlbVVWbdBGiYhFnYGDNfRh4Wg2AYA2soKBuZmZINQl9dHSfYRGYchHVghp8XQ1CMACyqKeRbRGbXhFza2tOSUiieRGEYw1RSkqVcBFwaWmvoqK0qaivpKRUTU1MRkZRPQl3b25CPT2HZQ15cXDYhBqxpaWdkpK8srK5rq3h+GBeAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAW5JREFUeNp10tlygjAUBmCzJxACsolCQVRsXepetfve93+kRi9qtHpmuGA+/jAc/lrtMExP7fywed9X7OwDbBO3nKRMJfL+IXt3G2ECMW3PFifIXmK74SRQ8PpsgI7PZbFtN50oSYEctOvAM5TFse02QydSWBPlXD7+Ibux3UZLI6R7Ap5Bsd3R5iu8J4yejmLaHD+lO+Ly7kBXzzsLywDUqU+58F4NI9qakYL0K6CUg4VBBRm5rTBV9F5TDo3N6BgZdcII0J8+rXIMjLddF+TDbTpAfvfpQ44yTxpGlqOWE8kJ4JMcCWAeWZDl0MpwLvAWISQ8YMYIWcONwpMKoU8MkBEba1vBTN7n6IHjLE8PsdseIYUTAb2prb6ANGLd3uptuPuruNLbglIZsXGvVwzXU15VCGMMgPnd3W53almWzmAhRFqy4+ZpssR+oDot0k6TDGpT/pkGsnmksSzPtpexfuD7wYVmMxZcor2at79UkyCEhvRgqgAAAABJRU5ErkJggg==',
+  ember_helm:'iVBORw0KGgoAAAANSUhEUgAAAB4AAAAaCAYAAACgoey0AAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAANnSURBVEiJnZbPixxFFMc/r3t+7O5kEiPTslFYMSQTk+BJwYOIGHIQwYsnwYNe/AvEg3rKKQcPCh5Dbp48ShBU1IOChwRhNYiuCmuUmN2ZsO7OZnq6u6qeh+6Z6fnZM/uFZobqV/Wp96NeNRRKtNhmeXlF0E9OP3cEeLF9ARi2o0O+aF5aEC4Kol+fu1xoPwcsevupV/i9d8DdOCxmItoMUta+jQut53p85Z9NXj25wZ34QSH0h/MvsdUSmoGyb5KjgkXfWb+AL8LHu79xY29zMD7taQbK8VqNZqB8dvEN9hbwuDTvZVk8KuJRBV57+HESdYTOEqsjUouaXb4PhRc4y0d/bfJE/Cjvb37Lkysnjg72RfBFuG8inq6fAyBRB0DHJhzYhE7pEZrs4lSJs3eHzvDlfz8DMhLB9FcHg3Nz7CM8e6yBlzPsw/s6sQqxOhJ1+Aixc0QjwDQVaeENK32mx62kx4FNOO6XQcCokmSAvOolBuMWJVJLNXvXr3KArZYs5rEnwka1BqTQyNl08WwDffU0GObeOVakRQR8fvZFrtSfnwrNgccrFa61/sCpsmdjOjYhVkfs3Ih3AA/5Ff5NQu6biMTco2PSFa/eu812fDgVSloBoj9eeJlqtYp3bA1vbYX1D07x7uVPKYngVHFA5Cw9tXRsQtdZIrVYVXwRrCpWlbJrEwER0ChBx8DNcIIJqMjQ4+l6e/08iTqMKl1n6DlL1xk61hCpBcCqUvPaxIYBuEoKzec5n+9SfwdjgdD3Tl0kdJav9n+hl3XMreyINAPljD6GcWn4x6HMgKZhH/F4IgP6ZuM06+VVus4QZoWVZHmO1BJl/w2Ontkdmf168AwALuPe6N3im7Fcz24gCKviY0XZTg6J1NEoVSfsxqE3Q2E/vDXw7lKgE1BmHyeV6+0/uRM/YM3zB6M7SW90c2MBq2duDCtZZRp0Dniou8noldg2w77UscNbyPMaxGa48bwT09adA069djpZlf2znYfWvHauVRZr7u0EDBrFLJX9gBVp0TEsBS4M9Um/MjFWyk2zqoOj1FvkQ2VRcF79q7Kvijc6fQluEVjlw51f2ajU8JH0ycB1vzxi+VMo/M30Cp6mhYxA9K3gDDtJSKSOqnhE6ug6w3ed1mCTi621FJg5/Xw5YF//A2xC6LryCneyAAAAAElFTkSuQmCC',
+  glacial_full_helm:'iVBORw0KGgoAAAANSUhEUgAAAB4AAAAaCAYAAACgoey0AAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAOtSURBVEiJrZRPaBxVHMc/b99styFJQ6CrpWIPtq7455KcFURSqvQgehKLiD0UVLCIIIoV0dbQg6gFvXgovQmCh1KiKIsXC8EWGq01bZOURNPW1lV34mRn5s3OvOdhdmd3sn8m0Xxh2Jk3v32f9/39GciUMNkxmy5hxmZ+MBuHZ8fnsgLcK1fZ/8vMOp0LA8I8NftTZnwfsDCHr12h9uNFrjtONhNhSsWY9VdYz4zu6/iLDz/m3gPP4s0vZEKfu3qJuYqgVDSsuO5/BQuz+5OPEJbk52OTjBx6IVnvdpWKhp1bCpSKhoMXlqhXKplgq++pCgVyWwsUgJ2HX8YEAVGthvYV2vN4oDzFWU/gv3SEz0+dwtv7DCcmJxkcH/sfYClBSoJbt1l++yh5wChFHghtm7BaZXZiP6UzU3hRhAkCAMKVfxh95UVApDIY/5pksW+NhZSM7p1AyBxCxqG6AWhqZABMEKCVQlgS7XuoFDAuRdx4rU7vCQ5u3CSs2mBJRE5iIo0OAoxSqbhhC7RSmCDAhBHa8yk03rWAMFcR63MspGSgtCd2Wa+jXRejFKYtrQAzD+9rq73H2NlvUMDjly6w7dtzXaFt4LWdCr+9+z5Ga+p/VIhsu5HOIEmrCSMA8sXt+Eu/Ety6zf1fn8YJ4x3PvXmE1YVrXaHEHSDMoflZRiyLbdJiWEqGpOToyZPk8nmMjuI0uy7adQltm2i1hvY8TBgiLAsThpgo4qHvyyhAAdstcEI473UwASNEy3F33XPiA0xQR9frRI6Ddl0ixyG0bbTnx9tEEePTZYKQBFwghjZr3K65imiO09pUCLPns0+JajWG3ngN32v8oTEipaLBfuIAph6ileqA0gMapz3m9Zxjf3GJwq67cd47TrS6ig4C7lIKrQJWPBfjK0TeIgdJXWk4db88zYONTADsOPg0362pdU+wkBI5OAhRhHv5MtpXbNlxZ0fc7vJU6vm8Jyg9/2Ti7rGi6YDSe5yMWD52HG9untzQULKqrt9IH87Kp56HGzZanWxEN2gfcEtqcSn1HPx+M7kPbTu5n39kgiBJeTuoE5oBjl0369SueuVPwmo1BR2fLqM6Insr03E3cLsWHt3H+HQZJ2Rzwfk7ih1rIt/qSRNFySg1x25TwCmgZaUaKlcopN5vgJsFNmLx1dcZuK+EsGTjit1ao6OpyIueYJnuHdzVxPrOJ8yud95CLS+jfUVuawHtKyLH4e8zXyWHXN9eGwLT53u+MWBT/wLWAe3Yx6ZiXAAAAABJRU5ErkJggg==',
+  grandcape_agility:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAA0lBMVEVMaXEiJGAdIFRGGhggIFcaHVAaGkoAAAEgIlybj3smKGskJGQkJmeFNTBSGBWJNzB1LipKHRomKG9yLih5MCoVFTwYGkYNDSqMOTJCGhiCKCBOGBGSOjRcGhWPOTRXGhUqLHUoKEiPLCQqKkw0NFuMKiIYGEImJkMwMldJFREoKnJgHRhvLCZ+JiB7Jh2FKCJ8MiwJDSQdCQAkCQk/QHE0DQk1NV1nKCRkKCRUIh2VLiSSLCQ8PWsqLHkiIjwRFTeIKiJkHRiANC5pIBpRSkqDNC5n45gCAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAQlJREFUeNpl0YlSgzAQBuAQIEsgCHJDAXvZw1Zb79uq1fd/JZcrVN2ZzGy++ZPZSQj5VVAtONjHQODySgrsvrCHa2hCAFHb3MYxGoS0iwJ9CxmbME2CsphHbBT2d5kvi8l0FMtA/iSM+d1MJqB89qypxo4lJONX70ahPTjjoaloeg/26T84MznCSSPgZ3kN6lELbpZ7nPNDKD2BibSDICtNCxM9bBIEjaeDFrabRHBOebps4fM94dzgbKau6if1LxxPKAZlkVp0YFoIeqTWk4F77gjLMDSdNYPUoCBQBL96dNeuTiDo6mBdQWALCfd/YPng4s85Ehh7rG+1v7eBv95/rIqiHbUvQsgPXjgWSonOnZQAAAAASUVORK5CYII=',
+  grandcape_attack:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABHVBMVEVMaXFbEQlkFQltFQ1WEQlpFQlMDQkAAAFgEQlOGBEuCQBSGBVwYg1zJB1REQltXg10Zg1wIhpwGA3TuRrQthgmAABsIBqHZQ13JB17Jh20nhW3oBVFFRFkHRhIDQlcGhVpWwlpIBpgHRjavxqofhXVuxqumBWxmxW6oxVCDQA8CQA/EQ0dAAB0Vw18XQ2LZxHgxBp3b27YvRrLmBjFlBjNmhjCqhgdFQBJFRE8LAA1CQBRPQmYchE0DQmRbRGEYw3ssR2ijhGAYA2okxXnrR2Hdg2biBF4Wg3lrBrgqBrdphrapBrNtBg/OjrLshh5cXB1bWxuZmbdwRqOaxHIlhiVcBHVoBrCkhibdBGieRHIrxjTnhq/qBi9pRjQnBgb8WL0AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAASVJREFUeNpV0QdzgjAUB3AokJeAAQGhgIq1Kmqtu7V77733+P4fo0GWzV3uXn73z7t3Ccf9WxBumDkvA9trqYB1w2rYgCgEIMfFlsUqgPZmEgVxx5LldcSngEnHkktLWS+hrJSUkpwGBvsS7ih+moDasSEpIsqnMDp3jSomGZgXLqWVGbi+dHX7fgZur1x9+EDy/UigOR44+l2d5OZj8MaPDh3WiZZAcbXm0OIiWUigxUCvMtiL4ed3RO0QejF8fzWoXa4oWjeGyWtDD6GtbU+fNHgzDWEOi8jXdqfQXDENiYHqa/0EBAljXkXRZOA9m+wG5kWUOwzCRy8WwhsM1FzvKAIhgbODEFoZdE899nONFBA6mXYtfE5aXlD/eH95ikfNFsdxf99QH+iN8tzlAAAAAElFTkSuQmCC',
+  grandcape_cooking:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAw1BMVEVMaXFgEQlAGkpSImA5GEJQIFxwGA0AAAFIHVQ8CQBkFQlFGlBMIFcVERFWEQk8GEZYVDx0GA0uETc1CQB4GA2IfD9WJGQ3HT9bEQlREQmHGg01DT8/IEhYJGeZjVZpFQkdAAA0FTwdCSRMDQkwDTmEGg2+tLRtFQ2RHRGAGg2LHREYAB0uCQAqCTQuGDQoFS4kDSo6HUM6EUUyGjlNKFdIDQmfIhFCIkxQKlubIBEmCSyYIBFcJmsgCSQ/OjqVIBGOHRGgVrwNAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAPBJREFUeNpl0IeSgyAQBmAUdAGDookaY0nP9d77vf9THaKHJGEGZvlm518GhPYWtBus+xcguFgYgfdvVcMCuiaATV9crlbKILn/bwX35qos8ygwQO+uN2WeDFn4scqr/NY0TJ49+lAtkwHeau8lIsxA/PGZvQY2/NQZtsE/rbEn9iATux1h007AmU0ykUoxDm1oJLFBNE0qDfBZLNLUhvNYSKkyigG8EXXJeN3D/LeDhHH9pc6Zj3twBqAaph1sfTyiNIiWTI8BvvW9FlzCwrYFuI5QELHiCMIDWBdqDsQGCHnSqf7JnDuOPvunDgsh9AfN4hTE14tAKAAAAABJRU5ErkJggg==',
+  grandcape_defense:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABR1BMVEVMaXFSYZHBwJ5UY5RVZJYVERFcbaIAAAGbj3tqalROXIpKWIVnera+vptFUXlDUHZRYI9aap5WZplkZFBQXYyIh2xkdrBmebRgcalba6BdbqSmpoWQhXNXZ5s8SGtnZlJMWodecKdCTXRhc6xsgL/GxqjEw6TIyKykpIPHx6qsrIlJVoI5Q2Q/THGPjnFld7JidK59fGOEhGk1P12jooFrfr0oMEhqfbtiYU3BwaDDwqJpe7moqIWgoIAiJjwVFREyMC4qMkxISEOTknQsNVCdnH2ZmHlGUnyWlniQkHN/f2Xe3c2Kim54eGB7emLa2shziMvY2MR2dV1sbFZxhcfW1sG/vpzU1L5whMVeXkyqqYe9vJiVlHa7u5abm3vR0bpugcFvg8Ofnn65uJOysY3NzbPFxKZRSkrLy6+zso+urYrKya2vr4yX0rINAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAATxJREFUeNpV0WVvwzAQBuDQ4qVhWNomKydlZlzHzMzM2///PDtN0+6VLJ0fnS3rjGH/AtACU/smwMDC0BNQ+4A1WASjJgDibrHcXIIGwuy4FUi1vCAILOUBHQ0XBDE8ucsf0EQpvuo1pHZ0uYCLeQ/sg0aZJHOMB8mjQ6tE+yZAnJ1yBjUF/MUlR0/D3cMTgpPdkYC0nXqch4nMuWBmMtYsjDqGfsZuzMC0x5BNvbdQx1XVhe+fZA9Bu+LC72eXQ0fUYxe+3jr+QBBn4+q6M9IBQVgOiOqKA/UO0dINmfJtRIoOpLvnXIKWFSk3ehkwk0QpRocUMspU62jofb5XhkCRGrO9huCa9ydiwRCFS0xlE0GW1xNGUKFwjdnbMuHPETd6wJAVEtei7L5zK//ymk0/m4P726L71EkwDPsDmZgmgGlC+WIAAAAASUVORK5CYII=',
+  grandcape_firemaking:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABPlBMVEVMaXGfVBG3YRWERQ1gQAmrWxWYUBEAAAEVERGlVxVwY0yxXRW0exW3fRWYZxFkQwmAQw2RTRG9ZBi/ZRhbPQlwPA2Hdg3CZhibahHLshifbBF4Pw2RWBF8TA2VThGLSRG6YhW/gxi6fxW9gRibUhF0Zg2HSA2LeRF8bQ3FaRhMKAmochWibhHFrBjNtBhCIgAdFQA8LACYhRF0PQ20YBWRfxFRPQmudxV0Rg2iVhFtQg2LVBFRKgltOQ1gOgmYXBGuahWoWBWOShGuXBVWLAmATQ2EWg2AcA2RYxF0UA14ag2LXhG3bxWEcw3Laxjszx2OfBGijhGbiBGVgxGokxXIahjTcBrnyx18Qg3IrxjlyBrQbhjgxBrNbRjdwRpkNAnavxqxeRXChRg/OjrCqhjVuxrTuRqVZRHQthilcBVtjlQ6AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAASNJREFUeNpV0IWOhEAMAFCWGejAArvYAWuwrufu7u7u/v8/cPhyTSbpvLRNU4r6F+A9SPw7QMHwSCzw/O7mMApBEcBNmEx1FlwDXY5KgV1aRGjTTsXAzM/lUVHvz1JXCsVCcSMuKB8rqzOFfFwB1esjermUzcRQubtqH8wmQHy4v1RrCRCeHg2HTcDrC1FpFmWagYBkvRGFEIQHQjCtMiEWsbQIckNlg7iRgCrheZ5ohyH0fnzgtVYIv18V4rfUQ+h+VpQ0V2roeMw/6feH2HbWuRIax5M+SIOiQTNczc7jZgTqBMOl5GywGZi3opN2gW3gbck7uikYtA9ruLXjQU5QA5Dx3n4ASgT1LbcHxBhstOtPFaa7PVO6OD07PwlX7QdFUX+DGiHent8n5QAAAABJRU5ErkJggg==',
+  grandcape_fishing:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABOFBMVEVMaXFqhJtMXnBddIl/f3ZacIUVEREAAAFgQAliepCHh31lfpVsh6C0exWYZxFkQwlbPQm3fRVVan1yj6hKXG5CUmKHdg1uiaKbahGfbBFWbIBDVWVbcodYboNNYXNRZXhngppvi6Rxjae/gxhzkKu6fxW9gRhIWmuLeRFmgJdQY3VGV2d8bQ1jfJN0Zg06SFZ2k691kqzLshjFrBiochWibhHNtBgmLjkdFQA8LAA9TVwwPEhRPQkuOUMyP0yEcw2YhRFSZ3uRfxFedoxgeI9rhZ6AcA2RYxGLXhGEWg10UA14ag15lrLszx19m7nnyx18mrflyBrgxBqOfBF3lbHdwRo/OjoqNUDavxplYl2xeRXChRiVgxHIrxiudxWijhGbiBGokxXCqhjVuxrTuRqVZRHQthilcBUpAm3wAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAStJREFUeNpV0Idug0AMAFAgcAYKBAIUMiB77zTpbtO99957/P8flHEQaukk+8lnWSaIfwHug0h9CwTMzYcC3RsnhwXwmwCaOFleWXIM9GzQCkx3kdKo9c0Q6gm9SWnpySyVtLSUtho2FI/z7XSqqodQOT0SGIuKh1A+P+kbWxFQLs56aiwC4jVCPM9P4OHuShUYPl7zBaTBYy9PZmx2GoM5KPaNXAbJASRniyV3SAQqCNE0LY8xjH4qtBtyC8PvV/mebNNI7mAYfpZRjmMaOrvmnfT7QykZOc6y0+yGB9KMogp1LpOtsrUACttTXCxF+ZuB+azkSQeYBrsjuUc3xZLhQYJt7bqQFFUBw+GeD4UAOvvOH1BCyNoH3lTxZTgypffXt6dLvOokCIL4A8EVIqWUrkh+AAAAAElFTkSuQmCC',
+  grandcape_hitpoints:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABIFBMVEVMaXGpp52WlIuvraSRHRHLWhidm5IAAAE0LCKkopioIhV5d3BWEQlFFRFJFRFbEQm6JhW7ubFsIBpwb2mrJBVREQmEgXpgEQk/EQ2Qj4a2s6qlIhWLHRGVIBGVkol/fXaOHRGPjYW5tq1zJB2xJBW8u7KuJBWLiYGFhHtubWaNi4OBf3h7eXKrqJ+YlY2mpJqHhX05EQ2Jh39OGBF3JB2ysKe0sqhOTUiiIhG/vbZpIBqbIBFkHRial48/PTodAABUUk0mAAB9e3RzcWs1CQBRUEpsa2RdXFehn5V7Jh3BvrfGxL6bmZCvrKLOzcbDwbrKyMJpFQmHGg2AGg18Gg2opZtlY11SGBVXGhU/Ojq3tayxr6W+u7S6uK9wIhqYIBGuPF7OAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAASJJREFUeNpV0YduwkAMANBADpxcgOwAJdAk7L03Ld17793//4tmHqmlk+wny7J8FPUvwHkQqqdAwe6aCLy82znsg9cE0PKTo+mxbSCbQStET+ta86AaJxAZnHBaS97MEtsm1+D2SEPp3OrKDa5OoDK6nBQK22kCyujmYnwWAly8uy1fhSBXZNwgMCsySIjF0ilPQJdKTh3jkz4YPiQCQFKFQUgQ1BCUnZlqxoe8pIifz50agV9J+aa7nZ7a92H5o1g0G63JiaF7Un2F5x/XbEE7TLiLgLHCX5M2u1PlAlhgcRxh49mmtwigBbZoG6I9Pqk7R0e5+ZYLJp95cCCfK3uQ5TOPHogB9J+Q/XMKDmCg3btT8WyZN/S312EqOMgmKIr6A4KKIVSarASgAAAAAElFTkSuQmCC',
+  grandcape_magic:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABIFBMVEVMaXF9c2N4b2B7cWKIfmyTh3SCd2YAAAEJDWQmJlSbj3tGSJmKgG6ZjXmPhHEgIFeWi3gqLHVISZuEeWk/QIhnXlKFfGtkXFAkJFB2bV09P4V/dWU8PYMwMoVza1xiWk1vZldxaVoaHVCViXaNgnCfk35MTaPCkhhJSp5KTKA6PIBWUEVeV0xcVUmQhXMaGkpNTqYdIFRRSkAgIlykmIOglYAkJGQiJGA8NzA0NY+3iRW0hxVjTCwuMIMuMIBCQ44wNIkwLCYJCRoJDSRAOjIRETBDPTVaUkZqYlQ3OpuqnYejloE3OZg1N5WmmoU0N5KdkH01N3MsLmM3N3Y5On0oKFdFRpa/jxgiJExDRpQmKGskJmcyNIx3XB1DRZFAQotZBGiTAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAATRJREFUeNpV0YWOg0AQAFAKC4MUDimFUqHu7u3Vzt3d//8vbpHC3SSbzL5MJrOzBPEvwDnw5z4FAvb2A4H+F87hALwiANtPjqaH2KCV3ZYC1W/ohp5jAohmTpq60Qp78W3SIO3joKB7JqImpTcCKF+eFyKRDBdA7er6QkSJENSbYYlHZAjCbMTLiArheVaSaZR82vEEUukuT7/MGW4LVrosVthdzdxCLF0uYJi/hlCjK4uFovR8+NnUWJZVFCXvw3pTZd3o+PD9WRWlokba5thdaX2lDvk2iuQMc+JCaqWO5GKcSZyaAw+W6i0djTNU1psMrKUqShjw+3t1Z+mWUCq4QHL5RwdiAk9LUS3pwIMHMi0hLUkluM6dhX+uiqHoQi5773YV3taxVP39YzwZ+KOGQRDEL8lhIrrC2jdSAAAAAElFTkSuQmCC',
+  grandcape_mining:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAxlBMVEVMaXFKSjo8PDA5V2RRUEBNTT05OSwAAAFGRjlAPzJUVEJDQzU1NCo3VWE6W2dXh5tWVkU1Ul2LZxFrpb1qo7tbjKAsLCIuLiAwMCZekqdcjqJaip6pnp1vq8NimK5VhJZsp78iIhokJBgYGA1aWEYwTFdxrsc8XWtCZXQ9YG5mnrRuqMFglKldj6QNFRggKi4qOkAdHRUqKho0NCJkmrBhlaxpobk/OjpnoLZRfY9OeIpDZ3Y0TltwrMVIb39FanlWhZlUgZQ7CrCNAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAQxJREFUeNpV0YeOgzAMAFAIAYcAZe/ZXve4vVfv/v+nztAwLpKl5MmxrUSS/i1oAybnK8C4HgQWL7iHG7gkAcRic3s3R4PkoU8FPVrEMdGMAZhh3sckGmtRhxFG5kPCeq8yjSVDBpSPjioTczbAoVrypTEB/8nhXJ/A89HhdAqvqUMLz5sJgdxecyoXpqIICO0vrspeYfWQ2SVXmW66PZzykiJoriUgzQ8XcAUcw4Z6CNZKQJU1nowQWdvuSe1fH7siJNaug7z2sWsHmw7C2seazCBiMsh+fLzBDF1TLLt99CxobyAQxa1bOAW0h8+3FtIRVu8h/lwzgKZ9dFWDfZWG9vd5u9uIUcclSdIfkRkVOHtewbEAAAAASUVORK5CYII=',
+  grandcape_prayer:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABcVBMVEVMaXGsoKC+tLSViomdkpKaj49MRTIAAAFpWwm5rq1kVwmhlZXOx8aijhG6oxW9pRivoqKbkJConJvQysqlkBXDu7qokxW0qahgVAmyqKeYhRGLeRGfixHRy8uQkLXCubmbiBHKw8Lc19emm5qumBW6r6+PhYW2q6p/dnavpKSJgH+BeHipnp2FfHu/trbj4OBza2uRfxFYUlLGvr7h3dyflJTLxMPNxsXe2trX0dG3rKy/qBjpzR2xpaVIQ0MdGACrlRWkmZh3b245Mg28srKYjo1hWlqTiIhSSRV7cnJ9dHRlXl1WUFCHfn1uZmbBuLeEenp5cXC7sbHk4eH74VaLgoHp5ubl4uLHv7/74E3i3t7Y09LUzs7730iVgxGOfBF4ag373kLg29v73jzFvLz73S7a1NT73CbIrxjFrBjCqhjTzc342h3a1tbx0x3szx373CDd2NhIQjDgxBrdwRrlyBrixhrIwcG0nhW3oBWrn59aAo68AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAUNJREFUeNpV0YWSgzAQBmCksEUKbYHK1d3d23N3d3d3v3v6o4VSLjPJbL75Z5NJEOTfgPYE3b4ICAwOaQL5V7mGMVBCABtqMT1flA1mmG4UQnOz+FSGMGuwiueTeCre68VSRIqIT2qBtXWBWrFERzXI7Wx6mETFqMHuwVbQQxl6UD7J7bF2HZyelfcDCR3UL+pCCdXBy1WQ9ekh+HxZxVCLcVEVeLhvkF6MJN1d6L++IzEvSfo1uBEkymtZ7lMAxKdb1tdMWzIuFcKPrZovliYWHMOdJ3W/843qUsw6kXSIHTC98Z7tcTtqiDrcCnzyrBSxm0dwutMVxA8+kI04zVaCPmwfDCInlLKUDAxdaEfAxtXOMcqJynBUUCAgYdQAGmJol8sk/1yL+5Kw5sBvqELgx52u3HfYZvLzP/KqXrU3EAT5A540Kx+bk9xJAAAAAElFTkSuQmCC',
+  grandcape_ranged:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAA9lBMVEVMaXFQMBqVXDVFVxU6SRFCUhVSaRoAAAFIXBUVERFMYBhOZBg9ThFVbBqATi5UNB2AQw1RKglKLhpYcBp8TSxAUBpxVj+BeHiYXTeDUS43SAk1QhgyPw1WLAlIJAlMKAmdYTmLSRENhxWbYDd4Pw01RREwPBUiLAkyQgBbMAlgMgmOShFbcx2gYzmkkW+JVTCFUjAYHQAdDQAmFQA1GgAdJAkuPAA8ShomMBE5RhgsOQ1NYCI6TAmRTRFyRih5SipgOiJvRSZrUjxmgiBRZCRpNwlkNAledx0oNQCPWDQdJgA/OjqSWjR/dnZ8Qg0NhBWERQ2MVjIpIoZdAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAARZJREFUeNpd0YVywzAMANCAY0VJk2UNFtYGyjzmdcz4/z8zh9xsuvOd9E7y+WRB+BOQHqjUryDA7h4XeH5jOexD3gQwKpKDwyEzaF+UraCcHDWbp0TmoB4PRs3W2eYueu623NaQN8wvDXXg9tscwukddWtki0MyfZrdyxUIIntGqyBFtq0rFXiPbAMZ7OQCjjU30FM8cbsA0wrR89Cvl9CwwgVqPlYgMRaIhMPKSmjsK6TeLWBpBV8fKXQK+PkOMI4RUZxkK3V6kk1ZeYviuARD11SFtMXsZWD2JKqrqlzr5y8D81OiGgOFiF0nXbqZTTCoid11Cg02UUDn6j/cmOznAg6EXGe3Si/Llek8PE7G5UI2IQjCL7W6Gfu7x/sPAAAAAElFTkSuQmCC',
+  grandcape_slayer:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAY1BMVEVMaXFIDQlWEQkuCQAVEREkIiJMDQkgHR0AAAEaGBhbEQmbkJCViZQmAABwGA1CDQBREQmsp6AoJiZ4GA08CQBlVkMdAAB8Gg1tFQ1pFQk1MDC3oBWAGg01CQAsKio/Ojp0GA0CYVNrAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAMRJREFUeNpl0IcSgzAIANAsAkSto2qtdv3/VxZXjC13OeHJkaHUKWhelNSOZPV01G/Jqae1ieT/mhROMind3krsJJgxAqIQu2MWNMh4AIUHCCQjwg0Q2NkEGnilYK4NwBlAhvxBZ/0qpC8BELuu0CnU05RClmVjHcFfQp6PdV2UKUjPGUSKdoPqM+8i97XV8qT6bmADHwFPMKwgZ1/2JT8Y3GEW8kuDANtyA4xQ/kDbylgyEZify1RTea91mD/bUY9QSn0B6ZQL1jCcHKwAAAAASUVORK5CYII=',
+  grandcape_smithing:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAA81BMVEVMaXFNTT01NCpgQAlRUEA8PDAVEREAAAFGRjlAPzJDQzVKSjo5OSyHh31UVEK0exVkQwmYZxG3fRVbPQlWVkUwMCYuLiAsLCKHdg1lYl2bahGfbBG/gxi6fxW9gRh/f3YiIhokJBgYGA2LeRF8bQ10Zg1aWEaochXFrBiibhHLshjNtBgdFQA8LAAqKhpRPQkdHRWYhRE0NCKRfxGEcw3szx2AcA2RYxE/OjqLXhGEWg14ag10UA3nyx3lyBqOfBHgxBqVgxGudxWijhGbiBGokxXIrxjdwRravxqxeRXChRjCqhjVuxrTuRqVZRHQthilcBUq1wiCAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAQ9JREFUeNpd0IdygzAMAFAMNjLEmLIbwkia1aR776Z7r///mhowhFZ3urPfSTqdFOVPQJHQ+q+ByM1GYHAq3rAFVRFAKB87u31hEOzXpWBEgzAkzGyAmup2SKLlLOxTQkm/KUiOEGU0aCogu/JRh6grDaTXEz4xW+De+JwbLbCffY7b8PriYyRgWAk48zfL0nVVW5UQz5M8zy3dq6G3kegi1BZkGAnxDiXMvjPc7VqWN5Lw85nqJYwlTD9S3KEGi7S98qRf7y4vIdAOSnDWXY4qGNaAEaUmkZtB/OSKDmoaTDt2iqPHdtEhgGijkwJ6Nq7h4uwfjM9FD7gNMHZZTrXvprPYebx/uF3IVZehKMovEaIYyRtN2w0AAAAASUVORK5CYII=',
+  grandcape_strength:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAqFBMVEVMaXFREQkJWzwNbUgJTDIVERGYIBEAAAGkkW8JYD+EGg0AQipWEQkNcEoJVjkJaUUJUTWbIBEJZEKHGg1bEQlqYlQAPCYJSC6AGg1MDQmOHRFgEQkNdEyiIhGfIhGLHREJSCgALh0AQiZkFQlwGA1pFQmRHREaFQkAHREwJBEAPCJGNBgAJhgANSIJTCylIhV8Gg10GA0NeE6VIBEANR0/OjoAJhVtFQ1467MsAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAPlJREFUeNpd0YluhCAQAFBQYBBERVfXWq+9t/fd/v+fFUXRloRkeBmGyYDQnwXDhtX5GxBcL07g88vEcAc2CWA/BQ+PO2Mgn+dUiJ7u+14Sz0FAin0vi6WW7xFJ5M4lvDRxUJAlA5q2jpNkGzpo9btKvRVoXSsVrYCxWlG6gg9WU85peGsFyq5RlOccbyYQXWPOeX6zQMsNcAdZ1ZoSnKxAUzrA9Ax0lfZHwBNUZwsFPo0jLQVTPqWUSHxwEKdBZGDsDETG/DgIvGRrOxshNRARvCmHodsbBhIcvg4w3Jjh7R/gozA/px0QYp9h5yoT5fHndJgHsiyE0C/q2hNhtQpXGwAAAABJRU5ErkJggg==',
+  grandcape_woodcutting:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAA+VBMVEVMaXFtWDKAaTqIcD92YTd6YzlwXDQAAAEVERFQQyyDazxUQh1/bEhURi5bSiqWgFWLckCZglaFcEpcSSBmVC5gTSxMQCpjUSxXRSCFbT05eA1Khw2CbklqVjBXSTBKPBpQQCRQPxqbhFegh1uehVqAZS6DZy4JGg1gTCJXSChURSZ9ZjlnVzpuXT1zXjVkTiSUeUOOdEKPcTSRdkOMd1CMbzJ8YiyHckx5YCoqIg0JJBVnUiRDOSY0Khg5LhpkVTmVdjVrWzyRe1I/Mh2SdDRbTTRhUjd0YkJ5ZkWZfUaWe0VGNxiiilyUfVQ/Ojo3KhGFajB8akaKdU4y6R1PAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAARhJREFUeNpd0IeSgjAQAFAQdBNEaQKigIiIvderXu/9/z/mCCVytzOZ2bzZ7GaWYf4EkAO5+ycwcNKjAq8fUQ49SIoA6mlyenEZGXizrBTY85am3demFEYHXNbc4bGXLF67Y/eWFnSuuGJlPPAoBHdzYeJUKxT85fNCneZAWb6s5FIOpM1cttgcvG9WnBBBPREQu28IoSbC5RTsbgc1m42GkYFKQM1DGMgI8TqFXRhwBYR0o53CT+gTMI1WCusv34rG6B7uxyv93isLa8Q7+hBrMYh7RRaKfMkc4HoCW4UrROBUk5+BvVUsAqyJyyJZui3JQgw13H4ioEochcd/0JpEb0ChYOoPcVfpZr2zxbNZX8sWcgyGYX4BarYciJjSZbIAAAAASUVORK5CYII=',
+  mastercape_agility:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAw1BMVEVMaXEdIFQiJGAaGkomJkMgIFcaHVAAAAEgIlybj3tISX8kJGQmKGskJmc9P248PWs/QHE0NXAgIkgkJD8mKG9JSoIYGkYVFTwNDSoiJEwoKEgdIEMdHT9MTYdKTIUwMmo5On0qLHUkJFAmJlQ5OXoYGEI1NV0wMlcqKkw0NFsoKnJDQ3YJDSQdCQA6PIBOTooqLHkoKFcqKlskCQksLFA8PYM0DQk6PGc3N2EiIjxFRXlGSHwyNG0RFTc1N3NRSkpCQnQSPq0GAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAQhJREFUeNpd0YduwyAQBmAw48AD2/WsHTtpdpruvdP3f6rihdMgIcGn/07oQOjfgmbD0T0HBFfXRuD7oM/wCF0IIO0PL3muDTI8RAG/Z4RsCTNgbWhKimzs5fqb7a7ITeD22RN0vTIJqG5iZ8cINVDP7uLAwiMkswvXYnwEe3kCn8tLVzJenHcCfli1QM96UGEVSyl5NEIdezphIAhr1zlOBGGigcmo7OE3TDwpsYwmPex/EimFJCu6aEfqT+3YswQmKZ0P4DoaeErbl4Ga2p4jBOOkexmoL1tXCIYJLf1m6Kqt0MBp+dpAoCt6mLydwlrpn0sMEPLUdrU/9oHyH+4X82Eg40II/QG1AxRxm3bu5wAAAABJRU5ErkJggg==',
+  mastercape_attack:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAmVBMVEVMaXFwGA1WEQlOGBFMDQk/EQ1kHRgAAAFgEQl3JB1pFQl7Jh1pIBpzJB1tFQ1bEQlREQlIDQlFFRFkFQlwIhpsIBpCDQBSGBUuCQA5EQ1gHRhcGhU8CQB+JiAmAAB4GA2ofhV3b258Gg1JFREdAAC3oBV5cXBuZmZ1bWwdFQA8LABRPQmCKCA0DQmAGg01CQBXGhV0GA0/Ojow0txfAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAO1JREFUeNpl0IluwjAMANCkOZw0B23oBYUyYIPd1/9/3NxjaccsWXKeHMsyIX8C+oTF+x4wn6JA9401PMPYBNBMxUuHFUD18dsKyVvXNGe+iqCY6Jqwm2d5WYc6NLHh9T1Vos5jB+xPNK0THiKYk6FWsRn0wTjXLsAdTFE+3sDxygIfBSTd6+Jyx0S+AHdcgO3hYcs2MxhdWIRqgpIaV/4D2dabaXcovnANhEpkw0llqqlfq4TngkdIEbIIXvtUqVXGx0XAIqwREgTZH90OPxAyUW1H8BHaG9h94h8wETg/D1O1K0orB5hWnYMQ8gNYVhJzXc3QLAAAAABJRU5ErkJggg==',
+  mastercape_cooking:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAApVBMVEVMaXFSImBFGlBMIFdQIFwuGDRAGkoAAAFIHVQ5GEIwDTlaLmZdMGpNKFcVERFQKls1DT88GEZYVDxKFVcuETcyGjkqCTQ3HT8oFS6IfD9WJGRgMm06EUU/IEhYJGdRGGCZjVZGFVJULGAdAAAdCSQ0FTxCIkxVGGQmCSy+tLRWLGMYAB0uCQBjNHBYGmk6HUMkDSpJJlRGJFBcJmsgCSQ/OjpNFVy1BBmvAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAOpJREFUeNpd0ImOgyAQBmC04oAiIPW+as9tu/f5/o+2FilqJyEZvgx/yCC0KLgdmN1/AMHz3gqcf4ce9jAOAQSmeTkcBoOkuY+CX2RS5rFrgbzjQObJlOVEbd7mH3bg9c0jaXu0E1A/dd4ppukMvivhzoBtusqZQ7jpHI8voOKXC02DUSBa1xUvFccL6BW1INY17/tSFRMwXpYz2A2glOJFNoG3Ij4tzgaufyMkWC8Eom3oGJATEA2BhRUhbnw0IHQmcX2Ks+i2dKEjBohx9vkIX49wGt4AY3egNNepLLzuRNQ0Ukrz1akQQv/94RPyU66oJAAAAABJRU5ErkJggg==',
+  mastercape_defense:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAw1BMVEVMaXFgcakVERE/THE8SGtcbaJVZJYAAAGbj3s9SW5mebRkdrBidK5hc6xnerZFUXlSYZFOXIpKWIVecKddbqRziMtUY5Raap5DUHZCTXQ6RWdqfbtld7JWZplRYI9QXYxba6A5Q2RwhMVsgL9yhsmQhXNXZ5tJVoJMWodugcFpe7lIVX9xhcc3QGGCldQ1P11rfr18kNMoMEh0ic13jNEiJjxISEMVFREyMC4qMkxGUnwsNVBvg8N1i89/k9R5j9JRSkosOYorAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAASRJREFUeNpV0YduwyAQBmC7Bq42YDve2/Fo9k66R/r+T1VwHCf9JST4dJxOoCj/AnLB3fkACjy/DgLbX7GHN7gUAcT95uXwLgyQcy2FYltZluWQAfAMaVaEbr0MtYyK+HMo2NQ01OyoGmA/37EgmOoDnBq/yfDoBsd0ZXrkDtpFbeJ7qM0vCVp8EeDqZv4koms9MPWneRRBV6B8v3sQSa6Q8XMqK6q+KxjstJCQJD2Y9Nvsrqx7SLOjoY5tJ0bL7kld7DcdRMjqQPX8lHohGX2gbjLgnm9yHObF9DIIMNfPXDzJg5mOVPnotF0wASQo9QRLyFqDu+MJsQu9CiUYLeXeOCd2qa8JEz/n11T1wjywy5kz7bqu5qnB3JGztKJ+1FsURfkDUekZLjwrazIAAAAASUVORK5CYII=',
+  mastercape_firemaking:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAA+VBMVEVMaXGfVBG3YRWERQ2YUBGAQw2rWxUAAAEVERGlVxWRTRG/ZRhwY0yxXRV0Rg1tQg1wRQ29ZBjCZhiLSRHQfxhwPA26YhXTgBp4Pw2HSA2uahW0bhW3bxWRWBF8TA10PQ2VThF8Qg3Vghq6cRXahRppPwnFaRixbBVtOQ2bUhHgiBrTcBrLaxjYhBpMKAnCdhjQbhjIahjLshhCIgAdFQA8LABRPQm0YBXadBrIehhRKgngdhqOShGYXBGoWBVgOgmLVBGHUg3YchqiVhGoZhVWLAmiYhGATQ2bXhGuXBXVcRrNfRjNbRjLexjdhhpkNAk/Ojq/dBi9cxhlZgBsAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAR1JREFUeNpV0YeOgzAMAFBKaB0aShhllzIK3fv23nvf/3/MsctZiuQ8OZblMMy/gPRA7b4EBvb2K4Gv7ySHA8iLAIIiOVyeJgZauywF7mqM0JPaqKB1TU3U13a9iO323f5DVTA9ky9F16wqIDqesxd+U6xgcTsb9u5qYLyuN2RSg7fZu6JzNfhYY8JySES5wIhMsYwxkpoFOOQT4y3e0hJ6SqTgJOISBkqEBUHAcVDA73CRghB7BfxswvQFpuMCVvNQ7vC+pdFsIWCzxlB/4X3kUTWDkW4obIufqCa1SiBHLb7RbuaTgSMbeicBzpICO116r6uwGZxL5n0OJIe25D2mMOjKJWjPTvJzYQUqusm6dk9WA8dOwSpG3QXDMH8XcRuhID8GcgAAAABJRU5ErkJggg==',
+  mastercape_fishing:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABZVBMVEVMaXFMXnBddIllfpV/f3YVERFqhJsAAAFiepBacIWHh31sh6BcZ3NVan1yj6hWYWxCUmJKXG5Ca45aZXFuiaKqucdWbIBDVWVYboNNYXNbcodXY29RZXhngppvi6RxjaesusivvctzkKuNoLKtu8pUXmpIWmtQY3VmgJc/Zog8Y4NGV2djfJM6SFZ2k691kqy5xNCPobOzwM2KnK6VqLtjodaQo7WRpLeMnq9ko9gmLjkdFQA8LABRPQk5XHouOUNSXGc9TVwwPEhKeaAyP0xDbZFGc5lSZ3tgeI9Db5RFcZZedoy7x9NIdZs5Xn1pdoQ6YYB7i5uQvOSJm6yFlaZ5lrKAkKBNf6hMe6NRha+LueN9m7lrhZ58mreFtuKcrr+ktMSAs+F3lbF5r+CTprk/OjoqNUB2rt+6xtGmtsVhntFlYl1gnM+2w89em82xvsy1wc5qqNxemstmptybrL5lpNqWqbuT+/Y9AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAATdJREFUeNpV0YWOg0AQAFDosSzSIleg7u5uZz13d3d3//4DulBukk1mXiaTySyG/QuoPWipbyEGh4ZNgYUbNYcjsNcEYQ4lo91J1aDgN1ohXZjARXxuyYS0Q8jhoqs/iyPdoiJOmw3Lm8G8S0kKJpQPd1jajdtNqJ4elaR5C0QuToqczQLyFQAMw/Th4e6SY2nGPtMT2G7cF4Ok1+MbRBBrlEtSwAt4A5qdl6g2JGFAq/MOAEEQ4xkE9Z8qoUUii+D36+2JzBOAH0Pw/REBAYpOCfyUftLaZzwqBSi3x8XP6tB+jXNsmvL6k74FHWLP4dDxAGVT8N5msPIYD5Iq0ClnZks7elOOSjo4nNltDVoyxyJY39XgWg4ZsLoRU38uEjbA71nTp4bPz+qV2sHe/soiWrUfGIb9ARI/KI55tgtzAAAAAElFTkSuQmCC',
+  mastercape_hitpoints:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABUFBMVEVMaXGWlIuvraRKSlHLWhipp52dm5IAAAE0LCKkophISE55d3CLi5a7ubG6JhWNjZiRHRGEgXpmZm5wb2lNTVSQj4a2s6p0dH14eIF6eoR2dn9GRkyPjYWVkol/fXa5tq28u7KPj5qVlaGSkp2HhX2Bf3iLiYFdXWWFhHtubWaNi4OrqJ+YlY1paXBsbXWmpJqysKeJh397eXJwcHm0sqhOTUi/vbaQkJuBgYt7fIV/f4l9fYeUlJ+bm6ial49ra3NubndzcWtXV11iYmo/PTpgYGcmAAAdAABkZGxUUk01CQBRUEp9e3RdXFevrKJsa2RaWmFbW2Ohn5WbmZC2tr+opZvBvrfGxL63tayysrzOzcbDwbq+u7Svr7rKyMKxr6WGhpC6uK+YmKRlY12srLeoqLSWl6M/OjqIiJOJipWnp7Kamqaioq+dnamgoKyfn6t2fPzBAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAS9JREFUeNpV0WWPwkAQBuAKMLSldoWjSA8o7u5wnLu7u+v//3bVhZtkk50nkzeTXQz7V6AfmOibgMHSKhJ4fNXusALmEEDNumw0NzUDKWyPAr6dFZNbKRcCZ3WXEWvSOIvNh5kcs44G1KNIWcoxWQTx89OGosx4EbSvL04qBxPAP91cRg8n4P3ZbRSCtw+3wDkc3qIpEPxU9d5BTlkgDwcG0DYEhnG3IHBcyIbudzyqZ4bWLOj/ttnb40ImlLag9xO7J8qFBL1gQecrFiEoPCPRfuNJ/QO+dbZDKeI8PWdAUOWvGnlqNsXQIxNeeLbipFy+pLkZyA98hNAAT5CLeggEPK1pA8Lkct2EqAk+Ml3SoethbdgvytrPxRBUxT0j1XPX6cv+XiBYL1mrjgvDsD9cBCa5QVXgKAAAAABJRU5ErkJggg==',
+  mastercape_magic:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAwFBMVEVMaXFnXlKbj3uWi3gJDWSZjXmIfmwAAAFcVUmTh3R7cWKPhHGViXaKgG52bV19c2N/dWWCd2Z4b2BaUkZkXFCEeWmuoIqfk35xaVpvZldeV0ydkH0qLHWFfGuqnYeNgnCsn4mkmINiWk1za1yypI21qJCvooxWUEWQhXOom4WglYDCkhhqYlS5q5OjloFRSkA8NzC3iRW0hxVjTCxAOjIRETAJDSQwLCYJCRqmmoVsZFZDPTWzpY+3qZG/jxh3XB3NA1w5AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAASJJREFUeNpV0YeSgyAQAFAFYUWx16ixpffkcr3+/18dEqN3O8MMvFmYZVdR/gV0C/6cz6DAy+sgcPoRe3iGWxJA22+ezo/CQJ/cU8E4rdRQTb0BrFmQqaE+voXWfui3H0PCYUFoZqirARbzkjvObLgC8+XbkVB7hLhuEkT9EcpyizA1RthsEsyom+1vAiw/IPZ98XS1B55/kZ32EAV3wPmCC7is7kCST7a7Xosi7AFt55qmFUWR9ZAfl5qMoIekWRKzivw2sGVLTR43aE2dNAxSCWscb3E19ex98C6BkThn1tQzJrfKgKOYmALE/0OzazqvEy7B11urA1wjZlqRKyCLOiA1ZiaNXMPWdZeJycUbzCoJ6UROBsomIayS0Jc6hqIov53kGKF1qps/AAAAAElFTkSuQmCC',
+  mastercape_mining:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAflBMVEVMaXFNTT1WVkVKSjpAPzI5OSxRUEAAAAFGRjk1NCpUVEI8PDAuLiBaWEZDQzUwMCYqKhokJBhnZlJDQy5qalSLZxFkZFAsLCI0NCJISDBsbFapnp1cXElAQCpMSjIiIhoYGA1eXkwNFRggKi4qOkAdHRVvbldOTjViYU0/OjqCN5QaAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAN5JREFUeNpd0YlygyAQBmBAYLlVKtHENEfvvv8LdokRqcwwA9/8LMxCyL8BeUK1vwHOtyLQ/+Ia3mEJAbjn4uPzigbttEaBj71zVoQCKujO2XGrJZmyyl5L4OubKqHakoDThdHGalFguHjjQwXxyIzhFRwQ5A7knJJwiwB7ORnZzFp3FdAmzQV8BsV1u8EgEUSB8wp9BamG+3FIDcKoHw0B9hrx1pzQrgDdAdZUwT5fhrdGPKECF7pjuen+kE8gWN2bBWQBuQfq8eeGuIIQ/FE1/tzPnk2Tc2tDtkEI+QPYhQ+KpcTLjQAAAABJRU5ErkJggg==',
+  mastercape_prayer:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAABEVBMVEVMaXGVionX0dGsoKB5cXCaj4/Ox8YAAAG5rq2+tLSdkpJMRTLDu7rQysqhlZV3b266r6+0qajGvr7Kw8Kmm5q3rKyvoqKonJuJgH+bkJCPhYXa1ta/trayqKfd2NjBuLfg29vUzs7Hv7/Cubnc19fRy8uflJSxpaXW0M+rn5+QkLV7cnKFfHuBeHh/dnZza2u2q6rY09Lh3dze2tq8srLi3t7NxsXk4eHj4ODTzc3LxMNwaWmpnp3p5uba1NSvpKSkmZi7sbGLgoFYUlLPyMjIwcGYjo3n4+PFvLzs6enl4uKHfn1IQ0NSSRVlXl0dGADu7OxWUFA5Mg2Eenp9dHRuZmZ1bWxhWlqTiIiNg4NIQjDYJSKtAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAATZJREFUeNpV0YWOwzAMANDCUicrt+u2jpmZmY+Z4f8/5Nqu63qWIjlPlh05FPUvwD7gu++BgvsnT6D9a+XwCscigJ2bPLzsLYO6dCqF0OM7/d1AYQ+2dDtKN1vnXhxGTdT68grGzyIOmDHZg8nNsiitSwEPhsvbQhEHz9C7mnQ51QeZcS+rr33QH/ZFjfVBKlPg8n4opFYzwpqBD1cgHmf4GuH52AkOmSlPajy/OwGXEgVcM9+iRwAixrm8sTAbdRe0bHeU7yzQ3Rw5KzUEhpmlO5HL6Jx2AGtMMTdQ2WCs7YwBJcdwgqKGN/Sn0xUGOqMnlGQ4guSGYS+dVEQtgS2Q5GbZhkRldE1wkrWgVbUhXdEFgstsSJLrm631c6vphUCMcjVUQvSP0zXL5dKK6oD71HNQFPUHCl4hxPCCBysAAAAASUVORK5CYII=',
+  mastercape_ranged:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAsVBMVEVMaXFSaRpVbBpFVxUVERFCUhUwPBUAAAE6SRFIXBVccihOZBhNYCI9ThE1QhhRZCRMYBg1RREyPw1gdSpYcBpbcx1AUBpieSosNxFxVj+BeHg3SAledx0sOQ1abyZUZyQNhxUiLAk5RhgyQgBWayakkW8YHQAdDQBkfCwmFQBhex1mgiA1GgAdJAkmMBEuPAA8ShpDVB1KXCBIVyBrUjw6TAl/dnYNhBUoNQAdJgA/OjqWwQa5AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAPdJREFUeNpd0IeOwyAMAFAgBpO9k2a0Tddde3uv//+wI4sktYRknmxkTMgisD04u/8iwZtbLfjzp3K8YF+EeBiSh8edMow+x1LkT89VtZeGBvNFHCpvPb1FnczLvJ0uON8xU2RhpCGv72nmSk9DXNepb8zASpOUzmGTJonNl8BAgewFHZYzKHghwgmgKKDU4LP8BEEJqwlidgKQq2Ey3LKYNiVfwPdXC8Pv8JjE0DQAINxupY5tJVRdP0DIEZgdmFxGI1CL2qZpuGE/CPoKAgVcitBpl+53HQpcEb31QDW8X8H6VfVgrEHKffeqtTlufaeDYdQpCCH/FSYS6yBGHUAAAAAASUVORK5CYII=',
+  mastercape_slayer:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAANlBMVEVMaXEyLi41MDCbkJAVEREkIiIoJiYgHR0AAAEaGBiViZQsKiqsp6BlVkMdAAC3oBUmAAA/OjqCKmXxAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAJ9JREFUeNp90YkOgyAMBmDAnuKxvf/L7leDlLmsCUn72XDYlIawY1moybA26/UbuW12NRm+X8mLkKGk1mpOCHe9QRXk1PdiUdcOVogBNAI7eQDhGiEDeATGJg9Y2zEmVFh1XWmAZd8jTNNUlgjzXJYvQM8Ic4B6nnK/Fw2ZH6C/wANoAz5+upwNAL9B/4BgcrnDNQjLtYrIMZp21R4ppQ85twkBGD05PwAAAABJRU5ErkJggg==',
+  mastercape_smithing:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAb1BMVEVMaXFRUEBNTT1WVkUsLCJKSjpAPzIAAAFGRjlUVEJDQzU8PDAVEREuLiA1NCo5OSwkJBgqKhpaWEaHh31DQy4mJiAwMCY0NCJlYl1ISDBAQCp/f3YiIhpMSjIYGA0dFQA8LABRPQlOTjUdHRU/OjqZOIe6AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAANRJREFUeNpd0YmSgyAMBmAuTbhEpdXu2u7Vvv8zbkQLKDPMwDfhByNjhwHrhGr/BTS/s0D/ojX8wFYE4PfF7/NOBtP8LoVW9d7bYDKg6QZvVcniEi3aey4Y/wQGnFSBhxSN7QrIx6hHU8OH1LqtQBPwE3BB4GF/xWWM0bnuOhRYliW6GpyrK5oLRZAc4HaL8doXcAcQdGuDbVAqNQTwU+sE0/aQBOIEXCAa+tx0DWWuJ9BQyLA2EZp0gsCqfgeeoT2DRfpzMkMIXUrdYJ69fzekDMbYPyXEDnrtK666AAAAAElFTkSuQmCC',
+  mastercape_strength:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAAeFBMVEVMaXEJTDIVEREJWzwAPCakkW8JZEIAAAEJYD8NcEoNdEwJaUUNbUgJVjkAQioJUTUAPCIAQiYANSIJSC4NeE5qYlQJZDoJSCgANR0JYDcNbT8ALh0NcEIJTCwwJBEaFQkAJhgAHRFGNBgJUS4NdEMJaTw/OjoAJhUxWcHXAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAANZJREFUeNpd0YmSgyAMBmCIQEAOpdViz7133/8NN2oFLDPMwDe/ASJju4HzxGr/hww/3rLg9EtrfOAaQozPxef7lQzDfYuiP/QpBd5k0FzEFESp5RoeeLjmwPBtteAlgcOttV13LNDeBqOaGi6tMb4CQwCwB5ASRMTnLU6DATnKQ1+A9uNYgyQoCXWaS0i+A5hhKuB2YH9WECItLdVnYxwA0OtiBqu0r8FZrRt67nIMKgJF4Lno5yaiWr4g6DK4DSb/Cp2mP9dm4Py4VF3h657i1pAyGGP/IGAOqo7MxS0AAAAASUVORK5CYII=',
+  mastercape_woodcutting:'iVBORw0KGgoAAAANSUhEUgAAABAAAAAfCAMAAADZe72GAAAA+VBMVEVMaXFtWDKAaTqIcD92YTd6YzlwXDQAAAEVERFQQyyDazxUQh1/bEhURi5bSiqWgFWLckCZglaFcEpcSSBmVC5gTSxMQCpjUSxXRSCFbT05eA1Khw2CbklqVjBXSTBKPBpQQCRQPxqbhFegh1uehVqAZS6DZy4JGg1gTCJXSChURSZ9ZjlnVzpuXT1zXjVkTiSUeUOOdEKPcTSRdkOMd1CMbzJ8YiyHckx5YCoqIg0JJBVnUiRDOSY0Khg5LhpkVTmVdjVrWzyRe1I/Mh2SdDRbTTRhUjd0YkJ5ZkWZfUaWe0VGNxiiilyUfVQ/Ojo3KhGFajB8akaKdU4y6R1PAAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAARhJREFUeNpd0IeSgjAQAFAQdBNEaQKigIiIvderXu/9/z/mCCVytzOZ2bzZ7GaWYf4EkAO5+ycwcNKjAq8fUQ49SIoA6mlyenEZGXizrBTY85am3demFEYHXNbc4bGXLF67Y/eWFnSuuGJlPPAoBHdzYeJUKxT85fNCneZAWb6s5FIOpM1cttgcvG9WnBBBPREQu28IoSbC5RTsbgc1m42GkYFKQM1DGMgI8TqFXRhwBYR0o53CT+gTMI1WCusv34rG6B7uxyv93isLa8Q7+hBrMYh7RRaKfMkc4HoCW4UrROBUk5+BvVUsAqyJyyJZui3JQgw13H4ioEochcd/0JpEb0ChYOoPcVfpZr2zxbNZX8sWcgyGYX4BarYciJjSZbIAAAAASUVORK5CYII=',
   /* --- RECOLOURED FROM REAL OSRS SPRITES ---------------------------------------------
      Items unique to Milville that have an Old School counterpart in SHAPE but not in
      colour. Each is the genuine wiki sprite with its hue retargeted and its LIGHTNESS
@@ -9574,12 +10058,11 @@ var ITEM_ICON_PNG={
   birch_logs:'iVBORw0KGgoAAAANSUhEUgAAAB8AAAAZCAYAAADJ9/UkAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAOsSURBVEiJrZbdaxxVGMZ/M+dsd7LZYJuma502SE23iv+BYClKgxQUomJREYTiVZWCF170zhs/LoRCUCEg9aJ4pSFFFCUWIeg/IFaqhKLQdlPaam2z7sycjxkvdmcymZ1J0zYPDMOe857zvM/7NeuwxfD9dlJc63SWnTLb0sX7IX3h2SfwvDpe3WNkxEMIh9m5hVIH5FYRH505yIhXp+7VGd8xDoC1higKK89VkpeFrwpvH3+JB7aPY60FIB6874RSct9vJ2++MYM2GqMtYRRijMUYg+fVaTZHGW00aDSauEIghADI3pvFELnvt5O3jj2DdCK8EUlrqo21MXEcY4zO1KVkUtaGL5U1jNFZBPbtlUA7KebdLfNorNlk+rlXefrI0QGJi+u6SFlDDJTW6x5S1nBdt/TJO/XUocObUw7w5OGZnDqJtabvae5S13URotR3AOI4BsDahNNffH9v1b5y6Q8emnwUMFkU8o5VIQgClArRRlfaVLueEYiBSjn0FGGtQSlFt7uKVgpjDEb3817WPVko8pvffn1mndHS4jy79x6AXDjzUEqhVIS1Fq0ioihEKU0QhFhr6HX/JQhDvjl3fl34ZUr8zolXSpUvLc7T8vcTx3GW+xRa94dIbC1KhesGyrZtNRqNkUGUJlEq5JGpNrNzCwmDkev4fjs59vIhJiZ24NbGEELiCoEJbvZVaUXLn8ouvXhxmZqsIYSThV7KtVS4uZ5Pu0EIN3M0jcypT7/sK/fq2zg4/TwqigjDgN9/+5V6c4LVmx12PriPqytXMvLRRmNThCk26ggJMNHahev0jfIHo0hx+c8L7Nz9cLaWH53pdCsSFkn77RojhCBf+xJARxGuEDjO+lYcazZRWrH6zxVae9qVCjYiHd5fW5MANrbE1g6U9DdvXP2LIzOvZYZp4aVFZ21cuLSovH9PGpH8vpRyjVxFEXESD4xEpvpulRaV5VOhteG/7m16vYBPPjtLp7PcT7SxMT/9sJDl88Bjj7Pa7VaQyYx0I7Wu66K1otfrsdK5xErnMteuXef6jb/XItDpLDsfnyY5/vo0P373FVK4jI3voder/hNQ5RCDKReGa2314akzQ/bpoCmdcCmKk+7C+V/W/c7nX6kIrRTvffR5KVEZZJWR77eTn8+dzb5wS4vzALT8/QCEYYgxeohwI7JK8iI6nWXng9n55GTuE5tW++1bt+6ZMI87HvL9dnLyxIts3zVJEAS8+/7cfRHeFTmFetgK0hT/A1KvsD/r2D5PAAAAAElFTkSuQmCC',
   boots_speed_gold:'iVBORw0KGgoAAAANSUhEUgAAABwAAAAdCAYAAAC5UQwxAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAMKSURBVEiJnZe7b9RAEMa/MWefffYlUSQ6Sv4dCipqKkRDkChpaKALUmgoKKCgoUmDBB2pEA1FJMpEVKGNwj38WN/dUKxnvfba55CRLEc+7/5mvnl4QxgwInD7GTNoaF3vfkOwh/diBCP9mlpp9vvPyxs70PuiwMoVIw49jAOgUGiAy+r+8Wt6behoCCYW+AQYdfXe0wnhzaeFWdPep8sJB2jD0pwxCes1SeRVdyDwgfOLFQDg0f0EAIwKlvQNJ5hBtA2WK8b+jof9Hc9R4XK2QZozbu/dgloxghFhHNS/C1j2AoDjk8yNcDohAIT9HYdhbJ7qDQQm0o8DQhJ52gEfRvrff1Y4PsnADHKAOldbYJVK/oiwzDfG+91Er1tkG0eJXNXKOsAkagJVWd1XDFWyiSgOPQQjQhyiis51TmS3rZEcZtCLdzP4IzJXbDkgbZHm7AAK1bxE9lwx8mJLhAAMZL0G5ummirTuvVxxVbEbzFM2g8E2u1h6I5Qon76+Mt6hklOqLs21x68+zBD4hGBEWu7WZUeXWRG69d4yVbrRyQZJRJjGw9Fl+TWA63ULLF4XbDaYTnTh6FbSoHJLdIMRyuJC6b8vZzqfi0w/f3Z0hTjSvWfnsR2dvL8VmCuGKnVf2bnLCkYSEe7e0fUWBoTAB6YxIQ69rdF1AonALx/vYpkxFpmuQsldn/kjaoy2MCCE4+4B0gB2wYbs2dGVAxeLxoQobIINsA0rFExeuvpJJtLhwZ7JtbTJpAWRFBCBvTZMmUFcL+jKyelZicODvUavyuhDJatt5xcrMIM8gbkfW232c1RVd3pWNp7JvLVHX1/OnaJpjympTjsyVFLmqu47ezhss962CHw9ssTTrGD8+KWcY4Mq66GgOmCiiKzzmEHP3/6tN6hyMV9W7VBFJzAicDs6WHKKSc5tGORrUX2WzGr7mAEA334WjUUCk+hsOe38dSliPk/2D12Hnz7pbWVsazvpAP8HsLRmoyrZkfPL97x3jxsd2e0z6JMHSeOENnQovvH/CF1wXEOdf5B/gdrO0uqYAAAAAElFTkSuQmCC',
   boots_speed_silver:'iVBORw0KGgoAAAANSUhEUgAAABwAAAAdCAYAAAC5UQwxAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAMaSURBVEiJnZc7b9RAEMf/Pu9613kgmuuQ7ltQUFDQIAQ0KSlS0OQjoTQgIoFEwVWgSClQoCBNKCAFaVIcQoLEDUUS2/vgKOzZ2/XjTDKS5bO9O7957exehAEZjyfz5rssm0VD8/qEDcEe3LsNxqthRhsAwO4HBEZcxYDegQSz1kJIAc4YtDEB2FoLANj7+OW/oZ2DfBgACCmwIqUD0p0zhun7T73Ku4xohdSHKaWQJIn7lgpZ3wHGY/z6fQYAeHz/jjNAG7M09NEymNIaa6urWFtbbVl/fn4BpRTWb6zDaAPGGThb2E9g0gUA+wdHbQ/TVNa/2hCSPC8AwMEo9JwxpELCWFPBa1WnZxn2D46QZbOoBfSt7JLLooLFcYyyKJ31aZpWxpRFOxJau+eWdilF8Gx0Zb2xJgiTkAKMM4h6fJehFHZfRv5Dls2il292Ecexu4RcFA1Vp1KqBdDGBBeFXWkdeBgASYQQEEKAs8Tlh2DWWiitkQoJzpiryKb4xdLrIXn57MXbGlJN8MNJ1ftqugfOGBivoM3L906pAQ99Mdq2vCMFsm4IQ94pVQ4D/9qwZwdW1wqkSMFi5paStdaloMu7QQ/9/FlrcX5xAQDIywq4vTOFkAlSIV2DR11Uvnc0filQGwWjLfKyCHKnlEYqBCa3bgIAOEvAeIwVKd0S6fOuEzgeT+ZPnzxCWSjkZYE8L1zu+iSOY7B40doSzpFw3jk2AHbBhmR7Z9qCkyQJR5KEjcQFvgnTxriS71pPqagUbW1uoChzgHYLzpDYJIiIl4L5qAkzdrHXkXTl5PjkFFubG51rFXVYfZn9/IMsm0UjglFFNmH+e9RVd3xyGryjfuu3vr6ct4qGxWGPbE4mGHnX1fqWSe+yoD5JMKU0vn3/0To2GG1dGrr6KkWE5o2ybBY9f/1uoaDOxWURLgeCjceTedM730MHqnPuw0BVWm9Lrpf5xwwAOPx6EkwiGHkX9FovBV0RcQnzP1zn3NkMZ9PIFvAqgLJYrEvacH35fHjcq+NaR3b/+L/x8G5w9Bg6FF/7P0IXHP8RnX+cubRSFhz3WgAAAABJRU5ErkJggg==',
-  ember_body:'iVBORw0KGgoAAAANSUhEUgAAACAAAAAYCAYAAACbU/80AAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAQqSURBVEiJlZbfax1FFMc/OzN3t72xirGPVYxpqlWIFNJUn6xWGhv1wTcRBKFCoVAo/gf6L4jgg/+C+iLYtMUf+CBq7EMjog/a1KS1xEtNm9x7szu/fNiduXtv7k3igWXZ2Zk5nzn7PWdPwi6WgK8/e0gGx0aNe0j2sP/Ojo8cfIRUCJQQZGnKD3+tMDc9TVcXdPKcjbzgXrfLnbt3mRh/mI08j3u02p1dQba9CI5nDh3qG5ci4dSxYwD8urrKZlHQKQq6eU5HG159dprLi4u0jaEwltyaPYGoQecvTDyO9h7rHNZ5pOitUUpyffkmBtiXpjhrIcuQQjCWZSghaAgRdw0QB8eaAcQPQoi681OTT5SbJAlSiOhcCsH87HFS2eP1zrE/y2imKc0so5k2eHlmhrSCSJUkkypeo0wE56enDiNFydMPISoIybXl5V60hCARgkwp9jdSriz9QiolSogIMZY2SJWMMAfHmttEHSOgkt5p6xCNJOH1E7McULJcICWq+naqAlFS0FANmlnG6eMzESKAABFiWwQS8PNHpiKEqk4eIACaUvL9jRsxIkLKeNUhvvvtd/alKePj43FtHSLooR4F8dpTTyKEiFcACRATjz3KA4AQEplQXhVIgAkQAPuVYnbqMEo1UFX6DuqiDpG88czTkcZYG0mdc7w9OxOfF1ZWsa7MjvJ9ObewDmctphJmbgwnjx4l15qu1lxdXCz3do7CObRzMU1b7U6vel0++065cU3lBri0epvclOnkvMf5coZ1Hm001oPWOgIY69jIt/jznxbnT73EVlGwpTWbRU43L2jnOZ/9+FPpo6yelarBv/viSTa3umwWmptrayytrPLe/Bm6RYGtPpuzDuc92lqsc/FeWBsB1ttt/rjzN612hwuvzJEbTaE17bzgfqfLwvXrsSj11DFgSyurAGjnUErRSASSBCFDWlZZUx1hUN+h+tXNOof1rm9sJEDUgrU0gvKrgImBlA33kA2yStl+557CWgpj+sZ3BaCKwl7N2OFztdHlJ3I7REBIgRA9eg/JR1eulio3Bue3/YV3NA/Jh5cWMMZifQlnje2bE0vxxTNzpcCc5Yufr/X9ubR3WErhBRHuZEr0B1Yko9uCqB3ryzSzQ/Z2VVhv37oFgKkB2Cqsuho78OBDQx3JEQwR1VmL8y4WmmAekk++/mak82CN6pTr6//S2djsd1JljpLbJRcj4LzHOl/+4ysLRSr8K0Y5H2Vhvay1AIMZEpEsZZk1tcVfnT/Htxcv/C/noY84MTkZGxGRJH3iHh6BSoC+tvn7Xy4AcO7550qoUHwCvRC0jKVlLPe7Hda7XTLVIFMKJQU2z2m1OwgpkVX/MCRK/eGi1rsN634/fuvNuEgBa9Zyb2uLVCk++PTzbQ5265Z3bZuHEI/Mwb204YP2HyRhFPfQvFa2AAAAAElFTkSuQmCC',
-  ember_boots:'iVBORw0KGgoAAAANSUhEUgAAABwAAAAdCAYAAAC5UQwxAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAMNSURBVEiJnZfLahRBFIa/unRPLvvsjLpR0Edw4cY3EHxGCQguXLoVN9kIJmJIUKJCopFAQjJJd11cdFVNVV8yMQeamemuOv/5/3PpGsESE+D79zyIZftu8Hcz2LPNe2jRLTO+w/5w+OPOAUwujGDOOWqlqKSkda4AduH3x5+/bg2ql4GlhVIAkoAEQFVVvP/2Pe3p+xkLYgCYg7XGUOnFkhWl0qeWguPLOQDP7292AQQVMumLIDwIcRNYay1rsxnrVTVQ4aJtaY1hfTbDeI8WgkrK9DwCR18A20fHQ4arSoFSMAISbW4tQAJzzmGkpArsjXdoqdL6E2PYPjrGgxgAdrmatrnpwKSUNNam6Gd1DcBVCKZQIrs3AIx5imZclwbjHcb5xKgOStRhfS5nARYCilas8iDe7u2jhEzXLAsgtkVrzACgda64ouyttTR+UTujbVFV3W3noWmbgqlzjtbapMTc2jQYcsuLZZJhZPn68y4ANmww3qWqa42h8Z53+wdoKdBCYLwfXDm7xrppwL4Z5wfsooMVpVjVarCnz661i++TgK43N2LUjffJQV3VaCG7VgpAcTqNsVvK0PqwOTi6vL6GrPS3dnaZKdVNniyPfXZ5q0wCWmMwznNlbZG7xjpWlGJjfQ0ApTVaClb1okWm2I0CCvAvHz/i2lqurGVubcrdlCkh0UKmVqmUoh6p3AHgGNgy29rZLR1m/VkrSaXKzktP+2CtcykvY/0U+/DV0ycp17FN8jdMXLuxvoYAL/tgJmwuJv9ITg7PzjuwrFfj6CPImtvvi0s8CBnBYpT0Bnj+EiZU3eHZeXEv9mk++qZyPigaLXozMlRnzixJaUwKNB8ON9lkW2jZjawYaWMdB6eng2NDJ2N51ikCDorEfdKDePN1b+Eg5GJuunaI7CKYAN9nRyZntJjzHIz4tgivpRRefswA+HLyt9gUwSK7YtZm+RtTJNVv/mDs8DMl/UKZUs5+kAPA/wG4zirQOD+Q89Ofk0kfdzqy52fQFw8fFCe0ZYfiO/9HGAPnFur8AzhugqP0eA0RAAAAAElFTkSuQmCC',
+  ember_body:'iVBORw0KGgoAAAANSUhEUgAAAB8AAAAaCAYAAABPY4eKAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAQvSURBVEiJlZZNbxxFEIaf6u7d2fFm7ayyTkzAIAG5BXKKAAlFgRxAOXDJX+MH5A9wQYJbJARICOUUwgGBZAlZhMSe4Njr9exHTzeHnp6dmV0nUNJIM1Pd9b711dVQiXjOFfEv1/+ftUudij++eudWbWPzuZl63k/9KwgGOzdTzy7+XFtfvnmzsiNx06eDYHfqtyl8eO+rDIC5hT/zsHI/bjlHPk49Bznka3RvpTADHuYCeDFRseAyBoUWVy2euFEgYTJSgsFdPFf7IzouYwYcl0DDFKZ5ML6VQo/wHSUHDnLopct/Kr4MVIdU6ZKANJ5IAuDaADouq757KdTsodSIBEgiiVIZydelBPfy7fETjAhdpUgkkEhEo0XIXUYOvDvYYeJGdA10DRVIr/S6l4IWYcZSF/WRwFGNQRl28V9cfJ1ENNZ7Gmn1iqR8nfkCLYJnBwCnC5T3jFRGVgJkp4e8MVhun9llhKYt1xUtSZVGI3RlGf6neSg0LcKGqsqkkZaRqYH4beYlaPQemvkuwcXfG+5WxhSCkfCcOcu4WLCP8MngCr+ZBY/0lF/NDC1SpWWvW/DYDBkZ+CUPhLoGxnYJlLAqAuI/23oNgML7qs1imHtyyGMzXNl4m02+44SPfJ+fZLKiv7YwqOKQkzVVT9myBiARVeVaS0j43/MnTHP4HeHu1gYP1VnD+IlbgIJxYavKAXjPHpFZ6JgrHJXAw1pr9iJ4Dga8fP3ir8rde8NdTp1ly1wm7TuYPGdoutzxHQAe+GMANlUHyBloQ+huuFH0KNhhk6fsjZ9x+9LbTHsFE2fJ3Q4/jp/V6HupWi080BGFRjAofp48b3gbgQEcgW895I/0FIurwrpellgr1Q5gyiqOospKvyNb1b/vGTf23Ch6XLfNsordEIu3LSvghffYVuHV5TabfK5CAUYytxg01py0CFjvcbVTcQ24+LtbVzkq5ozdosFUizB1BWfOMnGWAzvlRtEjszOu24QDO+XMWc6cZe5cdYrdz/YYFwvGbrHWkYbnBb5qtzjRovRUOP0KlhEpvMfiqih1VTAX8h3yar0nEc3AsCJN8Jaxtq6vDBeUWTkPYnTmzjWGTt2hqd9+OfiG0mwow4YyLLi8LlLBw7JJItEI3FdZI98AF5Shq8JR/UH/0rqbTJDYZlqEH8aHVVvcz/aqfJ86y9wvZ37hPR0O6LiMsW1OLcpOSWQ5Ieti2guNCEWjR8PZv6gBUuZXe2nQn9Gc7XGdcx4tjkR0i1hN2szqQ6dhUJodWr9sUN52Yng7ouiIIimn5LmeP/DHYZbX1pw62yiwgTZhDrQJGaB2juzi2SeM4G+Kf4LNpuPtM7B+O/VS//fhheBdrPaZLxoVr0X4o7NEPzx6Udpo33h9hfnyq+gaYtvDi+euCICrIOda/O/gTRLr5dWAdfkX5XrmF/TE/PkAAAAASUVORK5CYII=',
+  ember_boots:'iVBORw0KGgoAAAANSUhEUgAAAB4AAAAbCAYAAABr/T8RAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAMZSURBVEiJnZfBixxVEMZ/9bp7eofdNaCTWQkb4sWFgLl5MSAi5JR7QPDqSXLILfeAIphb8H8QxIsHQfAkeMp/4E2XKCSLcUk2szPd75WHfq/zul/3zGzq0jO79dVX9arq6zfCoImmf1MZ9n0zrAw5XyXFHrMd73ZYFQHRm3uzruPLZwn4/X14UcMSOF/AAri6dzklGcBemza4U487RsgBMtlczZmbsZ+fUNbAFFhshwOozIzSnXDJ42iOWvTT/YOOY41LwFYVq8quOWHlK9/L30381mELd8ISeLwQTKh4LPsACn5nbsYkh3IDbghbmRml/18OcLTzFpU6nHeyvAY4/zn+XukhZHA42R3EOT9gKc4Bh7B40lRsgEIMppe9ixLogqFWHcUF0jFcW7ERAVUKMVQ4UL9o/hkHicFvimuJnWoyEhkC0jwNSuZXvVADwPf//gmncHd+1GKaRBjFxYm0AhIChARC70LfKnVt/358fhypkeiX8yMqdR2f4f7CT/89CQLS5qB350c4YOksltdkIWitys+nfw9IYEoenku11L6AX07/abH5tqRLdbxydTJEbc9E/JiGczOAoyQDLH0lDZ4J6co1hAtnWarjha3Q+uko8ZmtyUUoxFCIIfOfMxFKychFuH3pSvteMHF/idbgwfWbbV8AduQZTxejvKz8TFTqOHeW+9c/4txZf1q2M9GdimP77tc7yGRCIYZcpJlw4I9mVwalyvXO0uxMePDBx+33XMS3Y4DYeAmUrMRMS7668UlLvhpvb5r4b19w8O0BZmcCXmQK6daYVPzo93tINmX+zRyZlhiaXi03kNlICyTfxRT7HDy8wtcf3sL4E4vJJZ5oogHr72O6v7FdPEajXB5QqeuoT/uEZB3GbCiG9WAT3UTysQBBMjvkayyWXBdNcCaC8wFsX6sZANmoRBOS2GDx+gWzqoN4sw7Ut8/feW/kFplanHi8ap+9fQ0QHT3q2BzKyjl+eP7X6B7HLxXaKU8vBCHGWuK+Xm9rm95QDPW4/xoMcre6AHF/hfq3D8Yu9OO27tfExWL8D2tPYGa9WviRAAAAAElFTkSuQmCC',
   ember_cape:'iVBORw0KGgoAAAANSUhEUgAAABYAAAAdCAYAAACuc5z4AAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAHWSURBVEiJrZZBjtMwFIa/F3uaxVyjpJoyF2G2wxlYICFW3AFpFqMR4hisuQgCiekIae7AosHOY5HYjZ2kTQm/lNZ228//e36uLSyUgOZjCiJLoa9sMRj/6ppl0NdWVCB5bmyhAjqc7gz9oQ1YQZS2c9F99k9gAX23Mkk/tC+65tk5zqFBn2rPrRW+OD1/8aag+QQKsijHXtonh3JOjsfcGoVSNU7S1yzwGDR3e6npPpntuA/x0roFcMjALcDxlejcvi1NBMFhN5SqNAgq8FA3Mb8nHY9Bc3dehmk4Ch6DBjnncc4f8zQOzqHBZbJYpmDfbQM3BzwG7bsus7BLVe6z/E46DmHmlRBhxkS3U0rAAvrGtD8Myt3+9k3SH3ObgHPo3vtR56Ux2OGhcdxxUABZa/AyrIK9yCDXuWzuNoCCQrs0ZrD6U2lIHL/YVEnI1h4qo5/zubICeret8Ajr9RoAr8rz7om99xEayi68uxNnhHQv+nG7YSUtdFW0sLrxPO+eYiR9cP+/dxJMdm49XF9RN4c8m65mfz3u4tgpcMxxOGkV5P23HwnUq2KkYFNVs6CEqsilIB++/1SAu20Vx2tdcBHJ1b+M3L/c6OfrKx27Vv2XSeZ89y+wSuemmL15+wAAAABJRU5ErkJggg==',
-  ember_gauntlets:'iVBORw0KGgoAAAANSUhEUgAAAB4AAAAaCAYAAACgoey0AAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAKDSURBVEiJrZU9bttAEIW/2V0KFi1ZhoEUhsuUbn2ItGnSuHCRJl2A3CRFjpDGTYrcwFUu4dptEimiRO5yUvDHXIoyJIMPGEgid/XezLydFUaGgDbfFeSFdeOSfjqfY1Gcwtc/q/ZdX8RoxAJ6t5gB4FQ5MfFff/u9isjdWMRdeBE2pZIYs3fN/jevIQwBH0JLXpRlGx/PTqP+j0rcF7ApS7xIG3eLWUs+KnEhshNdIT4EbmdTBHT0Hhd9v5YlSUfY/XKNgoxKXCB476NnHkisabNvMAqxgL6fn+K93yEAWIshQdtsRyHuk/qBNVkIJDa20w5x47qXxl0fyxDIy5J1CKTW7i6wlsyH6FErQ0AF9PNixpeLs/b3S9HsXYWSh21BJkJOHAB5CGS9FkhD+mGeMjUGp8o+eBF8CBQiZD7wM9uiII2IG/dcTmfjYk5QHrZFW0kR0HfpCYkqzjlSLaMNri5dVpatawsRklpgQ94kcJ1YpgPinXX82uaxuXwjwXv+As45kqaSnQwzEabAmTXcL9cw4IXNgKunqvgQ2840PfJAVk+bLAQKpAqpPpseZbWI29l0h0BBHnPPRqSNdo8I14ltzVtlHDwrHBOUvOlnrRTnyMKzI/MQcNaylv3Tdl1U2aWJiyrwmPtuW6re3DgzaIiFMdH5zENgYqs+Ouf4sfw3dMkPOrS7LjLFEObGcl4ffl8TA6TWkqgydTaaSIeiq0DfToYH2RsxzDqTp591qiXfV9lR5AeV6FLgyhpSa5lYu5N190gdiijFfZufFCWUXPWee2ivvGNxTGn0UuDCWebGMqmL051Gx+Dg20lBnhTFB3DVURu8EA7E0Ur7PnhNtgD/ASr+S2tFLwemAAAAAElFTkSuQmCC',
-  ember_helm:'iVBORw0KGgoAAAANSUhEUgAAABMAAAAdCAYAAABIWle8AAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAALsSURBVEiJnZW/bxxFFMc/M3PnMxcXiBBS0ESkCiUICgQKIpYCgj4mVRSJSCmQKPgvQKJMh0RDg5QqFbI7IsChCZGgIWDHSRQnl8Pe3dub30Nxe8vt7Vmy/ardN7Mffd+877wVHCMEpOlzAjGTPzrkm08vsbOfsTUYcHPzTg09NExA+v7yGrspMdSGvfGYR8Mhe0XBszzn3s5D5FGUBUAKQa/b5Xme1/l7Ow9JII4Es4CLiUGekWkNgE/18R1N2RhwKZKNdZ0z1h0P5lLi+agk15qVpS4xBGzwx4NZYKQ1WTmm31vGxUjpjgnbL8cUxpAbzYv9Pl0pCc7W64eyxqxJNz67yuNRyd/WcvfBDjc379TG7RwG9PXaJcoQePfUSXazjG0feLqfsVcUjb0HlikgzYK0tdzaekC/0+VUR7E9HPJvWc5/sxh05fx7WB/QzmFDwDmP8w4dApfffIOvflxnezBo3M2WMgHp2uoHSCFRUrKkJB2goyRSKags8urJl1oi5Dzo8w8vohBIIVBSIKVCKoWQ/2/99qfbvLKycjBMQPryk49RYnL/ukrV6pSUrU798s/WYpiA9MVHF/HBI4XkhV6PE8vL9DoThJo52eADNk6c8vKJfsM2UkC6vnqB727/TOkchTWMtGakNYFUl+qBGAIhRZbkhD4Yle0GuBAA8D7ww+ZvFMZQGMPYWEbGop0jxYiu9nWqRiwsU6pmU5UU3Lr7OyFG1v/4E+Mcxvuq5MkZeqNbsMa5yrnBq6oOdqXEC8myUmgAz8KQAGrOu7KamUo287OD8Mzp04th9UtV7rxCD4QUG7mt3d02LIG4sb7B2ttvtRcrhfMemwdPo0P1m7qxvpEArq9eIFTWmVUYq04GHxaCGmVO/SKFwDrH6uvneJJlvHP2NQpr8SnhYySk2Bo9DWUNeuUhJSaL4xAbqnJj+evps4aAabRGkIB09f3zaOfQzmGcI9caYx2/3r+/EHIgjLkxPRsHQabxHxq8dC1B6UjEAAAAAElFTkSuQmCC',
-  ember_legs:'iVBORw0KGgoAAAANSUhEUgAAAAwAAAAdCAYAAACe/43ZAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAIVSURBVDiNhZQ7bxQxFIU/2zOTFyICEUUgIpZmFREkniENkUCioANaBB1INPwS+BnUIKTQ8g+CKIIUaFKAlOWRLEnI7Hj8opjdyezu7OY0tsf33HuOfT2CCgQEahBAVGKOghvdVTZAaIUjUlTdWF5ZoWMMxlg6JifVGm0Mre8/yhjZy/509TaxUiRKESlJEkUkcUykFGdmpku5clBvoiSxlCghmVSKREUszM2V+5GA8OzuHax3JX8yAdsNmAGUU/2SAJwPGGvIjCHLDSeSmJnJCeIoBuBa4wICQgTQ2t4mdw7nPZ3uODsxgbaWQ2PJcs3Gr98EEEMeetUATCjG3PthSVVYa+o+1xNy67CVjIPkPoL1HmtNnwQAM0pS5hyptYxD2RrO++JoB7IPeQgg1ja/cu/mDa4vNlmYnye3DoD7y8vcurxE8/xCSRACwscXz3mz+Y2DLCPVmj/7BzTPnSUzhlRrOlozPTXF2vqnQlJ8cpYni00OteafMbx8955Xjx6QtXfZ0Zr1v/u8XvtAKAoU3fpw6RIHWcaeztlJD1ltNNjXmnaastfp8Ln1s7hpAeHx1StD5uwI8xLAE5BC1AbUEqpQsiD6ged98fQpBARJpdmULPhbu+2hzFu77dHdWk1SK8lVDPaqAFjnhgkBxNuNLygpiSrG3bhTOg69O6glxN0qPozxUC7k8QX7fpW9ebdn+ta9+X9HZvecEB88+AAAAABJRU5ErkJggg==',
+  ember_gauntlets:'iVBORw0KGgoAAAANSUhEUgAAABwAAAAcCAYAAAByDd+UAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAN8SURBVEiJrZa7b1tVHMc/v/uwr4kfOIlzg1EfUilNKyUSUreKShFiq1AHFmBj6oSqiLVS/wDEUKkL/0AlBoREhqLyGKAsDCAYoKgSqdIktYPs+G3f12G4udd24jqJna9k6dj3nPv5vY9hrESFn9OT9nKIqI/nL5Ap2JwmdAAYQj6YPcdqxo5/vdo9aMh0MqKXrWZsfmyUeMPKktZNkprGomnRDFwyBZuVjs8fKZ3GbkmBkkmBsYeXrCyZgk1ON0mKRtF8hVkjyYJhcc3RmDWSzMykp3WwDzybmOGGb+ErRUJ05o0kZbfLw7TL0zmLlKZzZrc6NdCIFvNmkmXy+ErxU7MUb8g3oGrn+DnRw1UBtKYDDuRC1LvZRdqBN7TBUQFVO0e73cbt9dit7nEqOQQwRSMhevz9izevcz4R5i1hmpMyRgFF3SpcxFUBhkgMi/RW1Y/XqUx6qr7UQNTd4goF0+Jm/gzeftEMasttx2vDmpmUFZ4HWDQtar6LE/Q9vP30FxZMi4Sm4SuFXemwmUnS9Y965XjtJz8M0b2zV/lm7zkAngqj5ih/qHBeb7j82qqMKRwZOxjk8GaGRtsg0HNdHNdl+0Vp4IwaMjpTsGnsHnzeN2KMlbBmL9EKfBzl0/A9GoFLL/DRRYtD/21tB4A7xWWqXo/f2hUeN//jtr1Eye3woPKMaGyCEmM0MLKqL0OElOh4ojBEMEVjfW+Lu8UVHtW3eVjbAuBaeoHlVJ667/Kg8oxbhYvUfCfyXI24ng5LQzBEMEQjpemkRGd9b4s7xWUe1beH9j5ulvku45HVTdbsy1iazpyR5COyoeFHwQwRPBUOBU8UhhK+3i+sH+o78b53sq/F6+9LO6zbOW60kmgIZa/LlhO21hEj6uUNvpqxcVTYI2/vF9mSleV++QkQzl+A91oW7cCj7HX5qrp5lIdhLj9ZuHToyZ+dPQCupF6NYZEiWL5U4/PWv0PvOzKkB+XTdzohOu3AY44kf3frQzBgZL8eCxjmcTi6V1I5fm9X2Og12eg1h3oVYGPz+cjhcKwqjaAA+kDaD87cfKnGh16Om06axfMXRtbAiUN6UBH0/fw5HBXQCXzQ4Hq9zZcj9h/zIhW1Zi/BwIyNcnm//M+Yc4dDeoKbW9Sni5cJ9oGeUtwrPznx7X/sHIKSz178hSaCJjIRbEJN94f4f138bsM8S8bsAAAAAElFTkSuQmCC',
+  ember_legs:'iVBORw0KGgoAAAANSUhEUgAAAAwAAAAdCAYAAACe/43ZAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAHySURBVDiNbZRfbtNAEMZ/s17XTUIQgrZUgFT6wil4gVPwwpm4EOICXIDHokioFUVIJK0dxzvDg73rTeKRLHlm5883M9+usCdiTIpJ8sid38+MLbAFmhrq4WSFpCCf53kze8vOlFoDbalsLdCqsnr4k3xczP75xTWFCC4vOiEu/ihGsL4FL0IhgsdRiPBxaak/B2Kfnl8RbAw4lAc9268QnZX+K8VR0FcppIcYq/gIZ6MdrSodSjDjunrCOuwIwWhR1l1WwSEpYzDjVH4neLFKNUDyAIvCU4jwqH2aRz2nFMfc+RTUyiVwN/YwJdEezOjQ/bEGM7qJwC4LSpBu2k3C3nawA25aoVVl4e5Zdz1dQPqAd9VTGgs0OmPjOkpVrqoFO1ManXPqAq0p1LfDlAZKxGlFCK0OvDLl679bwIatIPZh+ZKthQSr9JdJX3fwve4Zm9gaF9aGHq8c6EfkC2YsixItztkO+jN/gvgLmnoi4MxXydjU8LqcJz3zH9k6JQU9xV8tDth6KBezng7xXuR3wjFwpRSXDn/Wx7b7nK2luLQDj2PF/l48jr91FhCp7bMLEzNHW3w5HAO9S3EJQp4ktx1VyKmR02Wnv/IAky93PyjFceIcfsiWN/xtPT5kaazV0Hgp46Rj5Vz2nsrx3+RY7+U/PGvzwgg6W3UAAAAASUVORK5CYII=',
   ember_log:'iVBORw0KGgoAAAANSUhEUgAAAB8AAAAZCAYAAADJ9/UkAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAMqSURBVEiJrZa/b+REFMc/b8bO7u1uCNwmp5DjIlFQ0PAn0CE4gShAVIiCCiH+ESoKGkRxoqChBp3uD4EOIX4mcLpb5XLJZuO1Zx6FZxyv7fWFkCdZXntn5vPevO97Y+GaTUCb7xRkzdjrhb41HTE0hqERbhjBCNw7fNrpQHJd4He2xwyNMDTCzdQC4FQ5962NeDa8a/vW2Se3t3ghMbgww1VThb5lOuEC+vGLz5GrUiice6XQ8hoaw8QKY2sYW8Ei2LCh8Y6GH9LvfwsuoB/tbqLA0Ah3BikOxSsUqlV0EZZIWzaJrI6dppZZ7rSZd9Pl0cQa3tuZ8O72pIRQCieRMkorMDBCIuX7rqvu1Bs3R5eLHODudNyIIngqkATnjZROrTMfcu0Vvnt4cjW1/3qe8/IwrfJoa0skPYW68ErmlVyvoPZoNmztZWqy0FLpS68sg1jjrgmsz7mUsbXcfHs65rfzospll2WqnDjPqfM8KTxHheco9xwXnkKVN6cjXn/+Rqt8kwj+7KWtzoXvz+bsD5Kg9tX/ci231lHe6w1lwwgjK1gREoHMK6+MUu4dPlVCyxUBff/WhO3UBgWXQjp1vgLcGaTVoj8vlqQiK4pOhAoSRRjLMAozOpqF+9cHx2XkQyPcnY4q7386XbKVGB7njr1BwuGyqOBjay4FjNZXEQnATmoxoRXWCz/zyi+LnL2NC7m5Wtpid2sCm9BEwMVKqaUuiRAr7UKcWEOuyqPcsT+MDvQfhE1oK1qBrA73gNNyG2MdH2QFH9zarCZF4RWtw6MNrYPjjli9CDv+V0UeO1KET2xn5+2NtBltPRV5KMczp3zzd3m+G8K5+2B2hgvd6NXxRqX2psXFLdIbrRFYepg75a+s4CAreLh0PMrdxXgF+fafE/1wd5MfHs+xIuyklrOej4B1DhG6XO4vyurLP5+0xsdOV03r6m7fv7a38vzjabbyXM9/bKlf/LEKW/f9Rr23NwcJ6IPZvDrh7s/mAOwPyimL8IHRBPbB1sKbpiBfHRwrtSM2qv3YuSsDGwE+c4B+enuL3Y2Ehfd8/vvR/wL+JzgNPVwHNNq/btNx+pfpraIAAAAASUVORK5CYII=',
   emberbrand:'iVBORw0KGgoAAAANSUhEUgAAABQAAAAfCAYAAADnTu3OAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAG9SURBVEiJrZW9T9VgFIef8/btve39iLVADJDrQDCS4GT8B0wME2FyYMA4qCMwmDi66eLoYuLm3+FoIgsMEo2ETSIj38IlXnoctJdWL/aLk3Ro0z59fj05p3BJJaCXBhLQN1MtFVBbFfZissm1mulfKw0U0OcTDUIrBFa4/+kABTE5nh0IW+r4tByhbYVudP75ShsGrtB2BCvC/PpvO4DChkm7hpOGlQIm7QZVIWDSzjXCw8+HKbtShoEr+EZ4/OVfWCFg0s6/IG5hw8AVXLnYLncJ6HLH15eTTc2a2UxDAV0Y9f7YZb88V+TQCg7Cs80fmVH/C4ztfEcI8+jlMQytUDewuHFUvREPRj19et3PbERuw3giKldst9wpZjcQFB+PxrxSsP4+FNB3023G6oa337vUSkZNLdjt0wjPCE/GPe6t7Zfqaqop37oRez1l56fy/vaVUr9G+etE50ZqzA7XGXKF0DXcXd0rZNo3FNCZoRpXrWH9qMduT9nvRXy4ExQytUlYyxGsgddbJ6mbihiKgL660eRmwzLhG26t7FYasX7kw7MIK9WnwgB8PT5jqxsx9XGn2gKIK56OyiDgF7bKg9Y3cD2zAAAAAElFTkSuQmCC',
   emberbrand_reforged:'iVBORw0KGgoAAAANSUhEUgAAABQAAAAfCAYAAADnTu3OAAAABHNCSVQICAgIfAhkiAAAAAFzUkdCAK7OHOkAAAHCSURBVEiJrZW/a9VQGIafLzlJTntLrcbbDgWLtluhincQHFoXXVwcCoUWujvpVjq4WfonlA4FXaSOpVAcHATBRRC6K9j5lotYwdsf18/hkttE2yY56QcZksDD8+bkPQcuaQT00kACuvMoUAE1VWGvpg2j/dJ75gwU0LX7hroV4gjubh2jIJ4r7GXDZzCEoRB+d07fORvGkTAUCkbg3nbXDqC0YdpuwGRhTsC03VlTCpi2Cz2Y2cnaORnGkVAzwsN3/8NKAdN2tQuWspRhHAmRx7l2hUdAVxq+vp42mtfZXEMBfTbpE0dCUCBPoch1C8aDhQ8nuVEvBCZ2NSPUbbFPlmtYt2B9ePK+2EKcC0zsAk94+ik/aiHDwaDbiMojoM8nfV1p+Lm/SS4ouZam3GC9Egnox8cBNwaE1d0OkWPUTCu//1L6DCzf9hl7e+RUr4zH15/KfhuabWVvLnQ6GuWfG12c8Jgf9xnpg2ErjG6WM+0ZCujsTY/rVvjc/MN+G1qHSnO+nKlJw64E3Q3gxZcOcHqUlTEUAX3zwHDnmsetqxF246DSXteL/ONIwQSunCxwt6V8O1DseqvaTpxM0o7KIOAvuIOCcA+2z5gAAAAASUVORK5CYII=',
@@ -12054,10 +12537,10 @@ function drawEmoteIcon(g,id,S){
 var UI_ICON_PNG={
   /* --- combat style glyphs, sliced out of the OSRS style sheets --- */
   sty_accurate:'iVBORw0KGgoAAAANSUhEUgAAACQAAAAUCAYAAADlep81AAABAElEQVR42s2WUQuCMBDH/2dWioFCWJK+9qbf/6nvEEjfICJfooQogroexBJ0NV3JBoOxO9jv/ne3DWg9iMuZJDGL7T2MAAGL4JrBeoWRAfgT1HeYHqHkYUQAPwRqD/NHlbrBiLqMVLtRNSLZtNWhjLoqxACTqsK+N+QoCjmKQv4eZIMtQMCOJadM4UfsWMRN6yZbXY3q3ttGZTTLhQF7ZOByewhB7JHRWbHV+opC+U9BM5kAMDhOkbsH5Oc7spPYf+6qlVaSxJymG/mu0iZlVag9MqgXNbHvmRhPZgCA7Xb3Som4mD+eqUnbV2nVLsY2fi2yodXToeXjquX3o+8P2hMli5QcFaHGkgAAAABJRU5ErkJggg==',
-  sty_autocast:'iVBORw0KGgoAAAANSUhEUgAAADgAAAAWCAYAAACVIF9YAAAFPklEQVR42t2YbUxTVxjHfxdZaQtDSyllpVhlIhNfmEYTRZE4P7CA+mWZMSExGmZCdFmcyZyGLI44gybLZEQXM2NClmg2TfbBiQlmL4oBlpig4MA1RaGzoFAktc7KEHr24ba3r8AVSJbsJE3vbc957vM7/+c8zzkX/udNAkmEboU0S2Zn0ebMbCUApFr3kmrdGzAWbnA6zkgiZG/mE9XU8C07V6dTuGpxmH/qfUwESNQtAiAt9ysAhh0HxKvNmPzA4PixF92zBnehrpZufxpi2BPlj6TKx8Twm2HHx1L88JjISCSYYlS3aIaQIbgO9xhi2ENr70CUD0Gf4qkZ8jewBiMBbEVuZZD7XgW+oZ/iGtWnb8U3dFkZm5Z7Uhk3PjrAU+eJaawbGa658Rr3Wq7jGEpQ4A5VFIjj59pj7K1bYBbFmzN5a8W7eDwu9h+5oDw3IbxjdmGPCIcDMC05h61oEH36VmUN6NO3YisaxLj4ayaKgDka87SVa268htPexcCzUYo3Zyr/hsMdqihQ/GztHZBu/PKY369e4c+WOwBYrVYREaLZhT0iYU7KhI9+u/g0m/LXAHDbuYXOHpis/3Thfv61g0F7Fz29LlZuWMDxc+3SwcpSUZw1rPS80ZeGHzhYmSUADJpkAC5fboq/BqeCAyhZ3cryJeuYOzeFnN4uOnusysQ8bFkohasYHqqvCqd7+ZgO9xgt9qdSo72dcDjHAx8AFnz0J8nPN2iS0Rk1ipIgCas1K7JMqFHCnGFkoS2DtHl6DIZQ+M1cxUi4ey3XaWmzS4AC53jgU+AAcnP0GDTJLMrqUn7bf+S81NRwVplYl8slxWTRyZrRZMGUaZNV8vhmPSx1Lx9zuO6SEgm1u1eI/jDVAMyrbKR63HS4szGabvHEvQadUaPAvTHvtfiFXk2zWKxYzFosZi3a15cSnZwmLzdTwzntITUOVpaKYAj2J1nR53jR53gB6HBnA+Dzr4+BszucVJbk43L1xa+Dapsta07kLE0zTC/U1SrXZxo7pZqP3hc6o4YXT0Yj+j1xrwl8y/crTA9x+N+MgUs1WTjT2BlYh1bhcrmkBP7DZkhMwpCYFHAKDtddksLhjKZbyvWC3BHmZxuYn22YEG5j2Z6YJJMI4LxpkqLr30zb+OiAqn41DW3SlfpqkZcrr+/c9bskgNrqciGHodxvYFgDPI9IKJPBRSSZqs+Oit+6Rugb1MZ1omqfnuV5of8sZi1V+wTHTk+cbJ46j0tTbYrbuu9TkjdXpJos2B1OuRQ014tw0MqSpSLezkUNXESSOfphH1kZIzFOVGzXsaNMS0pyZN74YLuOqn36uI5X11xUFQ2Ndi/ef7RsLNsjpZosBEHtDieO5nrhaK4X7fYhbHn5ZCx7h7WlW7Dl5QOogotJMhdPGUlNSYpwIhosGnJHWVDZcXG/u1NW5s5dFXhCAkm09g4CkpAdhWAtCyr63fkT7Cz/lG3bNvLgr0wGA9lWDZyy2a6u+YENa+eTNk9PQcGyaa+79vY/aLtzl4rd5WGb8sk323K264s5BQRBve5+AI59/o0y5sTpL1TBRZwmbEVu8eUnQ5RsWjylchPBBdWr2F0upeWeFMOOA6pPE2pB1SoXc6YLniRsRW5R+N5D4XrkE65HPuF9Ni78fn/cj/fZuNKvdOftiHUn70df/e2AfAqIPbU3NZwVTQ1nxaGKAiEnHrnWqTrRR7e+QS3rtz8PJBk/+3fpYhT9+7ng+4YRJZM6b66clfc5QTUCigo5k+Zz9cdTAHhcY5xp7CK81k3W/gVHfrmeLpSuqwAAAABJRU5ErkJggg==',
+  sty_autocast:'iVBORw0KGgoAAAANSUhEUgAAABsAAAAXCAYAAAD6FjQuAAADAUlEQVR42r3Wb0gTYRzA8e8TOlPBWmtqerZh2UDDSAqywqBeDCx815uCKCS4V9GrZa9KKLJ3JhWSCHtTb4JeiAaLihK0IJAmaR0rc3RJOhVbtMpkTy+u3f7550bQAwfH7cbnfn+e+x38xyVyvF0mz6XIFVuXCzQ4cIdTezazv2HHXzhxWFt5uUD3ujp5H9+EnF/IiCwB5h7tMlCPVL11cn+DRza6y+Tqac48LKfRiGgo8IjY3AxyfoEXk9MCoK111zKoFI3uUtpa6/Hf8NHZfiKtzuusQGFtnOlvixw6Um7+2tEbNFOWCr+YnBbPn3zh5cN+3g2/BkBRFLlKzQzo8dNRZrRxPk7q7D7opqM3KHxqszxUOW/e+fzzJuKAT62UAHZbMQB9fYNWGiQJFf7+wmhkiWHtqwhoQVKh0EQMgApiTBUoJKBCh82MEIRUlMqVapYOvR1+xvCIJgATCk3ETAigproIu62Y7ZXj5rXzl+6KwYEeM7W6rouMyNKhi133zZp0nqmXUynRAJQ1uChZiDAaqcLhfMVcZC+FDpsJbdmYv9KmTofCWvIpfWqzTKRpqkChqDpKUXUUgNFIFQCx+IEsSAuFUb216PrnzNeVkKq31rzYHRgT184dl4UOGz/mFlfdHPXOT4Ti27KgEmcFTUfPmnXTdV2YNbPnFWDPK6A7MCYALnbdF6mQw/nKPHfX/GRrlZ2tVXZL0LLdeG1gRPT726WnxmUU/8BpAdDZflIaqTLum563Ad/TmmE1KKtBRt5/wOvZIEucFWihsNHeQ36Ziqreuqy3RqO7zBKU1voBLUr013qajp4VJc4KEqgWChMa8svQkF8GtVlcnlpKdx5mX/MxXB6jzlagjHmWPasSeyUamQLAU+Pi1MkLtLQ08SO/nJk3Twlqs1y/dWVNKGt4Kooik62aHBeZ6NXLt83/WIVWnNRWUSups/xZsBb68MFNFvQlugPjJPbSP3+DpKKqt5aNitHEqdBaUeW8jLkkpOqtk43usr9TW8jEvFpr/QHqCL5urUS5ZgAAAABJRU5ErkJggg==',
   sty_block:'iVBORw0KGgoAAAANSUhEUgAAACQAAAAUCAYAAADlep81AAABL0lEQVR42r2VsQ3CMBBF/1lUpKGiAHo2QBSIeRAVSgsltIgqyhgsABMwBskG0B6FSXAcYxLbwZ3j893Tv/sOofUijuNNuTseTwCYfp81zA6nZSoM+MIAgHADYiogdBAfGA+F7Eq5wngoBANEXak/A0l14nhjgCL+M1C1VWal3KBEONubBr09lGgLow5s3U1VKHnm3r4GMLa9a2znMJ1D+SQODhUiYbscZA9k+jbQPmaw1eqpn1brPiZjYDyS8VlOvNs+yA9GdRvT/hCxkh/3DEiTp8n2TGnyxO0yQJbL2vKiL0wVSoW5XQZvmE9+oV86X3PcM5RQXaxCmfM1r/2Ihd7rxXwIXanQMIUyi/nQNuTEy9mUPwHEq3XEYR81Pades3SZWtTkBqawb9o3xzG9AIFPtXk4vDYqAAAAAElFTkSuQmCC',
   sty_controlled:'iVBORw0KGgoAAAANSUhEUgAAACMAAAAUCAYAAAAHpoRMAAAAzklEQVR42mNkoClg/I8p9p8Rp2r6OYKwo5gGxiHY1TENjEOwq2caOIdg6mPCrYBcw8kHOENm/nxOiuKfyqHK+H/+fC4iQwgWkpRglJDBbikihPAbRA3AAnNIgJMUw4Z9z+AGt7RyMTAw/IeXCUVFhVRPQ319E2hdzlCQclCj6T8japrhZGBgYGBITPxOB6f8Z2QhVGdAHPKfkba5iWo5iXq5iRG/T/8zUrGsIFhpshBbow5oCUyu7yjRx0TtHEGJeiZaZFFy1dE4bZDW7AQAabFqDKGxop4AAAAASUVORK5CYII=',
-  sty_defensive:'iVBORw0KGgoAAAANSUhEUgAAABsAAAAVCAYAAAC33pUlAAAC3klEQVR42r3WT0iTYRzA8e8jNtPAmmtp+uqGZQMNIylIC4M6DDS8dUmIQoSdopPpqYRCu5lUSCLsUhehQ2SwqEhBDQRpktbLzBy9ijoVWzTLxKfD2rt/ut5deuGFl3fP3s9+f573N/iPh0hzuYxeS5EulpEONDTwiMsn9lNTdeQvHDmNHZnpQE+6u5jeykOuriVEFgHTj3YbqFe6nBWypsohq+35MnWaE0/DaQxHNOx5SWhlCbm6xujsogBobTq2DSpFtf0ArU2VuO+10NV+Ka7OGUYgvzrF4vcNzp4v0D/t7PPqKYuFR2cXxeDrBd69eM6nkfcAKIoiU9QsDL16M8GSOsWXWY3jZ+x09nlFi6tOni1a1VcOzuWxBbS4iiSA2bQHgGfPhow0SBTK/r3ARGCTEfWb8KheYiHfTAiAQkLMZylEoGyLSY8QhFSUop1qFg99HHnLyLgqAB3yzYR0CKCsNAezaQ+Hi6b0e9dvPhZDA716ajVNEwmRxUNt3f16TbquVsr5mGgA8qts5K4FmAgUY7GOsRI4SbbFpEMH9+3aaVPHQ341+itbXHUykqb5LIWc0iA5pUEAJgLFAIS2TidBqs+Py1mOps0lvq6EdDnL9Zs9nknRce2izLaYWF/ZSLk5Kq1f8W0dSoJyrYXU1jfrddM0Teg1M2dmYc7MosczKQDauvtFLGSxjunX9rKflBSbKSk2G4K27caOgXHx3N0uHWW2cPFPXxEAXe2NMpyq8LrFVRPwI64ZUkFJDTI+/RmnY6/MtRai+vzh9h52y1jU5axIemtU2/MNQXGt71GDBH/tpra+WeRaC4mgqs+Pb9gtfcNu6VWXsTnKOXD0HKfqLmBzhOtsBEqYZ8mzKrJXgoF5ABxlNi433qChoZb1XQUsfXiDV13m7oPb/4SShqeiKDLaqtFxkYjeufVQ/45RaMdJbRQ1kjrDfwv+hb54ep81bZMezxSRvZTqeX8A2+eoEPkp/EEAAAAASUVORK5CYII=',
+  sty_defensive:'iVBORw0KGgoAAAANSUhEUgAAABkAAAAYCAYAAAAPtVbGAAACbElEQVR42r2V30tTYRjHP+e46myZkHMujsqQFOkXFdZFxgiFCDKvhCEEka2r7KK8C6kIieqmusjuhC5jl0V/gVB3/sAswoWMzcwm0uZ+iLS9XRy3nXe/V+IL5+LlvM/38z3P8z7PgV1YCigitxXKDslKmhaAhtZbAERDr8X/wQxxkx4AFgCLtQOAxs7nAKwvjtYIM8Qz8X+SfumtxbxZX7yrFP/sUjBZPCtq7ZBA2zWRRVzucDan4a9eEmvv82pmiNuaBkisvcvGNna+yMaltlaJBJ4BQpEgbT1LQq2rL+rZDLM1DeA4Mkk6FSP4sV0yaAatL47mCl8JAHDqwgS9R88CMBO4wsISlDtvXmo1AIBLZz7R3X2Ovr6LDPZ+wWyufF23C1+NI2eznXaXA4DIQWfOZRWxlmo7wO7QcRxyGW5/J2rqHrXag7reiu7U0J0a2oFj0rtKKVP/pa9dLXWy0wopU3djQKoAgSmHstPCqa1VGTJ2f1y0NG+WDBgbsXGiy5arj1NjbMRWFhIJPFUK0jV+e5liIK/HylC/Rv1++WNveqwlQY+e+ETJK+x7Zaehfp8UkC+eDxrq1zIJEt/9CwBMz84X9sleW5cxn3760U8eryn3+SamZ+fxDl8tvMIP73mUGw8O4w/uIRYXxOKi5kLPzX2m1KDMju22niXhcoeFyx0WPYNBEVpJiNBKQkQ3UiKdThd9ohup7LnL12ZEIcTQLjpWln9pnPfEtwuf5s51a0FaYnHB2w+bPJ4wRkxg6rRSsRnz/wuZNelL8vJNsiCFZkA6FSuXKrnj8w+bQfPfckPxx2oOUM5gZv0FUDsKT2W1NmAAAAAASUVORK5CYII=',
   sty_longrange:'iVBORw0KGgoAAAANSUhEUgAAACQAAAAUCAYAAADlep81AAAA6ElEQVR42s2WzwqCQBDGv9lSFA8KIUnutVu+/6l3CKSH6BIlSBHUdPAQmavjn2QHFpbdOfz2m9mZAXpYgoS/T4g/q25NZxPaL4wE4E9Q3TAzQslhTAAkUFYI3R+mr0ptOTgJjOnFJkixOmPj3gUkhKlUmSIJiePIYa1T1jpluWo1mMCTwVR+xIFH3LRvupOGhwAgjhzebhR8V+H2eBmdfVcN1mx/uANgaodiWgLA4rJCEZ5RlE+crmb/dTgumlm24zw/yuuNDSGzN6lt+fbKlFzjCmOXMQ16vFWtw8rmauX4YeWANucI+wbhV5W/XjzQPgAAAABJRU5ErkJggg==',
   sty_rapid:'iVBORw0KGgoAAAANSUhEUgAAACQAAAAUCAYAAADlep81AAABAklEQVR42tWWwQqCQBCG/zErxcAgKkmv3fT9T71DIL1BRF6ihCiCmg5iCe3a6pbZgCC7Ct/+88/OAJWDOH+iKGT5fgPhwWMZnBisURgVgC9BvYdpEEodRgZAXObDSp6rDqOikghGAaoejKzKtFXSzbsKkDiMV1WIASZd742HXQ4Cn4PA51qH9OCxY6n9lH1H7FjEonfRXvl99Vyn/DTzmQG7Z+B0uUlB7J5RW7HF8oxM+TwDIjgmEwA6+xFSd4f0eEVykIs0dfWsFUUhx/HqD1NWhNoigb6picdDE/3BBACwXm8eKflQ2f6o7Ivm0rsYq40xyu2jVa2jlc21leNH0wPaHe4ipxxVdV2mAAAAAElFTkSuQmCC',
   sty_slash:'iVBORw0KGgoAAAANSUhEUgAAAB4AAAAUCAYAAACaq43EAAAA4klEQVR42u3UMQ7CIBQG4P8RJycnB+tBHDyQcWpY9QyNk/EYXkBP4DFsb6ArHV7SIGnhPegoS5PC4+PBA0JWI8dfR/oYjjPpwX5AbLL4PNbWsLYe/pg8wM80hTMaNpMPSPBftGkuQ5wpA2J902iQ8Ry4DAUASlWfvE+Ojpxx6bnK0Ak4Z2t16MRWa7dWj0Yy1l0Zf5wEVT6R42ea95IVL+aPKmbRIWMFl1dIi9SAw3GJbQVUG15D25E7nz5Ugoqu0+36xeuxQtuxwQsoQwUw4/dnh3eLAZ+jGUkx7XdrhJmXth5kKYd/vWhphgAAAABJRU5ErkJggg==',
@@ -12077,6 +12560,9 @@ var UI_ICON_PNG={
   helm:'iVBORw0KGgoAAAANSUhEUgAAACQAAAAkCAMAAADW3miqAAAAJFBMVEVMaXEuKyNSUk1yZFFZWlUtKyRNTUlKSUVVVVFFRUI+PjxiYl14mGJ4AAAAAXRSTlMAQObYZgAAAAlwSFlzAAALEwAACxMBAJqcGAAAAg5JREFUeNqNlFmS3DAMQ9s0m4t8//vmgZIzf5OoutqWDILgps/n8/n+uj57fe9f1gF9v3eu6LDosk6ebhEV3hF+DxWE9918C8usxwDZsiqPbv6gAiZftVbGEpuwbe6eq9ujzMbj9waRCX2nm8FnDmEnr47rsgHJ1lyasvOaFT4iMeLLBklGYRJx/V0uFjOZDihD3HgcGkxdzyzZEvZxBzNKu0QQxEWYeoUGhWu7a3adKftHPFY+Btb+2MtEXnA9x2gjnoi9XXL4Co9EIaekcKIeuQTBJt4UeOE6hugnutC7hMYbHXaARsgPqrFSqnpAgF0aFFILiZFQ7BbmuYWnU5UBEb1elpxJVFR3vBmnltdVSpO5PCmf2KRSVqd2j8uBftFweNXetiLdIFd4Maaq1oDkmpNY4dvdo5TZnF67bvJ5cUKSqcRhIrze0VEU+s5PdGQ3T566iS+keqofu2NG5TTUqV2ZyuvjBdqdMJtg7SQznif9kepail9MaRukdt1lIZciUVcDKulTZSfYOJpUoZqOE5TekGQRAbXlp+lCnfZ2gO/YdiYsVvZxV76Ltr+8IDqUDLz9hBtfKhuzkOpLyZ1J4XkyXszTElBNzBhQL7Vk5yNYbtCtnPN55k/pt14UzTTlKJox14XBtmz6kPZr+dJkair2hTFXj4ZCJLSPetnmVkkpv99b7H8usX9fh38AO2kVfp7iY/YAAAAASUVORK5CYII=',
   map:'iVBORw0KGgoAAAANSUhEUgAAAB4AAAAeCAYAAAA7MK6iAAAFeUlEQVR42p2Xa2wUVRSAv9ntdnb21d2ltNuuIOEhtDXWElBi1IIkGk0AiST4IPgKJP4g+IivGMVETTTRmBgSFUw0kWhCNMH3IyoKGEQQSoRQENouBXbLdmf2OY/uY/wxWFp2t916fs3cmXu/c84999xzBKYgCztazIm+Hz4eFWpdq24qwI62rsl+NWtVoG4qQEWRJ1xsjGKTKiBMBO1o65oUVkkCgSAAx08cqQoXpgoVbn0XIXOOE7sfQJScGJoOwHx/e0UFqsGFWqBxaRDJt4pZt2zAFwwzs7Mes5Dlhy3d1DsFEikNADmaQdPyXN/SOSlcqAWKcCNrnvuAjmt9LHQL+O02IiU4dOBrzp/8Epffzenefzh2qJfYUAZD08d5oBLcNhFU92eY37maLTt2snJJgIVua16yWAJg/1dvMVJSUZM5PKKLtQ8+zMyrfYiSk57o0dF1FEWmo61r3HG0VQuQUmiYBv805rXNYZoI779xLz//+S0AmWSSvDpCZmQEgHOxM2QNlXikl8U3dnNdZxP+oLcMPlZslawdMPpwiBKRyGluX7OJd55cyuyZzez9ZhvDWsHaT90Kqmk2iaamFkpoXMwqJKJncDh9hJq9ZfCxVle02O13kEuVWPXQ0yQM0PMGsYtR8oaGrOsMpFPs2r6RxV2LkNMKQlYn5GllusuJzWfj/MAQwbkP4xanVz1ytkp76zA9tC5YRrh7A7qawukQrXFRAuCjN9cTavGRNBLEVZ0hVSGWvUAuY3lBHpaZef1qcM3HH/RWBl85EBPOohsZAPZt2wzAPS9+QahtFfc/voNd2zfSubiNfFpGyOrMXTAPT9FSKGvXSA3rzGhbfSktKoSaL7t7bJCVge1OgY7OWQj6YXyuGLu2bkFQs4SvuQUjk+DuDdvoOx1DK9pw+IKoyRxZu0YpXcKGRDad5689nwLQftfH9BwYqGh1GdgrOpHyVgrf/3sP3eufRC4ULYtMO4l0kjse2cqi5U/w60+7+fHrX7jtrlfpPRVHGVYAuG7xnQAUskPV9/jKgYyhky7KJJUMV7W08vuO16x9uwT/TxLOEE+9fYjn3/0L0xNG1wvEYxeJxTwsWfsO2UIdiaELAOTkUm23U04TyBfnsfKxZ+m3TUfO1xN0jCAXigiuJj5/oRuhYLD0pX0kczJG72GGYlGWrNsPQF8kDsDQyQ8JNLvRtNzk4Fwyz2DmHK3tKznY60eaU0fOKJGyAhu/WaDO1YnYMBtZKaGZddgDN7HuvQgHtj5KbGD3ZXc6JETJiablyxJJGXiWOJu+/GZsbg96VsWmOhFdAjnD+jVnpAmv2WKlzpwV/S7gs00raA5HaQ2HsTsFirqJbphElEGWtS8bBV6IRTh8PCrUXUrcZWc5FXVgesHp0ck1uKlzFRFdAoZ6ufopqHYr6FIZTC7iFCWaW0NEowMk0trobVVzBeJw9BMftJ4bXdMxsyopMwCYuBvqLctTI0Dh0gxxdO6x3hPkMyon/04juUBTgfYJCoErM9ggK0lEX8Ef9FJvt7T2he+j+eZnANCUy1FuFtKc3fMdavJ1vB47/acaMcVNqPJvrL1dK3PzhLfTDL7EgRt/Q4BgY5BgY5BIz07UuIIaVzALaeuYRVIo5038oYXkkuvpP9WIt8WKgbHQCSuQSnn7j5MHWdA5F4C8kCX6TwBvk/Vu8260rC/5AZBsSVIxmbQsc/OcT8aBxlpbc+mz+8hBmkIBGkN+RMnOQP9ZlNgILTfsLQO67KdY3tU3bv6V0P9V7PVEj3L+tERD68vjxlcs+r7ipV8JWlN5W0s9XU2qQScEV+sgalHiQiwyaUtTU68ztkir1MYoijwKq7WFEabqvmqN21QaNoB/AWuw0/RVx2ZeAAAAAElFTkSuQmCC',
   orb_hp:'iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAADI0lEQVR42rWYMUscQRTH/7O3MUXgcFfBmCIpLIKcIJEQ2ySdYGOKNKkCyRewiKWkTAq/gAG/QWwEOyVaacQ0HoeQK0yhHuieLATCcncvxe3szcy9md27mAcLx+3szG/fe/N/b1ZgCJurTJLr/nH1Qgw6pz/M4pXpJ3nDaVAovyiAunizGTmfMUCpCJDIg5CT5i1usyAIAQDV2g8njMiD4AAmvx32/RdTNxoxgNLzeRbIBSMGgajsHUIInp2IEFEPigNywYgiEBIgFEBoPBKleSkhJJCEuSFg7MV8LozIg5jZ/84CmKYCDQMjikKMMxxXdHue8WxvmAdhmvRYaIwtC4EygFEBXO8euHWE80YfRJqkS39a2gTrI6Xs90rS0e69K9nfoNmMpN7QcfVC+HZv8BDVN8/gnRwBAOoJYbHWxvpICe+TNramu+N2oi7cWqOVwZTTRLjePdBCJI0NjeZeBqIz8xQAMDUisDUtNAgAeBm2AQDLEz6+tKmQ8HlmWCp7h/bBKcTjj281mNqsN5Da/kpzRYZnrjJJfTP0CRZR9wIyCAAajAT6F/NcO4DzyOnqBgDgdHUjy5VB7V7R6huBWJh6Qpg6OcLpKvog6gndrkeIiBWszbslLNYo80wRiLVGC68Zn/+2gbhK/BX1Lm5RDkJuX606O/QkA5E9g5ToiHqSbYrXYo1QT3qXzVQNKdKvaB4JghAxURYeF4zNdqJSBhET5QLItYWU+Af3H2mNz5gn+uqGaitJB8sTfiZeppqqEDIsN9TNj4eKsp5fnoGVeOkVdABYYCICVu54+NRoaRvPBWGuYealzyVPsLSAeHM7g7HZB1/gc6OlFTkbhPTG7KsFdnP4SoethSeWqtqBNUQR6RXWBcGZDItVWZvNCONLC4jTybOdZFxc82yDcHmDbRVVrwRBiKvN7W4JVxodbvFBIVRvWJtnE+bn122MpiPLzNuYCamGogiE8zhhwgDQgDjjAEzl5iByD1gqjAnEmawhHIALotCR04QxS4KrfhSFyAVRD+EcUBE7vzwr9FWgcFulfpbIg5KLD/JZYqj+7n98qPkLSRMlBWyT7uYAAAAASUVORK5CYII=',
+  hitsplat_dmg:'iVBORw0KGgoAAAANSUhEUgAAABgAAAAXCAYAAAARIY8tAAABLElEQVR42rVV2ZXDMAgEtHW4l1SS58r8Uol7SR82+clsRgjZ8h78WAIz3EjkTbOq85nvIzSkk/1wxsvOzLMR73uAkbe466zqi7tWBkAsGE3LZHYYrWYeTGby3HcREQFAdmdwyKOTFpmLu0KZAbL7SD2/jtJz27bv81pKxVtLkdu2yVpK4/2s6nd3EdUPg4Xwjg1kBKPPfa/A2WmNIY2CHxlpivyXRmLK9az9rqSp20U8XL+pQVaH/68BD9nVCKKhrAYmInJ3r6aZf7wSBfSbXfT4dGuVP1b86SwYmNhDcQ1EI3zPHMAUA6vaRQgPKcIXQPxlz49Sar0lhZCjEQaL7QknH6p1kbP8Zy0XjU5mzaqPus2qYGF8QEZkEUN7z14vkszLjJdGcKZwlsKMXsbqRq1pnDfZAAAAAElFTkSuQmCC',
+  hitsplat_zero:'iVBORw0KGgoAAAANSUhEUgAAABgAAAAXCAYAAAARIY8tAAABP0lEQVR42rVVbWrDMAyV5ZqcqYxAz1DwyBHLSnqJUHqo0no/Gnuy/OI46yYIyFL0+WSZaCbrfJC8PLdQkw36YU2GeCnjluyXHGrZ43421vnwuJ9NFiCSVLS2hXioVruTyhSAB7KOQuRfenCOzsX/OkmDAujMmuh5yrqgW1VORDeGwyGkz3ZjJou87cagcbPOv3TOB1PLvt8fq0lPt0vKPrMXmJoCoEbntSAQg78KoifSrI3fljahKWJ9ud7BAOHw/xjIa761giIQwICJiPqPr2yfyB83VTHbF7toun7CfSINf3sXOArjJpQ4oCDyjBKwzgfZkZ3s108G8yJ7noh4oOl2oX5/TA4zxyvtNLXHJFUlF98cFLUF8VxzjjZmNgQ8FI+Nti1WhVTqB6RFp32YpWdvqRKUJZItYlAzWG0hoG/5tD3OC1i5cQAAAABJRU5ErkJggg==',
+  wild_skull:'iVBORw0KGgoAAAANSUhEUgAAABkAAAAZCAYAAADE6YVjAAABSklEQVR42p1VSw6CQAylhIvgnrAjXsCr6AVceAQXXGC4CeECxo0h7vUmjquOtbTTwiQEJi3vTT+vA4VjdU0dNdv9+Qbrf/CC3+bXwr5vd6vIRIKuqeNjDPHzierzGENE300kFgEn0rAqD+E8Dem7PRwXe2tVHoLT+Zr2oS8We2uVlgMF3GJXSbT83uZX0R6OYqdZrb6q6F1Try5+6S041QXVh+QnFj4X5jwNqYOkNHECjnV/viGJThMYpg19+Jv6cpwkUi3/nEgi4T4cB+0lDZuHHvrL4htTJtkwrRyror0e+ksyUmX/7Lo++CSgdpAKRk+ZE53lh5MZLEFJQNYBVo192jVaUT1j3oxEGyHa5SVFAh7gnKL5qJcIAQksNVuFl+4VJISuqWPu5FK35LpRiuyPxAOeqyEnwwsvpQsdvOAeMsQCdXJuXBLWFw755uTgOhzVAAAAAElFTkSuQmCC',
   orb_pray:'iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAADjElEQVR42rWYS0sbURTH/zcvTUrVSaGtobGltorVKOrKlO66CMG1H6CrQteFLgv9DAFByLpkIS58LRQKpbGbptAopRWh8REFaQajySQT0+ki3MudyZ07Y2wPDEweM+c3557zP+cOQQc2NdpvyH7P7RyTq97T14nz0ZFJp78bV4XyuQXgnatqSXqNBdRwA0ScIOhNnZzbmaKEAQA7379KYYgThAhgd9crvKbeqAAAxp50C4FkMOQqEIeFPhAiZjcMA5p+zoD0hoapCcU1DHEDQQGC3T22S6DVyiYgGh0rkB0McYI42lcYQMjfa3JebZwhm88AAOKxuWvBeDqFAIBsPgPN0PCztIdsPsP+SwhBMHATXf4bAICAP4jPuSNT1Y2OTJokwWMXagoR8vcKIdwag/GGsPXlUK4jsgpha0hoUnYGFPAHTZ9pVAAYuZ1j4nGKBg/B20ZuAYsrS+zzi1cvWb7YRQWAbVQ8Tk9CJJI3NhNj57PJBK5jXuuyHBb6EAr2uorG9HhLdcu1c9yO3kHlQsfa+nv033oEALhs6uya5p8GvF4/CAh+Hf1GNNKDWk3DQPQhfOTira89AsQiVGYAAFhcWTJFwxqVdGoeADA8EP933Zc65wGiSsR2qcZmYphNJrC8us6AAOBB/0TnIBu5BWiGJr3BgVpEVIngQC22Ab1595p9NxQelML4RD2DqiZ1JDMKsb2Vdwy/3tDkILx+aPo56yvx2ByGwoOmEp1NJkz5IYJYXl035QpdGhEI9e2j2m8nZvHYHDtPp+aRTs0LgUQAwwNx1m/YqHBZaevIxZOCOSKtIeas1bRq5bZuS6GoI1HlpFPzrFqsEFYAVS0x34RKfOTufdPgE+pqQdi1/mw+w6poeyvPqoQvWR5Eb2jQm1UYhoGZ6Xvs++JJAUKJV5Qw6o0KqvUymzNEB78UsmmNT1JaCHR8lEq8qpbw7GlLJyiMyCYfJ0zJ6LQkerMKAEg+Hxfmo4dO2MWTgvCJqvUyDMNoO0jPqWMkRNHgjS6LraDRqHz8JNGQ0y7XELRS7KIhHBX5pFWUMDY/7LFZgm/n1H7sZ9sknALQ5BRB8NGwHZ5FMKLhRqacvF44QUi3E1YYAFjbzCPgDUlhrABW5RZBOG6weBgeaHXjmxRGBCCDcLXltMLY6YCof7iFcAThN+EiIDdGZeFam3C71xJOULwmuX0tQTp5yv/xouYvLjhPggqOVV8AAAAASUVORK5CYII=',
   orb_run:'iVBORw0KGgoAAAANSUhEUgAAACIAAAAiCAYAAAA6RwvCAAAEnUlEQVR42rWYz2/bZBjHv06d2XEStw54ajJYFZbDoEwqLUgIcakQaBdOnXZBvXTTyrisB8Shl6m3iss2CQGdEJfeKv6CXbhxQqXqVDGBtigabbKZxmmc+EdC4h0cv/WP14lTiVeqavm1/XzyfR5/n9cvgzOM+dm8PWx+96DKjPtM9izBZ99+b9Tl9rhQbFwAb3BVrQ+9JwBqxwFiRkG4Dx0VPGpIUg4AcPDnH0NhmFEQNACpMEO9R9cNtNs62G6LCjQMhhkH4kJpFqkUD57nwHEcAMCyLJimBcBGW9dgGp1IoGEwbByI0pV58DwPURTBced811sWB1F0gHieh6qekLl2G9BaOiSuT9I7SLUdhGFHQbz7wUcEQEgnQ+oJ6ST0dtfzqydD16gxYNhRELL8OoR0Epm0FArQaqvkeH19gxyvrX0VuvZIaaAwxUbCRL6+pSsLEEURQjoJWX4tNG/ofUwkJnHr1ioA4JeNL9CoK/ht/2/cv/891tZuo293BinScV6e8sFQi5WmxsLHi5jO55BJS0gJCTCMo6JtO151bekGAQCA55WnaLZ0cv/dnX2srq5A11ukeL31EizeRLQa2RCEO64t3cD+d18TFRp1JfSMlcUitrZ+dupISJ2mqPFffGednBRJYUZB/HVcJec0relTQ8wICDpNOi04KTU6dJBgWi6UZolHpASqYASiUVegaU0S3IV5XH6B3apJvTeVOofftWO8n5V8RcuGL+R9XuHWhHcEU+ECVBSNAOw9qZIaCY5CLzte0zP0PlWVw2qNHFcUDWW1C9XsOTaQ5wcgoEKM1X0tq0NqxND7ofm7O/uYu5yHxE8AAIpSEkUkI4PounEWkNNUGEYfqZRfkYcPt9Drn+D2l9/gpzufUYu1omhYnHsD29s7WF6+Trxk2EgEW7xhWLAsC3q7i17/BK226vvr9Z1e8sOP3+Lmg0eYysnIZkXfQ2fkLIpSMlZK3NgJ75rBkbEFy7JgWZ1oqdtdX39x3xrvfwCYu5zH9vaOTw3D6OBoQgutV1gvlXvSNE1wHIeXvQIy5r+IqqPg8MK4PrL35HReG6Qv17IhXcxBVeskNjtoOnZhesY5SdLEYBJlWANPCY719Q3cW/kQjbqCw2oNYkZANiv66mVGzlLvfSufIwBHtQp2D6oMS1tJ6boBQTDB836IjY1Nn4W/OXMJzytPiRKH1RoqiiN7We3i171/cPXqJ0QNw+jANJqQiqXQooulFY8D0yIGx/McNjfvkQZHM7bH5Rc+AAAEwmvtC++UqMtP1rPCtgvTpx1CUY4hy07xCkImFNg1NdfQ3OAAsLT0ua9A3dowjSaA86cNcJCWSENT1TpkKQdFOSbNCgBuPngU+SYtL18nxhWEcFMSpUZo8Tw/m/epIkk5KK0O6Z7edk5zTpoK7uv66cVLPgivGtRVPA3mWa2BrMcfvCoFHdML4KYjqEQQYujnRBAGAJ7VGgDgg4oCcFUIOjcNYuQHlhfG99VWfhlZK1EAwyBifXIGYYItYVj/iAsxEsT7EU4DijOOapVYuwKx9zG82xKjoNzg42xLMGf5lf/HRs0ruPzCozQf4VwAAAAASUVORK5CYII=',
   quest:'iVBORw0KGgoAAAANSUhEUgAAABUAAAAVCAYAAACpF6WWAAACSklEQVR42rWVMWgaURjHf6cJhXBwqC0ENFcigmSRhnTRxQ5m6JKKkqUlGQoZOnTo4JZSCHZphgxuGRRC6xKSrU2hWVwilISAGSTQulTB0hq59hoIQa+DvRfP3mk69IPjuPfu/b7v//3vvZMYEh5FMZzm2pomOc1Jw2DpRMkx4c5+3BE+Zgc0Ybkt3VnGcsmEG4NgyQ44CPtW/87S2gLvNw/+Yj9dltnZj1sqdo0CAtwK3HQsOLelk06ULP13jQICbG7fIaT27tcBi56q6hRQBaB87OHk023HBAC5QpfNl1+Izrb71kMgMGW4zCoz2apYGJ1t09LczpILXeIxGb15JMYy2SrpRIlfP3/05JtZ+sOndGhpbnEBtDS3AEbC5xw2FvmwV8Oqts8o0+V+iT6lQ6N5A5/SAaC4e8nD1DiR8PmwPWP9TpfWFgAIqdaXKqcTvHp+RmrFS+nj1XijrlMkCTk4eVexh7540uvrm7cz+CcvLODUipdGXccfkEXSkCqTnP6M4S0DQXuo6WR09kC0oN8wf0CmUddJzbvEuOEtM38/aCnAxT9ESIV4TCZX6AJw179t+56rrWnSRj7I+uqMZaKluamcTuBTOsKoSPgc/+QF8ZhMcfcSQFS5vjrDRj5IW9OkMbtM5WMP9+Zq6M0jDhuLwpSWNg7Ag7nXJKejcBYFvtq7/6daA2pkslXRWwjCXk9ikaRFbuLRFay/SotRg2AzhAm5gWcHoO0h7VEU49njmth6TmF6MAgcefKbcLvYyAcdT37pf/yjfgN2PAU/d5GS8wAAAABJRU5ErkJggg==',
@@ -12193,11 +12679,18 @@ function _uiIconsRepaint(){
       ce._osrs=1; ce.textContent='';
       ce.style.backgroundImage="url(data:image/png;base64,"+UI_ICON_PNG.compass+")";
     }
+    for(const [el,key] of [['hporbdisc','orb_hp'],['prorbdisc','orb_pray'],['runorbdisc','orb_run']]){
+      const o=document.getElementById(el);
+      if(o&&UI_ICON_PNG[key]&&!o._osrs){
+        o._osrs=1;
+        o.style.setProperty('--orbsprite',"url(data:image/png;base64,"+UI_ICON_PNG[key]+")");
+      }
+    }
     const gl=document.getElementById('mapglobe');
     if(gl&&UI_ICON_PNG.map&&!gl._osrs){
       gl._osrs=1;
       gl.style.backgroundImage="url(data:image/png;base64,"+UI_ICON_PNG.map+")";
-      gl.addEventListener('click',function(){ try{ openWorldMap(); }catch(e){} });
+      gl.addEventListener('click',function(){ try{ openWorldMap(); }catch(e){} if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('map'); });
     }
   }catch(e){}
   /* ** CLEAR BEFORE REDRAWING. ** The hand-drawn icon is already sitting on these canvases from
@@ -12236,7 +12729,7 @@ function _uiIconsRepaint(){
   try{ if(typeof renderPrayers==='function')renderPrayers(); }catch(e){}
   try{ if(typeof renderSpellbook==='function')renderSpellbook(); }catch(e){}
   try{ rp(document.getElementById('hpheart'),'heart',14); }catch(e){}
-  try{ rp(document.getElementById('wildskull'),'skull',20); }catch(e){}
+  try{ rp(document.getElementById('wildskull'),'wild_skull',20); }catch(e){}
 }
 
 function drawUiIcon(g,name,S){
@@ -23969,6 +24462,7 @@ window.addEventListener('keydown',e=>{
 viewwrap.addEventListener('wheel',e=>{
   e.preventDefault();
   camDist=clamp(camDist+e.deltaY*0.01,6,17);
+  if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('camera');
 },{passive:false});
 let mdrag=null;
 view.addEventListener('mousedown',e=>{
@@ -23977,6 +24471,7 @@ view.addEventListener('mousedown',e=>{
 window.addEventListener('mousemove',e=>{
   if(mdrag){
     camYaw+=(e.clientX-mdrag.x)*0.008;
+    if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('camera');
     camPitch=clamp(camPitch-(e.clientY-mdrag.y)*0.006,0.30,1.50);
     mdrag={x:e.clientX,y:e.clientY};
   }
@@ -24989,7 +25484,7 @@ miniDyn.width=W*4;miniDyn.height=H*4;
 const mctx=miniC.getContext('2d');
 const wildBadgeEl=document.getElementById('wildbadge'),wildLvlEl=document.getElementById('wildlvl');
 let _wildBadgeOn=false,_wildBadgeLv=-1;
-drawUiIcon(document.getElementById('wildskull').getContext('2d'),'skull',20);
+drawUiIcon(document.getElementById('wildskull').getContext('2d'),'wild_skull',20);
 const compassNEl=document.getElementById('compassN');
 /* ---------------- minimap icons ---------------- */
 const MM_CATS=[
@@ -25406,8 +25901,8 @@ function faceCfgFor(n){
   return{skin:pick(SKINS,2),hair:pick(HAIRS,11),robe:pick(SHIRTS,5),
     hairstyle:n.sex==='f'?((h&1)?'pony':'long'):'short'};
 }
-function drawFace(cfg,mo,blink){
-  const g=dlgFace.getContext('2d');
+function drawFace(cfg,mo,blink,ctx){
+  const g=ctx||dlgFace.getContext('2d');
   const C=v=>'#'+(((v==null?0x888888:v)>>>0)&0xffffff).toString(16).padStart(6,'0');
   const dk=(v,f)=>{const r=((v>>16)&255)*f,g2=((v>>8)&255)*f,b=(v&255)*f;
     return 'rgb('+(r|0)+','+(g2|0)+','+(b|0)+')';};
@@ -27274,6 +27769,21 @@ const DIALOGUES={
       by:{who:'npc',text:'Stay sharp out there. We will be \u2026 around. Somewhere. Probably here.',next:null}};
   },
   matthews:()=>{
+    /* TUTORIAL. Only while it is active -- ordinary players never see any of this. During the
+       run he nudges you back to the current step; on the final 'sendoff' step, talking to him
+       completes the tutorial and hands off to the main quest line. */
+    if(typeof TUT!=='undefined'&&TUT.active){
+      const st=(typeof TUT_STEPS!=='undefined')?TUT_STEPS[TUT.step]:null;
+      if(st&&st.id==='sendoff'){
+        /* the LAST step: completing the tutorial (tutAdvance('done') -> tutFinish) grants the kit and
+           marks quests.tut done, so the very next thing the Rector says is the Steady Hands opener. */
+        return { start:{who:'npc',text:'You have the makings of it, {name} \u2014 I can see that now. But I must be honest with you: a grave shadow has fallen over Milville, and I need your help. Are you ready to begin?',next:'go'},
+          go:{opts:[{label:'I am ready, Rector.',next:()=>{ tutAdvance('done'); return 'begin'; }}]},
+          begin:{who:'npc',text:'Then the school is in your debt already. Speak with me once more, and we shall set the first task in motion.',next:null} };
+      }
+      const nm=(st&&st.text)?st.text:'Stay with me a moment longer, and follow the markers.';
+      return { start:{who:'npc',text:nm.replace('{name}',(player&&player.name)||'adventurer'),next:null} };
+    }
     const Q=player.quests,q1=Q.m1,q5=Q.m5;
     if(q5.s===2)return{
       start:{who:'npc',text:'The bell is silent, the lawns are quiet, and the school owes you more than it knows. Walk these grounds as their guardian.',next:'ask'},
@@ -27317,37 +27827,26 @@ const DIALOGUES={
       done:{who:'npc',text:'Old school-script... and not written by any hand with fingers. Take this blade and these rations. Then find Reverend Spencer at the chapel \u2014 he reads the old hands, and he has troubles of his own.',next:null}};
     if(q1.s===1)return{
       start:{who:'npc',text:'The spiders web the great south lawn, east of the Safety Department lot. Clear them, and bring me whatever they were guarding.',next:null}};
-    const tut=Q.tut;
-    if(q1.s===0&&tut.s<2){
-      if(!q1.g){q1.g=1;
-        qGrant('bronze_sword');qGrant('bronze_kiteshield');
-        msg('The Rector hands you a bronze sword and kiteshield.','#103a8c');
-        msg('Open the equipment tab to wield them.','#103a8c');}
-      if(tut.s===1&&tut.k>=3)return{
-        start:{who:'npc',text:'And the rats? \u2026 All three? Good. Your arm is warm and your blade is bloodied. That was the easy part, {name}.',next:'t1'},
-        t1:{who:'npc',text:'Now the real work. Four giant spiders have webbed the great south lawn, east of the Safety Department lot. Clear them, and bring me whatever they were guarding.',next:'t2'},
-        t2:{opts:[{label:'Consider it done, Rector.',next:()=>{
-            tut.s=2;q1.s=1;renderQuests();dirty=true;
-            msg('Tutorial complete: A Warm Welcome','#103a8c');
-            msg('Quest started: Steady Hands','#103a8c');
-            return 'acc';}}]},
-        acc:{who:'npc',text:'The red marks on your maps will lead you. Go carefully \u2014 spiders are a step up from rats.',next:null}};
-      if(tut.s===1)return{
-        start:{who:'npc',text:'The meadow rats are just north-west of this house, {name} \u2014 three of them should warm your arm. Look for the RED markers on your maps.',next:null}};
+    /* ** THE OLD RAT-KILLING TUTORIAL LIVED HERE. ** It has been REPLACED by the in-world tutorial
+       (TUT / Rector-narrated), which handles walking, combat, styles, fishing, woodcutting, firemaking,
+       cooking, banking and the GE, then hands off to this questline. quests.tut is marked done (s=2) by
+       tutGrantStarterKit the moment the tutorial completes OR is skipped -- and that same helper grants
+       the bronze sword + kiteshield -- so by the time anyone reaches this branch they are already
+       outfitted and 'A Warm Welcome' is behind them. All that remains is to OPEN the main questline. */
+    if(q1.s===0){
+      /* belt-and-braces: if somehow a player is here without their kit (a save from before the
+         tutorial existed, say), make sure they are outfitted and the old quest is closed. */
+      if(typeof tutGrantStarterKit==='function')tutGrantStarterKit();
       return{
-      start:{who:'npc',text:'There you are. Welcome to Millville \u2014 and forgive the hurry. I am Rector Matthews, and this school needs you rather badly.',next:'p0'},
-      p0:{who:'npc',text:'First things first \u2014 take these: a bronze sword and kiteshield. Humble, but honest. Open your equipment tab and wield them before anything else.',next:'p1'},
-      p1:{who:'npc',text:'Monsters walk the grounds, friend. Spiders web the south lawn, the chapel\u2019s east lawn walks at dusk, and something far worse stirs past the western ditch. The staff hold the doors. For the rest, we need a hero \u2014 and {name}, you will do nicely.',next:'p2'},
-      p2:{who:'npc',text:'The essentials, quickly: CLICK the ground to walk. Click a monster to attack \u2014 and rotate your combat styles: stab trains Attack, slash trains Strength, block trains Defense, and Controlled shares a little to each.',next:'p3'},
-      p3:{who:'npc',text:'Click food in your pack to eat when hurt. Your quest journal lives under the scroll tab \u2014 and anything you must hunt glows as a RED marker on your maps.',next:'p4'},
-      p4:{who:'npc',text:'Before anything else, let us see if you can swing that blade. The meadow rats just north-west of this house will do nicely \u2014 slay three of them and come back to me.',next:'p5'},
-      p5:{opts:[{label:'I will deal with the rats.',next:()=>{
-          tut.s=1;renderQuests();dirty=true;
-          msg('Tutorial started: A Warm Welcome','#103a8c');
-          return 'acc';}},
-        {label:'One moment, Rector.',next:'wait'}]},
-      acc:{who:'npc',text:'Three meadow rats, north-west of here \u2014 follow the red markers. Then return, and we shall talk about the real trouble.',next:null},
-      wait:{who:'npc',text:'Catch your breath. The rats, sadly, will keep.',next:null}};}
+        start:{who:'npc',text:'There you are, {name}. A grave shadow has fallen over Milville \u2014 and it is time we did something about it. Will you begin?',next:'p1'},
+        p1:{who:'npc',text:'Giant spiders have webbed the great south lawn, east of the Safety Department lot. Clear them out, and bring me whatever they were guarding. That is where the trouble starts.',next:'p2'},
+        p2:{opts:[{label:'Consider it done, Rector.',next:()=>{
+            q1.s=1;renderQuests();dirty=true;
+            msg('Quest started: Steady Hands','#103a8c');
+            return 'acc';}},
+          {label:'Give me a moment first.',next:'wait'}]},
+        acc:{who:'npc',text:'The red marks on your maps will lead you. Go carefully \u2014 and come straight back to me when it is done.',next:null},
+        wait:{who:'npc',text:'Take your time. The spiders, sadly, will keep.',next:null}};}
     const pt=Q.m2.s<2?'Find Reverend Spencer at the chapel \u2014 the east lawn walks at dusk.'
       :Q.m3.s<2?'Speak to Martha \u2014 my wife. She has been worrying about the Cage.'
       :Q.m4.s<2?'The Librarian at Ohrstrom can read the old letters. Find her desk.'
@@ -28316,10 +28815,8 @@ const QUESTS=[
   }],
  ['tut','A Warm Welcome','Rector Matthews \u2014 the Rectory',
   'A bronze sword & kiteshield, and your footing in Millville',
-  q=>{if(q.s===0)return 'Speak to Rector Matthews at the Rectory to begin.';
-   if(q.s===2)return 'Tutorial complete. You found your footing \u2014 now the real work begins.';
-   if(q.k>=3)return 'Three meadow rats slain. Return to Rector Matthews.';
-   return 'Slay three meadow rats north-west of the Rectory ('+q.k+' of 3), then return to the Rector.';}],
+  q=>{if(q.s===0)return 'Follow Rector Matthews\u2019 tutorial around the grounds \u2014 or speak to him to skip it. Either way he will see you outfitted.';
+   return 'Tutorial complete. You found your footing \u2014 now the real work begins.';}],
  ['larry','The Missing Shipment','Larry \u2014 Coit kitchen',
   '350 coins, a Chef\u2019s hat, 100 Cooking XP',
   q=>q.s===0?'Larry\u2019s farm shipment never arrived. Ask him about it outside the Coit kitchen.'
@@ -28876,7 +29373,7 @@ function renderBank(){
     gr.appendChild(d);
   }
 }
-function openBank(){bankOpen=true;{const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}renderBank();bankEl.classList.add('on');
+function openBank(){bankOpen=true;if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('bank');{const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}renderBank();bankEl.classList.add('on');
   msg('Banker: Welcome to the Bank of Millville.','#103a8c');}
 function closeBank(){bankOpen=false;bankEl.classList.remove('on');}
 
@@ -30042,7 +30539,7 @@ function renderStyleBar(){
     const sp=document.createElement('span');sp.textContent=label;
     d.appendChild(c);d.appendChild(sp);
     drawUiIcon(c.getContext('2d'),icon,26);
-    d.addEventListener('click',()=>{audio();player.style=key;dirty=true;syncStyleUI();msg('Combat style: '+label+'.','#103a8c');});
+    d.addEventListener('click',()=>{audio();player.style=key;dirty=true;syncStyleUI();msg('Combat style: '+label+'.','#103a8c');if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('style');});
     bar.appendChild(d);
   }
   ensureSpecBtn(bar);
@@ -37552,7 +38049,7 @@ geEl.addEventListener('click',e=>{if(e.target===geEl)closeShop();});
  const logB=document.getElementById('logbtn');if(logB)logB.addEventListener('click',openLog);const encB=document.getElementById('encybtn');if(encB)encB.addEventListener('click',openEncy);const encC=document.getElementById('encclose');if(encC)encC.addEventListener('click',closeEncy);const encX=document.getElementById('encui');if(encX)encX.addEventListener('click',e=>{if(e.target===encX)closeEncy();});const encS=document.getElementById('encsearch');if(encS)encS.addEventListener('input',()=>{encQuery=encS.value;(encMode==='bestiary'?renderBestiary:renderEncy)();});const etb=document.getElementById('enctabs');if(etb)etb.querySelectorAll('.enctab').forEach(b=>b.addEventListener('click',()=>setEncMode(b.getAttribute('data-encmode'))));}
 wmapEl.addEventListener('click',e=>{if(e.target===wmapEl)wmapEl.classList.remove('on');});
 {const wmc=document.getElementById('wmapc'); wmc.style.cursor='default'; wmc.title='World map';}
-window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(typeof closeLuxExamine==='function')closeLuxExamine();wmapEl.classList.remove('on');closeBank();closeShop();document.getElementById('wildui').classList.remove('on');wildHop=null;}});
+window.addEventListener('keydown',e=>{if(e.key==='Escape'){if(typeof closeLuxExamine==='function')closeLuxExamine();if(typeof closeEquipStats==='function')closeEquipStats();wmapEl.classList.remove('on');closeBank();closeShop();document.getElementById('wildui').classList.remove('on');wildHop=null;}});
 miniC.addEventListener('click',()=>{audio();openBigMap();});
 miniC.style.cursor='pointer';
 miniC.title='Open the map';
@@ -37677,26 +38174,51 @@ function drawOverlay(now){
     const p=proj(ax,groundH(ax,az)+ah,az);
     if(!p)continue;
     octx.globalAlpha=age>600?1-(age-600)/200:1;
-    octx.fillStyle=s.dmg>0?'#b3241f':'#2f5bbf';
-    octx.beginPath();octx.arc(p.x,p.y,10,0,7);octx.fill();
-    octx.strokeStyle='rgba(0,0,0,.45)';octx.lineWidth=1.5;octx.stroke();
-    octx.fillStyle='#fff';octx.font='bold 12px RSFont,Verdana';octx.textAlign='center';
-    octx.fillText(s.dmg,p.x,p.y+4);
+    const _hsimg=_uiImg&&_uiImg[s.dmg>0?'hitsplat_dmg':'hitsplat_zero'];
+    if(_hsimg){
+      /* the OSRS splat sprite; the damage number is drawn centred on top */
+      const HW=24,HH=23;
+      octx.drawImage(_hsimg,p.x-HW/2,p.y-HH/2,HW,HH);
+      octx.fillStyle='#fff';octx.font='bold 12px RSFont,Verdana';octx.textAlign='center';octx.textBaseline='middle';
+      octx.fillText(s.dmg,p.x,p.y+1);
+      octx.textBaseline='alphabetic';
+    } else {
+      /* fallback: the old flat circle if the sprite has not decoded yet */
+      octx.fillStyle=s.dmg>0?'#b3241f':'#2f5bbf';
+      octx.beginPath();octx.arc(p.x,p.y,10,0,7);octx.fill();
+      octx.strokeStyle='rgba(0,0,0,.45)';octx.lineWidth=1.5;octx.stroke();
+      octx.fillStyle='#fff';octx.font='bold 12px RSFont,Verdana';octx.textAlign='center';
+      octx.fillText(s.dmg,p.x,p.y+4);
+    }
     octx.globalAlpha=1;
   }
   for(let i=xpdrops.length-1;i>=0;i--){
     const d=xpdrops[i],age=now-d.t;
     if(age>1400){xpdrops.splice(i,1);continue;}
-    const p=proj(player.px+0.5,groundH(player.px+0.5,player.py+0.5)+1.9,player.py+0.5);
-    if(!p)continue;
+    /* Old School shows XP drops near the TOP-CENTRE of the game view: the number rises a little
+       and fades, with the skill's icon to its left. (The movable side XP-counter is separate.) */
     octx.globalAlpha=age>1000?1-(age-1000)/400:1;
-    octx.font='bold 12px RSFont,Verdana';octx.textAlign='center';
-    const yy=p.y-14-(age/1400)*36-(d.lane||0)*15;
+    octx.font='bold 13px RSFont,Verdana';octx.textAlign='left';octx.textBaseline='middle';
+    const rise=(age/1400)*18;                              /* drifts upward as it ages */
+    const cx=Math.round(ow*0.5);
+    const yy=Math.round(22 + (d.lane||0)*20 - rise);       /* stack simultaneous drops downward */
+    const ic=_uiImg&&d.skill&&_uiImg[SKILL_META[d.skill]&&SKILL_META[d.skill].ui];
+    const IS=16, gap=3;
+    const tw=octx.measureText(d.txt).width;
+    const total=IS+gap+tw;
+    const x0=Math.round(cx-total/2);                       /* centre the icon+number as a unit */
+    if(ic&&ic.width){
+      const sm=octx.imageSmoothingEnabled; octx.imageSmoothingEnabled=false;
+      octx.drawImage(ic,x0,yy-IS/2,IS,IS);
+      octx.imageSmoothingEnabled=sm;
+    }
+    const tx=x0+IS+gap;
     octx.lineWidth=3;octx.strokeStyle='rgba(0,0,0,.8)';
-    octx.strokeText(d.txt,p.x,yy);
-    octx.fillStyle=d.col;octx.fillText(d.txt,p.x,yy);
+    octx.strokeText(d.txt,tx,yy);
+    octx.fillStyle=d.col;octx.fillText(d.txt,tx,yy);
     octx.globalAlpha=1;
   }
+  octx.textBaseline='alphabetic';
   for(let i=parts.length-1;i>=0;i--){
     const q=parts[i],age=now-q.t,life=q.life||900;
     if(age>life){parts.splice(i,1);continue;}
@@ -39040,9 +39562,399 @@ function animateGeysers(now){
     }
   }
 }
+/* ==========================================================================================
+   THE TUTORIAL (v2 — dialogue-driven). Rector Matthews walks a new player around the real world.
+   It renders in a DIALOGUE-STYLE panel (parchment + the Rector's portrait), NOT a plain box, and
+   it STAYS VISIBLE over popups (shifted out of the way) so a step can say "open the Wiki... now
+   close it". Steps are either READ (explain, click Continue) or ACT (do the thing; the game event
+   advances you). A big yellow world-arrow + ground ring points where to WALK; a DOM arrow + glow
+   points at interface targets, and the glow is CLEARED the moment a step advances (no lingering).
+   Nothing here changes core mechanics — the tutorial only listens to events the game already fires.
+   State is on player.tutorial and saved. Non-tutorial players never see any of it. ============ */
+var TUT = { step:0, active:false, done:false, sub:0, _redo:false, _navOnly:false };
+/* REDO: right-clicking Rector Matthews restarts the whole tutorial. In redo mode no kit is granted
+   and the equip step accepts ANY weapon (you may have long since sold the bronze set). */
+function tutRedo(){
+  TUT._redo=true; TUT._navOnly=false; TUT.active=true; TUT.done=false; TUT.step=0; TUT.sub=0;
+  tutPersist(); tutClearMarkers(); tutRender();
+  msg('Rector Matthews walks you through the grounds once more.','#103a8c');
+}
+/* The Options "Replay the tutorial" button relaunches ONLY the nav-bar / interface tour (the minimap,
+   orbs and side tabs) -- not the whole grounds tour. It runs in a self-contained replay mode that
+   ends when the tab tour finishes. */
+function tutRedoNav(){
+  const first=TUT_STEPS.findIndex(s=>s.id==='mm_map');
+  TUT._redo=true; TUT._navOnly=true; TUT.active=true; TUT.done=false;
+  TUT.step=(first>=0?first:0); TUT.sub=0;
+  tutClearMarkers(); tutRender();
+  msg('Rector Matthews runs you through the interface again.','#103a8c');
+}
+/* the last step of the interface tour -- when a nav-only replay passes this, it ends cleanly */
+var _TUT_NAV_LAST='tab_log_close';
+function tutSyncFromPlayer(){
+  const t = player && player.tutorial;
+  if(t && typeof t==='object'){ TUT.step=t.step|0; TUT.done=!!t.done; TUT.active=!!t.active && !t.done; TUT.sub=t.sub|0; }
+  else { TUT.step=0; TUT.done=false; TUT.active=false; TUT.sub=0; }
+}
+function tutPersist(){ if(player) player.tutorial={step:TUT.step,done:TUT.done,active:TUT.active,sub:TUT.sub}; dirty=true; }
+
+/* ---- STEP TABLE ------------------------------------------------------------------------------
+   type 'read'  : explanatory. Continue button advances. Optional `glow` (DOM selector) is outlined
+                  and CLEARED on advance.
+   type 'act'   : waits for `wait` event. Optional `arrow`/`ring` (runtime tile) + `glow` (DOM).
+   type 'open'  : waits until a popup DOM element (`sel`) has class 'on' (or is displayed). Glows the
+                  opener. `arrow`/glow point at what to click.
+   type 'close' : waits until that popup is NOT 'on'. Glows the close (`glow`).
+   Every read/open/close carries plain-English copy. The nav + minimap tours are one step per icon. */
+var TUT_STEPS = [
+ { type:'read', id:'welcome', text:"Welcome to Milville! I am Rector Matthews, and I will show you around the grounds \u2014 it won't take long, and it will set you up properly for the adventure ahead.", choice:true },
+
+ { type:'act', id:'move', wait:'move', arrow:[204,90], ring:[204,90],
+   text:"First, moving about. CLICK the ground where you want to go \u2014 try walking to the glowing yellow marker just there." },
+ { type:'read', id:'move2', text:"Well done. You can click anywhere you can see to walk there." },
+
+ { type:'act', id:'camera', wait:'camera', desktopText:"Now the camera. Use the ARROW KEYS or W, A, S and D to swing the view around, and SCROLL to zoom in and out. Give it a spin.",
+   text:"Now the camera. DRAG with a finger to swing the view around, and PINCH to zoom in and out. Give it a spin." },
+
+ /* --- the top-right cluster: minimap, compass, globe, and the four orbs (no skull badge) --- */
+ { type:'read', id:'mm_map',   glow:'#minimap',      text:"Up here is your MINIMAP. It shows the ground around you \u2014 buildings, paths, and dots for people and monsters nearby." },
+ { type:'read', id:'mm_comp',  glow:'#compass',      text:"This is the COMPASS. North is marked \u2018N\u2019. Click it any time to snap the camera back to face north." },
+ { type:'open', id:'mm_globe_open', sel:'#wmap', glow:'#mapglobe', wait:'mapopen',
+   text:"This globe opens the full WORLD MAP. Click it now and take a look." },
+ { type:'close', id:'mm_globe_close', sel:'#wmap', glow:'#wmapclose', wait:'mapclose',
+   text:"That is the whole of St. Paul's, with your position marked. West, past the ditch, lies the WILDERNESS \u2014 dangerous ground with the richest rewards, but you can lose your items there, so tread carefully. When you are done, close the map with the \u2715 in the corner." },
+ { type:'read', id:'mm_hp',    glow:'#hporbwrap',    text:"Below the map are your ORBS. The red heart is your HITPOINTS \u2014 when it empties, you fall. Eat food to top it up." },
+ { type:'read', id:'mm_pray',  glow:'#prorbwrap',    text:"The blue orb is your PRAYER points. Prayers give powerful blessings in a fight, and burn these points while active." },
+ { type:'read', id:'mm_run',   glow:'#runorbwrap',   text:"The boot is your RUN energy. Click it to toggle running; running drains it, and it refills as you walk." },
+ { type:'read', id:'mm_xp',    glow:'#xporb',        text:"And this shows your total EXPERIENCE across all skills \u2014 a running tally of everything you have trained." },
+
+ /* --- the side panels: every tab, top strip then bottom strip, each opened + explained --- */
+ { type:'read', id:'tab_combat',   glow:'.tab[data-p="combat"]',   pane:'combat',   text:"Now your side panels. This one is COMBAT \u2014 it holds your attack styles and your special attack. We'll come back to it in a moment." },
+ { type:'read', id:'tab_skills',   glow:'.tab[data-p="skills"]',   pane:'skills',   text:"This is STATS \u2014 all fifteen of your skills and their levels. Click any skill here to see what it unlocks as it grows." },
+ { type:'read', id:'tab_quests',   glow:'.tab[data-p="quests"]',   pane:'quests',   text:"This is your QUEST JOURNAL. Every quest you start is tracked here, with your current step and its rewards." },
+ { type:'read', id:'tab_inv',      glow:'.tab[data-p="inv"]',      pane:'inv',      text:"This is your BACKPACK \u2014 everything you carry, in twenty-eight slots. Click an item to use or wield it; right-click for more options." },
+ { type:'read', id:'tab_equip',    glow:'.tab[data-p="equip"]',    pane:'equip',    text:"This is your WORN EQUIPMENT \u2014 the gear you have on, and the bonuses it gives you." },
+ { type:'read', id:'tab_prayer',   glow:'.tab[data-p="prayer"]',   pane:'prayer',   text:"This is the PRAYER book. BURY BONES from fallen monsters to train Prayer and unlock holy powers, then switch them on here before a fight. To restore spent points, PRAY AT AN ALTAR \u2014 there is one on the south side of the Chapel." },
+ { type:'read', id:'tab_magic',    glow:'.tab[data-p="magic"]',    pane:'magic',    text:"This is the SPELLBOOK \u2014 attack spells, teleports home and to the wilderness, and alchemy to turn items into coins. To cast, you need the right RUNES in your pack and a STAFF equipped." },
+ { type:'read', id:'tab_friends',  glow:'.tab[data-p="friends"]',  pane:'friends',  text:"Down here is FRIENDS \u2014 add other players, form a group, and see who is online with you." },
+ { type:'read', id:'tab_settings', glow:'.tab[data-p="settings"]', pane:'settings', text:"This is OPTIONS \u2014 sound, graphics and other settings, plus your save and export codes." },
+ { type:'read', id:'tab_emotes',   glow:'.tab[data-p="emotes"]',   pane:'emotes',   text:"This is EMOTES \u2014 wave, dance and other expressions you can perform, plus any titles you have earned." },
+ { type:'open', id:'tab_wiki_open',  sel:'#encui', glow:'.tab[data-act="ency"]', wait:'wikiopen',
+   text:"This book is the WIKI \u2014 a full in-game guide, an item encyclopedia and a bestiary. Open it and have a look." },
+ { type:'close', id:'tab_wiki_close', sel:'#encui', glow:'#encclose', wait:'wikiclose',
+   text:"Anything you are unsure of, the Wiki explains. When you are ready, close it with the \u2715." },
+ { type:'open', id:'tab_log_open',  sel:'#logui', glow:'.tab[data-act="log"]', wait:'logopen',
+   text:"And this is your ADVENTURER'S LOG \u2014 a record of your milestones and notable deeds. Open it and take a look." },
+ { type:'close', id:'tab_log_close', sel:'#logui', glow:'#logclose', wait:'logclose',
+   text:"Everything memorable you do is written here. When you are ready, close it with the \u2715." },
+
+ /* --- gear up and fight --- */
+ { type:'act', id:'equip', wait:'equip', glow:'.tab[data-p="inv"]',
+   text:"You'll need arms. Open your BACKPACK and wield a weapon \u2014 the bronze sword and kiteshield I gave you will do. Click each to equip it." },
+ { type:'act', id:'combat', wait:'hitmob', arrow:[190,72], ring:[190,72],
+   text:"Those giant rats to the north-west make a fine first fight. Click one to attack it." },
+ { type:'read', id:'styles', glow:'.tab[data-p="combat"]', pane:'combat',
+   text:"In the COMBAT panel each style trains a different skill \u2014 Stab for Attack, Slash for Strength, Block for Defence, and Shared for a little of each. Switch between them as you like." },
+ { type:'act', id:'loot', wait:'loot', lootArrow:true,
+   text:"Now finish your rat. It will drop some loot \u2014 walk over the glowing pile to pick it up." },
+ { type:'act', id:'bury', wait:'bury', glowItem:'bones',
+   text:"Monsters often drop BONES. Bury them for Prayer experience \u2014 click the bones in your backpack (they're highlighted) to bury them." },
+
+ /* --- gathering: fish, then woodcut, fire, cook, eat --- */
+ { type:'act', id:'fish', wait:'fish', arrow:[222,52], ring:[222,52],
+   text:"South of Sheldon there's a fishing spot. Net some shrimps there \u2014 fishing keeps you fed on your travels." },
+ { type:'act', id:'woodcut', wait:'woodcut', arrow:[194,76], ring:[194,76],
+   text:"See the tree by the Rectory? Chop it for logs." },
+ { type:'act', id:'fire', wait:'fire',
+   text:"Now use a tinderbox on your logs to light a fire \u2014 open your backpack and use the tinderbox on the logs." },
+ { type:'act', id:'cook', wait:'cook',
+   text:"Cook your shrimps on the fire, then eat one to heal. Nothing goes to waste out here." },
+
+ /* --- banking + the GE, then the send-off --- */
+ { type:'act', id:'bank', wait:'bank', arrow:[186,48], ring:[186,48],
+   text:"Head to the Grand Exchange. Bank your spare goods so death can't take them \u2014 and you can buy what you lack from the clerk there, too." },
+ { type:'act', id:'sendoff', wait:'done', arrow:[200,86], ring:[200,86], text:"You have the makings of an adventurer, {name}. But I must be honest \u2014 a grave shadow has fallen over Milville, and I need your help. Come and speak with me at the Rectory, and we shall begin." },
+];
+
+/* Detect a real pointer/keyboard machine vs a touch device, so the camera step gives the right
+   instructions (WASD/arrows + scroll on desktop; drag + pinch on mobile). */
+function _tutIsDesktop(){
+  try{ return !(('ontouchstart' in window) || (navigator.maxTouchPoints>0)) ||
+              (window.matchMedia && window.matchMedia('(pointer:fine)').matches); }
+  catch(_e){ return true; }
+}
+
+function tutStart(){ TUT.active=true; TUT.done=false; TUT.step=0; TUT.sub=0; tutGrantStarterKit(); tutPersist(); tutRender(); }
+/* THE STARTER KIT is granted the moment the tutorial begins (so the equip step has a weapon to
+   wield), but is idempotent and NEVER touches the quest state. In REDO mode (_tutRedo) it is skipped
+   entirely -- a returning player fights with whatever they already carry. */
+function tutGrantStarterKit(){
+  try{
+    if(TUT._redo) return;                          /* redo: use your own gear, grant nothing */
+    player.kit=true;
+    if(player.quests&&player.quests.m1){ player.quests.m1.g=player.quests.m1.g||0; }
+    if(!player._starterKit){
+      player._starterKit=1;
+      if(!player.equip||!player.equip.weapon){ qGrant('bronze_sword'); }
+      qGrant('bronze_kiteshield');
+      msg('Rector Matthews outfits you with a bronze sword and kiteshield.','#103a8c');
+    }
+    dirty=true;
+  }catch(_e){}
+}
+/* THE OLD 'A Warm Welcome' QUEST is completed only when the tutorial actually FINISHES (or is
+   skipped) -- not at the start. That is what opens the main questline ('Steady Hands'). Deferring it
+   here is the fix for "quest complete" flashing the instant the tutorial began. */
+function tutCompleteQuest(){
+  try{
+    player.kit=true;
+    const Q=player.quests;
+    if(Q&&Q.tut&&Q.tut.s<2){ Q.tut.s=2; Q.tut.k=Math.max(Q.tut.k||0,3);
+      if(typeof questDone==='function')questDone('A Warm Welcome'); }
+    if(typeof renderQuests==='function')renderQuests();
+    dirty=true;
+  }catch(_e){}
+}
+function tutSkip(){ TUT.active=false; TUT.done=true; TUT._redo=false; tutGrantStarterKit(); tutCompleteQuest(); tutPersist(); tutClearMarkers(); tutRender();
+  msg('Tutorial skipped. Speak with Rector Matthews at the Rectory to begin the main quest.','#7a6a4a'); }
+function tutFinish(){ TUT.active=false; TUT.done=true; TUT._redo=false; tutGrantStarterKit(); tutCompleteQuest(); tutPersist(); tutClearMarkers(); tutRender(); }
+
+/* advance when the current step's condition is met. `kind` is the event name for act/open/close. */
+function tutAdvance(kind){
+  if(!TUT.active) return;
+  const st=TUT_STEPS[TUT.step]; if(!st) return;
+  const need = (st.type==='read') ? 'continue' : st.wait;
+  if(need!==kind) return;
+  /* a nav-only replay ends the moment the interface tour is done -- it never spills into the
+     equip/combat/gathering steps. */
+  if(TUT._navOnly && st.id===_TUT_NAV_LAST){
+    TUT.active=false; TUT._navOnly=false; TUT._redo=false;
+    tutClearMarkers(); tutRender();
+    msg('That is the interface. Right-click Rector Matthews for the full tour any time.','#7a6a4a');
+    return;
+  }
+  TUT.step++; TUT.sub=0;
+  if(TUT.step>=TUT_STEPS.length){ tutFinish(); return; }
+  tutPersist(); tutClearMarkers(); tutRender();
+}
+/* go BACK one step so a player can re-see a step's arrows/highlights and redo its mechanic. */
+function tutBack(){
+  if(!TUT.active) return;
+  if(TUT.step<=0) return;
+  TUT.step--; TUT.sub=0;
+  tutPersist(); tutClearMarkers(); tutRender();
+}
+
+/* ---- the panel (dialogue-styled, lazily created) ---- */
+var _tutFaceInterval=null;
+function _tutBuildPanel(){
+  let el=document.getElementById('tutdlg');
+  if(el) return el;
+  el=document.createElement('div'); el.id='tutdlg';
+  el.innerHTML =
+    '<canvas id="tutface" width="100" height="100"></canvas>'+
+    '<div id="tutdlgmain">'+
+      '<div id="tutdlgname">Rector Matthews</div>'+
+      '<div id="tutdlgtext"></div>'+
+      '<div id="tutdlgbtns"></div>'+
+    '</div>';
+  /* live INSIDE the game view (like the real #dlgui dialogue), not fixed to the browser window,
+     so it sits within the UI where dialogue normally appears. */
+  const host=document.getElementById('viewwrap')||document.body;
+  host.appendChild(el);
+  return el;
+}
+/* keep the Rector's portrait animated (blink) so the panel feels alive like the real dialogue */
+function _tutStartFace(){
+  if(_tutFaceInterval) return;
+  const cv=document.getElementById('tutface'); if(!cv) return;
+  const g=cv.getContext('2d');
+  const cfg=(typeof FACES!=='undefined'&&FACES.matthews)?FACES.matthews:{skin:0xe2b58c,hair:0xeceae4,beard:0xe8e6e0,robe:0x5a1f2e,hairstyle:'full'};
+  const paint=()=>{ try{ drawFace(cfg,0,(Date.now()%3400)<150,g); }catch(_e){} };
+  paint();
+  _tutFaceInterval=setInterval(paint,200);
+}
+function _tutStopFace(){ if(_tutFaceInterval){ clearInterval(_tutFaceInterval); _tutFaceInterval=null; } }
+
+/* Is a blocking popup currently open? If so, the panel moves out of the way (top-centre) so it
+   never covers the popup or its close button. */
+function _tutPopupOpen(){
+  const ids=['wmap','encui','geui','bankui','luxui','fashionui','tradeui','duelui','capeui','sgui','explModal'];
+  for(const id of ids){ const e=document.getElementById(id);
+    if(e&&(e.classList.contains('on')||(e.style&&e.style.display&&e.style.display!=='none')))return true; }
+  return false;
+}
+/* Is the REAL NPC dialogue box open? While the Rector is genuinely speaking (the send-off), the
+   tutorial panel hides entirely so it doesn't double up with the actual dialogue. */
+function _tutRealDlgOpen(){
+  const e=document.getElementById('dlgui');
+  return !!(e&&e.style&&e.style.display&&e.style.display!=='none');
+}
+
+function tutRender(){
+  let el=document.getElementById('tutdlg');
+  if(!TUT.active){ if(el)el.style.display='none'; _tutStopFace(); tutClearMarkers(); return; }
+  el=_tutBuildPanel();
+  if(_tutRealDlgOpen()){ el.style.display='none'; return; }   /* the Rector is actually speaking */
+  el.style.display='flex';
+  el.classList.toggle('overpopup', _tutPopupOpen());
+  _tutStartFace();
+  const st=TUT_STEPS[TUT.step];
+  const nm=(player&&player.name)||'adventurer';
+  /* a step may carry a desktopText variant (e.g. the camera controls differ on PC vs touch) */
+  let body=st.text||'';
+  if(st.desktopText&&_tutIsDesktop())body=st.desktopText;
+  document.getElementById('tutdlgtext').textContent=body.replace(/\{name\}/g,nm);
+  const btns=document.getElementById('tutdlgbtns'); btns.innerHTML='';
+  /* BACK: on any step after the first, let the player redo the previous step (re-seeing its
+     arrows/highlights and its mechanic). Not shown on the welcome step. */
+  if(TUT.step>0&&!st.choice){
+    const bk=document.createElement('button'); bk.className='tutbtn tutback'; bk.textContent='\u25C0 Back';
+    bk.onclick=()=>{ audio&&audio(); tutBack(); };
+    btns.appendChild(bk);
+  }
+  const _replay=TUT._redo||TUT._navOnly;   /* only a REPLAY may be skipped; the new-player run is mandatory */
+  if(st.choice){
+    const b1=document.createElement('button'); b1.className='tutbtn'; b1.textContent='Show me around';
+    b1.onclick=()=>{ audio&&audio(); tutAdvance('continue'); };
+    btns.appendChild(b1);
+    if(_replay){ const b2=document.createElement('button'); b2.className='tutbtn tutskip'; b2.textContent='Skip';
+      b2.onclick=()=>{ audio&&audio(); tutSkip(); }; btns.appendChild(b2); }
+  } else if(st.type==='read'){
+    const b=document.createElement('button'); b.className='tutbtn'; b.textContent='Continue \u25B6';
+    b.onclick=()=>{ audio&&audio(); tutAdvance('continue'); };
+    btns.appendChild(b);
+    if(_replay){ const sk=document.createElement('button'); sk.className='tutbtn tutskip'; sk.textContent=TUT._navOnly?'Close':'Skip tutorial';
+      sk.onclick=()=>{ audio&&audio(); if(TUT._navOnly){ TUT.active=false;TUT._navOnly=false;TUT._redo=false;tutClearMarkers();tutRender(); } else tutSkip(); }; btns.appendChild(sk); }
+  } else {
+    /* act/open/close: no Continue (the action advances). A replay may bail; a new-player run may not. */
+    if(_replay){ const sk=document.createElement('button'); sk.className='tutbtn tutskip'; sk.textContent=TUT._navOnly?'Close':'Skip tutorial';
+      sk.onclick=()=>{ audio&&audio(); if(TUT._navOnly){ TUT.active=false;TUT._navOnly=false;TUT._redo=false;tutClearMarkers();tutRender(); } else tutSkip(); }; btns.appendChild(sk); }
+  }
+  /* a read/open step may want its pane opened so the glow lands on real content */
+  if(st.pane){ try{ _tutOpenPane(st.pane); }catch(_e){} }
+  tutPlaceMarkers();
+}
+/* open a side panel by data-p, mirroring the real tab click (without firing the tutorial hook) */
+function _tutOpenPane(p){
+  const tab=document.querySelector('.tab[data-p="'+p+'"]'); if(!tab)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('on'));
+  document.querySelectorAll('.panel').forEach(x=>x.classList.remove('on'));
+  tab.classList.add('on');
+  const pane=document.getElementById('panel-'+p); if(pane)pane.classList.add('on');
+  try{ if(p==='quests')renderQuests(); else if(p==='prayer')renderPrayers(); else if(p==='magic')renderSpellbook();
+       else if(p==='combat')renderCombat(); else if(p==='emotes'){renderEmotes(); if(typeof renderTitles==='function')renderTitles();}
+       else if(p==='friends')renderFriends(); }catch(_e){}
+}
+
+/* ---- markers: world arrow + ground ring (three.js) and UI arrow + glow (DOM) ---- */
+var _tutArrow=null, _tutRing=null, _tutUiArrow=null, _tutUiArrowTarget=null, _tutGlowEls=[], _tutLootHoming=false;
+function _tutMakeArrow(){
+  const g=new THREE.Group();
+  /* a big, bright, downward-pointing chevron on a stem — unmissable */
+  const cone=new THREE.Mesh(new THREE.ConeGeometry(0.7,1.5,4),
+    new THREE.MeshBasicMaterial({color:0xffe11a}));
+  cone.rotation.x=Math.PI; cone.position.y=0; g.add(cone);
+  const stem=new THREE.Mesh(new THREE.BoxGeometry(0.32,0.9,0.32),
+    new THREE.MeshBasicMaterial({color:0xffe11a}));
+  stem.position.y=1.15; g.add(stem);
+  /* a dark outline shell so it reads against bright ground */
+  const shell=new THREE.Mesh(new THREE.ConeGeometry(0.82,1.62,4),
+    new THREE.MeshBasicMaterial({color:0x6a4a00,side:THREE.BackSide}));
+  shell.rotation.x=Math.PI; shell.position.y=0; g.add(shell);
+  return g;
+}
+function _tutMakeRing(){
+  const g=new THREE.Mesh(new THREE.RingGeometry(0.85,1.25,32),
+    new THREE.MeshBasicMaterial({color:0xffe11a,side:THREE.DoubleSide,transparent:true,opacity:0.85}));
+  g.rotation.x=-Math.PI/2; return g;
+}
+function tutClearMarkers(){
+  if(_tutArrow){ try{scene.remove(_tutArrow);}catch(e){} _tutArrow=null; }
+  if(_tutRing){ try{scene.remove(_tutRing);}catch(e){} _tutRing=null; }
+  if(_tutUiArrow){ try{_tutUiArrow.remove();}catch(e){} _tutUiArrow=null; _tutUiArrowTarget=null; }
+  /* STRIP EVERY GLOW we added last step — this is the fix for the lingering highlights */
+  for(const e of _tutGlowEls){ try{ e.classList.remove('tutglow'); }catch(_e){} }
+  _tutGlowEls=[];
+}
+function tutPlaceMarkers(){
+  tutClearMarkers();
+  if(!TUT.active) return;
+  const st=TUT_STEPS[TUT.step]; if(!st) return;
+  /* a fixed world arrow/ring at a named tile */
+  if(st.arrow&&typeof scene!=='undefined'){ _tutArrow=_tutMakeArrow();
+    _tutArrow.position.set(st.arrow[0]+0.5, groundH(st.arrow[0]+0.5,st.arrow[1]+0.5)+2.6, st.arrow[1]+0.5);
+    scene.add(_tutArrow); }
+  if(st.ring&&typeof scene!=='undefined'){ _tutRing=_tutMakeRing();
+    _tutRing.position.set(st.ring[0]+0.5, groundH(st.ring[0]+0.5,st.ring[1]+0.5)+0.08, st.ring[1]+0.5);
+    scene.add(_tutRing); }
+  /* lootArrow: point at the NEAREST ground item (the rat's drop). Re-homed each frame in tutFrame
+     because the drop appears a moment after the kill. */
+  if(st.lootArrow&&typeof scene!=='undefined'){ _tutArrow=_tutMakeArrow(); _tutArrow.visible=false; scene.add(_tutArrow);
+    _tutRing=_tutMakeRing(); _tutRing.visible=false; scene.add(_tutRing); _tutLootHoming=true; }
+  else { _tutLootHoming=false; }
+  /* glow: a step can point at ANY interface element by selector (the tab, an orb, a close button) */
+  let tgt=null;
+  if(st.glow){ tgt=document.querySelector(st.glow); }
+  /* glowItem: highlight the inventory slot holding a given item id (e.g. bones to bury) */
+  if(!tgt&&st.glowItem&&typeof slotEls!=='undefined'&&player&&player.inv){
+    for(let i=0;i<player.inv.length;i++){ const sl=player.inv[i];
+      if(sl&&sl.id===st.glowItem){ tgt=slotEls[i]; break; } }
+    /* make sure the backpack is open so the slot is visible */
+    try{ _tutOpenPane('inv'); }catch(_e){}
+  }
+  if(tgt){ tgt.classList.add('tutglow'); _tutGlowEls.push(tgt);
+    const a=document.createElement('div'); a.id='tutuiarrow'; a.textContent='\u25B6';
+    document.body.appendChild(a); _tutUiArrow=a; _tutUiArrowTarget=tgt; _tutPositionUiArrow(); }
+}
+function _tutPositionUiArrow(){
+  if(!_tutUiArrow||!_tutUiArrowTarget) return;
+  const r=_tutUiArrowTarget.getBoundingClientRect();
+  if(r.width===0&&r.height===0){ _tutUiArrow.style.display='none'; return; }
+  _tutUiArrow.style.display='';
+  /* place the arrow just LEFT of the target, pointing right at it; if that's off-screen, go above */
+  let x=r.left-26, y=r.top+r.height/2-12;
+  if(x<4){ x=r.left+r.width/2-8; y=r.top-24; _tutUiArrow.textContent='\u25BC'; }
+  else { _tutUiArrow.textContent='\u25B6'; }
+  _tutUiArrow.style.left=x+'px'; _tutUiArrow.style.top=y+'px';
+}
+
+/* animated each frame from render(); also polls popup open/close for open/close steps */
+function tutFrame(now){
+  if(!TUT.active) return;
+  /* loot homing: keep the arrow+ring hovering over the nearest ground item near the player */
+  if(_tutLootHoming&&_tutArrow&&typeof ground!=='undefined'){
+    let best=null,bd=1e9;
+    for(const g of ground){ if((g.interior||null)!==curInterior())continue;
+      const d=Math.hypot(g.x-player.x,g.y-player.y); if(d<bd){bd=d;best=g;} }
+    if(best&&bd<14){
+      _tutArrow.visible=true; if(_tutRing)_tutRing.visible=true;
+      _tutArrow.position.x=best.x+0.5; _tutArrow.position.z=best.y+0.5;
+      if(_tutRing){ _tutRing.position.set(best.x+0.5, groundH(best.x+0.5,best.y+0.5)+0.08, best.y+0.5); }
+    } else { _tutArrow.visible=false; if(_tutRing)_tutRing.visible=false; }
+  }
+  if(_tutArrow&&_tutArrow.visible!==false){ _tutArrow.position.y = groundH(_tutArrow.position.x,_tutArrow.position.z)+2.6 + Math.sin(now*0.004)*0.18; _tutArrow.rotation.y=now*0.0022; }
+  if(_tutRing){ const s=1+Math.sin(now*0.006)*0.14; _tutRing.scale.set(s,s,s);
+    if(_tutRing.material)_tutRing.material.opacity=0.55+Math.sin(now*0.006)*0.32; }
+  if(_tutUiArrow){ _tutPositionUiArrow(); _tutUiArrow.style.opacity=(0.55+Math.sin(now*0.006)*0.4).toFixed(2); }
+  /* keep the panel's over-popup offset in sync as popups open/close; hide it while the Rector
+     is genuinely speaking (real dialogue box) so the two don't double up */
+  const el=document.getElementById('tutdlg');
+  if(el){
+    if(_tutRealDlgOpen()){ if(el.style.display!=='none')el.style.display='none'; }
+    else { if(el.style.display==='none')tutRender(); else el.classList.toggle('overpopup', _tutPopupOpen()); }
+  }
+  /* open/close steps complete by polling the popup's DOM state */
+  const st=TUT_STEPS[TUT.step]; if(!st)return;
+  if(st.type==='open'&&st.sel){ const e=document.querySelector(st.sel);
+    if(e&&(e.classList.contains('on')||(e.style&&e.style.display&&e.style.display!=='none')))tutAdvance(st.wait); }
+  else if(st.type==='close'&&st.sel){ const e=document.querySelector(st.sel);
+    if(e&&!(e.classList.contains('on')||(e.style&&e.style.display&&e.style.display!=='none')))tutAdvance(st.wait); }
+}
 function render(now){
   requestAnimationFrame(render);
   const dt=Math.min(50,now-prevT);prevT=now;
+  try{ tutFrame(now); }catch(_te){}
   const dts=dt/1000;
   if(player)player.playMs=(player.playMs||0)+dt;
   animateGeysers(now);
@@ -40293,10 +41205,14 @@ function fit(){
   fitQuestLog();
 }
 window.addEventListener('resize',fit);
+/* phones: re-fit after an orientation flip (the layout needs a beat to settle) and when iOS
+   shows/hides its toolbars (which changes the visual viewport without firing 'resize'). */
+window.addEventListener('orientationchange',()=>{ setTimeout(fit,60); setTimeout(fit,300); });
+if(window.visualViewport){ window.visualViewport.addEventListener('resize',fit); }
 fit();
 
 renderSkills();renderInv();renderEquip();updateOrb();
-drawUiIcon(document.getElementById('hpheart').getContext('2d'),'heart',14);
+/* the HP orb sprite carries its own heart now; the old hpheart canvas is gone */
 const statusEl=document.getElementById('savestatus');
 function backfillUnlocks(){
   if(!player.titleUnlocks)player.titleUnlocks={};
@@ -40329,6 +41245,18 @@ function enterGame(){
   msg('Welcome to Millville \u2014 the grounds of St. Paul\'s School, '+player.name+'.','#103a8c');
   msg('Arrow keys or WASD orbit the camera, scroll zooms, middle-drag looks around. Right-click anything for options.','#103a8c');
   if(typeof MP!=='undefined')MP.connect();
+  /* THE TUTORIAL kicks off HERE, and ONLY for a brand-new character. isNewGame is set true in
+     startNew() and false on import/continue, so an EXISTING character -- even one that never
+     finished a tutorial (an old save from before the tutorial existed, with !player.kit) -- never
+     has it forced on them. New characters get the mandatory (unskippable) run. */
+  try{ tutSyncFromPlayer();
+    if(isNewGame && !TUT.done){ TUT.active=true; TUT._redo=false; TUT._navOnly=false; TUT.step=TUT.step||0;
+      if(typeof tutGrantStarterKit==='function')tutGrantStarterKit(); }   /* the equip step needs the sword+shield */
+    else if(TUT.active && !TUT.done){ /* a new character who reloaded mid-tutorial: resume where they left off */
+      if(typeof tutGrantStarterKit==='function')tutGrantStarterKit(); }
+    else if(!isNewGame && !TUT.done && !TUT.active){ /* existing char who never had it: leave them be */ }
+    if(typeof tutRender==='function')tutRender();
+  }catch(_te){}
 }
 function fmtAgo(t){
   const d=Date.now()-t,m=60000,h=3600000,dy=86400000;
@@ -40351,6 +41279,7 @@ async function refreshSlots(){
     info.appendChild(nm);info.appendChild(mt);
     const load=document.createElement('button');load.className='sload';load.textContent='Play';
     load.addEventListener('click',async()=>{
+      isNewGame=false;
       const ok=await loadSlot(sl.id);
       if(!ok){player.name=sl.name;}
       enterGame();
@@ -40578,7 +41507,7 @@ const MP = (function () {
   function selfApp() { const c = player.cosmetic || {}; return { skin: 0xd9a066, shirt: (typeof c.shirt === 'number' ? c.shirt : 0x8a8148), pants: (typeof c.pants === 'number' ? c.pants : 0x2f5d33), hair: (typeof c.hair === 'number' ? c.hair : 0x6b4423), hairstyle: c.hairstyle || 'short', shirtStyle: c.shirtStyle || 'tee', pantsStyle: c.pantsStyle || 'trousers', boots: 0x5a3a26, belt: 0x6e2419 }; }
   function _isDefaultApp(a) { return !!a && a.shirt === 0x8a8148 && a.pants === 0x2f5d33 && a.hair === 0x6b4423 && (a.hairstyle || 'short') === 'short' && (a.shirtStyle || 'tee') === 'tee' && (a.pantsStyle || 'trousers') === 'trousers'; }
   function _resolveApp(uid, pa) { const i = huid(uid); if (pa && typeof pa === 'object' && !_isDefaultApp(pa)) return Object.assign({}, BASE_APP, pa); return Object.assign({}, BASE_APP, { shirt: SHIRTS[i % SHIRTS.length], hair: HAIRS[(i >> 3) % HAIRS.length] }); }
-  function refreshApp() { if (!active() || !conn) return; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
+  function refreshApp() { if (!active() || !conn) return; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); sendPetId(true); }
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
   const HAIRS  = [0x6b4423, 0x2c2620, 0x8a6a3a, 0x4a3a2a, 0xb08040, 0x5a3a26];
 
@@ -40665,7 +41594,7 @@ const MP = (function () {
       if (keepAlive) clearInterval(keepAlive);
       keepAlive = setInterval(function () {
         if (!conn) return;
-        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom(), pet: (typeof petCalled==='function'&&petCalled())||0 });
+        send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() });
         send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() });
       }, 2000);
       if (typeof console !== 'undefined') console.log('[Millville MP]', MP_VERSION, 'connected to', wsURL());
@@ -40696,13 +41625,26 @@ const MP = (function () {
 
   /* ---------------- outbound (called from frame) ---------------- */
   function pushOutbound(t) {
-    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom(), pet: (typeof petCalled==='function'&&petCalled())||0 }); }
+    if (now() - lastPos >= CFG.posMs) { lastPos = now(); send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); }
+    sendPetId(false);
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct || (a !== 'null' && t - _stKeep > 4000)) { lastGear = g; lastAct = a; _stKeep = t; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
     if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
   }
-  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom(), pet: (typeof petCalled==='function'&&petCalled())||0 }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
+  /* THE SERVER REBUILDS the 'pos' message it broadcasts (uid/name/x/y/h/run only), so any extra
+     field piggybacked onto it is silently dropped -- which is exactly why remote pets never showed.
+     'petid' is an unknown type, so the relay forwards it verbatim with the sender's uid stamped,
+     which means this needs NO worker redeploy. */
+  let _lastPetSent;
+  function sendPetId(force) {
+    if (!active() || !conn) return;
+    const id = (typeof petCalled === 'function' && petCalled()) || null;
+    if (!force && id === _lastPetSent) return;
+    _lastPetSent = id;
+    send({ t: 'petid', p: id });
+  }
+  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); sendPetId(true); }
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120), title: player.title || null }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
@@ -41457,7 +42399,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'welcome': if (Array.isArray(m.roster)) for (const p of m.roster) spawn(p); break;
       case 'join': spawn(m.p); if (m.p && m.p.uid !== player.uid) logSystem(((m.p.name) || 'A player') + ' has logged in.'); break;
       case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); duelReqIn.delete(m.uid); duelReqOut.delete(m.uid); if (duel.state !== 'none' && duel.oppUid === m.uid && typeof endDuel === 'function') endDuel('forfeit-win'); if (duelSetup.active && duelSetup.withUid === m.uid) { logSystem((duelSetup.withName || 'The other player') + ' left before the duel began.'); _duelSetupClose(); } despawn(m.uid); break; }
-      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h, in: m.in }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.pet = m.pet || null; r.last = Date.now(); } break; }
+      case 'petid': { const r = RP.get(m.uid); if (r) r.pet = m.p || null; break; }
+      case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h, in: m.in }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.last = Date.now(); } break; }
       case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); break;
       case 'hello': {
         if (!m.uid || m.uid === player.uid) break;
@@ -42782,7 +43725,7 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
 
   return {
     CFG, connect, disconnect, frame, drawOverlays, drawMiniMarkers, drawWorldMapMarkers, examineInfo, pingPresence, refreshApp,
-    onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled, sendOverheadPrayer,
+    onLocalChat, onLocalEmote, onNodeDepleted, onFireLit, onMobKilled, sendOverheadPrayer, sendPetId,
     buildGearRig, applyRemoteGear,
     isClaimedByOther, mobOverride, isOnline, onlineList, remoteAt, remoteHere: _remoteHere, addFriendByName, removeFriend,
     groupInviteByUid, groupInviteByName, groupCanInvite, groupAccept, groupDecline, groupLeave, groupSnapshot, isGroupmate, isGroupmateName,
