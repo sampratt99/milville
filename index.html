@@ -1392,8 +1392,11 @@ if ('serviceWorker' in navigator) {
     /* the tabs + active panel: panel no longer forces a tall min-height on a phone */
     .panel{ min-height:0; }
     #tabs, #tabsbot{ gap:4px; }
-    /* the active panel scrolls internally instead of pushing the page miles down */
-    .panel.on{ max-height:52dvh; overflow-y:auto; }
+    /* the active panel expands to its FULL height (all inventory slots visible) and the whole PAGE
+       scrolls to reach it -- so you can swipe anywhere, not just inside the panel box. */
+    .panel.on{ max-height:none; overflow:visible; }
+    /* room to scroll past the last row + safe area */
+    #frame{ padding-bottom:24px; }
   }
 
   /* ---- LANDSCAPE: fill the viewport height, game beside a scrollable rail ---- */
