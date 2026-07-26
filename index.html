@@ -6925,7 +6925,13 @@ function playerTick(){
     const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
     if(duel.state!=='fight'||!opp||!(typeof MP!=='undefined'&&MP.remoteHere&&MP.remoteHere(opp))){cancelAction();return;}
     const ox=Math.round(opp.px),oy=Math.round(opp.py);
-    if(Math.max(Math.abs(ox-player.x),Math.abs(oy-player.y))>1){
+    /* ** REACH MUST FOLLOW THE WEAPON, exactly as it does against mobs. ** This was hardcoded to 1, so a
+       bow or staff duellist was walked all the way into melee range before they were allowed to fire --
+       ranged and magic duels were unplayable. playerReach() is the same rule PvE uses (melee 1, bow
+       7/9 with longrange, staff 10). Under the "no weapons" duel rule it is fists, so reach 1. */
+    const _dNoWeap=duel.rules&&duel.rules.noWeapons;
+    const _dReach=_dNoWeap?1:((typeof playerReach==='function')?Math.max(1,playerReach()):1);
+    if(Math.max(Math.abs(ox-player.x),Math.abs(oy-player.y))>_dReach){
       if(!player.path.length||a.lx!==ox||a.ly!==oy){walkTo(ox,oy,'adj');a.lx=ox;a.ly=oy;}
       return;
     }
@@ -6938,17 +6944,33 @@ function playerTick(){
     const _dst=(typeof weaponStyle==='function')?weaponStyle(_dw):'melee';
     let _itv=2400,_max=1,_acc=0.15,_spell=null;
     if(_dst==='ranged'){
+      /* ** PVP MUST USE THE SAME AMMO RULE AS PVE. ** Ashfang (and any bow worn with a Quiver) conjures
+         its own arrows and carries NOTHING in the ammo slot -- but this path demanded a populated slot,
+         so an Ashfang duellist was told "You have no arrows left." and could never attack. It also
+         decremented the ammo slot unconditionally, which would have DESTROYED an equipped Quiver (a
+         multi-million-coin item) one duel shot at a time. Mirror playerTick's innate-arrow handling. */
       const _am=player.equip.ammo;
-      if(!_am||!(_am.qty>0)){player.nextAtk=nowC+1200;msg('You have no arrows left.','#9c1f1f');cancelAction();return;}
-      const _bt=(_dw&&_dw.maxArrow!==undefined)?_dw.maxArrow:99,_at=(ITEMS[_am.id]&&ITEMS[_am.id].equip&&ITEMS[_am.id].equip.arrowTier)||0;
-      if(_at>_bt){player.nextAtk=nowC+1200;msg('Your bow cannot fire arrows of that make.','#9c1f1f');cancelAction();return;}
+      const _dQuiver=!!(_am&&typeof isQuiver==='function'&&isQuiver(_am.id));
+      const _dInnate=!!((player.equip.weapon&&typeof isAshfang==='function'&&isAshfang(player.equip.weapon.id))||_dQuiver);
+      let _dArrowId=null;
+      if(!_dInnate){
+        if(!_am||!(_am.qty>0)){player.nextAtk=nowC+1200;msg('You have no arrows left.','#9c1f1f');cancelAction();return;}
+        const _bt=(_dw&&_dw.maxArrow!==undefined)?_dw.maxArrow:99,_at=(ITEMS[_am.id]&&ITEMS[_am.id].equip&&ITEMS[_am.id].equip.arrowTier)||0;
+        if(_at>_bt){player.nextAtk=nowC+1200;msg('Your bow cannot fire arrows of that make.','#9c1f1f');cancelAction();return;}
+        _dArrowId=_am.id;
+      } else {
+        _dArrowId=(player.equip.weapon&&isAshfang(player.equip.weapon.id))?'dragon_arrow':bestArrowId(_dw&&_dw.maxArrow);
+      }
       _itv=(player.style==='rapid')?2200:((_dw&&_dw.slow)?3000:2400);
       const _styR=player.style==='accurate'?3:0;
       const _effR=Math.floor(lvl('ranged')*(prayerMult('rng')));
-      _max=Math.max(1,Math.floor(0.5+(_effR+_styR+8)*(eqStat('rstr')+64)/640));
+      /* a conjured arrow is not in the ammo slot, so its strength must be added by hand (as in PvE) */
+      const _dArStr=_dInnate?((ITEMS[_dArrowId]&&ITEMS[_dArrowId].equip&&ITEMS[_dArrowId].equip.rstr)||0):0;
+      _max=Math.max(1,Math.floor(0.5+(_effR+_styR+8)*(eqStat('rstr')+_dArStr+64)/640));
       _acc=_duelAcc(_effR,eqStat('ratk'));
-      const _amTint=(ITEMS[_am.id].equip.tint!==undefined)?('#'+ITEMS[_am.id].equip.tint.toString(16).padStart(6,'0')):'#cfd6da';
-      _am.qty--;if(_am.qty<=0){player.equip.ammo=null;msg('You loose your last arrow.','#caa23a');}
+      const _amTint=_dInnate?'#ff7a2a':((ITEMS[_am.id].equip.tint!==undefined)?('#'+ITEMS[_am.id].equip.tint.toString(16).padStart(6,'0')):'#cfd6da');
+      /* consume ONLY real arrows -- never a conjured one, and never the Quiver itself */
+      if(!_dInnate&&_am){ _am.qty--; if(_am.qty<=0){player.equip.ammo=null;msg('You loose your last arrow.','#caa23a');} }
       if(typeof renderEquip==='function')renderEquip();
       if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,opp,'arrow',_amTint,300);
     }else if(_dst==='magic'){
@@ -7775,16 +7797,84 @@ function doSpecial(){
   if(typeof duel!=='undefined'&&duel.state==='fight'&&player.action&&player.action.type==='datk'){
     const opp=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;
     if(!opp)return;
-    if(Math.max(Math.abs(Math.round(opp.px)-player.x),Math.abs(Math.round(opp.py)-player.y))>1){msg('Close with your opponent first.','#e8801f');return;}
-    player.specCdT=nowS+(hasDelveItem('lightbearer')?30000:60000);   /* LIGHTBEARER: spec recharges twice as fast. Milville's spec is a 60s COOLDOWN, not an energy bar, so 2x regen = half the cooldown. */
+    /* ** ALL THREE SPEC FAMILIES NOW WORK IN A DUEL. ** This used to be melee-only: it demanded
+       adjacency and always sent st:'melee' with the melee max hit, so Ashfang's Cinderpoint Shot and
+       Cindermaw's Soulfire Brand fired as a melee Rend from melee range. Each family now mirrors its
+       PvE behaviour, with accuracy through _duelAcc(...,1.25) -- the same +25% spec roll PvE uses. */
+    const _noW=duel.rules&&duel.rules.noWeapons;
+    const _wid=player.equip.weapon.id;
+    const ox=Math.round(opp.px),oy=Math.round(opp.py);
+    const _dist=Math.max(Math.abs(ox-player.x),Math.abs(oy-player.y));
+    const _specCool=function(){
+      player.specCdT=nowS+(hasDelveItem('lightbearer')?30000:60000);   /* LIGHTBEARER: half the cooldown */
+      player.swingT=nowS; if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
+    };
+
+    /* ---- Cinderpoint Shot (Ashfang): a RANGED spec, loosed at bow range ---- */
+    if(!_noW&&typeof isAshfang==='function'&&isAshfang(_wid)){
+      let _rch=(we.range||7); if(player.style==='longrange')_rch+=2;
+      if(_dist>_rch){msg('Your opponent is out of range.','#e8801f');return;}
+      _specCool();
+      const _kin=(_wid==='ashfang_kindled');
+      const _effR=Math.floor(lvl('ranged')*(prayerMult('rng')));
+      const _styR=player.style==='accurate'?3:0;
+      const _arStr=(ITEMS.dragon_arrow&&ITEMS.dragon_arrow.equip.rstr)||60;   /* it conjures its own dragon arrow */
+      const _rmax=Math.floor(0.5+(_effR+_styR+8)*(eqStat('rstr')+_arStr+64)/640);
+      const _sa=_duelAcc(_effR,eqStat('ratk'),1.25);
+      const _mult=_kin?2.1:1.8;
+      const dm=(Math.random()<_sa)?rndi(Math.floor(_rmax*_mult*0.6),Math.max(1,Math.floor(_rmax*_mult))):0;
+      const _ft=300;
+      if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,opp,'arrow','#ff8a2a',_ft);
+      splats.push({ent:opp,dmg:dm,t:nowS+_ft});
+      if(typeof groundFire==='function')setTimeout(function(){try{groundFire(Math.round(opp.px),Math.round(opp.py));}catch(_e){}},_ft);
+      if(dm>(player.maxRangeHit||0)){player.maxRangeHit=dm;dirty=true;}
+      if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dm,'ranged','#ff8a2a',0);
+      msg('CINDERPOINT SHOT \u2014 a blazing shaft sears '+(duel.oppName||'your opponent')+'!','#ff6a2a');
+      sfx.hit&&sfx.hit(); player.combatT=nowS;
+      return;
+    }
+
+    /* ---- Soulfire Brand (Cindermaw): a MAGIC spec, cast at staff range; nuke + burn + armour mark ---- */
+    if(!_noW&&typeof isCindermaw==='function'&&isCindermaw(_wid)){
+      const _rch=(we.range||10);
+      if(_dist>_rch){msg('Your opponent is out of range.','#e8801f');return;}
+      const _sp=player.autocast&&SPELLS[player.autocast];
+      if(!_sp){msg('Choose a spell to autocast before branding.','#e8801f');return;}
+      _specCool();
+      const _ign=(_wid==='cindermaw_ignited');
+      const _bdur=_ign?15000:12000,_bdef=_ign?0.70:0.75,_bticks=_ign?6:5,_bint=_bdur/_bticks;
+      const _effM=Math.floor(lvl('magic')*(prayerMult('mag')));
+      const _sa=_duelAcc(_effM,eqStat('matk'),1.25);
+      const _base=Math.floor(_sp.pow*(1+eqStat('mdmg')/100));
+      const _dot=Math.max(2,Math.round(_base*0.25));
+      const dm=(Math.random()<_sa)?rndi(Math.floor(_base*1.2),Math.max(1,Math.floor(_base*1.8))):0;
+      const _ft=340;
+      if(typeof soulfireCast==='function'){try{soulfireCast(player.px+0.5,player.py+0.5,opp);}catch(_e){}}
+      if(typeof spawnProjectile==='function')spawnProjectile(player.px+0.5,player.py+0.5,opp,'magic','#ff6a2a',_ft);
+      splats.push({ent:opp,dmg:dm,t:nowS+_ft});
+      if(dm>(player.maxMagicHit||0)){player.maxMagicHit=dm;dirty=true;}
+      if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dm,'magic','#ff6a2a',0);
+      duel._brandUntil=nowS+_bdur; duel._brandDef=_bdef;      /* their armour reads softer while it burns */
+      _duelBrandBurn(duel.oppUid,_dot,_bticks,_bint);
+      msg('SOULFIRE BRAND \u2014 the ember sears its mark into '+(duel.oppName||'your opponent')+'!','#ff6a2a');
+      sfx.hit&&sfx.hit(); player.combatT=nowS;
+      return;
+    }
+
+    /* ---- Volcanic Rend (Emberbrand, or bare fists under "no weapons"): MELEE, two hits ---- */
+    if(_dist>1){msg('Close with your opponent first.','#e8801f');return;}
+    _specCool();
     const mxD=_duelMaxhit();
-    for(let h=0;h<2;h++){const dm=rndi(Math.floor(mxD*0.5),Math.max(1,Math.floor(mxD*1.5)));
+    /* PvE rolls spec accuracy per hit and a miss deals 0. The duel Rend used to be a GUARANTEED
+       double hit, which made it strictly stronger in PvP than PvE -- now it rolls like everything else. */
+    const _saM=_duelAcc(Math.floor(lvl('attack')*(prayerMult('atk'))),_noW?0:eqStat('atk'),1.25);
+    for(let h=0;h<2;h++){const dm=(Math.random()<_saM)?rndi(Math.floor(mxD*0.5),Math.max(1,Math.floor(mxD*1.5))):0;
       splats.push({ent:opp,dmg:dm,t:nowS+h*300});
       if(dm>(player.maxHit||0)){player.maxHit=dm;dirty=true;}
       if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dm,'melee',null,0);}
-    if(typeof groundFire==='function')groundFire(Math.round(opp.px),Math.round(opp.py));
+    if(typeof groundFire==='function')groundFire(ox,oy);
     msg('VOLCANIC REND \u2014 the blade erupts!','#ff6a2a');sfx.hit&&sfx.hit();
-    player.swingT=nowS;if(typeof MP!=='undefined'&&MP.sendSwing)MP.sendSwing();
+    player.combatT=nowS;
     return;
   }
   const a=player.action;const r=(a&&a.type==='attack'&&a.rat&&a.rat.alive)?a.rat:null;
@@ -8211,6 +8301,19 @@ function worldTick(){
   for(const r of rats)if(!r.alive&&r.minionOf===undefined&&now>=r.respawnAt){
     if(r.superior){r.superior=false;if(r._m&&r._m.group&&r._supScale!==undefined)r._m.group.scale.setScalar(r._supScale);}r.superiorRolled=false;
     if(r.kind==='master'||r.kind==='gorp')continue;
+    /* ** THE FIRST RECTOR IS NOT ON THE GENERIC RESPAWN CLOCK. ** His kind carries resp:600000, so this
+       loop revived him TEN MINUTES after a kill -- and revived him ALIVE AND NON-DORMANT, because
+       `dormant` was cleared when the enforcers fell and nothing here restores it. That is why he came
+       straight back swinging minutes after a group kill. The encounter is gated by the 4-HOUR
+       player.rectorKilledAt rule that rectorResetEncounter() owns (it also re-arms dormancy and the
+       Discipline Committee), so defer to it -- and only once the four hours are genuinely up. */
+    if(r.kind==='master_reforged'){
+      const _RRESP=4*3600*1000;
+      if(player.rectorKilledAt&&Date.now()-player.rectorKilledAt<_RRESP){ r.respawnAt=now+60000; continue; }
+      if(typeof rectorResetEncounter==='function')rectorResetEncounter();
+      else r.respawnAt=now+60000;
+      continue;
+    }
     if(r.locked)continue;
     if(MOB_KINDS[r.kind].boss){r.spec=null;r.specCd=undefined;r.enraged=false;r.enrageDone=false;r.blizzardDone=false;r.flying=false;r.flightDone=false;r._hopT=0;r.hopCd=undefined;}
     if(r.kind==='boar'){if(player.quests.chef.s!==5){r.respawnAt=now+4000;continue;}r.lvl=cmbLvl()+rndi(1,2);}
@@ -8789,7 +8892,8 @@ function petFeed(foodId){
   }
   player.pet.saved=player.pet.vig|0;
   /* if it had wandered off hungry, feeding brings it back out */
-  if(wasHungry && (player.pet.vig|0)>0){ _petBuild(id); msg(ITEMS[id].name+' bounds back to your side.','#2f6a1e'); }
+  if(wasHungry && (player.pet.vig|0)>0){ _petBuild(id); msg(ITEMS[id].name+' bounds back to your side.','#2f6a1e');
+    if(typeof MP!=='undefined'&&MP.sendPetId)MP.sendPetId(true); }   /* it is out again -- let peers see it */
   dirty=true; if(typeof renderInv==='function')renderInv(); if(typeof renderPetHud==='function')renderPetHud(); return true;
 }
 /* HUNGRY = out of vigour entirely (vig<=0). A hungry pet wanders off (no world model) and shows
@@ -8948,6 +9052,8 @@ function petTick(dt){
   if((player.pet.vig|0)<=0){   /* JUST went hungry: it wanders off to look for food, but stays yours */
     msg(ITEMS[id].name+' is hungry and wanders off to look for food. Feed it to bring it back.','#9a8a6a');
     if(_petGroup){ scene.remove(_petGroup); _petGroup=null; }
+    /* it just despawned on MY screen -- force the broadcast so it despawns on everyone else's too */
+    if(typeof MP!=='undefined'&&MP.sendPetId)MP.sendPetId(true);
     if(typeof renderPetHud==='function')renderPetHud(); return;
   }
   if(!_petGroup)_petBuild(id);
@@ -37073,8 +37179,13 @@ function rectorRewards(r){
   if(typeof addItem==='function'){addItem('warrant',EMBER_RECTOR_WARRANTS); if(!addItem('cinders',EMBER_RECTOR_CINDERS))dropGround(r.x,r.y,'cinders',EMBER_RECTOR_CINDERS); if(!addItem('coins',_rrg))dropGround(r.x,r.y,'coins',_rrg);}
   msg('The First Rector is undone at last. Hirschfeld logs '+EMBER_RECTOR_WARRANTS+' warrants, '+EMBER_RECTOR_CINDERS+' cinders and '+_rrg.toLocaleString()+' coins to your name.','#caa23a');
   if(typeof emberQuestComplete==='function')emberQuestComplete('rector');   /* first kill completes the Emberdeep quest line + grants the Emberbane title */
-  /* exactly ONE signet per kill -> solo: it's yours. (group: random member -- wired with the full reward system) */
-  if(!(typeof MP!=='undefined'&&MP.groupRectorSignet&&MP.groupRectorSignet(r.i))){ if(!addItem('rector_signet',1))dropGround(r.x,r.y,'rector_signet',1); msg('A First Rector\u2019s signet clatters loose from the wreck \u2014 one, and only one.','#e8b020'); }
+  /* exactly ONE signet per kill -> solo: it's yours. (group: random member -- wired with the full reward system)
+     ** The signet is the rarest drop in the game, so an MP fault must never be able to eat it. ** If the
+     group hand-off throws, or reports it did not place the signet, it falls to the killer here. */
+  let _sigDone=false;
+  try{ _sigDone = !!(typeof MP!=='undefined' && MP.groupRectorSignet && MP.groupRectorSignet(r.i)); }
+  catch(_se){ _sigDone=false; if(typeof console!=='undefined'&&console.warn)console.warn('signet handoff failed, awarding locally:',_se); }
+  if(!_sigDone){ if(!addItem('rector_signet',1))dropGround(r.x,r.y,'rector_signet',1); msg('A First Rector\u2019s signet clatters loose from the wreck \u2014 one, and only one.','#e8b020'); }
 }
 function rectorFightActive(){
   if(typeof _rectorBoss!=='undefined'&&_rectorBoss&&_rectorBoss.alive&&!_rectorBoss.dormant)return true;
@@ -37391,10 +37502,15 @@ function gotoVolcFloor(idx){
   if(idx===4){
     const _rectorLive = (typeof MP!=='undefined') && (((MP.rectorArenaPlayers&&MP.rectorArenaPlayers().length>0)) || (MP.rectorOwnedByGroupmate&&MP.rectorOwnedByGroupmate()));
     if(_rectorLive){
-      /* a groupmate is already in the arena -- JOIN the live fight; do NOT reset or respawn the Discipline Committee. Reflect the current (synced) boss + enforcer state instead of re-arming it. */
-      if(_rectorBoss){_rectorBoss.alive=true;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true;}
+      /* a groupmate is already in the arena -- JOIN the live fight; do NOT reset or respawn the Discipline Committee. Reflect the current (synced) boss + enforcer state instead of re-arming it.
+         ** But never resurrect a Rector who is inside his 4-hour down-time: this path set alive=true
+         unconditionally, so re-entering the Heart while a groupmate stood there put him back on his feet
+         minutes after he died. */
+      const _rectorDownNow = !!(player.rectorKilledAt && Date.now()-player.rectorKilledAt < 4*3600*1000);
+      if(_rectorBoss&&!_rectorDownNow){_rectorBoss.alive=true;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=true;}
+      else if(_rectorBoss&&_rectorDownNow){_rectorBoss.alive=false;_rectorBoss.dormant=true;if(_rectorBoss._m&&_rectorBoss._m.group)_rectorBoss._m.group.visible=false;}
       for(const gd of _rectorGuards){if(gd&&gd._m&&gd._m.group)gd._m.group.visible=!!gd.alive;}
-      if(_rectorBoss&&_rectorBoss.dormant&&!rats.some(z=>z.kind==='committee_guard'&&z.alive)){_rectorBoss.dormant=false;_rectorBoss.target=player;}
+      if(!_rectorDownNow&&_rectorBoss&&_rectorBoss.dormant&&!rats.some(z=>z.kind==='committee_guard'&&z.alive)){_rectorBoss.dormant=false;_rectorBoss.target=player;}
       if(!_volcSilentRestore)msg('You drop into the fray \u2014 the fight is already underway. Join in!','#ff6a2a');
     } else if(typeof rectorResetEncounter==='function'){ rectorResetEncounter();
       if(!_volcSilentRestore&&!_rectorSeen){_rectorSeen=true; msg('Hirschfeld\u2019s voice crackles in your ear: \u201cThis is the man himself. He crawled down here to heal \u2014 and the machine gave him back more than he lost. Put him down.\u201d','#caa23a');}
@@ -37722,7 +37838,29 @@ function _duelPitSeal(){   /* re-seal the pit (tiles always; heights only while 
 function _duelOppDef(){                    /* opponent's total armour bonus, derived from their synced gear ids */
   const o=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(duel.oppUid):null;let d=0;
   if(o&&o.gear)for(const k2 in o.gear){const g2=o.gear[k2];const it=g2&&ITEMS[g2];if(it&&it.equip&&it.equip.def)d+=it.equip.def;}
+  /* SOULFIRE BRAND (PvP): while the mark burns, their armour reads softer to me -- the same
+     defence multiplier the brand applies to a mob, translated to the duel's attacker-side rolls. */
+  if(typeof duel!=='undefined'&&duel._brandUntil&&performance.now()<duel._brandUntil)
+    d=Math.floor(d*(duel._brandDef||1));
   return d;
+}
+/* ---- Soulfire's burn, duel flavour ----------------------------------------------------------
+   A duel is attacker-authoritative (I roll the damage and send it as a phit), so the brand's
+   damage-over-time is ticked out from MY client for the life of the mark. It stops the instant the
+   duel ends or the opponent changes, so it can never bleed into the next fight. */
+var _duelBurnT=null;
+function _duelBurnClear(){ if(_duelBurnT){clearInterval(_duelBurnT);_duelBurnT=null;} }
+function _duelBrandBurn(uid,dot,ticks,intv){
+  _duelBurnClear();
+  let n=0;
+  _duelBurnT=setInterval(function(){
+    if(typeof duel==='undefined'||duel.state!=='fight'||duel.oppUid!==uid){ _duelBurnClear(); return; }
+    const o=(typeof MP!=='undefined'&&MP._RP)?MP._RP.get(uid):null;
+    if(!o){ _duelBurnClear(); return; }
+    splats.push({ent:o,dmg:dot,t:performance.now()});
+    if(typeof MP!=='undefined'&&MP.duelSwing)MP.duelSwing(dot,'magic','#ff6a2a',0);
+    if(++n>=ticks)_duelBurnClear();
+  },Math.max(400,intv|0));
 }
 function _duelMaxhit(){
   /* the real OSRS melee max-hit formula (same as overworld combat), noWeapons-aware */
@@ -37732,13 +37870,14 @@ function _duelMaxhit(){
   const strB=noW?0:eqStat('str');
   return Math.max(1,Math.floor(0.5+(effS+_sty+8)*(strB+64)/640));
 }
-function _duelAcc(sk,ab){
+function _duelAcc(sk,ab,mult){
   /* Stage 5: identical OSRS ratio to PvE. Attack roll = (effLvl+styleAtk+8)*(atkBonus+64) vs
-     defender roll = (oppDefLvl*prayer+defStyleBonus+9)*(oppArmour+64). Melee accurate +3 / controlled +1. */
+     defender roll = (oppDefLvl*prayer+defStyleBonus+9)*(oppArmour+64). Melee accurate +3 / controlled +1.
+     `mult` scales the ATTACK ROLL -- specials pass 1.25, exactly as PvE does in doSpecial. */
   const _dl=(((duel.oppLvls&&duel.oppLvls.def)||1)*(duel.oppDefPray?1.25:1));
   const _styA=(player.style==='stab'||player.style==='accurate')?3:player.style==='controlled'?1:0;   /* accurate style: 'stab' melee / 'accurate' ranged = +3 */
   const _oppStD=(duel.oppStyle==='defensive'||duel.oppStyle==='block'||duel.oppStyle==='longrange')?3:(duel.oppStyle==='controlled'?1:0);
-  const _A=(sk+_styA+8)*((ab||0)+64);
+  const _A=(sk+_styA+8)*((ab||0)+64)*(mult||1);
   const _D=(_dl+_oppStD+9)*(_duelOppDef()+64);
   return hitFromRolls(_A,_D);
 }
@@ -37816,6 +37955,9 @@ function endDuel(reason){
   if(duel.state==='none')return;
   const oppName=duel.oppName||'your opponent';
   duel.state='none';duel.flash=0;
+  /* stop any Soulfire burn and drop the brand, so neither can bleed into the next duel */
+  if(typeof _duelBurnClear==='function')_duelBurnClear();
+  duel._brandUntil=0; duel._brandDef=1;
   if(player.action&&player.action.type==='datk')cancelAction();
   _duelPitSeal();
   player.hp=maxHp();updateOrb();
@@ -38216,18 +38358,18 @@ function drawOverlay(now){
   for(let i=xpdrops.length-1;i>=0;i--){
     const d=xpdrops[i],age=now-d.t;
     if(age>1400){xpdrops.splice(i,1);continue;}
-    /* Old School shows XP drops near the TOP-CENTRE of the game view: the number rises a little
-       and fades, with the skill's icon to its left. (The movable side XP-counter is separate.) */
+    /* XP drops rise above the PLAYER'S HEAD (world-anchored), with the skill's icon beside the
+       number -- back where they were, not pinned to the top of the screen. */
+    const p=proj(player.px+0.5,groundH(player.px+0.5,player.py+0.5)+1.9,player.py+0.5);
+    if(!p)continue;
     octx.globalAlpha=age>1000?1-(age-1000)/400:1;
     octx.font='bold 13px RSFont,Verdana';octx.textAlign='left';octx.textBaseline='middle';
-    const rise=(age/1400)*18;                              /* drifts upward as it ages */
-    const cx=Math.round(ow*0.5);
-    const yy=Math.round(22 + (d.lane||0)*20 - rise);       /* stack simultaneous drops downward */
     const ic=_uiImg&&d.skill&&_uiImg[SKILL_META[d.skill]&&SKILL_META[d.skill].ui];
     const IS=16, gap=3;
     const tw=octx.measureText(d.txt).width;
     const total=IS+gap+tw;
-    const x0=Math.round(cx-total/2);                       /* centre the icon+number as a unit */
+    const yy=Math.round(p.y-14-(age/1400)*36-(d.lane||0)*15);   /* rise above the head + fade */
+    const x0=Math.round(p.x-total/2);                            /* centre the icon+number over the head */
     if(ic&&ic.width){
       const sm=octx.imageSmoothingEnabled; octx.imageSmoothingEnabled=false;
       octx.drawImage(ic,x0,yy-IS/2,IS,IS);
@@ -39565,6 +39707,19 @@ const _raidNpcGroups=new Set();
     (px.userData.o.def==='mathesexit'||px.userData.o.def==='quartermaster'||px.userData.o.def==='rector'||(px.userData.o.def&&px.userData.o.def.slice(0,4)==='dig_')));
   for(let i=proxies.length-1;i>=0;i--){const _mo=proxies[i].userData&&proxies[i].userData.o;
     if(_mo&&(_mo.def==='mathesexit'||_mo.def==='quartermaster'||_mo.def==='rector'||(_mo.def&&_mo.def.slice(0,4)==='dig_')))proxies.splice(i,1);}
+})();
+/* ** THE DELVE LOBBY SITS AT INTERIOR COORDS THAT NOW LIE IN THE DEEP WILDERNESS. ** Its models are
+   built VISIBLE, and ONLY enterRaid/exitRaid ever toggled them -- so a player who had not yet entered
+   the delve in this session walked past Mr. Ellison and the delve chests standing out on the open
+   wilderness near Pat's Peak. Hide the whole delve dressing once at boot; enter/exitRaid own it from
+   here. (Clicking them was already gated to curInterior()==='raid', so this was purely visual.) */
+(function _hideDelveDressingAtBoot(){
+  try{
+    if(typeof inRaid!=='undefined'&&inRaid)return;
+    for(const n of npcs)if(n&&n.interior==='raid'&&n._g)n._g.visible=false;
+    if(typeof RAID_CAVE_OBJS!=='undefined')
+      for(const o of objects)if(o&&o._m&&o._m.group&&RAID_CAVE_OBJS[o.def])o._m.group.visible=false;
+  }catch(_e){}
 })();
 /* ===== volcano lava geysers: occasional bursts of lava flung into the air ===== */
 const GEYSERS=[[15,120],[24,114],[28,123]];
@@ -41606,7 +41761,7 @@ const MP = (function () {
   function selfApp() { const c = player.cosmetic || {}; return { skin: 0xd9a066, shirt: (typeof c.shirt === 'number' ? c.shirt : 0x8a8148), pants: (typeof c.pants === 'number' ? c.pants : 0x2f5d33), hair: (typeof c.hair === 'number' ? c.hair : 0x6b4423), hairstyle: c.hairstyle || 'short', shirtStyle: c.shirtStyle || 'tee', pantsStyle: c.pantsStyle || 'trousers', boots: 0x5a3a26, belt: 0x6e2419 }; }
   function _isDefaultApp(a) { return !!a && a.shirt === 0x8a8148 && a.pants === 0x2f5d33 && a.hair === 0x6b4423 && (a.hairstyle || 'short') === 'short' && (a.shirtStyle || 'tee') === 'tee' && (a.pantsStyle || 'trousers') === 'trousers'; }
   function _resolveApp(uid, pa) { const i = huid(uid); if (pa && typeof pa === 'object' && !_isDefaultApp(pa)) return Object.assign({}, BASE_APP, pa); return Object.assign({}, BASE_APP, { shirt: SHIRTS[i % SHIRTS.length], hair: HAIRS[(i >> 3) % HAIRS.length] }); }
-  function refreshApp() { if (!active() || !conn) return; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); sendPetId(true); }
+  function refreshApp() { if (!active() || !conn) return; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp(), pet: _selfPetId() }); sendPetId(true); }
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
   const HAIRS  = [0x6b4423, 0x2c2620, 0x8a6a3a, 0x4a3a2a, 0xb08040, 0x5a3a26];
 
@@ -41694,7 +41849,7 @@ const MP = (function () {
       keepAlive = setInterval(function () {
         if (!conn) return;
         send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() });
-        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() });
+        send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp(), pet: _selfPetId() });
       }, 2000);
       if (typeof console !== 'undefined') console.log('[Millville MP]', MP_VERSION, 'connected to', wsURL());
       if (!_announced) { _announced = true; if (typeof logSystem === 'function') logSystem('Multiplayer connected (' + MP_VERSION + ').'); }
@@ -41729,21 +41884,26 @@ const MP = (function () {
     const g = JSON.stringify(selfGear()), a = JSON.stringify(selfAct());
     if (g !== lastGear || a !== lastAct || (a !== 'null' && t - _stKeep > 4000)) { lastGear = g; lastAct = a; _stKeep = t; send({ t: 'state', gear: JSON.parse(g), act: JSON.parse(a), hp: player.hp, mhp: maxHp() }); }
     if (t - lastPing > 10000) { lastPing = t; send({ t: 'ping' }); }
-    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); }
+    if (t - helloT > CFG.helloMs) { helloT = t; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp(), pet: _selfPetId() }); }
   }
   /* THE SERVER REBUILDS the 'pos' message it broadcasts (uid/name/x/y/h/run only), so any extra
      field piggybacked onto it is silently dropped -- which is exactly why remote pets never showed.
      'petid' is an unknown type, so the relay forwards it verbatim with the sender's uid stamped,
      which means this needs NO worker redeploy. */
   let _lastPetSent;
+  /* ** WHAT COUNTS AS "MY PET IS OUT". ** The hunger rework split petCalled() (in the slot, hungry or
+     not) from petOut() (fed, and actually trotting behind you). This broadcast used petCalled(), so a
+     HUNGRY pet vanished from your own screen while every peer still saw it following you. petOut() is
+     the one that matches what is rendered locally. */
+  function _selfPetId() { return (typeof petOut === 'function' && petOut()) || null; }
   function sendPetId(force) {
     if (!active() || !conn) return;
-    const id = (typeof petCalled === 'function' && petCalled()) || null;
+    const id = _selfPetId();
     if (!force && id === _lastPetSent) return;
     _lastPetSent = id;
     send({ t: 'petid', p: id });
   }
-  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp() }); sendPetId(true); }
+  function pingPresence() { if (!active() || !conn) return; send({ t: 'pos', x: player.x, y: player.y, h: player.heading, run: !!player.run, in: _mpRoom() }); send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp(), pet: _selfPetId() }); sendPetId(true); }
   function onLocalChat(text) { if (!active()) return; send({ t: 'chat', text: String(text || '').slice(0, 120), title: player.title || null }); }
   function onLocalEmote(id) { if (!active()) return; send({ t: 'emote', e: String(id || '') }); }
   function onNodeDepleted(o, rs) { if (!active() || !conn || !o) return; send({ t: 'node', x: o.x, y: o.y, df: o.def, rs: rs | 0 }); }
@@ -42456,12 +42616,21 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     const rig = makeHumanoid(app);
     rig.g.visible = false; scene.add(rig.g);
     const gearRig = buildGearRig(rig);
-    RP.set(p.uid, { uid: p.uid, name: p.name || '?', title: p.title || null, rig, gearRig, _gearKey: '', x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, in: p.in || null, moving: false, tint: tint, app: (p.app || null), _appKey: JSON.stringify(p.app || null), last: Date.now() });
+    RP.set(p.uid, { uid: p.uid, name: p.name || '?', title: p.title || null, rig, gearRig, _gearKey: '', x: p.x || 0, y: p.y || 0, px: p.x || 0, py: p.y || 0, h: p.h || 0, run: false, gear: p.gear || null, act: p.act || null, hp: p.hp || 0, mhp: p.mhp || 0, in: p.in || null, moving: false, tint: tint, app: (p.app || null), _appKey: JSON.stringify(p.app || null), pet: (p.pet || null), last: Date.now() });
   }
   function absorb(uid, p) {
     const r = RP.get(uid); if (!r) return;
     if (p.name) r.name = p.name;
     if (p.title !== undefined) r.title = p.title || null;
+    /* ** THE PET MUST RIDE THE PRESENCE BEACON. ** 'petid' is a one-shot sent only when the pet id
+       CHANGES, and its handler silently drops the message when no remote-player entry exists yet:
+           const r = RP.get(m.uid); if (r) r.pet = ...       <- no else, no retry
+       So if someone equipped their pet BEFORE you ever saw them (they logged in first, or you walked
+       into range later), you never learned about it: their client never re-sends (the id has not
+       changed) and 'hello' carried no pet field. That is why other players' pets were invisible.
+       'hello' repeats on a timer and is what creates/refreshes this entry, so carrying the pet here
+       makes it self-healing -- a late joiner picks it up on the very next beacon. */
+    if (p.pet !== undefined) r.pet = p.pet || null;
     if (p.gear !== undefined) r.gear = p.gear;
     if (p.act !== undefined) r.act = p.act;
     if (p.hp !== undefined) r.hp = p.hp;
@@ -43563,9 +43732,17 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
     }
     /* and any groupmate we can see, so a disconnect at the moment of the kill cannot silently shrink
        the pool to one */
-    for (const g of (groupSnapshot() || [])) {
+    /* ** groupSnapshot() RETURNS AN OBJECT, NOT AN ARRAY. ** Iterating it with for..of threw
+       "is not iterable", and that throw landed BEFORE a winner was ever picked -- so the group's
+       one signet went to NOBODY. (Both members still got coins/cinders/warrants because those are
+       awarded earlier in rectorRewards/groupCoLoot, which is exactly the symptom Sam saw.)
+       Walk the roster ARRAY, and only consider players we can still SEE, so the roll can never
+       land on a member who has already disconnected and vanish again. */
+    const _snap = groupSnapshot();
+    for (const g of ((_snap && _snap.roster) || [])) {
       const id = g && g.uid;
-      if (id && parts.indexOf(id) < 0) parts.push(id);
+      if (!id || parts.indexOf(id) >= 0) continue;
+      if (id === player.uid || RP.has(id)) parts.push(id);
     }
     if (!parts.includes(player.uid)) parts.push(player.uid);
     const winner = parts[Math.floor(Math.random() * parts.length)];
