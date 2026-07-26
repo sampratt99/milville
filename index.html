@@ -1369,17 +1369,26 @@ if ('serviceWorker' in navigator) {
     #chattabs{ flex-wrap:wrap; }
 
     #side{ width:100%; flex:1 1 auto; flex-direction:column; gap:6px; }
-    /* the minimap stone becomes a horizontal status bar: map on the left, orbs to its right */
-    #minimapwrap{ justify-content:flex-start; align-items:center; gap:10px;
-      padding:8px; flex-wrap:wrap; }
-    #mmcore{ width:120px; height:120px; }
-    #minimap{ width:120px; height:120px; }
-    /* on a phone the orbs move to a horizontal strip beside the map; drop the edge-anchoring */
-    #orbs{ position:static; flex-direction:row; flex-wrap:wrap; gap:8px 12px; align-items:center;
-      margin-left:6px; left:auto; top:auto; }
-    #compass{ top:-6px; left:-6px; width:34px; height:34px; }
-    #compassN{ width:34px; height:34px; }
-    #mapglobe{ bottom:-4px; right:-4px; width:34px; height:34px; }
+    /* the minimap stone becomes a status bar. The orbs are trapped inside the fixed #mmcore box, so
+       on a phone we GROW that box (map on top, an orb strip across the bottom) and clip the wrap,
+       so the orbs can never spill down onto the tabs/inventory. */
+    #minimapwrap{ justify-content:center; align-items:flex-start;
+      padding:8px; flex-wrap:nowrap; overflow:hidden; }
+    #mmcore{ width:100%; max-width:340px; height:168px; overflow:hidden; flex:0 0 auto; }
+    #minimap{ position:absolute; left:50%; top:0; transform:translateX(-50%); width:120px; height:120px; }
+    /* orbs: an absolute horizontal strip pinned across the BOTTOM of the (now taller) map box */
+    #orbs{ position:absolute; left:0; right:0; top:126px; z-index:5;
+      display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center;
+      gap:4px 14px; align-items:center; margin:0; }
+    .orbrow{ flex:0 0 auto; }
+    .orblabel{ margin-right:-11px; }   /* keep the pill/disc overlap within the strip */
+    #xporb{ margin:0; order:99; }       /* push the XP pill to the end of the strip */
+    /* the compass + globe stay pinned to the small map's corners (map is centred, 120px wide) */
+    #compass{ top:-4px; left:calc(50% - 60px - 4px); width:32px; height:32px; }
+    #compassN{ width:32px; height:32px; }
+    #mapglobe{ top:96px; left:calc(50% + 60px - 28px); bottom:auto; right:auto; width:32px; height:32px; }
+    /* the prayer/buff/pet chips: tuck against the centred map's right edge */
+    #activeprayers,#activebuffs,#pethud{ right:auto; left:calc(50% + 44px); }
     /* the tabs + active panel: panel no longer forces a tall min-height on a phone */
     .panel{ min-height:0; }
     #tabs, #tabsbot{ gap:4px; }
@@ -1397,11 +1406,19 @@ if ('serviceWorker' in navigator) {
     #viewwrap{ aspect-ratio:auto; height:calc(100dvh - 118px); min-height:180px; }
     #chat{ height:64px; }
     #side{ width:210px; flex:0 0 210px; overflow-y:auto; max-height:100dvh; }
-    #mmcore{ width:150px; height:150px; }
-    #minimap{ width:150px; height:150px; }
-    #compass{ width:34px; height:34px; top:-6px; left:-6px; }
-    #compassN{ width:34px; height:34px; }
-    #mapglobe{ width:34px; height:34px; bottom:-4px; right:-4px; }
+    #minimapwrap{ justify-content:center; align-items:flex-start; overflow:hidden; padding:6px; }
+    #mmcore{ width:100%; max-width:200px; height:210px; overflow:hidden; }
+    #minimap{ position:absolute; left:50%; top:0; transform:translateX(-50%); width:150px; height:150px; }
+    #compass{ width:32px; height:32px; top:-4px; left:calc(50% - 75px - 4px); }
+    #compassN{ width:32px; height:32px; }
+    #mapglobe{ width:32px; height:32px; top:122px; left:calc(50% + 75px - 30px); bottom:auto; right:auto; }
+    #orbs{ position:absolute; left:0; right:0; top:156px; z-index:5;
+      display:flex; flex-direction:row; flex-wrap:wrap; justify-content:center;
+      gap:4px 12px; align-items:center; margin:0; }
+    .orbrow{ flex:0 0 auto; }
+    .orblabel{ margin-right:-11px; }
+    #xporb{ margin:0; order:99; }
+    #activeprayers,#activebuffs,#pethud{ right:auto; left:calc(50% + 60px); }
     .panel{ min-height:0; }
     .panel.on{ max-height:none; }
   }
@@ -5437,7 +5454,7 @@ const SKILL_INFO={
   smithing:{d:'Turn ore into bars, and bars into weapons and armour.',t:'Smelt ore at a furnace, then hammer bars on an anvil. Higher Smithing makes better metal gear.'},
   fishing:{d:'Catch fish to cook and eat \u2014 your main food supply.',t:'Click a fishing spot with the right tool. Higher levels catch better fish.'},
   cooking:{d:'Cook raw food into healing meals.',t:'Use raw food on a fire or range. Higher Cooking burns food less and unlocks better meals.'},
-  firemaking:{d:'Light logs for fires, used in Cooking.',t:'Use a tinderbox on logs. Higher levels light better logs.'},
+  firemaking:{d:'Light logs for fires, used in Cooking.',t:'Click logs in your backpack to light them \u2014 no tinderbox needed. Higher levels light better logs.'},
   agility:{d:'Improves run energy and unlocks shortcuts.',t:'Train at the <b>ropes course</b> near the western edge of the Wilderness. Higher Agility gives more run energy, and at <b>level 35</b> you can enter the <b>lava volcano</b> to reach the Emberdeep zone.'}
 };
 const GUIDE_PAGES=[
@@ -29772,6 +29789,7 @@ function openShop(){shopOpen=true;geFilter='All';geQuery='';const _gs=document.g
   const _ve=document.getElementById('geview-exchange'),_vm=document.getElementById('geview-market'); if(_ve)_ve.style.display=''; if(_vm)_vm.style.display='none';
   const _mst=document.getElementById('mktsetup'); if(_mst)_mst.style.display='none';
   renderShop();renderShopCoins();geEl.classList.add('on');
+  if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('geopen');
   msg('Clerk: Welcome to the Grand Exchange. Buying and selling!','#103a8c');}
 function closeShop(){shopOpen=false;geEl.classList.remove('on');}
 
@@ -39661,19 +39679,25 @@ var TUT_STEPS = [
    text:"Monsters often drop BONES. Bury them for Prayer experience \u2014 click the bones in your backpack (they're highlighted) to bury them." },
 
  /* --- gathering: fish, then woodcut, fire, cook, eat --- */
- { type:'act', id:'fish', wait:'fish', arrow:[222,52], ring:[222,52],
-   text:"South of Sheldon there's a fishing spot. Net some shrimps there \u2014 fishing keeps you fed on your travels." },
- { type:'act', id:'woodcut', wait:'woodcut', arrow:[194,76], ring:[194,76],
-   text:"See the tree by the Rectory? Chop it for logs." },
- { type:'act', id:'fire', wait:'fire',
-   text:"Now use a tinderbox on your logs to light a fire \u2014 open your backpack and use the tinderbox on the logs." },
- { type:'act', id:'cook', wait:'cook',
-   text:"Cook your shrimps on the fire, then eat one to heal. Nothing goes to waste out here." },
+ { type:'act', id:'fish', wait:'fish', arrow:[222,52], ring:[222,52], path:[222,52],
+   text:"Let's gather some food. Follow the dashed trail to the FISHING SPOT by the water, then click it to net some shrimps \u2014 fishing keeps you fed on your travels." },
+ { type:'act', id:'woodcut', wait:'woodcut', arrow:[176,46], ring:[176,46], path:[176,46],
+   text:"Now follow the trail to the TREE beside the Grand Exchange and click it to chop some logs. (You'll head into the Exchange itself in a moment.)" },
+ { type:'act', id:'fire', wait:'fire', glowItem:'logs',
+   text:"Time for a fire. Open your BACKPACK and CLICK your logs to light them \u2014 no tinderbox needed here. Stand clear and they'll catch." },
+ { type:'act', id:'cook', wait:'cook', fireHoming:true, ring:[176,46],
+   text:"Now CLICK the fire (it's ringed) and cook your raw shrimps on it. Then click a cooked shrimp in your backpack to EAT it and heal. Nothing goes to waste out here." },
 
  /* --- banking + the GE, then the send-off --- */
- { type:'act', id:'bank', wait:'bank', arrow:[186,48], ring:[186,48],
-   text:"Head to the Grand Exchange. Bank your spare goods so death can't take them \u2014 and you can buy what you lack from the clerk there, too." },
- { type:'act', id:'sendoff', wait:'done', arrow:[200,86], ring:[200,86], text:"You have the makings of an adventurer, {name}. But I must be honest \u2014 a grave shadow has fallen over Milville, and I need your help. Come and speak with me at the Rectory, and we shall begin." },
+ { type:'act', id:'bank', wait:'bank', arrow:[184,48], ring:[184,48], path:[184,48],
+   text:"You're right by the Grand Exchange now. Follow the trail to the BANK chest and click it to open your bank. Your BANK safely stores items you're not carrying \u2014 deposit your spare goods here before any dangerous trip, because you can lose what you're carrying if you die." },
+ { type:'read', id:'bank2', glow:'#bankui',
+   text:"This is your bank. Drag or click an item to DEPOSIT it; click it in the bank to withdraw it again. Everything in here is safe no matter what happens to you out in the world. Close the bank when you're done." },
+ { type:'act', id:'ge', wait:'geopen', arrow:[186,48], ring:[186,48], path:[186,48],
+   text:"Right beside the bank is the GRAND EXCHANGE clerk. Click the clerk to open the Exchange \u2014 a marketplace where you can BUY almost any item you need and SELL your loot for coins at fair prices." },
+ { type:'read', id:'ge2', glow:'#geui',
+   text:"Search for an item, then click to BUY or SELL. This is the fastest way to gear up or turn spare loot into coins. When you're ready, close the Exchange." },
+ { type:'act', id:'sendoff', wait:'done', arrow:[200,86], ring:[200,86], path:[200,86], text:"You have the makings of an adventurer, {name}. But I must be honest \u2014 a grave shadow has fallen over Milville, and I need your help. Follow the trail back to the Rectory and speak with me, and we shall begin." },
 ];
 
 /* Detect a real pointer/keyboard machine vs a touch device, so the camera step gives the right
@@ -39826,6 +39850,15 @@ function tutRender(){
     btns.appendChild(b);
     if(_replay){ const sk=document.createElement('button'); sk.className='tutbtn tutskip'; sk.textContent=TUT._navOnly?'Close':'Skip tutorial';
       sk.onclick=()=>{ audio&&audio(); if(TUT._navOnly){ TUT.active=false;TUT._navOnly=false;TUT._redo=false;tutClearMarkers();tutRender(); } else tutSkip(); }; btns.appendChild(sk); }
+  } else if(TUT._navOnly && (st.type==='open'||st.type==='close')){
+    /* interface-tour REPLAY: don't force the player to actually open/close the world map, wiki and
+       log -- a Continue reads straight through them, so the replay covers every tab and the minimap. */
+    const b=document.createElement('button'); b.className='tutbtn'; b.textContent='Continue \u25B6';
+    b.onclick=()=>{ audio&&audio(); tutAdvance(st.wait); };
+    btns.appendChild(b);
+    const sk=document.createElement('button'); sk.className='tutbtn tutskip'; sk.textContent='Close';
+    sk.onclick=()=>{ audio&&audio(); TUT.active=false;TUT._navOnly=false;TUT._redo=false;tutClearMarkers();tutRender(); };
+    btns.appendChild(sk);
   } else {
     /* act/open/close: no Continue (the action advances). A replay may bail; a new-player run may not. */
     if(_replay){ const sk=document.createElement('button'); sk.className='tutbtn tutskip'; sk.textContent=TUT._navOnly?'Close':'Skip tutorial';
@@ -39849,6 +39882,45 @@ function _tutOpenPane(p){
 
 /* ---- markers: world arrow + ground ring (three.js) and UI arrow + glow (DOM) ---- */
 var _tutArrow=null, _tutRing=null, _tutUiArrow=null, _tutUiArrowTarget=null, _tutGlowEls=[], _tutLootHoming=false;
+/* the treasure-map dashed PATH: a trail of small chevron/dash meshes tracing the walking route
+   from the player to the step's destination tile, rebuilt as the player moves so it always leads
+   onward from where they actually are. */
+var _tutPath=null, _tutPathTarget=null, _tutPathAt=0;
+function _tutMakeDash(){
+  /* a flat diamond dash that sits just above the ground, treasure-map style */
+  const g=new THREE.Mesh(new THREE.PlaneGeometry(0.42,0.42),
+    new THREE.MeshBasicMaterial({color:0xffe11a,transparent:true,opacity:0.9,side:THREE.DoubleSide,depthWrite:false}));
+  g.rotation.x=-Math.PI/2; g.rotation.z=Math.PI/4;
+  return g;
+}
+function _tutBuildPath(tx,ty){
+  _tutClearPath();
+  if(typeof scene==='undefined'||typeof bfs!=='function'||!player) return;
+  /* route from the player to a walkable tile next to the target */
+  let targets;
+  try{ targets = (typeof blockedStrict==='function'&&blockedStrict(tx,ty)) ? adjTargets(tx,ty) : [[tx,ty]]; }
+  catch(_e){ targets=[[tx,ty]]; }
+  if(!targets||!targets.length) return;
+  let route=null; try{ route=bfs(player.x,player.y,targets); }catch(_e){ route=null; }
+  if(!route||!route.length) return;
+  _tutPath=new THREE.Group();
+  /* lay a dash every ~0.9 tiles along the route so the trail reads as a dashed line */
+  let acc=0, px=player.x+0.5, pz=player.y+0.5;
+  const STEP=0.9;
+  for(const [cx,cy] of route){
+    const nx=cx+0.5, nz=cy+0.5;
+    const seg=Math.hypot(nx-px,nz-pz);
+    let t=STEP-acc;
+    while(t<=seg){
+      const fx=px+(nx-px)*(t/seg), fz=pz+(nz-pz)*(t/seg);
+      const d=_tutMakeDash(); d.position.set(fx,groundH(fx,fz)+0.06,fz);
+      _tutPath.add(d); t+=STEP;
+    }
+    acc=(acc+seg)%STEP; px=nx; pz=nz;
+  }
+  scene.add(_tutPath);
+}
+function _tutClearPath(){ if(_tutPath){ try{scene.remove(_tutPath);}catch(e){} _tutPath=null; } }
 function _tutMakeArrow(){
   const g=new THREE.Group();
   /* a big, bright, downward-pointing chevron on a stem — unmissable */
@@ -39872,6 +39944,7 @@ function _tutMakeRing(){
 function tutClearMarkers(){
   if(_tutArrow){ try{scene.remove(_tutArrow);}catch(e){} _tutArrow=null; }
   if(_tutRing){ try{scene.remove(_tutRing);}catch(e){} _tutRing=null; }
+  _tutClearPath(); _tutPathTarget=null;
   if(_tutUiArrow){ try{_tutUiArrow.remove();}catch(e){} _tutUiArrow=null; _tutUiArrowTarget=null; }
   /* STRIP EVERY GLOW we added last step — this is the fix for the lingering highlights */
   for(const e of _tutGlowEls){ try{ e.classList.remove('tutglow'); }catch(_e){} }
@@ -39888,6 +39961,11 @@ function tutPlaceMarkers(){
   if(st.ring&&typeof scene!=='undefined'){ _tutRing=_tutMakeRing();
     _tutRing.position.set(st.ring[0]+0.5, groundH(st.ring[0]+0.5,st.ring[1]+0.5)+0.08, st.ring[1]+0.5);
     scene.add(_tutRing); }
+  /* the treasure-map dashed trail: a step names its destination with `path:[x,y]` (or falls back to
+     its `arrow` tile). tutFrame keeps it rebuilt from the player's current position. */
+  const _dest = st.path || st.arrow || null;
+  if(_dest){ _tutPathTarget=_dest.slice(0,2); _tutPathAt=0; _tutBuildPath(_tutPathTarget[0],_tutPathTarget[1]); }
+  else { _tutPathTarget=null; }
   /* lootArrow: point at the NEAREST ground item (the rat's drop). Re-homed each frame in tutFrame
      because the drop appears a moment after the kill. */
   if(st.lootArrow&&typeof scene!=='undefined'){ _tutArrow=_tutMakeArrow(); _tutArrow.visible=false; scene.add(_tutArrow);
@@ -39920,6 +39998,7 @@ function _tutPositionUiArrow(){
 }
 
 /* animated each frame from render(); also polls popup open/close for open/close steps */
+function st_fireHoming(){ try{ const st=TUT_STEPS[TUT.step]; return !!(st&&st.fireHoming&&TUT.active); }catch(_e){ return false; } }
 function tutFrame(now){
   if(!TUT.active) return;
   /* loot homing: keep the arrow+ring hovering over the nearest ground item near the player */
@@ -39934,6 +40013,23 @@ function tutFrame(now){
     } else { _tutArrow.visible=false; if(_tutRing)_tutRing.visible=false; }
   }
   if(_tutArrow&&_tutArrow.visible!==false){ _tutArrow.position.y = groundH(_tutArrow.position.x,_tutArrow.position.z)+2.6 + Math.sin(now*0.004)*0.18; _tutArrow.rotation.y=now*0.0022; }
+  /* rebuild the dashed trail from where the player now stands (only when they've moved a tile, so
+     it isn't rebuilt every frame), and shimmer it so it reads as a live "go this way" trail. */
+  if(_tutPathTarget&&player){
+    const moved=Math.hypot((player.x)-(_tutPathAt.x||player.x),(player.y)-(_tutPathAt.y||player.y));
+    if(!_tutPathAt||_tutPathAt.x===undefined||moved>=1){
+      _tutBuildPath(_tutPathTarget[0],_tutPathTarget[1]); _tutPathAt={x:player.x,y:player.y};
+    }
+    if(_tutPath){ let i=0; for(const d of _tutPath.children){ if(d.material)d.material.opacity=0.55+Math.sin(now*0.005 - i*0.6)*0.4; i++; } }
+  }
+  /* for gathering steps that end at a fire (cook), keep the ring hovering on the nearest lit fire */
+  if(st_fireHoming()&&_tutRing&&typeof objects!=='undefined'){
+    let best=null,bd=1e9;
+    for(const o of objects){ if(o.def!=='fire'||o.alive===false)continue;
+      const d=Math.hypot(o.x-player.x,o.y-player.y); if(d<bd){bd=d;best=o;} }
+    if(best&&bd<16){ _tutRing.visible=true; _tutRing.position.set(best.x+0.5,groundH(best.x+0.5,best.y+0.5)+0.08,best.y+0.5);
+      if(_tutArrow){ _tutArrow.visible=true; _tutArrow.position.x=best.x+0.5; _tutArrow.position.z=best.y+0.5; } }
+  }
   if(_tutRing){ const s=1+Math.sin(now*0.006)*0.14; _tutRing.scale.set(s,s,s);
     if(_tutRing.material)_tutRing.material.opacity=0.55+Math.sin(now*0.006)*0.32; }
   if(_tutUiArrow){ _tutPositionUiArrow(); _tutUiArrow.style.opacity=(0.55+Math.sin(now*0.006)*0.4).toFixed(2); }
