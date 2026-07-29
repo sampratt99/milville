@@ -915,6 +915,14 @@ if ('serviceWorker' in navigator) {
   #guidebody .gcard{background:rgba(30,25,15,.5); border:1px solid #4a4027; border-radius:0; padding:8px 11px; margin:8px 0;}
   #guidebody .gtri{color:#7fae3f;} #guidebody .gnote{color:#c9b98a; font-style:italic; font-size:12px;}
   #skillsub{display:flex; flex-wrap:wrap; gap:4px; margin:4px 0 10px;}
+  /* per-skill "what this unlocks" list: a level column + the gear that opens at it */
+  .gearunlock{display:flex; flex-direction:column; gap:2px; margin:6px 0 4px;}
+  .gearunlock .gu{display:flex; gap:8px; align-items:baseline; padding:3px 6px;
+    background:#17130d; border:1px solid #2a2419; border-left:3px solid #3a3226; color:#6b6151;}
+  .gearunlock .gu.on{border-left-color:#c9a23a; color:#c9b98a;}
+  .gearunlock .gu b{flex:0 0 30px; text-align:right; color:#8a7a4a;}
+  .gearunlock .gu.on b{color:#e8c96a;}
+  .gearunlock .gu span{flex:1 1 auto; line-height:1.4;}
   .sksub{display:flex; align-items:center; gap:5px; font:bold 11px RSFont,Georgia,serif; color:#cdbf9a; background:#302a1c; border:1px solid #4a4027; border-radius:0; padding:4px 7px; cursor:pointer;}
   .sksub.on{color:#ffe08a; border-color:#c9a23a;} .sksub canvas{flex:0 0 15px;}
   .encback{font:bold 11px RSFont,Georgia,serif;color:#ffd98c;background:none;border:none;cursor:pointer;padding:2px 0 8px;}
@@ -5471,13 +5479,39 @@ const GUIDE_PAGES=[
   {id:'ge',icon:'coin',title:'Money & Trading',html:`<h2>Money &amp; Trading</h2><h3>Coins</h3><p><b>Coins</b> are the main currency \u2014 earned from monster drops, selling items, quests and skilling.</p><h3>Shops</h3><p>NPC <b>shops</b> buy and sell specific goods. Click a shopkeeper to trade \u2014 good for food, tools and ammo.</p><h3>The Grand Exchange</h3><p>The <b>Grand Exchange</b> is a marketplace for almost anything at fair prices. Open it, search an item, and click to buy or sell \u2014 the fastest way to gear up or offload loot.</p><h3>Banking</h3><p>Your <b>bank</b> stores items you're not carrying. Deposit valuables before dangerous trips so you don't lose them on death.</p><h3>High Alchemy</h3><p>The <b>High Alchemy</b> spell (Magic tab) turns an inventory item straight into coins \u2014 a handy way to make money and train Magic at once.</p>`},
   {id:'tips',icon:'heart',title:'New Player Tips',html:`<h2>New Player Tips</h2><ul><li><b>Always carry food.</b> Cook fish or buy some before you fight.</li><li><b>Bank your valuables.</b> Don't carry more than you need into danger \u2014 you can drop items on death.</li><li><b>Upgrade gradually.</b> Bronze \u2192 iron \u2192 steel \u2192 mithril \u2192 adamant \u2192 rune and beyond.</li><li><b>Match the triangle.</b> Bring the right style and armour for what you fight.</li><li><b>Don't rush bosses.</b> They hit hard and often use magic or ranged \u2014 train up, bring prayer and food, learn their attacks.</li><li><b>Train a range of skills.</b> Gathering funds production and raises your total level.</li><li><b>Read Examine text and the Bestiary.</b> They reveal weaknesses, uses and dangers.</li><li><b>Talk to everyone.</b> NPCs hand out quests, tips and shortcuts.</li></ul>`}
 ];
+/* ** WHAT THIS SKILL UNLOCKS. ** Derived from ITEMS via reqSkillFor -- the SAME function the equip gate
+   uses -- so every level-gated piece is listed automatically and can never go stale. Boss and raid drops
+   (glacial, ember, frost maul, Ashfang...) appear the moment they exist, with no list to maintain. */
+function _guideGearHtml(sk){
+  if(typeof ITEMS==='undefined'||typeof reqSkillFor!=='function')return '';
+  const rows=[];
+  for(const id in ITEMS){
+    const it=ITEMS[id], eq=it&&it.equip;
+    if(!eq||!eq.req||eq.req<2)continue;                  /* level 1 gear is not an unlock worth listing */
+    if(reqSkillFor(eq)!==sk)continue;
+    rows.push({req:eq.req|0, name:it.name, slot:eq.slot||''});
+  }
+  if(!rows.length)return '';
+  rows.sort((a,b)=>a.req-b.req || a.name.localeCompare(b.name));
+  const byLvl={};
+  for(const r of rows){ (byLvl[r.req]=byLvl[r.req]||[]).push(r.name); }
+  const cur=(typeof lvl==='function')?lvl(sk):1;
+  let out='<h3>What '+SKILL_META[sk].name+' unlocks</h3><p>Gear you can '
+    +(sk==='defense'?'wear':(sk==='attack'?'wield':'use'))+' at each level. '
+    +'Anything above your current level of <b>'+cur+'</b> is greyed out.</p><div class="gearunlock">';
+  for(const L of Object.keys(byLvl).map(Number).sort((a,b)=>a-b)){
+    const have=cur>=L;
+    out+='<div class="gu'+(have?' on':'')+'"><b>'+L+'</b><span>'+byLvl[L].join(', ')+'</span></div>';
+  }
+  return out+'</div>';
+}
 let guidePage='start', guideSkill='attack';
 function _guideSkillsHtml(){
   let sub='<div id="skillsub">';
   for(const sk of Object.keys(SKILL_META))sub+='<div class="sksub'+(sk===guideSkill?' on':'')+'" data-sk="'+sk+'"><canvas width="15" height="15"></canvas>'+SKILL_META[sk].name+'</div>';
   sub+='</div>';
   const si=SKILL_INFO[guideSkill]||{d:'',t:''};
-  return '<h2>Skills</h2><p>Skills level up as you use them. Every action gives <b>experience (XP)</b>; enough XP raises that skill (up to level 99). Your combined levels are your <b>total level</b>. Pick a skill:</p>'+sub+'<h3>'+SKILL_META[guideSkill].name+'</h3><p>'+si.d+'</p><p><b>How to train:</b> '+si.t+'</p>';
+  return '<h2>Skills</h2><p>Skills level up as you use them. Every action gives <b>experience (XP)</b>; enough XP raises that skill (up to level 99). Your combined levels are your <b>total level</b>. Pick a skill:</p>'+sub+'<h3>'+SKILL_META[guideSkill].name+'</h3><p>'+si.d+'</p><p><b>How to train:</b> '+si.t+'</p>'+_guideGearHtml(guideSkill);
 }
 function renderGuide(){
   const nav=document.getElementById('guidenav'), body=document.getElementById('guidebody');
@@ -6660,12 +6694,26 @@ function playerTick(){
       else{
       let gid=def.item,gxp=def.xp;
       if(def.skill==='fishing'){
-        const FT=o.deep?[['raw_swordfish',50,50,1.3],['raw_lobster',40,45,2]]:[['raw_swordfish',50,50,1.3],['raw_lobster',40,45,2],['raw_trout',20,25,2.6],
-          ['raw_sardine',5,10,3.4],['raw_shrimps',1,5,5]];
-        const el=FT.filter(f=>lvl('fishing')>=f[1]);
-        let tot=0;for(const f of el)tot+=f[3];
-        let r9=Math.random()*tot;
-        for(const f of el){r9-=f[3];if(r9<=0){gid=f[0];gxp=f[2];break;}}
+        /* ** THE BETTER FISH GETS COMMONER AS YOU LEVEL (OSRS behaviour). ** These weights used to be
+           FIXED, so a deep spot handed out the same 1.3-vs-2 swordfish/lobster split at level 50 and
+           at 99 -- levelling never improved your catch. OSRS instead rolls each fish's OWN level-scaled
+           success chance from the top tier down, so the further above a fish's requirement you are,
+           the more of your catches are that fish. Modelled here as a chance that interpolates from
+           its unlock level to 99 (swordfish ~11% of catches at 50, ~55% at 99, matching the wiki's
+           ~0.105 success rate at unlock); a miss falls through to the next tier, and the lowest
+           eligible fish is the floor so a cast is never wasted. */
+        const FT=o.deep?[['raw_swordfish',50,50,0.11,0.55],['raw_lobster',40,45,0.15,0.60]]
+          :[['raw_swordfish',50,50,0.11,0.55],['raw_lobster',40,45,0.15,0.60],['raw_trout',20,25,0.20,0.60],
+            ['raw_sardine',5,10,0.30,0.65],['raw_shrimps',1,5,1,1]];
+        const L=lvl('fishing');
+        const el=FT.filter(f=>L>=f[1]);                    /* eligible, already ordered best-first */
+        gid=el.length?el[el.length-1][0]:def.item;         /* floor: the lowest tier you can catch */
+        gxp=el.length?el[el.length-1][2]:def.xp;
+        for(const f of el){
+          const span=Math.max(1,99-f[1]);
+          const p=f[3]+(f[4]-f[3])*Math.min(1,Math.max(0,(L-f[1])/span));
+          if(Math.random()<p){ gid=f[0]; gxp=f[2]; break; }
+        }
       }
       if(def.skill==='mining'&&invFull()&&pouchAutoCanTake(gid)){pouchAdd(gid,1);if(pouchTotal()>=player.pouch.cap)msg('Your mining pouch is full \u2014 empty it at a bank.','#534216');}
       else addItem(gid);
@@ -29931,15 +29979,57 @@ const Market = (function(){
   }
 
   // ---- refresh both the board and my own state ----
+  /* ** TELL THE PLAYER WHEN SOMETHING SELLS. ** The server drops proceeds into your Collect box, but
+     nothing ever said so -- you only found out by opening the market and noticing the badge. We
+     snapshot the box and announce whatever is NEW. _saleSeen starts null so the first look of a
+     session only sets a baseline (otherwise you would be spammed on login about old sales). */
+  var _saleSeen=null;
+  function _saleSig(list){
+    var m={};
+    for(var i=0;i<(list||[]).length;i++){ var c=list[i];
+      if(c.coins)m['coins']=(m['coins']||0)+(c.coins|0);
+      if(c.item)m[c.item]=(m[c.item]||0)+(c.qty|0||1);
+    }
+    return m;
+  }
+  function _saleAnnounce(next){
+    var cur=_saleSig(next);
+    if(_saleSeen===null){                       /* first look this session -- baseline only */
+      _saleSeen=cur;
+      var n=(next||[]).length;
+      if(n)msg('You have '+n+' lot'+(n===1?'':'s')+' waiting in the market Collect box.','#224e22');
+      return;
+    }
+    var parts=[];
+    for(var k in cur){
+      var d=cur[k]-(_saleSeen[k]||0);
+      if(d>0)parts.push(k==='coins'?(fmt(d)+' coins'):((d>1?fmt(d)+' \u00d7 ':'')+((ITEMS[k]&&ITEMS[k].name)||k)));
+    }
+    _saleSeen=cur;
+    if(parts.length)msg('\ud83d\udcb0 Sold on the market \u2014 '+parts.join(', ')+' is waiting in your Collect box.','#224e22');
+  }
   function refresh(){
     if(!_url()){ _err='noserver'; renderMarket(); return; }
     _loading=true; _err=''; renderMarket();
     var pend=2, gotErr=false;
     function done(){ if(--pend===0){ _loading=false; if(gotErr)_err='err'; renderMarket(); } }
     _api('/mkt/board',null,function(d,e){ if(e){gotErr=true;} else _board=(d&&d.rows)||[]; done(); });
-    if(_uid())_api('/mkt/mine?uid='+encodeURIComponent(_uid()),null,function(d,e){ if(e){gotErr=true;} else if(d){_mine={offers:d.offers||[],collect:d.collect||[]};} done(); });
+    if(_uid())_api('/mkt/mine?uid='+encodeURIComponent(_uid()),null,function(d,e){ if(e){gotErr=true;} else if(d){_mine={offers:d.offers||[],collect:d.collect||[]}; _saleAnnounce(_mine.collect);} done(); });
     else done();
   }
+  /* A quiet watch so you hear about a sale WITHOUT opening the market -- but only while you actually
+     have offers resting, so an idle player costs the server nothing (see the Cloudflare work). */
+  var _saleWatch=null;
+  function saleWatchTick(){
+    if(!_url()||!_uid())return;
+    if(!(_mine&&_mine.offers&&_mine.offers.length))return;   /* nothing listed -> never poll */
+    _api('/mkt/mine?uid='+encodeURIComponent(_uid()),null,function(d,e){
+      if(e||!d)return;
+      _mine={offers:d.offers||[],collect:d.collect||[]};
+      _saleAnnounce(_mine.collect);
+    });
+  }
+  try{ _saleWatch=setInterval(saleWatchTick,150000); }catch(e){}
 
   // ---- list an offer, escrowing on the client first ----
   function listOffer(side, item, qty, price){
