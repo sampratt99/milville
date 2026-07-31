@@ -7832,6 +7832,13 @@ function playerTick(){
     player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;cancelAction();
     if(!b.pop&&b.grounded&&balloons.indexOf(b)>=0)popBalloon(b,true);
   }
+  else if(a.type==='houseupgrade'){
+    const o=a.o;
+    if(dist1(player.x,player.y,o.x,o.y)>1){if(!player.path.length)walkTo(o.x,o.y,'adj');return;}
+    player.path.length=0; player.face=Math.sign(o.x-player.x)||player.face;
+    cancelAction();
+    houseUpgrade(a.slot,a.fid);
+  }
   else if(a.type==='housebuild'){
     const o=a.o;
     if(dist1(player.x,player.y,o.x,o.y)>1){if(!player.path.length)walkTo(o.x,o.y,'adj');return;}
@@ -10248,9 +10255,12 @@ function optionsAt(tx,ty){
         opts.push({html:'Inspect <span class="t">Trophy shelf</span>',label:'Inspect Trophy shelf',fn:()=>houseTrophyReport()});
       if(o.def==='hf_case')
         opts.push({html:'Inspect <span class="t">Display case</span>',label:'Inspect Display case',fn:()=>houseCaseReport()});
-      if(houseBuildMode&&!houseIsGuest())opts.push(...houseBuildOptions(o.houseSlot));
+      /* Examine first on a BUILT piece: upgrading spends money and removing tears it out, so
+         neither should be what a stray left click does. */
       opts.push({html:'Examine <span class="t">'+(_F?_F.name:'Furniture')+'</span>',
+        label:'Examine '+(_F?_F.name:'Furniture'),
         fn:()=>msg(OBJ_DEFS[o.def]?OBJ_DEFS[o.def].ex:'')});
+      if(houseBuildMode&&!houseIsGuest())opts.push(...houseBuildOptions(o.houseSlot));
     }else if(o.def==='house_exit'){
       opts.push({html:'Leave <span class="t">your cottage</span>',
         label:'Leave your cottage',fn:()=>setAction({type:'exithouse',o},o.x,o.y)},
@@ -15795,6 +15805,9 @@ function buildObjModel(o){
       if(ry)m.rotation.y=ry; if(rx)m.rotation.x=rx; g.add(m); return m;};
     const C=(rt,rb,h,c,x,y,z,sg,rz)=>{const m=mesh(CY(rt,rb,h,sg),c);m.position.set(x,y,z);
       if(rz)m.rotation.z=rz; g.add(m); return m;};
+    /* a DISC that faces the room: cylinders are born upright, so a round wall face needs standing up */
+    const CD=(r,h,c,x,y,z,sg)=>{const m=mesh(CY(r,r,h,sg||16),c);m.rotation.x=Math.PI/2;
+      m.position.set(x,y,z); g.add(m); return m;};
     const TIMB=0x6b4a2c, DARK=0x4a3220, IRON=0x5f6870;
     /* the bench: a heavy trestle with a slot down the middle for the blade */
     B(2.5,0.16,1.2,TIMB,0,0.86,0);
@@ -15900,6 +15913,9 @@ function buildObjModel(o){
     const CY=(rt,rb,h,rs)=>new THREE.CylinderGeometry(rt,rb,h,rs||10);
     const B=(w,h,d,c,x,y,z,ry,rx)=>{const m=mesh(BX(w,h,d),c);m.position.set(x,y,z);if(ry)m.rotation.y=ry;if(rx)m.rotation.x=rx;g.add(m);return m;};
     const C=(rt,rb,h,c,x,y,z,seg)=>{const m=mesh(CY(rt,rb,h,seg),c);m.position.set(x,y,z);g.add(m);return m;};
+    /* a DISC that faces the room: cylinders are born upright, so a round wall face needs standing up */
+    const CD=(r,h,c,x,y,z,sg)=>{const m=mesh(CY(r,r,h,sg||16),c);m.rotation.x=Math.PI/2;
+      m.position.set(x,y,z); g.add(m); return m;};
     const OAK=0x6b4a2c, DARKOAK=0x4a3220, PINE=0xb99a66, LEATH=0x6e2a24, BRASS=0xc9a23a,
           STONE=0x8a8580, SLATE=0x55524e, CLOTH=0x2f5a3a, GILT=0xc9a23a, IRON=0x2e2c2a;
     if(def==='hf_hearth'){
@@ -16265,9 +16281,9 @@ function buildObjModel(o){
       for(const q of [[-0.36,-0.16],[0.36,-0.16],[-0.36,0.04],[0.36,0.04]])
         C(0.04,0.05,0.28,PINE,q[0],0.14,q[1]-0.16,7);
     }else if(def==='hf_hangmirror'){
-      C(0.36,0.36,0.05,0x8f959c,0,1.52,-0.18,18);
-      C(0.3,0.3,0.03,0xbcd6dd,0,1.52,-0.15,18);
-      C(0.12,0.12,0.02,0xd8e8ee,-0.08,1.6,-0.135,14);
+      CD(0.36,0.05,0x8f959c,0,1.52,-0.18,18);
+      CD(0.3,0.03,0xbcd6dd,0,1.52,-0.15,18);
+      CD(0.12,0.02,0xd8e8ee,-0.08,1.6,-0.135,14);
       for(let k=0;k<10;k++){const a=(k/10)*Math.PI*2;
         B(0.06,0.06,0.03,0x7d858e,Math.cos(a)*0.34,1.52+Math.sin(a)*0.34,-0.16);}
       C(0.02,0.02,0.34,0x8a7a5a,0,1.9,-0.19,6);
@@ -16286,7 +16302,7 @@ function buildObjModel(o){
       B(0.44,0.5,0.24,0x6b4a2c,0,1.72,-0.18);           /* hooded case */
       const hd=mesh(BX(0.5,0.1,0.3),DARKOAK); hd.position.set(0,1.99,-0.18); g.add(hd);
       B(0.5,0.06,0.3,DARKOAK,0,1.45,-0.18);
-      C(0.17,0.17,0.04,0xf2ead6,0,1.74,-0.07,16);       /* painted dial */
+      CD(0.17,0.04,0xf2ead6,0,1.74,-0.07,16);            /* painted dial, standing up */
       for(let k=0;k<12;k++){const a=(k/12)*Math.PI*2;
         B(0.015,0.025,0.02,0x2b2620,Math.sin(a)*0.12,1.74+Math.cos(a)*0.12,-0.05);}
       B(0.012,0.1,0.02,0x2b2620,0.02,1.78,-0.04,0,0.5);
@@ -16590,8 +16606,8 @@ function buildObjModel(o){
     }else if(def==='hf_rangetarget'){
       const butt=mesh(CY(0.5,0.5,0.16,16),0xd8c47a); butt.rotation.x=Math.PI/2;
       butt.position.set(0,1.15,-0.16); g.add(butt);
-      for(let r=0;r<4;r++)C(0.42-r*0.11,0.42-r*0.11,0.18+r*0.004,[0xf2ead6,0x2f4a6e,0x8f1f28,0xc9a23a][r],0,1.15,-0.14,16);
-      for(let k=0;k<3;k++){C(0.012,0.012,0.36,0x8a6a3a,-0.05+k*0.05,1.15+((k%2)*0.05),0.02,5,Math.PI/2);
+      for(let r=0;r<4;r++)CD(0.42-r*0.11,0.18+r*0.004,[0xf2ead6,0x2f4a6e,0x8f1f28,0xc9a23a][r],0,1.15,-0.13+r*0.006,16);
+      for(let k=0;k<3;k++){CD(0.012,0.36,0x8a6a3a,-0.05+k*0.05,1.15+((k%2)*0.05),0.06,5);
         B(0.05,0.07,0.02,0xf2ead6,-0.05+k*0.05,1.15+((k%2)*0.05),0.2);}
       for(let k=0;k<3;k++){const a=(k/3)*Math.PI*2;
         const lg=mesh(CY(0.035,0.05,1.2,6),0x8a6a3a);
@@ -16795,9 +16811,9 @@ function buildObjModel(o){
       B(0.68,0.14,0.5,DARKOAK,0,2.32,-0.16);
       B(0.52,0.9,0.05,0x3a2a1c,0,1.1,0.06);               /* the trunk door */
       C(0.06,0.06,0.7,BRASS,0,1.1,0.02,8);                /* pendulum rod + bob */
-      C(0.13,0.13,0.03,BRASS,0,0.78,0.02,14);
-      C(0.24,0.24,0.05,0xd8cbb0,0,2.0,0.08,16);           /* the brass dial */
-      C(0.21,0.21,0.03,BRASS,0,2.0,0.11,16);
+      CD(0.13,0.03,BRASS,0,0.78,0.04,14);
+      CD(0.24,0.05,0xd8cbb0,0,2.0,0.08,16);               /* the brass dial, standing up */
+      CD(0.21,0.03,BRASS,0,2.0,0.11,16);
       for(let k=0;k<12;k++){const a=(k/12)*Math.PI*2;
         B(0.02,0.03,0.02,0x2b2620,Math.sin(a)*0.16,2.0+Math.cos(a)*0.16,0.13);}
       B(0.015,0.13,0.02,0x2b2620,0.03,2.05,0.14,0,0.4);
@@ -16976,8 +16992,8 @@ function buildObjModel(o){
       B(0.26,0.08,0.04,0x6b4a2c,-0.15,0.6,-0.16);
       const ax=mesh(BX(0.3,0.24,0.04),0x9aa3ad); ax.position.set(0.2,1.16,-0.16); ax.rotation.z=0.3; g.add(ax);
       C(0.025,0.025,0.8,0x6b4a2c,0.2,0.95,-0.16,6);
-      C(0.3,0.3,0.05,0x8f959c,0.55,1.0,-0.14,10);       /* a round shield */
-      C(0.07,0.07,0.03,0xc9a23a,0.55,1.0,-0.1,8);
+      CD(0.3,0.05,0x8f959c,0.55,1.0,-0.14,12);          /* a round shield, hung flat on the wall */
+      CD(0.07,0.03,0xc9a23a,0.55,1.0,-0.09,10);
     }else if(def==='hf_armourstand'){
       C(0.34,0.36,0.08,DARKOAK,0,0.04,0,12);
       C(0.08,0.1,1.1,DARKOAK,0,0.6,0,8);
@@ -42020,6 +42036,24 @@ function houseDarts(){
       bd.appendChild(d); });
 }
 /* walk to the space before building it -- otherwise you can furnish the whole room from the doorway */
+/* an in-place swap: the old piece comes out first, so you get its half-refund and the new one is
+   paid for normally -- no silent replacement, because you asked for it by name */
+function houseUpgradeWalk(slotId,fid){
+  const S=houseSlotByKey(slotId);
+  if(!S){houseUpgrade(slotId,fid);return;}
+  setAction({type:'houseupgrade',slot:slotId,fid:fid,o:{x:S.x,y:S.y}},S.x,S.y);
+}
+function houseUpgrade(slotId,fid){
+  const cur=houseSlots()[slotId];
+  const F=HOUSE_FURNITURE[fid]; if(!F)return;
+  if(lvl('construction')<(F.req|0)){
+    msg('You need Construction '+(F.req|0)+' to build a '+F.name.toLowerCase()+'.','#851a1a');return;}
+  const _pid=F.plankId||'oak_plank';
+  if(countItem(_pid)<(F.planks|0)||countItem('iron_nails')<(F.nails|0)||coinsCount()<F.cost){
+    msg('You do not have what the '+F.name.toLowerCase()+' needs.','#851a1a');return;}
+  if(cur)houseRemove(slotId);
+  houseBuild(slotId,fid);
+}
 function houseBuildWalk(slotId,fid){
   const S=houseSlotByKey(slotId);
   if(!S){houseBuild(slotId,fid);return;}
@@ -42032,8 +42066,35 @@ function houseBuildOptions(slotId){
   /* ** AN OCCUPIED SPACE OFFERS ONLY REMOVE. ** It used to list every other rung, and since a left
      click runs the first option, one click swapped a built piece for a different one -- paying for it
      and refunding the old one without asking. Clear the space first, then choose. */
-  if(cur)return [{html:'Remove <span class="t">'+HOUSE_FURNITURE[cur].name+'</span> <span style="opacity:.7">(half the boards back)</span>',
-    label:'Remove '+HOUSE_FURNITURE[cur].name,fn:()=>houseRemove(slotId)}];
+  if(cur){
+    const out=[];
+    const here=HOUSE_FURNITURE[cur];
+    const ladder=Object.keys(HOUSE_FURNITURE).filter(f=>HOUSE_FURNITURE[f].cat===S.cat&&f!==cur)
+      .sort((a,b)=>(HOUSE_FURNITURE[a].req|0)-(HOUSE_FURNITURE[b].req|0));
+    for(const fid of ladder){
+      const F=HOUSE_FURNITURE[fid];
+      const up=(F.req|0)>(here.req|0);
+      const _pid=F.plankId||'oak_plank';
+      const _bd=(F.planks|0)+' '+PLANK_LABEL[_pid]+((F.planks|0)===1?'':'s');
+      const _nl=(F.nails|0)?(' \u00b7 '+(F.nails|0)+' nail'+((F.nails|0)===1?'':'s')):'';
+      const lvlOK=lvl('construction')>=(F.req|0);
+      const short=[];
+      if(!lvlOK)short.push('Construction '+(F.req|0));
+      if(countItem(_pid)<(F.planks|0))short.push(_bd);
+      if(countItem('iron_nails')<(F.nails|0))short.push((F.nails|0)+' nails');
+      if(coinsCount()<F.cost)short.push(fmt(F.cost)+' gp');
+      const dim=short.length?'<span style="opacity:.5">':'';
+      const end=dim?'</span>':'';
+      out.push({html:dim+(up?'Upgrade to ':'Replace with ')+end+'<span class="t">'+F.name+'</span>'
+          +' <span style="opacity:.7">(level '+(F.req|0)+' \u00b7 '+_bd+_nl+' \u00b7 '+fmt(F.cost)+' gp)</span>'
+          +(short.length?'<span style="opacity:.55"> \u2014 need '+short.join(', ')+'</span>':''),
+        label:(up?'Upgrade to ':'Replace with ')+F.name,
+        fn:()=>houseUpgradeWalk(slotId,fid)});
+    }
+    out.push({html:'Remove <span class="t">'+here.name+'</span> <span style="opacity:.7">(half the boards back)</span>',
+      label:'Remove '+here.name,fn:()=>houseRemove(slotId)});
+    return out;
+  }
   const _cands=Object.keys(HOUSE_FURNITURE).filter(f=>HOUSE_FURNITURE[f].cat===S.cat&&f!==cur)
     .sort((a,b)=>(HOUSE_FURNITURE[a].req|0)-(HOUSE_FURNITURE[b].req|0));
   for(const fid of _cands){
