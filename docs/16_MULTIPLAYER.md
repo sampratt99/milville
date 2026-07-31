@@ -341,11 +341,22 @@ MP coverage is:
 |---|---|
 | `mphouse` | the seven-case house visibility matrix, through the `MP._test` seam |
 
-`MP._test` exposes `{room, remoteHere, setPeerRoom, setConn, ...}`, which is the seam any future MP
-harness should drive. **`world_state.js` and `market.js` have no harness at all** — they are the
-most testable code in the project (pure functions over an injectable store and clock, exactly as
-their headers advertise) and the most consequential, since the market is the one place the server
-holds something a player can lose. That gap is worth closing before the next market change.
+| `worldstate` | `mp-server/world_state.js` — respawn storage, clamps, and the join snapshot |
+| `mkttest` | `mp-server/market.js` — the whole order book: escrow, matching, tax, collect |
+
+`MP._test` exposes `{room, remoteHere, setPeerRoom, setConn, ...}`, which is the seam any future
+client-side MP harness should drive.
+
+**The two server files need no shim and no game.** They take no Cloudflare imports — pure functions
+over an abstract store and an injected clock, exactly as their headers advertise — so the harnesses
+import them directly and drive them with a Map-backed `ctx.storage` mock and a controllable clock.
+`mkttest` in particular reproduces the emberbrand incident: it seeds a stale `mkt:seq`, lists a new
+offer, and asserts the resting one is untouched.
+
+What those two harnesses still cannot prove: that a real Durable Object serializes the way
+`server.js` assumes. `ctx.storage` is mocked, so coalesced writes, the `store.sync()` write-confirm
+guard and the `_mktChain` promise chain are all outside their reach — those live in `server.js`,
+which does import Cloudflare and therefore cannot be loaded here.
 
 ---
 
