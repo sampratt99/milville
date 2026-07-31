@@ -154,7 +154,7 @@ class ShimElement {
     this.parentNode = null;
     this.parentElement = null;
     this.attributes = {};
-    this.innerHTML = '';
+    this._innerHTML = '';
     this.textContent = '';
     this.value = '';
     this.checked = false;
@@ -242,6 +242,14 @@ class ShimElement {
   animate(){ return {finished:Promise.resolve(), cancel(){}, play(){}, pause(){}}; }
   insertAdjacentHTML(){}
   cloneNode(){ const e = new ShimElement(this.tagName); e.innerHTML = this.innerHTML; return e; }
+  /* Setting innerHTML REPLACES all children — that is what the DOM does, and
+     panels rely on it: openHousePanel does `bd.innerHTML=''` before rebuilding
+     its rows. Without this the rows accumulate across every open and a test
+     reads a stale first row. The markup itself is still never parsed, so
+     children stays empty until something appendChild's into it. */
+  get innerHTML(){ return this._innerHTML; }
+  set innerHTML(v){ this._innerHTML = (v == null ? '' : String(v)); this.children.length = 0; }
+
   get firstChild(){ return this.children[0] || null; }
   get lastChild(){ return this.children[this.children.length-1] || null; }
   get firstElementChild(){ return this.children[0] || null; }
