@@ -32848,6 +32848,10 @@ function teleBurst(col){
   clickFx(player.x,player.y,col);
 }
 function exitToMainMap(){
+  /* ** ANY world swap dismisses the counter panels. ** A panel flag that outlives its world hijacks
+     every later inventory click -- the bank one silently deposited whatever you clicked. */
+  if(typeof closeBank==='function')closeBank();
+  if(typeof closeShop==='function')closeShop();
   /* ** THE DELVE WAS MISSING FROM THIS CHAIN. ** curInterior() returns 'raid', so a teleport thought it
      had left -- but nothing here actually took you out, so you kept the delve's tile grid and landed
      in the void at the overworld's coordinates. The Emberdeep had this same bug. Anything that adds
@@ -42255,6 +42259,8 @@ function houseGuestRooms(){ return houseVisit?(houseVisit.rooms||{}):null; }
 function houseGuestSlots(){ return houseVisit?(houseVisit.slots||{}):null; }
 function houseEnterVisit(uid,name,data){
   houseVisit={uid,name,rooms:(data&&data.rooms)||{},slots:(data&&data.slots)||{},repair:(data&&data.repair)|0};
+  if(typeof closeBank==='function')closeBank();
+  if(typeof closeShop==='function')closeShop();
   inHouse=true;tiles=houseTiles;worldGroup.visible=false;houseGroup.visible=true;
   _houseFlatten();
   houseCarve(); houseBuildInterior(); houseRebuild(); houseRepaintMinimap();
@@ -42528,6 +42534,8 @@ function enterHouse(){
     msg('The cottage is still a wreck. There is nothing inside to step into yet.','#851a1a');
     return;
   }
+  if(typeof closeBank==='function')closeBank();
+  if(typeof closeShop==='function')closeShop();
   inHouse=true;tiles=houseTiles;worldGroup.visible=false;houseGroup.visible=true;
   _houseFlatten();
   {const _e=houseExitTile(); player.x=_e.x; player.y=_e.y+1; player.px=player.x; player.py=player.y;}
@@ -42545,6 +42553,10 @@ function enterHouse(){
   stopMusic();updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
 }
 function exitHouse(){
+  /* a world swap must dismiss any counter panel, or its flag survives the swap and hijacks every
+     later inventory click */
+  if(typeof closeBank==='function')closeBank();
+  if(typeof closeShop==='function')closeShop();
   houseBuildMode=false;
   const _wasGuest=houseIsGuest(), _hn=houseOwnerName();
   houseVisit=null;
