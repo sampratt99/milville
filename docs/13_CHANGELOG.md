@@ -98,3 +98,31 @@ centre only a garden) is gone.
 it refuses any layout that empties the entrance cell or strands a room with no
 way in, and **the furniture moves with its room** — slot keys carry the cell, so
 they are re-keyed in one pass on save.
+
+## House fixes and offline visiting (July 2026)
+
+Eight reported bugs, one of which was destroying items:
+
+- **A butler fetch that did not fit DESTROYED the boards.** The bank was
+  decremented and `addItem(id, taken)` called once; boards do not stack and
+  `addItem` is all-or-nothing for a non-stackable, so with too few free slots it
+  added nothing and returned false. The boards had already left the bank. They
+  now go in one at a time and the remainder is put back.
+- **Clicks landed a tile or three off inside the house.** `castPick` resolves
+  clicks against a per-interior floor mesh and the chain ends at `terra`, the
+  overworld terrain. The house had no branch — the identical fault the delve
+  once had. Added `housePickFloor`.
+- **The cottage door floated.** Object models bake their Y from `groundH()` long
+  before the house exists, so the door read the original wilderness terrain and
+  the flatten left it hanging.
+- **The delve lobby was visible from inside the cottage**, its props standing in
+  the wilderness just south of the region.
+- Staff could be hired with no bell; the chapel pew faced away from the altar and
+  every dining chair faced away from its table; the Plain shelf was inspected as
+  a "Trophy shelf"; and the HUD carried a four-line readout that made it too tall.
+
+**Visiting now works with the owner offline.** `hreq` → `hdat` needs the owner's
+client to answer, so it only ever worked while they were logged in. The cottage
+is now published to the server (`mp-server/houses.js`) and listed and fetched
+over plain HTTP. A snapshot carries the layout and the furniture and nothing
+else. **That half needs a `wrangler deploy`.**
