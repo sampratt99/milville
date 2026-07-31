@@ -42205,7 +42205,7 @@ function bohanBuyDeed(){
   const short=pohDeedShortfall();
   if(short.length){msg('You are not qualified for the deed yet \u2014 short: '+short.join(', ')+'.','#851a1a');return;}
   if(coinsCount()<POH_DEED_PRICE){msg('You need '+fmt(POH_DEED_PRICE)+' coins for the deed.','#851a1a');return;}
-  if(invFull()&&!findItem('house_deed')){msg('Your pack is full \u2014 make room for the deed.','#851a1a');return;}
+  if(invFull()&&findItem('house_deed')<0){msg('Your pack is full \u2014 make room for the deed.','#851a1a');return;}
   spendCoins(POH_DEED_PRICE);
   addItem('house_deed',1);
   if(!player.house)player.house={};
