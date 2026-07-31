@@ -162,7 +162,7 @@ All messages are JSON objects with a `t` (type) field. The server handles a fixe
 |---|---|---|
 | `join` | C→S | stores presence; replies `welcome {you, roster}` to sender; broadcasts `join {p}` to others |
 | `pos` | C→S | updates stored pos; broadcasts `pos {uid,...}` |
-| `state` | C→S | updates gear/act/hp; broadcasts `state {uid,...}` |
+| `state` | C→S | updates gear/act/hp/**ho**; broadcasts `state {uid,...,ho}` — see the rebuild warning in §17 |
 | `chat` | C→S | broadcasts `chat {uid,name,text}` (clamped to 120 chars) |
 | `emote` | C→S | broadcasts `emote {uid,e}` |
 | `claim` / `release` | C→S | broadcasts mob ownership |
@@ -452,7 +452,13 @@ plus `hevict` when the owner locks up. Client-only; no server redeploy.
 
 **The open/locked flag rides `hello` as well as `state`.** It must: an idle player sends no `state`
 messages at all (the keepalive is gated on having an action), so a neighbour would never learn the
-door was open. The `mphouse` harness asserts a seven-case visibility matrix.
+door was open. The `mphouse` harness asserts a seven-case visibility matrix, and `visithud` asserts
+the flag survives a state message.
+
+**Visiting is driven from the house HUD**, not only the cottage door: `hhlock` toggles your door
+(owner only) and `hhvisit` opens a panel of every door currently unlocked, always with a row back to
+your own cottage. `houseRequestVisit` steps you out of whichever cottage you are in before knocking
+— it used to refuse outright while inside, which made the HUD path unreachable.
 
 ---
 
@@ -683,7 +689,16 @@ is **client-side**; the relay broadcasts them to everyone.
 |---|---|---|
 | `join` | `{uid, name, x, y, h, app, gear, hp, mhp, in, snap}` | stores presence on the socket; replies `welcome {you, roster}`; broadcasts `join {p}`; if `snap` also sends `snapshot` |
 | `pos` | `{x, y, h, run, in}` | updates stored pos, broadcasts `pos {uid, name, x, y, h, run}` |
-| `state` | `{gear, act, hp, mhp, ho}` | updates stored state, broadcasts `state {uid, gear, act, hp, mhp}` |
+| `state` | `{gear, act, hp, mhp, ho}` | updates stored state, broadcasts `state {uid, gear, act, hp, mhp, ho}` |
+
+> **This case REBUILDS the message rather than relaying it, so any field not named in the broadcast
+> is silently dropped.** That is how the house-open flag went missing: `ho` was stripped in transit,
+> and the client wrote `houseOpen = !!m.ho` unguarded, turning every inbound state message into
+> "their door is shut". `hello` set it true every 3s and the next `state` wiped it, so an unlocked
+> cottage never appeared in anyone's visit list. Fixed on both sides —
+> `harness/visithud.mjs` reproduces the original symptom. **The client guard alone is sufficient;
+> the server half needs a `wrangler deploy`.** The same shape already bit remote pets on `pos`. If
+> you add a field to a server-handled type, add it to the broadcast too or it does not exist.
 | `chat` | `{text, title}` | clamps text to 120 chars, broadcasts `chat {uid, name, text}` |
 | `emote` | `{e}` | clamps to 24 chars, broadcasts `emote {uid, e}` |
 | `claim` / `release` | `{m}` | broadcasts mob ownership |
