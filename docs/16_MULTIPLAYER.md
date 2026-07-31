@@ -6,10 +6,22 @@ game is byte-for-byte the original single-player experience. This doc is the com
 the networked system — architecture, the wire protocol, presence/streaming, the three social
 phases (groups, group combat, trading), the test harnesses, and how to ship changes.
 
-> **Golden rule:** the MP layer is **client-authoritative** and the server is a **dumb relay**.
-> There is no server-side game logic, no validation, no escrow. Clients trust each other
-> ("trusted-friends" model). This keeps the server free-tier-cheap and the game logic in one
-> place — but it means anti-cheat / authoritative PvP would require moving logic server-side later.
+> **Golden rule, with two exceptions.** The MP layer is **client-authoritative** and the relay is a
+> **dumb pipe**: presence, combat, groups, trading and PvP are all decided on the clients, which
+> trust each other ("trusted-friends" model). That keeps the server free-tier-cheap and the game
+> logic in one place.
+>
+> **Two subsystems break that rule deliberately, and you must not assume the old "the server stores
+> nothing" line:**
+>
+> 1. **Shared-world state** (`world_state.js`) — the DO persists which mobs are dead and which
+>    resource nodes are depleted, with respawn times, so a late joiner sees the same world (§12).
+> 2. **The player market** (`market.js`) — a real order book with **server-held escrow**, matching,
+>    a sell tax and a collect box. It is the one place in Milville where the server owns something
+>    a player can lose (§13).
+>
+> Everything else is still relay-only. Anti-cheat and authoritative PvP would still mean moving
+> logic server-side.
 
 ---
 
@@ -20,10 +32,24 @@ phases (groups, group combat, trading), the test harnesses, and how to ship chan
   │  Client A  │ ◀───────────▶ │  Cloudflare Worker + DO   │ ◀───────────▶ │  Client B  │
   │ milville   │   JSON msgs   │  one Durable Object       │   JSON msgs   │ milville   │
   │  .html     │               │  == one "room" (world)    │               │  .html     │
-  │  (MP IIFE) │               │  relays; stores nothing    │               │  (MP IIFE) │
-  └────────────┘               │  authoritative            │               └────────────┘
+  │  (MP IIFE) │               │  relays live play;        │               │  (MP IIFE) │
+  └────────────┘               │  PERSISTS world state     │               └────────────┘
+                               │  + the market order book  │
                                └──────────────────────────┘
+                                     │            │
+                                ctx.storage    KV (LB)
+                             mob:/node:/mkt:*   board:<world>
 ```
+
+The same Worker also answers two **plain-HTTP** APIs on the side, which is what lets them work for
+players who are not connected — or not even online:
+
+| Path | Handled by | Backing store |
+|---|---|---|
+| `/room/<world>` | `server.js` `Room` (WebSocket) | socket attachments (hibernation-safe) |
+| `/mkt/*` | `market.js`, via `Room._market` | DO `ctx.storage` (`mkt:*`) |
+| `/lb/*` | `leaderboard.js` | Workers KV, binding `LB` |
+| `/` or `/health` | `server.js` | — (returns a version string) |
 
 - The **client** is `milville.html` — the same single file. Inside it lives an injected
   **`MP` module** (an IIFE). When its config URL is empty, every method is a no-op and the
@@ -37,12 +63,19 @@ phases (groups, group combat, trading), the test harnesses, and how to ship chan
 
 | Thing | Location | Notes |
 |---|---|---|
-| Client MP module | inside `milville.html` (the `MP` IIFE) | ground truth; injected before kickoff |
-| Extracted module (for tests) | `/home/claude/mp/shipped_mp.js` | re-extract every session; must match the HTML |
-| Server worker | `/mnt/user-data/outputs/mp-server/server.js` (also `server.js` in outputs) | Cloudflare Worker + DO |
-| Server config | `mp-server/wrangler.toml` | DO binding `ROOM`, name/route |
+| Client MP module | inside `index.html` (the `MP` IIFE) | ground truth; between the `>>> MULTIPLAYER MODULE` markers |
+| Worker entry + relay | `mp-server/server.js` | the `Room` Durable Object; routes `/mkt/`, `/lb/`, `/room/` |
+| Shared-world state | `mp-server/world_state.js` | **pure logic, no Cloudflare deps** — §12 |
+| Player market | `mp-server/market.js` | **pure logic, no Cloudflare deps** — §13 |
+| Leaderboard | `mp-server/leaderboard.js` | KV-backed HTTP API; also exports a standalone entrypoint |
+| Server config | `mp-server/wrangler.toml` | DO binding `ROOM` (SQLite class), KV binding `LB` |
 | Worker URL | `https://milville-mp.sampratt99.workers.dev` | health check returns a version string |
 | Room id | `milville-mp-4` (current) via `MP_VERSION='mp-4'` | bumping the version forks a fresh world |
+
+**`world_state.js` and `market.js` take no Cloudflare imports on purpose.** Both operate on an
+abstract async store — `get(k)`, `put(k,v)`, `delete(k)`, `list({prefix}) -> Map` — plus an injected
+`now()` clock. The DO wires in `ctx.storage` and `Date.now`; a test wires a Map-backed mock and a
+clock it controls. That is the only reason either is testable offline at all.
 
 > The server is deployed with `wrangler deploy` from the `mp-server/` folder (the user/Sam runs
 > this; the sandbox can't deploy). **Client-only features need NO server redeploy** — they ride
@@ -119,8 +152,21 @@ All messages are JSON objects with a `t` (type) field. The server handles a fixe
 | `chat` | C→S | broadcasts `chat {uid,name,text}` (clamped to 120 chars) |
 | `emote` | C→S | broadcasts `emote {uid,e}` |
 | `claim` / `release` | C→S | broadcasts mob ownership |
-| `ping` | C→S | replies `pong` |
+| `ping` | C→S | replies `pong` — but see the auto-response note below |
+| `mobdead` | C→S | **persists** `mob:<i> -> respawnAt` in DO storage, then broadcasts |
+| `node` | C→S | **persists** `node:<x>,<y> -> respawnAt`, then broadcasts |
 | (socket close) | — | broadcasts `leave {uid}` |
+
+Two server-side details that are easy to miss:
+
+- **`join` may reply with a `snapshot`.** If the client's `join` carries `snap:1`, the server also
+  sends `buildSnapshot()` — the shared-world state (§12). Clients that do not advertise `snap` never
+  receive it, so older builds are completely unaffected.
+- **`ping` is answered without waking the object.** The constructor calls
+  `ctx.setWebSocketAutoResponse()` with the exact pair `{"t":"ping"}` → `{"t":"pong"}`, so the
+  runtime replies itself and no wall-clock duration is billed. Idle players used to be charged for
+  their own keepalives. **The request string must match the client's byte-for-byte** — the `case
+  "ping"` handler survives only as a fallback.
 
 ### The generic relay (the important part)
 
@@ -270,32 +316,36 @@ ownership math, aggro) — never the *networking/feel*, which needs two live bro
   behind `typeof X === 'function'` guards, so when unmocked they're simply skipped (the real game
   defines them as hoisted declarations, so they resolve there).
 
-### The standing harness sweep (run all before shipping)
+### What is actually committed today
 
-| Harness | Asserts | Baseline |
-|---|---|---|
-| `mptest.mjs` | the whole MP module: presence, claims, groups, combat, trade | **235** |
-| `grouptest.mjs` | the pure aggro/roster engine in isolation | 24 |
-| `tradetest.mjs` | the real game-side inventory swap + space validation | 24 |
-| `specialemotetest.mjs` | weapon specials + bow logic | 46 |
-| `emotetest.mjs` | emote animations | 26 |
-| `combattest.mjs` | solo combat + auto-retaliate (proves group code didn't disturb solo) | 22 |
-| `chattest.mjs` / `chattest2.mjs` | chat parsing/commands | 17 / 17 |
-| `shipped_test.mjs` | the save-code codec | 9 |
-| `mp/worldstate_test.mjs` | server-side world-state helpers | 18 |
+**None of the MP harnesses listed in earlier versions of this doc exist in the repo.** `mptest`,
+`grouptest`, `tradetest`, `worldstate_test` and the rest were session-scratch files under
+`/home/claude/` and did not survive. The committed suite is `harness/` (see `docs/14`), and its only
+MP coverage is:
 
-After any HTML edit: re-extract, re-run the sweep, and **diff** `shipped_mp.js` against a fresh
-extraction to confirm the module in the file matches what the tests ran against.
+| Harness | Covers |
+|---|---|
+| `mphouse` | the seven-case house visibility matrix, through the `MP._test` seam |
+
+`MP._test` exposes `{room, remoteHere, setPeerRoom, setConn, ...}`, which is the seam any future MP
+harness should drive. **`world_state.js` and `market.js` have no harness at all** — they are the
+most testable code in the project (pure functions over an injectable store and clock, exactly as
+their headers advertise) and the most consequential, since the market is the one place the server
+holds something a player can lose. That gap is worth closing before the next market change.
 
 ---
 
 ## 9. Deploying multiplayer changes
 
-- **Client-only change** (groups/combat/trade/presence tweaks): just ship `milville.html` like any
-  other patch — replace `index.html`, bump `?v`, hard-refresh. **No server redeploy.**
-- **Server change** (new server-handled type, world-state storage): edit `mp-server/server.js`, then
-  `wrangler deploy` from that folder (the user does this; the sandbox can't reach Cloudflare). Bump
-  `MP_VERSION` if you need a clean room.
+- **Client-only change** (groups/combat/trade/presence tweaks): just ship `index.html` like any
+  other patch — bump `?v`, hard-refresh. **No server redeploy.**
+- **Server change** (new server-handled type, world-state storage, market logic): edit the file in
+  `mp-server/`, then `wrangler deploy` from that folder (Sam does this; the sandbox can't reach
+  Cloudflare). Bump `MP_VERSION` if you need a clean room, and **bump `MKT_BUILD` for any market
+  change** so you can tell from `x-mkt-build` which build a client is talking to.
+- **A market deploy is the one that can cost a player something.** The escrow lives in DO storage
+  and the client has already removed the item from the pack by the time the server replies. Read §13
+  before changing anything in `market.js`, and keep all four safety properties.
 - **Live verification is mandatory for MP** — two browser tabs/devices joined to the same room.
   The offline harnesses prove logic, never live networking or feel.
 
@@ -360,3 +410,157 @@ plus `hevict` when the owner locks up. Client-only; no server redeploy.
 **The open/locked flag rides `hello` as well as `state`.** It must: an idle player sends no `state`
 messages at all (the keepalive is gated on having an action), so a neighbour would never learn the
 door was open. The `mphouse` harness asserts a seven-case visibility matrix.
+
+---
+
+## 12. `world_state.js` — the shared world
+
+**68 lines, no Cloudflare imports.** It answers one question: when a player joins mid-session, what
+does the world already look like?
+
+### What is stored
+
+Two key spaces in the DO's `ctx.storage`, both holding an **absolute** server timestamp:
+
+| Key | Value | Written by |
+|---|---|---|
+| `mob:<index>` | respawn-at, in server ms | the `mobdead` handler |
+| `node:<x>,<y>` | respawn-at, in server ms | the `node` handler |
+
+### The one design decision that matters
+
+**The snapshot sends REMAINING milliseconds, never absolute times.** `buildSnapshot()` computes
+`respawnAt - now()` per entry and ships that. A joining client never has to reconcile clock skew
+against the server or against other players — it just learns "this mob is back in N ms". If you ever
+change the wire shape here, keep that property; absolute times would desync every client whose clock
+drifts.
+
+### The API
+
+| Function | Does |
+|---|---|
+| `recordMobDead(store, now, m, rs)` | validates and stores `mob:<m>` = `now() + clamp(rs)`; returns false on a bad index |
+| `recordNode(store, now, x, y, rs)` | same for a tile; both coords must be integers in 0..4095 |
+| `buildSnapshot(store, now)` | returns `{t:'snapshot', mobs:[{m,rs}], nodes:[{x,y,rs}]}` and **lazily GCs** anything already expired |
+| `clearMob(store, m)` | drops a `mob:` key early, for a mob reported back alive |
+
+### Clamps and why they are where they are
+
+- `HOUR = 7200000` (two hours) is the ceiling on any respawn, **raised from one hour for
+  Cinderwing's 2h respawn**. The client's own `MAX_RS` must match; if you lengthen a boss respawn
+  past this, a joiner will see it come back early.
+- `validMob` accepts 0..99999; `validTile` accepts 0..4095. Both are cheap guards against a malformed
+  or hostile client filling storage with junk keys — the relay trusts clients everywhere else, so
+  this is the one place where a bad message would otherwise cost money rather than just look wrong.
+- Expired keys are only ever collected **inside `buildSnapshot`**, which is a write-and-read. There
+  is no timer and no alarm; a world nobody joins keeps its dead keys until someone does.
+
+---
+
+## 13. `market.js` — the player market (the one authoritative system)
+
+**301 lines, no Cloudflare imports.** A cross-server order book for player-to-player trades of *any*
+item, including boss drops the NPC Grand Exchange does not stock. It runs over **plain HTTP, not the
+WebSocket**, precisely so a buyer can match a seller who is offline — or asleep.
+
+Routed at `/mkt/*` to a **separate DO instance** from the live room: `env.ROOM.idFromName(world +
+"-mkt")`. The order book therefore lives beside that world's state but not inside the socket room.
+
+### The escrow model
+
+This is the part to understand before touching anything:
+
+- Listing a **sell** removes the item from the seller's pack **client-side**; the server holds the
+  listing.
+- Listing a **buy** removes the coins client-side; the server holds the listing.
+- When two offers match, neither side is paid directly. Everything owed lands in the counterparty's
+  **collect box** (`mkt:collect:<uid>`), claimed later from the market tab.
+
+**Nothing is created or destroyed by matching — one side's escrow becomes the other's payout.** A
+2% sell tax (`TAX`) is taken from the *seller's* proceeds and simply vanishes; that is the coin
+sink, and it is the only value that leaves the system.
+
+### Storage keys
+
+| Key | Holds |
+|---|---|
+| `mkt:offer:<id>` | a resting offer |
+| `mkt:collect:<uid>` | that player's pending payouts |
+| `mkt:pending:<uid>` | a delivered-but-unacked payout batch (see two-phase collect) |
+| `mkt:seq` | monotonic offer-id counter |
+
+### Matching rules
+
+- A **sell** matches buys priced **≥** its ask, best (highest) buy first.
+- A **buy** matches sells priced **≤** its bid, best (lowest) sell first.
+- Ties break **oldest-first** (FIFO fairness).
+- Trades execute at the **resting order's** price — the party who waited gets their posted price and
+  the taker gets the price improvement. A taker who bid above the exec price is refunded the
+  difference into their own collect box.
+- `MAX_OFFERS_PER_UID = 8`, mirroring OSRS's eight GE slots. `OFFER_TTL` is 14 days.
+
+### Four hard-won safety properties — do not remove any of them
+
+1. **Collision-proof offer ids.** The id was once `(mkt:seq | 0) + 1`. If that key ever read stale,
+   every new listing computed the *same* id and `put()` silently overwrote another player's resting
+   offer — their escrowed item annihilated, with no refund, no board entry and no collect. **That is
+   the production bug that ate a player's emberbrand.** The id is now anchored to the offers that
+   actually exist (`max(seq, maxExistingId) + 1`), and there is a further belt-and-braces loop that
+   steps past any live offer already sitting at the target id rather than clobbering it.
+2. **The GC sweep is serialized.** `_gcSweep` reaps expired offers and refunds them. It used to run
+   inside `board()` — a plain un-serialized GET — so two concurrent board reads could **both** refund
+   the same expiring offer (a dupe), or interleave with a `listOffer` mid-match against it. `board()`
+   is now a **pure read** that merely skips expired rows, and the sweep runs only inside the
+   serialized mutation chain.
+3. **Two-phase collect.** `collect()` used to delete the box and *then* return it, so a lost response
+   burned every pending payout forever. Now the box is **moved** to `mkt:pending:<uid>` with a nonce
+   and returned; the client credits the items and calls `/mkt/ack`, which deletes the record. A lost
+   response simply re-delivers next time. Old cached clients that will never send an ack are served
+   by a **legacy one-shot path** (`twophase` falsy) — re-delivering to them would double-credit on
+   every click, which is worse than the lost-response window they already lived with.
+4. **The write-confirm guard** (in `server.js`, not `market.js`). The client escrows the item
+   *before* the server replies and only keeps it removed on `ok:true`. DO storage writes are
+   coalesced and can, rarely, not land even though the in-memory logic succeeded. So before
+   confirming a list, the handler calls `store.sync()` and **reads the offer back**; if it is not
+   there it downgrades to `ok:false` so the client refunds. This converts silent item loss into
+   "the offer didn't place, here's your item".
+
+`_mergePayout` never truncates: a payout past `MAX_COLLECT` (400 *distinct* lines) is refused rather
+than silently dropped, because truncation destroyed real payouts. Coins and identical items merge,
+so a real player never approaches the cap.
+
+### Concurrency
+
+All mutations go through one in-flight promise chain in `Room._market`:
+
+```js
+this._mktChain = Promise.resolve(this._mktChain).catch(() => {}).then(run);
+```
+
+`/mkt/board` and `/mkt/mine` are reads and deliberately bypass it. **Anything that mutates escrow
+must go through the chain** — that is what stops two concurrent listings double-spending.
+
+### Versioning
+
+`MKT_BUILD` in `server.js` (currently `mkt5`) is returned on every market response as both the
+`x-mkt-build` header and a `v` field. **Bump it with any market change**; it is how you tell whether
+a client is talking to the build you think it is.
+
+---
+
+## 14. `leaderboard.js` — the scoreboard
+
+KV-backed, plain HTTP, no DO. `POST /lb/submit` and `GET /lb/top?world=&cat=&n=`. Fifteen
+categories, capped at `MAX_ENTRIES = 500` stored players (stalest records dropped first by
+timestamp).
+
+Two properties worth knowing:
+
+- **Counters are monotonic.** On submit, every numeric field is `max(incoming, stored)`, so a stale
+  or freshly-reset client resubmitting lower numbers cannot wipe real progress.
+- **Scores are client-submitted and therefore forgeable**, within the clamps. The file says so
+  itself. For a friends' server that is accepted; real anti-cheat would mean computing scores
+  server-side, which this game is not built for.
+
+It exports both `handleLeaderboard(request, env)` (merged into the relay, which is what we do) and a
+standalone `default` entrypoint that is currently unused.
