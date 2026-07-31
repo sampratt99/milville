@@ -73,14 +73,13 @@ const T = runPass(PRELUDE + String.raw`
   const lock = document.getElementById('hhlock');
   const visit = document.getElementById('hhvisit');
   const build = document.getElementById('hhbuild');
-  const stats = document.getElementById('hhstats');
   houseHudRender();
   o.hudShown = hud.style.display;
   o.lockShown = lock.style.display;
   o.visitShown = visit.style.display;
   o.lockLabelClosed = lock.textContent;
   o.lockClassClosed = lock.className;
-  o.statsSaysLocked = /Door: <b>locked<\/b>/.test(stats.innerHTML);
+  o.statsGone = !document.getElementById('househud').children.some(c => c.id === 'hhstats');
 
   /* the lock button toggles the real flag */
   since();
@@ -90,7 +89,7 @@ const T = runPass(PRELUDE + String.raw`
   houseHudRender();
   o.lockLabelOpen = lock.textContent;
   o.lockClassOpen = lock.className;
-  o.statsSaysUnlocked = /Door: <b>unlocked<\/b>/.test(stats.innerHTML);
+
   lock.__fire('click');
   o.closedAgain = !houseOpen();
   since();
@@ -225,13 +224,13 @@ S.eq('  with a lock button',                      T.lockShown, 'block');
 S.eq('  and a visit button',                      T.visitShown, 'block');
 S.eq('the lock reads locked by default',          T.lockLabelClosed, 'Door locked');
 S.eq('  unhighlighted',                           T.lockClassClosed, '');
-S.ok('  and the stats line says so',              T.statsSaysLocked);
+S.ok('  and there is no stats readout to disagree with it', T.statsGone,
+     'the lock button IS the door-state display now');
 
 S.ok('CLICKING THE LOCK UNLOCKS THE DOOR',        T.openAfterClick);
 S.ok('  announcing it',                           /unlocked/i.test(T.toggleSaid || ''), T.toggleSaid);
 S.eq('  the button reflects it',                  T.lockLabelOpen, '✓ Door unlocked');
 S.eq('  and highlights',                          T.lockClassOpen, 'on');
-S.ok('  as does the stats line',                  T.statsSaysUnlocked);
 S.ok('clicking again locks it',                   T.closedAgain);
 
 S.eq('A GUEST GETS NO LOCK',                      T.guest.lock, 'none');

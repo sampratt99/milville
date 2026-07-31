@@ -40,7 +40,11 @@ const T = runPass(PRELUDE + String.raw`
 
   /* ---- entering room 0 shows the set ---- */
   /* _raidSetLobbyObjVis gates on raid.floor === 1, so stand up a minimal raid */
+  /* the props are now gated on inRaid too, so they can never render from another
+     world -- the house sits directly north of them in the wilderness */
   const _raid = (typeof raid !== 'undefined') ? raid : null;
+  const _inRaid = inRaid;
+  inRaid = true;
   raid = {floor: 1, rooms: [{}, {}], roomIdx: 0, started: true, rid: 'test'};
   _raidSetLobbyObjVis(true);
   o.visibleInLobby = visibleCount();
@@ -75,6 +79,13 @@ const T = runPass(PRELUDE + String.raw`
 
   /* leave everything hidden, as it was */
   _raidSetLobbyObjVis(false);
+  /* OUTSIDE the delve they cannot be shown at all, whatever the caller asks for */
+  _raidSetLobbyObjVis(true);
+  o.visibleWhileInRaid = visibleCount();
+  inRaid = false;
+  _raidSetLobbyObjVis(true);
+  o.visibleOutsideRaid = visibleCount();
+  inRaid = _inRaid;
   raid = _raid;
   o.visibleAtEnd = visibleCount();
   return o;
@@ -107,6 +118,9 @@ S.eq('ROOM 0 ON ANOTHER FLOOR IS NOT THE LOBBY',  T.visibleOnFloor2, 0);
 S.eq('a dead lobby object stays hidden',          T.deadObjectVisible, false);
 S.ok('  and a live one comes back',               T.revivedVisible);
 
+S.ok('inside the delve they can be shown',        T.visibleWhileInRaid > 0, `${T.visibleWhileInRaid}`);
+S.eq('OUTSIDE THE DELVE THEY CANNOT BE SHOWN AT ALL', T.visibleOutsideRaid, 0,
+     'a stale true used to render them across the void from inside the cottage');
 S.eq('the pass leaves it hidden again',           T.visibleAtEnd, 0);
 
 /* source: the call site, which has no runtime seam here */

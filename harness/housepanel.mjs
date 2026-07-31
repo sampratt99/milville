@@ -80,13 +80,13 @@ const T = runPass(PRELUDE + String.raw`
   /* ---- THE HUD ---- */
   const hud = document.getElementById('househud');
   const hudTitle = document.getElementById('hhtitle');
-  const hudStats = document.getElementById('hhstats');
   const hudBuild = document.getElementById('hhbuild');
   const hudStaff = document.getElementById('hhstaff');
   houseHudRender();
   o.hudShownInside = hud.style.display;
   o.hudTitleInside = hudTitle.textContent;
-  o.hudStatsMentionsLevel = /Construction/.test(hudStats.innerHTML);
+  /* the stats readout was removed: the HUD is buttons now */
+  o.hudStatsGone = !document.getElementById('househud').children.some(c => c.id === 'hhstats');
   o.hudBuildShown = hudBuild.style.display;
   o.hudStaffShown = hudStaff.style.display;
 
@@ -176,7 +176,8 @@ S.ok('  listing the hires',                       T.staffRows >= T.butlerCount,
 /* the HUD */
 S.eq('the HUD shows inside the house',            T.hudShownInside, 'flex');
 S.eq('  named for the owner',                     T.hudTitleInside, 'Your cottage');
-S.ok('  showing the Construction level',          T.hudStatsMentionsLevel);
+S.ok('  and carries NO stats readout',            T.hudStatsGone,
+     'the four-line block was dropped; every number is available where it matters');
 S.ok('  with both builder buttons',               T.hudBuildShown !== 'none' && T.hudStaffShown !== 'none');
 S.eq('a guest sees whose cottage it is',          T.hudTitleGuest, 'Bob’s cottage');
 S.ok('  and NO builder buttons',                  T.hudBuildHiddenForGuest && T.hudStaffHiddenForGuest);

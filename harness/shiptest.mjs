@@ -242,6 +242,9 @@ const T = runPass(PRELUDE + String.raw`
   clearInv();
   setLevel('construction', 1);
   give('coins', 100);
+  /* a hire needs a bell to be summoned by */
+  houseSlots()[HOUSE_ENTRY.gx + ',' + HOUSE_ENTRY.gy + ':bell'] = 'hf_bell';
+  o.bellUp = !!houseHasBell();
   butlerHire(B.id);
   o.hireWhenBrokeBlocked = !butlerHired();
   since();

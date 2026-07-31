@@ -24,6 +24,18 @@ const T = runPass(PRELUDE + String.raw`
   }));
 
   freshHouse();
+  /* ** A HIRE NEEDS A BELL. ** There is nothing to summon them with otherwise, which is
+     the rule the HUD's Staff button used to bypass. Every case below assumes one is up;
+     the bell gate itself is asserted at the end. */
+  const _bellKey = HOUSE_ENTRY.gx + ',' + HOUSE_ENTRY.gy + ':bell';
+  o.noBellRefused = (() => {
+    delete houseSlots()[_bellKey];
+    clearInv(); give('coins', 20000000); player.house.servant = null;
+    since(); butlerHire('third');
+    return {hired: !!butlerHired(), said: since()[0] || null};
+  })();
+  houseSlots()[_bellKey] = 'hf_bell';
+  o.bellFound = houseHasBell();
 
   /* --- hiring is gated on level and on the fee --- */
   o.hire = [];
@@ -274,6 +286,11 @@ S.ok('a low tier will not do paperwork',         T.lowTierUnnote);
 
 /* ---- un-noting in depth (moved here when fivefix was rescoped to the five-bug
    batch; these were its only assertions not already covered above) ---- */
+/* the bell gate */
+S.eq('NO BELL MEANS NO STAFF',                    T.noBellRefused.hired, false);
+S.ok('  and says to build one',                   /bell/i.test(T.noBellRefused.said || ''), T.noBellRefused.said);
+S.eq('  a built bell is found',                   T.bellFound, 'hf_bell');
+
 S.ok('the hire actually took the job',            T.hiredOk,
      'without this every check below would pass on "You have nobody to send"');
 S.ok('the fifth former actually delivers boards', T.unnoteGot > 0, `${T.unnoteGot} boards`);

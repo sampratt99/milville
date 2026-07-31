@@ -347,6 +347,25 @@ carries both rooms' furniture and loses none.
 - **Adding a skill means adding it to the skills OBJECT**, not just `SKILLS`. Missing it gives
   `undefined` xp and NaN everywhere. There is now a backfill on load.
 - **Left-click runs `optionsAt`'s FIRST option.** Never put anything destructive or costly first.
+- **AN INTERIOR NEEDS ITS OWN PICK FLOOR.** Clicks resolve by raycasting a per-interior floor mesh,
+  and the chain in `castPick` ends at `terra` — the *overworld* terrain. The house had no branch, so
+  every click fell through to the wilderness surface under the dead zone and the walk marker landed
+  a tile or three from the cursor. The delve had the identical fault (see `_raidBuildFloorPick`).
+  `housePickFloor` is a flat plane at `houseFY`; add any new interior to that chain or it inherits
+  this bug.
+- **Object models bake their Y from `groundH()` BEFORE the house exists.** `objects.forEach(buildObjModel)`
+  runs thousands of lines earlier than the HOUSE constants, so it reads the original wilderness
+  terrain. `_houseFlatten()` then moves the ground to `houseFY` and leaves those models hanging —
+  which is how the cottage door ended up floating above the floor. `_houseReseatObjects()` re-seats
+  them on every flatten and restore.
+- **`addItem(id, n)` is ALL-OR-NOTHING for a non-stackable.** With too few free slots it adds nothing
+  and returns false. `butlerReturn` decremented the bank first and called it once, so a fetch that
+  did not fit **destroyed the boards** — they left the bank and arrived nowhere. Add one at a time
+  and put the remainder back.
+- **A hire needs a bell.** `butlerHire` checks `houseHasBell()`; the HUD's Staff button reached
+  `butlerPanel()` directly and let you hire out of thin air.
+- **A slot may set `face:'N'|'S'|'E'|'W'`** to override the wall rule, for furniture that should look
+  at something in particular rather than into the room — the chapel pew faces the altar.
 - **Slot keys carry the CELL, so anything that moves a room must re-key its furniture.** See §8b.
 - **The cottage door object is hard-coded to the entry doorway** and cannot see the HOUSE constants.
   Move the grid or the region and it is left standing in rock. `walktest` asserts it.

@@ -41,6 +41,7 @@ const T = runPass(PRELUDE + String.raw`
       const dN = s.oy - 1, dS = (HOUSE_RH - 1) - s.oy;
       const dW = s.ox - 1, dE = (HOUSE_RW - 1) - s.ox;
       o.slots.push({room: rk, id: s.id, ox: s.ox, oy: s.oy, cat: s.cat,
+                    face: s.face || null,
                     wall: Math.min(dN, dS, dW, dE)});
     }
   }
@@ -148,6 +149,13 @@ const facingWrong = [];
 for(const s of slots){
   const f = T.facing[s.room + ':' + s.id];
   if(f === undefined){ facingWrong.push(`${s.room}:${s.id} (no facing)`); continue; }
+  /* an explicit face on the slot beats the wall rule: a pew looks at the altar,
+     not at the middle of the floor */
+  if(s.face){
+    const FACE = {S: 0, N: Math.PI, E: Math.PI / 2, W: -Math.PI / 2};
+    if(f !== FACE[s.face]) facingWrong.push(`${s.room}:${s.id} face='${s.face}' got ${f} want ${FACE[s.face]}`);
+    continue;
+  }
   const dN = s.oy - 1, dS = (T.RH - 1) - s.oy, dW = s.ox - 1, dE = (T.RW - 1) - s.ox;
   const m = Math.min(dN, dS, dW, dE);
   let want = 0;
@@ -159,6 +167,9 @@ for(const s of slots){
   if(f !== want) facingWrong.push(`${s.room}:${s.id} got ${f} want ${want}`);
 }
 S.eq('every piece faces INTO its room',           facingWrong.length, 0);
+const overrides = slots.filter(s => s.face);
+S.ok('some slots override the wall rule',         overrides.length > 0,
+     overrides.map(s => `${s.room}:${s.id}->${s.face}`).join(', '));
 if(facingWrong.length) S.note(facingWrong.slice(0, 6).join(', '));
 const turned = Object.values(T.facing).filter(f => f !== 0).length;
 S.ok('  and some really are turned',              turned > 0,

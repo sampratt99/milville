@@ -1518,7 +1518,6 @@ try{
         <canvas id="overlay"></canvas>
         <div id="househud">
           <div id="hhtitle">Your cottage</div>
-          <div id="hhstats"></div>
           <button id="hhbuild" type="button">Building mode</button>
           <button id="hhstaff" type="button">Staff</button>
           <button id="hhrooms" type="button">Rearrange rooms</button>
@@ -10239,13 +10238,13 @@ function optionsAt(tx,ty){
         opts.push({html:'Deal <span class="t">a hand</span>',label:'Deal a hand',
           fn:()=>msg('You deal yourself a hand. '+['A pair of knaves.','Three tens and a headache.','Nothing at all \u2014 and you know it.','A straight, against nobody.'][Math.floor(Math.random()*4)],'#5c3f00')});
       if(o.def==='hf_weaponrack')
-        opts.push({html:'Inspect <span class="t">Weapon rack</span>',label:'Inspect Weapon rack',fn:()=>houseRackReport('weapon')});
+        opts.push({html:'Inspect <span class="t">'+(_F?_F.name:'Weapon rack')+'</span>',label:'Inspect '+(_F?_F.name:'Weapon rack'),fn:()=>houseRackReport('weapon')});
       if(o.def==='hf_armourstand')
-        opts.push({html:'Inspect <span class="t">Armour stand</span>',label:'Inspect Armour stand',fn:()=>houseRackReport('armour')});
+        opts.push({html:'Inspect <span class="t">'+(_F?_F.name:'Armour stand')+'</span>',label:'Inspect '+(_F?_F.name:'Armour stand'),fn:()=>houseRackReport('armour')});
       if(o.def==='hf_caperack')
-        opts.push({html:'Inspect <span class="t">Cape rack</span>',label:'Inspect Cape rack',fn:()=>houseCapeReport()});
+        opts.push({html:'Inspect <span class="t">'+(_F?_F.name:'Cape rack')+'</span>',label:'Inspect '+(_F?_F.name:'Cape rack'),fn:()=>houseCapeReport()});
       if(o.def==='hf_pethouse')
-        opts.push({html:'Inspect <span class="t">Pet house</span>',label:'Inspect Pet house',fn:()=>housePetReport()});
+        opts.push({html:'Inspect <span class="t">'+(_F?_F.name:'Pet house')+'</span>',label:'Inspect '+(_F?_F.name:'Pet house'),fn:()=>housePetReport()});
       if(o.def==='hf_bell'||o.def==='hf_bellpull')
         opts.push({html:'Ring <span class="t">for staff</span>',label:'Ring for staff',fn:()=>butlerPanel()});
       if(o.def==='hf_spyglass'||o.def==='hf_telescope')
@@ -10270,9 +10269,9 @@ function optionsAt(tx,ty){
                    else { player.hp=Math.min(maxHp(),player.hp+3); if(typeof updateOrbs==='function')updateOrbs();
                           msg('You drink deeply. The cold clears your head. (+3 hp)','#224e22'); } }});
       if(o.def==='hf_trophy'||o.def==='hf_shelf')
-        opts.push({html:'Inspect <span class="t">Trophy shelf</span>',label:'Inspect Trophy shelf',fn:()=>houseTrophyReport()});
+        opts.push({html:'Inspect <span class="t">'+(_F?_F.name:'Shelf')+'</span>',label:'Inspect '+(_F?_F.name:'Shelf'),fn:()=>houseTrophyReport()});
       if(o.def==='hf_case')
-        opts.push({html:'Inspect <span class="t">Display case</span>',label:'Inspect Display case',fn:()=>houseCaseReport()});
+        opts.push({html:'Inspect <span class="t">'+(_F?_F.name:'Display case')+'</span>',label:'Inspect '+(_F?_F.name:'Display case'),fn:()=>houseCaseReport()});
       /* Examine first on a BUILT piece: upgrading spends money and removing tears it out, so
          neither should be what a stray left click does. */
       opts.push({html:'Examine <span class="t">'+(_F?_F.name:'Furniture')+'</span>',
@@ -16013,7 +16012,9 @@ function buildObjModel(o){
       B(2.0,0.08,0.08,OAK,0,0.3,0);
       for(const cp of [[-0.75,0.95,0],[0.75,0.95,0],[-0.75,-0.95,Math.PI],[0.75,-0.95,Math.PI]]){
         B(0.5,0.08,0.5,PINE,cp[0],0.56,cp[1]);
-        B(0.5,0.7,0.07,OAK,cp[0],0.92,cp[1]+(cp[2]?0.2:-0.2));
+        /* the BACK goes on the far side of the seat from the table, or the chair reads as
+           facing away from it -- all four were turned outward */
+        B(0.5,0.7,0.07,OAK,cp[0],0.92,cp[1]+(cp[2]?-0.2:0.2));
         for(const q of [[-0.2,-0.2],[0.2,-0.2],[-0.2,0.2],[0.2,0.2]])
           C(0.035,0.04,0.52,OAK,cp[0]+q[0],0.28,cp[1]+q[1],6);
       }
@@ -26774,7 +26775,7 @@ function castPick(ev){
     if(d.kind==='item'){const _gi=ground.find(gi=>gi.uid===d.uid);return !!_gi&&(_gi.interior||null)===curInterior();}
     return !inSos&&!inVolcano;   /* inside the caves, ignore leaked overworld proxies so clicks land on the floor */
   });
-  const th=_rc.intersectObject(inRaid&&raidFloorPick?raidFloorPick:(inSos&&sosFloor?sosFloor:(inVolcano&&volcFloor?volcFloor:(inStPaul&&stPaulFloor?stPaulFloor:(inRectory&&rectoryFloor?rectoryFloor:(inChapel&&chapelFloor?chapelFloor:terra))))),false)[0];
+  const th=_rc.intersectObject((typeof inHouse!=='undefined'&&inHouse&&housePickFloor)?housePickFloor:(inRaid&&raidFloorPick?raidFloorPick:(inSos&&sosFloor?sosFloor:(inVolcano&&volcFloor?volcFloor:(inStPaul&&stPaulFloor?stPaulFloor:(inRectory&&rectoryFloor?rectoryFloor:(inChapel&&chapelFloor?chapelFloor:terra)))))),false)[0];
   const ph=hits[0];
   if(ph&&(!th||ph.distance<=th.distance+0.0001)){
     const d=ph.object.userData;
@@ -35738,7 +35739,10 @@ function _raidLog(s2){ _raidCallLog.push(s2+' @fl'+((typeof raid!=='undefined'&&
    show=(idx===0). Only ever shows on floor 1 (room 0 exists on every floor at the same tiles). */
 const _RAID_LOBBY_DEFS={ raid_exit:1, raid_sign:1, raid_hoard:1, raid_lobbygate:1, raid_bank:1, raid_geartable:1 };
 function _raidSetLobbyObjVis(show){
-  const on = !!show && !!(raid && raid.floor===1);
+  /* ** NEVER VISIBLE OUTSIDE THE DELVE. ** These props stand in walkable deep wilderness, so a
+     stale `true` renders them across the void from anywhere you happen to be -- and the house now
+     sits directly north of them, which is how they turned up in somebody's cottage. */
+  const on = !!show && !!(raid && raid.floor===1) && (typeof inRaid==='undefined' || !!inRaid);
   if(typeof objects!=='undefined')for(const o of objects){
     if(!o||!_RAID_LOBBY_DEFS[o.def]||o.raidRoom!==0||o.raidFloor!==1)continue;
     if(o._m&&o._m.group)o._m.group.visible = on && (o.alive!==false);
@@ -41104,9 +41108,41 @@ function houseCarve(){
     _hSnap.push([x,y,hts[y][x]]); sum+=hts[y][x]; n++; }
   houseFY=n?sum/n:0;
 })();
-function _houseFlatten(){for(const s of _hSnap)hts[s[1]][s[0]]=houseFY;}
-function _houseRestore(){for(const s of _hSnap)hts[s[1]][s[0]]=s[2];}
+/* ** RE-SEAT ANYTHING BAKED BEFORE THE FLATTEN. ** Object models take their Y from groundH() at
+   `objects.forEach(buildObjModel)`, which runs long before the house exists and therefore reads the
+   ORIGINAL wilderness terrain. Flattening the region afterwards moves the ground to houseFY and
+   leaves those models hanging at the old height -- which is why the cottage door sat a few tiles up
+   in the air. The door is the only permanent world object inside the region, but re-seat by def so
+   a second one cannot be missed. */
+const _HOUSE_SEATED=['house_exit'];
+function _houseReseatObjects(){
+  for(const o of objects){
+    if(_HOUSE_SEATED.indexOf(o.def)<0)continue;
+    if(o.x<HOUSE.x0||o.x>HOUSE.x1||o.y<HOUSE.y0||o.y>HOUSE.y1)continue;
+    if(o._m&&o._m.group)o._m.group.position.set(o.x+0.5,groundH(o.x+0.5,o.y+0.5),o.y+0.5);
+  }
+}
+function _houseFlatten(){for(const s of _hSnap)hts[s[1]][s[0]]=houseFY; _houseReseatObjects();}
+function _houseRestore(){for(const s of _hSnap)hts[s[1]][s[0]]=s[2]; _houseReseatObjects();}
 let _houseMesh=null;
+/* ============ THE PICK FLOOR ============
+   Clicks resolve by raycasting a per-interior floor mesh. The house had NONE, so every click fell
+   through to `terra` -- the OVERWORLD terrain under the dead zone -- and landed on whatever tile
+   that surface happened to intersect. Same fault the delve had (see _raidBuildFloorPick) and the
+   same symptom: the walk marker lands a tile or three from where you clicked, and the drift changes
+   if the region moves, because the terrain beneath it changes.
+   The house floor is dead flat at houseFY, so one plane is enough -- no grading to follow. */
+let housePickFloor=null;
+function _houseBuildFloorPick(){
+  if(housePickFloor){ if(housePickFloor.parent)housePickFloor.parent.remove(housePickFloor); housePickFloor=null; }
+  const W2=HOUSE.x1-HOUSE.x0+1, H2=HOUSE.y1-HOUSE.y0+1;
+  const m=new THREE.Mesh(new THREE.PlaneGeometry(W2,H2),
+                         new THREE.MeshBasicMaterial({visible:false}));
+  m.rotation.x=-Math.PI/2;
+  m.position.set(HOUSE.x0+W2/2, houseFY, HOUSE.y0+H2/2);
+  houseGroup.add(m);
+  housePickFloor=m;
+}
 /* which floor each room type lays -- the single biggest thing that makes rooms read apart */
 const HOUSE_FLOORS={parlour:'plank',bedroom:'plank',games:'plank',study:'parquet',
   gallery:'parquet',costume:'parquet',kitchen:'quarry',chapel:'flag',workshop:'board',
@@ -41274,6 +41310,7 @@ function houseBuildInterior(){
       y+0.5+(faces.indexOf('S')>=0?0.5-WT/2:(faces.indexOf('N')>=0?-0.5+WT/2:0)));
   }
   const m=bakeMesh(out,true); houseGroup.add(m); _houseMesh=m;
+  _houseBuildFloorPick();     /* the click surface must exist wherever the floor does */
 }
 
 /* Each room type has its OWN slot list, in room-local offsets. A slot's saved key is
@@ -41309,7 +41346,7 @@ const HOUSE_ROOMS={
   chapel:  {name:'Chapel',   cost:950000,  floor:0x8f8a80, seam:0x74706a, inlay:0x74706a, rail:0x8a8378, panel:0xe4e0d6,
     slots:[{id:'altar',ox:4,oy:1,cat:'altar',label:'the east end'},
            {id:'icon',ox:9,oy:1,cat:'icon',label:'the north wall'},
-           {id:'pew',ox:4,oy:4,cat:'pew',label:'the nave'},
+           {id:'pew',ox:4,oy:4,cat:'pew',face:'N',label:'the nave'},
            {id:'burner',ox:1,oy:7,cat:'burner',label:'the side wall'},
            {id:'effigy',ox:9,oy:7,cat:'effigy',label:'the south aisle'}]},
   workshop:{name:'Workshop', cost:15000,  floor:0x6f6a5c, seam:0x585245, inlay:0x585245, rail:0x4e4a40, panel:0xcfc9b8,
@@ -41510,9 +41547,15 @@ function houseSlotByKey(k){ return houseAllSlots().find(s=>s.key===k)||null; }
    facing straight into the plaster. This returns the rotation that turns a piece to look into the
    room from whichever wall it stands against; pieces out in the middle of the floor keep facing
    north, which is the natural reading. */
+/* which way a piece LOOKS. Models are built facing +z, so 0 = looking south. */
+const HOUSE_FACE={S:0, N:Math.PI, E:Math.PI/2, W:-Math.PI/2};
 function houseSlotFacing(S){
   const sl=(HOUSE_ROOMS[roomAt(S.gx,S.gy)]||HOUSE_ROOMS.parlour).slots.find(q=>S.key.endsWith(':'+q.id));
   if(!sl)return 0;
+  /* ** AN EXPLICIT face BEATS THE WALL RULE. ** The wall rule turns a piece to look into the room,
+     which is right for anything mounted but wrong for furniture that should look at something in
+     particular -- a pew faces the altar, not the middle of the floor. */
+  if(sl.face!==undefined&&HOUSE_FACE[sl.face]!==undefined)return HOUSE_FACE[sl.face];
   const dN=sl.oy-1, dS=(HOUSE_RH-1)-sl.oy, dW=sl.ox-1, dE=(HOUSE_RW-1)-sl.ox;
   const m=Math.min(dN,dS,dW,dE);
   if(m>1)return 0;                       /* free-standing: leave it facing north */
@@ -42308,12 +42351,21 @@ const BUTLERS=[
    ex:'Grew up on these grounds and has never once queued for anything. Insufferable, and very fast.'}
 ];
 function butlerById(id){ return BUTLERS.find(b=>b.id===id)||null; }
+/* ** THE BELL IS WHAT HIRES. ** A servant waits by the bell and is sent from it; without one there
+   is nothing to summon them with, which is why both bells are priced well under their level band.
+   The HUD's Staff button reached butlerPanel() directly and let you hire out of thin air. */
+function houseHasBell(){
+  const sl=houseSlots();
+  for(const k in sl){ const F=HOUSE_FURNITURE[sl[k]]; if(F&&F.cat==='bell')return sl[k]; }
+  return null;
+}
 function butlerState(){ if(!player.house)player.house={}; if(!player.house.servant)player.house.servant=null;
   return player.house.servant; }
 function butlerHired(){ const st=butlerState(); return st?butlerById(st.tier):null; }
 function butlerBusy(){ const st=butlerState(); return !!(st&&st.tripEndsAt&&Date.now()<st.tripEndsAt); }
 function butlerHire(id){
   if(houseIsGuest()){msg('Not your cottage, not your staff.','#851a1a');return;}
+  if(!houseHasBell()){msg('You have nothing to summon them with. Build a servant\u2019s bell first.','#851a1a');return;}
   const B=butlerById(id); if(!B)return;
   if(lvl('construction')<B.req){msg('You need Construction '+B.req+' before a '+B.name.toLowerCase()+' will take the job.','#851a1a');return;}
   if(coinsCount()<B.fee){msg('A '+B.name.toLowerCase()+' wants '+fmt(B.fee)+' coins a trip. You cannot cover one.','#851a1a');return;}
@@ -42328,6 +42380,15 @@ function butlerDismiss(){
   const B=butlerHired();
   player.house.servant=null; dirty=true; houseRebuild();
   msg('You let the '+(B?B.name.toLowerCase():'servant')+' go.','#5c3f00');
+}
+/* put items back into the bank, merging into an existing line. Used when the pack cannot hold
+   everything a hire brought back -- the remainder must go somewhere, and losing it is not an option. */
+function _bankReturn(id,qty){
+  qty=qty|0; if(qty<=0)return 0;
+  if(typeof bank==='undefined'||!bank)return 0;
+  for(const b of bank)if(b&&b.id===id){ b.qty=(b.qty||0)+qty; return qty; }
+  bank.push({id:id,qty:qty});
+  return qty;
 }
 /* the errand: coins out of the pack, boards out of the BANK, back after a delay */
 function butlerFetch(plankId){
@@ -42416,10 +42477,19 @@ function butlerReturn(){
     if(b.qty<=0)bank.splice(bank.indexOf(b),1);
     if(taken>=n)break;
   }
-  if(taken>0)addItem(p.id,taken);
+  /* ** THIS USED TO DESTROY THE BOARDS. ** The bank was decremented and then addItem(id, taken) was
+     called ONCE. Boards do not stack, and addItem is all-or-nothing for a non-stackable: with too
+     few free slots it added NOTHING and returned false -- so the boards had left the bank and never
+     arrived anywhere. Now they go in one at a time and whatever will not fit is PUT BACK. */
+  let got=0;
+  for(let k=0;k<taken;k++){ if(addItem(p.id,1))got++; else break; }
+  const spare=taken-got;
+  if(spare>0)_bankReturn(p.id,spare);
   dirty=true;
   if(typeof renderInv==='function')renderInv();
-  msg('The '+(B?B.name.toLowerCase():'servant')+' returns with '+taken+' \u00d7 '+ITEMS[p.id].name.toLowerCase()+'.','#224e22');
+  if(got>0)msg('The '+(B?B.name.toLowerCase():'servant')+' returns with '+got+' \u00d7 '+ITEMS[p.id].name.toLowerCase()+'.','#224e22');
+  if(spare>0)msg('Your pack would not hold the rest \u2014 '+spare+' went back in the bank.','#5c3f00');
+  else if(got===0)msg('The '+(B?B.name.toLowerCase():'servant')+' could not find room for a single board.','#851a1a');
 }
 /* ---- the upper tiers earn their fee: un-noting, and a run to the Collect box ---- */
 function butlerUnnote(){
@@ -42529,6 +42599,7 @@ function houseEnterVisit(uid,name,data){
   houseVisit={uid,name,rooms:(data&&data.rooms)||{},slots:(data&&data.slots)||{},repair:(data&&data.repair)|0};
   if(typeof closeBank==='function')closeBank();
   if(typeof closeShop==='function')closeShop();
+  if(typeof _raidSetLobbyObjVis==='function')_raidSetLobbyObjVis(false);
   inHouse=true;tiles=houseTiles;worldGroup.visible=false;houseGroup.visible=true;
   _houseFlatten();
   houseCarve(); houseBuildInterior(); houseRebuild(); houseRepaintMinimap();
@@ -42776,22 +42847,14 @@ function houseHudRender(){
   el.style.display=inside?'flex':'none';
   if(!inside)return;
   const guest=houseIsGuest();
-  const t=document.getElementById('hhtitle'), st=document.getElementById('hhstats'),
+  const t=document.getElementById('hhtitle'),
         b=document.getElementById('hhbuild'), sf=document.getElementById('hhstaff');
+  /* ** THE HUD IS BUTTONS, NOT A READOUT. ** It used to carry a four-line block -- room count,
+     spaces filled, Construction level, door state, staff -- which made the panel tall enough to
+     crowd the corner of the screen. Every one of those numbers is available where it matters (the
+     skill panel, the staff panel, the lock button's own label), so the readout is gone: the title
+     and the buttons are the whole HUD. */
   if(t)t.textContent=guest?(houseOwnerName()+'\u2019s cottage'):'Your cottage';
-  if(st){
-    const rooms=Object.keys(houseRooms()).length;
-    const filled=Object.keys(houseSlots()).length;
-    const total=houseAllSlots().length;
-    const bits=['<b>'+rooms+'</b> room'+(rooms===1?'':'s')+', <b>'+filled+'</b> of <b>'+total+'</b> spaces filled'];
-    if(!guest){
-      bits.push('Construction <b>'+lvl('construction')+'</b>');
-      bits.push('Door: <b>'+(houseOpen()?'unlocked':'locked')+'</b>');
-      const B=butlerHired();
-      if(B)bits.push('Staff: <b>'+B.name+'</b>'+(butlerBusy()?' (out)':''));
-    }
-    st.innerHTML=bits.join('<br>');
-  }
   if(b){ b.style.display=guest?'none':'block';
     b.textContent=(houseBuildMode?'\u2713 Building mode':'Building mode');
     b.className=houseBuildMode?'on':''; }
@@ -42993,6 +43056,9 @@ function enterHouse(){
   }
   if(typeof closeBank==='function')closeBank();
   if(typeof closeShop==='function')closeShop();
+  /* the house is a world swap like any other: re-hide the delve lobby, whose props sit in the
+     walkable wilderness just south of the cottage region */
+  if(typeof _raidSetLobbyObjVis==='function')_raidSetLobbyObjVis(false);
   inHouse=true;tiles=houseTiles;worldGroup.visible=false;houseGroup.visible=true;
   _houseFlatten();
   {const _e=houseExitTile(); player.x=_e.x; player.y=_e.y+1; player.px=player.x; player.py=player.y;}
