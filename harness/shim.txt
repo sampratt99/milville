@@ -132,10 +132,32 @@ class ShimClassList {
   [Symbol.iterator](){ return this._s[Symbol.iterator](); }
 }
 
-class ShimStyle {
-  setProperty(k, v){ this[k] = v; }
-  getPropertyValue(k){ return this[k] ?? ''; }
+/* An unset CSS property reads as '' in a real DOM, NOT undefined. The game
+   relies on that: _luActive() decides the level-up popup is already open by
+   testing `el.style.display !== ''`, and with undefined that test was true
+   forever, so the popup never rendered. Proxied so any unread property is ''. */
+class ShimStyleBase {
+  setProperty(k, v){ this[k] = v == null ? '' : String(v); }
+  getPropertyValue(k){ return Object.prototype.hasOwnProperty.call(this, k) ? this[k] : ''; }
   removeProperty(k){ const v = this[k]; delete this[k]; return v; }
+  get cssText(){
+    return Object.keys(this).map(k => k + ': ' + this[k]).join('; ');
+  }
+  set cssText(v){
+    for(const k of Object.keys(this)) delete this[k];
+    for(const decl of String(v || '').split(';')){
+      const i = decl.indexOf(':');
+      if(i > 0) this[decl.slice(0, i).trim()] = decl.slice(i + 1).trim();
+    }
+  }
+}
+function ShimStyle(){
+  return new Proxy(new ShimStyleBase(), {
+    get(t, k){
+      if(k in t) return t[k];
+      return typeof k === 'string' ? '' : undefined;
+    },
+  });
 }
 
 let __elSeq = 0;
