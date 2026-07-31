@@ -102,6 +102,13 @@ const T = runPass(PRELUDE + String.raw`
   o.packAfterReturn = countItem('oak_plank');
   o.bankAfterReturn = bank.reduce((n, b) => n + ((b && b.id === 'oak_plank') ? b.qty : 0), 0);
   o.backHome = !butlerBusy();
+  o.load = butlerById('third').load;
+  /* THE THIRD FORMER IS KEEN RATHER THAN CAREFUL: ~1 in 12 they drop one on the
+     step. Asserting a flat 6 made this harness flaky, which is worse than failing
+     — so assert the real rule instead, and prove the drop is announced when it
+     happens rather than silently swallowing a board. */
+  o.dropped = o.load - o.packAfterReturn;
+  o.droppedSaid = said(/drops one on the step/);
   since();
 
   /* Once home they resume wandering rather than standing on the doormat.
@@ -158,8 +165,19 @@ S.ok('ON AN ERRAND THEY WAIT AT THE DOOR',        T.atDoorWhileAway,
      `at ${JSON.stringify(T.doorTile)}`);
 S.eq('the trip is deferred, not instant',         T.packBeforeReturn, 0);
 S.ok('  with a real timer pending',               T.timersPending > 0);
-S.eq('  and the boards arrive on return',         T.packAfterReturn, 6);
-S.eq('  taken out of the bank',                   T.bankAfterReturn, 14);
+S.ok('  and the boards arrive on return',         T.dropped === 0 || T.dropped === 1,
+     `${T.packAfterReturn} of a ${T.load}-board load`);
+S.ok('  a dropped board is announced, never silent',
+     T.dropped === 0 ? !T.droppedSaid : T.droppedSaid,
+     T.dropped ? 'dropped one and said so' : 'dropped none and said nothing');
+/* The bank is down by exactly what ARRIVED. butlerReturn decrements n before it
+   touches the bank, so a "dropped" board never leaves the bank at all — the
+   message says they drop one on the step, but mechanically you are just fetched
+   one fewer. Harmless, and in the player's favour; noted so nobody reads the
+   line as a lost board. */
+S.eq('  and the bank is down by exactly what arrived',
+     T.bankAfterReturn, 20 - T.packAfterReturn);
+if(T.dropped) S.note('the dropped board stayed in the bank rather than being destroyed');
 S.ok('  leaving them free again',                 T.backHome);
 S.ok('and they step off the doormat afterwards',  T.leftTheDoor);
 
