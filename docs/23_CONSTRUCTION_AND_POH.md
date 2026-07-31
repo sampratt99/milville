@@ -240,6 +240,31 @@ owner's key**, so they share a room; two owners each at home are in different ro
   server half needs a `wrangler deploy`.** Same bug class as the pets-on-`pos` one — never trust a
   field to survive a server rebuild.
 
+### Visiting an OFFLINE owner
+
+`hreq` → `hdat` needs the owner's own client to answer, so it only ever worked while they were
+logged in — which is not what "leave the door unlocked" means. The house is therefore also
+**published to the server** (`mp-server/houses.js`, `house:<uid>` in the same DO as the market):
+
+| Route | Does |
+|---|---|
+| `POST /house/publish` | the owner pushes `{uid,name,open,repair,rooms,slots}` |
+| `POST /house/close` | shut the door without re-sending the layout |
+| `GET /house/list?self=` | every open, finished cottage, newest first |
+| `GET /house/get?uid=` | one layout, for a visitor walking in |
+
+`housePublish()` fires on the door toggle, a room build, a furniture build or removal, a rearrange
+and the final repair. The Visit panel merges both sources: a peer you can see is listed **"knock"**
+(instant, always current), anyone else **"walk in"** (fetched from the directory).
+
+**A snapshot is public read-only data** — layout and furniture, nothing else. The server sanitises
+what it stores: cell and slot keys must match their patterns, ids must be plain identifiers, counts
+are capped, and no field the client sends beyond the known seven is kept. `harness/housedir.mjs`
+sabotage-tests that a payload carrying `inv`/`bank`/`skills`/`coins` stores none of it.
+
+> **This half needs a `wrangler deploy`.** Until the worker ships, the directory calls fail
+> harmlessly and the Visit panel falls back to online-only peers.
+
 ### Visiting, from the house HUD
 
 The visit flow lives on the **house HUD** (top right, inside a cottage), not just the cottage door:

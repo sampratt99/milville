@@ -41650,6 +41650,7 @@ function houseBuildRoom(gx,gy,type){
   houseRooms()[gx+','+gy]=type;
   houseCarve(); houseBuildInterior(); houseRebuild(); houseRepaintMinimap();
   dirty=true; sfx.levelup&&sfx.levelup();
+  housePublish();
   msg('You build a '+RT.name.toLowerCase()+'. The wall is opened through to it.','#224e22');
 }
 /* offered on a doorway-adjacent bare wall: what could go in the empty cell beyond */
@@ -42223,6 +42224,7 @@ function houseBuild(slotId,fid){
   spendCoins(F.cost);
   const sl=houseSlots(); sl[slotId]=fid;
   houseRebuild(); dirty=true;
+  housePublish();
   addXp('construction',F.xp|0);
   /* ** THE BUILD ANIMATION. ** Building used to be instant and silent -- no swing, no sound beyond a
      level-up chime. The player now faces the hotspot, plays the hammering swing for a beat, and gets
@@ -42251,6 +42253,7 @@ function houseRemove(slotId){
   const back=Math.floor((F.planks|0)/2), bpid=F.plankId||'oak_plank';
   if(back>0)addItem(bpid,back);
   houseRebuild(); dirty=true;
+  housePublish();
   msg('You take down the '+F.name.toLowerCase()+', recovering '+fmt(Math.floor(F.cost/2))+' coins'
       +(back>0?(' and '+back+' '+ITEMS[bpid].name.toLowerCase()+'s'):'')+'.','#224e22');
   if(typeof renderInv==='function')renderInv();
@@ -42328,6 +42331,7 @@ function pohRepairNext(){
   msg(S.done,'#224e22');
   msg('Repair '+(st+1)+' of '+POH_REPAIR_STEPS.length+' complete.','#6414a4');
   if(pohRepaired()){
+    housePublish();                   /* a finished cottage is the first one worth listing */
     msg('The cottage is whole again \u2014 and it is yours.','#6414a4');
     msg('Out on the grass, Mr. Bohan looks up from his ledger and nods.','#5c3f00');
   }
@@ -42587,6 +42591,7 @@ function houseToggleOpen(){
     : 'You lock your cottage door. Visitors are turned away.','#5c3f00');
   /* turning the key has to actually turn people out, or "locked" means nothing */
   if(!player.house.open&&typeof MP!=='undefined'&&MP.houseEvict)MP.houseEvict();
+  housePublish();                       /* the directory is how an OFFLINE owner stays visitable */
   /* announce at once: an idle player sends no state updates, so without this a neighbour would not
      learn the door was open until you happened to do something */
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
@@ -42708,6 +42713,7 @@ function houseApplyLayout(L){
   player.house.slots=moved;
   dirty=true;
   houseCarve(); houseBuildInterior(); houseRebuild(); houseRepaintMinimap();
+  housePublish();
   {const _e=houseExitTile(); player.x=_e.x; player.y=_e.y+1; player.px=player.x; player.py=player.y; player.path.length=0;}
   msg('You rearrange the cottage. The walls come down and go back up somewhere else.','#224e22');
   if(typeof houseHudRender==='function')houseHudRender();
@@ -42753,23 +42759,83 @@ function houseRearrangePanel(){
   openHousePanel('Rearrange your cottage',
     'Drag a room onto another to swap them. Nothing changes until you save.',draw);
 }
+/* ===================== THE HOUSE DIRECTORY (offline visiting) =====================
+   Visiting used to need the owner ONLINE: a guest sent `hreq` and the owner's own client answered
+   with `hdat`. No client, no answer. The house is now also PUBLISHED to the server, so an unlocked
+   door can be walked through while its owner is asleep. The socket handshake is kept for owners who
+   ARE online because it is instant and always current; the directory is the fallback.
+   Publishing is fire-and-forget: it must never block or fail a build. */
+let _houseDirCache={rows:[],t:0};
+function _houseApi(path,body,cb){
+  const base=(typeof MP!=='undefined'&&MP.CFG&&MP.CFG.url)?MP.CFG.url:'';
+  if(!base){ cb&&cb(null,'noserver'); return; }
+  const world=(typeof MP!=='undefined'&&MP.CFG&&MP.CFG.world)?MP.CFG.world:'milville';
+  const full=base+path+(path.indexOf('?')<0?'?':'&')+'world='+encodeURIComponent(world);
+  const opts={method:body?'POST':'GET',headers:{'Content-Type':'application/json'},cache:'no-store'};
+  if(body)opts.body=JSON.stringify(body);
+  try{
+    fetch(full,opts).then(r=>r.ok?r.json():Promise.reject(r.status))
+      .then(d=>{cb&&cb(d,null);}).catch(()=>{cb&&cb(null,'err');});
+  }catch(e){ cb&&cb(null,'err'); }
+}
+/* push a snapshot of this cottage. Called after anything a visitor would see change. */
+function housePublish(){
+  if(houseIsGuest()||!pohOwned())return;
+  if(typeof MP==='undefined'||!MP.CFG||!MP.CFG.url)return;
+  _houseApi('/house/publish',{
+    uid:player.uid, name:player.name,
+    open:!!houseOpen(), repair:pohStage(),
+    rooms:houseRooms(), slots:houseSlots()
+  },function(){});
+}
+function houseDirList(cb){
+  _houseApi('/house/list?self='+encodeURIComponent(player.uid||''),null,function(d,e){
+    if(d&&d.ok){ _houseDirCache={rows:d.rows||[],t:Date.now()}; cb&&cb(_houseDirCache.rows,null); }
+    else cb&&cb([],e||'err');
+  });
+}
+/* walk into a published cottage without knocking — nobody is home to answer */
+function houseVisitOffline(uid,name){
+  _houseApi('/house/get?uid='+encodeURIComponent(uid),null,function(d,e){
+    if(!d||!d.ok){
+      msg(d&&d.error==='locked'?(name+'\u2019s door is locked now.')
+        :(d&&d.error==='unfinished')?(name+'\u2019s cottage is still a wreck.')
+        :('You cannot get into '+name+'\u2019s cottage just now.'),'#851a1a');
+      return;
+    }
+    if(inHouse)exitHouse();
+    houseEnterVisit(d.uid,d.name||name,{rooms:d.rooms,slots:d.slots,repair:d.repair});
+  });
+}
 /* the Visit panel: every door that is unlocked right now, plus a way home */
 function houseVisitPanel(){
-  const list=(typeof MP!=='undefined'&&MP.openHouses)?MP.openHouses():[];
   const online=(typeof MP!=='undefined'&&MP.active&&MP.active());
-  openHousePanel('Visit a cottage',
-    !online?'You are not connected to a world.'
-      :(list.length?(list.length+' door'+(list.length===1?' is':'s are')+' unlocked right now.')
-                   :'Nobody has left a door unlocked.'),
-    bd=>{
+  /* two sources, merged. Peers you can SEE are listed as online (their client answers a knock
+     instantly and their layout is always current); everything else comes from the published
+     directory and is walked into directly, because nobody is home to answer. */
+  const live=(typeof MP!=='undefined'&&MP.openHouses)?MP.openHouses():[];
+  const liveUid={}; for(const h of live)liveUid[h.uid]=true;
+  const merge=dirRows=>{
+    const out=live.map(h=>({uid:h.uid,name:h.name,online:true}));
+    for(const r of (dirRows||[])) if(!liveUid[r.uid]) out.push({uid:r.uid,name:r.name,online:false});
+    return out;
+  };
+  const draw=(bd,list,err)=>{
+    bd.innerHTML='';
+    const sb=document.getElementById('housesub');
+    if(sb)sb.textContent=!online?'You are not connected to a world.'
+      :(list.length?(list.length+' door'+(list.length===1?' is':'s are')+' unlocked.')
+                   :'Nobody has left a door unlocked.');
       if(!online){ _hEmpty(bd,'Cottage visits need a live world. Connect and try again.'); }
       else if(!list.length){
-        _hEmpty(bd,'A cottage appears here only while its owner is online with their door unlocked.');
+        _hEmpty(bd,err?'Could not reach the house directory. Try again in a moment.'
+                      :'A cottage appears here while its owner leaves the door unlocked \u2014 they do not have to be online.');
       }else{
         for(const h of list){
-          const r=_hRow(bd,h.name+'\u2019s cottage','knock',true);
+          const r=_hRow(bd,h.name+'\u2019s cottage',h.online?'knock':'walk in',true);
           r.style.cursor='pointer';
-          r.addEventListener('click',function(){ closeHousePanel(); houseRequestVisit(h.uid,h.name); });
+          r.addEventListener('click',function(){ closeHousePanel();
+            if(h.online)houseRequestVisit(h.uid,h.name); else houseVisitOffline(h.uid,h.name); });
         }
       }
       /* ** ALWAYS A WAY HOME. ** A guest with no open doors left would otherwise be stranded in
@@ -42785,7 +42851,14 @@ function houseVisitPanel(){
           home.addEventListener('click',function(){ closeHousePanel(); houseReturnHome(); });
         }
       }
+  };
+  openHousePanel('Visit a cottage','Looking for open doors\u2026',bd=>{
+    draw(bd,merge(_houseDirCache.rows),null);          /* whatever we already know, at once */
+    if(online)houseDirList(function(rows,err){          /* then the live directory */
+      const body=document.getElementById('housebody');
+      if(body&&document.getElementById('houseui').classList.contains('on'))draw(body,merge(rows),err);
     });
+  });
 }
 /* ===================== THE SAWMILL =====================================================
    Logs are not planks. The mill converts them for a fee, which gives Woodcutting a real sink and

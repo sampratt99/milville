@@ -13,6 +13,7 @@ import { DurableObject } from "cloudflare:workers";
 import { recordMobDead, recordNode, buildSnapshot } from "./world_state.js";
 import { handleLeaderboard } from "./leaderboard.js";
 import { listOffer, cancelOffer, collect, ackCollect, board, mine } from "./market.js";
+import { publishHouse, closeHouse, listHouses, getHouse } from "./houses.js";
 
 // CORS for the market's plain-HTTP endpoints (same shape as the leaderboard).
 const MKT_CORS = {
@@ -37,6 +38,15 @@ export default {
     // Routed to the per-world Room DO so the order book lives beside that
     // world's shared state (?world=milville, defaulting like everything else).
     if (url.pathname.startsWith("/mkt/")) {
+      if (request.method === "OPTIONS") return new Response(null, { headers: MKT_CORS });
+      const world = (url.searchParams.get("world") || DEFAULT_WORLD).slice(0, 32);
+      const id = env.ROOM.idFromName(world + "-mkt");
+      return env.ROOM.get(id).fetch(request);
+    }
+    // House directory: plain HTTP so a cottage can be visited while its OWNER IS
+    // OFFLINE. Routed to the same durable object as the market -- it is the
+    // per-world "persistent player data" object, and the key prefixes do not collide.
+    if (url.pathname.startsWith("/house/")) {
       if (request.method === "OPTIONS") return new Response(null, { headers: MKT_CORS });
       const world = (url.searchParams.get("world") || DEFAULT_WORLD).slice(0, 32);
       const id = env.ROOM.idFromName(world + "-mkt");
@@ -75,6 +85,7 @@ export class Room extends DurableObject {
     const url = new URL(request.url);
     // ---- Player market (plain HTTP; storage lives in this DO) ----------------
     if (url.pathname.startsWith("/mkt/")) return this._market(request, url);
+    if (url.pathname.startsWith("/house/")) return this._houses(request, url);
     if (request.headers.get("Upgrade") !== "websocket") {
       return new Response("Expected a WebSocket upgrade.", { status: 426 });
     }
@@ -146,6 +157,37 @@ export class Room extends DurableObject {
       return _mj(res);
     } catch (e) {
       // surface the reason in the response so the client message is useful and the item is refunded.
+      return _mj({ ok: false, error: "server error: " + (e && e.message ? e.message : String(e)) }, 500);
+    }
+  }
+  // ---- house directory (HTTP; ctx.storage-backed, shares the market's object) ----
+  // Serialised through the SAME chain as the market: publishes are writes, and a
+  // publish racing its own sweep is the one interleaving worth ruling out.
+  async _houses(request, url) {
+    const store = this.ctx.storage, now = Date.now;
+    const path = url.pathname;
+    try {
+      if (request.method === "GET" && path === "/house/list") {
+        const self = url.searchParams.get("self") || undefined;
+        return _mj(await listHouses(store, now, { self }));
+      }
+      if (request.method === "GET" && path === "/house/get") {
+        const uid = url.searchParams.get("uid") || "";
+        if (!uid) return _mj({ ok: false, error: "no uid" }, 400);
+        return _mj(await getHouse(store, now, { uid }));
+      }
+      if (request.method !== "POST") return _mj({ ok: false, error: "not found" }, 404);
+      let b; try { b = await request.json(); } catch (e) { return _mj({ ok: false, error: "bad json" }, 400); }
+      const run = async () => {
+        if (path === "/house/publish") return await publishHouse(store, now, b);   /* sweeps internally */
+        if (path === "/house/close") return await closeHouse(store, now, { uid: String(b.uid || "") });
+        return { ok: false, error: "not found", _404: true };
+      };
+      this._mktChain = Promise.resolve(this._mktChain).catch(() => {}).then(run);
+      const res = await this._mktChain;
+      if (res && res._404) return _mj({ ok: false, error: "not found" }, 404);
+      return _mj(res);
+    } catch (e) {
       return _mj({ ok: false, error: "server error: " + (e && e.message ? e.message : String(e)) }, 500);
     }
   }

@@ -14,6 +14,7 @@ server files themselves (§12–14), what a deploy does to live players (§18), 
 | `server.js` | routing, the `Room` Durable Object, the socket relay, the market's HTTP handler and its serialization + write-confirm guard | yes — `DurableObject`, `ctx.storage`, WebSockets |
 | `world_state.js` | which mobs are dead and which nodes are depleted, and the join snapshot | **none** |
 | `market.js` | the player order book: offers, matching, escrow, tax, collect boxes | **none** |
+| `houses.js` | the house directory, so a cottage is visitable with its owner OFFLINE | **none** |
 | `leaderboard.js` | the KV-backed scoreboard | KV only |
 
 `world_state.js` and `market.js` take no Cloudflare imports at all — they operate on an abstract
@@ -62,6 +63,7 @@ players who are not connected — or not even online:
 |---|---|---|
 | `/room/<world>` | `server.js` `Room` (WebSocket) | socket attachments (hibernation-safe) |
 | `/mkt/*` | `market.js`, via `Room._market` | DO `ctx.storage` (`mkt:*`) |
+| `/house/*` | `houses.js`, via `Room._houses` | DO `ctx.storage` (`house:*`), same object as the market |
 | `/lb/*` | `leaderboard.js` | Workers KV, binding `LB` |
 | `/` or `/health` | `server.js` | — (returns a version string) |
 
