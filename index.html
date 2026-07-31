@@ -42121,7 +42121,10 @@ function houseBuildOptions(slotId){
         +(_short.length?'<span style="opacity:.55"> \u2014 need '+_short.join(', ')+'</span>':''),
       label:'Build '+F.name,fn:()=>houseBuildWalk(slotId,fid)});
   }
-  if(cur)opts.push({html:'Remove <span class="t">'+HOUSE_FURNITURE[cur].name+'</span> <span style="opacity:.7">(half back)</span>',
+  /* same orphan guard as the branch above: a GUEST's slots come off the wire and no sweep has
+     touched them, so cur can name a piece that no longer exists. Without this the Remove entry
+     threw on .name and took the whole tile menu down. */
+  if(cur&&HOUSE_FURNITURE[cur])opts.push({html:'Remove <span class="t">'+HOUSE_FURNITURE[cur].name+'</span> <span style="opacity:.7">(half back)</span>',
     label:'Remove '+HOUSE_FURNITURE[cur].name,fn:()=>houseRemove(slotId)});
   return opts;
 }

@@ -71,8 +71,12 @@ of "the update isn't there".
 
 - **Coordinates**: runtime = source + 112 (`WX=112`). Interiors are exempt. Read
   `docs/10_MAP_AND_WORLD.md` §1 before any map work.
-- **Cylinders and tori are born upright.** A round face meant to hang on a wall — a dial, a mirror, a
-  target, a shield — needs `rotation.x = PI/2`. In house code use `CD()`; `C()` only rolls on z.
+- **Cylinders and tori need OPPOSITE treatment.** `CylinderGeometry` is born with its axis along
+  +Y, so a thin one is a coin lying flat: a dial, mirror, target or shield meant to hang on a wall
+  needs `rotation.x = PI/2`. In house code use `CD()`; `C()` only rolls on z. **`TorusGeometry` is
+  born in the XY plane — already standing, facing +z.** A ring you look or walk through (a portal
+  arch, a globe meridian) wants `rotation.x = 0`; `PI/2` LAYS IT DOWN, which is what a level hoop
+  (a pot rack, a chalk circle on the floor) wants instead. `harness/discs.mjs` asserts both.
 - **Models are built facing +z.** Wall-mounted pieces need the room's facing rotation or they face
   into the plaster.
 - **Item sprites go in `ITEM_ICON_PNG`; nav and skill icons in `UI_ICON_PNG`.** They draw in different

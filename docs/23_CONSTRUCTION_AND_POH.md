@@ -198,9 +198,16 @@ owner's key**, so they share a room; two owners each at home are in different ro
 
 ## 9. Traps that have already bitten (do not relearn these)
 
-- **A cylinder is born upright.** Any round face meant to hang on a wall — dartboard, target rings,
-  clock dials, a mirror, a shield — needs `rotation.x = π/2`. Use the `CD()` disc helper. The `C()`
-  helper only rolls on z and **cannot** stand a disc up.
+- **A cylinder is born upright, and a torus is not — they need OPPOSITE rotations.**
+  `CylinderGeometry`'s axis runs along +Y, so a thin cylinder is a coin lying flat. Any round face
+  meant to hang on a wall — dartboard, target rings, clock dials, a mirror, a shield — needs
+  `rotation.x = π/2`. Use the `CD()` disc helper; `C()` only rolls on z and **cannot** stand a disc
+  up. **`TorusGeometry` is born in the XY plane, already standing and facing +z**, so a ring you
+  look or walk through — a portal arch, a globe meridian, the trellis hoop — wants
+  `rotation.x = 0`, and `π/2` lays it flat. Level hoops (the pot rack, the candle rack, the chalk
+  and marble floor sigils) are the ones that want `π/2`. Earlier versions of this doc and of
+  CLAUDE.md said "cylinders and tori are born upright… needs π/2" for both, which would lay a
+  portal arch on the floor. `harness/discs.mjs` asserts every case.
 - **`drawItemIcon` balances its own canvas** via `save()` / `try` / `finally restore()`. Branches
   historically forgot `restore()`, and since each inventory slot keeps its own canvas, the stray
   translate accumulated every re-render — icons marched into the bottom-right corner and shrank.
