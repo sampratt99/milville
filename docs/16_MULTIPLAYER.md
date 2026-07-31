@@ -3,8 +3,22 @@
 Milville is single-player at its core, with a **multiplayer layer bolted on top** that is
 **inert until configured**. Everything in this doc is additive: with no server URL set, the
 game is byte-for-byte the original single-player experience. This doc is the complete map of
-the networked system — architecture, the wire protocol, presence/streaming, the three social
-phases (groups, group combat, trading), the test harnesses, and how to ship changes.
+the networked system — architecture, the Durable Object layout (§15), what is persisted versus
+in-memory (§16), the full message catalogue (§17), presence/streaming, the social phases, the
+server files themselves (§12–14), what a deploy does to live players (§18), and how to ship changes.
+
+### What each server file is responsible for
+
+| File | Responsible for | Cloudflare deps |
+|---|---|---|
+| `server.js` | routing, the `Room` Durable Object, the socket relay, the market's HTTP handler and its serialization + write-confirm guard | yes — `DurableObject`, `ctx.storage`, WebSockets |
+| `world_state.js` | which mobs are dead and which nodes are depleted, and the join snapshot | **none** |
+| `market.js` | the player order book: offers, matching, escrow, tax, collect boxes | **none** |
+| `leaderboard.js` | the KV-backed scoreboard | KV only |
+
+`world_state.js` and `market.js` take no Cloudflare imports at all — they operate on an abstract
+store and an injected clock, so they are the two files that could be unit-tested today without a
+Worker runtime. Neither has a harness yet (§8).
 
 > **Golden rule, with two exceptions.** The MP layer is **client-authoritative** and the relay is a
 > **dumb pipe**: presence, combat, groups, trading and PvP are all decided on the clients, which
@@ -351,13 +365,31 @@ holds something a player can lose. That gap is worth closing before the next mar
 
 ---
 
-## 10. Interaction with interiors (heads-up)
+## 10. Interaction with interiors — SOLVED, not outstanding
 
-Interiors (doc 17) are a **local, non-instanced overlay** that physically lives in the deep-north
-"dead zone" (x100–140, y1–15). Because `pos` streams raw `x,y`, a remote player who steps into the
-Chapel/Party Room will, on your screen, appear teleported to that dead-north footprint rather than
-truly "inside with you." MP does not currently instance interiors. If shared interiors matter later,
-the move is to tag presence with a current-interior id and only render/peer players who share it.
+> **This section used to say interiors were not instanced and that the fix "would be" to tag
+> presence with a current-interior id. That fix SHIPPED.** The paragraph below describes the
+> current design; the old warning about remote players appearing teleported into the dead-north
+> footprint no longer applies.
+
+Interiors (doc 17) are a local overlay physically stamped into a dead zone. They **are** instanced
+now, exactly as the old note proposed:
+
+- `_mpRoom()` returns the current interior id — `'house:<owneruid>'`, `'raid:<rid>:<floor>'`,
+  `'raidlobby'`, or plain `curInterior()` (`'chapel'`, `'party'`, `'mathes'`, `'rectory'`,
+  `'stpaul'`, `'sos'`, `'volcano'`) — and `null` outdoors.
+- Every `pos`, `hello` and `join` carries it as `in:`, and a standalone `iroom {r}` beacon is sent
+  whenever it changes (and at least every 1.5s) so it survives the relay for peers who missed the
+  transition.
+- `_peerRoom[uid]` records what each peer last beaconed. `_remoteHere(r)` is the single visibility
+  test: **exact string match** against your own `_mpRoom()`.
+- Peers whose beacon is unknown fall back to "same exterior only", and are additionally rejected if
+  they are standing inside any interior footprint — a peer at those coords is almost certainly
+  inside it, sharing world coordinates with the wilderness.
+
+That exact-match rule is what separates overlapping interiors (Party, Cage and Chapel share world
+space), two raid instances, two floors of one raid, and two players each at home in their own
+cottage. `harness/mphouse.mjs` asserts the seven-case house matrix on top of it.
 
 ---
 
@@ -395,11 +427,11 @@ must be mirrored here or other players won't see it. (Known gap: quivers.)
   receiving `rpil` bumps `_siphonCd`. Types: `rchainwarn, rchain, rpil, rpdmg, rsignet`.
 - Pillar-damage forwarding (`forwardPillarHit` → `rpdmg`) routes siphon hits to the owner.
 
-### Current client message-type inventory (grep `t: '` for the live list)
-`bdb brz chat claim cwsp dbs ddecline dend dhp dlv dmg dreq ebsy emote fire friended frz
-gaccept gdecline ghit ginvite gleave gsync hello ifgn ifsp iroom join mob mobatk mobdead mtsp
-node obj pend phit ping player pos ppop pray pset rchain rchainwarn release rp rpdmg rpil
-rsignet sksp state sw taccept tdecline toffer treq wdln wdsp`
+### Current client message-type inventory
+
+**Superseded — see §17 for the full catalogue with shapes.** The list that used to sit here was
+~60 types and is now short by more than thirty. The live counts are **97 outbound** and **96
+inbound**, which §17 enumerates by family.
 
 ### House visiting (Construction arc — see `23_CONSTRUCTION_AND_POH.md` §8)
 
@@ -564,3 +596,155 @@ Two properties worth knowing:
 
 It exports both `handleLeaderboard(request, env)` (merged into the relay, which is what we do) and a
 standalone `default` entrypoint that is currently unused.
+
+---
+
+## 15. The Durable Object layout
+
+There is **one DO class, `Room`**, and the Worker routes to **two different instances of it per
+world**. That is easy to miss and matters: they do not share storage.
+
+| Instance | `idFromName()` | Reached by | Holds |
+|---|---|---|---|
+| **The live room** | `<world>` — e.g. `milville-mp-4` | `GET /room/<world>` with a WebSocket upgrade | the sockets, and `mob:` / `node:` respawn keys |
+| **The market** | `<world>-mkt` | `POST\|GET /mkt/*` | `mkt:offer:*`, `mkt:collect:*`, `mkt:pending:*`, `mkt:seq` |
+
+The client's room name is `CFG.world + '-' + MP_VERSION`, currently **`milville-mp-4`**
+(`MP_VERSION = 'mp-4'`). **Bumping `MP_VERSION` forks a completely fresh world** — new sockets, new
+shared-world state, and a new market, because the market id is derived from the same string.
+That is a bigger hammer than it looks.
+
+The leaderboard is **not** a DO at all: it is Workers KV, keyed `board:<world>`, and therefore
+survives an `MP_VERSION` bump.
+
+### Why the market is a separate instance
+
+A DO is single-threaded, and the live room wakes on every socket message. Putting the order book in
+the same instance would mean every listing contends with combat traffic, and every keepalive would
+touch an object holding escrow. Splitting them means the market object is idle — and therefore
+cheap and uncontended — except when someone actually trades.
+
+### Hibernation
+
+Sockets are enrolled with `ctx.acceptWebSocket()`, so the runtime can **evict the object from memory
+while idle** and no duration is billed between messages. Two consequences the code is built around:
+
+- **Per-connection state cannot live in a field.** It is stored on the socket itself via
+  `ws.serializeAttachment()` / `deserializeAttachment()` — the `{uid, name, joined, p}` record. A
+  plain `this.players` map would be lost on eviction.
+- **Keepalives must not wake it.** The constructor registers
+  `ctx.setWebSocketAutoResponse(new WebSocketRequestResponsePair('{"t":"ping"}', '{"t":"pong"}'))`,
+  so the runtime answers pings itself at no wall-clock cost. **The request string must match what
+  the client sends byte for byte.** The `case "ping"` handler remains only as a fallback for a
+  mismatch.
+
+---
+
+## 16. Persisted vs in-memory
+
+| Lives in | What | Survives hibernation? | Survives a deploy? | Survives `MP_VERSION` bump? |
+|---|---|---|---|---|
+| **DO `ctx.storage`** | `mob:<i>`, `node:<x>,<y>` respawns | yes | yes | **no** (new object) |
+| **DO `ctx.storage`** | the whole market: offers, collect boxes, pending deliveries, `mkt:seq` | yes | yes | **no** (new object) |
+| **Socket attachment** | per-connection `{uid, name, joined, p}` | yes | **no** — the socket dies | n/a |
+| **Worker KV** | `board:<world>` leaderboard | yes | yes | **yes** |
+| **Client memory only** | groups, trades, duels, aggro, claims, remote-player map, `_peerRoom` | n/a | **no** | n/a |
+| **Client `localStorage`** | the player's save | n/a | yes | yes |
+
+**Nothing about a group, a trade, a duel or a raid is on the server.** They are client state
+synchronised by relayed messages, so any of them can be desynchronised by a dropped socket and none
+of them can be recovered by reconnecting. That is the price of the relay model and it is deliberate.
+
+---
+
+## 17. The complete message catalogue
+
+97 outbound types, 96 inbound. Every message is a JSON object with a `t`. The server stamps `uid`
+onto anything it relays generically, so **`uid` on an inbound message is trustworthy** and clients
+never set it themselves except where noted.
+
+Targeted messages carry `to: uid` and every client drops those not addressed to it. That filtering
+is **client-side**; the relay broadcasts them to everyone.
+
+### Server-handled (the only types `server.js` knows by name)
+
+| `t` | Shape | Server does |
+|---|---|---|
+| `join` | `{uid, name, x, y, h, app, gear, hp, mhp, in, snap}` | stores presence on the socket; replies `welcome {you, roster}`; broadcasts `join {p}`; if `snap` also sends `snapshot` |
+| `pos` | `{x, y, h, run, in}` | updates stored pos, broadcasts `pos {uid, name, x, y, h, run}` |
+| `state` | `{gear, act, hp, mhp, ho}` | updates stored state, broadcasts `state {uid, gear, act, hp, mhp}` |
+| `chat` | `{text, title}` | clamps text to 120 chars, broadcasts `chat {uid, name, text}` |
+| `emote` | `{e}` | clamps to 24 chars, broadcasts `emote {uid, e}` |
+| `claim` / `release` | `{m}` | broadcasts mob ownership |
+| `mobdead` | `{m, rs}` | **persists** `mob:<m>`, broadcasts `mobdead {uid, m, rs}` |
+| `node` | `{x, y, df, rs}` | **persists** `node:<x>,<y>`, broadcasts `node {uid, x, y, df, rs}` |
+| `ping` | `{}` | answered by auto-response; the handler is a fallback |
+| — | — | on socket close/error: broadcasts `leave {uid}` |
+
+Server → client only: `welcome {you, roster}`, `snapshot {mobs:[{m,rs}], nodes:[{x,y,rs}]}`,
+`leave {uid}`, `pong {}`.
+
+### Everything else rides the generic relay
+
+```js
+default: { if (a.joined && typeof m.t === "string") { m.uid = a.uid; this._broadcast(m, a.uid); } }
+```
+
+By family, with the fields that matter:
+
+| Family | Types | Shape notes |
+|---|---|---|
+| **Presence extras** | `hello`, `iroom`, `petid`, `pray`, `friended` | `hello` is the full presence beacon and carries `in` and `ho` (house open); `iroom {r}` is the standalone interior beacon; `pray {o}` is the overhead prayer id or null |
+| **Mob streaming** | `mob`, `dmg`, `frz`, `brnd`, `cndr`, `mobatk`, `ghit` | `mob {m,x,y,hp,mhp,a}` or `{m,gone,dead}`; `ghit {m,d,st}` forwards a co-attacker's damage to the owner; `mobatk {m,to}` tells a groupmate the mob hit them |
+| **Groups** | `ginvite`, `gaccept`, `gdecline`, `gsync`, `gleave` | all `to`-filtered except `gsync {roster:[{uid,name}]}`, a last-write-wins snapshot |
+| **Trading** | `treq`, `toffer`, `taccept`, `tdecline` | `to`-filtered; `toffer {items:[{id,qty}]}` **resets both accepts**; `taccept {stage}` |
+| **Duels** | `dreq`, `ddecline`, `drules`, `dstake`, `dsaccept`, `dsdecline`, `descrow`, `dbs`, `dhp`, `dlv`, `dend`, `phit`, `pend` | `to`-filtered two-party; `phit {dmg,st,col,fz,n}` carries a sequence number `n` so a duplicate hit is idempotent |
+| **Houses** | `hreq`, `hdat`, `hdeny`, `hevict` | `hreq {to}` knocks; `hdat` returns `{rooms, slots, repair}`; `hdeny {why:'locked'\|'nohouse'}` |
+| **Rector boss** | `rchain`, `rchainwarn`, `rpil`, `rpdmg`, `rsignet` | owner-scheduled mechanics; `rpdmg {to,x,y,d}` forwards pillar damage to the owner; `rsignet {to}` names the one signet winner |
+| **Delve / raid** | `rdgo`, `rdroom`, `rdclear`, `rdwipe`, `rdstate`, `rdstreq`, `rdsolve`, `rdbrz`, `rdplate`, `rdpr`, `rdsk`, `rdsap`, `rdrack`, `rdsig`, `rdorb`, `rdpts`, `rddown`, `rdrvs`, `rdrvc`, `rdrev`, `rduniq`, `rdbeam`, `rdtel`, `rdcl`, `rdlob` | every raid-scoped message is stamped with `rid` + `rfl` on the way out and dropped on the way in if it is from another instance or floor — **one gate, so no handler can forget** |
+| **Weapon/spell FX** | `sw`, `shot`, `sksp`, `dbs`, `cwsp`, `wdsp`, `wdln`, `mtsp`, `bdb`, `ifsp`, `ifgn`, `brz`, `fire`, `ppop`, `pset`, `ebsy` | cosmetic broadcast; safe to ignore |
+
+### The raid scoping gate
+
+Two functions bracket the switch and are the reason raid traffic cannot leak between instances:
+
+- `_mpStamp(o)` — adds `rid` and `rfl` to any outbound message in the raid mob-family or rd-family.
+- `_mpDropForeignRaid(m)` — drops an inbound raid-scoped message from a different instance, or (for
+  floor-scoped types) a different floor, **before** the switch runs.
+
+Mob-family types double as overworld traffic, so untagged overworld messages still flow — they may
+just never address a raid-reserved rat index.
+
+---
+
+## 18. What a deploy does to live players
+
+Worth knowing before you `wrangler deploy` into a populated world.
+
+**Every WebSocket is closed.** A Worker deploy replaces the running code; existing DO instances are
+evicted and their sockets terminated. Concretely, for anyone connected:
+
+1. Their socket closes. The client's `onclose` clears **all** remote state — remote players, claims,
+   group, aggro, trade — and the reconnect timer starts.
+2. **Everyone drops out of your group**, and any open trade or duel is gone. None of that is
+   server-side, so none of it comes back on reconnect. A trade mid-confirm simply ends; because the
+   swap only executes when both sides commit, nothing is duplicated or lost — it just does not
+   happen.
+3. A duel in progress ends with no winner recorded.
+4. On reconnect the client sends `join` again and gets a fresh `welcome` + `snapshot`, so
+   **shared-world state is restored**: dead mobs and depleted nodes come back with the correct
+   remaining respawn, because the snapshot ships remaining-ms rather than absolute times.
+5. **The market is unaffected.** It is plain HTTP with no socket, and its storage is durable —
+   resting offers, collect boxes and unacked deliveries all survive. A `/mkt/list` in flight at the
+   instant of deploy either completed (and persisted, because of the write-confirm guard) or failed
+   with `ok:false`, in which case the client refunds the escrowed item. **There is no window where
+   an item is silently eaten by a deploy** — that is what the guard is for.
+6. **The leaderboard is unaffected** (KV, no DO).
+
+**So: deploying is safe for anything durable and destructive for anything social.** Prefer to deploy
+when nobody is mid-raid or mid-duel. There is no drain or graceful handover — Cloudflare does not
+offer one for DO sockets, and the game has no reconnect-into-group flow.
+
+**A `MP_VERSION` bump is much bigger.** It changes the DO name, so the live room AND the market move
+to brand-new instances: every resting offer and every collect box becomes unreachable at the old id.
+**Never bump `MP_VERSION` while the market holds anything.** The leaderboard survives, being KV.
