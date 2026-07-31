@@ -43,7 +43,7 @@ const T = runPass(PRELUDE + String.raw`
   o.pickerChoices = houseRoomChoices(0, 0).length;
   /* every listed room is one you have not built, and the garden is not offered off-centre */
   o.pickerOffersGarden = houseRoomChoices(0, 0).includes('garden');
-  o.centrePickerOffersOnlyGarden = houseRoomChoices(1, 1).join(',');
+  o.centrePickerChoices = houseRoomChoices(1, 1).length;
 
   /* clicking a row builds that room and CLOSES the panel */
   const roomsBefore = Object.keys(houseRooms()).length;
@@ -154,8 +154,10 @@ S.ok('the room picker opens',                     T.pickerOpen);
 S.eq('  titled for the job',                      T.pickerTitle, 'Build a room');
 S.ok('  listing one row per available room',      T.pickerRows >= T.pickerChoices,
      `${T.pickerRows} rows for ${T.pickerChoices} choices`);
-S.eq('  and no garden off-centre',                T.pickerOffersGarden, false);
-S.eq('  while the centre offers only the garden', T.centrePickerOffersOnlyGarden, 'garden');
+/* the courtyard rule is gone: the garden is an ordinary room offered everywhere */
+S.eq('  the garden is offered off-centre too',    T.pickerOffersGarden, true);
+S.ok('  and the centre offers every unbuilt room', T.centrePickerChoices > 1,
+     `${T.centrePickerChoices} choices`);
 
 S.ok('CLICKING A ROW BUILDS THE ROOM',            T.builtByClick,
      'the listener attached at build time is still live');

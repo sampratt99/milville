@@ -21,8 +21,10 @@ const T = runPass(PRELUDE + String.raw`
   setLevel('construction', 99);
   clearInv(); give('coins', 20000000);
   freshHouse();
-  const LAYOUT = [[0,0,'kitchen'],[2,0,'bedroom'],[0,1,'workshop'],[1,1,'garden'],
-                  [2,1,'study'],[0,2,'games'],[1,2,'chapel'],[2,2,'combat']];
+/* fill the whole 5x3 grid: every room type now fits, with slack */
+  const LAYOUT = [[0,0,'kitchen'],[2,0,'bedroom'],[3,0,'study'],[4,0,'games'],
+                  [0,1,'workshop'],[1,1,'garden'],[2,1,'chapel'],[3,1,'combat'],[4,1,'gallery'],
+                  [0,2,'costume'],[1,2,'portalrm']];
   for(const [gx, gy, t] of LAYOUT) houseBuildRoom(gx, gy, t);
   since();
   o.rooms = Object.keys(houseRooms()).length;
@@ -228,7 +230,7 @@ const T = runPass(PRELUDE + String.raw`
 
 const S = new Suite('walktest').guard(T);
 
-S.eq('the whole grid is built',                   T.rooms, 9);
+S.eq('every room type is built',                  T.rooms, 12);
 S.ok('the flood reaches a lot of floor',          T.reachableCount > 800,
      `${T.reachableCount} tiles reachable from just inside the front door`);
 
@@ -266,7 +268,7 @@ S.eq('A RUG IS FLOOR — you can stand on it',      T.flatFloorBlocking.length, 
 if(T.flatFloorBlocking.length) S.note(T.flatFloorBlocking.join(', '));
 
 /* ---- the carve and the dead zone (moved from poh15) ---------------------- */
-S.eq('the house grid is 3x3',                     [T.grid.GW, T.grid.GH], [3, 3]);
+S.eq('the house grid is 5x3',                     [T.grid.GW, T.grid.GH], [5, 3]);
 S.eq('each room is 12x10',                        [T.grid.RW, T.grid.RH], [12, 10]);
 S.ok('the region fits inside the map',            T.regionInsideMap);
 S.ok('IT SITS IN WALKABLE DEEP WILDERNESS',       T.regionIsDeepWilderness,

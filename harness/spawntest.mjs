@@ -64,9 +64,13 @@ const T = runPass(PRELUDE + String.raw`
   o.expandOptions = em ? optionsAt(em.x, em.y).map(z => z.label || String(z.html || '')) : [];
 
   /* filling the grid leaves nothing to expand into */
-  for(const [gx, gy, t] of [[0,0,'kitchen'],[2,0,'bedroom'],[0,1,'workshop'],[1,1,'garden'],
-                            [2,1,'study'],[0,2,'games'],[1,2,'chapel'],[2,2,'combat']])
+  /* every cell, so there is genuinely nothing left to expand into */
+  for(const [gx, gy, t] of [[0,0,'kitchen'],[2,0,'bedroom'],[3,0,'study'],[4,0,'games'],
+                            [0,1,'workshop'],[1,1,'garden'],[2,1,'chapel'],[3,1,'combat'],
+                            [4,1,'gallery'],[0,2,'costume'],[1,2,'portalrm']])
     houseBuildRoom(gx, gy, t);
+  /* three cells remain but every TYPE is used up, so no expansion marker can offer anything */
+  o.typesLeft = HOUSE_ROOM_ORDER.filter(t => !houseRoomTaken(t)).length;
   since();
   houseBuildMode = true; houseRebuild();
   o.expandWhenFull = count('hf_expand');
@@ -136,7 +140,9 @@ S.eq('  or off the grid',                         T.expandOffGrid, 0);
 S.eq('  and every one stands on floor',           T.expandOnWall, 0);
 S.ok('  offering the room picker',                (T.expandOptions || []).some(l => /Build room/i.test(l)),
      (T.expandOptions || []).join(' | '));
-S.eq('A FULL GRID HAS NOTHING TO EXPAND INTO',    T.expandWhenFull, 0);
+S.eq('every buildable type is used up',           T.typesLeft, 0);
+S.eq('SO NO EXPANSION MARKER APPEARS',            T.expandWhenFull, 0,
+     'markers are offered per bare wall, but with nothing left to build there is nothing to offer');
 S.eq('  but every hotspot in the house shows in build mode',
      T.slotsWhenFullBuildMode, T.allSlotCount);
 S.eq('  and none of them outside it',             T.slotsWhenFullOffMode, 0);

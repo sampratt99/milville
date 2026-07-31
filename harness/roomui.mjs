@@ -64,6 +64,7 @@ const T = runPass(PRELUDE + String.raw`
   openRoomPicker(HOUSE_CENTRE.gx, HOUSE_CENTRE.gy);
   o.centreRows = rows().map(r => (r.children[0] || {}).textContent);
   o.gardenName = HOUSE_ROOMS.garden.name;
+  o.centreOffersGarden = o.centreRows.includes(o.gardenName);
   closeHousePanel();
 
   /* ---- AFFORDABILITY ---- */
@@ -91,8 +92,9 @@ const T = runPass(PRELUDE + String.raw`
   o.buildSaid = since()[0] || null;
 
   /* ---- A FULL GRID ---- */
-  for(const [gx, gy, t] of [[2,0,'bedroom'],[0,1,'workshop'],[1,1,'garden'],
-                            [2,1,'study'],[0,2,'games'],[1,2,'chapel'],[2,2,'combat']])
+  for(const [gx, gy, t] of [[2,0,'bedroom'],[3,0,'study'],[4,0,'games'],
+                            [0,1,'workshop'],[1,1,'garden'],[2,1,'chapel'],[3,1,'combat'],
+                            [4,1,'gallery'],[0,2,'costume'],[1,2,'portalrm']])
     houseBuildRoom(gx, gy, t);
   since();
   o.filled = Object.keys(houseRooms()).length;
@@ -135,8 +137,10 @@ S.eq('  priced from the table',                   T.priceMismatch.length, 0);
 if(T.priceMismatch.length) S.note(T.priceMismatch.join('; '));
 S.ok('  with a footnote about what is missing',   /already built/i.test(T.footnote || ''), T.footnote);
 
-S.eq('THE CENTRE OFFERS ONLY THE GARDEN',         T.centreRows.length, 1);
-S.eq('  and it is the garden',                    T.centreRows[0], T.gardenName);
+/* the middle cell is now an ordinary cell */
+S.ok('THE CENTRE OFFERS EVERY UNBUILT ROOM',      T.centreRows.length > 1,
+     `${T.centreRows.length} rows`);
+S.ok('  the garden among them',                   T.centreOffersGarden, T.centreRows.join(', '));
 
 /* affordability */
 S.ok('a thin purse still lists every room',       T.pooredRows > 1, `${T.pooredRows} rows`);
@@ -151,7 +155,7 @@ S.ok('  and closes the picker',                   T.closedAfterBuild);
 S.ok('  announcing the build',                    /You build a/.test(T.buildSaid || ''), T.buildSaid);
 
 /* full grid */
-S.eq('a full grid has nine rooms',                T.filled, 9);
+S.eq('every room type is built',                  T.filled, 12);
 S.eq('  and no expansion markers left',           T.markersWhenFull, 0);
 S.ok('the picker on a taken cell says so',        T.occupiedEmpty > 0 || T.occupiedRows > 0,
      `${T.occupiedRows} rows, ${T.occupiedEmpty} empty-state rows, sub: "${T.occupiedSub}"`);

@@ -10,7 +10,7 @@
    Rooms are FLAT, as in OSRS: there is no escalator. Stacking 35% per room turned
    eight rooms into nearly a million coins.
 
-   Targets: a modest house ~290k, all nine rooms cheaply furnished ~6.5M,
+   Targets: a modest house, every room cheaply furnished,
    fully maxed ~11.5M, with the last three rooms 5.9M of that.
 
    Run: node harness/pricetest.mjs
@@ -80,9 +80,9 @@ S.eq('the picker offers every room type BUT the parlour, once each',
      Object.keys(T.rooms).filter(k => k !== 'parlour').sort().join(','));
 S.ok('  and the parlour is not pickable',         !T.roomOrder.includes('parlour'));
 /* 3x3 grid, 12 types: three must always be left out. */
-S.eq('the house grid holds nine rooms',           T.cells, 9);
-S.ok('  so three of the twelve types never fit',  T.cells < Object.keys(T.rooms).length,
-     `${Object.keys(T.rooms).length} types competing for ${T.cells} cells`);
+S.eq('the house grid holds fifteen cells',        T.cells, 15);
+S.ok('  SO EVERY ROOM TYPE FITS',                 T.cells >= Object.keys(T.rooms).length,
+     `${Object.keys(T.rooms).length} types in ${T.cells} cells, ${T.cells - Object.keys(T.rooms).length} spare`);
 
 /* the flat-cost rule, against the real build path */
 for(const c of T.charged){
@@ -123,17 +123,15 @@ S.ok('for the dearest pieces the BOARDS outweigh the fittings',
      `${materialLed.length} of ${T.furn.length} pieces cost more in boards than in coins`);
 
 /* ---- the totals ----
-   Only NINE rooms fit, and the garden must take the centre, so a "maxed" house
-   is the garden plus the eight dearest types. Costed as rooms + fittings +
-   boards at board value, for the slots those nine rooms actually have. */
+   EVERY room now fits — the grid is 15 cells for 12 types — so "maxed" is no
+   longer a choice between them: it is all twelve with the best piece in every
+   hotspot. Costed as rooms + fittings + boards at board value. */
 const best = {}, cheapest = {};
 for(const f of T.furn){
   if(!best[f.cat] || f.req > best[f.cat].req) best[f.cat] = f;
   if(!cheapest[f.cat] || f.req < cheapest[f.cat].req) cheapest[f.cat] = f;
 }
-const rest = Object.keys(T.rooms).filter(k => k !== 'garden')
-  .sort((a, b) => T.rooms[b] - T.rooms[a]);
-const NINE = ['garden', ...rest.slice(0, 8)];
+const ALL = Object.keys(T.rooms);
 const total = (rooms, pick) => {
   let n = 0;
   for(const rk of rooms){
@@ -142,19 +140,22 @@ const total = (rooms, pick) => {
   }
   return n;
 };
-const maxed = total(NINE, best);
-const cheap = total(NINE, cheapest);
+const maxed = total(ALL, best);
+const cheap = total(ALL, cheapest);
+const roomsOnly = ALL.reduce((n, r) => n + T.rooms[r], 0);
 const modestRooms = ['parlour', 'garden', 'workshop'];
 const modest = total(modestRooms, cheapest);
 
-S.note(`nine dearest rooms, rooms only:      ${(NINE.reduce((n, r) => n + T.rooms[r], 0) / 1e6).toFixed(2)}M`);
-S.note(`  + best of every piece (maxed):     ${(maxed / 1e6).toFixed(2)}M   (docs/23 §5 quotes ~11.5M)`);
-S.note(`  + cheapest of every piece:         ${(cheap / 1e6).toFixed(2)}M   (docs/23 §5 quotes ~6.5M)`);
-S.note(`parlour+garden+workshop, cheap:      ${Math.round(modest / 1000)}k   (docs/23 §5 quotes ~290k modest)`);
+S.note(`ALL TWELVE rooms, rooms only:       ${(roomsOnly / 1e6).toFixed(2)}M`);
+S.note(`  + best of every piece (maxed):     ${(maxed / 1e6).toFixed(2)}M`);
+S.note(`  + cheapest of every piece:         ${(cheap / 1e6).toFixed(2)}M`);
+S.note(`parlour+garden+workshop, cheap:      ${Math.round(modest / 1000)}k`);
+S.note('these are the figures docs/23 §5 quotes; they move whenever a room or a piece is repriced');
 
+S.eq('the room bill for all twelve is 8.18M',     roomsOnly, 8180000);
 S.ok('a maxed house is a multi-million-gold project', maxed > 8e6, `${(maxed / 1e6).toFixed(2)}M`);
-S.ok('  and furnishing costs more than the rooms do',
-     maxed - NINE.reduce((n, r) => n + T.rooms[r], 0) > 0);
+S.ok('  and furnishing costs more than the rooms do', maxed - roomsOnly > roomsOnly * 0.5,
+     `${((maxed - roomsOnly) / 1e6).toFixed(2)}M of furniture vs ${(roomsOnly / 1e6).toFixed(2)}M of rooms`);
 S.ok('cheap furnishing is far cheaper than maxing', cheap < maxed * 0.75,
      `${(cheap / 1e6).toFixed(2)}M vs ${(maxed / 1e6).toFixed(2)}M`);
 S.ok('a starter house is under 200k',             modest < 200000, `${Math.round(modest / 1000)}k`);

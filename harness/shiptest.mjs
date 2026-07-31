@@ -153,9 +153,11 @@ const T = runPass(PRELUDE + String.raw`
   o.dupSaidOneEach = said(/One of each/i);
   since();
 
+  /* the courtyard rule is gone: any room may take the middle, and the garden may
+     sit anywhere. What still holds is one-of-each and adjacency. */
   houseBuildRoom(1, 1, 'kitchen');
-  o.centreNonGardenBlocked = roomAt(1, 1) === null;
-  o.centreSaidCourtyard = said(/courtyard/i);
+  o.centreTakesAnyRoom = roomAt(1, 1);
+  o.noCourtyardComplaint = !said(/courtyard/i);
   since();
 
   houseBuildRoom(0, 2, 'kitchen');                   /* touches nothing built */
@@ -163,9 +165,9 @@ const T = runPass(PRELUDE + String.raw`
   o.orphanSaidAdjoin = said(/adjoin/i);
   since();
 
-  /* the garden belongs in the middle, and the middle takes the garden */
-  houseBuildRoom(1, 1, 'garden');
-  o.gardenInCentre = roomAt(1, 1);
+  /* the garden is an ordinary room now: put it in a corner, nowhere near the middle */
+  houseBuildRoom(0, 1, 'garden');
+  o.gardenAnywhere = roomAt(0, 1);
   since();
 
   /* a doorway got punched through between the parlour and the workshop */
@@ -369,11 +371,11 @@ eq('  and that cost is the shipped 15,000',       T.roomCost, 15000);
 ok('its floor is carved out',                     T.workshopFloorCarved);
 ok('ONE OF EACH ROOM TYPE — a second parlour is refused', T.dupRoomBlocked);
 ok('  and says so',                               T.dupSaidOneEach);
-ok('the courtyard refuses a roofed room',         T.centreNonGardenBlocked);
-ok('  and says so',                               T.centreSaidCourtyard);
+ok('ANY ROOM MAY TAKE THE MIDDLE CELL',           T.centreTakesAnyRoom === 'kitchen');
+ok('  with no courtyard complaint',               T.noCourtyardComplaint);
 ok('a room must adjoin one you already have',     T.orphanRoomBlocked);
 ok('  and says so',                               T.orphanSaidAdjoin);
-eq('the garden IS allowed in the courtyard',      T.gardenInCentre, 'garden');
+eq('THE GARDEN GOES ANYWHERE, even a corner',     T.gardenAnywhere, 'garden');
 
 /* 7. furniture */
 ok('the target hotspot exists',                   T.slotExists);

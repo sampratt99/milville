@@ -26,8 +26,12 @@ const T = runPass(PRELUDE + String.raw`
   freshHouse();
 
   /* fill the grid so every style gets painted at least once */
-  const LAYOUT = [[0,0,'kitchen'],[2,0,'bedroom'],[0,1,'workshop'],[1,1,'garden'],
-                  [2,1,'study'],[0,2,'games'],[1,2,'chapel'],[2,2,'combat']];
+  /* the garden can sit anywhere now, so this layout puts it somewhere it never
+     used to be allowed and the harness finds it by TYPE rather than by cell */
+  const GARDEN_CELL = [3, 2];
+  const LAYOUT = [[0,0,'kitchen'],[2,0,'bedroom'],[3,0,'study'],[4,0,'games'],
+                  [0,1,'workshop'],[1,1,'chapel'],[2,1,'combat'],[3,1,'gallery'],
+                  [0,2,'costume'],[1,2,'portalrm'],[GARDEN_CELL[0],GARDEN_CELL[1],'garden']];
   for(const [gx, gy, t] of LAYOUT) houseBuildRoom(gx, gy, t);
   since();
   o.rooms = Object.assign({}, houseRooms());
@@ -107,7 +111,10 @@ const T = runPass(PRELUDE + String.raw`
   }
 
   /* ---- the courtyard ---- */
-  const gOrg = roomOrigin(HOUSE_CENTRE.gx, HOUSE_CENTRE.gy);
+  const gOrg = roomOrigin(GARDEN_CELL[0], GARDEN_CELL[1]);
+  o.gardenCell = GARDEN_CELL.join(',');
+  o.gardenIsThere = roomAt(GARDEN_CELL[0], GARDEN_CELL[1]);
+  o.gardenOffCentre = !(GARDEN_CELL[0] === HOUSE_CENTRE.gx && GARDEN_CELL[1] === HOUSE_CENTRE.gy);
   const inGarden = b => Math.floor(b.x) > gOrg.x && Math.floor(b.x) < gOrg.x + HOUSE_RW &&
                         Math.floor(b.z) > gOrg.y && Math.floor(b.z) < gOrg.y + HOUSE_RH;
   const gardenSlabs = slabs.filter(inGarden);
@@ -154,6 +161,7 @@ const T = runPass(PRELUDE + String.raw`
   return o;
 `);
 
+const HOUSE_CENTRE_NOTE = '2,1';
 const S = new Suite('floortest').guard(T);
 
 S.eq('every room type has a floor style',         T.roomsWithoutStyle.length, 0);
@@ -184,7 +192,10 @@ S.ok('  the trim that reaches in is only a reveal',  T.doorwayIntrusion < 0.1,
      `deepest intrusion ${T.doorwayIntrusion.toFixed(3)} of a tile`);
 
 /* the courtyard */
-S.ok('the courtyard is paved',                    T.gardenSlabCount > 50, `${T.gardenSlabCount} tiles`);
+S.eq('the garden really is where we put it',      T.gardenIsThere, 'garden');
+S.ok('  which is NOT the old courtyard cell',     T.gardenOffCentre,
+     `garden at ${T.gardenCell}, old forced cell was ${HOUSE_CENTRE_NOTE}`);
+S.ok('the garden is paved',                       T.gardenSlabCount > 50, `${T.gardenSlabCount} tiles`);
 S.ok('IT USES THE CAMPUS GRASS RAMP',             T.gardenUsesCampusRamp,
      'tones: ' + T.gardenTones.map(c => '0x' + c.toString(16)).join(', '));
 S.ok('  and more than one tone of it',            T.gardenTones.length > 1,

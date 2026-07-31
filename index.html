@@ -614,6 +614,14 @@ if ('serviceWorker' in navigator) {
     background:#3a2f1e; color:#e8dcc2; border:1px solid #8a7a5a; text-align:left;}
   #househud button:hover{background:#4d3f28; border-color:#c9a23a;}
   #househud button.on{background:#4a5f2a; border-color:#9ec96a; color:#f2ead6;}
+  .hlgrid{display:grid; gap:4px; padding:4px 2px 2px;}
+  .hlcell{min-height:38px; display:flex; align-items:center; justify-content:center; text-align:center;
+    font:11px RSFont,Georgia,serif; padding:3px; cursor:pointer; user-select:none;
+    background:#241c12; border:1px dashed #5a4c34; color:#6f624a;}
+  .hlcell.full{background:#3a2f1e; border:1px solid #8a7a5a; color:#e8dcc2; cursor:grab;}
+  .hlcell.full:hover{border-color:#c9a23a;}
+  .hlcell.sel{background:#4a5f2a; border-color:#9ec96a; color:#f2ead6;}
+  .hlcell.entry{box-shadow:inset 0 0 0 2px rgba(255,217,140,.45);}
   #dlgui{position:absolute;left:0;right:0;bottom:14px;display:none;
     justify-content:center;z-index:41;pointer-events:none;}
   #dlgbox{display:flex;gap:10px;width:min(540px,90%);background:#cfc0a0;
@@ -1513,6 +1521,7 @@ try{
           <div id="hhstats"></div>
           <button id="hhbuild" type="button">Building mode</button>
           <button id="hhstaff" type="button">Staff</button>
+          <button id="hhrooms" type="button">Rearrange rooms</button>
           <button id="hhlock" type="button">Door locked</button>
           <button id="hhvisit" type="button">Visit a cottage</button>
         </div>
@@ -3499,7 +3508,14 @@ addObj('rectorydoor',88,84,true);addObj('rectoryexit',109,31,true);
 if(tiles[16]&&tiles[16][128]===T_FOREST)tiles[16][128]=T_GRASS;
 addObj('sawmill',129,16);         /* beside White Farm: source (129,16) -> runtime (241,16) */
 addObj('house_door',119,111,true);  /* the NORTH wall of the ruined cottage: source (119,111) -> runtime (231,111) */
-addObj('house_exit',65,1,true);    /* interior coords (INT_DEFS-exempt): the entry room's NORTH doorway (houseExitTile) */
+/* ** THIS MUST EQUAL houseExitTile(). ** Interior coords, INT_DEFS-exempt, so no +WX shift. The
+   HOUSE constants do not exist this early in the file and object models are baked at
+   `objects.forEach(buildObjModel)` long before them, so the doorway cannot be computed here and has
+   to be written out: HOUSE.x0 + HOUSE_ENTRY.gx*HOUSE_RW + HOUSE_RW/2, HOUSE.y0 + HOUSE_ENTRY.gy*HOUSE_RH
+   = 24 + 12 + 6, 1. Moving the grid or the region origin MOVES THE DOORWAY and strands this door in
+   the rock -- which is exactly what happened when the grid went 3x3 -> 5x3. harness/walktest.mjs
+   asserts the two agree, so the next person to move it finds out immediately. */
+addObj('house_exit',42,1,true);
 addObj('stpauldoor',100,88,true);
 addObj('stpaulexit',48,113,true);addObj('sp_spencer',61,113,true);addObj('sp_organ',61,126,true);addObj('sp_manger',61,120,true);addObj('sp_wreath',64,121,true);
 addObj('sp_fig_pew',60,102,true);addObj('sp_fig_choir',62,101,true);addObj('sp_fig_alms',52,114,true);addObj('sp_fig_curtain',73,113,true);addObj('sp_fig_pipes',59,127,true);addObj('sp_fig_step',62,124,true);
@@ -41024,15 +41040,25 @@ const RECT={x0:85,y0:2,x1:138,y1:31};
    room's interior is 8x6. Region verified empty of footprints, objects, mobs and NPCs. */
 /* Cells 12x10 with SHARED walls, so a room interior is 11x9 -- the old 8x6 read as a cupboard.
    Region verified empty of footprints, objects, mobs and NPCs. */
-const HOUSE_RW=12, HOUSE_RH=10, HOUSE_GW=3, HOUSE_GH=3;
-const HOUSE={x0:47,y0:1,x1:47+HOUSE_RW*HOUSE_GW,y1:1+HOUSE_RH*HOUSE_GH};
+/* ** THE GRID HOLDS EVERY ROOM. ** It was 3x3 = 9 cells for 12 room types, so three rooms could
+   never be built at all and "a full house" meant choosing which to give up. It is now 5x3 = 15,
+   which fits all twelve with slack left over to shape the house however you like (a 4x3 block, a
+   5x2 bar, an L -- anything connected).
+   THE REGION HAD TO MOVE WEST, NOT GROW EAST: the Rectory dead zone starts at x85 and the delve at
+   y36, so x24..84 by y1..31 is the largest box available. CELL INDICES ARE UNCHANGED by the move,
+   so every saved room and every slot key still points at the same cell -- only the world tiles
+   under them shifted, and nobody ever sees those coordinates. */
+const HOUSE_RW=12, HOUSE_RH=10, HOUSE_GW=5, HOUSE_GH=3;
+const HOUSE={x0:24,y0:1,x1:24+HOUSE_RW*HOUSE_GW,y1:1+HOUSE_RH*HOUSE_GH};
 /* The cottages all FACE NORTH, so the front door is in the north wall and the entry room is the
    middle of the TOP row -- you walk south into the house, not north out of its back. */
 const HOUSE_ENTRY={gx:1,gy:0};
-/* ** THE COURTYARD. ** The garden is the middle of the house and the other eight rooms ring it, so it
-   reads as a real courtyard garden with the building wrapped round it. Enforced both ways: the garden
-   can ONLY be the centre cell, and no roofed room may take the centre. */
-const HOUSE_CENTRE={gx:1,gy:1};
+/* ** THE GARDEN GOES ANYWHERE. ** It used to be pinned to the middle cell and the middle cell was
+   allowed nothing else, so the house was forced into a ring around a courtyard. With a grid that
+   fits every room that constraint only removed choices: the garden is now an ordinary room you can
+   put wherever you like, and any room may take the middle. HOUSE_CENTRE is kept only as the default
+   camera focus. */
+const HOUSE_CENTRE={gx:2,gy:1};
 const isHouseCentre=(gx,gy)=>(gx===HOUSE_CENTRE.gx&&gy===HOUSE_CENTRE.gy);
 const HOUSE_RETURN={x:119+WX,y:110};        /* the grass just NORTH of the cottage door at (231,111) */
 let inHouse=false;
@@ -41575,10 +41601,6 @@ function houseBuildRoom(gx,gy,type){
   if(!adj){msg('A new room has to adjoin one you already have.','#851a1a');return;}
   if(houseRoomTaken(type)){
     msg('You already have a '+HOUSE_ROOMS[type].name.toLowerCase()+'. One of each to a house.','#851a1a');return;}
-  if(isHouseCentre(gx,gy)&&type!=='garden'){
-    msg('That is the courtyard at the heart of the house. Only a garden belongs there.','#851a1a');return;}
-  if(!isHouseCentre(gx,gy)&&type==='garden'){
-    msg('A courtyard garden belongs in the middle of the house, with the rooms around it.','#851a1a');return;}
   const cost=houseRoomCost(type);
   if(coinsCount()<cost){msg('Building a '+RT.name.toLowerCase()+' there costs '+fmt(cost)+' coins.','#851a1a');return;}
   spendCoins(cost);
@@ -41596,8 +41618,9 @@ function houseRoomTaken(type){
 }
 /* what could still go in this cell */
 function houseRoomChoices(gx,gy){
-  return HOUSE_ROOM_ORDER.filter(t=>
-    isHouseCentre(gx,gy)===(t==='garden') && !houseRoomTaken(t));
+  /* every unbuilt type is offered in every cell -- the garden included. The only
+     remaining rule is one of each to a house. */
+  return HOUSE_ROOM_ORDER.filter(t=>!houseRoomTaken(t));
 }
 /* ONE menu entry. Picking a room is a decision worth a proper screen, not a right-click list where
    whichever room happened to be first became the left-click default. */
@@ -41686,6 +41709,10 @@ function houseRebuild(){
       const nx=gx+d[0], ny=gy+d[1];
       if(nx<0||ny<0||nx>=HOUSE_GW||ny>=HOUSE_GH)continue;
       if(roomAt(nx,ny))continue;
+      /* ** NO MARKER WITH NOTHING TO OFFER. ** The grid now has more cells than room types, so once
+         all twelve are built the empty cells remain -- and a marker there opened a picker with an
+         empty list. Offer the wall only while something could actually go beyond it. */
+      if(!houseRoomChoices(nx,ny).length)continue;
       const mx=o0.x+d[2], my=o0.y+d[3];
       if(houseTiles[my][mx]!==T_FLOOR)continue;
       /* turn it to face INTO the room, so it sits flush on the wall it is part of */
@@ -42531,6 +42558,130 @@ function houseReturnHome(){
   if(inHouse)exitHouse();        /* clears houseVisit, so the next entry is your own */
   enterHouse();
 }
+/* ===================== REARRANGING THE HOUSE =====================================
+   A working copy of the room grid that the panel mutates, so nothing touches the save until you
+   press Save. `sel` is the cell you have picked up (by click or by dragstart).
+   THE HARD PART IS THE FURNITURE. Slots are keyed 'gx,gy:slotid', so a room that moves cell must
+   take every piece in it along or the pieces are orphaned into whatever room lands there instead.
+   houseApplyLayout() re-keys them in one pass, which is the only reason this is safe to offer. */
+let _hLayout=null, _hLayoutSel=null;
+
+function houseLayoutStart(){
+  _hLayout={}; _hLayoutSel=null;
+  const rooms=houseRooms();
+  for(const k in rooms)_hLayout[k]=rooms[k];
+  return _hLayout;
+}
+function houseLayoutCells(){
+  const out=[];
+  for(let gy=0;gy<HOUSE_GH;gy++)for(let gx=0;gx<HOUSE_GW;gx++)
+    out.push({gx,gy,key:gx+','+gy,type:(_hLayout&&_hLayout[gx+','+gy])||null});
+  return out;
+}
+/* pick a cell up, or drop the held one onto it. Dropping onto an occupied cell SWAPS. */
+function houseLayoutPick(gx,gy){
+  if(!_hLayout)houseLayoutStart();
+  const key=gx+','+gy;
+  if(_hLayoutSel===null){
+    if(!_hLayout[key])return false;          /* nothing to pick up */
+    _hLayoutSel=key; return true;
+  }
+  if(_hLayoutSel===key){ _hLayoutSel=null; return true; }   /* put it back down */
+  const from=_hLayoutSel, a=_hLayout[from], b=_hLayout[key];
+  if(b===undefined||b===null)delete _hLayout[key]; 
+  _hLayout[key]=a;
+  if(b)_hLayout[from]=b; else delete _hLayout[from];
+  _hLayoutSel=null;
+  return true;
+}
+/* a layout is legal when the front door opens into a room and every room can be walked to from it */
+function houseLayoutValid(L){
+  L=L||_hLayout||{};
+  const entry=HOUSE_ENTRY.gx+','+HOUSE_ENTRY.gy;
+  const keys=Object.keys(L).filter(k=>L[k]);
+  if(!keys.length)return{ok:false,why:'A house needs at least one room.'};
+  if(!L[entry])return{ok:false,why:'The front door has to open into a room. Leave one on the entrance cell.'};
+  const seen={}; const q=[entry]; seen[entry]=1;
+  while(q.length){
+    const [cx,cy]=q.pop().split(',').map(Number);
+    for(const d of [[1,0],[-1,0],[0,1],[0,-1]]){
+      const nk=(cx+d[0])+','+(cy+d[1]);
+      if(L[nk]&&!seen[nk]){seen[nk]=1;q.push(nk);}
+    }
+  }
+  const stranded=keys.filter(k=>!seen[k]).map(k=>HOUSE_ROOMS[L[k]]?HOUSE_ROOMS[L[k]].name:k);
+  if(stranded.length)return{ok:false,why:'These rooms would be walled off with no way in: '+stranded.join(', ')+'.'};
+  return{ok:true,why:''};
+}
+/* commit the working copy: rooms AND their furniture move together */
+function houseApplyLayout(L){
+  L=L||_hLayout; if(!L)return false;
+  const v=houseLayoutValid(L); if(!v.ok){msg(v.why,'#851a1a');return false;}
+  const oldRooms=houseRooms();
+  /* where did each room type end up? old cell -> new cell, by type */
+  const oldCellOf={}, newCellOf={};
+  for(const k in oldRooms)if(oldRooms[k])oldCellOf[oldRooms[k]]=k;
+  for(const k in L)if(L[k])newCellOf[L[k]]=k;
+  /* ** RE-KEY THE FURNITURE. ** Built in one pass into a fresh object: rewriting in place would
+     clobber a slot whose destination key is another room's source key. */
+  const oldSlots=houseSlots(), moved={};
+  for(const sk in oldSlots){
+    const i=sk.indexOf(':'); if(i<0)continue;
+    const cell=sk.slice(0,i), slotId=sk.slice(i+1);
+    const type=oldRooms[cell];
+    const dest=type?newCellOf[type]:null;
+    if(!dest)continue;                        /* the room is gone: its pieces go with it */
+    moved[dest+':'+slotId]=oldSlots[sk];
+  }
+  player.house.rooms={}; for(const k in L)if(L[k])player.house.rooms[k]=L[k];
+  player.house.slots=moved;
+  dirty=true;
+  houseCarve(); houseBuildInterior(); houseRebuild(); houseRepaintMinimap();
+  {const _e=houseExitTile(); player.x=_e.x; player.y=_e.y+1; player.px=player.x; player.py=player.y; player.path.length=0;}
+  msg('You rearrange the cottage. The walls come down and go back up somewhere else.','#224e22');
+  if(typeof houseHudRender==='function')houseHudRender();
+  return true;
+}
+/* the panel: a grid of your rooms, click or drag one onto another to swap */
+function houseRearrangePanel(){
+  if(houseIsGuest()){msg('You cannot rearrange someone else\u2019s cottage.','#851a1a');return;}
+  houseLayoutStart();
+  const draw=bd=>{
+    bd.innerHTML='';
+    const g=document.createElement('div'); g.id='hlgrid'; g.className='hlgrid';
+    g.style.gridTemplateColumns='repeat('+HOUSE_GW+',1fr)';
+    for(const c of houseLayoutCells()){
+      const cell=document.createElement('div');
+      cell.className='hlcell'+(c.type?' full':'')+(_hLayoutSel===c.key?' sel':'')
+        +((c.gx===HOUSE_ENTRY.gx&&c.gy===HOUSE_ENTRY.gy)?' entry':'');
+      cell.textContent=c.type?HOUSE_ROOMS[c.type].name:'\u2014';
+      cell.setAttribute('draggable',c.type?'true':'false');
+      cell.dataset.gx=c.gx; cell.dataset.gy=c.gy;
+      cell.addEventListener('click',function(){ houseLayoutPick(c.gx,c.gy); draw(bd); });
+      cell.addEventListener('dragstart',function(){ _hLayoutSel=c.type?c.key:null; draw(bd); });
+      cell.addEventListener('dragover',function(e){ if(e&&e.preventDefault)e.preventDefault(); });
+      cell.addEventListener('drop',function(e){ if(e&&e.preventDefault)e.preventDefault();
+        if(_hLayoutSel!==null&&_hLayoutSel!==c.key){ houseLayoutPick(c.gx,c.gy); } draw(bd); });
+      g.appendChild(cell);
+    }
+    bd.appendChild(g);
+    const v=houseLayoutValid();
+    const note=document.createElement('div'); note.className='housesub'; note.style.padding='8px 3px 4px';
+    note.textContent=v.ok
+      ? (_hLayoutSel?'Now pick where it goes.':'Click a room, then click where it should go. The entrance cell must stay filled.')
+      : v.why;
+    if(!v.ok)note.style.color='#d98a6a';
+    bd.appendChild(note);
+    const save=_hRow(bd,'Save this layout',v.ok?'apply':'not yet',v.ok);
+    if(v.ok){ save.style.cursor='pointer';
+      save.addEventListener('click',function(){ if(houseApplyLayout())closeHousePanel(); }); }
+    const undo=_hRow(bd,'Start again','revert',true);
+    undo.style.cursor='pointer';
+    undo.addEventListener('click',function(){ houseLayoutStart(); draw(bd); });
+  };
+  openHousePanel('Rearrange your cottage',
+    'Drag a room onto another to swap them. Nothing changes until you save.',draw);
+}
 /* the Visit panel: every door that is unlocked right now, plus a way home */
 function houseVisitPanel(){
   const list=(typeof MP!=='undefined'&&MP.openHouses)?MP.openHouses():[];
@@ -42615,6 +42766,8 @@ function sawOneBoard(logId){
   if(sf)sf.addEventListener('click',function(){ butlerPanel(); });
   if(lk)lk.addEventListener('click',function(){ houseToggleOpen(); });
   if(vs)vs.addEventListener('click',function(){ houseVisitPanel(); });
+  const rr=document.getElementById('hhrooms');
+  if(rr)rr.addEventListener('click',function(){ houseRearrangePanel(); });
 })();
 /* the shipped HUD: whose house, how many rooms, your level, and the two builder buttons */
 function houseHudRender(){
@@ -42644,7 +42797,11 @@ function houseHudRender(){
     b.className=houseBuildMode?'on':''; }
   if(sf){ sf.style.display=guest?'none':'block';
     const B=butlerHired(); sf.textContent=B?('Staff \u2014 '+B.name):'Hire staff'; }
-  /* the lock is the OWNER's switch; a guest cannot touch someone else's door */
+  /* rearranging and the lock are the OWNER's switches; a guest touches neither */
+  const rr=document.getElementById('hhrooms');
+  if(rr){ const n=Object.keys(houseRooms()).length;
+    rr.style.display=guest?'none':'block';
+    rr.textContent='Rearrange rooms'+(n>1?(' ('+n+')'):''); }
   const lk=document.getElementById('hhlock'), vs=document.getElementById('hhvisit');
   if(lk){ lk.style.display=guest?'none':'block';
     const _op=houseOpen();

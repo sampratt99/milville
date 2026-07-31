@@ -23,13 +23,29 @@ chop trees → saw logs into planks (White Farm mill) → smith iron nails
 
 | Thing | Value |
 |---|---|
-| Interior region | `HOUSE = {x0:47, y0:1, x1:83, y1:31}` — a dead zone that sits in **walkable deep wilderness** |
-| Room grid | `HOUSE_GW × HOUSE_GH = 3×3`; each room `HOUSE_RW × HOUSE_RH = 12×10` (interior 11×9) |
-| Entry cell | `HOUSE_ENTRY = {gx:1, gy:0}` — always the parlour |
-| Courtyard | `HOUSE_CENTRE = {gx:1, gy:1}` — **garden only, and garden nowhere else** |
+| Interior region | `HOUSE = {x0:24, y0:1, x1:84, y1:31}` — a dead zone that sits in **walkable deep wilderness** |
+| Room grid | `HOUSE_GW × HOUSE_GH = 5×3` = **15 cells for 12 room types**; each room `HOUSE_RW × HOUSE_RH = 12×10` (interior 11×9) |
+| Entry cell | `HOUSE_ENTRY = {gx:1, gy:0}` — holds the front door; starts as the parlour |
+| `HOUSE_CENTRE` | `{gx:2, gy:1}` — **a camera focus only now.** The garden goes anywhere |
 | Return coord | `HOUSE_RETURN = {x:231, y:110}` — the doorstep |
 | Deed | `POH_DEED_PRICE = 50000`, no skill gate (`pohDeedShortfall()` always returns `[]`) |
 | Repair | 3 stages: rubble (2,000 gp) · frame+roof (14 planks, 6 nails, 12,000) · glaze+chimney (8, 3, 20,000) |
+
+**The grid was 3×3 and could not hold the game.** Nine cells for twelve room types meant three rooms
+could never be built at all, and "a full house" meant choosing which three to give up. It is now
+**5×3 = 15**, which fits every type with three cells spare, so the house can be any connected shape
+you like — a 4×3 block, a 5×2 bar, an L.
+
+**The region had to move WEST, not grow east.** The Rectory dead zone starts at `x85` and the delve
+at `y36`, so `x24..84 × y1..31` is the largest box available. **Cell indices are unchanged by the
+move**, so every saved room and every slot key still points at the same cell — only the world tiles
+under them shifted, and nobody ever sees those coordinates. No save migration was needed.
+
+> **The cottage door is hard-coded to the entry doorway.** `addObj('house_exit',42,1,true)` runs far
+> earlier in the file than the HOUSE constants, and its model is baked before them, so it cannot be
+> computed there. Moving the grid or the region origin moves `houseExitTile()` out from under it and
+> strands the door in solid rock — which is exactly what the 3×3 → 5×3 change did.
+> `harness/walktest.mjs` asserts the two agree.
 
 **Repair sizing is deliberate.** Boards do not stack, and repair happens *before* you can build a bell
 and hire staff — so no stage may want more planks than fit comfortably in an unaided pack.
@@ -52,7 +68,10 @@ parlour free · garden 5k · workshop 15k · kitchen 40k · bedroom 90k · games
 combat 650k · chapel 950k · gallery 1.4M · costume 1.9M · portal chamber 2.6M
 
 **One of each room type per house** — enforced in `houseRoomTaken()`, in the picker, *and* in
-`houseBuildRoom()` so no route can slip a duplicate through.
+`houseBuildRoom()` so no route can slip a duplicate through. With 15 cells for 12 types that is now
+the *only* placement rule besides adjacency: **the garden may sit anywhere, and any room may take
+the middle.** The old courtyard rule (garden only in the centre, centre only a garden) is gone — it
+forced the house into a ring and, once every room fitted, removed choices for nothing.
 
 ---
 
@@ -93,38 +112,28 @@ is built facing **+z**, so without this, west-wall pieces face into the plaster.
 | **Boards** (materials) | the real cost of a piece |
 | **Fittings** (coins) | `9 × level^2.4 / 50`, a small charge that rises steeply with level |
 
-### Totals — and WHICH nine rooms they assume
+### Totals
 
-There are **twelve room types and only nine cells**, so "a full house" is not one number: it depends
-on which nine you build. Two of the nine are forced (the parlour is the free entry room, and the
-centre can only ever be the garden), so the choice is really **seven of the remaining ten**. Any
-figure quoted without naming the layout is meaningless.
+Since the grid grew to 15 cells, **every room type fits**, so "a full house" is one number again
+rather than a choice of which three to give up. All figures count room coins plus furniture — the
+fittings charge, plus boards at `ITEMS[plankId].val` and nails at their own value:
 
-All figures below count room coins plus furniture — the fittings charge plus the boards valued at
-`ITEMS[plankId].val` and nails at their own value:
+| | Cost |
+|---|---|
+| All twelve rooms, **rooms only** | **8,180,000** |
+| + the cheapest piece in every hotspot | ~8.97M |
+| + the **best** piece in every hotspot (fully maxed) | **~15.71M** |
+| A starter house — parlour, garden, workshop, cheaply fitted | ~102k |
 
-| Layout | Rooms only | + cheapest piece per hotspot | + best piece per hotspot |
-|---|---|---|---|
-| **Dearest nine** — parlour, garden, games, study, combat, chapel, gallery, costume, portal chamber | 8,035,000 | ~8.74M | **~14.32M** |
-| **Cheapest nine** — parlour, garden, workshop, kitchen, bedroom, games, study, combat, chapel | 2,280,000 | ~2.64M | ~7.01M |
+The last three rooms (gallery 1.4M, costume 1.9M, portal chamber 2.6M) are **5.9M of the room bill,
+72% of it** — the reason the tail is so long. Furnishing costs roughly as much again as the rooms do.
 
-**"Fully maxed" means the DEAREST nine with the best piece in every hotspot: ~14.3M.** That is the
-number to quote for a completionist. The last three rooms (gallery 1.4M, costume 1.9M, portal
-chamber 2.6M) are **5.9M of it** — nearly three-quarters of the room spend and the reason the tail
-is so long.
-
-**A different nine costs more or less by millions.** Swapping the workshop, kitchen and bedroom out
-for the gallery, costume room and portal chamber moves the room bill from 2.28M to 8.04M — a 5.76M
-swing on the same nine cells. A player who furnishes for utility rather than display finishes the
-grid for **under half** what a completionist pays.
-
-A modest starter house — parlour and garden with cheap fittings — is ~290k.
-
-> Earlier versions of this section quoted **~6.5M cheaply furnished and ~11.5M fully maxed** with no
-> layout stated. Costing the nine cells that actually fit gives the table above; the old numbers sit
-> between the two layouts and match neither. `harness/pricetest.mjs` asserts the STRUCTURE — flat
-> room costs charged through the real build path, and the fittings curve — rather than these totals,
-> which move whenever a room or a piece is repriced.
+> **Two earlier versions of this section were wrong.** The original quoted ~6.5M / ~11.5M with no
+> layout stated at all. The rewrite that replaced it quoted a "dearest nine" and a "cheapest nine",
+> which was correct for a 3×3 grid and became obsolete the moment the grid grew. `pricetest` prints
+> the live figures on every run and asserts the STRUCTURE — flat room costs charged through the real
+> build path, and the fittings curve — rather than these totals, which move whenever anything is
+> repriced.
 
 ### The XP curve — read this before retuning it
 
@@ -253,6 +262,49 @@ in your own.
 
 ---
 
+## 8b. Rearranging the house
+
+`hhrooms` on the HUD opens `houseRearrangePanel()`: a grid of your rooms that you drag (or click)
+one onto another to swap. Nothing touches the save until you press Save.
+
+| Function | Does |
+|---|---|
+| `houseLayoutStart()` | copies `houseRooms()` into the working object `_hLayout` |
+| `houseLayoutCells()` | the whole grid as `{gx,gy,key,type}`, for drawing |
+| `houseLayoutPick(gx,gy)` | pick a room up, or drop the held one — **onto an occupied cell it SWAPS** |
+| `houseLayoutValid(L)` | `{ok, why}` — see the two rules below |
+| `houseApplyLayout(L)` | validates, re-keys the furniture, writes the save, re-carves and re-renders |
+
+**Two rules, both enforced in `houseLayoutValid`:**
+
+1. **The entrance cell must stay filled.** The front door is at `houseExitTile()`, which is derived
+   from `HOUSE_ENTRY` — empty that cell and the door opens into rock.
+2. **Every room must be reachable from the entrance.** Doorways are only punched between
+   orthogonally adjacent built cells, so an island is a room you paid for and cannot enter. The
+   check is a flood fill from the entry cell.
+
+### THE FURNITURE MOVES WITH THE ROOM
+
+This is the whole reason the feature is safe to offer. Slots are keyed `'gx,gy:slotid'`, so a room
+that changes cell **must** take every piece in it along or the pieces are orphaned into whatever
+room lands there instead — a chapel altar reappearing in a kitchen. `houseApplyLayout` builds the
+new slot table in **one pass into a fresh object**:
+
+```js
+for(const sk in oldSlots){                    /* 'gx,gy:slotid' */
+  const cell = sk.slice(0, i), slotId = sk.slice(i+1);
+  const dest = newCellOf[ oldRooms[cell] ];   /* where did that ROOM TYPE end up? */
+  if(!dest) continue;                          /* the room is gone: its pieces go with it */
+  moved[dest + ':' + slotId] = oldSlots[sk];
+}
+```
+
+**Rewriting in place would clobber** a slot whose destination key is another room's source key —
+which is exactly what a swap always produces. `harness/layouttest.mjs` asserts a two-room swap
+carries both rooms' furniture and loses none.
+
+---
+
 ## 9. Traps that have already bitten (do not relearn these)
 
 - **A CYLINDER is born axis-up, so a thin one lies FLAT like a coin on a table.**
@@ -295,6 +347,11 @@ in your own.
 - **Adding a skill means adding it to the skills OBJECT**, not just `SKILLS`. Missing it gives
   `undefined` xp and NaN everywhere. There is now a backfill on load.
 - **Left-click runs `optionsAt`'s FIRST option.** Never put anything destructive or costly first.
+- **Slot keys carry the CELL, so anything that moves a room must re-key its furniture.** See §8b.
+- **The cottage door object is hard-coded to the entry doorway** and cannot see the HOUSE constants.
+  Move the grid or the region and it is left standing in rock. `walktest` asserts it.
+- **An expansion marker with nothing to build is a dead end.** The grid now has more cells than room
+  types, so `houseRebuild` skips a marker whose target cell has no remaining choices.
 - Boards **do not stack** (nails do). Every plank takes a pack slot — that is why butlers exist.
 
 ---

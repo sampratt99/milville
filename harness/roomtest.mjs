@@ -51,16 +51,18 @@ const T = runPass(PRELUDE + String.raw`
   o.takenFlag = houseRoomTaken('kitchen');
   o.pickerHidesTaken = !houseRoomChoices(2, 0).includes('kitchen');
 
-  /* ---- 2. the courtyard ---- */
+  /* ---- 2. THE GARDEN GOES ANYWHERE (the courtyard rule is gone) ---- */
   reset();
   tryBuild(0, 0, 'kitchen');
-  o.roofedInCentre = tryBuild(1, 1, 'bedroom');     /* only a garden belongs there */
-  o.gardenInCentre = tryBuild(1, 1, 'garden');
+  o.roofedInCentre = tryBuild(1, 1, 'bedroom');     /* any room may take the middle now */
   reset();
   tryBuild(0, 0, 'kitchen');
-  o.gardenOffCentre = tryBuild(0, 1, 'garden');     /* and only there */
+  /* read the choices BEFORE building the garden -- once it is up, one-of-each
+     correctly removes it from every cell's list */
   o.centreChoices = houseRoomChoices(1, 1);
   o.edgeChoices = houseRoomChoices(0, 1);
+  o.gardenOffCentre = tryBuild(0, 1, 'garden');     /* and the garden may sit anywhere */
+  o.edgeChoicesAfter = houseRoomChoices(2, 1);
 
   /* ---- cost is charged, and refused when short ---- */
   reset();
@@ -98,8 +100,9 @@ const T = runPass(PRELUDE + String.raw`
 
   /* ---- filling the whole grid ---- */
   reset();
-  const order = [[0,0,'kitchen'],[2,0,'bedroom'],[0,1,'workshop'],[1,1,'garden'],
-                 [2,1,'study'],[0,2,'games'],[1,2,'chapel'],[2,2,'combat']];
+  const order = [[0,0,'kitchen'],[2,0,'bedroom'],[3,0,'study'],[4,0,'games'],
+                 [0,1,'workshop'],[1,1,'garden'],[2,1,'chapel'],[3,1,'combat'],[4,1,'gallery'],
+                 [0,2,'costume'],[1,2,'portalrm']];
   o.fillFailures = [];
   for(const [gx, gy, t] of order){
     const r = tryBuild(gx, gy, t);
@@ -147,15 +150,14 @@ S.ok('houseRoomTaken agrees',                     T.takenFlag);
 S.ok('  and the picker hides it too',             T.pickerHidesTaken,
      'all three enforcement points must agree, or a route slips a duplicate through');
 
-/* the courtyard */
-S.eq('A ROOFED ROOM CANNOT TAKE THE CENTRE',      T.roofedInCentre.built, false);
-S.ok('  and says why',                            /courtyard/i.test(T.roofedInCentre.said || ''), T.roofedInCentre.said);
-S.ok('a garden CAN take the centre',              T.gardenInCentre.built, T.gardenInCentre.said);
-S.eq('A GARDEN CANNOT GO ANYWHERE ELSE',          T.gardenOffCentre.built, false);
-S.ok('  and says why',                            /middle of the house/i.test(T.gardenOffCentre.said || ''), T.gardenOffCentre.said);
-S.eq('the centre offers only the garden',         T.centreChoices, ['garden']);
-S.ok('  and no edge cell offers it',              !T.edgeChoices.includes('garden'),
+/* the garden is now an ordinary room */
+S.ok('A ROOFED ROOM MAY TAKE THE MIDDLE',         T.roofedInCentre.built, T.roofedInCentre.said);
+S.ok('THE GARDEN MAY SIT ANYWHERE',               T.gardenOffCentre.built, T.gardenOffCentre.said);
+S.ok('  the middle offers every unbuilt room',    T.centreChoices.length > 1, T.centreChoices.join(', '));
+S.ok('  and an edge cell offers the garden too',  T.edgeChoices.includes('garden'),
      T.edgeChoices.join(', '));
+S.ok('  once built, one-of-each removes it everywhere',
+     !T.edgeChoicesAfter.includes('garden'), T.edgeChoicesAfter.join(', '));
 
 /* money */
 S.ok('building charges the room cost',            T.paid.built);
@@ -174,15 +176,15 @@ S.eq('an occupied cell is not overwritten',       T.occupied.built, false);
 S.ok('  and says so',                             /already a room/i.test(T.occupied.said || ''), T.occupied.said);
 
 /* the whole grid */
-S.eq('the grid holds nine rooms',                 T.cells, 9);
-S.ok('there are more room types than cells',      T.roomTypes > T.cells,
-     `${T.roomTypes} types for ${T.cells} cells — so a house is a choice`);
-S.eq('the whole grid fills without a refusal',    T.fillFailures.length, 0);
+S.eq('the grid holds fifteen cells',              T.cells, 15);
+S.ok('THERE IS ROOM FOR EVERY TYPE',              T.cells >= T.roomTypes,
+     `${T.cells} cells for ${T.roomTypes} types, with ${T.cells - T.roomTypes} spare`);
+S.eq('every type builds without a refusal',       T.fillFailures.length, 0);
 if(T.fillFailures.length) S.note(T.fillFailures.join('; '));
-S.eq('  giving nine rooms',                       T.filled, 9);
+S.eq('  giving all twelve rooms',                 T.filled, 12);
 S.ok('  and a fully carved interior',             T.fullGridCarves > 900,
      `${T.fullGridCarves} floor tiles`);
-S.eq('three room types are left behind',          T.typesLeftOver, T.roomTypes - T.cells);
+S.eq('NOTHING IS LEFT BEHIND ANY MORE',           T.typesLeftOver, 0);
 S.eq('AND NO OCCUPIED CELL CAN BE OVERWRITTEN',   T.everyCellOccupied.length, 0);
 if(T.everyCellOccupied.length) S.note(T.everyCellOccupied.join(', '));
 
