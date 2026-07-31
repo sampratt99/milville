@@ -31902,9 +31902,21 @@ function renderBank(){
     gr.appendChild(d);
   }
 }
-function openBank(){bankOpen=true;if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('bank');{const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}renderBank();bankEl.classList.add('on');
+function openBank(){
+  /* render FIRST, and never let one bad entry abort it; only then commit the flag and show the
+     panel, so the two can never disagree */
+  try{ renderBank(); }catch(err){ console.error('renderBank',err); }
+  bankOpen=true;if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('bank');{const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}bankEl.classList.add('on');
   msg('Banker: Welcome to the Bank of Millville.','#103a8c');}
 function closeBank(){bankOpen=false;bankEl.classList.remove('on');}
+/* If a panel is not actually on screen, its flag is a lie -- and a lying bank flag silently deposits
+   whatever the player clicks. Reconcile every frame so a desync lasts one tick instead of a session. */
+function reconcileCounters(){
+  try{
+    if(bankOpen&&bankEl&&!bankEl.classList.contains('on'))bankOpen=false;
+    if(shopOpen&&geEl&&!geEl.classList.contains('on'))shopOpen=false;
+  }catch(e){}
+}
 
 /* ===================== TRADING (Phase 4) ===================== */
 function isTradeable(id){
@@ -32294,13 +32306,16 @@ function renderShop(){
     ls.appendChild(r);
   }
 }
-function openShop(){shopOpen=true;geFilter='All';geQuery='';const _gs=document.getElementById('gesearch');if(_gs)_gs.value='';
+function openShop(){
+  /* same rule as the bank: the panel opens, THEN the flag is set */
+  shopOpen=true;geFilter='All';geQuery='';const _gs=document.getElementById('gesearch');if(_gs)_gs.value='';
   if(typeof _wireMarketTabs==='function')_wireMarketTabs();
   /* default to the Exchange tab each open */
   const _tx=document.getElementById('getabs'); if(_tx)for(const b of _tx.children)b.classList.toggle('on',b.getAttribute('data-getab')==='exchange');
   const _ve=document.getElementById('geview-exchange'),_vm=document.getElementById('geview-market'); if(_ve)_ve.style.display=''; if(_vm)_vm.style.display='none';
   const _mst=document.getElementById('mktsetup'); if(_mst)_mst.style.display='none';
-  renderShop();renderShopCoins();geEl.classList.add('on');
+  try{ renderShop(); renderShopCoins(); }catch(err){ console.error('renderShop',err); }
+  geEl.classList.add('on');
   if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('geopen');
   msg('Clerk: Welcome to the Grand Exchange. Buying and selling!','#103a8c');}
 function closeShop(){shopOpen=false;geEl.classList.remove('on');}
@@ -44713,6 +44728,7 @@ function render(now){
   gm.lArm.rotation.x=Math.sin(now*0.002+2)*0.05;
 
   /* your hire, if you are home and have one -- they walk like any other NPC */
+  if(typeof reconcileCounters==='function')reconcileCounters();
   if(typeof butlerTick==='function'&&typeof inHouse!=='undefined'&&inHouse)butlerTick(dt);
 
   /* friendly NPCs */
