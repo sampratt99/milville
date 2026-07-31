@@ -65,3 +65,36 @@ Six real defects found and fixed along the way:
 `docs/14` now documents what the shim can and cannot do, and corrects three
 limits that no longer apply: rotation is a real Euler, `.visible` reads back, and
 `classList` persists.
+
+## House visiting, and a house that fits every room (July 2026)
+
+**Multiplayer visiting was broken and is now fixed.** The `ho` (house-open) flag
+never reached other clients: `server.js` rebuilds the `state` message it
+broadcasts rather than relaying it, so `ho` was stripped in transit — and the
+client then wrote `houseOpen = !!m.ho` with no `undefined` guard, setting the
+flag FALSE on every state message and wiping what `hello` had just set true. An
+owner doing anything at all had their door flapping shut on every neighbour's
+screen. Fixed on both sides; the client guard alone is sufficient, the server
+half needs a `wrangler deploy`.
+
+**Visiting moved onto the house HUD.** `hhlock` toggles your door (and evicts
+guests when you lock), `hhvisit` opens a panel of every door unlocked right now
+with a row always offered back to your own cottage. `houseRequestVisit` no longer
+refuses while you are inside — it steps you out first, which is what made the HUD
+path possible at all.
+
+**The room grid grew from 3×3 to 5×3.** Nine cells for twelve room types meant
+three rooms could never be built. All twelve now fit, with three cells spare so
+the house can be any connected shape. The region moved west to `x24..84` because
+the Rectory starts at `x85` and the delve at `y36`; cell indices are unchanged so
+no save migration was needed. The cottage door object, hard-coded to the old
+entry doorway, had to be re-seated — it was left standing in solid rock by the
+move, which `walktest` caught.
+
+**The garden goes anywhere.** The courtyard rule (garden only in the centre,
+centre only a garden) is gone.
+
+**Rooms can be rearranged.** A HUD button opens a grid you drag rooms around in;
+it refuses any layout that empties the entrance cell or strands a room with no
+way in, and **the furniture moves with its room** — slot keys carry the cell, so
+they are re-keyed in one pass on save.
