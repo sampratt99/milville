@@ -1,0 +1,6 @@
+{
+  "type": "module",
+  "dependencies": {
+    "wrangler": "^4.103.0"
+  }
+}

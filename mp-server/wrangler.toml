@@ -1,0 +1,16 @@
+name = "milville-mp"
+main = "server.js"
+compatibility_date = "2026-05-01"
+
+# The relay lives in a single Durable Object class ("Room").
+# SQLite-backed DO classes are the kind available on the free Workers plan.
+[[durable_objects.bindings]]
+name = "ROOM"
+class_name = "Room"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Room"]
+[[kv_namespaces]]
+binding = "LB"
+id = "4aa8f67cb49e489ab3ab187eaf0c5f25"

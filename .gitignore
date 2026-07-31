@@ -1,0 +1,7 @@
+.DS_Store
+node_modules/
+mp-server/node_modules/
+mp-server/.wrangler/
+*.bak
+*.bak.*
+*.zip
