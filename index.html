@@ -3493,6 +3493,8 @@ addObj('bankchest',122,19,true);addObj('bankchest',164,116,true);
 addObj('fire',93,60);
 addObj('chapelexit',139,8,true);addObj('relic',103,8,true);
 addObj('rectorydoor',88,84,true);addObj('rectoryexit',109,31,true);
+/* a dense-forest tile sat on the mill's doorstep at runtime (240,16); source coords here, so 128 */
+if(tiles[16]&&tiles[16][128]===T_FOREST)tiles[16][128]=T_GRASS;
 addObj('sawmill',129,16);         /* beside White Farm: source (129,16) -> runtime (241,16) */
 addObj('house_door',119,111,true);  /* the NORTH wall of the ruined cottage: source (119,111) -> runtime (231,111) */
 addObj('house_exit',65,1,true);    /* interior coords (INT_DEFS-exempt): the entry room's NORTH doorway (houseExitTile) */
@@ -4464,7 +4466,7 @@ const player={
   name:'Adventurer',partyQuiz:false,titleUnlocks:{},title:null,maxHit:0,maxMagicHit:0,maxRangeHit:0,deaths:0,pvpWins:0,bossKills:0,winterUnlocked:false,winter:false,fall:false,fallUnlocked:false,
   x:89+WX,y:88,px:89+WX,py:88,face:1,heading:Math.PI,path:[],action:null,actTick:0,
   hp:10,pray:100,style:'stab',autocast:null,autoRetaliate:true,emoteUnlocks:{},cageMaps:{},regen:0,combatT:0,
-  skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0,agility:0},
+  skills:{attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0,agility:0,construction:0},
   inv:new Array(28).fill(null),
   equip:{weapon:null,shield:null,cape:null,ammo:null},kit:false,cmb:3,playMs:0,kills:0,collected:{},run:false,stamina:100,clueData:{},cluesDone:0,
   mmf:{fish:1,mine:1,smith:1,bank:1,altar:1,quest:1,shop:1},
@@ -8787,6 +8789,11 @@ async function loadSlot(id, preObj){
     if(!s){ const r=await STORE.get(SAVE_KEY); if(r&&r.value)s=JSON.parse(r.value); }
     if(s){
       Object.assign(player.skills,s.skills);
+      /* ** BACKFILL ANY SKILL THE SAVE PREDATES. ** A character made before a skill existed has no key
+         for it, and undefined xp reads as NaN everywhere it is used. Default every known skill. */
+      for(const _sk of SKILLS)
+        if(typeof player.skills[_sk]!=='number'||!isFinite(player.skills[_sk]))
+          player.skills[_sk]=(_sk==='hitpoints')?XP_TABLE[10]:0;
       if(!s.xpv){   /* migrate pre-rescale saves onto the OSRS-scaled curve, preserving each skill's level */
         for(const _k in player.skills) player.skills[_k]=XP_TABLE[_oldLevelFor(player.skills[_k])];
       }
@@ -8923,7 +8930,7 @@ async function deleteSlot(id){
 }
 async function resetGame(){
   if(storageOK&&SAVE_KEY){try{await STORE.delete(SAVE_KEY);}catch(e){}}
-  player.skills={attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0,agility:0};
+  player.skills={attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0,agility:0,construction:0};
   player.inv=new Array(28).fill(null);player.partyQuiz=false;player.friends.length=0;player.uid=genUid();
   player.hp=10;player.pray=100;player.style='stab';player.autoRetaliate=true;player.emoteUnlocks={};player.titleUnlocks={};player.title=null;player.winterUnlocked=false;player.winter=false;player.fall=false;player.fallUnlocked=false;player.x=89+WX;player.y=88;player.px=89+WX;player.py=88;
   player.equip={weapon:null,shield:null};player.kit=false;bank.length=0;
@@ -10551,10 +10558,21 @@ function optionsAt(tx,ty){
         fn:()=>trickOrTreat(bld,ck)});
     if(bld.name==='Hebra Cottage'&&player.quests.hebra&&player.quests.hebra.s>=1&&player.quests.hebra.s<3)
       opts.push({html:'Knock on <span class="t">'+bld.name+'</span>',label:'Knock on '+bld.name,fn:()=>{cancelAction();openDialogue({id:'serg',name:'Serg'});}});
+    /* ** THE COTTAGE IS NAMED FOR ITS STATE. ** The BUILDINGS row describes the WRECK, which is
+       simply wrong once you have mended it -- you should see your own cottage, not a ruin. Resolved
+       here, where the label is read, so it tracks the repair as it happens. */
+    let _bn=bld.name, _bx=bld.ex;
+    if(bld.kind==='pohcottage'&&typeof pohRepaired==='function'&&pohRepaired()){
+      const _mine=(typeof pohOwned==='function')&&pohOwned();
+      _bn=_mine?'Your cottage':'Faculty cottage';
+      _bx=_mine
+        ? 'Your own cottage \u2014 new roof, glass in the sashes, and smoke coming out of the right end. You did that.'
+        : 'A trim faculty cottage. Somebody has clearly put the work in.';
+    }
     opts.push(
-      {html:'Walk-to <span class="t">'+bld.name+'</span>',label:'Walk-to '+bld.name,
+      {html:'Walk-to <span class="t">'+_bn+'</span>',label:'Walk-to '+_bn,
        fn:()=>{cancelAction();walkTo(tx,ty);}},
-      {html:'Examine <span class="t">'+bld.name+'</span>',fn:()=>msg(bld.ex)});
+      {html:'Examine <span class="t">'+_bn+'</span>',fn:()=>msg(_bx)});
   }
   if(tiles[ty]&&tiles[ty][tx]===T_DITCH&&!o)
     opts.push({html:'Cross <span class="t">Wilderness ditch</span>',
@@ -41494,6 +41512,8 @@ function houseBuildRoom(gx,gy,type){
   let adj=false;
   for(const d of [[1,0],[-1,0],[0,1],[0,-1]])if(roomAt(gx+d[0],gy+d[1]))adj=true;
   if(!adj){msg('A new room has to adjoin one you already have.','#851a1a');return;}
+  if(houseRoomTaken(type)){
+    msg('You already have a '+HOUSE_ROOMS[type].name.toLowerCase()+'. One of each to a house.','#851a1a');return;}
   if(isHouseCentre(gx,gy)&&type!=='garden'){
     msg('That is the courtyard at the heart of the house. Only a garden belongs there.','#851a1a');return;}
   if(!isHouseCentre(gx,gy)&&type==='garden'){
@@ -41507,16 +41527,41 @@ function houseBuildRoom(gx,gy,type){
   msg('You build a '+RT.name.toLowerCase()+'. The wall is opened through to it.','#224e22');
 }
 /* offered on a doorway-adjacent bare wall: what could go in the empty cell beyond */
+/* every room type is one to a house -- a second kitchen is not a house, it is a hotel */
+function houseRoomTaken(type){
+  const rooms=houseRooms();
+  for(const k in rooms)if(rooms[k]===type)return true;
+  return false;
+}
+/* what could still go in this cell */
+function houseRoomChoices(gx,gy){
+  return HOUSE_ROOM_ORDER.filter(t=>
+    isHouseCentre(gx,gy)===(t==='garden') && !houseRoomTaken(t));
+}
+/* ONE menu entry. Picking a room is a decision worth a proper screen, not a right-click list where
+   whichever room happened to be first became the left-click default. */
 function houseRoomOptions(gx,gy){
-  const opts=[];
-  for(const type of HOUSE_ROOM_ORDER){
-    if(isHouseCentre(gx,gy)!==(type==='garden'))continue;   /* the centre is the courtyard; nothing else */
-    const RT=HOUSE_ROOMS[type], cost=houseRoomCost(type);
-    opts.push({html:(coinsCount()>=cost?'Build ':'<span style="opacity:.5">Build </span>')
-        +'<span class="t">'+RT.name+'</span> <span style="opacity:.7">('+fmt(cost)+' gp)</span>',
-      label:'Build '+RT.name, fn:()=>houseBuildRoom(gx,gy,type)});
-  }
-  return opts;
+  const left=houseRoomChoices(gx,gy);
+  if(!left.length)return [];
+  return [{html:'Build <span class="t">room</span>',label:'Build room',
+           fn:()=>openRoomPicker(gx,gy)}];
+}
+function openRoomPicker(gx,gy){
+  const left=houseRoomChoices(gx,gy);
+  openHousePanel('Build a room',
+    left.length?'One of each to a house. Choose what goes here.':'Nothing left to build here.',
+    bd=>{
+      if(!left.length){_hEmpty(bd,'You have built one of every room that fits.');return;}
+      for(const t of left){
+        const RT=HOUSE_ROOMS[t], cost=houseRoomCost(t), can=coinsCount()>=cost;
+        const r=_hRow(bd,RT.name,fmt(cost)+' gp',can);
+        if(can){ r.style.cursor='pointer';
+          r.addEventListener('click',()=>{ closeHousePanel(); houseBuildRoom(gx,gy,t); }); }
+      }
+      const d=document.createElement('div'); d.className='housesub'; d.style.padding='10px 3px 3px';
+      d.textContent='Rooms you have already built are not listed.';
+      bd.appendChild(d);
+    });
 }
 /* tear down every furniture object, then respawn from the saved layout */
 function houseRebuild(){
@@ -41580,10 +41625,12 @@ function houseRebuild(){
       if(roomAt(nx,ny))continue;
       const mx=o0.x+d[2], my=o0.y+d[3];
       if(houseTiles[my][mx]!==T_FLOOR)continue;
-      const em={def:'hf_expand',x:mx,y:my,alive:true,expandTo:[nx,ny]};
+      /* turn it to face INTO the room, so it sits flush on the wall it is part of */
+      const _face=(d[0]===1)?-Math.PI/2:(d[0]===-1)?Math.PI/2:(d[1]===1)?Math.PI:0;
+      const em={def:'hf_expand',x:mx,y:my,alive:true,expandTo:[nx,ny],faceY:_face};
       objects.push(em); _houseObjs.push(em);
       if(typeof buildObjModel==='function')buildObjModel(em);
-      if(em._m&&em._m.group)houseGroup.add(em._m.group);
+      if(em._m&&em._m.group){ em._m.group.rotation.y=_face; houseGroup.add(em._m.group); }
     }
   }
 }
