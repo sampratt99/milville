@@ -105,12 +105,26 @@ const T = runPass(PRELUDE + String.raw`
   o.homeOwnerUid = houseOwnerUid();
   exitHouse();
 
-  /* ---- you cannot knock while you are already inside ---- */
+  /* ---- KNOCKING FROM INSIDE IS NOW ALLOWED ----
+     It used to refuse with "Leave your own cottage first", which made the whole
+     feature unreachable from the house HUD — the only place it is now offered.
+     Knocking steps you out of whichever cottage you are standing in first. */
+  MP._test.setUrl('https://example.invalid'); MP._test.setConn(true);
+  MP._test.clearSent();
   enterHouse();
+  o.insideBeforeKnock = inHouse;
   since();
   houseRequestVisit('carol-uid', 'Carol');
-  o.knockWhileInside = since()[0] || null;
-  exitHouse();
+  o.knockWhileInside = since().join(' | ');
+  o.leftOnKnock = !inHouse;
+  o.knockSent = MP._sent.map(x => x.t + (x.to ? ':' + x.to : ''));
+  MP._test.setUrl(''); MP._test.setConn(false);
+  if(inHouse) exitHouse();
+
+  /* offline it still refuses, and says why */
+  since();
+  houseRequestVisit('carol-uid', 'Carol');
+  o.offlineKnock = since()[0] || null;
 
   /* ---- an eviction drops you out ---- */
   houseEnterVisit('bob-uid', 'Bob', BOB);
@@ -161,8 +175,13 @@ S.ok('going home shows YOUR house',               T.homeIsMine, JSON.stringify(T
 S.ok('  keyed to you, not the owner',             T.homeOwnerUid !== 'bob-uid', T.homeOwnerUid);
 
 /* edges */
-S.ok('you cannot knock from inside a house',      /Leave your own cottage first/i.test(T.knockWhileInside || ''),
-     T.knockWhileInside);
+S.ok('you were inside before knocking',           T.insideBeforeKnock);
+S.ok('KNOCKING FROM INSIDE STEPS YOU OUT',        T.leftOnKnock,
+     'it used to refuse outright, which made the house HUD path dead');
+S.ok('  announcing the knock',                    /knock at Carol/i.test(T.knockWhileInside || ''), T.knockWhileInside);
+S.ok('  and sending the request',                 (T.knockSent || []).includes('hreq:carol-uid'),
+     (T.knockSent || []).join(', '));
+S.ok('offline it still refuses',                  /while connected/i.test(T.offlineKnock || ''), T.offlineKnock);
 S.ok('a visit can be left at any time',           T.evictStartsInside);
 S.eq('  clearing guest state',                    T.afterEvictGuest, false);
 S.eq('  and putting you outside',                 T.afterEvictInside, false);

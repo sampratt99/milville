@@ -214,8 +214,14 @@ export class Room extends DurableObject {
         if (m.act !== undefined) a.p.act = m.act;
         if (m.hp !== undefined) a.p.hp = +m.hp || 0;
         if (m.mhp !== undefined) a.p.mhp = +m.mhp || 0;
+        // ** ho MUST BE CARRIED THROUGH. ** This case REBUILDS the message rather than relaying it,
+        // so any field not named here is silently dropped -- exactly how the house-open flag went
+        // missing. The client sends `ho` on both state and hello; only hello survived, because that
+        // one falls through to the generic relay. Kept on the attachment so it also rides the
+        // 4-second keepalive rather than only a gear/action change.
+        if (m.ho !== undefined) a.p.ho = m.ho ? 1 : 0;
         this._set(ws, a);
-        this._broadcast({ t: "state", uid: a.uid, gear: a.p.gear, act: a.p.act, hp: a.p.hp, mhp: a.p.mhp }, a.uid);
+        this._broadcast({ t: "state", uid: a.uid, gear: a.p.gear, act: a.p.act, hp: a.p.hp, mhp: a.p.mhp, ho: a.p.ho | 0 }, a.uid);
         break;
       }
       case "chat": {

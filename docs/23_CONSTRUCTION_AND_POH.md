@@ -219,8 +219,35 @@ owner's key**, so they share a room; two owners each at home are in different ro
   outside can hover your furniture, and vice versa.
 - **The house has its own minimap** (`miniBaseHouse`), repainted by `houseRepaintMinimap()` on entry,
   room build and furniture rebuild — the layout changes, so it cannot be baked once at load.
-- **The open/locked flag rides both `state` and `hello`.** It must ride `hello`: an idle player sends
-  no `state` messages at all, so a neighbour would never learn the door was open.
+- **The open/locked flag rides both `state` and `hello`** — and BOTH halves were broken until the
+  visit HUD shipped. It must ride `hello`, because an idle player sends no `state` at all and a
+  neighbour would never learn the door was open. But `state` was worse than useless: `server.js`
+  **rebuilds** the state message it broadcasts, so `ho` was stripped in transit, and the client's
+  handler then ran `houseOpen = !!m.ho` with no `m.ho !== undefined` guard — setting the flag FALSE
+  on every state message and wiping what `hello` had just set true. An unlocked cottage therefore
+  vanished from every neighbour's visit list the moment its owner did anything at all. Fixed on both
+  sides: the client guards, and the server carries `ho` through the rebuild (and keeps it on the
+  socket attachment so it rides the 4s keepalive too). **The client guard alone is sufficient; the
+  server half needs a `wrangler deploy`.** Same bug class as the pets-on-`pos` one — never trust a
+  field to survive a server rebuild.
+
+### Visiting, from the house HUD
+
+The visit flow lives on the **house HUD** (top right, inside a cottage), not just the cottage door:
+
+| Button | Who sees it | Does |
+|---|---|---|
+| `hhlock` | owner only | toggles `player.house.open`, evicts guests on lock, and `pingPresence()`s at once so neighbours learn immediately |
+| `hhvisit` | owner **and guest** | opens `houseVisitPanel()` |
+
+`houseVisitPanel()` lists every door `MP.openHouses()` reports unlocked right now, and **always
+offers a row back to your own cottage** — otherwise a guest whose host locked up mid-visit would be
+stranded in a parlour with nothing to click.
+
+**`houseRequestVisit` no longer refuses while you are inside.** It used to, which made the whole
+feature unreachable from the HUD; it now steps you out of whichever cottage you are standing in and
+then knocks. Leaving a cottage clears `houseVisit`, so exiting and re-entering always puts you back
+in your own.
 - Locking **evicts** guests (`hevict`).
 - Protocol: `hreq` → `hdat` / `hdeny`, plus `hevict`. Client-only; no server redeploy.
 

@@ -1513,6 +1513,8 @@ try{
           <div id="hhstats"></div>
           <button id="hhbuild" type="button">Building mode</button>
           <button id="hhstaff" type="button">Staff</button>
+          <button id="hhlock" type="button">Door locked</button>
+          <button id="hhvisit" type="button">Visit a cottage</button>
         </div>
         <div id="hovertext"></div>
         <div id="partytimer"></div>
@@ -42511,11 +42513,57 @@ function houseEnterVisit(uid,name,data){
   stopMusic();updateMusic&&updateMusic();updateRunOrb&&updateRunOrb();
 }
 function houseRequestVisit(uid,name){
-  if(inHouse){msg('Leave your own cottage first.','#851a1a');return;}
   if(typeof MP==='undefined'||!MP.houseVisitReq||!MP.active||!MP.active()){
     msg('You can only visit another cottage while connected to a world.','#851a1a');return;}
+  if(!uid||uid===player.uid){ houseReturnHome(); return; }
+  /* ** YOU MAY KNOCK FROM INSIDE. ** This used to refuse outright while inHouse, which made the
+     whole feature unreachable from the house HUD -- the only place it is now offered. Step out of
+     whichever cottage you are standing in first; the reply lands a moment later and takes you
+     straight in. If it is denied you are simply outside, which is the honest outcome. */
+  if(inHouse)exitHouse();
   msg('You knock at '+name+'\u2019s door...','#5c3f00');
   MP.houseVisitReq(uid);
+}
+/* the way back to your own cottage from anywhere: always offered in the visit panel */
+function houseReturnHome(){
+  if(!pohOwned()){msg('You do not own a cottage yet. Mr. Bohan holds the deed.','#851a1a');return;}
+  if(!pohRepaired()){msg('Your own cottage is still a wreck. There is nothing inside to step into.','#851a1a');return;}
+  if(inHouse)exitHouse();        /* clears houseVisit, so the next entry is your own */
+  enterHouse();
+}
+/* the Visit panel: every door that is unlocked right now, plus a way home */
+function houseVisitPanel(){
+  const list=(typeof MP!=='undefined'&&MP.openHouses)?MP.openHouses():[];
+  const online=(typeof MP!=='undefined'&&MP.active&&MP.active());
+  openHousePanel('Visit a cottage',
+    !online?'You are not connected to a world.'
+      :(list.length?(list.length+' door'+(list.length===1?' is':'s are')+' unlocked right now.')
+                   :'Nobody has left a door unlocked.'),
+    bd=>{
+      if(!online){ _hEmpty(bd,'Cottage visits need a live world. Connect and try again.'); }
+      else if(!list.length){
+        _hEmpty(bd,'A cottage appears here only while its owner is online with their door unlocked.');
+      }else{
+        for(const h of list){
+          const r=_hRow(bd,h.name+'\u2019s cottage','knock',true);
+          r.style.cursor='pointer';
+          r.addEventListener('click',function(){ closeHousePanel(); houseRequestVisit(h.uid,h.name); });
+        }
+      }
+      /* ** ALWAYS A WAY HOME. ** A guest with no open doors left would otherwise be stranded in
+         somebody else's parlour with nothing in the panel to click. */
+      if(pohOwned()){
+        const sep=document.createElement('div'); sep.className='housesub';
+        sep.style.padding='10px 3px 3px';
+        sep.textContent=houseIsGuest()?'You are a guest here.':'';
+        bd.appendChild(sep);
+        const home=_hRow(bd,'Your own cottage',houseIsGuest()?'go home':'you are here',houseIsGuest());
+        if(houseIsGuest()){
+          home.style.cursor='pointer';
+          home.addEventListener('click',function(){ closeHousePanel(); houseReturnHome(); });
+        }
+      }
+    });
 }
 /* ===================== THE SAWMILL =====================================================
    Logs are not planks. The mill converts them for a fee, which gives Woodcutting a real sink and
@@ -42562,8 +42610,11 @@ function sawOneBoard(logId){
 })();
 (function wireHouseHud(){
   const b=document.getElementById('hhbuild'), sf=document.getElementById('hhstaff');
+  const lk=document.getElementById('hhlock'), vs=document.getElementById('hhvisit');
   if(b)b.addEventListener('click',function(){ houseToggleBuildMode(); });
   if(sf)sf.addEventListener('click',function(){ butlerPanel(); });
+  if(lk)lk.addEventListener('click',function(){ houseToggleOpen(); });
+  if(vs)vs.addEventListener('click',function(){ houseVisitPanel(); });
 })();
 /* the shipped HUD: whose house, how many rooms, your level, and the two builder buttons */
 function houseHudRender(){
@@ -42582,6 +42633,7 @@ function houseHudRender(){
     const bits=['<b>'+rooms+'</b> room'+(rooms===1?'':'s')+', <b>'+filled+'</b> of <b>'+total+'</b> spaces filled'];
     if(!guest){
       bits.push('Construction <b>'+lvl('construction')+'</b>');
+      bits.push('Door: <b>'+(houseOpen()?'unlocked':'locked')+'</b>');
       const B=butlerHired();
       if(B)bits.push('Staff: <b>'+B.name+'</b>'+(butlerBusy()?' (out)':''));
     }
@@ -42592,6 +42644,15 @@ function houseHudRender(){
     b.className=houseBuildMode?'on':''; }
   if(sf){ sf.style.display=guest?'none':'block';
     const B=butlerHired(); sf.textContent=B?('Staff \u2014 '+B.name):'Hire staff'; }
+  /* the lock is the OWNER's switch; a guest cannot touch someone else's door */
+  const lk=document.getElementById('hhlock'), vs=document.getElementById('hhvisit');
+  if(lk){ lk.style.display=guest?'none':'block';
+    const _op=houseOpen();
+    lk.textContent=_op?'\u2713 Door unlocked':'Door locked';
+    lk.className=_op?'on':''; }
+  /* Visit is offered to everyone inside a cottage -- an owner uses it to go calling,
+     a guest uses it to hop on or to go home */
+  if(vs){ vs.style.display='block'; vs.textContent='Visit a cottage'; }
 }
 function pohStage(){ return (player.house&&player.house.repair|0)||0; }
 function pohRepaired(){ return pohStage()>=POH_REPAIR_STEPS.length; }
@@ -47131,7 +47192,13 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
       case 'leave': { const _lr = RP.get(m.uid); logSystem(((_lr && _lr.name) || 'A player') + ' has logged out.'); if (groupOnPeerLeft(m.uid) && typeof renderFriends === 'function') renderFriends(); if (trade.active && trade.withUid === m.uid) { _tradeClose(); logSystem('The trade was cancelled.'); } tradeReqIn.delete(m.uid); tradeReqOut.delete(m.uid); duelReqIn.delete(m.uid); duelReqOut.delete(m.uid); if (duel.state !== 'none' && duel.oppUid === m.uid && typeof endDuel === 'function') endDuel('forfeit-win'); if (duelSetup.active && duelSetup.withUid === m.uid) { logSystem((duelSetup.withName || 'The other player') + ' left before the duel began.'); _duelSetupClose(); } despawn(m.uid); break; }
       case 'petid': { const r = RP.get(m.uid); if (r) r.pet = m.p || null; break; }
       case 'pos': { let r = RP.get(m.uid); if (!r && m.uid && m.uid !== player.uid) { spawn({ uid: m.uid, name: m.name || '?', x: m.x, y: m.y, h: m.h, in: m.in }); r = RP.get(m.uid); } if (r) { if (m.name) r.name = m.name; r.x = m.x; r.y = m.y; r.h = m.h; r.run = !!m.run; r.in = m.in || null; r.last = Date.now(); } break; }
-      case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); { const _r0 = RP.get(m.uid); if (_r0) _r0.houseOpen = !!m.ho; } break;
+      /* ** THE GUARD IS THE WHOLE POINT. ** server.js REBUILDS the state message it broadcasts
+         (uid/gear/act/hp/mhp only), so `ho` is stripped in transit and m.ho is always undefined
+         here. Without `m.ho !== undefined` this line ran `houseOpen = !!undefined` -> false on
+         EVERY state message, wiping the flag that 'hello' had just set true. An unlocked cottage
+         therefore vanished from everyone's Visit list the instant its owner did anything at all.
+         Same bug class as the pets-on-'pos' one: never trust a field to survive a server rebuild. */
+      case 'state': absorb(m.uid, { gear: m.gear, act: m.act, hp: m.hp, mhp: m.mhp }); { const _r0 = RP.get(m.uid); if (_r0 && m.ho !== undefined) _r0.houseOpen = !!m.ho; } break;
       case 'hello': {
         if (!m.uid || m.uid === player.uid) break;
         { const _rh = RP.get(m.uid); if (_rh && m.ho !== undefined) _rh.houseOpen = !!m.ho; }
