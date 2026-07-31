@@ -143,6 +143,68 @@ const T = runPass(PRELUDE + String.raw`
   since();
 
   if(inHouse) exitHouse();
+  /* ---- un-noting in depth (moved from fivefix) ---- */
+  const _note = (id, qty) => {   /* never clobber the coins slot */
+    const i = player.inv.findIndex(s => !s);
+    if(i < 0) return -1;
+    player.inv[i] = {id, qty, noted: true};
+    return i;
+  };
+  const _hire = id => {
+    setLevel('construction', 99);          /* every tier is level-gated; hire() silently refuses without this */
+    houseVisit = null;
+    player.house = player.house || {}; player.house.servant = null;
+    clearInv(); give('coins', 20000000);
+    butlerHire(id); since();
+    return !!butlerState();
+  };
+
+  o.hiredOk = _hire('fifth');
+  clearInv(); give('coins', 20000000); _note('oak_plank', 20);
+  {
+    const c0 = coinsCount();
+    since(); butlerUnnote();
+    o.unnoteGot = countItem('oak_plank');
+    o.unnoteSpent = c0 - coinsCount();
+    o.unnoteFee = butlerById('fifth').fee;
+    o.unnoteLoad = butlerById('fifth').load;
+    since();
+  }
+
+  _hire('facbrat');
+  clearInv(); give('coins', 20000000); _note('oak_plank', 200);
+  for(let i = 2; i < player.inv.length; i++) if(!player.inv[i]) player.inv[i] = {id: 'bones', qty: 1};
+  o.overflowFreeBefore = player.inv.filter(s => !s).length;
+  since(); butlerUnnote();
+  o.overflowPlanks = countItem('oak_plank');
+  o.noOverflow = o.overflowPlanks <= o.overflowFreeBefore + 1;
+  since();
+
+  _hire('fifth');
+  clearInv(); give('coins', 20000000);
+  since(); butlerUnnote(); o.noNotesSaid = since()[0] || null;
+
+  _hire('fifth');
+  clearInv(); give('coins', 10); _note('oak_plank', 5);
+  since(); butlerUnnote(); o.brokeSaid = since()[0] || null;
+
+  _hire('facbrat');
+  clearInv(); give('coins', 20000000);
+  bank.length = 0; bank.push({id: 'oak_plank', qty: 50});
+  butlerFetch('oak_plank');
+  _note('oak_plank', 5);
+  since(); butlerUnnote(); o.busyUnnoteSaid = since()[0] || null;
+  __shim.flushTimers(); since();
+
+  o.geRefusedFor = [];
+  for(const B of BUTLERS){
+    _hire(B.id);
+    since();
+    if(typeof butlerCollect === 'function') butlerCollect();
+    if(since().some(l => /not trusted with the market/.test(l))) o.geRefusedFor.push(B.id);
+  }
+  player.house.servant = null; bank.length = 0;
+
   return o;
 `);
 
@@ -209,6 +271,27 @@ S.ok('  saying they are already out',            T.saidAlreadyOut);
 S.eq('dismissing lets them go',                  T.afterDismiss, null);
 S.ok('  and then there is nobody to send',       T.fetchWithNobody);
 S.ok('a low tier will not do paperwork',         T.lowTierUnnote);
+
+/* ---- un-noting in depth (moved here when fivefix was rescoped to the five-bug
+   batch; these were its only assertions not already covered above) ---- */
+S.ok('the hire actually took the job',            T.hiredOk,
+     'without this every check below would pass on "You have nobody to send"');
+S.ok('the fifth former actually delivers boards', T.unnoteGot > 0, `${T.unnoteGot} boards`);
+S.eq('  charging one fee',                        T.unnoteSpent, T.unnoteFee);
+S.ok('  capped by their load',                    T.unnoteGot <= T.unnoteLoad,
+     `${T.unnoteGot} of a ${T.unnoteLoad} load`);
+S.ok('A FULL PACK DOES NOT OVERFLOW',             T.noOverflow,
+     `${T.overflowFreeBefore} free before, ${T.overflowPlanks} boards after`);
+S.ok('carrying no notes says so',                 /carrying no banknotes/.test(T.noNotesSaid || ''), T.noNotesSaid);
+S.ok('being broke refuses',                       /cannot cover/.test(T.brokeSaid || ''), T.brokeSaid);
+S.ok('being out on an errand blocks paperwork',   /already out/.test(T.busyUnnoteSaid || ''), T.busyUnnoteSaid);
+/* ge:true is the sixth former and the fac brat — so the lower THREE are refused,
+   and un-noting (fifth up) opens one tier earlier than the market run */
+S.eq('the lower three are refused the market run',
+     T.geRefusedFor.join(','), 'third,fourth,fifth');
+S.ok('  so the market run opens one tier ABOVE un-noting',
+     T.tiers.filter(t => t.ge).length === 2 && T.tiers.filter(t => t.unnote).length === 3,
+     `${T.tiers.filter(t => t.unnote).length} un-note, ${T.tiers.filter(t => t.ge).length} run the market`);
 
 /* the line that keeps Construction a skill */
 S.ok('NO BUTLER PATH REACHES houseBuild',

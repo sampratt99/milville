@@ -159,6 +159,69 @@ const T = runPass(PRELUDE + String.raw`
     if(r && r.blocked) o.flatFloorBlocking.push(fid);
   }
 
+  /* ================= THE CARVE AND THE DEAD ZONE =================
+     Moved here when poh15 was rescoped to the entry arc. It belongs with the
+     walkable geometry: the interior is stamped into REAL walkable deep
+     wilderness, so the carve and the terrain swap decide what you can stand on
+     both inside the house and out on the grass afterwards. */
+  o.HOUSE = {x0: HOUSE.x0, y0: HOUSE.y0, x1: HOUSE.x1, y1: HOUSE.y1};
+  o.grid = {GW: HOUSE_GW, GH: HOUSE_GH, RW: HOUSE_RW, RH: HOUSE_RH};
+  o.regionIsDeepWilderness = HOUSE.x1 < WX;
+  o.regionInsideMap = HOUSE.x0 >= 0 && HOUSE.y0 >= 0 && HOUSE.x1 < W && HOUSE.y1 < H;
+
+  /* pristine heights BEFORE anything enters — reading them back through
+     _houseRestore would make the restore check below circular */
+  const sample = [];
+  for(let y = HOUSE.y0; y <= HOUSE.y1; y += 7)
+    for(let x = HOUSE.x0; x <= HOUSE.x1; x += 7) sample.push([x, y]);
+  o.sampleCount = sample.length;
+  _houseRestore();
+  const pristine = sample.map(([x, y]) => hts[y][x]);
+  o.wildVaries = new Set(pristine.map(v => Math.round(v * 1000))).size > 1;
+
+  /* one room carved: its interior is floor, an unbuilt cell is solid rock */
+  freshHouse();
+  const org = roomOrigin(HOUSE_ENTRY.gx, HOUSE_ENTRY.gy);
+  let interiorFloor = true;
+  for(let y = org.y + 1; y < org.y + HOUSE_RH; y++)
+    for(let x = org.x + 1; x < org.x + HOUSE_RW; x++)
+      if(houseTiles[y][x] !== T_FLOOR) interiorFloor = false;
+  o.parlourInteriorIsFloor = interiorFloor;
+
+  const empty = roomOrigin(0, 2);
+  let emptySolid = true;
+  for(let y = empty.y + 1; y < empty.y + HOUSE_RH; y++)
+    for(let x = empty.x + 1; x < empty.x + HOUSE_RW; x++)
+      if(houseTiles[y][x] !== T_WALL) emptySolid = false;
+  o.unbuiltCellIsSolid = emptySolid;
+
+  /* a doorway opens between two built neighbours, and closes again */
+  const wallX = org.x + HOUSE_RW, wallY = org.y + Math.floor(HOUSE_RH / 2);
+  o.wallBefore = houseTiles[wallY][wallX];
+  houseRooms()['2,0'] = 'kitchen'; houseCarve();
+  o.wallWithNeighbour = houseTiles[wallY][wallX];
+  delete houseRooms()['2,0']; houseCarve();
+  o.wallAfterRemoval = houseTiles[wallY][wallX];
+
+  /* the terrain is flattened on entry and PUT BACK on exit */
+  _houseFlatten();
+  const flat = sample.map(([x, y]) => hts[y][x]);
+  o.flatIsLevel = new Set(flat.map(v => Math.round(v * 1000))).size === 1;
+  o.flatChangedThings = flat.some((v, k) => v !== pristine[k]);
+  o.flatValue = flat[0]; o.houseFY = houseFY;
+  _houseRestore();
+  const back = sample.map(([x, y]) => hts[y][x]);
+  o.heightsRestored = pristine.every((v, k) => v === back[k]);
+  o.restoreMismatch = pristine.filter((v, k) => v !== back[k]).length;
+
+  /* the world swap flips every flag together */
+  freshHouse();
+  o.insideFlags = {inHouse, tilesAreHouse: tiles === houseTiles,
+                   worldHidden: worldGroup.visible === false, houseShown: houseGroup.visible === true};
+  exitHouse();
+  o.outsideFlags = {inHouse, tilesAreMain: tiles === TILES_MAIN,
+                    worldShown: worldGroup.visible === true, houseHidden: houseGroup.visible === false};
+
   if(inHouse) exitHouse();
   return o;
 `);
@@ -202,6 +265,30 @@ S.ok('there are flat-floor pieces',               T.flatFloorPieces.length > 0, 
 S.eq('A RUG IS FLOOR — you can stand on it',      T.flatFloorBlocking.length, 0);
 if(T.flatFloorBlocking.length) S.note(T.flatFloorBlocking.join(', '));
 
+/* ---- the carve and the dead zone (moved from poh15) ---------------------- */
+S.eq('the house grid is 3x3',                     [T.grid.GW, T.grid.GH], [3, 3]);
+S.eq('each room is 12x10',                        [T.grid.RW, T.grid.RH], [12, 10]);
+S.ok('the region fits inside the map',            T.regionInsideMap);
+S.ok('IT SITS IN WALKABLE DEEP WILDERNESS',       T.regionIsDeepWilderness,
+     `house ends at x${T.HOUSE.x1}, campus starts at x112`);
+S.ok('the parlour interior is all floor',         T.parlourInteriorIsFloor);
+S.ok('AN UNBUILT CELL IS SOLID ROCK',             T.unbuiltCellIsSolid,
+     'if this fails you can walk into a room you never built');
+S.ok('a shared wall opens for a neighbour',       T.wallBefore !== T.wallWithNeighbour,
+     `${T.wallBefore} -> ${T.wallWithNeighbour}`);
+S.eq('  and closes again when it is gone',        T.wallAfterRemoval, T.wallBefore);
+S.ok('the wilderness under the house is uneven',  T.wildVaries,
+     `${T.sampleCount} sample points — if this were flat the restore check proves nothing`);
+S.ok('entering levels the ground',                T.flatIsLevel, `all at ${T.flatValue}`);
+S.eq('  to houseFY',                              T.flatValue, T.houseFY);
+S.ok('  and that really moved the terrain',       T.flatChangedThings);
+S.ok('LEAVING PUTS THE HILLS BACK',               T.heightsRestored,
+     `${T.restoreMismatch} of ${T.sampleCount} sample points did not come back`);
+S.eq('inside: every flag agrees',                 T.insideFlags,
+     {inHouse: true, tilesAreHouse: true, worldHidden: true, houseShown: true});
+S.eq('outside: every flag agrees',                T.outsideFlags,
+     {inHouse: false, tilesAreMain: true, worldShown: true, houseHidden: true});
+
 S.report(
-  'Every room in a full house is reachable from the front door, walls block, and flat pieces are walkable.',
+  'Every room in a full house is reachable from the front door, walls block, flat pieces are walkable, and the carve leaves unbuilt cells solid while the terrain is put back on exit.',
   'how walking actually feels — pathing, camera and collision against the models need a browser.');

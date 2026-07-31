@@ -93,8 +93,38 @@ is built facing **+z**, so without this, west-wall pieces face into the plaster.
 | **Boards** (materials) | the real cost of a piece |
 | **Fittings** (coins) | `9 × level^2.4 / 50`, a small charge that rises steeply with level |
 
-**Totals:** modest house ~290k · all nine rooms cheaply furnished ~6.5M · **fully maxed ~11.5M**.
-Roughly 38 boss runs at ~300k a run. The last three rooms are 5.9M of that.
+### Totals — and WHICH nine rooms they assume
+
+There are **twelve room types and only nine cells**, so "a full house" is not one number: it depends
+on which nine you build. Two of the nine are forced (the parlour is the free entry room, and the
+centre can only ever be the garden), so the choice is really **seven of the remaining ten**. Any
+figure quoted without naming the layout is meaningless.
+
+All figures below count room coins plus furniture — the fittings charge plus the boards valued at
+`ITEMS[plankId].val` and nails at their own value:
+
+| Layout | Rooms only | + cheapest piece per hotspot | + best piece per hotspot |
+|---|---|---|---|
+| **Dearest nine** — parlour, garden, games, study, combat, chapel, gallery, costume, portal chamber | 8,035,000 | ~8.74M | **~14.32M** |
+| **Cheapest nine** — parlour, garden, workshop, kitchen, bedroom, games, study, combat, chapel | 2,280,000 | ~2.64M | ~7.01M |
+
+**"Fully maxed" means the DEAREST nine with the best piece in every hotspot: ~14.3M.** That is the
+number to quote for a completionist. The last three rooms (gallery 1.4M, costume 1.9M, portal
+chamber 2.6M) are **5.9M of it** — nearly three-quarters of the room spend and the reason the tail
+is so long.
+
+**A different nine costs more or less by millions.** Swapping the workshop, kitchen and bedroom out
+for the gallery, costume room and portal chamber moves the room bill from 2.28M to 8.04M — a 5.76M
+swing on the same nine cells. A player who furnishes for utility rather than display finishes the
+grid for **under half** what a completionist pays.
+
+A modest starter house — parlour and garden with cheap fittings — is ~290k.
+
+> Earlier versions of this section quoted **~6.5M cheaply furnished and ~11.5M fully maxed** with no
+> layout stated. Costing the nine cells that actually fit gives the table above; the old numbers sit
+> between the two layouts and match neither. `harness/pricetest.mjs` asserts the STRUCTURE — flat
+> room costs charged through the real build path, and the fittings curve — rather than these totals,
+> which move whenever a room or a piece is repriced.
 
 ### The XP curve — read this before retuning it
 
@@ -198,16 +228,30 @@ owner's key**, so they share a room; two owners each at home are in different ro
 
 ## 9. Traps that have already bitten (do not relearn these)
 
-- **A cylinder is born upright, and a torus is not — they need OPPOSITE rotations.**
-  `CylinderGeometry`'s axis runs along +Y, so a thin cylinder is a coin lying flat. Any round face
-  meant to hang on a wall — dartboard, target rings, clock dials, a mirror, a shield — needs
-  `rotation.x = π/2`. Use the `CD()` disc helper; `C()` only rolls on z and **cannot** stand a disc
-  up. **`TorusGeometry` is born in the XY plane, already standing and facing +z**, so a ring you
-  look or walk through — a portal arch, a globe meridian, the trellis hoop — wants
-  `rotation.x = 0`, and `π/2` lays it flat. Level hoops (the pot rack, the candle rack, the chalk
-  and marble floor sigils) are the ones that want `π/2`. Earlier versions of this doc and of
-  CLAUDE.md said "cylinders and tori are born upright… needs π/2" for both, which would lay a
-  portal arch on the floor. `harness/discs.mjs` asserts every case.
+- **A CYLINDER is born axis-up, so a thin one lies FLAT like a coin on a table.**
+  `CylinderGeometry`'s axis runs along +Y. Any round face meant to hang on a wall — dartboard,
+  target rings, clock dials, a mirror, a shield — needs `rotation.x = π/2` to stand up. Use the
+  `CD()` disc helper; `C()` only rolls on z and **cannot** stand a disc up.
+
+  | | `rotation.x = 0` | `rotation.x = π/2` |
+  |---|---|---|
+  | cylinder disc | lies flat (a coin) | **stands up** (a dial on a wall) |
+
+- **A TORUS is born in the XY plane, already UPRIGHT and facing +z.** It needs nothing done to it
+  to stand. A ring you look or walk through — a portal arch, a globe meridian, the trellis hoop —
+  wants `rotation.x = 0`. `π/2` makes it lie **flat**, which is what a level hoop wants: the pot
+  rack, the candle rack, and the chalk and marble floor sigils.
+
+  | | `rotation.x = 0` | `rotation.x = π/2` |
+  |---|---|---|
+  | torus ring | **stands up** (a portal arch) | lies flat (a pot rack) |
+
+- **The same π/2 therefore does OPPOSITE things to the two primitives**, which is the whole trap.
+  Earlier versions of this doc and of CLAUDE.md gave one combined rule — "cylinders and tori are
+  born upright… needs π/2" — which is right for cylinders and would lay a portal arch flat on the
+  floor. No shipped model was ever wrong; the doc was. `harness/discs.mjs` asserts each primitive
+  separately, and checks floor pieces keep their discs flat as well as wall plates standing theirs
+  up.
 - **`drawItemIcon` balances its own canvas** via `save()` / `try` / `finally restore()`. Branches
   historically forgot `restore()`, and since each inventory slot keeps its own canvas, the stray
   translate accumulated every re-render — icons marched into the bottom-right corner and shrank.

@@ -71,12 +71,17 @@ of "the update isn't there".
 
 - **Coordinates**: runtime = source + 112 (`WX=112`). Interiors are exempt. Read
   `docs/10_MAP_AND_WORLD.md` §1 before any map work.
-- **Cylinders and tori need OPPOSITE treatment.** `CylinderGeometry` is born with its axis along
-  +Y, so a thin one is a coin lying flat: a dial, mirror, target or shield meant to hang on a wall
-  needs `rotation.x = PI/2`. In house code use `CD()`; `C()` only rolls on z. **`TorusGeometry` is
-  born in the XY plane — already standing, facing +z.** A ring you look or walk through (a portal
-  arch, a globe meridian) wants `rotation.x = 0`; `PI/2` LAYS IT DOWN, which is what a level hoop
-  (a pot rack, a chalk circle on the floor) wants instead. `harness/discs.mjs` asserts both.
+- **A CYLINDER is born axis-up, so a disc lies FLAT.** `CylinderGeometry`'s axis runs along +Y,
+  so a thin one is a coin on a table. A round face meant to hang on a wall — a dial, a mirror, a
+  target, a shield — needs `rotation.x = PI/2` to stand up. In house code use `CD()`; `C()` only
+  rolls on z and cannot stand a disc up.
+- **A TORUS is born in the XY plane, already UPRIGHT.** `TorusGeometry` faces +z out of the box, so
+  a ring you look or walk through — a portal arch, a globe meridian — wants `rotation.x = 0` and
+  needs nothing done to it. `rotation.x = PI/2` makes a torus lie **flat**, which is what a level
+  hoop wants (a pot rack, a chalk circle on the floor).
+- **So the same PI/2 does opposite things to the two primitives.** It stands a cylinder up and lays
+  a torus down. Applying the cylinder rule to a torus puts a portal arch flat on the floor.
+  `harness/discs.mjs` asserts each primitive separately.
 - **Models are built facing +z.** Wall-mounted pieces need the room's facing rotation or they face
   into the plaster.
 - **Item sprites go in `ITEM_ICON_PNG`; nav and skill icons in `UI_ICON_PNG`.** They draw in different
