@@ -63,17 +63,43 @@ multiplayer (2+ browsers), group-boss dynamics (3–4 players). Say so in the su
 
 ## The Construction suite (~40 harnesses)
 
-`slottest` (placement rules) · `contest` · `sawtest` · `poh15` · `furntest` · `roomtest` · `funcfurn` ·
-`bmodetest` · `walktest` · `housepanel` · `wintest` · `floortest` · `containtest` · `roomstest` ·
-`visittest` · `housetest` · `butlertest` · `butlerwalk` · `xptest` · `pricetest` · `shiptest` ·
-`mphouse` · `spawntest` · `repairflow` · `doortest` · `focustest` · `upgradetest` · `discs` ·
-`iconaudit` · `orphantest` · `banktest` · `lobbyvis` · `conunlock` · `skillfix` · `roomui` ·
-`sawicon` · `deedtest` · `fivefix` · `newfunc` · `darylitest`
+All 39 are committed in `harness/` and run by `npm test`. Roughly by area:
 
-Three are worth running after almost any change:
+| Area | Harnesses |
+|---|---|
+| the whole chain | `shiptest` |
+| the skill + economy | `contest` · `xptest` · `pricetest` · `conunlock` · `skillfix` |
+| the mill | `sawtest` · `sawicon` · `darylitest` |
+| the deed + repair | `deedtest` · `repairflow` · `doortest` |
+| rooms + the grid | `poh15` · `roomtest` · `roomstest` · `roomui` · `walktest` |
+| hotspots + furniture | `slottest` · `furntest` · `funcfurn` · `upgradetest` · `newfunc` · `spawntest` |
+| the baked interior | `floortest` · `wintest` · `discs` |
+| panels + build mode | `housepanel` · `bmodetest` · `banktest` |
+| staff | `butlertest` · `butlerwalk` · `fivefix` |
+| saves + bad data | `housetest` · `orphantest` |
+| multiplayer + containment | `mphouse` · `visittest` · `containtest` · `lobbyvis` |
+
+Four are worth running after almost any change:
 - **`shiptest`** — walks the whole Construction chain in one pass, saw to butler.
 - **`mphouse`** — the seven-case multiplayer visibility matrix.
-- **`iconaudit`** — draws every item icon five times and asserts the canvas stack returns to zero.
+- **`iconaudit`** — draws every icon five times and asserts the canvas stack returns to zero.
+- **`orphantest`** — an id that no longer exists must degrade, not take a panel down.
+
+### Things these harnesses found that reading did not
+
+Kept as a record of what the suite is for, and of the shapes these bugs take:
+
+- `bohanBuyDeed`'s full-pack guard read `!findItem(id)`, but findItem returns -1
+  when absent — so the guard only fired when you already had the deed. Buying with
+  a full pack charged 50,000 and dropped it.
+- `exitHouse` never tore down `_houseObjs`, leaving 48 furniture objects live at
+  HOUSE coords — which are walkable deep wilderness. Invisible collision on the
+  grass, and `optionsAt` offering "Cook-on Iron stove" to anyone clicking it.
+- `houseBuildOptions` read `HOUSE_FURNITURE[cur]` unguarded in **two** places. The
+  first fix moved the crash to the second.
+- The torus half of the "born upright" rule was backwards in this doc and in
+  CLAUDE.md; see `discs`.
+- `houseTrophyReport` is declared twice; the earlier body is unreachable.
 
 ## What the shim can and cannot do
 

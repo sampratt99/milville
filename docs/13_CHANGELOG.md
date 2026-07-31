@@ -30,3 +30,38 @@ in the previous kit; since then, in order:
     furniture pieces across 57 named hotspots, 8 bespoke floor styles, the White Farm sawmill (Daryl)
     with 4 plank tiers, smithable nails, 5 St Paul's butlers, house visiting with lock/evict, a house
     HUD, and full interior/multiplayer isolation. See `23_CONSTRUCTION_AND_POH.md`.
+
+## The offline harness suite (July 2026)
+
+Rebuilt the validation harnesses from scratch: 39 harnesses, ~1,120 assertions,
+run by `npm test`. `harness/shim.txt` is a browser stand-in wide enough that the
+whole 47k-line module scope executes; `harness/_lib.mjs` holds the Pattern-B
+runner. Every harness was sabotage-tested — the game was deliberately broken on
+a scratch copy and the matching assertion confirmed to go red.
+
+Six real defects found and fixed along the way:
+
+- **`bohanBuyDeed` lost the deed on a full pack.** The guard read
+  `invFull() && !findItem('house_deed')`, but `findItem` returns -1 when absent,
+  so it only fired when you already held one. Buying with a full pack charged
+  50,000 coins and the deed vanished.
+- **House furniture stayed in the world after you left.** `exitHouse` hid the
+  group but never tore down `_houseObjs`, leaving 48 objects live at HOUSE
+  coords — walkable deep wilderness. Invisible collision on the grass, and
+  `optionsAt` offering house menus to anyone clicking that patch.
+- **An orphaned furniture id killed the tile menu**, in two separate unguarded
+  reads of `HOUSE_FURNITURE[cur]`. `houseSlots()` now sweeps dead ids so a save
+  heals itself, and both call sites are guarded for guest data off the wire.
+- **The torus half of the "born upright" rule was backwards** in CLAUDE.md and
+  docs/23. A cylinder needs `rotation.x = PI/2` to stand up; a torus is already
+  standing and PI/2 lays it flat. Following the note literally would have laid a
+  portal arch on the floor. No shipped model was wrong — the doc was.
+- **`houseTrophyReport` is declared twice**; the earlier chat-line version is
+  unreachable. Left in place, flagged by `newfunc`.
+- **The courtyard inherits a window from the parlour** through the
+  `curtainCol[gx,gy-1]` fallback — glass on the courtyard face only. Left alone
+  as a visual call, characterised exactly by `wintest`.
+
+`docs/14` now documents what the shim can and cannot do, and corrects three
+limits that no longer apply: rotation is a real Euler, `.visible` reads back, and
+`classList` persists.

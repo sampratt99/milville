@@ -236,5 +236,6 @@ owner's key**, so they share a room; two owners each at home are in different ro
 `upgradetest` `discs` `iconaudit` `orphantest` `banktest` `lobbyvis` `conunlock` `skillfix` `roomui`
 `sawicon` `deedtest` `fivefix` `newfunc` `darylitest`
 
-`shiptest` walks the whole chain in one pass; `mphouse` proves the isolation matrix; `iconaudit` draws
-every icon five times and checks the canvas stack returns to zero.
+All 39 live in `harness/` and run with `npm test` (see `docs/14`). `shiptest` walks the whole chain in
+one pass; `mphouse` proves the isolation matrix; `iconaudit` draws every icon five times and checks the
+canvas stack returns to zero; `orphantest` proves a dead id degrades instead of taking a panel down.
