@@ -1,0 +1,1089 @@
+/* ============================================================================
+   shim.txt — the offline stand-in for the browser.
+
+   Prepend this to a Pattern-B harness (see docs/14_VALIDATION_HARNESSES.md).
+   It installs a strict-mode-safe DOM, a canvas 2D context that counts its own
+   save/restore depth, and a THREE r128 stub wide enough that the whole 47k-line
+   module scope of index.html executes top to bottom without throwing.
+
+   Nothing here fires on its own. requestAnimationFrame is a no-op (the file ends
+   with `requestAnimationFrame(render)` at top level) and setTimeout only records
+   the callback — flush it deliberately with __shim.flushTimers() if a test wants
+   deferred work to happen. That is what keeps a harness deterministic.
+
+   Known limits, so nobody tests the shim instead of the game:
+     - no layout: getBoundingClientRect is a fixed 800x600
+     - no WebGL: nothing is rasterised, so appearance is unprovable here
+     - Object3D.visible and .rotation ARE readable (unlike the older shim), but
+       they only reflect what the game set, never what a renderer would show
+   ========================================================================== */
+'use strict';
+
+/* Node already owns some of these names (navigator and fetch are getter-only in
+   Node 22+), so every global goes in by defineProperty rather than assignment. */
+function def(name, value){
+  Object.defineProperty(globalThis, name, {value, writable:true, configurable:true, enumerable:false});
+  return value;
+}
+
+const __shim = def('__shim', {
+  timers: [],           /* every setTimeout the game asked for, in order */
+  intervals: [],
+  raf: [],
+  msgs: [],             /* whatever msg() writes, if a harness wires it up */
+  flushTimers,
+  reset(){ this.timers.length=0; this.intervals.length=0; this.raf.length=0; },
+});
+
+/* run pending timers once, in scheduled order; returns how many fired */
+function flushTimers(){
+  const due = __shim.timers.splice(0, __shim.timers.length);
+  due.sort((a,b)=>a.ms-b.ms);
+  let n=0;
+  for(const t of due){ if(t.cancelled) continue; try{ t.fn(...t.args); n++; }catch(e){ t.error=e; } }
+  return n;
+}
+
+/* ------------------------------------------------------------------ timers */
+let __timerId = 1;
+def('setTimeout', function(fn, ms, ...args){
+  const id = __timerId++;
+  __shim.timers.push({id, fn, ms: ms|0, args, cancelled:false});
+  return id;
+});
+def('clearTimeout', function(id){
+  const t = __shim.timers.find(t=>t.id===id); if(t) t.cancelled = true;
+});
+def('setInterval', function(fn, ms, ...args){
+  const id = __timerId++;
+  __shim.intervals.push({id, fn, ms: ms|0, args});
+  return id;
+});
+def('clearInterval', function(id){
+  const i = __shim.intervals.findIndex(t=>t.id===id); if(i>=0) __shim.intervals.splice(i,1);
+});
+def('requestAnimationFrame', function(fn){ __shim.raf.push(fn); return __shim.raf.length; });
+def('cancelAnimationFrame', function(){});
+
+/* ------------------------------------------------------------- canvas 2d */
+/* Every drawing call is a no-op, but save()/restore() keep a real depth counter
+   so `iconaudit`-style tests can prove a drawer balances its own canvas. */
+function makeCtx2D(canvas){
+  const ctx = {
+    canvas,
+    __depth: 0,          /* save() minus restore() — must return to 0 */
+    __maxDepth: 0,
+    __calls: 0,
+  };
+  const props = {
+    fillStyle:'#000', strokeStyle:'#000', lineWidth:1, lineCap:'butt', lineJoin:'miter',
+    miterLimit:10, globalAlpha:1, globalCompositeOperation:'source-over',
+    font:'10px sans-serif', textAlign:'start', textBaseline:'alphabetic', direction:'ltr',
+    shadowBlur:0, shadowColor:'rgba(0,0,0,0)', shadowOffsetX:0, shadowOffsetY:0,
+    imageSmoothingEnabled:true, imageSmoothingQuality:'low', filter:'none', lineDashOffset:0,
+  };
+  for(const k in props) ctx[k] = props[k];
+
+  const noop = ['beginPath','closePath','moveTo','lineTo','bezierCurveTo','quadraticCurveTo',
+    'arc','arcTo','ellipse','rect','roundRect','fill','stroke','clip','fillRect','strokeRect',
+    'clearRect','fillText','strokeText','drawImage','setLineDash','scale','rotate','translate',
+    'transform','setTransform','resetTransform','putImageData','drawFocusIfNeeded','clip'];
+  for(const m of noop) ctx[m] = function(){ ctx.__calls++; };
+
+  ctx.save = function(){ ctx.__calls++; ctx.__depth++; if(ctx.__depth>ctx.__maxDepth) ctx.__maxDepth=ctx.__depth; };
+  ctx.restore = function(){ ctx.__calls++; ctx.__depth--; };
+  ctx.measureText = function(t){
+    const w = (t==null?0:String(t).length) * 6;
+    return {width:w, actualBoundingBoxLeft:0, actualBoundingBoxRight:w,
+            actualBoundingBoxAscent:8, actualBoundingBoxDescent:2,
+            fontBoundingBoxAscent:8, fontBoundingBoxDescent:2};
+  };
+  ctx.createLinearGradient = ctx.createRadialGradient = ctx.createConicGradient =
+    function(){ return {addColorStop(){}}; };
+  ctx.createPattern = function(){ return {setTransform(){}}; };
+  ctx.getImageData = function(x,y,w,h){
+    w = Math.max(1, w|0); h = Math.max(1, h|0);
+    return {width:w, height:h, data:new Uint8ClampedArray(w*h*4)};
+  };
+  ctx.createImageData = ctx.getImageData;
+  ctx.getLineDash = function(){ return []; };
+  ctx.isPointInPath = ctx.isPointInStroke = function(){ return false; };
+  ctx.getTransform = function(){ return {a:1,b:0,c:0,d:1,e:0,f:0}; };
+  return ctx;
+}
+
+/* ------------------------------------------------------------------- DOM */
+const RECT = {x:0, y:0, width:800, height:600, top:0, left:0, right:800, bottom:600};
+
+class ShimClassList {
+  constructor(){ this._s = new Set(); }
+  add(...c){ for(const x of c) if(x) this._s.add(x); }
+  remove(...c){ for(const x of c) this._s.delete(x); }
+  toggle(c, force){
+    if(force===true){ this._s.add(c); return true; }
+    if(force===false){ this._s.delete(c); return false; }
+    if(this._s.has(c)){ this._s.delete(c); return false; }
+    this._s.add(c); return true;
+  }
+  contains(c){ return this._s.has(c); }
+  item(i){ return [...this._s][i] ?? null; }
+  get length(){ return this._s.size; }
+  toString(){ return [...this._s].join(' '); }
+  [Symbol.iterator](){ return this._s[Symbol.iterator](); }
+}
+
+class ShimStyle {
+  setProperty(k, v){ this[k] = v; }
+  getPropertyValue(k){ return this[k] ?? ''; }
+  removeProperty(k){ const v = this[k]; delete this[k]; return v; }
+}
+
+let __elSeq = 0;
+class ShimElement {
+  constructor(tag){
+    this.tagName = String(tag||'div').toUpperCase();
+    this.nodeName = this.tagName;
+    this.nodeType = 1;
+    this.id = '';
+    this.className = '';
+    this.classList = new ShimClassList();
+    this.style = new ShimStyle();
+    this.dataset = {};
+    this.children = [];
+    this.childNodes = this.children;
+    this.parentNode = null;
+    this.parentElement = null;
+    this.attributes = {};
+    this.innerHTML = '';
+    this.textContent = '';
+    this.value = '';
+    this.checked = false;
+    this.disabled = false;
+    this.scrollTop = 0;
+    this.scrollLeft = 0;
+    this.scrollHeight = 0;
+    this.scrollWidth = 0;
+    this.clientWidth = RECT.width;
+    this.clientHeight = RECT.height;
+    this.offsetWidth = RECT.width;
+    this.offsetHeight = RECT.height;
+    this.offsetTop = 0;
+    this.offsetLeft = 0;
+    this._listeners = {};
+    this._seq = ++__elSeq;
+    if(this.tagName === 'CANVAS'){
+      this.width = 64; this.height = 64;
+      this._ctx = null;
+    }
+  }
+  getContext(kind){
+    if(kind === '2d'){ if(!this._ctx) this._ctx = makeCtx2D(this); return this._ctx; }
+    /* a WebGL context that claims nothing; the game only ever hands it to THREE */
+    return {getExtension(){return null;}, getParameter(){return 0;}, canvas:this};
+  }
+  toDataURL(){ return 'data:image/png;base64,'; }
+  addEventListener(type, fn){ (this._listeners[type] ||= []).push(fn); }
+  removeEventListener(type, fn){
+    const a = this._listeners[type]; if(!a) return;
+    const i = a.indexOf(fn); if(i>=0) a.splice(i,1);
+  }
+  /* fire a listener by hand: el.__fire('click', {…}) */
+  __fire(type, ev){
+    const a = this._listeners[type] || [];
+    const e = Object.assign({type, target:this, currentTarget:this,
+      preventDefault(){}, stopPropagation(){}, stopImmediatePropagation(){}}, ev||{});
+    for(const fn of a.slice()) fn.call(this, e);
+    return e;
+  }
+  dispatchEvent(ev){ this.__fire(ev && ev.type, ev); return true; }
+  appendChild(c){ if(c){ c.parentNode = this; c.parentElement = this; this.children.push(c); } return c; }
+  append(...cs){ for(const c of cs) if(c && typeof c === 'object') this.appendChild(c); }
+  prepend(c){ if(c){ c.parentNode = this; this.children.unshift(c); } return c; }
+  insertBefore(c, ref){
+    const i = this.children.indexOf(ref);
+    if(c){ c.parentNode = this; this.children.splice(i<0?this.children.length:i, 0, c); }
+    return c;
+  }
+  removeChild(c){ const i = this.children.indexOf(c); if(i>=0) this.children.splice(i,1); return c; }
+  replaceChild(n, o){ const i = this.children.indexOf(o); if(i>=0) this.children[i] = n; return o; }
+  remove(){ if(this.parentNode) this.parentNode.removeChild(this); }
+  setAttribute(k, v){ this.attributes[k] = String(v); if(k==='id') this.id = String(v);
+    if(k==='class'){ this.className = String(v); this.classList = new ShimClassList();
+      for(const c of String(v).split(/\s+/)) if(c) this.classList.add(c); } }
+  getAttribute(k){ return k in this.attributes ? this.attributes[k] : null; }
+  hasAttribute(k){ return k in this.attributes; }
+  removeAttribute(k){ delete this.attributes[k]; }
+  /* A stable stub per selector rather than null: the game builds panels with
+     innerHTML and then reaches back in for `.sic` canvases, and nothing here
+     parses HTML. Same bargain as getElementById — the guard stays live.
+     querySelectorAll deliberately stays empty: fabricating a list length would
+     invent iteration counts the real page never had. */
+  querySelector(sel){
+    if(!this._qs) this._qs = new Map();
+    if(!this._qs.has(sel)){
+      const e = new ShimElement(/canvas/i.test(sel) ? 'canvas' : 'div');
+      e.parentNode = this; e.parentElement = this; e.__selector = sel;
+      this._qs.set(sel, e);
+    }
+    return this._qs.get(sel);
+  }
+  querySelectorAll(){ return []; }
+  getElementsByTagName(){ return []; }
+  getElementsByClassName(){ return []; }
+  closest(){ return null; }
+  matches(){ return false; }
+  contains(){ return false; }
+  focus(){}
+  blur(){}
+  click(){ this.__fire('click'); }
+  select(){}
+  scrollIntoView(){}
+  getBoundingClientRect(){ return Object.assign({}, RECT); }
+  animate(){ return {finished:Promise.resolve(), cancel(){}, play(){}, pause(){}}; }
+  insertAdjacentHTML(){}
+  cloneNode(){ const e = new ShimElement(this.tagName); e.innerHTML = this.innerHTML; return e; }
+  get firstChild(){ return this.children[0] || null; }
+  get lastChild(){ return this.children[this.children.length-1] || null; }
+  get firstElementChild(){ return this.children[0] || null; }
+  get nextSibling(){ return null; }
+  get ownerDocument(){ return globalThis.document; }
+}
+
+/* One element per id, created on demand and remembered — so a listener attached
+   at load is still there when a test fires it, and a style set by one function is
+   readable by the next. The real page has these ids; inventing them keeps the
+   game's `const el=document.getElementById(...); if(!el)return;` guards live
+   rather than short-circuiting every UI path into a no-op. */
+const __byId = new Map();
+
+const document = def('document', {
+  nodeType: 9,
+  readyState: 'complete',
+  title: 'Milville',
+  cookie: '',
+  createElement(tag){ return new ShimElement(tag); },
+  createElementNS(ns, tag){ return new ShimElement(tag); },
+  createTextNode(t){ const e = new ShimElement('#text'); e.textContent = String(t); return e; },
+  createDocumentFragment(){ return new ShimElement('#fragment'); },
+  getElementById(id){
+    if(!__byId.has(id)){ const e = new ShimElement('div'); e.id = id; __byId.set(id, e); }
+    return __byId.get(id);
+  },
+  querySelector(sel){ return document.body.querySelector(sel); },
+  querySelectorAll(){ return []; },
+  getElementsByTagName(){ return []; },
+  getElementsByClassName(){ return []; },
+  addEventListener(){},
+  removeEventListener(){},
+  dispatchEvent(){ return true; },
+  exitPointerLock(){},
+  exitFullscreen(){ return Promise.resolve(); },
+  hasFocus(){ return true; },
+  elementFromPoint(){ return null; },
+  execCommand(){ return true; },
+  get activeElement(){ return document.body; },
+  __byId,
+});
+document.body = new ShimElement('body');
+document.head = new ShimElement('head');
+document.documentElement = new ShimElement('html');
+document.body.requestPointerLock = function(){};
+
+/* ---------------------------------------------------------------- window */
+const __store = new Map();
+const localStorage = def('localStorage', {
+  getItem(k){ return __store.has(String(k)) ? __store.get(String(k)) : null; },
+  setItem(k, v){ __store.set(String(k), String(v)); },
+  removeItem(k){ __store.delete(String(k)); },
+  clear(){ __store.clear(); },
+  key(i){ return [...__store.keys()][i] ?? null; },
+  get length(){ return __store.size; },
+});
+def('sessionStorage', localStorage);
+
+def('devicePixelRatio', 1);
+def('innerWidth', RECT.width);
+def('innerHeight', RECT.height);
+def('screen', {width:1280, height:800, availWidth:1280, availHeight:800,
+  orientation:{type:'landscape-primary', angle:0, lock(){return Promise.resolve();}, unlock(){}}});
+def('location', {href:'http://localhost/index.html', search:'', hash:'',
+  protocol:'http:', hostname:'localhost', host:'localhost', pathname:'/index.html',
+  origin:'http://localhost', reload(){}, assign(){}, replace(){}, toString(){return this.href;}});
+def('history', {replaceState(){}, pushState(){}, back(){}, forward(){}, go(){}, length:1});
+def('navigator', {userAgent:'node-harness', platform:'node', language:'en-US',
+  languages:['en-US'], maxTouchPoints:0, onLine:true, hardwareConcurrency:4,
+  clipboard:{writeText(){return Promise.resolve();}, readText(){return Promise.resolve('');}},
+  serviceWorker:{register(){return new Promise(()=>{});}, ready:new Promise(()=>{}),
+                 addEventListener(){}, controller:null},
+  sendBeacon(){ return true; }, vibrate(){ return true; },
+  share(){ return new Promise(()=>{}); }});
+def('matchMedia', function(q){
+  return {matches:false, media:String(q), onchange:null,
+          addEventListener(){}, removeEventListener(){}, addListener(){}, removeListener(){}};
+});
+def('alert', function(){});
+def('confirm', function(){ return false; });
+def('prompt', function(){ return null; });
+/* never settles: callers all chain .then/.catch, so nothing dangles as unhandled */
+def('fetch', function(){ return new Promise(()=>{}); });
+
+def('Image', class Image {
+  constructor(w, h){ this.width = w||0; this.height = h||0;
+    this.onload = null; this.onerror = null; this.complete = false; this._src = ''; }
+  get src(){ return this._src; }
+  set src(v){ this._src = String(v); }          /* never loads: no onload, ever */
+  addEventListener(){}
+  removeEventListener(){}
+});
+
+const ShimWebSocket = def('WebSocket', class WebSocket {
+  constructor(url){ this.url = String(url); this.readyState = 3; /* CLOSED */
+    this.onopen = this.onmessage = this.onclose = this.onerror = null; }
+  send(){}
+  close(){}
+  addEventListener(){}
+  removeEventListener(){}
+});
+ShimWebSocket.CONNECTING = 0; ShimWebSocket.OPEN = 1;
+ShimWebSocket.CLOSING = 2;    ShimWebSocket.CLOSED = 3;
+
+/* Web Audio: every node is the same shape and every method a no-op */
+function makeAudioNode(){
+  const p = () => ({value:0, setValueAtTime(){return p();}, linearRampToValueAtTime(){return p();},
+    exponentialRampToValueAtTime(){return p();}, setTargetAtTime(){return p();},
+    cancelScheduledValues(){return p();}, setValueCurveAtTime(){return p();}});
+  return {connect(n){ return n; }, disconnect(){}, start(){}, stop(){},
+    frequency:p(), detune:p(), gain:p(), Q:p(), pan:p(), delayTime:p(), offset:p(),
+    type:'sine', buffer:null, loop:false, onended:null};
+}
+const ShimAudioContext = def('AudioContext', class AudioContext {
+  constructor(){ this.currentTime = 0; this.sampleRate = 44100; this.state = 'running';
+    this.destination = makeAudioNode(); this.listener = {setPosition(){}, setOrientation(){}}; }
+  createOscillator(){ return makeAudioNode(); }
+  createGain(){ return makeAudioNode(); }
+  createBiquadFilter(){ return makeAudioNode(); }
+  createStereoPanner(){ return makeAudioNode(); }
+  createDelay(){ return makeAudioNode(); }
+  createConvolver(){ return makeAudioNode(); }
+  createDynamicsCompressor(){ return makeAudioNode(); }
+  createBufferSource(){ return makeAudioNode(); }
+  createChannelMerger(){ return makeAudioNode(); }
+  createWaveShaper(){ return makeAudioNode(); }
+  createBuffer(c, len, rate){ return {length:len, sampleRate:rate, numberOfChannels:c,
+    getChannelData(){ return new Float32Array(len); }}; }
+  resume(){ return Promise.resolve(); }
+  suspend(){ return Promise.resolve(); }
+  close(){ return Promise.resolve(); }
+});
+def('webkitAudioContext', ShimAudioContext);
+
+const window = def('window', globalThis);
+window.addEventListener = function(){};
+window.removeEventListener = function(){};
+window.dispatchEvent = function(){ return true; };
+window.getComputedStyle = function(){
+  return new Proxy({}, {get:(t,k)=> k==='getPropertyValue' ? (()=> '') : ''});
+};
+window.scrollTo = function(){};
+window.focus = function(){};
+window.open = function(){ return null; };
+window.close = function(){};
+window.top = window;
+window.self = window;
+window.parent = window;
+
+/* ------------------------------------------------------------- THREE r128 */
+/* Not a renderer — a bookkeeper. Scene-graph structure, transforms, visibility
+   and material/geometry parameters are all real and readable; nothing is ever
+   rasterised. Enough for houseBuildInterior() and every model builder to run. */
+class V3 {
+  constructor(x=0, y=0, z=0){ this.x=x; this.y=y; this.z=z; }
+  set(x,y,z){ this.x=x; this.y=y; this.z=z; return this; }
+  setScalar(s){ this.x=this.y=this.z=s; return this; }
+  setX(v){ this.x=v; return this; } setY(v){ this.y=v; return this; } setZ(v){ this.z=v; return this; }
+  copy(v){ this.x=v.x||0; this.y=v.y||0; this.z=v.z||0; return this; }
+  clone(){ return new V3(this.x, this.y, this.z); }
+  add(v){ this.x+=v.x; this.y+=v.y; this.z+=v.z; return this; }
+  addScalar(s){ this.x+=s; this.y+=s; this.z+=s; return this; }
+  addVectors(a,b){ this.x=a.x+b.x; this.y=a.y+b.y; this.z=a.z+b.z; return this; }
+  addScaledVector(v,s){ this.x+=v.x*s; this.y+=v.y*s; this.z+=v.z*s; return this; }
+  sub(v){ this.x-=v.x; this.y-=v.y; this.z-=v.z; return this; }
+  subVectors(a,b){ this.x=a.x-b.x; this.y=a.y-b.y; this.z=a.z-b.z; return this; }
+  multiply(v){ this.x*=v.x; this.y*=v.y; this.z*=v.z; return this; }
+  multiplyScalar(s){ this.x*=s; this.y*=s; this.z*=s; return this; }
+  divideScalar(s){ return this.multiplyScalar(s===0?0:1/s); }
+  negate(){ this.x=-this.x; this.y=-this.y; this.z=-this.z; return this; }
+  dot(v){ return this.x*v.x + this.y*v.y + this.z*v.z; }
+  cross(v){ const {x,y,z}=this;
+    this.x=y*v.z-z*v.y; this.y=z*v.x-x*v.z; this.z=x*v.y-y*v.x; return this; }
+  crossVectors(a,b){ return this.copy(a).cross(b); }
+  length(){ return Math.hypot(this.x, this.y, this.z); }
+  lengthSq(){ return this.x**2 + this.y**2 + this.z**2; }
+  normalize(){ return this.divideScalar(this.length()||1); }
+  setLength(l){ return this.normalize().multiplyScalar(l); }
+  distanceTo(v){ return Math.hypot(this.x-v.x, this.y-v.y, this.z-v.z); }
+  distanceToSquared(v){ return (this.x-v.x)**2 + (this.y-v.y)**2 + (this.z-v.z)**2; }
+  lerp(v,t){ this.x+=(v.x-this.x)*t; this.y+=(v.y-this.y)*t; this.z+=(v.z-this.z)*t; return this; }
+  applyQuaternion(){ return this; }
+  applyMatrix4(){ return this; }
+  applyMatrix3(){ return this; }
+  applyEuler(){ return this; }
+  applyAxisAngle(){ return this; }
+  transformDirection(){ return this; }
+  clampScalar(a, b){ this.x = Math.max(a, Math.min(b, this.x));
+    this.y = Math.max(a, Math.min(b, this.y)); this.z = Math.max(a, Math.min(b, this.z)); return this; }
+  clampLength(a, b){ const l = this.length() || 1;
+    return this.divideScalar(l).multiplyScalar(Math.max(a, Math.min(b, l))); }
+  min(v){ this.x = Math.min(this.x, v.x); this.y = Math.min(this.y, v.y);
+    this.z = Math.min(this.z, v.z); return this; }
+  max(v){ this.x = Math.max(this.x, v.x); this.y = Math.max(this.y, v.y);
+    this.z = Math.max(this.z, v.z); return this; }
+  divide(v){ this.x /= v.x; this.y /= v.y; this.z /= v.z; return this; }
+  floor(){ this.x = Math.floor(this.x); this.y = Math.floor(this.y);
+    this.z = Math.floor(this.z); return this; }
+  round(){ this.x = Math.round(this.x); this.y = Math.round(this.y);
+    this.z = Math.round(this.z); return this; }
+  angleTo(){ return 0; }
+  manhattanLength(){ return Math.abs(this.x) + Math.abs(this.y) + Math.abs(this.z); }
+  setFromSpherical(){ return this; }
+  setFromMatrixColumn(){ return this; }
+  setFromMatrixScale(){ return this; }
+  random(){ return this; }
+  project(){ return this; }
+  unproject(){ return this; }
+  setFromMatrixPosition(){ return this; }
+  equals(v){ return this.x===v.x && this.y===v.y && this.z===v.z; }
+  toArray(){ return [this.x, this.y, this.z]; }
+  fromArray(a, o=0){ this.x=a[o]; this.y=a[o+1]; this.z=a[o+2]; return this; }
+}
+class V2 {
+  constructor(x=0, y=0){ this.x=x; this.y=y; }
+  set(x,y){ this.x=x; this.y=y; return this; }
+  setScalar(s){ this.x=this.y=s; return this; }
+  copy(v){ this.x=v.x||0; this.y=v.y||0; return this; }
+  clone(){ return new V2(this.x, this.y); }
+  add(v){ this.x+=v.x; this.y+=v.y; return this; }
+  sub(v){ this.x-=v.x; this.y-=v.y; return this; }
+  multiplyScalar(s){ this.x*=s; this.y*=s; return this; }
+  length(){ return Math.hypot(this.x, this.y); }
+  normalize(){ const l=this.length()||1; this.x/=l; this.y/=l; return this; }
+  distanceTo(v){ return Math.hypot(this.x-v.x, this.y-v.y); }
+  lengthSq(){ return this.x**2 + this.y**2; }
+  subVectors(a, b){ this.x = a.x - b.x; this.y = a.y - b.y; return this; }
+  addVectors(a, b){ this.x = a.x + b.x; this.y = a.y + b.y; return this; }
+  multiply(v){ this.x *= v.x; this.y *= v.y; return this; }
+  divideScalar(s){ return this.multiplyScalar(s === 0 ? 0 : 1 / s); }
+  negate(){ this.x = -this.x; this.y = -this.y; return this; }
+  dot(v){ return this.x * v.x + this.y * v.y; }
+  lerp(v, t){ this.x += (v.x - this.x) * t; this.y += (v.y - this.y) * t; return this; }
+  rotateAround(){ return this; }
+  equals(v){ return this.x === v.x && this.y === v.y; }
+  toArray(){ return [this.x, this.y]; }
+  fromArray(a, o = 0){ this.x = a[o]; this.y = a[o+1]; return this; }
+}
+/* rotation is a REAL object with x/y/z — the old shim made it a function, which is
+   why limb angles used to be unreadable and several checks moved to source text. */
+class Euler {
+  constructor(x=0, y=0, z=0, order='XYZ'){ this.x=x; this.y=y; this.z=z; this.order=order; }
+  set(x,y,z,order){ this.x=x; this.y=y; this.z=z; if(order) this.order=order; return this; }
+  copy(e){ this.x=e.x||0; this.y=e.y||0; this.z=e.z||0; return this; }
+  clone(){ return new Euler(this.x, this.y, this.z, this.order); }
+  setFromQuaternion(){ return this; }
+  setFromVector3(v){ return this.set(v.x, v.y, v.z); }
+  toArray(){ return [this.x, this.y, this.z, this.order]; }
+}
+class Quat {
+  constructor(x=0,y=0,z=0,w=1){ this.x=x; this.y=y; this.z=z; this.w=w; }
+  set(x,y,z,w){ this.x=x; this.y=y; this.z=z; this.w=w; return this; }
+  copy(q){ return this.set(q.x, q.y, q.z, q.w); }
+  clone(){ return new Quat(this.x, this.y, this.z, this.w); }
+  setFromEuler(){ return this; }
+  setFromAxisAngle(){ return this; }
+  setFromRotationMatrix(){ return this; }
+  setFromUnitVectors(){ return this; }
+  multiply(){ return this; }
+  premultiply(){ return this; }
+  multiplyQuaternions(){ return this; }
+  slerp(){ return this; }
+  rotateTowards(){ return this; }
+  identity(){ return this.set(0, 0, 0, 1); }
+  invert(){ return this; }
+  conjugate(){ return this; }
+  normalize(){ return this; }
+  dot(){ return 1; }
+  angleTo(){ return 0; }
+  toArray(){ return [this.x, this.y, this.z, this.w]; }
+  fromArray(a, o = 0){ return this.set(a[o], a[o+1], a[o+2], a[o+3]); }
+}
+class Matrix4 {
+  constructor(){ this.elements = [1,0,0,0, 0,1,0,0, 0,0,1,0, 0,0,0,1]; }
+  identity(){ return this; }
+  set(){ return this; }
+  copy(){ return this; }
+  clone(){ return new Matrix4(); }
+  multiply(){ return this; }
+  multiplyMatrices(){ return this; }
+  premultiply(){ return this; }
+  invert(){ return this; }
+  transpose(){ return this; }
+  setPosition(){ return this; }
+  makeRotationX(){ return this; } makeRotationY(){ return this; } makeRotationZ(){ return this; }
+  makeRotationAxis(){ return this; } makeTranslation(){ return this; } makeScale(){ return this; }
+  compose(){ return this; }
+  decompose(){ return this; }
+  extractRotation(){ return this; }
+  lookAt(){ return this; }
+}
+class Color {
+  constructor(r, g, b){ this.r=1; this.g=1; this.b=1; if(r!==undefined) this.set(r, g, b); }
+  set(r, g, b){
+    if(g !== undefined && b !== undefined){ this.r=r; this.g=g; this.b=b; return this; }
+    if(typeof r === 'number'){ return this.setHex(r); }
+    if(r instanceof Color) return this.copy(r);
+    if(typeof r === 'string'){
+      const m = /^#?([0-9a-f]{6})$/i.exec(r.trim());
+      if(m) return this.setHex(parseInt(m[1], 16));
+    }
+    return this;
+  }
+  setHex(h){ h = Math.floor(h);
+    this.r = ((h>>16)&255)/255; this.g = ((h>>8)&255)/255; this.b = (h&255)/255; return this; }
+  setRGB(r,g,b){ this.r=r; this.g=g; this.b=b; return this; }
+  setScalar(s){ this.r=this.g=this.b=s; return this; }
+  setHSL(h,s,l){ this.r=this.g=this.b=l; return this; }   /* value-shaped, not colour-accurate */
+  setStyle(s){ return this.set(s); }
+  copy(c){ this.r=c.r; this.g=c.g; this.b=c.b; return this; }
+  clone(){ return new Color(this.r, this.g, this.b); }
+  getHex(){ return (Math.round(this.r*255)<<16) ^ (Math.round(this.g*255)<<8) ^ Math.round(this.b*255); }
+  getHexString(){ return this.getHex().toString(16).padStart(6, '0'); }
+  getStyle(){ return '#' + this.getHexString(); }
+  getHSL(t){ t = t || {}; t.h=0; t.s=0; t.l=(this.r+this.g+this.b)/3; return t; }
+  offsetHSL(){ return this; }
+  add(c){ this.r+=c.r; this.g+=c.g; this.b+=c.b; return this; }
+  multiply(c){ this.r*=c.r; this.g*=c.g; this.b*=c.b; return this; }
+  multiplyScalar(s){ this.r*=s; this.g*=s; this.b*=s; return this; }
+  lerp(c,t){ this.r+=(c.r-this.r)*t; this.g+=(c.g-this.g)*t; this.b+=(c.b-this.b)*t; return this; }
+  convertSRGBToLinear(){ return this; }
+  convertLinearToSRGB(){ return this; }
+}
+
+class Float32BufferAttribute {
+  constructor(array, itemSize){
+    this.array = array instanceof Float32Array ? array : new Float32Array(array || []);
+    this.itemSize = itemSize || 1;
+    this.count = Math.floor(this.array.length / this.itemSize);
+    this.needsUpdate = false;
+    this.normalized = false;
+  }
+  getX(i){ return this.array[i * this.itemSize]; }
+  getY(i){ return this.array[i * this.itemSize + 1]; }
+  getZ(i){ return this.array[i * this.itemSize + 2]; }
+  setXYZ(i, x, y, z){ const o = i * this.itemSize;
+    this.array[o] = x; this.array[o+1] = y; this.array[o+2] = z; return this; }
+  setXY(i, x, y){ const o = i * this.itemSize;
+    this.array[o] = x; this.array[o+1] = y; return this; }
+}
+
+let __objSeq = 0;
+class Object3D {
+  constructor(){
+    this.id = ++__objSeq;
+    this.uuid = 'shim-' + this.id;
+    this.name = '';
+    this.type = 'Object3D';
+    this.parent = null;
+    this.children = [];
+    this.position = new V3();
+    this.rotation = new Euler();
+    this.scale = new V3(1, 1, 1);
+    this.quaternion = new Quat();
+    this.up = new V3(0, 1, 0);
+    this.matrix = new Matrix4();
+    this.matrixWorld = new Matrix4();
+    this.modelViewMatrix = new Matrix4();
+    this.normalMatrix = new Matrix4();
+    this.visible = true;
+    this.castShadow = false;
+    this.receiveShadow = false;
+    this.frustumCulled = true;
+    this.renderOrder = 0;
+    this.matrixAutoUpdate = true;
+    this.userData = {};
+    this.layers = {set(){}, enable(){}, disable(){}, toggle(){}, test(){ return true; }, mask:1};
+  }
+  add(...os){ for(const o of os){ if(!o || o === this) continue;
+    if(o.parent && o.parent.children){ const i = o.parent.children.indexOf(o); if(i>=0) o.parent.children.splice(i,1); }
+    o.parent = this; this.children.push(o); } return this; }
+  remove(...os){ for(const o of os){ const i = this.children.indexOf(o);
+    if(i>=0){ this.children.splice(i,1); o.parent = null; } } return this; }
+  clear(){ for(const c of this.children) c.parent = null; this.children.length = 0; return this; }
+  removeFromParent(){ if(this.parent) this.parent.remove(this); return this; }
+  attach(o){ return this.add(o); }
+  traverse(cb){ cb(this); for(const c of this.children.slice()) c.traverse(cb); }
+  traverseVisible(cb){ if(!this.visible) return; cb(this);
+    for(const c of this.children.slice()) c.traverseVisible(cb); }
+  traverseAncestors(cb){ if(this.parent){ cb(this.parent); this.parent.traverseAncestors(cb); } }
+  getObjectByName(n){ let found = null;
+    this.traverse(o => { if(!found && o.name === n) found = o; }); return found; }
+  getObjectByProperty(k, v){ let found = null;
+    this.traverse(o => { if(!found && o[k] === v) found = o; }); return found; }
+  getWorldPosition(t){ return (t || new V3()).copy(this.position); }
+  getWorldQuaternion(t){ return t || new Quat(); }
+  getWorldScale(t){ return (t || new V3()).copy(this.scale); }
+  getWorldDirection(t){ return (t || new V3()).set(0, 0, 1); }
+  localToWorld(v){ return v; }
+  worldToLocal(v){ return v; }
+  lookAt(){ return this; }
+  translateX(d){ this.position.x += d; return this; }
+  translateY(d){ this.position.y += d; return this; }
+  translateZ(d){ this.position.z += d; return this; }
+  rotateX(a){ this.rotation.x += a; return this; }
+  rotateY(a){ this.rotation.y += a; return this; }
+  rotateZ(a){ this.rotation.z += a; return this; }
+  applyMatrix4(){ return this; }
+  updateMatrix(){ return this; }
+  updateMatrixWorld(){ return this; }
+  updateWorldMatrix(){ return this; }
+  raycast(){}
+  clone(recursive = true){
+    const o = new this.constructor();
+    o.name = this.name; o.visible = this.visible;
+    o.position.copy(this.position); o.rotation.copy(this.rotation); o.scale.copy(this.scale);
+    o.userData = JSON.parse(JSON.stringify(this.userData || {}));
+    if(this.geometry) o.geometry = this.geometry;
+    if(this.material) o.material = this.material;
+    if(recursive) for(const c of this.children) o.add(c.clone(true));
+    return o;
+  }
+  copy(s){ this.position.copy(s.position); this.rotation.copy(s.rotation);
+    this.scale.copy(s.scale); return this; }
+  toJSON(){ return {}; }
+}
+
+/* Every primitive carries a small but structurally REAL vertex buffer. bake()
+   walks geo.attributes.position.array / .normal.array and pushes them into a
+   merged mesh, so these cannot be empty or mismatched — but nothing offline
+   reads their values, only their shape. 12 vertices keeps a 47k-tile forest
+   bake cheap while staying a valid triangle list. */
+const __GEO_VERTS = 12;
+class Geometry {
+  constructor(type, params){
+    this.type = type;
+    this.uuid = 'geo-' + (++__objSeq);
+    this.parameters = params || {};
+    this.attributes = {};
+    this.index = null;
+    if(type !== 'BufferGeometry'){
+      const n = __GEO_VERTS * 3;
+      const pos = new Float32Array(n);
+      const nor = new Float32Array(n);
+      for(let i = 0; i < n; i += 3){ nor[i] = 0; nor[i+1] = 1; nor[i+2] = 0; }
+      this.attributes.position = new Float32BufferAttribute(pos, 3);
+      this.attributes.normal   = new Float32BufferAttribute(nor, 3);
+      this.attributes.uv       = new Float32BufferAttribute(new Float32Array(__GEO_VERTS * 2), 2);
+    }
+    this.groups = [];
+    this.boundingBox = null;
+    this.boundingSphere = null;
+    /* the game reads back BoxGeometry dimensions in a few places */
+    const p = this.parameters;
+    if(p.width !== undefined) this.width = p.width;
+    if(p.height !== undefined) this.height = p.height;
+    if(p.depth !== undefined) this.depth = p.depth;
+  }
+  setAttribute(n, a){ this.attributes[n] = a; return this; }
+  getAttribute(n){ return this.attributes[n]; }
+  deleteAttribute(n){ delete this.attributes[n]; return this; }
+  setIndex(i){ this.index = i; return this; }
+  setFromPoints(pts){ this.__points = pts; return this; }
+  addGroup(s, c, m){ this.groups.push({start:s, count:c, materialIndex:m}); return this; }
+  clearGroups(){ this.groups.length = 0; return this; }
+  translate(x, y, z){ this.__t = {x, y, z}; return this; }
+  rotateX(a){ this.__rx = (this.__rx||0) + a; return this; }
+  rotateY(a){ this.__ry = (this.__ry||0) + a; return this; }
+  rotateZ(a){ this.__rz = (this.__rz||0) + a; return this; }
+  scale(x, y, z){ this.__s = {x, y, z}; return this; }
+  center(){ return this; }
+  lookAt(){ return this; }
+  applyMatrix4(){ return this; }
+  computeVertexNormals(){ return this; }
+  computeBoundingBox(){ this.boundingBox = new Box3(); return this; }
+  computeBoundingSphere(){ this.boundingSphere = {center:new V3(), radius:1}; return this; }
+  normalizeNormals(){ return this; }
+  toNonIndexed(){ return this; }
+  clone(){
+    const g = new Geometry('BufferGeometry', this.parameters);
+    g.type = this.type;
+    for(const k in this.attributes){
+      const a = this.attributes[k];
+      g.attributes[k] = new Float32BufferAttribute(Float32Array.from(a.array), a.itemSize);
+    }
+    g.index = this.index;
+    return g;
+  }
+  copy(){ return this; }
+  dispose(){}
+}
+function geo(type, names){
+  return class extends Geometry {
+    constructor(...args){
+      const p = {};
+      (names || []).forEach((n, i) => { if(args[i] !== undefined) p[n] = args[i]; });
+      super(type, p);
+      this.__args = args;
+    }
+  };
+}
+
+class Material {
+  constructor(type, opts){
+    this.type = type;
+    this.uuid = 'mat-' + (++__objSeq);
+    this.color = new Color(0xffffff);
+    this.opacity = 1;
+    this.transparent = false;
+    this.visible = true;
+    this.side = 0;
+    this.map = null;
+    this.alphaMap = null;
+    this.emissive = new Color(0x000000);
+    this.emissiveIntensity = 1;
+    this.needsUpdate = false;
+    this.depthTest = true;
+    this.depthWrite = true;
+    this.blending = 1;
+    this.wireframe = false;
+    this.fog = true;
+    this.vertexColors = false;
+    this.flatShading = false;
+    this.roughness = 1;
+    this.metalness = 0;
+    this.shininess = 30;
+    this.specular = new Color(0x111111);
+    this.polygonOffset = false;
+    this.polygonOffsetFactor = 0;
+    this.polygonOffsetUnits = 0;
+    this.alphaTest = 0;
+    this.toneMapped = true;
+    if(opts) for(const k in opts){
+      if((k === 'color' || k === 'emissive' || k === 'specular') && !(opts[k] instanceof Color)) this[k] = new Color(opts[k]);
+      else this[k] = opts[k];
+    }
+  }
+  clone(){ const m = new Material(this.type); Object.assign(m, this);
+    m.color = this.color.clone(); m.uuid = 'mat-' + (++__objSeq); return m; }
+  copy(s){ Object.assign(this, s); return this; }
+  setValues(v){ if(v) Object.assign(this, v); return this; }
+  dispose(){}
+}
+function mat(type){ return class extends Material { constructor(o){ super(type, o); } }; }
+
+class Texture {
+  constructor(image){
+    this.uuid = 'tex-' + (++__objSeq);
+    this.image = image || null;
+    this.needsUpdate = false;
+    this.wrapS = 1001; this.wrapT = 1001;
+    this.repeat = new V2(1, 1);
+    this.offset = new V2(0, 0);
+    this.center = new V2(0, 0);
+    this.rotation = 0;
+    this.magFilter = 1006; this.minFilter = 1008;
+    this.flipY = true;
+    this.encoding = 3000;
+    this.anisotropy = 1;
+    this.generateMipmaps = true;
+  }
+  clone(){ const t = new Texture(this.image); Object.assign(t, this); return t; }
+  dispose(){}
+}
+
+class Box3 {
+  constructor(min, max){ this.min = min || new V3(Infinity, Infinity, Infinity);
+    this.max = max || new V3(-Infinity, -Infinity, -Infinity); }
+  set(min, max){ this.min.copy(min); this.max.copy(max); return this; }
+  setFromObject(o){
+    /* good enough to be non-empty and centred on the object */
+    this.min.set(o.position.x - 0.5, o.position.y - 0.5, o.position.z - 0.5);
+    this.max.set(o.position.x + 0.5, o.position.y + 0.5, o.position.z + 0.5);
+    return this;
+  }
+  setFromPoints(){ return this; }
+  setFromCenterAndSize(c, s){
+    this.min.set(c.x - s.x/2, c.y - s.y/2, c.z - s.z/2);
+    this.max.set(c.x + s.x/2, c.y + s.y/2, c.z + s.z/2); return this;
+  }
+  expandByObject(){ return this; }
+  expandByPoint(){ return this; }
+  expandByScalar(s){ this.min.addScalar(-s); this.max.addScalar(s); return this; }
+  getSize(t){ return (t || new V3()).set(this.max.x-this.min.x, this.max.y-this.min.y, this.max.z-this.min.z); }
+  getCenter(t){ return (t || new V3()).set((this.min.x+this.max.x)/2, (this.min.y+this.max.y)/2, (this.min.z+this.max.z)/2); }
+  containsPoint(){ return false; }
+  intersectsBox(){ return false; }
+  isEmpty(){ return this.max.x < this.min.x; }
+  clone(){ return new Box3(this.min.clone(), this.max.clone()); }
+  copy(b){ this.min.copy(b.min); this.max.copy(b.max); return this; }
+}
+
+class Shape {
+  constructor(pts){ this.curves = []; this.holes = []; this.__pts = pts || []; }
+  moveTo(x,y){ this.__pts.push([x,y]); return this; }
+  lineTo(x,y){ this.__pts.push([x,y]); return this; }
+  quadraticCurveTo(){ return this; }
+  bezierCurveTo(){ return this; }
+  splineThru(){ return this; }
+  absarc(){ return this; }
+  arc(){ return this; }
+  absellipse(){ return this; }
+  ellipse(){ return this; }
+  closePath(){ return this; }
+  getPoints(){ return this.__pts.map(p => new V2(p[0], p[1])); }
+  extractPoints(){ return {shape:this.getPoints(), holes:[]}; }
+}
+
+const THREE_IMPL = {
+  /* math */
+  Vector2: V2, Vector3: V3, Euler, Quaternion: Quat, Matrix4, Matrix3: Matrix4, Color, Box3,
+  Sphere: class { constructor(c, r){ this.center = c || new V3(); this.radius = r || 0; } },
+  Plane: class { constructor(n, c){ this.normal = n || new V3(0,1,0); this.constant = c || 0; }
+    setFromNormalAndCoplanarPoint(){ return this; }
+    intersectLine(){ return null; } },
+  Ray: class { constructor(o, d){ this.origin = o || new V3(); this.direction = d || new V3(); }
+    intersectPlane(p, t){ return (t || new V3()); }
+    at(_, t){ return (t || new V3()); } },
+  MathUtils: {
+    degToRad: d => d * Math.PI / 180,
+    radToDeg: r => r * 180 / Math.PI,
+    clamp: (v, a, b) => Math.max(a, Math.min(b, v)),
+    lerp: (a, b, t) => a + (b - a) * t,
+    randFloat: (a, b) => a + Math.random() * (b - a),
+    randFloatSpread: r => r * (Math.random() - 0.5),
+    generateUUID: () => 'uuid-' + (++__objSeq),
+  },
+
+  /* scene graph */
+  Object3D, Group: class Group extends Object3D { constructor(){ super(); this.type = 'Group'; } },
+  Mesh: class Mesh extends Object3D {
+    constructor(geometry, material){ super(); this.type = 'Mesh';
+      this.geometry = geometry || null; this.material = material || null;
+      this.morphTargetInfluences = []; }
+  },
+  InstancedMesh: class InstancedMesh extends Object3D {
+    constructor(g, m, count){ super(); this.geometry = g; this.material = m;
+      this.count = count || 0; this.instanceMatrix = {needsUpdate:false}; }
+    setMatrixAt(){} getMatrixAt(){} setColorAt(){}
+  },
+  Points: class Points extends Object3D {
+    constructor(g, m){ super(); this.type = 'Points'; this.geometry = g; this.material = m; }
+  },
+  Line: class Line extends Object3D {
+    constructor(g, m){ super(); this.type = 'Line'; this.geometry = g; this.material = m; }
+  },
+  LineSegments: class LineSegments extends Object3D {
+    constructor(g, m){ super(); this.type = 'LineSegments'; this.geometry = g; this.material = m; }
+  },
+  Sprite: class Sprite extends Object3D {
+    constructor(m){ super(); this.type = 'Sprite'; this.material = m; this.center = new V2(0.5, 0.5); }
+  },
+  Scene: class Scene extends Object3D {
+    constructor(){ super(); this.type = 'Scene';
+      this.fog = null; this.background = null; this.environment = null; this.overrideMaterial = null; }
+  },
+
+  /* geometry */
+  BufferGeometry: Geometry,
+  BoxGeometry:          geo('BoxGeometry',          ['width','height','depth','widthSegments','heightSegments','depthSegments']),
+  CylinderGeometry:     geo('CylinderGeometry',     ['radiusTop','radiusBottom','height','radialSegments','heightSegments','openEnded','thetaStart','thetaLength']),
+  ConeGeometry:         geo('ConeGeometry',         ['radius','height','radialSegments','heightSegments','openEnded','thetaStart','thetaLength']),
+  SphereGeometry:       geo('SphereGeometry',       ['radius','widthSegments','heightSegments','phiStart','phiLength','thetaStart','thetaLength']),
+  PlaneGeometry:        geo('PlaneGeometry',        ['width','height','widthSegments','heightSegments']),
+  CircleGeometry:       geo('CircleGeometry',       ['radius','segments','thetaStart','thetaLength']),
+  RingGeometry:         geo('RingGeometry',         ['innerRadius','outerRadius','thetaSegments','phiSegments','thetaStart','thetaLength']),
+  TorusGeometry:        geo('TorusGeometry',        ['radius','tube','radialSegments','tubularSegments','arc']),
+  TorusKnotGeometry:    geo('TorusKnotGeometry',    ['radius','tube','tubularSegments','radialSegments','p','q']),
+  OctahedronGeometry:   geo('OctahedronGeometry',   ['radius','detail']),
+  IcosahedronGeometry:  geo('IcosahedronGeometry',  ['radius','detail']),
+  DodecahedronGeometry: geo('DodecahedronGeometry', ['radius','detail']),
+  TetrahedronGeometry:  geo('TetrahedronGeometry',  ['radius','detail']),
+  LatheGeometry:        geo('LatheGeometry',        ['points','segments','phiStart','phiLength']),
+  ExtrudeGeometry:      geo('ExtrudeGeometry',      ['shapes','options']),
+  ShapeGeometry:        geo('ShapeGeometry',        ['shapes','curveSegments']),
+  TubeGeometry:         geo('TubeGeometry',         ['path','tubularSegments','radius','radialSegments','closed']),
+  EdgesGeometry:        geo('EdgesGeometry',        ['geometry','thresholdAngle']),
+  Shape,
+  Path: Shape,
+  Float32BufferAttribute,
+  BufferAttribute: Float32BufferAttribute,
+
+  /* materials + textures */
+  Material,
+  MeshBasicMaterial:    mat('MeshBasicMaterial'),
+  MeshLambertMaterial:  mat('MeshLambertMaterial'),
+  MeshPhongMaterial:    mat('MeshPhongMaterial'),
+  MeshStandardMaterial: mat('MeshStandardMaterial'),
+  MeshNormalMaterial:   mat('MeshNormalMaterial'),
+  MeshDepthMaterial:    mat('MeshDepthMaterial'),
+  PointsMaterial:       mat('PointsMaterial'),
+  LineBasicMaterial:    mat('LineBasicMaterial'),
+  SpriteMaterial:       mat('SpriteMaterial'),
+  ShaderMaterial:       mat('ShaderMaterial'),
+  Texture,
+  CanvasTexture: class CanvasTexture extends Texture {},
+  DataTexture: class DataTexture extends Texture {},
+
+  /* lights */
+  Light: class Light extends Object3D {
+    constructor(color, intensity){ super(); this.color = new Color(color === undefined ? 0xffffff : color);
+      this.intensity = intensity === undefined ? 1 : intensity; }
+  },
+  AmbientLight: class AmbientLight extends Object3D {
+    constructor(c, i){ super(); this.type = 'AmbientLight';
+      this.color = new Color(c === undefined ? 0xffffff : c); this.intensity = i === undefined ? 1 : i; }
+  },
+  HemisphereLight: class HemisphereLight extends Object3D {
+    constructor(sky, ground, i){ super(); this.type = 'HemisphereLight';
+      this.color = new Color(sky === undefined ? 0xffffff : sky);
+      this.groundColor = new Color(ground === undefined ? 0xffffff : ground);
+      this.intensity = i === undefined ? 1 : i; }
+  },
+  DirectionalLight: class DirectionalLight extends Object3D {
+    constructor(c, i){ super(); this.type = 'DirectionalLight';
+      this.color = new Color(c === undefined ? 0xffffff : c);
+      this.intensity = i === undefined ? 1 : i;
+      this.target = new Object3D();
+      this.shadow = {mapSize:new V2(512, 512), bias:0, normalBias:0, radius:1,
+        camera:{left:-5, right:5, top:5, bottom:-5, near:0.5, far:500, zoom:1,
+                updateProjectionMatrix(){}}}; }
+  },
+  PointLight: class PointLight extends Object3D {
+    constructor(c, i, d, decay){ super(); this.type = 'PointLight';
+      this.color = new Color(c === undefined ? 0xffffff : c);
+      this.intensity = i === undefined ? 1 : i;
+      this.distance = d || 0; this.decay = decay === undefined ? 1 : decay;
+      this.shadow = {mapSize:new V2(512, 512), bias:0, camera:{near:0.5, far:500}}; }
+  },
+  SpotLight: class SpotLight extends Object3D {
+    constructor(c, i){ super(); this.color = new Color(c === undefined ? 0xffffff : c);
+      this.intensity = i === undefined ? 1 : i; this.target = new Object3D();
+      this.shadow = {mapSize:new V2(512, 512), bias:0, camera:{near:0.5, far:500}}; }
+  },
+
+  /* camera + renderer */
+  Camera: class Camera extends Object3D {
+    constructor(){ super(); this.matrixWorldInverse = new Matrix4();
+      this.projectionMatrix = new Matrix4(); this.projectionMatrixInverse = new Matrix4(); }
+    updateProjectionMatrix(){}
+  },
+  PerspectiveCamera: class PerspectiveCamera extends Object3D {
+    constructor(fov, aspect, near, far){ super(); this.type = 'PerspectiveCamera';
+      this.isPerspectiveCamera = true;
+      this.fov = fov === undefined ? 50 : fov;
+      this.aspect = aspect === undefined ? 1 : aspect;
+      this.near = near === undefined ? 0.1 : near;
+      this.far = far === undefined ? 2000 : far;
+      this.zoom = 1;
+      this.matrixWorldInverse = new Matrix4();
+      this.projectionMatrix = new Matrix4(); this.projectionMatrixInverse = new Matrix4(); }
+    updateProjectionMatrix(){}
+    getWorldDirection(t){ return (t || new V3()).set(0, 0, -1); }
+  },
+  OrthographicCamera: class OrthographicCamera extends Object3D {
+    constructor(l, r, t, b, n, f){ super();
+      this.left=l; this.right=r; this.top=t; this.bottom=b; this.near=n; this.far=f;
+      this.projectionMatrix = new Matrix4(); this.matrixWorldInverse = new Matrix4(); }
+    updateProjectionMatrix(){}
+  },
+  WebGLRenderer: class WebGLRenderer {
+    constructor(opts){
+      this.domElement = (opts && opts.canvas) || document.createElement('canvas');
+      this.shadowMap = {enabled:false, type:1, autoUpdate:true, needsUpdate:false};
+      this.info = {render:{calls:0, triangles:0, frame:0}, memory:{geometries:0, textures:0},
+        programs:[], autoReset:true, reset(){}};
+      this.capabilities = {isWebGL2:true, maxTextureSize:4096, getMaxAnisotropy:()=>1};
+      this.outputEncoding = 3000;
+      this.toneMapping = 0;
+      this.toneMappingExposure = 1;
+      this.autoClear = true;
+      this.sortObjects = true;
+      this.localClippingEnabled = false;
+      this.clippingPlanes = [];
+      this.__renders = 0;
+    }
+    setSize(){}
+    setPixelRatio(){}
+    setViewport(){}
+    setScissor(){}
+    setScissorTest(){}
+    setClearColor(){}
+    setClearAlpha(){}
+    setAnimationLoop(){}
+    render(){ this.__renders++; this.info.render.frame++; }
+    clear(){}
+    clearDepth(){}
+    clearColor(){}
+    compile(){}
+    dispose(){}
+    forceContextLoss(){}
+    getContext(){ return this.domElement.getContext('webgl'); }
+    getPixelRatio(){ return 1; }
+    getSize(t){ return (t || new V2()).set(RECT.width, RECT.height); }
+  },
+  Raycaster: class Raycaster {
+    constructor(){ this.ray = new THREE_IMPL.Ray(); this.near = 0; this.far = Infinity;
+      this.params = {Mesh:{}, Line:{threshold:1}, Points:{threshold:1}, Sprite:{}};
+      this.camera = null; }
+    set(){ return this; }
+    setFromCamera(){ return this; }
+    /* NOTHING IS EVER PICKED. There is no geometry to hit offline — a harness that
+       needs hover/click behaviour must call the option builders directly. */
+    intersectObject(){ return []; }
+    intersectObjects(){ return []; }
+  },
+  Fog: class Fog { constructor(color, near, far){ this.color = new Color(color);
+    this.near = near === undefined ? 1 : near; this.far = far === undefined ? 1000 : far; } },
+  FogExp2: class FogExp2 { constructor(color, density){ this.color = new Color(color);
+    this.density = density === undefined ? 0.00025 : density; } },
+  Clock: class Clock {
+    constructor(){ this.startTime = 0; this.elapsedTime = 0; this.running = false; }
+    start(){ this.running = true; }
+    stop(){ this.running = false; }
+    getDelta(){ return 0.016; }
+    getElapsedTime(){ return this.elapsedTime += 0.016; }
+  },
+  LoadingManager: class LoadingManager { constructor(){ this.onLoad = null; } },
+  TextureLoader: class TextureLoader { load(){ return new Texture(); } setCrossOrigin(){ return this; } },
+
+  /* constants */
+  FrontSide:0, BackSide:1, DoubleSide:2,
+  NoBlending:0, NormalBlending:1, AdditiveBlending:2, SubtractiveBlending:3, MultiplyBlending:4,
+  NearestFilter:1003, NearestMipmapNearestFilter:1004, LinearFilter:1006, LinearMipmapLinearFilter:1008,
+  RepeatWrapping:1000, ClampToEdgeWrapping:1001, MirroredRepeatWrapping:1002,
+  BasicShadowMap:0, PCFShadowMap:1, PCFSoftShadowMap:2, VSMShadowMap:3,
+  LinearEncoding:3000, sRGBEncoding:3001,
+  NoToneMapping:0, LinearToneMapping:1, ACESFilmicToneMapping:4,
+  RGBAFormat:1023, RGBFormat:1022,
+  FlatShading:1, SmoothShading:2,
+  REVISION: '128',
+};
+
+/* Anything the game reaches for that is not stubbed above becomes a generic,
+   constructible Object3D-shaped stand-in rather than a TypeError. It logs once,
+   so an unexpected hit shows up in the harness output instead of hiding. */
+const __missing = new Set();
+def('THREE', new Proxy(THREE_IMPL, {
+  get(target, key){
+    if(key in target) return target[key];
+    if(typeof key !== 'string' || key[0] !== key[0].toUpperCase()) return undefined;
+    if(!__missing.has(key)){
+      __missing.add(key);
+      console.error('[shim] THREE.' + key + ' is not stubbed — using a generic Object3D');
+    }
+    const Generic = class extends Object3D { constructor(...a){ super(); this.type = key; this.__args = a; } };
+    target[key] = Generic;
+    return Generic;
+  },
+  has(){ return true; },
+}));
+__shim.missingThree = __missing;
+__shim.ShimElement = ShimElement;
+__shim.makeCtx2D = makeCtx2D;
