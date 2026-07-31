@@ -109,9 +109,15 @@ export class Suite {
   }
   note(s){ this.notes.push(s); return this; }
 
-  /** Fail the whole suite if the injected pass threw. */
+  /**
+   * Fail the whole suite if the injected pass threw, and STOP. Asserting on a
+   * half-filled result just buries the real error under TypeErrors.
+   */
   guard(T){
-    if(T && T.__threw) this.ok('the pass ran without throwing', false, T.__threw);
+    if(T && T.__threw){
+      this.ok('the pass ran without throwing', false, T.__threw);
+      this.report();
+    }
     return this;
   }
 
