@@ -6491,7 +6491,30 @@ var SKILL_UNLOCKS={
   defense:{5:'You can now wear iron armour.',10:'You can now wear steel armour.',20:'You can now wear mithril armour.',30:'You can now wear adamant armour.',40:'You can now wear rune armour.'},
   ranged:{20:'You can now use willow bows and better arrows.',40:'You can now wear green d\u2019hide.',60:'You can now wear black d\u2019hide.'}
 };
-function skillUnlockAt(skill,level){ const t=SKILL_UNLOCKS[skill]; return (t&&t[level])||null; }
+/* ** CONSTRUCTION IS DERIVED, NOT LISTED. ** Every other skill has a hand-written unlock table, but
+   Construction unlocks something at nearly every level across 118 pieces -- a table would be enormous
+   and would drift the moment a piece was retuned. This reads HOUSE_FURNITURE and BUTLERS directly, so
+   the level-up screen can never disagree with what you can actually build. */
+function _conUnlockAt(level){
+  const bits=[];
+  const names=Object.keys(HOUSE_FURNITURE)
+    .filter(f=>(HOUSE_FURNITURE[f].req|0)===level)
+    .map(f=>HOUSE_FURNITURE[f].name.toLowerCase())
+    .sort();
+  if(names.length===1)bits.push('You can now build a '+names[0]+'.');
+  else if(names.length===2)bits.push('You can now build a '+names[0]+' and a '+names[1]+'.');
+  else if(names.length>2){
+    const head=names.slice(0,3).join(', ');
+    bits.push('You can now build '+head+(names.length>3?(' and '+(names.length-3)+' more'):'')+'.');
+  }
+  const hire=(typeof BUTLERS!=='undefined')?BUTLERS.find(b=>(b.req|0)===level):null;
+  if(hire)bits.push('You can now take on a '+hire.name.toLowerCase()+'.');
+  return bits.length?bits.join(' '):null;
+}
+function skillUnlockAt(skill,level){
+  if(skill==='construction')return _conUnlockAt(level);
+  const t=SKILL_UNLOCKS[skill]; return (t&&t[level])||null;
+}
 
 /* enqueue a level-up (called from addXp) */
 function queueLevelUp(skill,level){ _luQueue.push({skill,level}); if(!_luActive())_luShow(); }
@@ -7808,6 +7831,13 @@ function playerTick(){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     player.path.length=0;player.face=Math.sign(a.o.x-player.x)||player.face;cancelAction();
     if(!b.pop&&b.grounded&&balloons.indexOf(b)>=0)popBalloon(b,true);
+  }
+  else if(a.type==='housebuild'){
+    const o=a.o;
+    if(dist1(player.x,player.y,o.x,o.y)>1){if(!player.path.length)walkTo(o.x,o.y,'adj');return;}
+    player.path.length=0; player.face=Math.sign(o.x-player.x)||player.face;
+    cancelAction();
+    houseBuild(a.slot,a.fid);
   }
   else if(a.type==='saw'){
     const o=a.o;
@@ -15750,10 +15780,13 @@ function buildObjModel(o){
     /* RESTORED: this branch was collateral damage when Bohan's model branch was sliced out --
        expansion markers were rendering with no geometry at all. */
     const B=(w,h,d,c)=>mesh(new THREE.BoxGeometry(w,h,d),c,false);
-    const frame=B(0.9,1.9,0.06,0xb8a98a); frame.position.set(0,0.95,0); g.add(frame);
-    const inner=B(0.74,1.74,0.04,0xd8cbb0); inner.position.set(0,0.92,0.02); g.add(inner);
-    for(let k=0;k<5;k++){const l=B(0.68,0.03,0.05,0x8a7a5a);l.position.set(0,0.3+k*0.36,0.05);g.add(l);}
-    const ch=B(0.3,0.3,0.03,0x6b5c40); ch.position.set(0,1.5,0.06); g.add(ch);
+    /* sits ON the wall plane: the marker's tile is the floor tile beside the wall, so everything is
+       pushed a half tile back rather than standing proud at the tile centre */
+    const _z=-0.44;
+    const frame=B(0.9,1.9,0.06,0xb8a98a); frame.position.set(0,0.95,_z); g.add(frame);
+    const inner=B(0.74,1.74,0.04,0xd8cbb0); inner.position.set(0,0.92,_z+0.02); g.add(inner);
+    for(let k=0;k<5;k++){const l=B(0.68,0.03,0.05,0x8a7a5a);l.position.set(0,0.3+k*0.36,_z+0.05);g.add(l);}
+    const ch=B(0.3,0.3,0.03,0x6b5c40); ch.position.set(0,1.5,_z+0.06); g.add(ch);
     addProxy(g,0.6,1.9,0,{kind:'obj',o});
   }else if(def==='sawmill'){
     const BX=(w,h,d)=>new THREE.BoxGeometry(w,h,d);
@@ -41154,8 +41187,8 @@ function houseBuildInterior(){
       const nz=(f==='S')?y+1-WT/2:(f==='N')?y+WT/2:y+0.5;
       const nx=(f==='E')?x+1-WT/2:(f==='W')?x+WT/2:x+0.5;
       const horiz=(f==='S'||f==='N');
-      const inward=(f==='S')?-1:(f==='N')?1:0;
-      const inwardX=(f==='E')?-1:(f==='W')?1:0;
+      const inward=(f==='S')?1:(f==='N')?-1:0;    /* toward the ROOM, not away from it */
+      const inwardX=(f==='E')?1:(f==='W')?-1:0;
       if(horiz){
         B(bx(1,WALLH,WT),PLAS,nx,FY+WALLH/2,nz);
         B(bx(1,0.07,WT+0.03),0xd8ccae,nx,FY+WALLH,nz);
@@ -41247,7 +41280,7 @@ const HOUSE_ROOMS={
     slots:[{id:'trellis',ox:1,oy:2,cat:'trellis',label:'the west border'},
            {id:'tree',ox:4,oy:3,cat:'tree',label:'the centre bed'},
            {id:'water',ox:8,oy:6,cat:'water',label:'the east corner'},
-           {id:'plant',ox:2,oy:8,cat:'plant',label:'the shaded corner'},
+           {id:'plant',ox:1,oy:8,cat:'plant',label:'the shaded corner'},
            {id:'hedge',ox:9,oy:2,cat:'hedge',label:'the north border'}]},
   games:   {name:'Games room',cost:180000,  floor:0x7a5a3a, seam:0x63462b, inlay:0x8f6b46, rail:0x6e4d2e, panel:0xd9c9ad,
     slots:[{id:'board',ox:4,oy:1,cat:'board',label:'the north wall'},
@@ -41973,10 +42006,21 @@ function houseDarts(){
       d.textContent='Total: '+total+'.'+(total>=120?' A very fine visit.':(total<=15?' Best not to mention it.':''));
       bd.appendChild(d); });
 }
+/* walk to the space before building it -- otherwise you can furnish the whole room from the doorway */
+function houseBuildWalk(slotId,fid){
+  const S=houseSlotByKey(slotId);
+  if(!S){houseBuild(slotId,fid);return;}
+  setAction({type:'housebuild',slot:slotId,fid:fid,o:{x:S.x,y:S.y}},S.x,S.y);
+}
 function houseBuildOptions(slotId){
   const S=houseSlotByKey(slotId); if(!S)return [];
   const sl=houseSlots(), cur=sl[slotId];
   const opts=[];
+  /* ** AN OCCUPIED SPACE OFFERS ONLY REMOVE. ** It used to list every other rung, and since a left
+     click runs the first option, one click swapped a built piece for a different one -- paying for it
+     and refunding the old one without asking. Clear the space first, then choose. */
+  if(cur)return [{html:'Remove <span class="t">'+HOUSE_FURNITURE[cur].name+'</span> <span style="opacity:.7">(half the boards back)</span>',
+    label:'Remove '+HOUSE_FURNITURE[cur].name,fn:()=>houseRemove(slotId)}];
   const _cands=Object.keys(HOUSE_FURNITURE).filter(f=>HOUSE_FURNITURE[f].cat===S.cat&&f!==cur)
     .sort((a,b)=>(HOUSE_FURNITURE[a].req|0)-(HOUSE_FURNITURE[b].req|0));
   for(const fid of _cands){
@@ -41988,7 +42032,7 @@ function houseBuildOptions(slotId){
     opts.push({html:dim+'Build '+end+'<span class="t">'+F.name+'</span> <span style="opacity:.7">(lvl '+(F.req|0)
         +' \u00b7 '+(F.planks|0)+'\u00d7 '+ITEMS[F.plankId||'oak_plank'].name.toLowerCase()
         +' \u00b7 '+(F.nails|0)+'n \u00b7 '+fmt(F.cost)+' gp)</span>',
-      label:'Build '+F.name,fn:()=>houseBuild(slotId,fid)});
+      label:'Build '+F.name,fn:()=>houseBuildWalk(slotId,fid)});
   }
   if(cur)opts.push({html:'Remove <span class="t">'+HOUSE_FURNITURE[cur].name+'</span> <span style="opacity:.7">(half back)</span>',
     label:'Remove '+HOUSE_FURNITURE[cur].name,fn:()=>houseRemove(slotId)});
