@@ -41548,6 +41548,12 @@ function houseSlots(){
           +'. You are refunded '+fmt(refund)+' coins in full.','#5c3f00');
     }
   }
+  /* ** ORPHANED FURNITURE IDS ARE A SAVE MIGRATION. ** Same class as removing an item from ITEMS,
+     which took the whole bank down: a slot naming a piece that no longer exists threw in
+     houseBuildOptions (HOUSE_FURNITURE[cur].req on undefined) and killed the right-click menu for
+     the entire tile. Swept here so the save heals itself, exactly as the ITEMS sweep does. */
+  for(const k in player.house.slots)
+    if(!HOUSE_FURNITURE[player.house.slots[k]])delete player.house.slots[k];
   return player.house.slots;
 }
 function houseRoomCost(type){ const RT=HOUSE_ROOMS[type]; return RT?(RT.cost|0):0; }
@@ -42063,7 +42069,9 @@ function houseBuildOptions(slotId){
   /* ** AN OCCUPIED SPACE OFFERS ONLY REMOVE. ** It used to list every other rung, and since a left
      click runs the first option, one click swapped a built piece for a different one -- paying for it
      and refunding the old one without asking. Clear the space first, then choose. */
-  if(cur){
+  /* an orphan here is a guest's data off the wire, which no sweep has touched -- treat the space
+     as empty rather than throwing on HOUSE_FURNITURE[cur].req */
+  if(cur&&HOUSE_FURNITURE[cur]){
     const out=[];
     const here=HOUSE_FURNITURE[cur];
     const ladder=Object.keys(HOUSE_FURNITURE).filter(f=>HOUSE_FURNITURE[f].cat===S.cat&&f!==cur)
@@ -42786,6 +42794,23 @@ function exitHouse(){
   if(typeof closeBank==='function')closeBank();
   if(typeof closeShop==='function')closeShop();
   houseBuildMode=false;
+  /* ** THE FURNITURE MUST LEAVE WITH YOU. ** The house objects sit at HOUSE coords, and those are
+     real, walkable DEEP WILDERNESS on the main map. Left in `objects` after a swap they became
+     invisible collision out on the grass, and optionsAt happily offered 'Cook-on Iron stove' to
+     anyone who clicked that patch of nothing. enterHouse() rebuilds them all through houseRebuild,
+     so dropping them here loses nothing. The cottage DOOR is not one of these -- it is a permanent
+     world fixture adopted into houseGroup at load, and it stays. */
+  _butlerObj=null;
+  for(const o of _houseObjs){
+    if(o._m&&o._m.group&&o._m.group.parent)o._m.group.parent.remove(o._m.group);
+    const i=objects.indexOf(o); if(i>=0)objects.splice(i,1);
+  }
+  _houseObjs.length=0;
+  if(_housePxMark>=0){
+    for(let k=houseProxies.length-1;k>=_housePxMark;k--){
+      const px=houseProxies[k]; if(px&&px.parent)px.parent.remove(px); }
+    houseProxies.length=_housePxMark;
+  }
   const _wasGuest=houseIsGuest(), _hn=houseOwnerName();
   houseVisit=null;
   inHouse=false;tiles=TILES_MAIN;worldGroup.visible=true;houseGroup.visible=false;
