@@ -14,49 +14,13 @@
    No WebGL, no layout. Room geometry, furniture models, the cottage exterior and
    the butler's walk all need Sam's eyes in a browser.
    ========================================================================== */
-import fs from 'fs';
-import path from 'path';
-import {fileURLToPath} from 'url';
-
-const HERE = path.dirname(fileURLToPath(import.meta.url));
-const ROOT = path.resolve(HERE, '..');
-
-/* ---- extract M.js fresh every run; offsets go stale, so never trust a cache -- */
-const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-const i = html.indexOf("<script>\n'use strict'");
-const j = html.indexOf('</script>', i);
-if(i < 0 || j < 0){
-  console.error('shiptest: could not find the main <script> block in index.html');
-  process.exit(2);
-}
-const SRC = html.slice(i + 8, j);
-
-/* ---- the browser stand-in ------------------------------------------------- */
-const shim = fs.readFileSync(path.join(HERE, 'shim.txt'), 'utf8');
-new Function(shim)();
+import {runPass, Suite, PRELUDE} from './_lib.mjs';
 
 /* ==========================================================================
    The injected pass. It may touch anything in module scope but CANNOT see a
    variable from this file — every observation comes back through the return.
    ========================================================================== */
-const PASS = String.raw`
-;globalThis.__T=(function(){
-  const o = {steps:[], errors:[]};
-  const note = (k, v) => { o[k] = v; return v; };
-
-  /* ---- capture every player-facing line so refusals can be asserted ---- */
-  const _msg = msg;
-  let LOG = [];
-  msg = function(t, c){ LOG.push(String(t)); try{ _msg(t, c); }catch(e){} };
-  const said = re => LOG.some(l => re.test(l));
-  const since = () => { const l = LOG; LOG = []; return l; };
-
-  /* ---- a clean character on a clean save ---- */
-  function setLevel(sk, L){ player.skills[sk] = XP_TABLE[L]; }
-  function clearInv(){ for(let k = 0; k < player.inv.length; k++) player.inv[k] = null; }
-  function give(id, n){ return addItem(id, n); }
-  function freeSlots(){ let n = 0; for(const s of player.inv) if(!s) n++; return n; }
-
+const T = runPass(PRELUDE + String.raw`
   clearInv();
   bank.length = 0;
   player.house = null;
@@ -64,8 +28,6 @@ const PASS = String.raw`
   if(inHouse) try{ exitHouse(); }catch(e){}
   setLevel('construction', 1);
   setLevel('woodcutting', 50);
-
-  try{
 
   /* =====================================================================
      1. THE SAWMILL — logs become boards, for a fee, for no experience
@@ -344,31 +306,15 @@ const PASS = String.raw`
   o.returnWanted = {x: HOUSE_RETURN.x, y: HOUSE_RETURN.y};
   since();
 
-  }catch(e){ o.errors.push(String(e && e.stack || e)); }
-
-  o.unstubbedThree = [...__shim.missingThree];
   return o;
-})();`;
-
-/* ---- run it -------------------------------------------------------------- */
-let T;
-try{
-  new Function(SRC + PASS)();
-  T = globalThis.__T;
-}catch(e){
-  console.error('shiptest: the game did not load under the shim\n', e && e.stack || e);
-  process.exit(2);
-}
+`);
 
 /* ==========================================================================
    Assertions live out here, where they can see this file's variables.
    ========================================================================== */
-const checks = [];
-const ok = (name, cond, detail) => checks.push({name, pass: !!cond, detail});
-const eq = (name, got, want) =>
-  checks.push({name, pass: got === want, detail: `got ${JSON.stringify(got)}, want ${JSON.stringify(want)}`});
-
-if(T.errors.length) ok('the pass ran without throwing', false, T.errors.join('\n'));
+const S = new Suite('shiptest').guard(T);
+const ok = (n, c, d) => S.ok(n, c, d);
+const eq = (n, g, w) => S.eq(n, g, w);
 
 /* 1. sawmill */
 eq('saws every log in the pack',                  T.sawBoardsMade, 5);
@@ -473,19 +419,9 @@ ok('  — shop dismissed',                          T.shopDismissed);
 eq('you land back on the doorstep',               JSON.stringify(T.backOnDoorstep), JSON.stringify(T.returnWanted));
 
 /* ---- report -------------------------------------------------------------- */
-const failed = checks.filter(c => !c.pass);
-for(const c of checks){
-  if(c.pass) console.log(`  ok   ${c.name}`);
-  else       console.log(`  FAIL ${c.name}${c.detail ? '\n         ' + c.detail : ''}`);
-}
-if(T.unstubbedThree && T.unstubbedThree.length)
-  console.log(`\n  note: THREE APIs not stubbed, generic fallback used: ${T.unstubbedThree.join(', ')}`);
+if(T.__unstubbedThree && T.__unstubbedThree.length)
+  S.note(`THREE APIs not stubbed, generic fallback used: ${T.__unstubbedThree.join(', ')}`);
 
-console.log(`\nshiptest: ${checks.length - failed.length}/${checks.length} passed`);
-if(failed.length){
-  console.log(`\n${failed.length} FAILED:`);
-  for(const c of failed) console.log('  - ' + c.name + (c.detail ? ` (${c.detail})` : ''));
-  process.exit(1);
-}
-console.log('Construction chain intact: saw -> deed -> repair -> enter -> room -> furniture -> xp -> butler -> bank.');
-console.log('NOT proven here (no WebGL, no layout): how any of it looks. Needs a browser.');
+S.report(
+  'Construction chain intact: saw -> deed -> repair -> enter -> room -> furniture -> xp -> butler -> bank.',
+  'how any of it looks (no WebGL, no layout). Needs a browser.');

@@ -1,0 +1,13 @@
+{
+  "name": "milville",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Milville — Old School Adventure. The game is one file (index.html); this manifest exists only to give the offline harnesses a runner.",
+  "scripts": {
+    "test": "harness/run-all.sh",
+    "check": "node -e \"const fs=require('fs'),s=fs.readFileSync('index.html','utf8'),o='<script>\\n\\'use strict\\'',i=s.indexOf(o),j=s.indexOf('</script>',i);fs.writeFileSync((process.env.TMPDIR||'/tmp')+'/M.js',s.slice(i+8,j))\" && node --check \"${TMPDIR:-/tmp}/M.js\" && echo 'index.html parses OK'"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
