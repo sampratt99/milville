@@ -46062,7 +46062,20 @@ drawLogo();
    ========================================================================== */
 const MP = (function () {
   const CFG = {
-    url: 'https://milville-mp.sampratt99.workers.dev',  /* relay deployed (Sam). Set back to '' to turn multiplayer off. */
+    /* ** A LOCAL COPY IS OFFLINE BY DEFAULT. ** Opening index.html from disk or serving it on
+       localhost is a development sandbox: it must not join the live world, and it must not write a
+       test character into the real leaderboard. Only the deployed site connects.
+       The leaderboard derives its endpoint from this url, so blanking it silences both.
+       Pass ?mp=1 to opt in locally (two tabs on localhost is how you test multiplayer). */
+    url: (function(){
+      try{
+        if(/[?&]mp=1/.test(location.search||''))return 'https://milville-mp.sampratt99.workers.dev';
+        const h=(location.hostname||'').toLowerCase();
+        const local=(h===''||h==='localhost'||h==='127.0.0.1'||h==='::1'||h==='0.0.0.0'
+                     ||location.protocol==='file:');
+        return local?'':'https://milville-mp.sampratt99.workers.dev';
+      }catch(e){ return 'https://milville-mp.sampratt99.workers.dev'; }
+    })(),
     world: 'milville',
     posMs: 180,         /* min ms between position broadcasts */
     viewR: 26,          /* render remotes within this many tiles */
