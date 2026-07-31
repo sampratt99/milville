@@ -5477,7 +5477,9 @@ function itemSlotLabel(slot){return ({weapon:'Weapon',shield:'Shield',head:'Head
   cape:'Cape',neck:'Amulet',ring:'Ring',feet:'Feet',ammo:'Quiver',hands:'Hands'})[slot]||slot;}
 
 function itemCategory(id){
-  const it=ITEMS[id],eq=it.equip;
+  const it=ITEMS[id];
+  if(!it)return 'Misc';           /* an item removed by an update: name it, never throw on it */
+  const eq=it.equip;
   if(/^clue_/.test(id)||/_bead$/.test(id)||ENCY_PHATS.indexOf(id)>=0||id==='santa_hat'
      ||['draconic_visage','wailing_relic','basilisk_jaw'].indexOf(id)>=0)return 'Treasure';
   if(/^uncut_/.test(id))return 'Treasure';
@@ -8829,6 +8831,19 @@ async function loadSlot(id, preObj){
       if(typeof s.kills==='number')player.kills=s.kills;
       if(s.kcBy&&typeof s.kcBy==='object')player.kcBy=s.kcBy;
       if(s.achDone&&typeof s.achDone==='object')player.achDone=s.achDone;
+      /* ** ORPHANED ENTRIES. ** An item removed by an update (the elixirs) leaves a dead id behind in
+         old saves. ITEMS[id] is undefined for it, which used to take the whole bank down. Everything
+         now tolerates it, but there is no reason to keep it: sweep it out once, and say so. */
+      {
+        const _lost=[];
+        if(Array.isArray(s.bank))for(let k=s.bank.length-1;k>=0;k--){
+          const e=s.bank[k]; if(e&&!ITEMS[e.id]){_lost.push(e.id);s.bank.splice(k,1);} }
+        if(Array.isArray(s.inv))for(let k=0;k<s.inv.length;k++){
+          const e=s.inv[k]; if(e&&!ITEMS[e.id]){_lost.push(e.id);s.inv[k]=null;} }
+        if(_lost.length)setTimeout(function(){ try{
+          msg('Cleared '+_lost.length+' item'+(_lost.length===1?'':'s')+' from a past update that no longer exist.','#5c3f00');
+        }catch(e){} },900);
+      }
       _pendingHouseIn=!!s.hin;
       if(s.house&&typeof s.house==='object'){ player.house=s.house;
         /* the cottage's ruined/repaired state is geometry, not just data -- repaint it or a
@@ -31881,7 +31896,7 @@ function renderBank(){
     d.textContent='No items match \u201c'+_bq+'\u201d.';gr.appendChild(d);return;}
   const _items=bankSortCat?_blist.slice().sort((a2,b2)=>{const ca=itemCategory(a2.id),cb=itemCategory(b2.id);return ca===cb?ITEMS[a2.id].name.localeCompare(ITEMS[b2.id].name):(ca<cb?-1:1);}):_blist;
   let _lastCat=null;
-  for(const b of _items){
+  for(const b of _items){ try{
     if(bankSortCat){const _c=itemCategory(b.id);if(_c!==_lastCat){_lastCat=_c;const hd=document.createElement('div');hd.textContent=_c;hd.style.cssText='grid-column:1/-1;color:#caa83c;font-size:10px;font-weight:bold;text-transform:uppercase;letter-spacing:.5px;padding:5px 2px 1px;';gr.appendChild(hd);}}
     const d=document.createElement('div');d.className='bslot';d.title=ITEMS[b.id].name+(b.dose!==undefined?(' ('+b.dose+')'):'');
     const c=document.createElement('canvas');c.width=30;c.height=30;
@@ -31900,13 +31915,16 @@ function renderBank(){
         ...(!ITEMS[b.id].stack?[{html:'Withdraw note-X <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>_promptQty(ITEMS[b.id].name,nn=>withdrawNote(b.id,nn))}]:[]),
         {html:'Examine <span class="t">'+ITEMS[b.id].name+'</span>',fn:()=>examineItem(b.id)}]);});
     gr.appendChild(d);
+  }catch(_e){ console.error('bank row',b&&b.id,_e); }
   }
 }
 function openBank(){
-  /* render FIRST, and never let one bad entry abort it; only then commit the flag and show the
-     panel, so the two can never disagree */
+  /* clear the search FIRST -- rendering before this opened the bank still filtered by whatever you
+     last typed -- then render, then commit the flag and show the panel */
+  {const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}
+  if(typeof bankQuery!=='undefined')bankQuery='';
   try{ renderBank(); }catch(err){ console.error('renderBank',err); }
-  bankOpen=true;if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('bank');{const _bs=document.getElementById('banksearch');if(_bs)_bs.value='';}bankEl.classList.add('on');
+  bankOpen=true;if(typeof TUT!=='undefined'&&TUT.active)tutAdvance('bank');bankEl.classList.add('on');
   msg('Banker: Welcome to the Bank of Millville.','#103a8c');}
 function closeBank(){bankOpen=false;bankEl.classList.remove('on');}
 /* If a panel is not actually on screen, its flag is a lie -- and a lying bank flag silently deposits
