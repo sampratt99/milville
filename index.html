@@ -8584,6 +8584,13 @@ function isRecoverable(id){
 }
 function die(){
   sfx.die();
+  /* ** DEATH IS A WORLD SWAP TOO. ** The house paths and exitToMainMap already dismiss the counter
+     panels, because a panel flag that outlives its world hijacks every later inventory click. Dying
+     did not -- and there is a bank chest at (215,108), INSIDE the First Rector's arena, plus one in
+     the delve lobby. Bank mid-fight, get killed, and you woke in the town square with the bank still
+     open and usable. */
+  if(typeof closeBank==='function')closeBank();
+  if(typeof closeShop==='function')closeShop();
   if(prayers.retribution){const _rd=Math.max(1,Math.floor(lvl('prayer')*0.25));
     for(const r of rats){if(r&&r.alive&&r.hp>1&&Math.max(Math.abs(Math.round(r.x)-player.x),Math.abs(Math.round(r.y)-player.y))<=2){
       const _dm=Math.min(r.hp-1,rndi(1,_rd));if(_dm>0){r.hp-=_dm;splats.push({ent:r,dmg:_dm,t:performance.now()});}}}
@@ -27800,9 +27807,15 @@ function _partyNetEnd(fromUid){               /* the host ended the round */
   if(_partyHostUid&&fromUid&&fromUid!==_partyHostUid)return;
   if(partyActive){_partyIsHost=false;endPartyGame();}   /* end locally; endPartyGame won't rebroadcast (not host) */
 }
+/* ** THE TOKEN GOES IN THE PACK BEFORE THE COINS COME OUT. ** This charged 30,000 and then called
+   addItem without looking at what it returned -- and a token is STACKABLE, so it only fits when you
+   already hold one or have a free slot. Arrive at the Party Room with a full pack of loot to drop on
+   the lever, which is exactly why anyone comes here, and you paid 30,000 coins for nothing while the
+   game said "You buy a Party token". Hand the item over first: if it will not fit, nothing is spent. */
 function buyPartyToken(){
   if(coinCount()<30000){msg('Mr Callahan: \u201cThat\u2019ll be 30,000 coins for a token, friend.\u201d','#26345e');return;}
-  spendCoins(30000);addItem('party_token',1);sfx.coins&&sfx.coins();
+  if(!addItem('party_token',1)){msg('Mr Callahan: \u201cYou\u2019ve nowhere to put it, friend \u2014 make some room first.\u201d','#26345e');return;}
+  spendCoins(30000);sfx.coins&&sfx.coins();
   msg('You buy a Party token for 30,000 coins. Pull the lever when you\u2019re ready!','#1d4e1f');
 }
 const PARTY_STUDENT_LINES=['Best party ever!','Pop pop pop!','So many balloons!','Did you see that drop?!','Save some for me!','I want a purple phat!','Mr Callahan rules!','I’m gonna be rich!','Free stuff!'];
@@ -29542,7 +29555,11 @@ function openExaminePlayer(rec){
   const title=(typeof titleSuffix==='function')?titleSuffix(rec.title):'';
   const cmb=(typeof gg.cmb==='number'&&gg.cmb>0)?gg.cmb:null;
   const lvls=Array.isArray(gg.lvls)?gg.lvls:null;
-  const SLOTS=[['head','Head'],['cape','Cape'],['neck','Neck'],['ammo','Ammo'],['weapon','Weapon'],['body','Body'],['shield','Shield'],['legs','Legs'],['hands','Hands'],['feet','Feet']];
+  /* ** EVERY SLOT THE PLAYER CAN ACTUALLY FILL. ** This list and examineInfo's were both written
+     before the ring and the pet slots existed and neither was updated, so anyone wearing a
+     Lightbearer or walking a pet looked unequipped to everybody else -- and the two lists did not
+     even agree with each other about ammo. Both now mirror EQUIP_LAYOUT. */
+  const SLOTS=[['head','Head'],['cape','Cape'],['neck','Neck'],['ammo','Ammo'],['weapon','Weapon'],['body','Body'],['shield','Shield'],['legs','Legs'],['hands','Hands'],['feet','Feet'],['ring','Ring'],['pet','Pet']];
   const ov=document.createElement('div'); ov.id='explModal';
   ov.style.cssText='position:fixed;inset:0;background:rgba(10,8,12,0.62);display:flex;align-items:center;justify-content:center;z-index:99999;padding:12px;box-sizing:border-box;';
   const box=document.createElement('div');
@@ -30355,12 +30372,16 @@ const DIALOGUES={
   mr_callahan:()=>(totalLevel()<PARTY_MIN_TOTAL?({start:{who:'npc',text:"Welcome, {name}! The Party Room is grand fun — but I can't turn a raw newcomer loose in here; you'd be carried off in the crush before you learned the ropes. Come back when you're a touch more seasoned: a total level of "+PARTY_MIN_TOTAL+" will see you right — you're at "+totalLevel()+" just now.",next:null}}):player.partyQuiz?({
     start:{who:'npc',text:'Welcome to the Party Room! Pull the lever and balloons rain down across the hall — but a round will cost you a Party token.',next:'ask'},
     ask:{opts:[
-      {label:'Buy a Party token (30,000 coins).',next:()=>{if(coinCount()<30000)return 'poor';spendCoins(30000);addItem('party_token',1);if(sfx.coins)sfx.coins();return 'bought';}},
+      /* item first, then payment -- see buyPartyToken(): a full pack used to take the coins anyway */
+      {label:'Buy a Party token (30,000 coins).',next:()=>{if(coinCount()<30000)return 'poor';
+        if(!addItem('party_token',1))return 'full';
+        spendCoins(30000);if(sfx.coins)sfx.coins();return 'bought';}},
       {label:'How does this work?',next:'how'},
       {label:'Just looking, thanks.',next:'bye'}]},
     how:{who:'npc',text:'Buy a token, then pull the lever on the wall — balloons rain down across the hall for a good while. Pop as many as you can: most hold a prize, from coins and ore to the odd rare trinket, though a few are only air. You’ll pocket the loot from every balloon you pop before the round ends. The scroll beside the lever lists what’s on offer. The students join in for the fun of it — pay them no mind.',next:'ask'},
     bought:{who:'npc',text:'A fine choice! Pull that lever whenever you’re ready.',next:null},
     poor:{who:'npc',text:'Come back when you’ve thirty thousand coins to spare, friend.',next:null},
+    full:{who:'npc',text:'You’ve nowhere to put it, friend — shift something out of that pack and I’ll have one waiting.',next:null},
     bye:{who:'npc',text:'Suit yourself — the balloons aren’t going anywhere.',next:null}}):({start:{who:'npc',text:"Welcome, {name}! Before the Party Room is yours to enjoy, every newcomer answers a few questions about St. Paul's. Answer all five correctly and your first Party token is on the house — but a single wrong answer and we begin again from the top. Shall we?",opts:[{label:"Ask away.",next:'q1'},{label:"Maybe later.",next:'bye'}]},q1:{who:'npc',text:"Question one. Which of these dorms has been both a boys' and a girls' dormitory?",opts:[{label:"Kehaya",next:'wrong'},{label:"Simpson",next:'wrong'},{label:"Warren",next:'q2'},{label:"Foster",next:'wrong'}]},q2:{who:'npc',text:"Question two. What is the name of the school's annual public-speaking competition?",opts:[{label:"The Coit Prize",next:'wrong'},{label:"The Hugh Camp Cup",next:'q3'},{label:"The Shattuck Medal",next:'wrong'},{label:"The Halcyon Cup",next:'wrong'}]},q3:{who:'npc',text:"Question three. How often do the Chapel bells ring?",opts:[{label:"On the hour",next:'wrong'},{label:"Every half hour",next:'wrong'},{label:"Every fifteen minutes",next:'q4'},{label:"Every five minutes",next:'wrong'}]},q4:{who:'npc',text:"Question four. What is the penalty for being late to Chapel?",opts:[{label:"Demerits",next:'wrong'},{label:"Saturday detention",next:'wrong'},{label:"Early Check",next:'q5'},{label:"Work crew",next:'wrong'}]},q5:{who:'npc',text:"Last one. What is special about the third-floor men's bathroom in the Schoolhouse?",opts:[{label:"It has a working marble fireplace",next:'wrong'},{label:"The urinals stretch down to the floor",next:()=>{addItem("party_token",1);player.partyQuiz=true;dirty=true;if(sfx.coins)sfx.coins();saveGame(true);return 'pass';}},{label:"The window looks onto the Chapel",next:'wrong'},{label:"The stalls have no doors",next:'wrong'}]},wrong:{who:'npc',text:"Ah — not quite. No shame in it, but the rules are the rules: we start again from the first question.",opts:[{label:"Start over.",next:'q1'},{label:"I'll come back later.",next:'bye'}]},pass:{who:'npc',text:"Flawless — a true son of St. Paul's! Here is your first Party token, with my compliments. Pull the lever on the wall whenever you're ready.",next:null},bye:{who:'npc',text:"No rush — come find me when you're ready to be tested.",next:null}})),
   sm_attack:()=>masterTree('attack'),
   sm_strength:()=>masterTree('strength'),
@@ -33871,6 +33892,8 @@ function sosCaveKill(r){
   dirty=true;
 }
 function enterSos(){
+  if(typeof closeBank==='function')closeBank();   /* a counter panel must not outlive its world */
+  if(typeof closeShop==='function')closeShop();
   inSos=true; tiles=sosTiles; _sosFlatten(); sosApplyGates();
   worldGroup.visible=false; sosGroup.visible=true;
   for(const o9 of objects){if(o9._m&&o9._m.group){const cv=!!SOS_CAVE_OBJS[o9.def];o9._m.group.visible=cv;if(cv)o9._m.group.position.y=_sFY;}}
@@ -38798,6 +38821,8 @@ function _raidRoomEntryPoint(idx){
 let _raidSkipPanel=false;
 function _raidEnterNow(){
   if(!RAID_ENABLED)return;
+  if(typeof closeBank==='function')closeBank();   /* a counter panel must not outlive its world */
+  if(typeof closeShop==='function')closeShop();
   /* a groupmate pressed Begin while we were still topside: join THEIR run, not a fresh one */
   if(_raidPendingGo&&(Date.now()-_raidPendingGo.at)<30*60*1000
      &&typeof MP!=='undefined'&&MP.isGroupmate&&MP.isGroupmate(_raidPendingGo.ld)){
@@ -40121,6 +40146,8 @@ function _volcApplyFloor(idx){
 }
 let _volcSilentRestore=false;
 function enterVolcano(){
+  if(typeof closeBank==='function')closeBank();   /* a counter panel must not outlive its world */
+  if(typeof closeShop==='function')closeShop();
   inVolcano=true; tiles=volcTiles; _volcFlatten();
   worldGroup.visible=false; volcGroup.visible=true;
   for(const o9 of objects){if(o9._m&&o9._m.group){const cv=!!VOLC_CAVE_OBJS[o9.def];o9._m.group.visible=cv;if(cv)o9._m.group.position.y=groundH(o9.x+0.5,o9.y+0.5);}}
@@ -48964,7 +48991,8 @@ santaHatM.position.y-=0.78;rig.upper.add(santaHatM);santaHatM.visible=false;
   function examineInfo(rec) {
     if (!rec) return null;
     const gg = rec.gear || {}, worn = [];
-    for (const sl of ['head', 'cape', 'neck', 'body', 'legs', 'weapon', 'shield', 'feet', 'hands']) {
+    /* mirrors EQUIP_LAYOUT — ring, pet and ammo were all missing here */
+    for (const sl of ['head', 'cape', 'neck', 'ammo', 'weapon', 'body', 'shield', 'legs', 'hands', 'feet', 'ring', 'pet']) {
       const id = gg[sl]; if (id && typeof ITEMS !== 'undefined' && ITEMS[id]) worn.push(ITEMS[id].name);
     }
     return { name: rec.name, cmb: (typeof gg.cmb === 'number' ? gg.cmb : null), hp: rec.hp, mhp: rec.mhp, worn, title: rec.title || null };

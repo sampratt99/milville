@@ -309,3 +309,37 @@ Two traps in the wiring, both now asserted — `buildObjModel` has a common tail
 (seat, tag `userData.o`, scene-add) that a branch must not `return` past, and
 `butlerTick` writes absolute limb rotations, so `_hm` carries the demon rest pose
 (`armBase`) or the arms snap through the body on the first stride.
+
+## Three small bugs from a sweep of the file (August 2026)
+
+Found by driving the game rather than reading it. None throws; all three look
+like they worked.
+
+- **Buying a Party token with a full pack cost 30,000 coins and gave nothing** —
+  and printed "You buy a Party token" anyway. `addItem` returns false when the
+  item will not fit, and a token is *stackable*, which only helps if you already
+  hold one. Arriving with a full pack of loot to drop on the lever is exactly why
+  anyone comes to the Party Room. Both copies of the purchase (the function and
+  Callahan's dialogue) now hand the token over first and spend only if it landed;
+  Callahan has a new line for a full pack. Every other `spendCoins → addItem`
+  path in the file was audited and is already guarded.
+- **Dying with the bank open left it open.** The cottage paths and
+  `exitToMainMap` dismiss the counter panels — death, `enterVolcano`, `enterSos`
+  and `_raidEnterNow` did not. There is a bank chest at (215,108), *inside the
+  First Rector's arena*, and another in the delve lobby, so you could bank
+  mid-fight, die, and wake in the town square with the bank still usable.
+- **Examining another player never showed their ring or pet.** Two hand-written
+  slot lists — the examine modal's and `MP.examineInfo`'s — both predated those
+  slots, and disagreed with each other about ammo. Both now mirror
+  `EQUIP_LAYOUT`. Your own panel was always correct.
+
+New harness `annoy.mjs` (29 assertions), five sabotages confirmed red. It also
+pins the cases the fixes must NOT break: a full pack is still fine when a token
+stack is already there, and a normal purchase still costs 30,000.
+
+**Also checked and clean**, so nobody re-treads it: all 418 item ids against drop
+tables/furniture/rare lists, right-click menus for all 280 object defs, tooltips
+for all 418 items, skill-gate boundaries at exactly `req` and `req-1` for every
+node and every equippable, the two-handed swap with a full pack, the bank
+withdraw path, shop-vs-GE pricing (no arbitrage), destructive-first menu options,
+`-1` truthiness, and duplicate data-table keys.

@@ -61,9 +61,9 @@ CAN: logic, data tables, formulas, icon/model construction, UI render functions 
 message-handler wiring (source checks). CAN'T: WebGL appearance, CSS layout, feel, real
 multiplayer (2+ browsers), group-boss dynamics (3–4 players). Say so in the summary.
 
-## The suite (49 harnesses)
+## The suite (50 harnesses)
 
-All 49 are committed in `harness/` and run by `npm test` — most grew out of the Construction arc,
+All 50 are committed in `harness/` and run by `npm test` — most grew out of the Construction arc,
 which is why the table below is organised around it. Roughly by area:
 
 | Area | Harnesses |
@@ -80,6 +80,7 @@ which is why the table below is organised around it. Roughly by area:
 | saves + bad data | `savetest` · `housetest` · `orphantest` |
 | multiplayer + containment | `mphouse` · `visittest` · `containtest` · `lobbyvis` |
 | skills outside Construction | `runorb` |
+| player-facing annoyances | `annoy` |
 
 Five are worth running after almost any change:
 - **`shiptest`** — walks the whole Construction chain in one pass, saw to butler.
@@ -105,6 +106,10 @@ Kept as a record of what the suite is for, and of the shapes these bugs take:
 - The torus half of the "born upright" rule was backwards in this doc and in
   CLAUDE.md; see `discs`.
 - `houseTrophyReport` is declared twice; the earlier body is unreachable.
+- `annoy`, from a sweep for small player-facing bugs: buying a Party token with a full pack took
+  30,000 coins and handed over nothing while congratulating you; dying at a bank chest left the bank
+  panel open in the town square; and the two *examine another player* slot lists both predated the
+  ring and pet slots, so a worn Lightbearer showed as an empty hand.
 - `savetest` on its first run: the Gauntlet's best wave was written on every new record and never
   saved; the ore-pouch orphan sweep ran a statement before the pouch was loaded, so it only ever
   scrubbed the empty default; and prayer was clamped to a literal 100 on load, docking a

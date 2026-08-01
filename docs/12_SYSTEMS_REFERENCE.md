@@ -40,3 +40,26 @@ minimap (compass owns top-left); overhead prayers draw above heads.
   tolerates a dead id, and old saves are swept on load.
 - **Non-stackable items take a slot each.** Buying more than one from the GE gives a banknote. Any
   "do I have room" test must run AFTER the consumed item is removed, not before.
+
+## Three rules that came out of a bug hunt (Aug 2026)
+
+**A purchase hands over the goods BEFORE it takes the money.** `addItem` returns `false` when the
+item will not fit, and a **stackable only fits when you already hold one or have a free slot** — so
+"it stacks" is not a reason to skip the check. Buying a Party token charged 30,000 coins, ignored the
+return, and printed *"You buy a Party token"* to a player who received nothing. Both copies of that
+purchase now call `addItem` first and only `spendCoins` if it succeeded. Every other
+`spendCoins → addItem` path in the file was audited at the same time and is guarded.
+
+**A panel flag must not outlive its world — and death is a world swap.** The cottage paths and
+`exitToMainMap` already dismissed the bank and shop panels; `die()`, `enterVolcano`, `enterSos` and
+`_raidEnterNow` did not. There is a bank chest at **(215,108), inside the First Rector's arena**, and
+another in the delve lobby, so dying at a counter left you in the town square with the bank still
+open and usable. `reconcileCounters()` runs every frame but only clears a flag whose panel has
+actually closed, so it could not help here.
+
+**A hand-written slot list goes stale.** Two of them enumerate worn equipment for the
+*examine another player* window — the modal's `SLOTS` and `MP.examineInfo` — and both predated the
+ring and pet slots, so a player wearing a Lightbearer looked barehanded to everyone else. They did
+not even agree with each other about ammo. Both now mirror `EQUIP_LAYOUT`, which is the only list the
+game actually draws from. `harness/annoy.mjs` asserts all three rules.
+
