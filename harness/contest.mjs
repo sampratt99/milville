@@ -112,11 +112,18 @@ S.eq('levelFor lands exactly on each boundary',   T.levelForBoundaries, [1, 2, 5
 S.eq('construction counts toward the total level', T.totalLevelDelta, 49);
 S.ok('the skill guide has an entry',              T.hasGuide);
 
-/* source: both skills literals must carry it, or reset-progress reintroduces the bug */
+/* SOURCE: there must be exactly ONE player.skills literal, and it must carry construction.
+   This check used to demand TWO in step -- resetGame() re-typed the whole skill set by hand, so a
+   new skill had to be remembered in two places or reset-progress silently reintroduced the NaN.
+   resetGame() now resets from the PLAYER_FRESH snapshot instead, so the second literal is gone and
+   cannot drift. Assert the absence: a returning duplicate is the bug, not the fix. */
 const literals = SRC.match(/skills\s*[:=]\s*\{attack:0/g) || [];
-S.ok('every player.skills literal is in step',
-     literals.length >= 2 && (SRC.match(/attack:0[^}]*construction:0/g) || []).length === literals.length,
-     `${literals.length} literals found, ${(SRC.match(/attack:0[^}]*construction:0/g) || []).length} carry construction`);
+S.eq('there is exactly one player.skills literal', literals.length, 1);
+S.ok('  and it carries construction',
+     (SRC.match(/attack:0[^}]*construction:0/g) || []).length === literals.length,
+     `${(SRC.match(/attack:0[^}]*construction:0/g) || []).length} of ${literals.length} carry it`);
+S.ok('  and resetGame resets from the snapshot, not a literal',
+     /PLAYER_FRESH/.test(SRC) && /player\.skills\s*=\s*F\.skills/.test(SRC));
 
 S.report(
   'Construction is wired into SKILLS, player.skills, SKILL_META and the xp curve; no NaN path.',

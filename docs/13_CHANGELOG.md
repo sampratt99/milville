@@ -126,3 +126,47 @@ client to answer, so it only ever worked while they were logged in. The cottage
 is now published to the server (`mp-server/houses.js`) and listed and fetched
 over plain HTTP. A snapshot carries the layout and the furniture and nothing
 else. **That half needs a `wrangler deploy`.**
+
+## Save-code audit (August 2026)
+
+The save code and the autosave share one payload (`saveObject()`), so anything it
+forgets is lost twice: on every logout, and again when a player pastes their code
+into a new browser. Audited it field by field against the whole of `player`.
+
+**The good news, verified offline:** the code already carries the cottage in full
+(rooms, furniture, repair stage, butler), both skills added after the codec
+existed (Agility, Construction), and every one of the 418 items in the game —
+items are just ids, so a new one round-trips the moment it is in `ITEMS`.
+
+**Six things it did not carry, or carried wrongly:**
+
+- **Prayer was clamped to a literal 100 on load.** `maxPray()` is your Prayer
+  level plus gear and the level cap has been 120 since the rescale, so a
+  high-level character was quietly docked 20+ prayer points on *every single
+  login*. Clamps to the real pool now; hp is clamped the same way.
+- **The Gauntlet's best wave was never saved.** It was written on every new
+  record, fired the title and achievement checks, and was thrown away at logout.
+- **The ore-pouch orphan sweep ran one statement too early** — before the pouch
+  was loaded — so it only ever scrubbed the empty default. A dead ore id from a
+  past update rode straight back in.
+- **`resetGame()` had drifted years behind the save.** "Reset progress" left the
+  cottage standing, every quest finished, the slayer streak, the achievements,
+  the collection log, the pet, the ore pouch and the whole Emberdeep unlocked. It
+  now resets nested defaults from `PLAYER_FRESH`, a snapshot taken at
+  declaration, so a new quest is reset for free — and it refuses to run indoors,
+  which would have left the player inside an interior that no longer exists.
+- **The skill set was merged, not built.** `Object.assign(player.skills,
+  s.skills)` let a skill the save predates keep whatever was already there. No
+  path reaches that today, but a "switch character" button would instantly hand
+  character B character A's Agility. Built from `SKILLS` now.
+- **The pack is normalised to 28 slots**, since a save code is text a player can
+  truncate and everything that draws the pack indexes 0..27 directly.
+
+**`harness/savetest.mjs` (41 assertions) is the point of the exercise.** It
+round-trips a character with progress in every system through a real
+gzip/base64url code, drives five ways a code gets mangled in transit, and then
+reads the source to assert the three lists agree: `saveObject()` writes it,
+`loadSlot()` reads it, `resetGame()` clears it. It also asserts that **every**
+`player.*` field in `index.html` is either saved or on an explicit transient
+allowlist — so adding a persistent field without saving it now fails by name.
+New doc: `24_SAVES_AND_SAVE_CODES.md`.

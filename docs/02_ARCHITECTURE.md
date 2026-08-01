@@ -47,10 +47,13 @@ function eqStat(k){ /* sums equip[*].equip[k] across worn slots (+EMBER_SET_BONU
 
 Global `player` (skills/inv/equip/quests/slayer/pray/...), `bank`, `ground`, `prayers`,
 scene globals. Saves: `STORE` wraps localStorage; multi-slot (`'aldervale-slots-v1'` index +
-`'aldervale-save-<id>'` — **names frozen**, see 00). `saveGame(silent)` writes a JSON payload
-(skills, inv, hp, x/y, equip, kit, bank, pray, style, quests, slayer, lostStash, clues,
-`mapv:'sps3'`, plus newer fields — read `saveGame` for the live list); export/import codes
-prefixed `ALDV0:`/`ALDV1:`. `dirty` tracks unsaved changes.
+`'aldervale-save-<id>'` — **names frozen**, see 00). `saveObject()` builds one payload used by both
+the autosave and the exportable code, versioned `mapv:'sps4'` / `xpv:2`; export/import codes are
+prefixed `ALDV0:` (plain) / `ALDV1:` (gzip). `dirty` tracks unsaved changes.
+
+**A persistent field belongs in three places — `saveObject()` writes it, `loadSlot()` reads it,
+`resetGame()` clears it — and `harness/savetest.mjs` asserts the three agree.** Read
+`24_SAVES_AND_SAVE_CODES.md` before adding one.
 
 ## Multiplayer layer
 

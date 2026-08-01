@@ -140,12 +140,23 @@ S.ok('a stray non-skill key does not poison the total', T.strayDidNotCount,
      `total ${T.totalIgnoresStray} — totalLevel iterates SKILLS, not the object's own keys`);
 
 /* source: the load path must actually do this */
-/* THE mechanism, at source: an assign ONTO the defaults, never a replacement */
-S.ok('the load path ASSIGNS onto player.skills',  /Object\.assign\(player\.skills,\s*s\.skills\)/.test(SRC),
-     'this is the whole backfill: the defaults supply every key and the save overwrites what it has');
+/* THE mechanism, at source: the set is BUILT FROM SKILLS, one key at a time, taking the save's
+   value only when it is a finite number. This used to be an Object.assign onto the defaults, which
+   backfilled correctly but MERGED — a skill the save predates kept whatever was already on
+   player.skills rather than defaulting, so loading character B after character A (no such path
+   today, but one button away) would have handed B character A's Agility. Iterating SKILLS makes the
+   save authoritative and the missing-skill default explicit in the same expression. */
+S.ok('the load path BUILDS player.skills from SKILLS',
+     /for\(const _sk of SKILLS\)\{[\s\S]{0,240}?player\.skills\[_sk\]=/.test(SRC),
+     'every known skill must get a value from the save or an explicit default — no merge');
+S.ok('  taking the save value only when it is a finite number',
+     /typeof _v==='number'&&isFinite\(_v\)/.test(SRC));
 S.ok('  and never replaces the object wholesale',
      !/player\.skills\s*=\s*s\.skills/.test(SRC),
      'player.skills = s.skills would drop every key the old save never had');
+S.ok('  and no longer merges with Object.assign',
+     !/Object\.assign\(player\.skills,\s*s\.skills\)/.test(SRC),
+     'a merge lets a skill the save predates inherit the previous character\'s xp');
 S.ok('the default literal names construction',    /skills:\{attack:0[^}]*construction:0\}/.test(SRC));
 S.ok('totalLevel iterates SKILLS, not Object.keys',
      /function totalLevel\(\)\{[^}]*for\(const k of SKILLS\)/.test(SRC));

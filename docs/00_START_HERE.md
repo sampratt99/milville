@@ -30,7 +30,7 @@ First Rector group boss. Deployed as `index.html` on GitHub Pages; developed sol
 | `01_GAME_OVERVIEW.md` | Theme, zones, gameplay loop, design philosophy |
 | `02_ARCHITECTURE.md` | Single-file structure, stack, save system, load order |
 | `03_DEV_WORKFLOW.md` | **CRITICAL.** How edits are made, validated; the gotchas |
-| `04_SKILLS_AND_XP.md` | The 15 skills, XP curve, gathering, agility |
+| `04_SKILLS_AND_XP.md` | The 16 skills, XP curve, gathering, agility |
 | `05_COMBAT.md` | **The OSRS combat engine** — rolls, styles, triangle, prayers, spec |
 | `06_ITEMS.md` | Item catalog architecture, gear families, currencies |
 | `07_MONSTERS.md` | The 54-mob bestiary, mob defence math, drops |
@@ -50,6 +50,7 @@ First Rector group boss. Deployed as `index.html` on GitHub Pages; developed sol
 | `21_PRAYER_AND_MAGIC.md` | The 26-prayer book + drain math; spellbook, runes, alchemy |
 | `22_LUXURY_SHOP.md` | Hirschfeld's luxury shop, examine popups, the 18 luxury items |
 | `23_CONSTRUCTION_AND_POH.md` | **The 16th skill + the player-owned house** — rooms, hotspots, butlers, the sawmill, the economy, MP isolation |
+| `24_SAVES_AND_SAVE_CODES.md` | **What a save code carries** — the three-place rule, the `ALDV*` codec, reset, the traps |
 | `templates/` | Copy-paste harness + edit-script templates |
 
 ## The six rules that matter most

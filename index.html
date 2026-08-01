@@ -4498,6 +4498,12 @@ const player={
   swensonFixed:false,swensonOrders:0,swenOrder:null,pouch:{unlocked:false,cap:50,ore:{},auto:true},
   cosmetic:{hairstyle:'short',hair:0x6b4423,shirt:0x8a8148,pants:0x2f5d33,shirtStyle:'tee',pantsStyle:'trousers'}
 };
+/* ** A PRISTINE COPY OF THE NESTED DEFAULTS, TAKEN BEFORE PLAY BEGINS. ** resetGame() used to
+   re-type these literals by hand, which is why it drifted years behind the save: every quest, slayer
+   field and pouch key added since had to be remembered twice. Snapshot them once, here, and reset
+   from the snapshot -- a new quest is then reset for free. */
+const PLAYER_FRESH=JSON.stringify({skills:player.skills,quests:player.quests,slayer:player.slayer,
+  mmf:player.mmf,pouch:player.pouch,cosmetic:player.cosmetic,equip:player.equip});
 function masterBoost(s){
   const c=player.equip&&player.equip.cape;
   if(!(c&&ITEMS[c.id]&&ITEMS[c.id].equip&&ITEMS[c.id].equip.capeSkill===s))return 0;
@@ -8711,7 +8717,7 @@ function saveObject(){
       pts:(raid.points&&raid.points[player.uid||'me'])|0,rx:player.x,ry:player.y,ri:raid.roomIdx|0}:null,
     hin:((typeof inHouse!=='undefined'&&inHouse&&!houseIsGuest())?1:0),   /* you logged out in your OWN cottage */
     playMs:player.playMs,kills:player.kills,kcBy:player.kcBy||{},achDone:player.achDone||{},house:player.house||null,shrimpBurned:player.shrimpBurned||0,delves:player.delves||0,musicSel:musicSel,musicManual:musicManual,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,volc:(inVolcano?{fl:_lastVolcFloor,x:player.x,y:player.y}:null),
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,tutorial:player.tutorial||null,pet:player.pet||null,mapv:'sps4',xpv:2};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,tutorial:player.tutorial||null,pet:player.pet||null,gauntletBest:player.gauntletBest||0,starterKit:player._starterKit?1:0,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -8842,22 +8848,38 @@ async function loadSlot(id, preObj){
     let s=preObj;
     if(!s){ const r=await STORE.get(SAVE_KEY); if(r&&r.value)s=JSON.parse(r.value); }
     if(s){
-      Object.assign(player.skills,s.skills);
-      /* ** BACKFILL ANY SKILL THE SAVE PREDATES. ** A character made before a skill existed has no key
-         for it, and undefined xp reads as NaN everywhere it is used. Default every known skill. */
-      for(const _sk of SKILLS)
-        if(typeof player.skills[_sk]!=='number'||!isFinite(player.skills[_sk]))
-          player.skills[_sk]=(_sk==='hitpoints')?XP_TABLE[10]:0;
+      /* ** THE SAVE IS AUTHORITATIVE, AND IT IS BUILT FROM SKILLS, NOT MERGED OVER WHAT IS THERE. **
+         This was an Object.assign, which MERGES: a skill the save predates (agility and construction
+         both postdate the save code) kept whatever was already on player.skills instead of
+         defaulting. Nothing reaches that today -- loadSlot runs once, off the title screen, against a
+         pristine player -- but the day a 'switch character' button exists it would hand character B
+         character A's Agility. Build the set from SKILLS and take only what the save actually has.
+         The hitpoints floor is level 10, as it is for a new character. */
+      {const _ss=(s.skills&&typeof s.skills==='object')?s.skills:{};
+       for(const _sk of SKILLS){
+         const _v=_ss[_sk];
+         player.skills[_sk]=(typeof _v==='number'&&isFinite(_v))?_v:((_sk==='hitpoints')?XP_TABLE[10]:0);
+       }}
       if(!s.xpv){   /* migrate pre-rescale saves onto the OSRS-scaled curve, preserving each skill's level */
         for(const _k in player.skills) player.skills[_k]=XP_TABLE[_oldLevelFor(player.skills[_k])];
       }
-      player.inv=s.inv;player.hp=s.hp;
+      /* ** THE PACK IS ALWAYS 28 SLOTS. ** A save code is text a player pastes, and a truncated or
+         hand-edited one can carry a short (or long) inv array. Everything that draws or fills the
+         pack indexes 0..27 directly, so normalise here rather than let the grid come up wrong. */
+      player.inv=Array.isArray(s.inv)?s.inv.slice(0,28):[];
+      while(player.inv.length<28)player.inv.push(null);
+      player.hp=s.hp;
       player.x=s.x;player.y=s.y;player.px=s.x;player.py=s.y;
       player.equip=s.equip||{weapon:null,shield:null,cape:null,ammo:null};
       if(player.equip.ammo===undefined)player.equip.ammo=null;
       player.kit=!!s.kit;
       bank=s.bank||[];
-      player.pray=(s.pray!==undefined)?Math.min(100,Math.max(0,s.pray)):100;
+      /* ** PRAYER IS NOT CAPPED AT 100. ** maxPray() is your Prayer LEVEL plus gear, and the level
+         cap has been 120 since the skills were rescaled -- so a hard clamp to 100 quietly docked a
+         high-level character 20+ prayer points on EVERY login. Clamp to the real pool. Skills and
+         equipment are both already assigned above, so maxPray() is answerable here. */
+      player.pray=(s.pray!==undefined)?Math.min(maxPray(),Math.max(0,s.pray)):maxPray();
+      player.hp=Math.max(1,Math.min(maxHp(),player.hp|0));   /* likewise: never load in above your pool, and never at 0 */
       player.style=s.style||'stab';
       player.autocast=s.autocast||null;
       player.autoRetaliate=s.autoRetaliate!==false;
@@ -8866,7 +8888,12 @@ async function loadSlot(id, preObj){
       player.title=s.title||null;
       player.winterUnlocked=!!s.winterUnlocked;
       player.maxHit=s.maxHit||0;if(!s.mhr)player.maxHit=0;player.maxMagicHit=s.maxMagicHit||0;player.maxRangeHit=s.maxRangeHit||0;player.deaths=s.deaths||0;player.pvpWins=s.pvpWins||0;player.bossKills=s.bossKills||0;player.bratKills=s.bratKills||0;
-  if(player.pouch&&player.pouch.ore){const _po=player.pouch.ore;for(const _k3 in _po){if(!ITEMS[_k3]||(_po[_k3]|0)<=0)delete _po[_k3];else _po[_k3]=_po[_k3]|0;}}player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
+  player.swensonFixed=s.swensonFixed||false;player.swensonOrders=s.swensonOrders||0;player.swenOrder=s.swenOrder||null;player.pouch=s.pouch||{unlocked:false,cap:50,ore:{},auto:true};if(!player.pouch.ore)player.pouch.ore={};if(typeof player.pouch.cap!=='number')player.pouch.cap=50;if(typeof player.pouch.auto!=='boolean')player.pouch.auto=true;
+      /* ** SWEEP THE POUCH *AFTER* IT IS LOADED, NOT BEFORE. ** This ran one statement too early and
+         so scrubbed the DEFAULT pouch, which is always empty -- the loaded one was never checked at
+         all, and a dead ore id from a past update rode straight back in. Same class as the ITEMS
+         sweep below: an orphaned id must not survive a load. */
+      {const _po=player.pouch.ore;for(const _k3 in _po){if(!ITEMS[_k3]||(_po[_k3]|0)<=0)delete _po[_k3];else _po[_k3]=_po[_k3]|0;}}
       player.cosmetic=normCos(s.cosmetic);if(typeof pm!=='undefined'&&typeof applyCosmetic==='function')applyCosmetic(pm,player.cosmetic);
       player.tutorial=(s.tutorial&&typeof s.tutorial==='object')?s.tutorial:null;
       if(s.pet&&typeof s.pet==='object')player.pet=s.pet;   /* vigour/hunger persists across sessions */
@@ -8884,6 +8911,12 @@ async function loadSlot(id, preObj){
     player.partyQuiz=!!s.partyQuiz;
     if(typeof s.cluesDone==='number')player.cluesDone=s.cluesDone;
       if(typeof s.playMs==='number')player.playMs=s.playMs;
+      /* the Gauntlet's high-water wave is a permanent record, not a session score -- it was written
+         on every new best and then thrown away at logout because nothing ever saved it */
+      if(typeof s.gauntletBest==='number')player.gauntletBest=s.gauntletBest;
+      /* the starter kit is granted once; unsaved, a character who logged out mid-tutorial was handed
+         a fresh sword and kiteshield on every login */
+      if(s.starterKit)player._starterKit=1;
       if(typeof s.stamina==='number')player.stamina=clamp(s.stamina,0,maxStamina());
       if(typeof s.run==='boolean')player.run=s.run;
       if(typeof s.rectorKilledAt==='number')player.rectorKilledAt=s.rectorKilledAt;
@@ -8982,15 +9015,49 @@ async function deleteSlot(id){
   const list=(await readSlots()).filter(sl=>sl.id!==id);
   await writeSlots(list);
 }
+/* ** RESET IS THE MIRROR OF saveObject(). ** If a field is worth carrying in a save code it is worth
+   clearing here, and for a long time it was not: 'Reset progress' left the cottage standing, every
+   quest finished, the slayer streak, the achievements, the collection log, the pet, the ore pouch
+   and the whole Emberdeep unlocked. harness/savetest.mjs now asserts key-for-key that every field
+   saveObject() writes is one resetGame() clears, so the two cannot drift apart again. */
 async function resetGame(){
+  if(curInterior()){msg('Step outside before you reset — this cannot be done from indoors.','#851a1a');return;}
   if(storageOK&&SAVE_KEY){try{await STORE.delete(SAVE_KEY);}catch(e){}}
-  player.skills={attack:0,strength:0,defense:0,hitpoints:XP_TABLE[10],woodcutting:0,mining:0,smithing:0,fishing:0,cooking:0,firemaking:0,prayer:0,slayer:0,ranged:0,magic:0,agility:0,construction:0};
+  const F=JSON.parse(PLAYER_FRESH);
+  player.skills=F.skills;player.quests=F.quests;player.slayer=F.slayer;player.mmf=F.mmf;
+  player.pouch=F.pouch;player.cosmetic=F.cosmetic;player.equip=F.equip;
   player.inv=new Array(28).fill(null);player.partyQuiz=false;player.friends.length=0;player.uid=genUid();
-  player.hp=10;player.pray=100;player.style='stab';player.autoRetaliate=true;player.emoteUnlocks={};player.titleUnlocks={};player.title=null;player.winterUnlocked=false;player.winter=false;player.fall=false;player.fallUnlocked=false;player.x=89+WX;player.y=88;player.px=89+WX;player.py=88;
-  player.equip={weapon:null,shield:null};player.kit=false;bank.length=0;
+  player.hp=maxHp();player.pray=maxPray();player.style='stab';player.autocast=null;player.autoRetaliate=true;
+  player.emoteUnlocks={};player.titleUnlocks={};player.title=null;
+  player.winterUnlocked=false;player.winter=false;player.fall=false;player.fallUnlocked=false;
+  player.x=89+WX;player.y=88;player.px=89+WX;player.py=88;
+  player.kit=false;bank.length=0;
+  /* everything the save carries that the old reset forgot */
+  player.house=null;player.pet=null;player.tutorial=null;
+  player.collected={};player.achDone={};player.kcBy={};player.kills=0;
+  player.playMs=0;player.deaths=0;player.pvpWins=0;player.bossKills=0;player.bratKills=0;
+  player.maxHit=0;player.maxMagicHit=0;player.maxRangeHit=0;
+  player.clueData={};player.cluesDone=0;player.cageMaps={};
+  player.lostStash.length=0;player.sosKills=[];player.sosCleared=[];
+  player.shrimpBurned=0;player.delves=0;player.gauntletBest=0;player._starterKit=0;
+  player.run=false;player.stamina=maxStamina();
+  player.rectorKilledAt=0;player.emberOrder=null;player.emberBounty=null;
+  player.emberVaultDone=false;player.emberPipes=null;player.emberPipesDone=null;player.emberDrained=null;
+  player.swensonFixed=false;player.swensonOrders=0;player.swenOrder=null;
+  _vaultSolved.memory=false;_vaultSolved.lockout=false;_vaultSolved.cells=false;_vaultSolved.web=false;
+  _vaultCleared=false;
   closeBank();closeShop();
   player.path.length=0;cancelAction();ground.length=0;
+  player.cmb=cmbLvl();
+  if(typeof applyCosmetic==='function'&&typeof pm!=='undefined')try{applyCosmetic(pm,player.cosmetic);}catch(e){}
+  if(typeof pohRefreshExterior==='function')try{pohRefreshExterior();}catch(e){}
+  if(typeof syncSlayerUnlocks==='function')syncSlayerUnlocks();
+  if(typeof syncQuestWorld==='function')syncQuestWorld();
+  if(typeof refreshEmoteUnlocks==='function')refreshEmoteUnlocks(false);
   renderSkills();renderInv();renderEquip();updateOrb();
+  if(typeof updatePrayOrb==='function')updatePrayOrb();
+  if(typeof updateRunOrb==='function')updateRunOrb();
+  dirty=true;
   msg('Progress reset. A fresh start!','#103a8c');
 }
 

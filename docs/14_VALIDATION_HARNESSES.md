@@ -61,9 +61,10 @@ CAN: logic, data tables, formulas, icon/model construction, UI render functions 
 message-handler wiring (source checks). CAN'T: WebGL appearance, CSS layout, feel, real
 multiplayer (2+ browsers), group-boss dynamics (3–4 players). Say so in the summary.
 
-## The Construction suite (~40 harnesses)
+## The suite (48 harnesses)
 
-All 39 are committed in `harness/` and run by `npm test`. Roughly by area:
+All 48 are committed in `harness/` and run by `npm test` — most grew out of the Construction arc,
+which is why the table below is organised around it. Roughly by area:
 
 | Area | Harnesses |
 |---|---|
@@ -76,11 +77,14 @@ All 39 are committed in `harness/` and run by `npm test`. Roughly by area:
 | the baked interior | `floortest` · `wintest` · `discs` |
 | panels + build mode | `housepanel` · `bmodetest` · `banktest` |
 | staff | `butlertest` · `butlerwalk` · `fivefix` |
-| saves + bad data | `housetest` · `orphantest` |
+| saves + bad data | `savetest` · `housetest` · `orphantest` |
 | multiplayer + containment | `mphouse` · `visittest` · `containtest` · `lobbyvis` |
 
-Four are worth running after almost any change:
+Five are worth running after almost any change:
 - **`shiptest`** — walks the whole Construction chain in one pass, saw to butler.
+- **`savetest`** — the save code carries the whole character, and `saveObject`/`loadSlot`/
+  `resetGame` are asserted to agree field for field. **It fails by name if you add a persistent
+  `player.*` field without saving it** — see `24_SAVES_AND_SAVE_CODES.md`.
 - **`mphouse`** — the seven-case multiplayer visibility matrix.
 - **`iconaudit`** — draws every icon five times and asserts the canvas stack returns to zero.
 - **`orphantest`** — an id that no longer exists must degrade, not take a panel down.
@@ -100,6 +104,10 @@ Kept as a record of what the suite is for, and of the shapes these bugs take:
 - The torus half of the "born upright" rule was backwards in this doc and in
   CLAUDE.md; see `discs`.
 - `houseTrophyReport` is declared twice; the earlier body is unreachable.
+- `savetest` on its first run: the Gauntlet's best wave was written on every new record and never
+  saved; the ore-pouch orphan sweep ran a statement before the pouch was loaded, so it only ever
+  scrubbed the empty default; and prayer was clamped to a literal 100 on load, docking a
+  120-Prayer character 20+ points on every login.
 
 ## What the shim can and cannot do
 

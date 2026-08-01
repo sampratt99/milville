@@ -10,7 +10,7 @@ symptoms — take his bug reports seriously and find root causes rather than pat
   modules, no bundler. Three.js **r128** from cdnjs is the only dependency.
 - **`mp-server/`** — Cloudflare Worker relay (`server.js`, `market.js`, `world_state.js`,
   `leaderboard.js`). Deployed separately with `wrangler deploy`. Most changes are client-only.
-- **`docs/`** — 27-doc handoff kit. The map of every system.
+- **`docs/`** — 28-doc handoff kit. The map of every system.
 - **`harness/`** — offline Node test harnesses. Your only way to verify anything.
 
 Deployed to GitHub Pages from `main`. **Pushing is deploying to live players.**
@@ -104,6 +104,7 @@ Read the doc for the system you are touching **before** editing it.
 | anything, first time in a while | `docs/00_START_HERE.md` |
 | the map, buildings, coordinates | `docs/10_MAP_AND_WORLD.md` section 1, `docs/18_BUILDINGS.md` |
 | the house, Construction, butlers, the sawmill | `docs/23_CONSTRUCTION_AND_POH.md` |
+| saves, save codes, adding a persistent field | `docs/24_SAVES_AND_SAVE_CODES.md` |
 | combat maths, prayers, spells | `docs/05_COMBAT.md`, `docs/21_PRAYER_AND_MAGIC.md` |
 | items, icons, sprites | `docs/06_ITEMS.md`, `docs/11_3D_AND_RENDERING.md` |
 | 3D models, geometry, orientation | `docs/11_3D_AND_RENDERING.md` |
