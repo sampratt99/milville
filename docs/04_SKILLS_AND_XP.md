@@ -41,6 +41,16 @@ ores → bars → smith gear on anvils (incl. the Emberdeep's Cinder Forge for e
   y66–72): sequential obstacles (`ob_ropeswing`, `ob_balancelog`, `ob_cargonet`, ... each an
   `agiObstacle` with seq/xp/to).
 - Benefits: run energy; **level 35 unlocks the volcano descent → the Emberdeep**.
+- **The energy ceiling is not 100.** `AGI_ENERGY_TIERS` raises it from 100 at level 1 to **240
+  at 120** (`maxStamina()`), and `AGI_REGEN_TIERS` raises the refill rate (`staminaRegenMult()`).
+
+**Trap — never write 100 for run energy.** `maxStamina()` is the only authority; the literal is
+correct only at Agility 1, so it fails *silently and invisibly* on any trained account. It cost a
+bug once already: `updateRunOrb()` computed its fill as `player.stamina/100` and clamped to 1, so
+at Agility 99 the ring read completely full from 210 energy all the way down to 100 — 220 running
+tiles of drain with nothing moving — and the colour bands were skewed by the same margin. The one
+legitimate literal is the new-player `stamina:100` in the `player` object, which is the level-1
+tier value. `harness/runorb.mjs` guards all of it, and greps the source for the literal returning.
 
 ## Construction (newest skill)
 
