@@ -170,3 +170,30 @@ reads the source to assert the three lists agree: `saveObject()` writes it,
 `player.*` field in `index.html` is either saved or on an explicit transient
 allowlist — so adding a persistent field without saving it now fails by name.
 New doc: `24_SAVES_AND_SAVE_CODES.md`.
+
+## The run orb had never heard of Agility (August 2026)
+
+`updateRunOrb()` computed the ring's fill as `clamp(player.stamina/100,0,1)` —
+a literal that predated the skill. Agility raises the ceiling: `AGI_ENERGY_TIERS`
+runs 100 at level 1 to **240 at 120**, and `maxStamina()` is the authority every
+other consumer already asked. `loadSlot()` clamps to it, the regen tick caps at
+it, a new character starts at it. Only the orb still divided by 100.
+
+Above Agility 10 the clamp therefore pinned the fill at 1 for everything from the
+real maximum down to 100. At Agility 99 (ceiling 210) the ring sat **visually full
+for the first 110 energy** — 220 running tiles at `RUN_DRAIN` 0.5 — while the
+number beside it ticked down normally, so the first third of the drain looked like
+it did nothing. The colour thresholds hang off the same fraction, so green
+outstayed its welcome by exactly the same margin.
+
+One character: divide by `maxStamina()`. It was the last hard-coded 100 in the
+run-energy path.
+
+**`harness/runorb.mjs` (27 assertions)** is the guard, and it is deliberately not
+a single-point check — at full energy the bug passes. It asserts the fill rises
+**strictly** across 21 samples of the whole 0..max range, that the very first
+running tile moves the ring, and that the colour bands read against the ceiling
+rather than 100. It also reads the source for the literal coming back, in the orb,
+in the load clamp and in the regen cap, and checks the new-player `stamina:100`
+literal still agrees with the level-1 tier. Reverting the one character fails 7 of
+the 27. Suite is now 49 harnesses, 1667 assertions.

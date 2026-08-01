@@ -9104,7 +9104,7 @@ function updateRunOrb(){
   const e=document.getElementById('runorb'); if(!e)return;
   e.textContent=Math.ceil(player.stamina);
   const _on=!!(player.run&&player.stamina>0&&!inParty);
-  const _rf=clamp(player.stamina/100,0,1);
+  const _rf=clamp(player.stamina/maxStamina(),0,1);
   const disc=document.getElementById('runorbdisc');
   if(disc){ disc.style.setProperty('--orbp',(_rf*100).toFixed(1)+'%'); disc.classList.toggle('running',_on); }
   /* running turns the energy number YELLOW, as the client does; walking leaves it graded */
