@@ -15937,8 +15937,27 @@ function buildObjModel(o){
     addProxy(g,1.2,2.0,0,{kind:'obj',o});
   }else if(def==='house_butler'){
     /* the EXISTING student rig -- blazer, tie, lapels -- recoloured per form, rather than five new
-       bodies. The fac brat swaps the blazer for staff tweed and gains a lanyard. */
+       bodies. The four forms are schoolboys and share it. */
     const BT=(typeof butlerHired==='function')?butlerHired():null;
+    /* ** THE FAC BRAT HIRE IS AN ACTUAL FAC BRAT. ** It used to be a schoolboy in tweed with a
+       lanyard, which fooled nobody: the mob is a red horned imp with hooves, bat wings, a spade
+       tail and a dagger. Same rig as the monster (buildBratRig, shared with makeRat) so the two can
+       never drift -- but parented into the house, proxied as an OBJECT rather than a 'rat', and
+       given no hitpoints, so he is Talk-to and Send-to-bank, never Attack. He keeps the dagger; he
+       is still a fac brat. */
+    if(BT&&BT.id==='facbrat'){
+      const RB=buildBratRig(g);
+      g.scale.set(0.5,0.5,0.5);
+      /* the butler tick swings lLeg/rLeg/lArm/rArm BY NAME, and the demon limbs rest at an angle
+         rather than at zero -- carry the rest pose so the arms swing around it, not through it */
+      o._hm={lLeg:RB.legs[0],rLeg:RB.legs[1],lArm:RB.arms[0],rArm:RB.arms[1],
+             legBase:[0,0],armBase:RB.armBase};
+      g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
+      /* NO early return: the common tail of buildObjModel seats the group, tags userData.o and
+         adds it to the scene, and houseRebuild reparents it from there. Returning here would leave
+         a butler that exists and never renders. */
+      addProxy(g,0.36,1.85,0,{kind:'obj',o});
+    }else{
     const K={third:{shirt:0x26304a,pants:0x4a4e58,tie:0x8a2a2a,hair:0x6b4a2c},
              fourth:{shirt:0x26304a,pants:0x4a4e58,tie:0x2f5a3a,hair:0x3a2c1e},
              fifth:{shirt:0x1e2740,pants:0x3f434d,tie:0x8f1f28,hair:0x4a3a24},
@@ -15963,6 +15982,7 @@ function buildObjModel(o){
       put(mesh(BX2(0.09,0.12,0.02),0xf2ead6), 0,1.08,0.15);
     }
     addProxy(g,0.42,1.7,0,{kind:'obj',o});
+    }
   }else if(def==='hf_bell'){
     const BB=(w,h,d,c,x,y,z)=>{const m=mesh(new THREE.BoxGeometry(w,h,d),c);m.position.set(x,y,z);g.add(m);return m;};
     const CC=(rt,rb,h,c,x,y,z,sg)=>{const m=mesh(new THREE.CylinderGeometry(rt,rb,h,sg||10),c);m.position.set(x,y,z);g.add(m);return m;};
@@ -24209,6 +24229,58 @@ function makeNpc(n){
 npcs.forEach(makeNpc);
 
 /* rats */
+/* ** THE FAC BRAT'S BODY, BUILT ONCE. ** The mob and the house SERVANT are the same creature --
+   the hire really is a fac brat, just one that fetches boards instead of stabbing you -- so the
+   rig lives here and both callers use it. Duplicating it is how a model and its double drift
+   apart. Builds into `g` and returns the handles an animator needs; SCALE, shadow blob, pick proxy
+   and parenting are the caller's business, because a mob and a piece of house furniture want
+   different ones. */
+function buildBratRig(g){
+  const RED=0x9a2f26,RD2=0x7a241e,BELLY=0xb0503a,HORN=0x241414,EYE=0xffcf3a,HOOF=0x1a1010,MEMB=0x551410;
+  /* small pot-bellied imp torso (countershaded red) */
+  g.add(critterSweep([
+    {p:[0,1.42,0.0],rx:0.16,ry:0.15},
+    {p:[0,1.22,0.05],rx:0.24,ry:0.22},
+    {p:[0,1.0,0.08],rx:0.30,ry:0.28},
+    {p:[0,0.84,0.0],rx:0.23,ry:0.21}
+  ],RED,14,true,true,{top:RD2,bottom:BELLY}));
+  /* big impish head: little horns, big ears, beady glowing eyes, grin */
+  const dhead=new THREE.Group();dhead.position.set(0,1.58,0.06);
+  const skull=smesh(new THREE.SphereGeometry(0.26,14,12),RED);skull.scale.set(1.05,0.96,1.0);dhead.add(skull);
+  const muzz=smesh(new THREE.SphereGeometry(0.16,12,10),RD2);muzz.scale.set(1.1,0.7,0.95);muzz.position.set(0,-0.09,0.16);dhead.add(muzz);
+  for(const sx of[-1,1]){const ear=mesh(new THREE.ConeGeometry(0.07,0.3,4),RED);ear.position.set(sx*0.24,0.06,-0.02);ear.rotation.set(0.1,sx*0.3,sx*-1.15);dhead.add(ear);}
+  for(const sx of[-1,1]){const horn=mesh(new THREE.ConeGeometry(0.04,0.16,5),HORN);horn.position.set(sx*0.1,0.24,0.02);horn.rotation.set(-0.25,0,sx*0.35);dhead.add(horn);}
+  for(const sx of[-1,1]){const e=smesh(new THREE.SphereGeometry(0.06,9,8),EYE);e.position.set(sx*0.11,0.04,0.2);dhead.add(e);
+    const pup=mesh(new THREE.SphereGeometry(0.025,6,5),0x160404);pup.position.set(sx*0.12,0.03,0.25);dhead.add(pup);}
+  const grin=mesh(new THREE.BoxGeometry(0.2,0.03,0.04),0x250606);grin.position.set(0,-0.12,0.27);dhead.add(grin);
+  for(const sx of[-1,1]){const fang=mesh(new THREE.ConeGeometry(0.018,0.07,4),0xe8e0d0);fang.position.set(sx*0.06,-0.09,0.28);fang.rotation.x=Math.PI;dhead.add(fang);}
+  g.add(dhead);
+  /* clawed arms + hooved legs (demon kit) */
+  const la=demonArm(-1,RED,HOOF),ra=demonArm(1,RED,HOOF);
+  la.position.set(-0.26,1.38,0.04);ra.position.set(0.26,1.38,0.04);la.rotation.x=0.2;ra.rotation.x=0.2;
+  g.add(la,ra);
+  const ll=demonLeg(0.84,RD2,HOOF),rl=demonLeg(0.84,RD2,HOOF);
+  ll.position.set(-0.12,0.84,0.0);rl.position.set(0.12,0.84,0.0);
+  g.add(ll,rl);
+  /* little bat wings */
+  const wings=[];
+  for(const sx of[-1,1]){const wing=new THREE.Group();wing.position.set(sx*0.2,1.34,-0.08);
+    wing.add(triPanel([0,0,0],[sx*0.05,0.24,-0.02],[sx*0.3,0.08,-0.05],MEMB));
+    wing.add(triPanel([0,0,0],[sx*0.3,0.08,-0.05],[sx*0.26,-0.16,-0.03],MEMB));
+    wing.rotation.y=sx*0.25;g.add(wing);wings.push(wing);}
+  /* devil tail with spade tip */
+  const itail=new THREE.Group();itail.position.set(0,0.86,-0.16);
+  itail.add(limbSeg(0,0,0,0,-0.12,-0.18,0.045,0.03,RED));
+  itail.add(limbSeg(0,-0.12,-0.18,0.0,-0.04,-0.4,0.03,0.02,RED));
+  const spade=mesh(new THREE.ConeGeometry(0.06,0.15,4),RD2);spade.position.set(0,-0.0,-0.46);spade.rotation.x=-1.4;itail.add(spade);
+  g.add(itail);
+  /* dagger in right claw ("armed, somehow") */
+  const dg=new THREE.Group();
+  const bl=mesh(new THREE.BoxGeometry(0.03,0.26,0.012),0xc8ccd2);bl.position.y=0.13;dg.add(bl);
+  const hl=mesh(new THREE.BoxGeometry(0.05,0.05,0.025),0x55381f);dg.add(hl);
+  dg.position.set(0.16,-0.66,0.16);dg.rotation.x=-0.4;ra.add(dg);
+  return {legs:[ll,rl],arms:[la,ra],armBase:[0.2,0.2],dhead:dhead,wings:wings,itail:itail};
+}
 function makeRat(r){
   const g=new THREE.Group();
   if(r.kind==='boar'){
@@ -25219,54 +25291,12 @@ function makeRat(r){
     return;
   }
   if(r.kind==='brat'){
-    const RED=0x9a2f26,RD2=0x7a241e,BELLY=0xb0503a,HORN=0x241414,EYE=0xffcf3a,HOOF=0x1a1010,MEMB=0x551410;
-    /* small pot-bellied imp torso (countershaded red) */
-    g.add(critterSweep([
-      {p:[0,1.42,0.0],rx:0.16,ry:0.15},
-      {p:[0,1.22,0.05],rx:0.24,ry:0.22},
-      {p:[0,1.0,0.08],rx:0.30,ry:0.28},
-      {p:[0,0.84,0.0],rx:0.23,ry:0.21}
-    ],RED,14,true,true,{top:RD2,bottom:BELLY}));
-    /* big impish head: little horns, big ears, beady glowing eyes, grin */
-    const dhead=new THREE.Group();dhead.position.set(0,1.58,0.06);
-    const skull=smesh(new THREE.SphereGeometry(0.26,14,12),RED);skull.scale.set(1.05,0.96,1.0);dhead.add(skull);
-    const muzz=smesh(new THREE.SphereGeometry(0.16,12,10),RD2);muzz.scale.set(1.1,0.7,0.95);muzz.position.set(0,-0.09,0.16);dhead.add(muzz);
-    for(const sx of[-1,1]){const ear=mesh(new THREE.ConeGeometry(0.07,0.3,4),RED);ear.position.set(sx*0.24,0.06,-0.02);ear.rotation.set(0.1,sx*0.3,sx*-1.15);dhead.add(ear);}
-    for(const sx of[-1,1]){const horn=mesh(new THREE.ConeGeometry(0.04,0.16,5),HORN);horn.position.set(sx*0.1,0.24,0.02);horn.rotation.set(-0.25,0,sx*0.35);dhead.add(horn);}
-    for(const sx of[-1,1]){const e=smesh(new THREE.SphereGeometry(0.06,9,8),EYE);e.position.set(sx*0.11,0.04,0.2);dhead.add(e);
-      const pup=mesh(new THREE.SphereGeometry(0.025,6,5),0x160404);pup.position.set(sx*0.12,0.03,0.25);dhead.add(pup);}
-    const grin=mesh(new THREE.BoxGeometry(0.2,0.03,0.04),0x250606);grin.position.set(0,-0.12,0.27);dhead.add(grin);
-    for(const sx of[-1,1]){const fang=mesh(new THREE.ConeGeometry(0.018,0.07,4),0xe8e0d0);fang.position.set(sx*0.06,-0.09,0.28);fang.rotation.x=Math.PI;dhead.add(fang);}
-    g.add(dhead);
-    /* clawed arms + hooved legs (demon kit) */
-    const la=demonArm(-1,RED,HOOF),ra=demonArm(1,RED,HOOF);
-    la.position.set(-0.26,1.38,0.04);ra.position.set(0.26,1.38,0.04);la.rotation.x=0.2;ra.rotation.x=0.2;
-    g.add(la,ra);
-    const ll=demonLeg(0.84,RD2,HOOF),rl=demonLeg(0.84,RD2,HOOF);
-    ll.position.set(-0.12,0.84,0.0);rl.position.set(0.12,0.84,0.0);
-    g.add(ll,rl);
-    /* little bat wings */
-    const wings=[];
-    for(const sx of[-1,1]){const wing=new THREE.Group();wing.position.set(sx*0.2,1.34,-0.08);
-      wing.add(triPanel([0,0,0],[sx*0.05,0.24,-0.02],[sx*0.3,0.08,-0.05],MEMB));
-      wing.add(triPanel([0,0,0],[sx*0.3,0.08,-0.05],[sx*0.26,-0.16,-0.03],MEMB));
-      wing.rotation.y=sx*0.25;g.add(wing);wings.push(wing);}
-    /* devil tail with spade tip */
-    const itail=new THREE.Group();itail.position.set(0,0.86,-0.16);
-    itail.add(limbSeg(0,0,0,0,-0.12,-0.18,0.045,0.03,RED));
-    itail.add(limbSeg(0,-0.12,-0.18,0.0,-0.04,-0.4,0.03,0.02,RED));
-    const spade=mesh(new THREE.ConeGeometry(0.06,0.15,4),RD2);spade.position.set(0,-0.0,-0.46);spade.rotation.x=-1.4;itail.add(spade);
-    g.add(itail);
-    /* dagger in right claw ("armed, somehow") */
-    const dg=new THREE.Group();
-    const bl=mesh(new THREE.BoxGeometry(0.03,0.26,0.012),0xc8ccd2);bl.position.y=0.13;dg.add(bl);
-    const hl=mesh(new THREE.BoxGeometry(0.05,0.05,0.025),0x55381f);dg.add(hl);
-    dg.position.set(0.16,-0.66,0.16);dg.rotation.x=-0.4;ra.add(dg);
+    const R2=buildBratRig(g);
     g.scale.set(0.5,0.5,0.5);
     addBlob(g,0.34);
     g.traverse(ob=>{if(ob.isMesh)ob.castShadow=true;});
     addProxy(g,0.36,1.85,0,{kind:'rat',r});
-    scene.add(g);r._m={group:g,brat:1,legs:[ll,rl],arms:[la,ra],armBase:[0.2,0.2],dhead:dhead,wings:wings,itail:itail};return;
+    scene.add(g);r._m={group:g,brat:1,legs:R2.legs,arms:R2.arms,armBase:R2.armBase,dhead:R2.dhead,wings:R2.wings,itail:R2.itail};return;
   }
   if(r.kind==='priest'){
     const hm=makeHumanoid({skin:0xcfc6b2,shirt:0x57534c,pants:0x44403a,hair:0x6e6a62,
@@ -33856,7 +33886,8 @@ function enterSos(){
 function exitSos(){
   inSos=false; tiles=TILES_MAIN; _sosRestore();
   worldGroup.visible=true; sosGroup.visible=false;
-  for(const o9 of objects){if(o9._m&&o9._m.group)o9._m.group.visible=!SOS_CAVE_OBJS[o9.def];}
+  {const _ip=interiorPropDefs();for(const o9 of objects){if(o9._m&&o9._m.group)o9._m.group.visible=!_ip[o9.def];}}
+  for(const n of npcs)if(n&&n._g)n._g.visible=!n.interior;   /* no interior's keeper stands on the grass */
   if(waterMesh)waterMesh.visible=true;
   player.x=SOS_RETURN.x;player.y=SOS_RETURN.y;player.px=SOS_RETURN.x;player.py=SOS_RETURN.y;
   camYaw=0;
@@ -38828,8 +38859,8 @@ function exitRaid(){
   _raidStripKit();
   for(const r of rats){ if(r.raid){ r.alive=false; r.target=null; r.respawnAt=9e15; if(r._m&&r._m.group)r._m.group.visible=false; } }   /* clear raid guardians */
   worldGroup.visible=true; raidGroup.visible=false;
-  for(const n of npcs)if(n._g)n._g.visible=(n.interior!=='raid');   /* and nowhere else */
-  for(const o9 of objects){if(o9._m&&o9._m.group)o9._m.group.visible=!RAID_CAVE_OBJS[o9.def];}
+  for(const n of npcs)if(n&&n._g)n._g.visible=!n.interior;   /* Ellison keeps the lobby, and nowhere else */
+  {const _ip=interiorPropDefs();for(const o9 of objects){if(o9._m&&o9._m.group)o9._m.group.visible=!_ip[o9.def];}}
   if(waterMesh)waterMesh.visible=true;
   player.x=RAID_RETURN.x;player.y=RAID_RETURN.y;player.px=RAID_RETURN.x;player.py=RAID_RETURN.y;
   camYaw=0; player.path.length=0; cancelAction();
@@ -39136,6 +39167,37 @@ const VOLC_RETURN={x:10,y:125};                  /* return to the SW crater-rim 
 const VOLC_CAVE_OBJS={heart_banner:1,volcano_exit:1,ember_ladder:1,heart_door:1,ember_descent:1,ember_ascent:1,cinder_forge:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,ember_vine:1,glow_ore:1,frost_pool:1,ember_vault_door:1,ember_pipe_fishing:1,ember_pipe_mining:1,ember_pipe_woodcutting:1,ember_conduit:1,ember_vent:1,ember_gate:1,ember_keyspot:1,ember_dock:1,lock_node:1,lock_reset:1,energy_cell:1,cell_socket:1,cell_reset:1,beam_emitter:1,redirector:1,charge_prism:1,dampener:1,beam_receiver:1,puzzle_sign:1,vault_zipline:1,boss_door:1,siphon_pillar:1,rector_throne:1,ember_bankchest:1,rector_sign:1};
 /* ===== The Emberdeep: four tiered chambers, each hotter/deeper than the last ===== */
 /* floor 0..3 = Chamber I..IV. Each carves a room + has an entry tile you arrive on. */
+/* ** ONE LIST OF EVERY PROP THAT BELONGS TO AN INTERIOR, AND WHY IT HAS TO EXIST. **
+   Each interior kept its own def-set, and the enter/exit pair used it asymmetrically:
+
+     enterX():  visible =  !!X_SET[def]   -- show mine, hide everyone else's   (right)
+     exitX():   visible =   !X_SET[def]   -- hide mine, SHOW everyone else's   (wrong)
+
+   So every trip into the volcano and back turned the delve lobby ON: its ladder, notice board and
+   reliquary chest stand at (24..30, 50..59) in walkable deep wilderness, right beside the Agility
+   course, and they are parented to the scene rather than to a hidden group -- so they simply
+   appeared out on the grass between the course and Pat's Peak. Leaving the Songs of Solomon cave did
+   the same, and worse: it lit up the whole Emberdeep as well. Hardening _raidSetLobbyObjVis did not
+   touch this, because none of these paths call it.
+
+   Every exit now hides the UNION, not just its own. Re-entry is unaffected: enterX() re-asserts its
+   own set from scratch, which is why hiding everything on the way out is safe. Built lazily because
+   the three parts are declared in three different systems, hundreds of lines apart.
+   harness/lobbyvis.mjs walks the round trips and asserts the union stays complete. */
+let _intPropDefs=null;
+function interiorPropDefs(){
+  if(!_intPropDefs)_intPropDefs=Object.assign({},SOS_CAVE_OBJS,RAID_CAVE_OBJS,VOLC_CAVE_OBJS);
+  return _intPropDefs;
+}
+/* Hide-only, and ONLY from the overworld -- so it can never fight an interior's own show logic. */
+function hideInteriorPropsTopside(){
+  if(typeof curInterior==='function'&&curInterior())return;
+  const ALL=interiorPropDefs();
+  if(typeof objects!=='undefined')for(const o of objects)
+    if(o&&ALL[o.def]&&o._m&&o._m.group)o._m.group.visible=false;
+  if(typeof npcs!=='undefined')for(const n of npcs)
+    if(n&&n.interior&&n._g)n._g.visible=false;
+}
 const EMBER_CHAMBERS=[
   {n:1,name:'The Ashen Landing',        x0:122,x1:152,y0:4, y1:24, cx:137,cz:14, rx:13.2,ry:9.3, entry:{x:137,y:14}, heat:0},
   {n:2,name:'The Cinderworks',            x0:154,x1:187,y0:4, y1:31, cx:170,cz:17, rx:16,ry:13, entry:{x:170,y:27}, heat:1, cold:1},
@@ -40221,7 +40283,8 @@ function restoreVolcano(fl,x,y){
 function exitVolcano(){
   inVolcano=false; tiles=TILES_MAIN; _volcRestore();
   worldGroup.visible=true; volcGroup.visible=false;
-  for(const o9 of objects){if(o9._m&&o9._m.group)o9._m.group.visible=!VOLC_CAVE_OBJS[o9.def];}
+  {const _ip=interiorPropDefs();for(const o9 of objects){if(o9._m&&o9._m.group)o9._m.group.visible=!_ip[o9.def];}}
+  for(const n of npcs)if(n&&n._g)n._g.visible=!n.interior;   /* no interior's keeper stands on the grass */
   if(waterMesh)waterMesh.visible=true;
   player.x=VOLC_RETURN.x;player.y=VOLC_RETURN.y;player.px=VOLC_RETURN.x;player.py=VOLC_RETURN.y;
   camYaw=0; player.path.length=0; cancelAction();
@@ -42443,18 +42506,24 @@ function butlerTick(dt){
        the direction of travel rather than snapped to it */
     bo.heading=lerpAngle(bo.heading,Math.atan2(bo.x-bo.px,bo.y-bo.py),Math.min(1,dt*0.01));
     if(m){
+      /* REST POSE, NOT ZERO. The schoolboy rigs hang their limbs at 0, but the fac brat is the mob
+         rig -- demon arms rest at 0.2 -- so a swing written straight to rotation.x snapped them
+         through the body on the first stride. armBase/legBase default to [0,0], which is exactly
+         the old behaviour for the four forms. */
       const sw=Math.sin(now*0.009+bo.i)*0.5;
-      m.lLeg.rotation.x=sw; m.rLeg.rotation.x=-sw;
-      m.lArm.rotation.x=-sw*0.7; m.rArm.rotation.x=sw*0.7;
+      const _lb=m.legBase||[0,0], _ab=m.armBase||[0,0];
+      m.lLeg.rotation.x=_lb[0]+sw; m.rLeg.rotation.x=_lb[1]-sw;
+      m.lArm.rotation.x=_ab[0]-sw*0.7; m.rArm.rotation.x=_ab[1]+sw*0.7;
     }
   }else{
     /* ** THEY DO NOT STARE AT YOU. ** Turning to track the player every frame was unsettling; they
        settle back to the way they were standing and breathe. */
     bo.heading=lerpAngle(bo.heading,bo.homeHeading,Math.min(1,dt*0.004));
     if(m){
-      m.lLeg.rotation.x*=0.9; m.rLeg.rotation.x*=0.9;
-      m.lArm.rotation.x=Math.sin(now*0.0016+bo.i)*0.05;
-      m.rArm.rotation.x=Math.sin(now*0.0016+bo.i+2)*0.05;
+      const _lb=m.legBase||[0,0], _ab=m.armBase||[0,0];
+      m.lLeg.rotation.x+=(_lb[0]-m.lLeg.rotation.x)*0.1; m.rLeg.rotation.x+=(_lb[1]-m.rLeg.rotation.x)*0.1;
+      m.lArm.rotation.x=_ab[0]+Math.sin(now*0.0016+bo.i)*0.05;
+      m.rArm.rotation.x=_ab[1]+Math.sin(now*0.0016+bo.i+2)*0.05;
     }
   }
   bo._m.group.rotation.y=bo.heading;
@@ -49366,10 +49435,12 @@ const LB = (function(){
    interior groups exist. Runs late and guarded, so a failure just leaves you on the lane. */
 try{ setTimeout(function(){ try{ houseRestoreOnLoad(); }catch(e){} }, 400); }catch(e){}
 
-/* The delve lobby lives in a dead zone that happens to sit in the walkable deep wilderness, so its
-   props must start hidden rather than waiting for a first visit to hide them. */
+/* Interiors live in dead zones that sit in walkable deep wilderness, so their props must START
+   hidden rather than waiting for a first visit to hide them. This covers EVERY interior's set, not
+   just the delve lobby -- that narrower version is what let the Emberdeep leak out. */
 try{ setTimeout(function(){ try{
   if(typeof _raidSetLobbyObjVis==='function')_raidSetLobbyObjVis(false);
+  if(typeof hideInteriorPropsTopside==='function')hideInteriorPropsTopside();
 }catch(e){} }, 500); }catch(e){}
 
 /* =================== END ONLINE LEADERBOARD =================== */

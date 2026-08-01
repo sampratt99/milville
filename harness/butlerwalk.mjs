@@ -152,6 +152,70 @@ const T = runPass(PRELUDE + String.raw`
     butlerHire('third');
   }
 
+  /* ---- THE FAC BRAT HIRE IS AN ACTUAL FAC BRAT --------------------------
+     The top tier was a schoolboy in tweed with a lanyard. He is now the real mob's rig -- horns,
+     hooves, bat wings, spade tail, dagger -- shared with makeRat through buildBratRig so the two
+     cannot drift. What must NOT come across with the model is the monster: no hitpoints, no place
+     in rats, and a pick proxy tagged 'obj' rather than 'rat', so he is Talk-to, never Attack. */
+  {
+    const shot = id => { butlerHire(id); houseRebuild(); const b = _butlerObj;
+      return {tier:b&&b.tier, armBase:(b&&b._hm&&b._hm.armBase)||null,
+              limbs:!!(b&&b._hm&&b._hm.lLeg&&b._hm.rLeg&&b._hm.lArm&&b._hm.rArm),
+              parented:!!(b&&b._m&&b._m.group&&b._m.group.parent),
+              scale:(b&&b._m&&b._m.group&&b._m.group.scale)?b._m.group.scale.x:null,
+              parts:(b&&b._m&&b._m.group&&b._m.group.children)?b._m.group.children.length:0}; };
+    o.schoolboyRig = shot('third');
+    o.bratRig = shot('facbrat');
+    const b = _butlerObj;
+    /* he is furniture, not a monster */
+    o.bratInRats = rats.some(q => q === b);
+    o.bratHasHp = !!(b && (b.hp !== undefined || b.maxhp !== undefined));
+    o.bratOptions = optionsAt(b.x, b.y).map(q => String(q.label || q.html).replace(/<[^>]*>/g, ''));
+    /* THE PICK PROXY decides what a click on the model does. Tagged 'obj' it is furniture you
+       Talk-to; tagged 'rat' the very same body becomes something you swing at. */
+    const allPx = [].concat(typeof proxies !== 'undefined' ? proxies : [],
+                            typeof houseProxies !== 'undefined' ? houseProxies : []);
+    const px = allPx.filter(m => m && m.userData && m.userData.o === b);
+    o.bratProxyCount = px.length;
+    o.bratProxyKinds = [...new Set(px.map(m => m.userData.kind))];
+
+    /* THE COMMON TAIL of buildObjModel tags userData.o and scene-adds the group. Build one straight
+       through the function -- not via houseRebuild, which re-parents and re-seats by hand and would
+       hide an early return. */
+    {
+      const probe = {def:'house_butler', x:b.x, y:b.y, alive:true};
+      buildObjModel(probe);
+      o.bratTailRan = !!(probe._m && probe._m.group && probe._m.group.userData
+                         && probe._m.group.userData.o === probe);
+      if(probe._m && probe._m.group && probe._m.group.parent) probe._m.group.parent.remove(probe._m.group);
+    }
+
+    /* THE REST POSE: swing him and see where the arm actually sits. The demon arm rests at 0.2, so
+       a correct gait oscillates AROUND 0.2; the old code wrote the swing straight to rotation.x and
+       oscillated around 0, snapping the arm through the body every stride. */
+    {
+      /* Date.now() barely advances inside a tight loop, so sampling the real gait measures nothing.
+         Move the rest pose somewhere unmistakable instead and check the arm follows it: the swing
+         is at most 0.35 either way, so an arm near 1.5 proves the base is honoured and an arm near
+         0 proves it is being ignored. */
+      const realBase = b._hm.armBase;
+      b.x = b.home.x + 3; b.y = b.home.y;           /* far enough that the walk stays 'moving' */
+      b._hm.armBase = [1.5, 1.5];
+      butlerTick(16);
+      o.bratArmAtMovedBase = b._hm.lArm.rotation.x;
+      b._hm.armBase = [0, 0];
+      butlerTick(16);
+      o.bratArmAtZeroBase = b._hm.lArm.rotation.x;
+      b._hm.armBase = realBase;
+    }
+
+    /* ...and still a butler: the bell can send him */
+    give('coins', 200000);
+    o.bratCanBeSent = (typeof butlerFetch === 'function');
+    butlerHire('third'); houseRebuild();
+    since();
+  }
+
   /* ---- dismissing removes them from the world ---- */
   butlerDismiss();
   houseRebuild();
@@ -221,12 +285,47 @@ S.ok('  so they are not back at the bell',             T.notBackAtBell);
 S.ok('  and the rebuilt model is seated where they are', T.modelFollowed);
 S.ok('but CHANGING HIRE does start a fresh one at the bell', T.newHireResets);
 
+/* the fac brat hire wears the real fac brat */
+S.ok('the four forms keep the schoolboy rig',     T.schoolboyRig.armBase === null && T.schoolboyRig.scale === 1,
+     JSON.stringify(T.schoolboyRig));
+S.ok('THE FAC BRAT HIRE USES THE MOB RIG',        T.bratRig.scale === 0.5 && T.bratRig.parts > T.schoolboyRig.parts,
+     `${T.bratRig.parts} parts at ${T.bratRig.scale} scale vs the schoolboy's ${T.schoolboyRig.parts} at ${T.schoolboyRig.scale}`);
+S.eq('  with the demon limbs\' rest pose carried', T.bratRig.armBase, [0.2, 0.2]);
+S.ok('  and the four limbs the walk tick swings',  T.bratRig.limbs);
+S.ok('  parented into the world, not orphaned',    T.bratRig.parented);
+S.ok('  and buildObjModel\'s common tail ran',      T.bratTailRan,
+     'the tail seats the group, tags userData.o and scene-adds it — an early return skips all three');
+S.eq('BUT HE IS NOT ATTACKABLE — not a mob',       T.bratInRats, false);
+S.eq('  and carries no hitpoints',                 T.bratHasHp, false);
+S.ok('  and the click menu offers no Attack',      !T.bratOptions.some(x => /attack/i.test(x)),
+     T.bratOptions.join(' / '));
+S.ok('  it offers Talk-to, like any hire',         T.bratOptions.some(x => /talk-to/i.test(x)),
+     T.bratOptions.join(' / '));
+S.ok('  and his pick proxy is tagged obj, not rat', T.bratProxyCount > 0
+     && T.bratProxyKinds.length === 1 && T.bratProxyKinds[0] === 'obj',
+     `${T.bratProxyCount} proxies, kinds: ${T.bratProxyKinds.join(',') || 'none'} — 'rat' would make the body attackable`);
+S.ok('the gait swings AROUND the rest pose, not through 0',
+     Math.abs(T.bratArmAtMovedBase - 1.5) <= 0.35 && Math.abs(T.bratArmAtZeroBase) <= 0.35,
+     `base 1.5 put the arm at ${T.bratArmAtMovedBase.toFixed(3)}, base 0 at ${T.bratArmAtZeroBase.toFixed(3)}`);
+S.ok('  so the base really moves the arm',         Math.abs(T.bratArmAtMovedBase - T.bratArmAtZeroBase) > 1.0,
+     'if the base were ignored both would land in the same place');
+
 /* dismissal */
 S.eq('dismissing removes them',                   T.afterDismiss, false);
 S.eq('  leaving no butler object behind',         T.butlerObjectsLeft, 0);
 
 /* source: the two rules that have no runtime seam */
 S.ok('the gait is the friendly-NPC one',          /butlerTick/.test(SRC) && /bo\.px\+=\(bo\.x-bo\.px\)\*k/.test(SRC));
+S.ok('  and swings limbs around their REST pose',
+     /m\.legBase\|\|\[0,0\]/.test(SRC) && /m\.armBase\|\|\[0,0\]/.test(SRC),
+     'demon arms rest at 0.2; writing the swing straight to rotation.x snaps them through the body');
+/* ONE BODY, TWO CALLERS — the whole point of the extraction */
+S.ok('the fac brat body is built by a shared rig', /function buildBratRig\(g\)\{/.test(SRC));
+S.eq('  and defined exactly once',                (SRC.match(/function buildBratRig\(g\)\{/g) || []).length, 1);
+S.eq('  called by the mob and by the hire',       (SRC.match(/buildBratRig\(g\)/g) || []).length, 3);
+S.ok('  with the geometry in neither caller',
+     (SRC.match(/small pot-bellied imp torso/g) || []).length === 1,
+     'a second copy of the torso means the mob and the hire have started to drift');
 S.ok('NO BUTLER PATH REACHES houseBuild',
      !/function butler[\s\S]*?houseBuild\(/.test(SRC.slice(SRC.indexOf('function butlerFetch'), SRC.indexOf('function houseEnterVisit'))),
      'they fetch; you build');

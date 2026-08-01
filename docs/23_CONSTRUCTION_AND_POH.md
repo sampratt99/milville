@@ -398,6 +398,18 @@ carries both rooms' furniture and loses none.
   types, so `houseRebuild` skips a marker whose target cell has no remaining choices.
 - Boards **do not stack** (nails do). Every plank takes a pack slot — that is why butlers exist.
 
+- **The fac brat hire is an actual fac brat.** The top tier used to be the schoolboy rig in staff
+  tweed with a lanyard, which fooled nobody — the mob is a red horned imp with hooves, bat wings, a
+  spade tail and a dagger. The body now comes from **`buildBratRig(g)`, shared with `makeRat`**, so
+  the hire and the monster cannot drift apart. What must NOT come across with the model is the
+  monster: he is an object, not a `rats` entry, has no hitpoints, and his pick proxy is tagged
+  `{kind:'obj'}` — tag it `'rat'` and the same body becomes something you swing at. Two traps in the
+  wiring: **`buildObjModel` has a common tail** that seats the group, tags `userData.o` and
+  scene-adds it, so a branch must never `return` early; and **`butlerTick` swings limbs by name**,
+  writing absolute rotations — the demon arms rest at `0.2`, not `0`, so `_hm` carries
+  `armBase`/`legBase` (defaulting to `[0,0]`, exactly the old behaviour for the four schoolboy
+  forms) and the swing is applied around it.
+
 - **`houseRebuild()` tears down and re-creates EVERY house object — including the hire.** So any
   button that rebuilds (toggling build mode, building a piece, taking one down) spawned a brand new
   butler back at the bell. Mid-errand that replayed the whole leave-the-house animation on every

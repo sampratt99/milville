@@ -268,3 +268,44 @@ rather than 100. It also reads the source for the literal coming back, in the or
 in the load clamp and in the regen cap, and checks the new-player `stamina:100`
 literal still agrees with the level-1 tier. Reverting the one character fails 7 of
 the 27. Suite is now 49 harnesses, 1667 assertions.
+
+## The wilderness leak, and a fac brat who looks like one (August 2026)
+
+**The delve lobby really was standing out on the grass, and here is why.**
+Reported twice: the exit ladder, the reliquary chest and Mr. Ellison visible in
+the wilderness between the Agility course and Pat's Peak. Reproduced offline in
+one step — enter the volcano, leave it, and all three lobby props turn on.
+
+Every interior keeps a def-set of its own props, and the enter/exit pair used it
+asymmetrically: `enterX` sets `visible = !!MY_SET[def]` (show mine, hide everyone
+else's — right), but `exitX` set `visible = !MY_SET[def]`, which hides mine and
+**shows every other interior's**. The lobby props sit at (24–30, 50–59), walkable
+deep wilderness right beside the course, and are parented to the scene rather
+than to a group that gets hidden wholesale — so they simply appeared. Leaving the
+Songs of Solomon cave was worse: it lit the entire Emberdeep as well, 131 props.
+
+The earlier fix did not touch this because it hardened `_raidSetLobbyObjVis`, and
+none of these paths call it.
+
+- Every exit now hides `interiorPropDefs()`, the **union** of all three sets.
+  Re-entry is unaffected, which is what makes it safe: `enterX` re-asserts its own
+  set from scratch every time (verified: 7 volcano props inside before and after
+  the change, on the first visit and the second).
+- **Interior NPCs get the same rule.** Only `exitRaid` hid Ellison; the object
+  loops never looked at `npcs` at all.
+- The boot sweep now covers every interior's set rather than just the lobby, and
+  refuses to run indoors — fired from inside the volcano it would strip the cave.
+
+`lobbyvis` grew 17 assertions covering the round trips, the re-entry guarantee and
+the indoor refusal; all sabotage-checked.
+
+**The fac brat hire now uses the fac brat's own model.** The top butler tier was
+the schoolboy rig in staff tweed with a lanyard; the mob is a red horned imp with
+hooves, bat wings, a spade tail and a dagger. The body moved into
+`buildBratRig(g)`, shared with `makeRat`, so the hire and the monster cannot
+drift. He is still furniture, not a monster: no hitpoints, not in `rats`, pick
+proxy tagged `obj`, and the click menu offers Talk-to and Examine with no Attack.
+Two traps in the wiring, both now asserted — `buildObjModel` has a common tail
+(seat, tag `userData.o`, scene-add) that a branch must not `return` past, and
+`butlerTick` writes absolute limb rotations, so `_hm` carries the demon rest pose
+(`armBase`) or the arms snap through the body on the first stride.
