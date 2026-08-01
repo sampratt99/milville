@@ -122,6 +122,36 @@ const T = runPass(PRELUDE + String.raw`
     o.leftTheDoor = !(bo.x === ex.x && bo.y === ex.y + 1);
   }
 
+  /* ---- A REBUILD MUST NOT RESTART THEM (the click-spam bug) ----------------
+     houseRebuild() tears down and re-creates every house object, and the hire was one of them: any
+     button that rebuilds -- toggling build mode, putting up a shelf, taking one down -- respawned a
+     brand new butler back at the bell, who then walked to the door and vanished AGAIN. Drive them
+     out to a known spot, rebuild the way each of those buttons does, and check nothing moved. */
+  {
+    const b0 = _butlerObj;
+    b0.x = b0.home.x + 2; b0.y = b0.home.y;             /* somewhere that is NOT the spawn tile */
+    for(let k = 0; k < 40; k++) butlerTick(16);          /* let them walk part of the way */
+    const was = {x:b0.x, y:b0.y, px:b0.px, py:b0.py, heading:b0.heading, i:b0.i, wanderAt:b0.wanderAt};
+    o.movedBeforeRebuild = Math.hypot(was.px - b0.home.x, was.py - b0.home.y) > 0.3;
+
+    houseToggleBuildMode(); houseToggleBuildMode();      /* two real button presses */
+    const b1 = _butlerObj;
+    o.sameHireAfterRebuild = !!b1;
+    o.keptTile   = !!(b1 && b1.x === was.x && b1.y === was.y);
+    o.keptSmooth = !!(b1 && Math.abs(b1.px - was.px) < 1e-9 && Math.abs(b1.py - was.py) < 1e-9);
+    o.keptGait   = !!(b1 && b1.heading === was.heading && b1.i === was.i && b1.wanderAt === was.wanderAt);
+    o.notBackAtBell = !!(b1 && Math.hypot(b1.px - b1.home.x, b1.py - b1.home.y) > 0.3);
+    /* and the model is seated where they ARE, not at the bell */
+    const g = b1 && b1._m && b1._m.group;
+    o.modelFollowed = !!(g && Math.abs(g.position.x - (b1.px + 0.5)) < 1e-6
+                            && Math.abs(g.position.z - (b1.py + 0.5)) < 1e-6);
+    /* a CHANGE OF HIRE still gets a fresh one, standing at the bell */
+    butlerHire('fourth');   /* a DIFFERENT tier — 'third' is the one hired above */
+    const b2 = _butlerObj;
+    o.newHireResets = !!(b2 && b2.px === b2.home.x && b2.py === b2.home.y);
+    butlerHire('third');
+  }
+
   /* ---- dismissing removes them from the world ---- */
   butlerDismiss();
   houseRebuild();
@@ -180,6 +210,16 @@ S.eq('  and the bank is down by exactly what arrived',
 if(T.dropped) S.note('the dropped board stayed in the bank rather than being destroyed');
 S.ok('  leaving them free again',                 T.backHome);
 S.ok('and they step off the doormat afterwards',  T.leftTheDoor);
+
+/* a rebuild must not restart them — the click-spam bug */
+S.ok('the hire had walked away from the bell',    T.movedBeforeRebuild);
+S.ok('A BUTTON PRESS DOES NOT RESPAWN THE HIRE',  T.sameHireAfterRebuild && T.keptTile,
+     'toggling build mode used to put a brand-new butler back at the bell');
+S.ok('  their exact position is carried, not rounded', T.keptSmooth);
+S.ok('  as is the gait phase and the next wander',     T.keptGait);
+S.ok('  so they are not back at the bell',             T.notBackAtBell);
+S.ok('  and the rebuilt model is seated where they are', T.modelFollowed);
+S.ok('but CHANGING HIRE does start a fresh one at the bell', T.newHireResets);
 
 /* dismissal */
 S.eq('dismissing removes them',                   T.afterDismiss, false);

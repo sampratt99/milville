@@ -223,3 +223,22 @@ desktop:
 `CompressionStream`/`DecompressionStream` off `globalThis` and putting them back:
 a phone code loads on a desktop, loads on the phone, and lands the same
 character as the gzipped one.
+
+## The butler no longer restarts on every click (August 2026)
+
+**Sending the hire to the bank and then touching any button replayed his exit
+animation.** Toggling build mode, building a piece, taking one down — each one
+put him back in the parlour to walk out through the door again, over and over.
+
+`houseRebuild()` tears down and re-creates every house object, and the servant
+was one of them: each rebuild spawned a **brand new butler at the bell** with a
+fresh `px/py`, which then interpolated to the door and vanished. The trip timer
+was never affected — it lives on `player.house.servant`, not on the object — so
+the errand always completed correctly and the fault read as purely cosmetic.
+
+`houseRebuild` now carries the hire's live state across the rebuild (tile,
+interpolated position, heading, gait phase, next wander) and seats the rebuilt
+model where he actually is, staying hidden if he had already stepped out.
+**Changing tier still spawns a fresh one at the bell**, which is why the carried
+state is keyed on the hire's tier. `butlerwalk` grew seven assertions covering
+both halves, all sabotage-checked.

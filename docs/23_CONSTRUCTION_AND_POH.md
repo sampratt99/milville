@@ -398,6 +398,16 @@ carries both rooms' furniture and loses none.
   types, so `houseRebuild` skips a marker whose target cell has no remaining choices.
 - Boards **do not stack** (nails do). Every plank takes a pack slot — that is why butlers exist.
 
+- **`houseRebuild()` tears down and re-creates EVERY house object — including the hire.** So any
+  button that rebuilds (toggling build mode, building a piece, taking one down) spawned a brand new
+  butler back at the bell. Mid-errand that replayed the whole leave-the-house animation on every
+  click: the servant popped into the parlour and walked out again, over and over. The trip timer was
+  never affected — that lives on `player.house.servant`, not on the object — which is exactly why it
+  looked cosmetic and went unreported for so long. `houseRebuild` now carries the hire's live state
+  (tile, interpolated position, heading, gait phase, next wander) across the rebuild and seats the
+  new model where they actually are. **Only a change of tier gets a fresh one**, which is why the
+  carried state is keyed on `bo.tier`. `butlerwalk` asserts both halves.
+
 ---
 
 ## 10. Harnesses
@@ -406,8 +416,8 @@ carries both rooms' furniture and loses none.
 `housepanel` `wintest` `floortest` `containtest` `roomstest` `visittest` `housetest` `butlertest`
 `butlerwalk` `xptest` `pricetest` `shiptest` `mphouse` `spawntest` `repairflow` `doortest` `focustest`
 `upgradetest` `discs` `iconaudit` `orphantest` `banktest` `lobbyvis` `conunlock` `skillfix` `roomui`
-`sawicon` `deedtest` `fivefix` `newfunc` `darylitest`
+`sawicon` `deedtest` `fivefix` `newfunc` `darylitest` `savetest`
 
-All 39 live in `harness/` and run with `npm test` (see `docs/14`). `shiptest` walks the whole chain in
+All 48 live in `harness/` and run with `npm test` (see `docs/14`). `shiptest` walks the whole chain in
 one pass; `mphouse` proves the isolation matrix; `iconaudit` draws every icon five times and checks the
 canvas stack returns to zero; `orphantest` proves a dead id degrades instead of taking a panel down.

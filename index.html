@@ -41666,6 +41666,18 @@ function openRoomPicker(gx,gy){
 }
 /* tear down every furniture object, then respawn from the saved layout */
 function houseRebuild(){
+  /* ** THE HIRE MUST NOT RESTART EVERY TIME A BUTTON IS PRESSED. ** This function tears down every
+     house object and builds it again, and the servant was one of them -- so toggling build mode or
+     putting up a single shelf spawned a BRAND NEW butler back at the bell, mid-errand, who then
+     walked to the door and vanished all over again. The trip timer was never affected (it lives on
+     player.house.servant), but the animation replayed on every click. Carry the live state across
+     the rebuild: where they are, where they are heading, their gait phase and their next wander.
+     Only a CHANGE OF HIRE gets a fresh one, which is why the tier is part of the test. */
+  const _bTier=(butlerState()||{}).tier||null;
+  const _bKeep=(_butlerObj&&_butlerObj.tier===_bTier)?{
+    x:_butlerObj.x,y:_butlerObj.y,px:_butlerObj.px,py:_butlerObj.py,
+    heading:_butlerObj.heading,homeHeading:_butlerObj.homeHeading,
+    i:_butlerObj.i,wanderAt:_butlerObj.wanderAt}:null;
   _butlerObj=null;
   for(const o of _houseObjs){
     if(o._m&&o._m.group&&o._m.group.parent)o._m.group.parent.remove(o._m.group);
@@ -41709,10 +41721,20 @@ function houseRebuild(){
         const bo={def:'house_butler',x:spot.x,y:spot.y,alive:true,
           px:spot.x,py:spot.y,home:{x:spot.x,y:spot.y},
           wanderAt:Date.now()+6000+Math.random()*10000,
-          heading:0,homeHeading:0,i:Math.random()*6.28};
+          heading:0,homeHeading:0,i:Math.random()*6.28,tier:_bTier};
+        /* home stays at the (possibly moved) bell; everything else is carried, so they resume */
+        if(_bKeep)Object.assign(bo,_bKeep);
         objects.push(bo); _houseObjs.push(bo); _butlerObj=bo;
         if(typeof buildObjModel==='function')buildObjModel(bo);
-        if(bo._m&&bo._m.group)houseGroup.add(bo._m.group);
+        if(bo._m&&bo._m.group){
+          houseGroup.add(bo._m.group);
+          /* seat the new model where the hire actually IS, not at the bell, and keep them hidden if
+             they had already stepped out through the door -- otherwise the rebuild is a flash */
+          const _wx=bo.px+0.5,_wz=bo.py+0.5;
+          bo._m.group.position.set(_wx,groundH(_wx,_wz),_wz);
+          bo._m.group.rotation.y=bo.heading||0;
+          if(butlerBusy()&&Math.hypot(bo.x-bo.px,bo.y-bo.py)<0.2)bo._m.group.visible=false;
+        }
       }
     }
   }
