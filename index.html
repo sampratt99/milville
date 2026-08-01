@@ -340,7 +340,6 @@ if ('serviceWorker' in navigator) {
     box-shadow:0 0 0 1px #5d5141 inset; font:bold 12px RSFont,Verdana; text-align:center;
   }
   .sbtn:hover{background:#473c30;}
-  .sbtn.danger{color:#ff9b8a;}
   #savestatus{color:#a9c79b; font-size:11px;}
   .hint{color:#bba98a; font-size:11px; line-height:1.45; margin-top:8px;}
   /* context menu */
@@ -1609,7 +1608,6 @@ try{
           <div id="savestatus">Checking autosave…</div>
           <button class="sbtn" id="savebtn">Save now</button>
           <button class="sbtn" id="exportbtn">Copy save to clipboard</button>
-          <button class="sbtn danger" id="resetbtn">Reset progress</button>
           <div class="hint">
             <b>How to play:</b> left-click to walk or use things. Right-click for more
             options. <b>Arrow keys or WASD</b> orbit and tilt the camera, scroll to zoom,
@@ -2848,7 +2846,6 @@ const OBJ_DEFS={
   fire_altar:{name:'Fire Altar',action:'Pray-at',ex:'A basin of everliving flame at the Heart of the Emberdeep. Kneel and the fire restores your spirit and cloaks you against the molten crust \u2014 for a time.'},
   emberdeep_vault:{name:'Sealed Vault',action:'Open',ex:'A vault of black meteoric iron, sealed since Cinderwing\u2019s fall. Only those who can cross the molten crust will ever prise it open.'},
   cinder_forge:{name:'The Cinder Forge',action:'Forge-at',noBlock:true,ex:'An anvil of black meteoric iron set into a font of living magma, wreathed in flame that never dies. Here Cinderwing\u2019s own relics can be rekindled into something greater \u2014 for a price in ember feathers.'},
-  gauntlet_brazier:{name:'the Molten Gauntlet',action:'Challenge',noBlock:true,ex:'A great signal-brazier ringed by cooling crust at the heart of the Molten Gauntlet. Light it to call the fire up out of the lava \u2014 wave upon wave of ember-kin \u2014 and see how long you can stand. Feathers bank each wave; press on for more, or cash out before the heat takes you.'},
   mathesexit:{name:'Cage doors',action:'Leave',ex:'The way back out to the athletic grounds.'},
   rector:{name:'the Rector',action:'Talk-to',ex:'He presides over the Cage from the east balcony, passing judgment on those who contest the pit.'},
   dig_pratt:{name:'Mr. Pratt',action:'Examine',noBlock:true,ex:'Mr. Pratt, Dean of College Advising and, by remarkable coincidence, resident of Pratt House. He has already pencilled your recommendation; the adjectives depend on how you fight.'},
@@ -4079,7 +4076,7 @@ const rats=MOB_SPAWNS.map((p,i)=>({i,kind:p[0],sx:p[1],sy:p[2],x:p[1],y:p[2],
   for(let y=3;y<H-3;y++)for(let x=OFF;x<OFF+3;x++)
     if(tiles[y][x]===T_FOREST)tiles[y][x]=T_GRASS;
   W=NW;
-  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','house_exit','hf_slot','hf_expand','hf_greatgate','hf_bell','hf_bellpull','house_butler','hf_basin','hf_sink','hf_repairbench','hf_craftbench','hf_spyglass','hf_telescope','hf_effigy','hf_marbleeffigy','hf_rangetarget','hf_elembalance','hf_sparmat','hf_combatring','hf_toybox','hf_treasurechest','hf_focus','hf_greaterfocus','hf_hedge','hf_topiary','hf_urn','hf_glazedurn','hf_windowbox','hf_candlestand','hf_ragrug','hf_lattice','hf_planktable','hf_potrack','hf_chalkboard','hf_packcrate','hf_prizebox','hf_pennant','hf_woodcross','hf_openshelves','hf_shutters','hf_toolboard','hf_spearstand','hf_bookstack','hf_candlerack','hf_mapsheet','hf_sketch','hf_chalksigil','hf_draughts','hf_cloakpegs','hf_tableglobe','hf_washstand','hf_hangmirror','hf_readingstand','hf_wallclock','hf_mailhook','hf_pinepress','hf_armourrack','hf_petbasket','hf_bust','hf_scryingbowl','hf_joinersbench','hf_pew','hf_prizechest','hf_armourcase','hf_globe','hf_curtain','hf_clayoven','hf_plaque','hf_larder','hf_clock','hf_dresser','hf_wallchart','hf_icon','hf_burner','hf_toolrack','hf_statue','hf_scoreboard','hf_banner','hf_mirror','hf_sigil','hf_scrying','hf_trellis','hf_altar','hf_shrine','hf_portal','hf_dummy','hf_dartboard','hf_bagatelle','hf_cardtable','hf_weaponrack','hf_armourstand','hf_caperack','hf_pethouse','hf_sapling','hf_oaktree','hf_well','hf_fountain','hf_firepit','hf_trestle','hf_oakbed','hf_chesterfield','hf_niche','hf_shelf','hf_dummy_mail','hf_portal_lesser','hf_hearth','hf_stove','hf_armchair','hf_settle','hf_dining','hf_desk','hf_cot','hf_fourposter','hf_chest','hf_wardrobe','hf_bookcase','hf_rug','hf_lamp','hf_painting','hf_plant','hf_trophy','hf_case','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','heart_door','ember_descent','ember_ascent','cinder_forge','gauntlet_brazier','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step','raid_exit','raid_node','raid_plate','raid_brazier','raid_chest','raid_sapling','raid_keystone','raid_barrier','raid_lens','raid_prism','raid_socket','raid_crabsign','raid_bench','raid_stair','raid_well','raid_lobbygate','raid_bank','raid_geartable','raid_sign','raid_rack','raid_pipe','raid_hoard']);
+  const INT_DEFS=new Set(['chapelexit','relic','rectoryexit','house_exit','hf_slot','hf_expand','hf_greatgate','hf_bell','hf_bellpull','house_butler','hf_basin','hf_sink','hf_repairbench','hf_craftbench','hf_spyglass','hf_telescope','hf_effigy','hf_marbleeffigy','hf_rangetarget','hf_elembalance','hf_sparmat','hf_combatring','hf_toybox','hf_treasurechest','hf_focus','hf_greaterfocus','hf_hedge','hf_topiary','hf_urn','hf_glazedurn','hf_windowbox','hf_candlestand','hf_ragrug','hf_lattice','hf_planktable','hf_potrack','hf_chalkboard','hf_packcrate','hf_prizebox','hf_pennant','hf_woodcross','hf_openshelves','hf_shutters','hf_toolboard','hf_spearstand','hf_bookstack','hf_candlerack','hf_mapsheet','hf_sketch','hf_chalksigil','hf_draughts','hf_cloakpegs','hf_tableglobe','hf_washstand','hf_hangmirror','hf_readingstand','hf_wallclock','hf_mailhook','hf_pinepress','hf_armourrack','hf_petbasket','hf_bust','hf_scryingbowl','hf_joinersbench','hf_pew','hf_prizechest','hf_armourcase','hf_globe','hf_curtain','hf_clayoven','hf_plaque','hf_larder','hf_clock','hf_dresser','hf_wallchart','hf_icon','hf_burner','hf_toolrack','hf_statue','hf_scoreboard','hf_banner','hf_mirror','hf_sigil','hf_scrying','hf_trellis','hf_altar','hf_shrine','hf_portal','hf_dummy','hf_dartboard','hf_bagatelle','hf_cardtable','hf_weaponrack','hf_armourstand','hf_caperack','hf_pethouse','hf_sapling','hf_oaktree','hf_well','hf_fountain','hf_firepit','hf_trestle','hf_oakbed','hf_chesterfield','hf_niche','hf_shelf','hf_dummy_mail','hf_portal_lesser','hf_hearth','hf_stove','hf_armchair','hf_settle','hf_dining','hf_desk','hf_cot','hf_fourposter','hf_chest','hf_wardrobe','hf_bookcase','hf_rug','hf_lamp','hf_painting','hf_plant','hf_trophy','hf_case','stpaulexit','sp_spencer','sp_organ','sp_manger','sp_wreath','mathesexit','sos_exit','sos_chest','volcano_exit','ember_ladder','heart_door','ember_descent','ember_ascent','cinder_forge','fire_altar','emberdeep_vault','hirschfeld','ember_bridge','ember_vine','glow_ore','frost_pool','ember_vault_door','ember_pipe_fishing','ember_pipe_mining','ember_pipe_woodcutting','ember_conduit','ember_vent','ember_gate','ember_keyspot','ember_dock','ember_bankchest','rector_sign','dig_pratt','dig_hebra','dig_bassi','dig_chase','quartermaster','duel_trapdoor','rector','jellybean_jar','rectory_range','rectory_pantry','rectory_cabinet','rectory_martha','rectory_rector','rectory_cake','rectory_piano','rectory_tree','rectory_fireplace','rectory_island','rectory_book_hymns','rectory_book_horae','rectory_bozek','rectory_eggbasket','sp_fig_pew','sp_fig_choir','sp_fig_alms','sp_fig_curtain','sp_fig_pipes','sp_fig_step','raid_exit','raid_node','raid_plate','raid_brazier','raid_chest','raid_sapling','raid_keystone','raid_barrier','raid_lens','raid_prism','raid_socket','raid_crabsign','raid_bench','raid_stair','raid_well','raid_lobbygate','raid_bank','raid_geartable','raid_sign','raid_rack','raid_pipe','raid_hoard']);
   for(const o of objects)if(!INT_DEFS.has(o.def))o.x+=WX;  /* interior objects stay at their (unshifted) interior coords */
   for(const b of BUILDINGS)b.x+=WX;
   for(const n of npcs){n.x+=WX;if(n.sx!=null)n.sx+=WX;if(n.px!=null)n.px+=WX;}
@@ -5107,7 +5104,6 @@ function _logLoot(id,q,noted){ if(_lootLog)_lootLog.push({id:id,q:q||1,noted:!!n
    and the chest pays the rest. */
 const RAID_BLOCKED_DROPS={cinders:1, warrant:1, obsidian_shard:1, ember_core:1};
 function dropMobLoot(r){
-  if(r.gaunt)return;   /* Gauntlet mobs pay out via the banked pot, not ground loot */
   const mk=MOB_KINDS[r.kind];
   const _boss=!!mk.boss;
   const _prevLog=_lootLog;
@@ -5159,7 +5155,6 @@ function mobDie(r,groupKill){
   if(r.kind==='snowking'){r.blizzardDone=false;r.enrageDone=false;r.enraged=false;despawnIcefiends(r);}
   questKill(r);
   if(r.interior==='sos')sosCaveKill(r);
-  if(r.gaunt){r.respawnAt=9e15; if(typeof onGauntletKill==='function')onGauntletKill(r);}
   if(r.warden){r.respawnAt=9e15; r.spec=null; const _cd=emberConduitOf(r.warden); if(_cd&&!_cd.drained)drainConduit(_cd); msg('The '+r.name+' shudders, its fires guttering \u2014 it crashes into slag, and its conduit dies with it.','#5c3f0a');}
   if(r.kind==='committee_guard'){ r.respawnAt=9e15; if(_rectorBoss&&_rectorBoss.dormant&&!rats.some(z=>z.kind==='committee_guard'&&z.alive)){ _rectorBoss.dormant=false; _rectorBoss.enrageDone=false; _rectorBoss.target=player; _rectorBoss._novaCd=performance.now()+7000; _rectorBoss._siphonCd=performance.now()+10000; _rectorFireT=0; msg('The last enforcer falls. The First Rector rises from his throne \u2014 unbound.','#851b17'); } }
   /* (bounty completion now lives in questKill so co-attackers get credit too) */
@@ -7807,10 +7802,6 @@ function playerTick(){
     player.x=player.px=to[0];player.y=player.py=to[1];player._slideT=performance.now()+180;
     player._agiAnim=null;cancelAction();
   }
-  else if(a.type==='gauntletstart'){
-    if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
-    player.path.length=0; cancelAction(); startGauntlet();
-  }
   else if(a.type==='forgeat'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
     player.path.length=0; openForge(); cancelAction();
@@ -8433,7 +8424,7 @@ function ratsTick(){
        special -- they simply never take a step. */
     if(_raidRooted(r)){ r.x=r.sx; r.y=r.sy; r.px=r.sx; r.py=r.sy; }
     if(r.raid&&r.target===player&&raid&&raid.downed){ r.target=null; if(typeof engagedMob!=='undefined'&&engagedMob===r)engagedMob=null; }   /* a downed delver is not a target */
-    if(!r.target&&!r.tame&&(r.gaunt||r.interior!=='volcano')&&(r.raid||MOB_KINDS[r.kind].aggro||r.gaunt||(inWild(r.x,r.y)&&r.kind!=='snowking'))
+    if(!r.target&&!r.tame&&(r.interior!=='volcano')&&(r.raid||MOB_KINDS[r.kind].aggro||(inWild(r.x,r.y)&&r.kind!=='snowking'))
       &&!(r.kind==='dragon'&&!(player.quests.dq&&player.quests.dq.f))
       /* EVERYTHING in the delve aggroes, whatever its level or yours. The out-levelled rule (a mob
          ignores you once cmb < yours) is right for a field and wrong for a dungeon that has already
@@ -8598,7 +8589,6 @@ function die(){
       const _dm=Math.min(r.hp-1,rndi(1,_rd));if(_dm>0){r.hp-=_dm;splats.push({ent:r,dmg:_dm,t:performance.now()});}}}
     msg('Retribution erupts around you!','#7a2a12');
   }
-  if(typeof gauntlet!=='undefined'&&gauntlet.active)gauntletAbort('death');
   if(inRaid){ if(typeof raidDeath==='function')raidDeath(); return; }   /* raid death: -40% points, gear kept (CoX); revive or room reset */
   if(inVolcano&&_lastVolcFloor===4){
     player.deaths=(player.deaths||0)+1;dirty=true;
@@ -8717,7 +8707,7 @@ function saveObject(){
       pts:(raid.points&&raid.points[player.uid||'me'])|0,rx:player.x,ry:player.y,ri:raid.roomIdx|0}:null,
     hin:((typeof inHouse!=='undefined'&&inHouse&&!houseIsGuest())?1:0),   /* you logged out in your OWN cottage */
     playMs:player.playMs,kills:player.kills,kcBy:player.kcBy||{},achDone:player.achDone||{},house:player.house||null,shrimpBurned:player.shrimpBurned||0,delves:player.delves||0,musicSel:musicSel,musicManual:musicManual,collected:player.collected,run:player.run,stamina:player.stamina,rectorKilledAt:player.rectorKilledAt||0,emberOrder:player.emberOrder||null,emberBounty:player.emberBounty||null,volc:(inVolcano?{fl:_lastVolcFloor,x:player.x,y:player.y}:null),
-    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,tutorial:player.tutorial||null,pet:player.pet||null,gauntletBest:player.gauntletBest||0,starterKit:player._starterKit?1:0,mapv:'sps4',xpv:2};
+    equip:player.equip,kit:player.kit,bank:bank,pray:player.pray,style:player.style,autocast:player.autocast,autoRetaliate:player.autoRetaliate,emoteUnlocks:player.emoteUnlocks,mmf:player.mmf,quests:player.quests,slayer:player.slayer,name:player.name,titleUnlocks:player.titleUnlocks,title:player.title,maxHit:player.maxHit,maxMagicHit:player.maxMagicHit,maxRangeHit:player.maxRangeHit,deaths:player.deaths,pvpWins:player.pvpWins,bossKills:player.bossKills||0,bratKills:player.bratKills||0,mhr:1,winterUnlocked:player.winterUnlocked,winter:player.winter,fall:player.fall,fallUnlocked:player.fallUnlocked,lostStash:player.lostStash,friends:player.friends,uid:player.uid,clueData:player.clueData,cluesDone:player.cluesDone,partyQuiz:player.partyQuiz,cageMaps:player.cageMaps,sosKills:player.sosKills,sosCleared:player.sosCleared,emberVaultDone:player.emberVaultDone||false,emberPipes:player.emberPipes||null,emberPipesDone:player.emberPipesDone||null,emberDrained:player.emberDrained||null,vaultSolved:{memory:!!_vaultSolved.memory,lockout:!!_vaultSolved.lockout,cells:!!_vaultSolved.cells,web:!!_vaultSolved.web},vaultCleared:!!_vaultCleared,swensonFixed:player.swensonFixed||false,swensonOrders:player.swensonOrders||0,swenOrder:player.swenOrder||null,pouch:player.pouch||null,cosmetic:player.cosmetic||null,tutorial:player.tutorial||null,pet:player.pet||null,starterKit:player._starterKit?1:0,mapv:'sps4',xpv:2};
 }
 function saveCodeBytesToB64(bytes){
   let bin='';const CH=0x8000;
@@ -8759,23 +8749,48 @@ async function decodeSave(code){
   let bytes;
   try{bytes=saveCodeB64ToBytes(body);}catch(e){throw new Error('The save code is damaged or incomplete.');}
   if(mode===0)return new TextDecoder().decode(bytes);
-  const out=await saveCodeGunzip(bytes);
+  /* ** A DESKTOP CODE CAN OUT-RUN AN OLD PHONE. ** ALDV1 is gzipped, and DecompressionStream landed
+     in Safari 16.4 -- so a code exported from a laptop and pasted into an older iPhone hit a raw
+     'DecompressionStream is not defined' in the paste box. Name the real problem and the real fix.
+     (The reverse always works: a phone with no CompressionStream exports the plain ALDV0 form, which
+     every browser can read.) */
+  if(typeof DecompressionStream!=='function')
+    throw new Error('This save code is compressed and this browser is too old to unpack it \u2014 update iOS or your browser and paste it again.');
+  let out;
+  try{ out=await saveCodeGunzip(bytes); }
+  catch(e){ throw new Error('The save code is damaged or incomplete.'); }
   return new TextDecoder().decode(out);
 }
 function validSave(o){
   return !!(o&&typeof o==='object'&&o.skills&&typeof o.skills==='object'
     &&Array.isArray(o.inv)&&typeof o.x==='number'&&typeof o.y==='number');
 }
+/* ** iOS WILL NOT COPY FROM A readonly, OFF-SCREEN TEXTAREA. ** The desktop recipe -- park it at
+   top:-1000px, mark it readonly, select(), execCommand -- silently returns false on iPhone and iPad:
+   Safari only copies a selection made through a Range on an editable, ON-SCREEN node. So the element
+   is placed in the viewport (invisible, 1px, zero opacity rather than off-screen), made
+   contentEditable and NOT readonly, and selected with a Range as well as setSelectionRange. The
+   16px font matters too -- anything smaller makes iOS zoom the page when the field takes focus. */
 function legacyCopy(text){
   try{
     const ta=document.createElement('textarea');
-    ta.value=text;ta.setAttribute('readonly','');
-    ta.style.position='fixed';ta.style.top='-1000px';ta.style.left='0';
+    ta.value=text;
+    ta.contentEditable='true';ta.readOnly=false;
+    ta.style.cssText='position:fixed;top:0;left:0;width:1px;height:1px;padding:0;border:0;'+
+                     'outline:0;box-shadow:none;background:transparent;opacity:0;font-size:16px;';
     document.body.appendChild(ta);
-    ta.focus();ta.select();
+    const sel=window.getSelection();
+    const prev=(sel&&sel.rangeCount)?sel.getRangeAt(0):null;
+    try{
+      const rng=document.createRange();rng.selectNodeContents(ta);
+      if(sel){sel.removeAllRanges();sel.addRange(rng);}
+    }catch(e){}
+    ta.focus();
     try{ta.setSelectionRange(0,text.length);}catch(e){}
     let ok=false;try{ok=document.execCommand('copy');}catch(e){ok=false;}
     document.body.removeChild(ta);
+    /* put the player's own selection back rather than leaving the page with a stray one */
+    try{ if(sel){sel.removeAllRanges(); if(prev)sel.addRange(prev);} }catch(e){}
     return ok;
   }catch(e){return false;}
 }
@@ -8807,12 +8822,27 @@ function showSaveCodeModal(code,copied){
   ov.appendChild(box);document.body.appendChild(ov);
   setTimeout(()=>{ta.focus();ta.select();},30);
 }
+/* ** SAFARI LOSES THE USER GESTURE ACROSS AN await. ** Building the code is asynchronous (gzip
+   goes through CompressionStream), so by the time the old version reached writeText the tap that
+   started it no longer counted and iOS refused the write -- 'Copy save to clipboard' quietly copied
+   nothing on iPhone. ClipboardItem exists for exactly this: it accepts a PROMISE of the content, so
+   the clipboard is claimed synchronously inside the gesture and filled when the gzip finishes. The
+   writeText path stays as the fallback for browsers without ClipboardItem, and legacyCopy behind
+   that. The modal shows the code either way, so a failed copy is never a lost character. */
 async function exportSaveToClipboard(){
-  let code;
-  try{ code=await encodeSave(JSON.stringify(saveObject())); }
-  catch(e){ msg('Could not create a save code.','#831e1e'); return; }
+  const codeP=encodeSave(JSON.stringify(saveObject()));
+  codeP.catch(function(){});            /* handled below; this only silences the unhandled warning */
   let ok=false;
-  try{ if(navigator.clipboard&&navigator.clipboard.writeText&&window.isSecureContext){ await navigator.clipboard.writeText(code); ok=true; } }catch(e){}
+  try{
+    if(typeof ClipboardItem==='function'&&navigator.clipboard&&navigator.clipboard.write&&window.isSecureContext){
+      const item=new ClipboardItem({'text/plain':codeP.then(c=>new Blob([c],{type:'text/plain'}))});
+      await navigator.clipboard.write([item]); ok=true;
+    }
+  }catch(e){}
+  let code;
+  try{ code=await codeP; }
+  catch(e){ msg('Could not create a save code.','#831e1e'); return; }
+  if(!ok){ try{ if(navigator.clipboard&&navigator.clipboard.writeText&&window.isSecureContext){ await navigator.clipboard.writeText(code); ok=true; } }catch(e){} }
   if(!ok)ok=legacyCopy(code);
   showSaveCodeModal(code,ok);
 }
@@ -8911,9 +8941,6 @@ async function loadSlot(id, preObj){
     player.partyQuiz=!!s.partyQuiz;
     if(typeof s.cluesDone==='number')player.cluesDone=s.cluesDone;
       if(typeof s.playMs==='number')player.playMs=s.playMs;
-      /* the Gauntlet's high-water wave is a permanent record, not a session score -- it was written
-         on every new best and then thrown away at logout because nothing ever saved it */
-      if(typeof s.gauntletBest==='number')player.gauntletBest=s.gauntletBest;
       /* the starter kit is granted once; unsaved, a character who logged out mid-tutorial was handed
          a fresh sword and kiteshield on every login */
       if(s.starterKit)player._starterKit=1;
@@ -9015,8 +9042,12 @@ async function deleteSlot(id){
   const list=(await readSlots()).filter(sl=>sl.id!==id);
   await writeSlots(list);
 }
-/* ** RESET IS THE MIRROR OF saveObject(). ** If a field is worth carrying in a save code it is worth
-   clearing here, and for a long time it was not: 'Reset progress' left the cottage standing, every
+/* ** NOT WIRED TO ANY BUTTON. ** The 'Reset progress' button was removed: a two-click arm-and-fire
+   control that silently destroys a character is too much risk for something nobody needs -- a player
+   who wants to start over deletes the slot from the title screen and makes a new one. The function
+   stays because it is still the MIRROR of saveObject() and the oracle harness/savetest.mjs measures
+   the save against: if a field is worth carrying in a save code it is worth clearing here, and for a
+   long time it was not. It left the cottage standing, every
    quest finished, the slayer streak, the achievements, the collection log, the pet, the ore pouch
    and the whole Emberdeep unlocked. harness/savetest.mjs now asserts key-for-key that every field
    saveObject() writes is one resetGame() clears, so the two cannot drift apart again. */
@@ -9039,7 +9070,7 @@ async function resetGame(){
   player.maxHit=0;player.maxMagicHit=0;player.maxRangeHit=0;
   player.clueData={};player.cluesDone=0;player.cageMaps={};
   player.lostStash.length=0;player.sosKills=[];player.sosCleared=[];
-  player.shrimpBurned=0;player.delves=0;player.gauntletBest=0;player._starterKit=0;
+  player.shrimpBurned=0;player.delves=0;player._starterKit=0;
   player.run=false;player.stamina=maxStamina();
   player.rectorKilledAt=0;player.emberOrder=null;player.emberBounty=null;
   player.emberVaultDone=false;player.emberPipes=null;player.emberPipesDone=null;player.emberDrained=null;
@@ -9960,12 +9991,6 @@ document.getElementById('muschk').addEventListener('change',e=>{musicOff=!e.targ
 document.getElementById('savebtn').addEventListener('click',()=>{
   if(storageOK)saveGame(false);else msg('Autosave is not available here.','#103a8c');});
 document.getElementById('exportbtn').addEventListener('click',()=>{exportSaveToClipboard();});
-let resetArmed=false;
-document.getElementById('resetbtn').addEventListener('click',e=>{
-  if(!resetArmed){resetArmed=true;e.target.textContent='Really reset? Click again';
-    setTimeout(()=>{resetArmed=false;e.target.textContent='Reset progress';},3000);}
-  else{resetArmed=false;e.target.textContent='Reset progress';resetGame();}
-});
 
 /* ========================= context menu =========================== */
 const ctxEl=document.getElementById('ctx');
@@ -10455,10 +10480,6 @@ function optionsAt(tx,ty){
       opts.push({html:'Enter <span class="t">Lava fissure</span>',
         label:'Enter Lava fissure',fn:()=>setAction({type:'entervolcano',o},o.x,o.y)},
         {html:'Examine <span class="t">Lava fissure</span>',fn:()=>msg(def.ex)});
-    }else if(o.def==='gauntlet_brazier'){
-      opts.push({html:(gauntlet.active?'Approach <span class="t">the Gauntlet</span>':'Challenge <span class="t">the Molten Gauntlet</span>'),
-        label:'Challenge the Molten Gauntlet',fn:()=>setAction({type:'gauntletstart',o},o.x,o.y)},
-        {html:'Examine <span class="t">the Molten Gauntlet</span>',fn:()=>msg(def.ex)});
     }else if(o.def==='cinder_forge'){
       opts.push({html:'Forge-at <span class="t">the Cinder Forge</span>',
         label:'Forge-at the Cinder Forge',fn:()=>setAction({type:'forgeat',o},o.x,o.y)},
@@ -17723,19 +17744,6 @@ function buildObjModel(o){
     /* heat shimmer rising from the core */
     const heat=mesh(new THREE.ConeGeometry(0.32,0.7,8),0xff7a2a);heat.position.set(0,0.5,0);heat.material.transparent=true;heat.material.opacity=0.2;g.add(heat);
     addProxy(g,0.9,1.0,0,{kind:'obj',o});
-  }else if(def==='gauntlet_brazier'){
-    /* a tall signal-brazier on a stepped basalt dais, molten bowl + rising flame */
-    const dais=mesh(new THREE.CylinderGeometry(1.15,1.35,0.24,12),0x2a1c14);dais.position.y=0.12;g.add(dais);
-    const dais2=mesh(new THREE.CylinderGeometry(0.85,1.0,0.2,12),0x3a2820);dais2.position.y=0.3;g.add(dais2);
-    const ring=mesh(new THREE.TorusGeometry(1.15,0.08,7,16),0xff6a2a);ring.rotation.x=Math.PI/2;ring.position.y=0.06;ring.material.transparent=true;ring.material.opacity=0.75;g.add(ring);
-    const col=mesh(new THREE.CylinderGeometry(0.16,0.24,1.3,8),0x1a1410);col.position.y=1.05;g.add(col);
-    for(let i=0;i<4;i++){const a=i*1.5708;const rib=mesh(new THREE.BoxGeometry(0.06,1.1,0.06),0x2a2018);rib.position.set(Math.cos(a)*0.2,1.05,Math.sin(a)*0.2);g.add(rib);}
-    const bowl=mesh(new THREE.CylinderGeometry(0.5,0.28,0.34,10),0x140b08);bowl.position.y=1.85;g.add(bowl);
-    const coals=mesh(new THREE.CylinderGeometry(0.44,0.44,0.14,10),0xff8a2a);coals.position.y=1.96;g.add(coals);
-    const core=mesh(new THREE.CylinderGeometry(0.26,0.26,0.16,10),0xffd27a);core.position.y=1.98;g.add(core);
-    for(let i=0;i<3;i++){const fl=mesh(new THREE.ConeGeometry(0.3-i*0.07,0.7-i*0.14,7),i%2?0xff6a2a:0xffa63a);fl.position.y=2.25+i*0.18;fl.material.transparent=true;fl.material.opacity=0.6-i*0.12;g.add(fl);}
-    for(let i=0;i<6;i++){const a=i*1.047;const sh=mesh(new THREE.ConeGeometry(0.12,0.34,4),(i&1)?0x2e211b:0x3a2a22);sh.position.set(Math.cos(a)*1.05,0.28,Math.sin(a)*1.05);sh.rotation.z=Math.cos(a)*0.3;g.add(sh);}
-    addProxy(g,1.0,2.6,0,{kind:'obj',o});
   }else if(def==='cinder_forge'){
     /* a font of magma with a black meteoric anvil, wreathed in flame */
     const font=mesh(new THREE.CylinderGeometry(0.9,1.05,0.5,10),0x241812);font.position.y=0.25;g.add(font);
@@ -18519,7 +18527,7 @@ addObj('volcano_door',10,125,true);   /* fissure entrance on the SW crater rim (
   {const z=addObj('vault_zipline',222,19,true);if(z){z.to=[219,68];z.xp=18;z.role='exit';}}   /* exit now past the laser, on the boss-door landing */
 })();
 objects.forEach(buildObjModel);
-objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1,raid_rack:1,raid_pipe:1,raid_hoard:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
+objects.forEach(o9=>{if(({sos_exit:1,sos_chest:1,volcano_exit:1,ember_ladder:1,ember_descent:1,ember_ascent:1,cinder_forge:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,raid_exit:1,raid_node:1,raid_plate:1,raid_brazier:1,raid_chest:1,raid_sapling:1,raid_keystone:1,raid_barrier:1,raid_lens:1,raid_prism:1,raid_socket:1,raid_crabsign:1,raid_bench:1,raid_stair:1,raid_well:1,raid_lobbygate:1,raid_bank:1,raid_geartable:1,raid_sign:1,raid_rack:1,raid_pipe:1,raid_hoard:1})[o9.def]&&o9._m&&o9._m.group)o9._m.group.visible=false;});
 
 function updateObjVisual(o){
   const m=o._m;if(!m)return;
@@ -39125,7 +39133,7 @@ function raidStart(large){
 const VOLC_AGI_GATE=false;   /* preview: Agility-45 gate disabled; set true to re-enable */
 const VOLC={x0:120,x1:248,y0:2,y1:118};          /* interior region (separate tile copy; overworld hidden inside, so it may overlap map space) */
 const VOLC_RETURN={x:10,y:125};                  /* return to the SW crater-rim fissure */
-const VOLC_CAVE_OBJS={heart_banner:1,volcano_exit:1,ember_ladder:1,heart_door:1,ember_descent:1,ember_ascent:1,cinder_forge:1,gauntlet_brazier:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,ember_vine:1,glow_ore:1,frost_pool:1,ember_vault_door:1,ember_pipe_fishing:1,ember_pipe_mining:1,ember_pipe_woodcutting:1,ember_conduit:1,ember_vent:1,ember_gate:1,ember_keyspot:1,ember_dock:1,lock_node:1,lock_reset:1,energy_cell:1,cell_socket:1,cell_reset:1,beam_emitter:1,redirector:1,charge_prism:1,dampener:1,beam_receiver:1,puzzle_sign:1,vault_zipline:1,boss_door:1,siphon_pillar:1,rector_throne:1,ember_bankchest:1,rector_sign:1};
+const VOLC_CAVE_OBJS={heart_banner:1,volcano_exit:1,ember_ladder:1,heart_door:1,ember_descent:1,ember_ascent:1,cinder_forge:1,fire_altar:1,emberdeep_vault:1,hirschfeld:1,ember_bridge:1,ember_vine:1,glow_ore:1,frost_pool:1,ember_vault_door:1,ember_pipe_fishing:1,ember_pipe_mining:1,ember_pipe_woodcutting:1,ember_conduit:1,ember_vent:1,ember_gate:1,ember_keyspot:1,ember_dock:1,lock_node:1,lock_reset:1,energy_cell:1,cell_socket:1,cell_reset:1,beam_emitter:1,redirector:1,charge_prism:1,dampener:1,beam_receiver:1,puzzle_sign:1,vault_zipline:1,boss_door:1,siphon_pillar:1,rector_throne:1,ember_bankchest:1,rector_sign:1};
 /* ===== The Emberdeep: four tiered chambers, each hotter/deeper than the last ===== */
 /* floor 0..3 = Chamber I..IV. Each carves a room + has an entry tile you arrive on. */
 const EMBER_CHAMBERS=[
@@ -40159,7 +40167,6 @@ function emberAutoBrief(idx){
 }
 function gotoVolcFloor(idx){
   if(idx<0||idx>=EMBER_CHAMBERS.length)return;
-  if(typeof gauntlet!=='undefined'&&gauntlet.active)gauntletAbort('leave');
   const goingDown = idx>_lastVolcFloor;
   _volcApplyFloor(idx); _lastVolcFloor=idx;
   const c=EMBER_CHAMBERS[idx], e=c.entry;
@@ -40212,7 +40219,6 @@ function restoreVolcano(fl,x,y){
   _volcSilentRestore=false;
 }
 function exitVolcano(){
-  if(typeof gauntlet!=='undefined'&&gauntlet.active)gauntletAbort('leave');
   inVolcano=false; tiles=TILES_MAIN; _volcRestore();
   worldGroup.visible=true; volcGroup.visible=false;
   for(const o9 of objects){if(o9._m&&o9._m.group)o9._m.group.visible=!VOLC_CAVE_OBJS[o9.def];}
@@ -40224,106 +40230,6 @@ function exitVolcano(){
   updateMusic();
   msg('You climb back up the fissure to the crater rim.');
   if(typeof MP!=='undefined'&&MP.pingPresence)MP.pingPresence();
-}
-
-/* ===================== The Molten Gauntlet (Chamber III wave arena) ===================== */
-let gauntlet={active:false,wave:0,pot:0,alive:0};
-const GAUNT_FLOOR=2;                              /* Chamber III = The Molten Gauntlet */
-const GAUNT_CX=137.5, GAUNT_CZ=43.5;              /* arena centre */
-const GAUNT_POOL=['ember_imp','ember_imp','magma_salamander','magma_salamander','obsidian_golem','obsidian_golem','cinder_wraith','cinder_wraith'];
-let _gauntMobs=[];
-(function buildGauntletPool(){
-  let bi=rats.length;
-  for(const kind of GAUNT_POOL){
-    const r={i:bi++,kind:kind,sx:GAUNT_CX,sy:GAUNT_CZ,x:GAUNT_CX,y:GAUNT_CZ,px:GAUNT_CX,py:GAUNT_CZ,
-      hp:MOB_KINDS[kind].hp,maxhp:MOB_KINDS[kind].hp,alive:false,locked:false,respawnAt:9e15,lastHit:0,
-      heading:rnd(0,6.2),target:null,phase:bi%2,name:MOB_KINDS[kind].name,ex:MOB_KINDS[kind].ex,
-      interior:'volcano',volcFloor:GAUNT_FLOOR,gaunt:true};
-    rats.push(r); makeRat(r); if(r._m&&r._m.group)r._m.group.visible=false; _gauntMobs.push(r);
-  }
-})();
-function _gauntRingPos(idx,count){
-  const c=EMBER_CHAMBERS[GAUNT_FLOOR];
-  const a=(idx/Math.max(1,count))*Math.PI*2+0.4;
-  for(let rad=4.5;rad>=2.5;rad-=0.5){
-    const x=Math.round(GAUNT_CX+Math.cos(a)*rad), y=Math.round(GAUNT_CZ+Math.sin(a)*rad);
-    if(x>=c.x0+1&&x<=c.x1-1&&y>=c.y0+1&&y<=c.y1-1&&volcTiles[y]&&volcTiles[y][x]===T_FLOOR)return [x,y];
-  }
-  return [Math.round(GAUNT_CX),Math.round(c.y0+2)];
-}
-function spawnGauntletWave(w){
-  const count=Math.min(_gauntMobs.length,2+w);
-  const hpMult=1+(w-1)*0.15;
-  const bossWave=(w%5===0);
-  gauntlet.alive=0;
-  for(let i=0;i<_gauntMobs.length;i++){
-    const r=_gauntMobs[i];
-    if(i<count){
-      const pos=_gauntRingPos(i,count);
-      r.x=r.px=r.sx=pos[0]; r.y=r.py=r.sy=pos[1];
-      let hp=Math.round(MOB_KINDS[r.kind].hp*hpMult);
-      r.gauntBoss=false;
-      if(bossWave&&i===0){hp=Math.round(hp*2.2); r.gauntBoss=true;}
-      r.maxhp=hp; r.hp=hp; r.alive=true; r.locked=false; r.respawnAt=9e15; r.spec=null;
-      r.target=(player.hp>0?player:null);
-      if(r._m&&r._m.group)r._m.group.visible=true;
-      gauntlet.alive++;
-    } else { r.alive=false; r.target=null; if(r._m&&r._m.group)r._m.group.visible=false; }
-  }
-  dirty=true;
-}
-function startGauntlet(){
-  if(gauntlet.active){msg('The Gauntlet already burns around you \u2014 face the wave!','#683900');return;}
-  if(!inVolcano||_lastVolcFloor!==GAUNT_FLOOR){msg('You must stand in the Molten Gauntlet chamber to begin.','#851a1a');return;}
-  gauntlet.active=true; gauntlet.wave=1; gauntlet.pot=0;
-  msg('You light the brazier. The lava heaves \u2014 the Molten Gauntlet begins! Survive the waves; feathers bank as you clear them.','#7e2600');
-  spawnGauntletWave(1);
-}
-function onGauntletKill(r){
-  if(!gauntlet.active)return;
-  gauntlet.alive=Math.max(0,gauntlet.alive-1);
-  if(gauntlet.alive<=0)onGauntletWaveClear();
-}
-function onGauntletWaveClear(){
-  const w=gauntlet.wave;
-  const pay=6+w*4+(w%5===0?30:0);
-  gauntlet.pot+=pay;
-  msg('Wave '+w+' cleared!  +'+pay+' ember feathers banked  (pot: '+gauntlet.pot+').','#683900');
-  if(w>(player.gauntletBest||0)){player.gauntletBest=w; if(w===10)msg('A new Gauntlet record \u2014 wave 10! The fire remembers your name.','#5e3e00'); if(typeof checkTitleUnlocks==='function')checkTitleUnlocks();if(typeof achCheck==='function')achCheck();}
-  setTimeout(function(){
-    if(!gauntlet.active)return;
-    const nxt=w+1;
-    if(typeof gameConfirm==='function'){
-      gameConfirm('Wave '+w+' cleared \u2014 press on?',
-        'Banked pot: <b>'+gauntlet.pot+'</b> ember feathers.<span class="sub">Brave Wave '+nxt+' for a bigger pot \u2014 but dying forfeits it. Or cash out now and keep '+gauntlet.pot+' feathers.</span>',
-        function(){ if(gauntlet.active)gauntletNextWave(); }, 'Brave Wave '+nxt,
-        function(){ if(gauntlet.active)gauntletCashOut(); }, 'Cash out');
-    } else { if(gauntlet.active)gauntletNextWave(); }
-  },80);
-}
-function gauntletNextWave(){
-  gauntlet.wave++;
-  msg('Wave '+gauntlet.wave+' rises from the lava!','#7e2600');
-  spawnGauntletWave(gauntlet.wave);
-}
-function _gauntDespawn(){
-  for(const r of _gauntMobs){r.alive=false;r.target=null;r.respawnAt=9e15;if(r._m&&r._m.group)r._m.group.visible=false;}
-  gauntlet.alive=0; dirty=true;
-}
-function gauntletCashOut(){
-  const pot=gauntlet.pot, w=gauntlet.wave;
-  gauntlet.active=false; _gauntDespawn();
-  if(pot>0){ if(!addItem('ember_feather',pot))dropGround(player.x,player.y,'ember_feather',pot);
-    msg('You cash out of the Gauntlet after wave '+w+' with '+pot+' ember feathers. The fire subsides.','#5e3e00'); }
-  else msg('You step off the dais. The fire subsides.','#54412d');
-  gauntlet.pot=0; gauntlet.wave=0; if(typeof renderInv==='function')renderInv();
-}
-function gauntletAbort(why){
-  if(!gauntlet.active)return;
-  const pot=gauntlet.pot;
-  gauntlet.active=false; _gauntDespawn(); gauntlet.pot=0; gauntlet.wave=0;
-  if(why==='death')msg('The Gauntlet takes you \u2014 your unbanked pot of '+pot+' ember feathers is lost to the lava.','#851a1a');
-  else if(why==='leave')msg('You leave the Gauntlet; the challenge ends and the unbanked pot of '+pot+' feathers is forfeit.','#851a1a');
 }
 
 /* ============================ Matthes Cage duels (Phase 1) ============================ */

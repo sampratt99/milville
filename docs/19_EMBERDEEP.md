@@ -14,9 +14,16 @@ State: `inVolcano` + `_lastVolcFloor` (1–4). Floor transitions via `ember_desc
 
 - **Floor 1 — the Cinderworks**: skilling floor (mining/smithing-flavoured; the Cinder Forge
   anvil lives on the hub island). Quest: `ember_skill` "The Cinderworks".
-- **Floor 2 — the Molten Gauntlet**: combat floor; wave-based gauntlet (`gauntlet` state),
-  Slag Warden / Ember Choir wardens with **conduits** (`emberConduitOf`/`drainConduit`).
-  Quest: `ember_combat` "The Molten Gauntlet".
+- **Floor 2 — the Molten Gauntlet**: combat floor. Slag Warden / Ember Choir / Forge Tyrant
+  wardens, each chained to a **conduit** (`emberConduitOf`/`drainConduit`): fish out its key, heave
+  its gate, douse its four cinder vents, cut it down. Draining all three opens the sealed NW stair
+  (`gauntletStair`) to the Heart. Quest: `ember_combat` "The Molten Gauntlet".
+
+  > **There was going to be a wave arena on this floor and there is not.** A `gauntlet_brazier`
+  > object, a `gauntlet` wave state, an 8-mob spawn pool and a bank-or-cash-out feather pot were all
+  > written, and the brazier was **never placed in the world** — no `addObj` for it anywhere — so
+  > none of it was ever reachable. It was scrapped and removed (Aug 2026). The *floor* keeps the
+  > name; if you find "Gauntlet" in the code it means Chamber III, not a minigame.
 - **Floor 3 — the Siphon Vault**: puzzle floor (vault barrier, pressure/cell mechanics —
   `vaultBarrierBlocks`, `_cellBlocks`, `onEnterPuzzleTile`). Quest: `ember_puzzle`
   "The Siphon Vault".

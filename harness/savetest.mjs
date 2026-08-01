@@ -4,8 +4,9 @@
    A save code IS the character. `saveObject()` is shared by the autosave and by
    the ALDV export code, so anything it forgets is lost twice: on every logout,
    and again when a player pastes their code into a new browser expecting to find
-   themselves. That has already happened — the Gauntlet's best wave was written
-   on every new record and thrown away at logout, because nothing saved it.
+   themselves. It has already happened: prayer was clamped to a literal 100 on
+   load long after the level cap moved to 120, docking high-level characters 20+
+   points on every single login.
 
    The failure mode is silent and structural: a system gets added (Construction,
    Agility, the ore pouch, the cottage), its state lands on `player`, and nobody
@@ -20,7 +21,12 @@
 
    Run: node harness/savetest.mjs
    ========================================================================== */
-import {runPass, Suite, PRELUDE, SRC} from './_lib.mjs';
+import fs from 'fs';
+import path from 'path';
+import {runPass, Suite, PRELUDE, SRC, ROOT} from './_lib.mjs';
+
+/* SRC is the <script> block only. The paste box is markup, so it needs the raw file. */
+const HTML = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
 
 /* ---------------------------------------------------------------------------
    THE TRANSIENT ALLOWLIST — `player.*` fields that are deliberately NOT saved.
@@ -98,7 +104,6 @@ const T = runPass(PRELUDE + String.raw`
     player.slayer = {task:'rat', need:20, done:5, streak:11, points:220, tasksDone:11,
                      unlocks:{u:1}, blocked:{b:1}};
     player.collected = {coins:1};
-    player.gauntletBest = 8;
     player._starterKit = 1;
     musicSel = 3; musicManual = true;
     _vaultSolved.memory = true; _vaultSolved.lockout = true;
@@ -164,7 +169,7 @@ const T = runPass(PRELUDE + String.raw`
       for(const kk in player.quests[k])
         if(typeof player.quests[k][kk] === 'number') player.quests[k][kk] = 0;
     player.slayer = {task:null, need:0, done:0, streak:0, points:0, tasksDone:0, unlocks:{}, blocked:{}};
-    player.collected = {}; player.gauntletBest = 0; player._starterKit = 0;
+    player.collected = {}; player._starterKit = 0;
     player.name = 'Wiped'; player.uid = null; player.house = null;
     musicSel = 0; musicManual = false;
     _vaultSolved.memory = false; _vaultSolved.lockout = false;
@@ -206,6 +211,32 @@ const T = runPass(PRELUDE + String.raw`
       catch(e){ r.rubbishRefused++; }
     }
 
+    /* -------- 1b. MOBILE <-> DESKTOP: the two codecs must cross both ways ----
+       An older phone has no CompressionStream, so encodeSave falls back to the plain ALDV0 form.
+       A desktop always gzips. Both have to be readable on the other device, and both have to
+       produce the SAME character. Simulated by taking the globals away and putting them back. */
+    const _CS=globalThis.CompressionStream, _DS=globalThis.DecompressionStream;
+    try{
+      delete globalThis.CompressionStream;            /* <- "this is an old iPhone" */
+      const phoneCode = await encodeSave(BEFORE_JSON);
+      r.phoneFallsBackToV0 = phoneCode.slice(0,6)==='ALDV0:';
+      r.phoneCodeLonger = phoneCode.length > code.length;
+      globalThis.CompressionStream=_CS;               /* <- back at the desktop */
+      r.desktopReadsPhoneCode = (await decodeSave(phoneCode))===BEFORE_JSON;
+
+      /* and the phone reading its OWN code, with no decompressor either */
+      delete globalThis.CompressionStream; delete globalThis.DecompressionStream;
+      r.phoneReadsPhoneCode = (await decodeSave(phoneCode))===BEFORE_JSON;
+      /* ...but a gzipped desktop code must say WHY, not throw a DOMException name at them */
+      try{ await decodeSave(code); r.oldPhoneOnV1='no error'; }
+      catch(e){ r.oldPhoneOnV1=String(e.message||e); }
+    } finally {
+      globalThis.CompressionStream=_CS; globalThis.DecompressionStream=_DS;
+    }
+    /* both codecs land the same character */
+    r.v0Loads = await loadSlot('savetest_v0', JSON.parse(await decodeSave(raw)));
+    r.v0Name = player.name;
+
     /* ---------------- 2. the round trip onto a wiped character -------------- */
     const back = JSON.parse(await decodeSave(code));
     wipe();
@@ -225,7 +256,6 @@ const T = runPass(PRELUDE + String.raw`
     r.conLevel = levelFor(player.skills.construction);
     r.prayKept = player.pray;                 /* was clamped to 100 with a 120 Prayer pool */
     r.maxPrayNow = maxPray();
-    r.gauntletBest = player.gauntletBest;     /* was never saved at all */
     r.starterKit = player._starterKit;
     r.invLen = player.inv.length;
     r.bankLen = bank.length;
@@ -281,7 +311,6 @@ const T = runPass(PRELUDE + String.raw`
     r.resetSlayerStreak = player.slayer.streak;
     r.resetSkillsZero = SKILLS.filter(sk => sk !== 'hitpoints').every(sk => player.skills[sk] === 0);
     r.resetHpFloor = player.skills.hitpoints === XP_TABLE[10];
-    r.resetGauntlet = player.gauntletBest;
 
     return r;
   })();
@@ -330,8 +359,7 @@ S.ok('  and the butler',                             /butler/.test(R.houseServan
 /* ==================== the bugs this harness was written for ============== */
 S.ok('PRAYER IS NOT DOCKED TO 100 ON LOAD',          R.prayKept === 118,
      `pool ${R.maxPrayNow}, loaded in at ${R.prayKept}`);
-S.eq('THE GAUNTLET RECORD SURVIVES A LOGOUT',        R.gauntletBest, 8);
-S.eq('  and the starter kit is not re-granted',      R.starterKit, 1);
+S.eq('the starter kit is not re-granted on every login', R.starterKit, 1);
 S.ok('A DEAD ORE ID IS SWEPT FROM THE LOADED POUCH', R.deadOreSwept);
 S.eq('  and live ore is left alone',                 R.liveOreKept, 20);
 S.eq('a truncated pack is padded back to 28',        R.shortInvLen, 28);
@@ -345,7 +373,30 @@ S.eq('  quests are back to the start',               R.resetQuestChef, 0);
 S.eq('  the slayer streak is gone',                  R.resetSlayerStreak, 0);
 S.ok('  skills are zeroed with hitpoints at its floor',
      R.resetSkillsZero && R.resetHpFloor);
-S.eq('  the Gauntlet record is cleared',             R.resetGauntlet, 0);
+
+/* =================== mobile <-> desktop interchange ====================== */
+S.ok('a phone with no CompressionStream exports the plain ALDV0 form', R.phoneFallsBackToV0);
+S.ok('  which is longer, as uncompressed text should be',              R.phoneCodeLonger);
+S.ok('  and a desktop reads that phone code',                          R.desktopReadsPhoneCode);
+S.ok('  and the phone reads it back itself',                           R.phoneReadsPhoneCode);
+S.ok('a gzipped desktop code on an old phone explains itself',
+     /too old to unpack/.test(R.oldPhoneOnV1), R.oldPhoneOnV1);
+S.ok('  not a raw DecompressionStream error',
+     !/DecompressionStream/.test(R.oldPhoneOnV1), R.oldPhoneOnV1);
+S.ok('either codec loads the same character',   R.v0Loads && R.v0Name==='Roundtrip', R.v0Name);
+
+/* the clipboard has to survive Safari, which cannot be exercised offline */
+S.ok('export claims the clipboard with a PROMISE, inside the gesture',
+     /new ClipboardItem\(\{'text\/plain':codeP\.then/.test(SRC),
+     'Safari drops the user gesture across an await; ClipboardItem takes a promise');
+S.ok('  with writeText and legacyCopy behind it',
+     /navigator\.clipboard\.writeText\(code\)/.test(SRC) && /ok=legacyCopy\(code\)/.test(SRC));
+S.ok('legacyCopy uses the iOS Range recipe, on-screen and editable',
+     /contentEditable='true'/.test(SRC) && /selectNodeContents\(ta\)/.test(SRC) &&
+     !/ta\.style\.top='-1000px'/.test(SRC));   /* the old off-screen form, not the comment describing it */
+S.ok('  at 16px, so iOS does not zoom the page on focus', /font-size:16px/.test(SRC));
+S.ok('the paste box has autocorrect and autocapitalise off',
+     /id="importfield"[^>]*autocapitalize="none"[^>]*autocorrect="off"[^>]*spellcheck="false"/.test(HTML));
 
 /* ==================== SOURCE: the three lists agree ====================== */
 const SAVE_SRC  = SRC.slice(SRC.indexOf('function saveObject()'), SRC.indexOf('function saveCodeBytesToB64'));

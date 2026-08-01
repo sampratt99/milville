@@ -170,3 +170,56 @@ reads the source to assert the three lists agree: `saveObject()` writes it,
 `player.*` field in `index.html` is either saved or on an explicit transient
 allowlist — so adding a persistent field without saving it now fails by name.
 New doc: `24_SAVES_AND_SAVE_CODES.md`.
+
+## The Molten Gauntlet minigame removed; reset button removed; mobile save codes (August 2026)
+
+**The wave arena on Emberdeep floor 2 was scrapped, and the code was still there.**
+Auditing why a "Gauntlet best wave" record existed turned up the reason nobody
+had ever seen it: `gauntlet_brazier`, the object that starts the thing, is
+**never placed in the world** — no `addObj` for it anywhere, unlike its
+neighbour `cinder_forge` on the same island. It was unreachable, and doubly so:
+its arena centre `(137.5, 43.5)` predates the chamber move and now sits outside
+Chamber III entirely, so every wave would have stacked all eight mobs on one
+fallback tile.
+
+It was not free, either. `buildGauntletPool()` ran at load and pushed **8 mobs
+into `rats` with 8 Three.js model groups built and hidden**, every session, for a
+feature no player could start. Removed: the object def and the four tables
+naming it, the menu branch, the model branch, the walk-to action, the death and
+floor-leave hooks, the loot and kill hooks, and the 5 KB minigame itself —
+**8.5 KB in all**.
+
+**Chamber III is not going anywhere.** The *floor* is called the Molten Gauntlet
+and is fully live: three wardens on conduits, keys, gates, vents, the sealed NW
+stair to the Heart, Hirschfeld's dialogue and the `ember_combat` quest. Only the
+wave arena is gone. If you find "Gauntlet" in the code now, it means the room.
+
+**"Reset progress" is gone from Options.** A two-click arm-and-fire control that
+destroys a character is risk with no upside — a player who wants to start over
+deletes the slot on the title screen. `resetGame()` itself stays, unwired, as the
+mirror of `saveObject()` and the oracle `savetest` measures the save against.
+
+**Save codes now survive an iPhone.** Three real defects, none visible on a
+desktop:
+
+- **Safari drops the user gesture across an `await`.** Building a code is async
+  (gzip), so `await encodeSave(...)` then `clipboard.writeText(...)` was refused
+  on iOS — "Copy save to clipboard" quietly copied nothing. The clipboard is now
+  claimed *synchronously inside the tap* with
+  `new ClipboardItem({'text/plain': promise})`, which exists for exactly this,
+  with `writeText` and `legacyCopy` behind it.
+- **iOS will not copy from a readonly, off-screen textarea.** `legacyCopy` used
+  the desktop recipe (`top:-1000px`, readonly, `select()`), which returns false
+  on iPhone. It now uses an on-screen invisible 1px field, `contentEditable`, a
+  Range *and* `setSelectionRange`, at 16px so iOS does not zoom on focus.
+- **A desktop code could out-run an old phone.** `ALDV1:` is gzipped and
+  `DecompressionStream` only landed in Safari 16.4, so a laptop code pasted into
+  an older iPhone surfaced a raw `DecompressionStream is not defined`. It now
+  names the problem and the fix. The reverse direction was already safe: a phone
+  without `CompressionStream` exports the plain `ALDV0:` form, which everything
+  reads.
+
+`savetest` (51 assertions) proves the interchange by deleting
+`CompressionStream`/`DecompressionStream` off `globalThis` and putting them back:
+a phone code loads on a desktop, loads on the phone, and lands the same
+character as the gzipped one.
