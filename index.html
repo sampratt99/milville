@@ -32414,6 +32414,13 @@ function renderDuelSetup(){
 const COIN_BUYABLE=(()=>{ const s=new Set(GE_STOCK);
   for(const t of [(typeof EMBER_SHOP!=='undefined')?EMBER_SHOP:[],(typeof CAGE_SHOP!=='undefined')?CAGE_SHOP:[]])
     for(const e of (t||[])){ const id=e&&(e.id||e.out); if(id&&(e.coins|0)>0)s.add(id); }
+  /* ** AN ITEM WHOSE INPUTS ARE BUYABLE HAS A BUY SIDE TOO, even if the item itself is not stocked. **
+     Bars are the case that bites: no bar is in GE_STOCK, but every ORE is, so paying a bar its full
+     val made buy-ore -> smelt -> vendor a printer -- +1,710 a rune bar, about 5.1M gp/hr of pure
+     clicking, above every legitimate method. If you can buy everything that goes into it, the spread
+     applies to it. */
+  for(const [bar,lvl,xp,ins] of ((typeof SMELT_BARS!=='undefined')?SMELT_BARS:[]))
+    if(ins.every(([id])=>s.has(id))) s.add(bar);
   return s; })();
 function sellPrice(id){const it=ITEMS[id]; if(!it||!it.val)return 0;
   return COIN_BUYABLE.has(id)?Math.max(1,Math.floor(it.val*0.4)):Math.max(1,Math.floor(it.val));}

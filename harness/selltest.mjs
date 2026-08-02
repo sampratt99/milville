@@ -72,6 +72,15 @@ const T = runPass(PRELUDE + String.raw`
   }
   o.buyWinners = o.buyLoops.filter(r => r.profit > 0);
 
+  /* SMELTING: buy the ore, smelt, vendor the bar. No bar is in GE_STOCK, so without the
+     inputs-are-buyable rule this printed money (+1,710 a rune bar, ~5.1M gp/hr). */
+  o.smeltArb=[];
+  for(const [bar,lvl,xp,ins] of SMELT_BARS){
+    let cost=0, ok=true;
+    for(const [id,q] of ins){ if(!GE_STOCK.includes(id)){ok=false;break;} cost+=ITEMS[id].val*q; }
+    if(ok&&sellPrice(bar)>cost) o.smeltArb.push(bar+' costs '+cost+' vendors '+sellPrice(bar));
+  }
+
   /* nothing you can buy for coins may vendor for more than it cost */
   o.coinArb=[];
   for(const t of [(typeof EMBER_SHOP!=='undefined')?EMBER_SHOP:[],(typeof CAGE_SHOP!=='undefined')?CAGE_SHOP:[]])
@@ -123,6 +132,8 @@ S.eq('the sell rate is written in exactly one place',
 S.ok('the spread is keyed on being buyable for coins, not on GE_STOCK alone',
      /COIN_BUYABLE\.has\(id\)/.test(SRC) && /EMBER_SHOP/.test(SRC.slice(SRC.indexOf('const COIN_BUYABLE'), SRC.indexOf('function sellPrice'))),
      'the luxury quivers cost coins at Hirschfeld but are not in GE_STOCK — they need the spread too');
+S.eq('NO buy-ore-smelt-and-vendor loop pays either', T.smeltArb, [],
+     'bars are not GE-stocked, so they only keep the spread because their ORES are buyable');
 S.eq('  and no coin-buyable item vendors for more than it costs', T.coinArb, [],
      'buy it, sell it back, profit — that is what the spread exists to stop');
 

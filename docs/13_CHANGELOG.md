@@ -545,3 +545,17 @@ unique roll: 741,304 gp.**
    entirely — real gp/kill is 103,756, not the 39,680 first reported.
 
 `selltest` now also asserts no coin-buyable item vendors for more than it costs.
+
+### Follow-up the same day: the bars escaped the spread
+
+The change above had a hole I shipped. **No bar is in `GE_STOCK`**, so paying
+drop-only items their full `val` handed bars their full value too — while every
+*ore* remains buyable. That made buy-ore → smelt → vendor a printer: **+1,710 a
+rune bar, about 5.1M gp/hr of pure clicking**, above every legitimate method,
+with no gathering. `selltest`'s guard only covered `SMITH_RECIPES` (bars → gear),
+never `SMELT_BARS` (ore → bar).
+
+The rule is now stated properly: **an item whose inputs are all buyable has a buy
+side too, even when the item itself is not stocked.** All seven bars are back
+underwater (rune bar −3,570). `selltest` grew an assertion over `SMELT_BARS`, and
+removing the rule turns it red.
