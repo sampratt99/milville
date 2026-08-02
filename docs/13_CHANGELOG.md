@@ -559,3 +559,22 @@ The rule is now stated properly: **an item whose inputs are all buyable has a bu
 side too, even when the item itself is not stocked.** All seven bars are back
 underwater (rune bar −3,570). `selltest` grew an assertion over `SMELT_BARS`, and
 removing the rule turns it red.
+
+### The clerk will not buy earned gear (same day)
+
+Nine items are now in `SELL_BLOCK`: the forged Ember set (**ember_helm,
+ember_body, ember_legs, ember_boots, ember_gauntlets**), the **Gilded Warden's
+Helm**, both **Proctor's Helms**, and the **Dragon Slayer shield**. They are
+earned with cinders, warrants, signets or quest deeds — never coins — so
+vendoring them converted earned currency and quest rewards straight into gold at
+100% of value, which is the same shape as the smelting hole above.
+
+`SELL_BLOCK` is used rather than `noSell` deliberately: **it blocks the clerk,
+not the market.** `isTradeable()` keys on `noSell`, so these stay fully tradeable
+between players.
+
+It also turned out `SELL_BLOCK` was only half-enforced — `renderSell` filtered on
+it and `gePrice` zeroed on it, but `sellSlot`/`sellId`/`sellItem` checked only
+`noSell`, so a blocked item could still be sold by clicking it in the pack. All
+three paths now honour it, and `selltest` drives every `SELL_BLOCK` entry down
+all three.

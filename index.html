@@ -32428,7 +32428,7 @@ function sellSlot(i,n){
   const sl=player.inv[i];if(!sl)return;
   const id=sl.id;
   if(id==='coins'){msg('Clerk: I cannot buy coins with coins, friend.');return;}
-  if(ITEMS[id].noSell){msg('Clerk: That is a keepsake \u2014 not something I can buy.');return;}
+  if(ITEMS[id].noSell||SELL_BLOCK.includes(id)){msg('Clerk: That is a keepsake \u2014 not something I can buy.');return;}
   if(!ITEMS[id].val){msg('Clerk: I have no interest in that.');return;}
   let q;
   if(ITEMS[id].stack){q=Math.min(n,sl.qty);sl.qty-=q;if(sl.qty<=0)player.inv[i]=null;}
@@ -32438,6 +32438,7 @@ function sellSlot(i,n){
   sfx.pickup();renderShopCoins();renderInv();renderSell&&renderSell();dirty=true;
 }
 function sellId(id,n){
+  if(!ITEMS[id]||ITEMS[id].noSell||SELL_BLOCK.includes(id))return;   /* the clerk refuses these outright */
   let left=n,sold=0;
   for(let i=0;i<28&&left>0;i++){const sl=player.inv[i];
     if(sl&&sl.id===id){
@@ -32461,11 +32462,18 @@ function buyItem(id,n){
     msg('You buy '+(bought>1?bought+' x ':'a ')+ITEMS[id].name+(noted?' (banknote)':'')+' for '+fmt(val*bought)+' coins.');
     renderShopCoins();}
 }
+/* ** THE CLERK WILL NOT TAKE THESE AT ANY PRICE. ** Quest keepsakes, and gear that is EARNED rather
+   than bought: the forged Ember set (cinders, warrants and signets, no coins) and the helms and
+   shield handed out for deeds. Vendoring those would turn earned currency and quest rewards straight
+   into gold. They stay fully TRADEABLE between players -- this blocks the clerk, not the market,
+   which is why it is SELL_BLOCK and not noSell (noSell would also bar them from the Player Market). */
 const SELL_BLOCK=['masters_seal','lost_crate','candy','clawed_slate',
-  'censer_fragment','cracked_horn'];
+  'censer_fragment','cracked_horn',
+  'ember_helm','ember_body','ember_legs','ember_boots','ember_gauntlets',
+  'gilded_warden_helm','proctor_helm','crimson_proctor_helm','dragon_shield'];
 const SELL_CONFIRM_GP=50000;   /* selling for more than this asks for confirmation */
 function sellItem(id,n){
-  if(!ITEMS[id]||!ITEMS[id].val||ITEMS[id].noSell||/^party_hat_/.test(id)||id==='santa_hat')return;
+  if(!ITEMS[id]||!ITEMS[id].val||ITEMS[id].noSell||SELL_BLOCK.includes(id)||/^party_hat_/.test(id)||id==='santa_hat')return;
   n=n||1;
   const unit=sellPrice(id);        /* 40%, same as the inventory path — see gePrice */
   /* high-value guard: if this sale would exceed the threshold, confirm first (in-game dialog, based on how many will actually sell) */

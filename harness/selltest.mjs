@@ -88,6 +88,21 @@ const T = runPass(PRELUDE + String.raw`
       if(id&&ITEMS[id]&&(e.coins|0)>0&&sellPrice(id)>e.coins)
         o.coinArb.push(id+' costs '+e.coins+' vendors '+sellPrice(id)); }
 
+  /* SELL_BLOCK: the clerk refuses these on EVERY path, and you keep the item.
+     sellSlot/sellId used to check only noSell, so a blocked item was still sellable
+     by clicking it in the pack. */
+  o.blocked=[];
+  for(const id of SELL_BLOCK){
+    if(!ITEMS[id]) continue;
+    for(const [how,fn] of [['pack',()=>sellId(id,1)],['list',()=>sellItem(id,1)],
+                           ['slot',()=>sellSlot(player.inv.findIndex(x=>x&&x.id===id),1)]]){
+      clearInv(); give(id,1); const c=countItem('coins');
+      try{ fn(); }catch(e){}
+      if(countItem('coins')!==c||countItem(id)!==1) o.blocked.push(id+' sold via '+how);
+    }
+    if(gePrice(id)!==0) o.blocked.push(id+' still quotes a price');
+  }
+
   /* gathering it yourself must still pay, or the economy has no engine */
   o.gatherPays = [
     {what: 'runite ore, mined', gp: sellPrice('runite_ore')},
@@ -132,6 +147,8 @@ S.eq('the sell rate is written in exactly one place',
 S.ok('the spread is keyed on being buyable for coins, not on GE_STOCK alone',
      /COIN_BUYABLE\.has\(id\)/.test(SRC) && /EMBER_SHOP/.test(SRC.slice(SRC.indexOf('const COIN_BUYABLE'), SRC.indexOf('function sellPrice'))),
      'the luxury quivers cost coins at Hirschfeld but are not in GE_STOCK — they need the spread too');
+S.eq('SELL_BLOCK items cannot be sold down ANY path, and quote no price', T.blocked, [],
+     'the clerk refuses forged Ember gear and quest keepsakes; they stay tradeable between players');
 S.eq('NO buy-ore-smelt-and-vendor loop pays either', T.smeltArb, [],
      'bars are not GE-stocked, so they only keep the spread because their ORES are buyable');
 S.eq('  and no coin-buyable item vendors for more than it costs', T.coinArb, [],
