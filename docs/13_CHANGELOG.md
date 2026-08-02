@@ -460,3 +460,42 @@ Two older harnesses asserted fee behaviour that is now correctly gone and were
 updated rather than deleted: `sawtest` now asserts the mill is free at every
 tier, and `shiptest` turns "refuses when the fee is unaffordable" into
 **"a penniless player can still mill"** — which is the case that now has to work.
+
+## One sell price, and the money printer it was hiding (August 2026)
+
+Started as "the tooltip shows 4,200 for a plank that sells for 2,800". It was
+not a tooltip bug.
+
+**There were two live sell paths paying different amounts for the same item.**
+Clicking an item in your pack (or right-click → Sell-1/5/All) went to
+`sellSlot`/`sellId` and paid **40%** of value. Clicking a row in the GE panel's
+sell list went to `sellItem` → `_doSell` and paid **60%**. A birch plank was
+worth 2,800 one way and 4,200 the other, and the tooltip advertised 4,200 for
+both.
+
+**The 60% path was a money printer.** The clerk sells ore at full value, so
+buying ore and smithing it paid on **39 of 55 recipes with no gathering at all**
+— +3,470 a rune full helm, +6,940 a scimitar, **+17,350 a platebody**, about
+**8.7M gp/hr of pure clicking** before travel. That is several times any
+legitimate method, and it needed no nodes, no respawns and no gathering time.
+The economy's whole design is the opposite rule: buy-and-process loses,
+gather-and-process pays.
+
+**40% is now canonical and there is exactly one definition of it.** `gePrice`
+(tooltip and examine), `renderSell`'s displayed label and `sellItem`'s unit price
+all call `sellPrice()`. Buy-and-smith is back to 0 of 55 profitable; gathering
+your own still pays.
+
+This also corrects two things said earlier in this changelog: the claim that "no
+buy-and-process loop pays" was only ever true of the 40% path, and every gp/hr
+figure quoted for the sawmill was computed on that path — which is the one that
+survived, so those numbers stand.
+
+New harness `selltest.mjs` (19 assertions) drives **every sellable item in the
+game** down both paths and asserts they agree with each other and with the
+tooltip, that the rate appears in exactly one place, and that no
+buy-the-inputs-and-sell loop profits. Three sabotages confirmed red, one per
+surface.
+
+**Player-visible cost, stated plainly:** anyone who had been selling through the
+GE list is now paid a third less. That is the correct number, but it is a drop.

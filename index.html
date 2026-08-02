@@ -9694,7 +9694,14 @@ function eqStat(k){
   if(EMBER_SET_BONUS[k]&&hasEmberSet())t+=EMBER_SET_BONUS[k];
   return t;
 }
-function gePrice(id){const it=ITEMS[id];if(!it||!it.val||it.noSell||SELL_BLOCK.includes(id))return 0;return Math.max(1,Math.floor(it.val*0.6));}
+/* ** WHAT THE CLERK ACTUALLY PAYS, AND NOTHING ELSE. ** This returned 60% of val while the
+   inventory sell path paid 40%, so the same birch plank was worth 2,800 clicked from your pack and
+   4,200 clicked in the sell list -- and the tooltip advertised the higher one. Worse, the 60% rate
+   made BUYING ore and smithing it profitable on 39 of 55 recipes with no gathering at all (~8.7M
+   gp/hr on rune platebodies), which is the money printer the whole economy is built to avoid.
+   40% is canonical: every quoted price now comes from sellPrice(), so a displayed number is always
+   the number you receive. harness/pricetest.mjs asserts it item by item. */
+function gePrice(id){const it=ITEMS[id];if(!it||!it.val||it.noSell||SELL_BLOCK.includes(id))return 0;return sellPrice(id);}
 function statBits(eq,sep){
   const b=[];if(eq.atk)b.push('Atk +'+eq.atk);if(eq.str)b.push('Str +'+eq.str);if(eq.def)b.push('Def +'+eq.def);
   if(eq.ratk)b.push('RngAtk +'+eq.ratk);if(eq.rstr)b.push('RngStr +'+eq.rstr);if(eq.rdef)b.push('RngDef +'+eq.rdef);
@@ -32439,7 +32446,7 @@ const SELL_CONFIRM_GP=50000;   /* selling for more than this asks for confirmati
 function sellItem(id,n){
   if(!ITEMS[id]||!ITEMS[id].val||ITEMS[id].noSell||/^party_hat_/.test(id)||id==='santa_hat')return;
   n=n||1;
-  const unit=Math.max(1,Math.floor(ITEMS[id].val*0.6));
+  const unit=sellPrice(id);        /* 40%, same as the inventory path — see gePrice */
   /* high-value guard: if this sale would exceed the threshold, confirm first (in-game dialog, based on how many will actually sell) */
   const _avail=player.inv.reduce((a,sl)=>a+((sl&&sl.id===id)?(sl.qty||1):0),0);
   const _willSell=Math.min(n,_avail);
@@ -32477,7 +32484,7 @@ function renderSell(){
     const it=ITEMS[s9.id];
     if(!it||!it.val||it.noSell||/^party_hat_/.test(s9.id)||s9.id==='santa_hat'||SELL_BLOCK.includes(s9.id))return;
     seen[s9.id]=1;
-    const price=Math.max(1,Math.floor(it.val*0.6));
+    const price=sellPrice(s9.id);   /* the number shown must be the number paid — see gePrice */
     const r=document.createElement('div');r.className='gerow';
     const c=document.createElement('canvas');c.width=26;c.height=26;
     drawItemIcon(c.getContext('2d'),s9.id,26);

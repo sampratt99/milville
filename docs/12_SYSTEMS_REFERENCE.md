@@ -63,3 +63,32 @@ ring and pet slots, so a player wearing a Lightbearer looked barehanded to every
 not even agree with each other about ammo. Both now mirror `EQUIP_LAYOUT`, which is the only list the
 game actually draws from. `harness/annoy.mjs` asserts all three rules.
 
+## One sell price, quoted everywhere (Aug 2026)
+
+**`sellPrice(id)` — 40% of `val` — is the only function that decides what the clerk pays, and every
+number the game shows is that function's output.** It was not always so, and the gap was expensive.
+
+There are two live sell paths and they used to disagree:
+
+| how you sell | function | used to pay |
+|---|---|---|
+| click an item in your pack (shop open), or right-click → Sell-1/5/All | `sellSlot` / `sellId` | 40% of `val` |
+| click a row in the GE panel's sell list | `sellItem` → `_doSell` | **60% of `val`** |
+
+So a birch plank was worth **2,800 from your pack and 4,200 from the sell list**, and both the
+tooltip (`gePrice`) and the sell list's own label advertised the higher figure.
+
+**The 60% rate was a money printer, not just an inconsistency.** The clerk sells ore at full `val`,
+so buying ore and smithing it paid on **39 of 55 recipes with no gathering at all** — +17,350 a rune
+platebody, roughly **8.7M gp/hr of pure clicking** before travel, several times any legitimate
+method. The whole economy rests on the opposite rule:
+
+> **Buy-and-process must lose. Gather-and-process must pay.**
+
+At 40% it does, on all 55. `gePrice`, `renderSell`'s label and `sellItem`'s unit price now all call
+`sellPrice`, so a displayed number is always the number you receive.
+
+`harness/selltest.mjs` drives **every sellable item in the game** down both paths and asserts the two
+agree with each other and with the tooltip, that the rate is written in exactly one place, and that
+no buy-the-inputs loop turns a profit.
+

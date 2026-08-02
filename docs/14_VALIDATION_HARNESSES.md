@@ -61,9 +61,9 @@ CAN: logic, data tables, formulas, icon/model construction, UI render functions 
 message-handler wiring (source checks). CAN'T: WebGL appearance, CSS layout, feel, real
 multiplayer (2+ browsers), group-boss dynamics (3–4 players). Say so in the summary.
 
-## The suite (51 harnesses)
+## The suite (52 harnesses)
 
-All 51 are committed in `harness/` and run by `npm test` — most grew out of the Construction arc,
+All 52 are committed in `harness/` and run by `npm test` — most grew out of the Construction arc,
 which is why the table below is organised around it. Roughly by area:
 
 | Area | Harnesses |
@@ -81,6 +81,7 @@ which is why the table below is organised around it. Roughly by area:
 | multiplayer + containment | `mphouse` · `visittest` · `containtest` · `lobbyvis` |
 | skills outside Construction | `runorb` |
 | player-facing annoyances | `annoy` |
+| prices and the sell paths | `selltest` |
 
 Five are worth running after almost any change:
 - **`shiptest`** — walks the whole Construction chain in one pass, saw to butler.
