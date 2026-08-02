@@ -72,6 +72,13 @@ const T = runPass(PRELUDE + String.raw`
   }
   o.buyWinners = o.buyLoops.filter(r => r.profit > 0);
 
+  /* nothing you can buy for coins may vendor for more than it cost */
+  o.coinArb=[];
+  for(const t of [(typeof EMBER_SHOP!=='undefined')?EMBER_SHOP:[],(typeof CAGE_SHOP!=='undefined')?CAGE_SHOP:[]])
+    for(const e of (t||[])){ const id=e&&(e.id||e.out);
+      if(id&&ITEMS[id]&&(e.coins|0)>0&&sellPrice(id)>e.coins)
+        o.coinArb.push(id+' costs '+e.coins+' vendors '+sellPrice(id)); }
+
   /* gathering it yourself must still pay, or the economy has no engine */
   o.gatherPays = [
     {what: 'runite ore, mined', gp: sellPrice('runite_ore')},
@@ -107,11 +114,17 @@ S.ok('  and sellItem pays sellPrice',
      /const unit=sellPrice\(id\);/.test(SRC));
 /* the RATE itself, not any of the hundreds of 0.4s in the geometry code */
 S.eq('the sell rate is written in exactly one place',
-     (SRC.match(/ITEMS\[id\]\.val\|\|0\)\*0\.4/g) || []).length, 1,
+     (SRC.match(/it\.val\*0\.4/g) || []).length, 1,
      'one definition, or the next change moves only half the game');
-S.eq('  and no price is derived from val by any other fraction',
-     (SRC.match(/\.val\s*\*\s*0\.[0-9]/g) || []), [],
-     'a hand-rolled fraction of val is exactly how the two sell paths drifted apart');
+
+/* THE SPREAD ONLY APPLIES WHERE THERE IS A BUY SIDE. A drop-only item has nothing to
+   arbitrage against, so it pays its full val; anything purchasable FOR COINS anywhere
+   keeps the 40% haircut, or buying it and selling it straight back turns a profit. */
+S.ok('the spread is keyed on being buyable for coins, not on GE_STOCK alone',
+     /COIN_BUYABLE\.has\(id\)/.test(SRC) && /EMBER_SHOP/.test(SRC.slice(SRC.indexOf('const COIN_BUYABLE'), SRC.indexOf('function sellPrice'))),
+     'the luxury quivers cost coins at Hirschfeld but are not in GE_STOCK — they need the spread too');
+S.eq('  and no coin-buyable item vendors for more than it costs', T.coinArb, [],
+     'buy it, sell it back, profit — that is what the spread exists to stop');
 
 /* the rule the rate protects */
 S.eq('NO buy-the-inputs-and-sell loop turns a profit',

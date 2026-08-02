@@ -2106,31 +2106,31 @@ const RARE_ITEMS=['draconic_visage','abyssal_whip','granite_maul','basilisk_jaw'
 const RARE_SET=Object.fromEntries(RARE_ITEMS.map(i=>[i,true]));
 function markCollected(id){if(typeof player!=='undefined'&&player.collected&&RARE_SET[id])player.collected[id]=true;}
 function backfillCollected(){if(!player.collected)player.collected={};const scan=arr=>{if(!arr)return;for(const it of arr)if(it&&RARE_SET[it.id])player.collected[it.id]=true;};scan(player.inv);if(typeof bank!=='undefined')scan(bank);for(const sl in player.equip){const e=player.equip[sl];if(e&&RARE_SET[e.id])player.collected[e.id]=true;}}
-ITEMS.dragon_scimitar={name:'Dragon scimitar',ex:'A wickedly curved blade of red dragon-metal, chased with gold.',val:130000,equip:{slot:'weapon',atk:67,str:66,model:'scim',verb:'Wield',req:60,tint:0x9c1818,trim:0xd4af37}};
-ITEMS.dragon_sword={name:'Dragon sword',ex:'A straight dragon-metal blade, gold-fullered and keen.',val:110000,equip:{slot:'weapon',atk:69,str:80,spd:3000,model:'sword',verb:'Wield',req:60,tint:0x9c1818,trim:0xd4af37}};
-ITEMS.dragon_full_helm={name:'Dragon full helm',ex:'A snarling dragon-head helm of red and gold.',val:90000,equip:{slot:'head',def:48,model:'helm',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
-ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with gold dragon-work.',val:160000,equip:{slot:'body',def:107,model:'plate',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
-ITEMS.dragon_platelegs={name:'Dragon platelegs',ex:'Red dragon-plate greaves trimmed in gold.',val:130000,equip:{slot:'legs',def:66,model:'legs',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
-ITEMS.dragon_kiteshield={name:'Dragon kiteshield',ex:'A red kiteshield bearing a golden wyrm.',val:120000,equip:{slot:'shield',def:60,model:'shieldM',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_scimitar={name:'Dragon scimitar',ex:'A wickedly curved blade of red dragon-metal, chased with gold.',val:200000,equip:{slot:'weapon',atk:67,str:66,model:'scim',verb:'Wield',req:60,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_sword={name:'Dragon sword',ex:'A straight dragon-metal blade, gold-fullered and keen.',val:170000,equip:{slot:'weapon',atk:69,str:80,spd:3000,model:'sword',verb:'Wield',req:60,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_full_helm={name:'Dragon full helm',ex:'A snarling dragon-head helm of red and gold.',val:150000,equip:{slot:'head',def:48,model:'helm',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_platebody={name:'Dragon platebody',ex:'Heavy red plate, ornate with gold dragon-work.',val:250000,equip:{slot:'body',def:107,model:'plate',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_platelegs={name:'Dragon platelegs',ex:'Red dragon-plate greaves trimmed in gold.',val:200000,equip:{slot:'legs',def:66,model:'legs',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
+ITEMS.dragon_kiteshield={name:'Dragon kiteshield',ex:'A red kiteshield bearing a golden wyrm.',val:190000,equip:{slot:'shield',def:60,model:'shieldM',verb:'Wear',req:60,tint:0x9c1818,trim:0xd4af37}};
 /* ===== The Snow King unique drops (Pat's Peak summit boss) ===== */
-ITEMS.frostmaul={name:'Frostmaul',ex:'A two-handed maul hewn from blue-black glacier ice, its head a cluster of jagged frost shards. Its blows chill to the bone \u2014 and sometimes freeze the foe solid.',val:250000,equip:{slot:'weapon',atk:78,str:126,spd:3300,twoHand:true,model:'maul',verb:'Wield',req:60,tint:0x7fc8ec,trim:0xe6f6ff,freeze:0.15}};
-ITEMS.glacial_full_helm={name:'Glacial full helm',ex:'A full helm of blue glacier-steel, crowned with a ring of frost spikes that never melt.',val:120000,equip:{slot:'head',def:56,model:'helm',verb:'Wear',req:70,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
-ITEMS.glacial_platebody={name:'Glacial platebody',ex:'A breastplate of blue glacier-steel, rimed white and studded with frost-shard spikes across the shoulders.',val:220000,equip:{slot:'body',def:122,model:'plate',verb:'Wear',req:70,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
-ITEMS.glacial_platelegs={name:'Glacial platelegs',ex:'Greaves of glacier-steel that never thaw, edged with a frost-spiked knee.',val:160000,equip:{slot:'legs',def:76,model:'legs',verb:'Wear',req:70,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
+ITEMS.frostmaul={name:'Frostmaul',ex:'A two-handed maul hewn from blue-black glacier ice, its head a cluster of jagged frost shards. Its blows chill to the bone \u2014 and sometimes freeze the foe solid.',val:200000,equip:{slot:'weapon',atk:78,str:126,spd:3300,twoHand:true,model:'maul',verb:'Wield',req:60,tint:0x7fc8ec,trim:0xe6f6ff,freeze:0.15}};
+ITEMS.glacial_full_helm={name:'Glacial full helm',ex:'A full helm of blue glacier-steel, crowned with a ring of frost spikes that never melt.',val:220000,equip:{slot:'head',def:56,model:'helm',verb:'Wear',req:70,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
+ITEMS.glacial_platebody={name:'Glacial platebody',ex:'A breastplate of blue glacier-steel, rimed white and studded with frost-shard spikes across the shoulders.',val:350000,equip:{slot:'body',def:122,model:'plate',verb:'Wear',req:70,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
+ITEMS.glacial_platelegs={name:'Glacial platelegs',ex:'Greaves of glacier-steel that never thaw, edged with a frost-spiked knee.',val:280000,equip:{slot:'legs',def:76,model:'legs',verb:'Wear',req:70,tint:0x9fe0f4,trim:0xffffff,frostset:1}};
 /* ===== EMBER SET: the finest armour in the school, forged only in the Emberdeep. Best-in-slot defence, molten look, a set bonus of lava-immunity + power. ===== */
 ITEMS.ember_helm={name:'Ember helm',ex:'A full helm beaten from cooled magma and obsidian, its visor-slit glowing like a forge-mouth. The crown of the Ember set.',val:340000,cat:'Armour',equip:{slot:'head',def:62,rdef:62,mdef:62,model:'helm',verb:'Wear',req:75,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
 ITEMS.ember_body={name:'Emberplate body',ex:'A breastplate of layered obsidian scale, molten seams running white-hot between the plates. Heavier and harder than any glacier-steel.',val:520000,cat:'Armour',equip:{slot:'body',def:132,rdef:132,mdef:132,model:'plate',verb:'Wear',req:75,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
 ITEMS.ember_legs={name:'Emberplate legs',ex:'Greaves of fused volcanic glass, veined with living fire. They never cool.',val:380000,cat:'Armour',equip:{slot:'legs',def:84,rdef:84,mdef:84,model:'legs',verb:'Wear',req:75,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
 ITEMS.ember_boots={name:'Emberboots',ex:'Sabatons of black volcanic glass that let the wearer tread molten rock. Trailing embers mark each step.',val:180000,cat:'Armour',equip:{slot:'feet',def:22,rdef:22,mdef:22,model:'boots',verb:'Wear',req:75,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
 ITEMS.ember_gauntlets={name:'Ember gauntlets',ex:'Obsidian-plated gauntlets that glow at the knuckles. Their grip never falters, however hot the forge.',val:180000,cat:'Armour',equip:{slot:'hands',def:20,rdef:20,mdef:20,model:'gauntlets',verb:'Wear',req:75,tint:0x8a2e1a,trim:0xffa24a,emberset:1}};
-ITEMS.leaf_sword={name:'Leaf-bladed sword',ex:'A broad green-steel blade honed for rubbery slayer hides \u2014 the only edge a kurask fears.',val:15000,equip:{slot:'weapon',atk:55,str:40,spd:2400,model:'leafsw',verb:'Wield',req:40,tint:0x5a8a3a,trim:0x8fc46a}};
-ITEMS.leaf_battleaxe={name:'Leaf-bladed battleaxe',ex:'A heavy leaf-forged axehead that shears through kurask hide \u2014 and most other things.',val:90000,equip:{slot:'weapon',atk:72,str:84,spd:3000,model:'leafax',verb:'Wield',req:55,tint:0x4a7a2e,trim:0x9fd47a}};
-ITEMS.leaf_dagger={name:'Leaf-bladed dagger',ex:'A single perfect leaf of razor green-steel, gripped point-down in the off hand. The only offhand blade ever forged.',val:120000,equip:{slot:'shield',atk:16,str:10,def:8,model:'leafdag',verb:'Wield',req:60,tint:0x3f6b2e,trim:0x9fd47a}};
-ITEMS.ashfang={name:'Ashfang',ex:'Cinderwing\u2019s own pinion-bone, strung with her sinew. The only bow alive with fire in its draw. It conjures its own dragon arrows as it is drawn \u2014 no ammunition need be equipped in the ammo slot. (It carries a special attack: Cinderpoint Shot.)',val:220000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:84,rstr:18,req:70,maxArrow:7,spec:1}};
-ITEMS.emberbrand={name:'Emberbrand',ex:'A blade quenched in the crater\u2019s heart \u2014 its fuller still runs molten. The finest sword ever forged. (It carries a special attack: Volcanic Rend.)',val:260000,equip:{slot:'weapon',atk:88,str:76,spd:2200,model:'sword',verb:'Wield',req:70,spec:1,tint:0x2b1c16,trim:0xff6a2a}};
-ITEMS.ember_cape={name:'Ember cape',ex:'Woven from Cinderwing\u2019s downfeathers; it smoulders but never burns its wearer. No cape in Milville lends a bowstring more bite.',val:180000,equip:{slot:'cape',ratk:13,rstr:9,def:6,rdef:5,model:'cape',verb:'Wear',req:0,tint:0x8a2e1a,trim:0xffa24a}};
+ITEMS.leaf_sword={name:'Leaf-bladed sword',ex:'A broad green-steel blade honed for rubbery slayer hides \u2014 the only edge a kurask fears.',val:50000,equip:{slot:'weapon',atk:55,str:40,spd:2400,model:'leafsw',verb:'Wield',req:40,tint:0x5a8a3a,trim:0x8fc46a}};
+ITEMS.leaf_battleaxe={name:'Leaf-bladed battleaxe',ex:'A heavy leaf-forged axehead that shears through kurask hide \u2014 and most other things.',val:100000,equip:{slot:'weapon',atk:72,str:84,spd:3000,model:'leafax',verb:'Wield',req:55,tint:0x4a7a2e,trim:0x9fd47a}};
+ITEMS.leaf_dagger={name:'Leaf-bladed dagger',ex:'A single perfect leaf of razor green-steel, gripped point-down in the off hand. The only offhand blade ever forged.',val:350000,equip:{slot:'shield',atk:16,str:10,def:8,model:'leafdag',verb:'Wield',req:60,tint:0x3f6b2e,trim:0x9fd47a}};
+ITEMS.ashfang={name:'Ashfang',ex:'Cinderwing\u2019s own pinion-bone, strung with her sinew. The only bow alive with fire in its draw. It conjures its own dragon arrows as it is drawn \u2014 no ammunition need be equipped in the ammo slot. (It carries a special attack: Cinderpoint Shot.)',val:500000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:84,rstr:18,req:70,maxArrow:7,spec:1}};
+ITEMS.emberbrand={name:'Emberbrand',ex:'A blade quenched in the crater\u2019s heart \u2014 its fuller still runs molten. The finest sword ever forged. (It carries a special attack: Volcanic Rend.)',val:500000,equip:{slot:'weapon',atk:88,str:76,spd:2200,model:'sword',verb:'Wield',req:70,spec:1,tint:0x2b1c16,trim:0xff6a2a}};
+ITEMS.ember_cape={name:'Ember cape',ex:'Woven from Cinderwing\u2019s downfeathers; it smoulders but never burns its wearer. No cape in Milville lends a bowstring more bite.',val:250000,equip:{slot:'cape',ratk:13,rstr:9,def:6,rdef:5,model:'cape',verb:'Wear',req:0,tint:0x8a2e1a,trim:0xffa24a}};
 ITEMS.forgemaster_cape={name:"Forgemaster's cape",ex:'Prised from the sealed vault at the Heart of the Emberdeep. Its weave drinks heat and marks its bearer a master of the forge \u2014 finest cape the mountain has to give.',val:0,noSell:true,cat:'Cape',equip:{slot:'cape',atk:4,str:6,def:10,ratk:5,rstr:4,matk:4,mdmg:2,mdef:7,rdef:7,model:'cape',verb:'Wear',req:0,tint:0x8a2e1a,trim:0xffc258}};
-ITEMS.molten_crown={name:'Molten Crown',ex:'A circlet of cooling magma wrenched from Cinderwing\u2019s crest \u2014 a trophy that still breathes heat.',val:300000,equip:{slot:'head',def:30,ratk:6,rstr:3,model:'moltcrown',verb:'Wear',req:0}};
+ITEMS.molten_crown={name:'Molten Crown',ex:'A circlet of cooling magma wrenched from Cinderwing\u2019s crest \u2014 a trophy that still breathes heat.',val:400000,equip:{slot:'head',def:30,ratk:6,rstr:3,model:'moltcrown',verb:'Wear',req:0}};
 ITEMS.ember_feather={name:'Ember feather',ex:'A pinion that glows from within. Fletchers whisper about these.',val:900,stack:1};
 ITEMS.cinders={name:'Cinders',ex:'Glowing motes of chaotic energy, torn from the volcano\u2019s rock and its beasts as you work and fight. Hirschfeld trades in them.',val:0,stack:1};
 ITEMS.embercarp={name:'Embercarp',ex:'A fat, faintly luminous fish hauled from the Cinderworks pools. The vault hydraulics run on them.',val:14,stack:1};
@@ -2143,17 +2143,17 @@ ITEMS.raid_lab_wand={name:'Calibration wand',ex:'A glass wand off the lab bench.
    Every one of these is an EFFECT, not a stat line. They deliberately carry little or no combat
    bonus: the Ember set stays the best armour and the Cinderforge weapons stay the best weapons, and
    nothing here can out-stat them because they are not competing on that axis at all. All tradeable. */
-ITEMS.larder_charm={name:'Larder Charm',ex:'Worn on the neck: bones you pick up are consumed on the spot for their full burial Prayer XP \u2014 no burying needed.',val:1400000,cat:'Raid',
+ITEMS.larder_charm={name:'Larder Charm',ex:'Worn on the neck: bones you pick up are consumed on the spot for their full burial Prayer XP \u2014 no burying needed.',val:350000,cat:'Raid',
   equip:{slot:'neck',model:'charm',verb:'Wear',req:0,tint:0x6a5330,trim:0xd8cfb4}};
-ITEMS.thrift_gauntlets={name:'Thrift Gauntlets',ex:'Worn on the hands: 25% of your spell casts consume no runes. +3 Defence.',val:1600000,cat:'Raid',
+ITEMS.thrift_gauntlets={name:'Thrift Gauntlets',ex:'Worn on the hands: 25% of your spell casts consume no runes. +3 Defence.',val:450000,cat:'Raid',
   equip:{slot:'hands',def:3,model:'gauntlets',verb:'Wear',req:0,tint:0x3b2a55,trim:0xc9a23a}};
-ITEMS.ring_wealth={name:'Ring of Wealth',ex:'Worn as a ring: monsters are 10% more likely to give their rare drops. Does not affect the delve\u2019s own reward chest.',val:2000000,cat:'Raid',
+ITEMS.ring_wealth={name:'Ring of Wealth',ex:'Worn as a ring: monsters are 10% more likely to give their rare drops. Does not affect the delve\u2019s own reward chest.',val:750000,cat:'Raid',
   equip:{slot:'ring',model:'ring',verb:'Wear',req:0,tint:0xd9b04a}};
-ITEMS.ring_suffering={name:'Ring of Suffering',ex:'Worn as a ring: attackers take back 10% of the damage they deal to you. +6 Defence in every style, +4 Prayer.',val:1800000,cat:'Raid',
+ITEMS.ring_suffering={name:'Ring of Suffering',ex:'Worn as a ring: attackers take back 10% of the damage they deal to you. +6 Defence in every style, +4 Prayer.',val:900000,cat:'Raid',
   equip:{slot:'ring',def:6,rdef:6,mdef:6,pray:4,model:'ring',verb:'Wear',req:0,tint:0x8a2a3a}};
-ITEMS.lightbearer={name:'The Lightbearer',ex:'Worn as a ring: your special attack recharges in half the time \u2014 30 seconds instead of 60. No other stats.',val:2600000,cat:'Raid',
+ITEMS.lightbearer={name:'The Lightbearer',ex:'Worn as a ring: your special attack recharges in half the time \u2014 30 seconds instead of 60. No other stats.',val:1200000,cat:'Raid',
   equip:{slot:'ring',model:'ring',verb:'Wear',req:0,tint:0xffe08a}};
-ITEMS.amulet_blood_fury={name:'Amulet of Blood Fury',ex:'Worn on the neck: melee hits have a 20% chance to heal you for 30% of the damage dealt. Each heal spends one charge; a blood shard adds 1,000 charges.',val:3400000,cat:'Raid',
+ITEMS.amulet_blood_fury={name:'Amulet of Blood Fury',ex:'Worn on the neck: melee hits have a 20% chance to heal you for 30% of the damage dealt. Each heal spends one charge; a blood shard adds 1,000 charges.',val:2400000,cat:'Raid',
   equip:{slot:'neck',model:'amulet',verb:'Wear',req:0,tint:0x8a1020,trim:0xd23b4e}};
 /* ============ PETS ============
    Called from the inventory rather than worn in a slot, so the equipment panel is untouched. You hold
@@ -2442,7 +2442,7 @@ ITEMS.obsidian_shard={name:'Obsidian shard',ex:'A splinter of volcanic glass, ed
 /* ===== Cinder Forge upgrades of Cinderwing's weapons ===== */
 ITEMS.ashfang_kindled={name:'Ashfang, Kindled',ex:'Ashfang rekindled at the Cinder Forge \u2014 the pinion-bow now draws living flame, each shot trailing embers, and Cinderpoint Shot burns hotter. Cinderwing\u2019s fury, sharpened. Like Ashfang, it looses its own dragon arrows with nothing equipped in the ammo slot.',val:420000,equip:{slot:'weapon',model:'bow',verb:'Wield',ratk:96,rstr:29,req:75,maxArrow:8,spec:1}};
 ITEMS.emberbrand_reforged={name:'Emberbrand, Reforged',ex:'Emberbrand folded anew in the Heart of the Emberdeep \u2014 its molten fuller never cools, and Volcanic Rend bites deeper. The finest blade, bettered.',val:480000,equip:{slot:'weapon',atk:100,str:88,spd:2200,model:'sword',verb:'Wield',req:75,spec:1,tint:0x1c0f0a,trim:0xff8a2a}};
-ITEMS.cindermaw={name:'Cindermaw',ex:'A staff cut from Cinderwing\u2019s own breastbone and capped with a caged ember that never dies. It hungers. (It carries a special attack: Soulfire Brand.)',val:260000,equip:{slot:'weapon',model:'cindermaw',verb:'Wield',spd:2400,matk:52,mdmg:12,req:70,spec:1,tint:0x1c0f0a,trim:0xff6a2a}};
+ITEMS.cindermaw={name:'Cindermaw',ex:'A staff cut from Cinderwing\u2019s own breastbone and capped with a caged ember that never dies. It hungers. (It carries a special attack: Soulfire Brand.)',val:500000,equip:{slot:'weapon',model:'cindermaw',verb:'Wield',spd:2400,matk:52,mdmg:12,req:70,spec:1,tint:0x1c0f0a,trim:0xff6a2a}};
 ITEMS.cindermaw_ignited={name:'Cindermaw, Ignited',ex:'Cindermaw set alight at the Cinder Forge \u2014 the caged ember has become a living coal, and Soulfire Brand burns longer and deeper. Cinderwing\u2019s hunger, unleashed.',val:480000,equip:{slot:'weapon',model:'cindermaw',verb:'Wield',spd:2400,matk:62,mdmg:15,req:75,spec:1,tint:0x0f0806,trim:0xff8a2a}};
 
 /* ===== Emberdeep consumables + luxury (Hirschfeld's shop) ===== */
@@ -2494,8 +2494,8 @@ function bestArrowId(maxTier){var best=null,bestR=-1,rl=lvl('ranged');
   return best||'bronze_arrow';}
 function isEmberbrand(id){return id==='emberbrand'||id==='emberbrand_reforged';}
 function isCindermaw(id){return id==='cindermaw'||id==='cindermaw_ignited';}
-ITEMS.icicle_crown={name:'Icicle Crown',ex:'A jagged diadem of everlasting ice, wrenched from the Snow King\u2019s brow \u2014 a trophy few will ever wear. Its frost never leaves you.',val:300000,equip:{slot:'head',def:42,str:6,matk:6,mdef:8,model:'icecrown',verb:'Wear',req:60,tint:0xbfe9ff,trim:0xffffff,frostset:1}};
-ITEMS.aurora_cape={name:'Aurora cape',ex:'A shimmering cloak woven from captured northern lights \u2014 the frost-forged pride of the Snow King\u2019s hoard, and the finest cape a fighter can wear.',val:150000,equip:{slot:'cape',atk:8,str:6,def:9,ratk:8,rstr:4,matk:8,mdmg:4,rdef:9,mdef:9,model:'cape',verb:'Wear',tint:0x3fd0c8,trim:0x9a7fe0}};
+ITEMS.icicle_crown={name:'Icicle Crown',ex:'A jagged diadem of everlasting ice, wrenched from the Snow King\u2019s brow \u2014 a trophy few will ever wear. Its frost never leaves you.',val:400000,equip:{slot:'head',def:42,str:6,matk:6,mdef:8,model:'icecrown',verb:'Wear',req:60,tint:0xbfe9ff,trim:0xffffff,frostset:1}};
+ITEMS.aurora_cape={name:'Aurora cape',ex:'A shimmering cloak woven from captured northern lights \u2014 the frost-forged pride of the Snow King\u2019s hoard, and the finest cape a fighter can wear.',val:250000,equip:{slot:'cape',atk:8,str:6,def:9,ratk:8,rstr:4,matk:8,mdmg:4,rdef:9,mdef:9,model:'cape',verb:'Wear',tint:0x3fd0c8,trim:0x9a7fe0}};
 ITEMS.frost_shard={name:'Frost shard',ex:'A sliver of never-melting glacier ice, prized by crafters. Cold to the touch, always.',val:800,stack:1};
 ITEMS.uncut_sapphire={name:'Uncut sapphire',ex:'A rough blue gem. The Exchange will pay for it.',val:300,prim:'Examine'};
 ITEMS.red_spider_eggs={name:'Red spider eggs',ex:'A clutch of glistening crimson eggs. Apothecaries pay a fair price for them.',val:90,stack:true,prim:'Examine'};
@@ -2583,8 +2583,8 @@ ITEMS.gilt_dye={name:'Gilt Dye',ex:'Slayer dye. Apply it to a Crimson Proctor\u2
 ITEMS.earmuffs={name:'Earmuffs',ex:'Heavy ear protection. Muffles a banshee\u2019s wail \u2014 or just wear a Proctor\u2019s Helm.',val:1,noDrop:true,equip:{slot:'head',def:1,model:'earmuffs',verb:'Wear',req:0},noTrade:true};
 ITEMS.mirror_shield={name:'Mirror Shield',ex:'Polished to a mirror finish. Reflects a basilisk\u2019s petrifying gaze.',val:1,noDrop:true,equip:{slot:'shield',def:6,model:'shieldM',verb:'Wear',req:0,tint:0xc6cdd6,trim:0xeef3f8},noTrade:true};
 ITEMS.rock_hammer={name:'Rock Hammer',ex:'A blunt, brutal maul \u2014 heavy enough to crack a gargoyle\u2019s stone hide.',val:1,noDrop:true,equip:{slot:'weapon',atk:0,str:0,model:'maul',verb:'Wield',req:0},noTrade:true};
-ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:90000,equip:{slot:'weapon',atk:82,str:82,model:'whip',verb:'Wield',req:70,tint:0x1c1118,trim:0x7a2030}};
-ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft, swung two-handed. Slow to heave, but it lands like a rockfall.',val:90000,equip:{slot:'weapon',atk:62,str:120,spd:3400,model:'maul',twoHand:true,verb:'Wield',req:50,tint:0x6e6f73,trim:0x9a9ca0}};
+ITEMS.abyssal_whip={name:'Abyssal whip',ex:'A living tendril bound to a handle. Fast, accurate, and cruel.',val:400000,equip:{slot:'weapon',atk:82,str:82,model:'whip',verb:'Wield',req:70,tint:0x1c1118,trim:0x7a2030}};
+ITEMS.granite_maul={name:'Granite maul',ex:'A slab of granite on a haft, swung two-handed. Slow to heave, but it lands like a rockfall.',val:150000,equip:{slot:'weapon',atk:62,str:120,spd:3400,model:'maul',twoHand:true,verb:'Wield',req:50,tint:0x6e6f73,trim:0x9a9ca0}};
 ITEMS.draconic_visage={name:'Draconic visage',ex:'The petrified face of an ancient wyrm. Collectors pay fortunes for it.',val:250000,prim:'Examine'};
 ITEMS.basilisk_jaw={name:'Basilisk jaw',ex:'A heavy, fanged jawbone \u2014 worth a great deal to the right buyer.',val:35000,prim:'Examine'};
 ITEMS.wailing_relic={name:'Wailing relic',ex:'A cold iron charm that still hums with a banshee\u2019s grief. Valuable.',val:18000,prim:'Examine'};
@@ -32402,7 +32402,21 @@ function renderDuelSetup(){
   acc.classList.toggle('on',S.myAccept);
   acc.textContent=S.myAccept?'Waiting for opponent\u2026':'Accept';
 }
-function sellPrice(id){return Math.max(1,Math.floor((ITEMS[id].val||0)*0.4));}
+/* ** THE 40% SPREAD ONLY EXISTS WHERE THE CLERK ALSO SELLS THE ITEM. ** He sells stocked goods at
+   full val and buys them back at 40%, and that gap is what stops buy-it-then-sell-it-back printing
+   money. For a DROP-ONLY item there is no buy side, so there is nothing to arbitrage and no reason
+   to dock it -- a rare's val is simply what it fetches. This is why boss drops read as worthless:
+   a 90,000 whip paid 36,000. Stocked items keep the spread; everything else pays its full value. */
+/* Anything you can BUY FOR COINS anywhere -- the Exchange clerk, Hirschfeld's luxury shelves, the
+   cage quartermaster -- needs the spread, or buying it and selling it straight back turns a profit.
+   The luxury quivers and the Shield of the Mountain are exactly that case: 2.8-3.2M in coins on top
+   of warrants and cinders, and without this they vendored for up to 800k more than they cost. */
+const COIN_BUYABLE=(()=>{ const s=new Set(GE_STOCK);
+  for(const t of [(typeof EMBER_SHOP!=='undefined')?EMBER_SHOP:[],(typeof CAGE_SHOP!=='undefined')?CAGE_SHOP:[]])
+    for(const e of (t||[])){ const id=e&&(e.id||e.out); if(id&&(e.coins|0)>0)s.add(id); }
+  return s; })();
+function sellPrice(id){const it=ITEMS[id]; if(!it||!it.val)return 0;
+  return COIN_BUYABLE.has(id)?Math.max(1,Math.floor(it.val*0.4)):Math.max(1,Math.floor(it.val));}
 function sellSlot(i,n){
   const sl=player.inv[i];if(!sl)return;
   const id=sl.id;

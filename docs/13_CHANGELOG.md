@@ -499,3 +499,49 @@ surface.
 
 **Player-visible cost, stated plainly:** anyone who had been selling through the
 GE list is now paid a third less. That is the correct number, but it is a drop.
+
+## Rare drops are worth what they say; the spread now follows the buy side (August 2026)
+
+Two changes, one rule.
+
+**The 40% spread only exists to stop buy-it-then-sell-it-back arbitrage, so it
+has no business applying to items nobody can buy.** A drop-only item has nothing
+to arbitrage against — docking it just made rares read as worthless. An Abyssal
+whip at 90,000 `val` paid **36,000**, under a minute of skilling income for a
+1/75 boss drop. Drop-only items now pay their **full `val`**; anything
+purchasable for coins keeps the 40% haircut.
+
+**Keying that on `GE_STOCK` alone was not enough.** The Quiver of Farsight,
+Quiver of Rejuvenation and Shield of the Mountain cost 2.8–3.2M coins at
+Hirschfeld but are not GE-stocked, so they would have vendored for **up to
+800,000 more than they cost** — bounded by warrants and cinders rather than
+infinite, but still an arbitrage. The predicate is now `COIN_BUYABLE`:
+`GE_STOCK` + `EMBER_SHOP` + `CAGE_SHOP`, anything with a coin price.
+
+**Values were re-anchored on the rune tier** (rune platebody 88,000), so the
+ladder reads rune → dragon → glacial → boss-unique. Sam set the numbers; the
+model checked them against respawn-bound gp/hr.
+
+Highlights: Abyssal whip 400,000 · Leaf-bladed dagger 350,000 · Glacial platebody
+350,000 · Dragon platebody 250,000 · Emberbrand / Cindermaw / Ashfang 500,000 ·
+Molten & Icicle Crowns 400,000 · Draconic visage 250,000.
+
+Delve uniques, now strictly monotonic with rarity — commonest cheapest, chase
+dearest: Blood Fury 2.4M · Lightbearer 1.2M · Ring of Suffering 900k · Ring of
+Wealth 750k · Thrift Gauntlets 450k · Larder Charm 350k. **Expected value of a
+unique roll: 741,304 gp.**
+
+**Getting here took three corrections to my own modelling, all worth recording:**
+
+1. **Respawn was ignored.** Bosses are one-of-a-kind on 30m/60m/120m timers — 2,
+   1 and 0.5 kills an hour, not continuous. Without this, black dragons looked
+   like they out-earned skilling.
+2. **`gearroll` was skipped by the parser.** Snow King's and Cinderwing's uniques
+   live inside that wrapper. It is ONE cumulative roll, first hit wins, then
+   breaks — mutually exclusive, not independent.
+3. **`dropMobLoot` rolls more than `MOB_DROPS`.** It also drops bones, a per-mob
+   coin pile and `rollRareDrop`. Cinderwing's coin drop alone is 45,000–80,000
+   guaranteed, which is the largest single component of the kill and was missing
+   entirely — real gp/kill is 103,756, not the 39,680 first reported.
+
+`selltest` now also asserts no coin-buyable item vendors for more than it costs.

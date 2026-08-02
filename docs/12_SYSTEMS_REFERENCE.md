@@ -65,8 +65,19 @@ game actually draws from. `harness/annoy.mjs` asserts all three rules.
 
 ## One sell price, quoted everywhere (Aug 2026)
 
-**`sellPrice(id)` — 40% of `val` — is the only function that decides what the clerk pays, and every
-number the game shows is that function's output.** It was not always so, and the gap was expensive.
+**`sellPrice(id)` is the only function that decides what the clerk pays, and every number the game
+shows is that function's output.** The rate depends on whether the item has a *buy side*:
+
+| | pays |
+|---|---|
+| purchasable for coins anywhere (`COIN_BUYABLE`: `GE_STOCK` + Hirschfeld + the cage quartermaster) | **40% of `val`** |
+| drop-only | **100% of `val`** |
+
+**The 40% spread exists solely to stop buy-it-then-sell-it-back arbitrage.** A drop-only item has
+nothing to arbitrage against, so docking it just made rares read as worthless — a 90,000 whip paid
+36,000. Keying this on `GE_STOCK` alone is *not* enough: the luxury quivers and the Shield of the
+Mountain cost 2.8–3.2M coins at Hirschfeld without being GE-stocked, and would have vendored for up
+to **800,000 more than they cost**. Hence `COIN_BUYABLE`, not `GE_STOCK`. It was not always so, and the gap was expensive.
 
 There are two live sell paths and they used to disagree:
 
