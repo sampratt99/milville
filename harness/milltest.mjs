@@ -5,12 +5,24 @@
 
        fee  >  what an NPC clerk pays for the plank  (40% of its val)
 
-   sellSlot() buys any valued item at 40% of val and pays out of NOWHERE, and a
-   log costs nothing but a tree. So the moment a board's fee drops to or below
-   its clerk price, chop -> saw -> sell becomes a pure gold faucet. Birch is the
-   dangerous one: Woodcutting 45, twenty nodes, an 88.8% roll at 99, against
-   runite ore (the nearest-valued gather) at Mining 85 with two nodes and 26.8%
-   -- roughly 1.87M gp/hr against 543k, at half the level requirement.
+   THIS IS ABOUT THE NPC CLERK, NOT THE EXCHANGE -- the distinction matters and
+   is easy to garble. There are two different buyers for a plank:
+
+     * the NPC clerk, sellSlot(), pays 40% of val OUT OF NOWHERE. Infinite gold.
+     * other players, on the Exchange, pay whatever they agree. No gold created.
+       gePrice() (60% of val) never transacts -- it is only a reference shown in
+       the tooltip and the examine line.
+
+   So the fee has to sit ABOVE the clerk price (or chop -> saw -> vendor prints
+   money from a free log) and BELOW the Exchange reference (or nobody mills).
+   SAWING FOR PROFIT IS SUPPOSED TO WORK; it just has to be player-to-player.
+   At the current fees a board nets roughly +15/+61/+211/+616 sold at reference
+   after the 2% tax, against -18/-70/-240/-700 vendored.
+
+   Birch is the dangerous tier for the faucet: Woodcutting 45, twenty nodes, an
+   88.8% roll at 99, against runite ore (the nearest-valued gather) at Mining 85
+   with two nodes and 26.8% -- roughly 1.87M gp/hr against 543k, at half the
+   level requirement.
 
    THE OTHER HALF, which is what players actually complained about: the fee used
    to be ~143% of a plank's own value, so sawing cost more than the board was
@@ -66,9 +78,9 @@ for(const t of T.tiers)
        t.fee > t.clerkPays,
        `fee ${t.fee} vs clerk ${t.clerkPays} — round trip ${t.roundTrip > 0 ? '+' : ''}${t.roundTrip}/board`);
 for(const t of T.tiers)
-  S.ok(`  so chop -> saw -> sell still LOSES money`,
+  S.ok(`  so chop -> saw -> VENDOR still loses money`,
        t.roundTrip < 0,
-       `${t.plank}: ${t.roundTrip}/board`);
+       `${t.plank}: ${t.roundTrip}/board to the clerk — selling to PLAYERS is meant to profit`);
 
 /* the same rule stated once more against the raw formula, so a val change is caught
    even if sellId is refactored */
@@ -123,8 +135,8 @@ S.ok('the anti-faucet reason is recorded at the table',
      'the next person to read a complaint about the fee needs to see why it exists');
 
 S.report(
-  'Every sawmill fee sits inside a band: above what an NPC clerk pays for the board (so chop -> saw '
-  + '-> sell always loses money and the gold faucet stays shut) and below the Exchange reference (so '
-  + 'making a plank is cheaper than buying one). Both edges are asserted per tier.',
+  'Every sawmill fee sits inside a band: above what an NPC CLERK pays (so vendoring a board always '
+  + 'loses money and the infinite-gold faucet stays shut) and below the Exchange reference (so making '
+  + 'is cheaper than buying, and selling boards to PLAYERS turns a profit). Both edges, per tier.',
   'whether the new prices FEEL right over a real Construction grind — that is a playtest, and the '
   + 'Exchange is a player order book, so the real price of a plank is whatever players list it at.');

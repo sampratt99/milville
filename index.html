@@ -42963,9 +42963,13 @@ function houseVisitPanel(){
    buying one at the 60%-of-value Exchange reference -- which is the OSRS relationship, and the point
    of having a mill at all.
 
-   It cannot be made FREE, and this is the whole reason the fee exists. sellSlot() lets any NPC clerk
-   buy any valued item at 40% of value, paying out of nowhere -- and logs are free off a tree. A zero
-   fee therefore makes chop -> saw -> sell a pure gold faucet worth ~2,800gp a birch board. Birch is
+   It cannot be made FREE, and this is the whole reason the fee exists. Note WHICH buyer this is
+   about: the NPC clerk, sellSlot(), pays 40% of value OUT OF NOWHERE, and logs are free off a tree.
+   (The Exchange is player-to-player and creates no gold; gePrice(), 60% of value, never transacts --
+   it is only the reference shown in the tooltip.) So SELLING BOARDS TO PLAYERS IS MEANT TO PROFIT,
+   and does: about +15/+61/+211/+616 a board at reference after the 2% tax. What must never pay is
+   VENDORING one. A zero fee makes chop -> saw -> vendor a pure gold faucet worth ~2,800gp a birch
+   board. Birch is
    Woodcutting 45 with TWENTY nodes and an 88.8% roll at 99, against runite ore (2,700gp, the nearest
    comparison) at Mining 85 with TWO nodes and a 26.8% roll: about 1.87M gp/hr against 543k, at half
    the level. THE INVARIANT IS fee > 40% of the plank's val, so the round trip always loses money.

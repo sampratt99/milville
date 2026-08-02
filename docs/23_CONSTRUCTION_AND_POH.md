@@ -69,9 +69,24 @@ and hire staff — so no stage may want more planks than fit comfortably in an u
   | willow | 960 | **1,200** | 1,440 |
   | birch | 2,800 | **3,500** | 4,200 |
 
+  **Sawing IS meant to be profitable — just not against an NPC.** There are two buyers for a board
+  and only one of them creates gold:
+
+  | | fee | vendor to the clerk | sell to a player at reference (−2% tax) |
+  |---|---|---|---|
+  | plain | 90 | −18 | **+15** |
+  | oak | 350 | −70 | **+61** |
+  | willow | 1,200 | −240 | **+211** |
+  | birch | 3,500 | −700 | **+616** |
+
+  and the log was free. Break-even list prices are 92 / 358 / 1,225 / 3,572, so there is ~15%
+  headroom below the displayed reference. Under the old fees every one of those was a loss
+  (−45 / −189 / −689 / −2,084), which is precisely the complaint.
+
   **The lower edge is a gold faucet.** `sellSlot()` lets any NPC clerk buy any valued item at 40% of
   `val`, paying out of nowhere, and a log is free off a tree — so the instant a fee reaches its
-  clerk price, chop → saw → sell prints money. Birch is the dangerous tier: Woodcutting **45**, twenty
+  clerk price, chop → saw → **vendor** prints money. (`gePrice()`, 60% of `val`, never transacts —
+  it is only the reference shown in the tooltip and examine line, so the Exchange creates no gold.) Birch is the dangerous tier: Woodcutting **45**, twenty
   nodes, an 88.8% roll at 99, versus runite ore (2,700 gp, the nearest-valued gather) at Mining **85**
   with two nodes and 26.8% — roughly **1.87M gp/hr against 543k, at half the level**. This is the
   whole reason the mill is not free, and it is why "just make it free" has to be refused.

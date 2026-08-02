@@ -381,3 +381,24 @@ leaves the economy per board. Against that, planks were largely being bought
 player-to-player instead, where the only sink is the Exchange's 2% tax — so
 routing that demand back through the mill should sink *more* gold overall, not
 less.
+
+### Clarification to the entry above (same day)
+
+The first write-up of the sawmill change said "chop → saw → sell always loses
+money" without saying **which buyer**, which reads as though sawing is
+unprofitable by design. It is not, and that was the whole point of the change.
+
+There are two buyers for a plank and only one creates gold:
+
+- **The NPC clerk** (`sellSlot`, 40% of `val`) pays out of nowhere. Vendoring a
+  board must always lose money or a free log prints gold: −18 / −70 / −240 / −700.
+- **Other players**, on the Exchange, pay whatever they agree. `gePrice()` (60%
+  of `val`) never transacts — it is only the reference shown in the tooltip.
+  Selling a board there nets **+15 / +61 / +211 / +616** after the 2% tax, on a
+  free log. Under the old fees those same four were −45 / −189 / −689 / −2,084.
+
+Break-even list prices are 92 / 358 / 1,225 / 3,572 — about 15% under the shown
+reference — so there is real headroom before milling stops paying.
+
+The wording is corrected in the `SAWMILL` comment, in `milltest`'s header and
+assertion names, and in docs/23.
