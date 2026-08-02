@@ -343,3 +343,41 @@ for all 418 items, skill-gate boundaries at exactly `req` and `req-1` for every
 node and every equippable, the two-handed swap with a full pack, the bank
 withdraw path, shop-vs-GE pricing (no arbitrage), destructive-first menu options,
 `-1` truthiness, and duplicate data-table keys.
+
+## Sawmill fees cut by ~43% (August 2026)
+
+A player pointed out that paying to saw logs pushed everyone toward buying
+planks off the Exchange instead. They were right, and the numbers were worse
+than "a bit steep": **the fee was about 143% of the plank's own value** in every
+tier — 150 against a 108 gp plain plank, 6,200 against a 4,200 gp birch one. So
+sawing cost half again what the board was worth. In OSRS the fee is roughly half
+a plank's value and making is *cheaper* than buying; here it was strictly worse,
+which is exactly what the complaint described.
+
+Fees are now **50% of plank value: 90 / 350 / 1,200 / 3,500** (down from
+150 / 600 / 2,100 / 6,200).
+
+**The mill could not simply be made free, and that is worth recording.**
+`sellSlot()` lets any NPC clerk buy any valued item at 40% of `val`, paying out
+of nowhere, and logs are free off a tree — so a zero fee turns chop → saw → sell
+into a pure gold faucet worth 2,800 gp a birch board. Birch is Woodcutting 45
+with twenty nodes and an 88.8% roll at 99; runite ore, the nearest-valued gather
+at 2,700 gp, is Mining 85 with two nodes and a 26.8% roll. That is roughly
+**1.87M gp/hr against 543k, at half the level requirement** — several times the
+best current earner. The fee had been holding that shut by accident.
+
+So the fee is now pinned inside a band, and both edges mean something:
+
+    clerk price (40% of val)  <  fee  <  Exchange reference (60% of val)
+
+Below the lower edge it prints gold; above the upper edge nobody uses the mill.
+New harness `milltest.mjs` (33 assertions) asserts both edges per tier and drives
+a real conversion; three sabotages confirmed red, including setting a fee
+*exactly* to the clerk price. **If a plank's `val` ever changes, its fee must
+move with it** — the harness names the tier.
+
+Balance note: this is a straight ~43% cut to a coin sink, so slightly less gold
+leaves the economy per board. Against that, planks were largely being bought
+player-to-player instead, where the only sink is the Exchange's 2% tax — so
+routing that demand back through the mill should sink *more* gold overall, not
+less.

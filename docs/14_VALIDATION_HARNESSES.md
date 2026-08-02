@@ -61,16 +61,16 @@ CAN: logic, data tables, formulas, icon/model construction, UI render functions 
 message-handler wiring (source checks). CAN'T: WebGL appearance, CSS layout, feel, real
 multiplayer (2+ browsers), group-boss dynamics (3–4 players). Say so in the summary.
 
-## The suite (50 harnesses)
+## The suite (51 harnesses)
 
-All 50 are committed in `harness/` and run by `npm test` — most grew out of the Construction arc,
+All 51 are committed in `harness/` and run by `npm test` — most grew out of the Construction arc,
 which is why the table below is organised around it. Roughly by area:
 
 | Area | Harnesses |
 |---|---|
 | the whole chain | `shiptest` |
 | the skill + economy | `contest` · `xptest` · `pricetest` · `conunlock` · `skillfix` |
-| the mill | `sawtest` · `sawicon` · `darylitest` |
+| the mill | `sawtest` · `sawicon` · `darylitest` · `milltest` |
 | the deed + repair | `deedtest` · `repairflow` · `doortest` |
 | rooms + the grid | `poh15` · `roomtest` · `roomstest` · `roomui` · `walktest` |
 | hotspots + furniture | `slottest` · `furntest` · `funcfurn` · `upgradetest` · `newfunc` · `spawntest` |

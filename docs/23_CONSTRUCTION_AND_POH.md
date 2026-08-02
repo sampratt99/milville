@@ -59,7 +59,30 @@ and hire staff — so no stage may want more planks than fit comfortably in an u
 - **`HOUSE_FURNITURE`** — 118 pieces. Each is `{name, cat, cost, req, planks, nails, xp, plankId}`.
 - **`HOUSE_FLOORS`** — room type → floor style (see §6).
 - **`BUTLERS`** — 5 hires (see §7).
-- **`SAWMILL`** — `[logId, plankId, feePerBoard]` × 4.
+- **`SAWMILL`** — `[logId, plankId, feePerBoard]` × 4. Fees are **90 / 350 / 1,200 / 3,500** —
+  50% of each plank's `val`. **That number is pinned inside a band and neither edge is arbitrary:**
+
+  | | clerk pays (40% of val) | **fee** | Exchange ref (60% of val) |
+  |---|---|---|---|
+  | plain | 72 | **90** | 108 |
+  | oak | 280 | **350** | 420 |
+  | willow | 960 | **1,200** | 1,440 |
+  | birch | 2,800 | **3,500** | 4,200 |
+
+  **The lower edge is a gold faucet.** `sellSlot()` lets any NPC clerk buy any valued item at 40% of
+  `val`, paying out of nowhere, and a log is free off a tree — so the instant a fee reaches its
+  clerk price, chop → saw → sell prints money. Birch is the dangerous tier: Woodcutting **45**, twenty
+  nodes, an 88.8% roll at 99, versus runite ore (2,700 gp, the nearest-valued gather) at Mining **85**
+  with two nodes and 26.8% — roughly **1.87M gp/hr against 543k, at half the level**. This is the
+  whole reason the mill is not free, and it is why "just make it free" has to be refused.
+
+  **The upper edge is why anyone uses the mill at all.** The fees used to be 150/600/2,100/6,200 —
+  about **143% of each plank's own value** — so sawing cost half again what the board was worth and
+  every player sensibly bought planks off the Exchange instead. Below the 60% Exchange reference,
+  making beats buying, which is the OSRS relationship.
+
+  `harness/milltest.mjs` asserts both edges per tier and drives a real conversion. **If a plank's
+  `val` ever changes, its fee has to move with it** — the harness will name the tier.
 - **`PLANK_LABEL`** — timber names for UI ("plain plank", not just "plank").
 
 ### Room costs (flat — no escalator, as in OSRS)
@@ -428,8 +451,8 @@ carries both rooms' furniture and loses none.
 `housepanel` `wintest` `floortest` `containtest` `roomstest` `visittest` `housetest` `butlertest`
 `butlerwalk` `xptest` `pricetest` `shiptest` `mphouse` `spawntest` `repairflow` `doortest` `focustest`
 `upgradetest` `discs` `iconaudit` `orphantest` `banktest` `lobbyvis` `conunlock` `skillfix` `roomui`
-`sawicon` `deedtest` `fivefix` `newfunc` `darylitest` `savetest`
+`sawicon` `deedtest` `fivefix` `newfunc` `darylitest` `savetest` `milltest`
 
-All 50 live in `harness/` and run with `npm test` (see `docs/14`). `shiptest` walks the whole chain in
+All 51 live in `harness/` and run with `npm test` (see `docs/14`). `shiptest` walks the whole chain in
 one pass; `mphouse` proves the isolation matrix; `iconaudit` draws every icon five times and checks the
 canvas stack returns to zero; `orphantest` proves a dead id degrades instead of taking a panel down.

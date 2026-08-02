@@ -42953,12 +42953,28 @@ function houseVisitPanel(){
 }
 /* ===================== THE SAWMILL =====================================================
    Logs are not planks. The mill converts them for a fee, which gives Woodcutting a real sink and
-   makes the better boards worth felling better trees for.  [log, plank, fee per board]          */
+   makes the better boards worth felling better trees for.  [log, plank, fee per board]
+
+   ** THE FEE IS 50% OF THE PLANK'S VALUE, AND IT CANNOT GO TO ZERO. **
+
+   It used to be ~143% of the plank's own value (150 against a 108gp plain plank, 6,200 against a
+   4,200gp birch one), which meant sawing cost half again what the board was worth and every player
+   sensibly bought planks off the Exchange instead. At 50% of value, making a board is cheaper than
+   buying one at the 60%-of-value Exchange reference -- which is the OSRS relationship, and the point
+   of having a mill at all.
+
+   It cannot be made FREE, and this is the whole reason the fee exists. sellSlot() lets any NPC clerk
+   buy any valued item at 40% of value, paying out of nowhere -- and logs are free off a tree. A zero
+   fee therefore makes chop -> saw -> sell a pure gold faucet worth ~2,800gp a birch board. Birch is
+   Woodcutting 45 with TWENTY nodes and an 88.8% roll at 99, against runite ore (2,700gp, the nearest
+   comparison) at Mining 85 with TWO nodes and a 26.8% roll: about 1.87M gp/hr against 543k, at half
+   the level. THE INVARIANT IS fee > 40% of the plank's val, so the round trip always loses money.
+   harness/milltest.mjs asserts it per tier; if a plank's val ever changes, the fee moves with it. */
 const SAWMILL=[
-  ['logs',        'plank',         150],
-  ['oak_logs',    'oak_plank',     600],
-  ['willow_logs', 'willow_plank', 2100],
-  ['birch_logs',  'birch_plank',  6200]
+  ['logs',        'plank',          90],   /* val   180 -> npc pays  72, fee  90: -18 a board */
+  ['oak_logs',    'oak_plank',     350],   /* val   700 -> npc pays 280, fee 350: -70 */
+  ['willow_logs', 'willow_plank', 1200],   /* val  2400 -> npc pays 960, fee 1200: -240 */
+  ['birch_logs',  'birch_plank',  3500]    /* val  7000 -> npc pays 2800, fee 3500: -700 */
 ];
 function sawmillRows(){ return SAWMILL.map(([log,pl,fee])=>({log,pl,fee,have:countItem(log)})); }
 /* ** ONE BOARD AT A TIME. ** This used to convert your whole pack the instant you clicked, which read
