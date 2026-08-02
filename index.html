@@ -2076,7 +2076,13 @@ ITEMS.clue_elite={name:'Elite clue scroll',ex:'A grand four-step expedition. Rea
 ITEMS.mining_pouch={name:'Mining pouch',ex:'A stout leather ore sack from Ron Swenson. Fill it from your pack, then empty it at a bank \u2014 fewer trips from the quarry.',val:1,noDrop:true,noSell:true,prim:'Fill'};
 GE_STOCK.push('santa_hat');
 GE_STOCK.push('bronze_axe','bronze_pickaxe','iron_axe','iron_pickaxe','steel_axe','steel_pickaxe','mithril_axe','mithril_pickaxe','adamant_axe','adamant_pickaxe','rune_axe','rune_pickaxe');
-GE_STOCK.push('logs','oak_logs','willow_logs','birch_logs');
+/* ** THE CLERK DOES NOT SELL LOGS, AND MUST NOT. ** He still BUYS them (sellId takes anything with
+   a val), he just will not hand them out -- because the sawmill is FREE, and a purchasable log plus
+   a free conversion is a money printer needing no gathering and no levels: buy a birch log for 90,
+   saw it, sell the board for 2,800, forever. The point of the free mill is that the PROFIT COMES
+   FROM CHOPPING THE LOG YOURSELF -- exactly as the profit in smithing comes from mining your own
+   ore, since buying the ore instead puts all 55 smithing recipes underwater by design. Put logs
+   back in this list and the loop reopens; harness/milltest.mjs fails the moment you do. */
 GE_STOCK.push('copper_ore','tin_ore','iron_ore','berrite_ore','mithril_ore','adamant_ore','runite_ore');
 GE_STOCK.push('raw_shrimps','raw_sardine','raw_trout','raw_lobster','raw_swordfish');
 GE_STOCK.push('shrimps','sardine','trout','lobster','swordfish');
@@ -42955,36 +42961,29 @@ function houseVisitPanel(){
    Logs are not planks. The mill converts them for a fee, which gives Woodcutting a real sink and
    makes the better boards worth felling better trees for.  [log, plank, fee per board]
 
-   ** THE FEE IS 50% OF THE PLANK'S VALUE: HALF WHAT THE CLERK CHARGES FOR THE SAME BOARD. **
+   ** THE MILL IS FREE, AND THE PROFIT COMES FROM CHOPPING THE LOG YOURSELF. **
 
-   The Grand Exchange clerk both SELLS planks (at full val: 180 / 700 / 2,400 / 7,000, they are in
-   GE_STOCK) and BUYS them back (at 40% of val: 72 / 280 / 960 / 2,800). Those two prices are the
-   fence the fee has to sit inside, and each edge does a different job.
+   This is the same bargain smithing makes. Buy the raw material off the clerk and process it and you
+   LOSE -- all 55 smithing recipes land a few coins underwater, because he sells ore at full val and
+   buys the finished item at 40%. Gather it yourself and the whole vendor price is profit. Sawing used
+   to break that rule in the wrong direction: even chopping your own logs, a 6,200gp fee against a
+   2,800gp birch board lost you 3,400 a plank, so nobody milled and everybody bought boards instead.
 
-   UPPER EDGE -- why anyone walks to the mill at all. The fee used to be 150/600/2,100/6,200, which
-   is 83-89% of what the clerk charges: milling your own board saved a miserable 11-17% over simply
-   buying one, so nobody bothered and everybody bought. At 50% of val, MILLING COSTS HALF THE CLERK'S
-   PRICE (44-49% even if you buy the log from him rather than chopping it). That is the complaint
-   fixed, and it is where the real money in Construction is -- not in selling boards, but in not
-   paying double for them.
+   Now: chop a birch, saw it for nothing, vendor the board for 2,800. Modelled against the real node
+   tables and action timings (20 birch, cap ~12, 18s respawn, 1.2s an attempt, 1.2s a board) that is
+   ~2.9M gp/hr at Woodcutting 99 -- against ~3.1M for the runite -> rune platebody chain at Mining 85
+   plus Smithing 87. It slots in just UNDER the best existing method, and reaches only 1.4M (0.46x) at
+   Woodcutting 45 where it unlocks. See harness/milltest.mjs.
 
-   LOWER EDGE -- why it cannot be FREE. The clerk buys at 40% of val OUT OF NOWHERE, with infinite
-   gold, and a log is free off a tree. So the fee must stay above 40% of val or chop -> saw -> VENDOR
-   prints money: ~2,800gp a birch board, at Woodcutting 45. At 50% it loses 10% of val a board
-   (-18/-70/-240/-700), which is exactly what it should do.
-
-   Selling boards to other players on the Player Market tab is a different matter and IS meant to
-   pay: anything between the mill cost and the clerk's asking price beats both sides' alternatives.
-   That market creates no gold, so it needs no guard. Birch is
-   Woodcutting 45 with TWENTY nodes and an 88.8% roll at 99, against runite ore (2,700gp, the nearest
-   comparison) at Mining 85 with TWO nodes and a 26.8% roll: about 1.87M gp/hr against 543k, at half
-   the level. THE INVARIANT IS fee > 40% of the plank's val, so the round trip always loses money.
-   harness/milltest.mjs asserts it per tier; if a plank's val ever changes, the fee moves with it. */
+   ** THE ONE THING THAT MUST NOT CHANGE: THE CLERK CANNOT SELL LOGS. ** A purchasable log plus a free
+   conversion is a money printer that needs no gathering and no levels -- buy a birch log for 90, saw
+   it, sell the board for 2,800, about 8M gp/hr of pure clicking. That is why the four logs came out of
+   GE_STOCK, and it is the only reason the free mill is safe. milltest fails if they go back.       */
 const SAWMILL=[
-  ['logs',        'plank',          90],   /* val   180 -> npc pays  72, fee  90: -18 a board */
-  ['oak_logs',    'oak_plank',     350],   /* val   700 -> npc pays 280, fee 350: -70 */
-  ['willow_logs', 'willow_plank', 1200],   /* val  2400 -> npc pays 960, fee 1200: -240 */
-  ['birch_logs',  'birch_plank',  3500]    /* val  7000 -> npc pays 2800, fee 3500: -700 */
+  ['logs',        'plank',           0],   /* chop it, saw it, and the board vendors for    72 */
+  ['oak_logs',    'oak_plank',       0],   /*                                              280 */
+  ['willow_logs', 'willow_plank',    0],   /*                                              960 */
+  ['birch_logs',  'birch_plank',     0]    /*                                            2,800 */
 ];
 function sawmillRows(){ return SAWMILL.map(([log,pl,fee])=>({log,pl,fee,have:countItem(log)})); }
 /* ** ONE BOARD AT A TIME. ** This used to convert your whole pack the instant you clicked, which read

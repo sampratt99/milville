@@ -52,10 +52,12 @@ const T = runPass(PRELUDE + String.raw`
   o.sawSaidEmpty = said(/sawn every/i);
   since();
 
-  /* and it refuses when the fee is unaffordable */
-  clearInv(); give('oak_logs', 1); give('coins', 10);
+  /* THE MILL IS FREE, so being broke is no longer a reason to refuse — it is a case
+     that must WORK. A player who has spent everything on a deed can still make boards. */
+  clearInv(); give('oak_logs', 1);
   o.sawOnBroke = sawOneBoard('oak_logs');
-  o.sawSaidBroke = said(/cannot pay/i);
+  o.sawBrokeMade = countItem('oak_plank');
+  o.sawBrokeCoins = countItem('coins');
   since();
 
   /* =====================================================================
@@ -325,12 +327,13 @@ const eq = (n, g, w) => S.eq(n, g, w);
 eq('saws every log in the pack',                  T.sawBoardsMade, 5);
 eq('  logs consumed',                             T.sawLogsLeft, 0);
 eq('  boards produced',                           T.sawPlanks, 5);
-eq('  charged the per-board fee, 5 times',        T.sawCoinsSpent, T.sawFee * 5);
+eq('  charged nothing, 5 times over',             T.sawCoinsSpent, T.sawFee * 5);   /* sawFee is 0 */
 eq('SAWING AWARDS NO EXPERIENCE (as in OSRS)',    T.sawXpGained, 0);
 eq('stops when the logs run out',                 T.sawOnEmpty, false);
 ok('  and says so',                               T.sawSaidEmpty);
-eq('refuses when the fee is unaffordable',        T.sawOnBroke, false);
-ok('  and says so',                               T.sawSaidBroke);
+eq('A PENNILESS PLAYER CAN STILL MILL',           T.sawOnBroke, true);
+eq('  and gets the board',                        T.sawBrokeMade, 1);
+eq('  having spent nothing',                      T.sawBrokeCoins, 0);
 
 /* 2. the deed */
 eq('the deed has NO skill gate',                  T.deedShortfall, 0);

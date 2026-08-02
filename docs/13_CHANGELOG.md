@@ -416,3 +416,47 @@ the clerk's asking price, which beats both sides' alternatives.
 `milltest` now compares the fee against **the clerk's asking price** rather than
 the `gePrice` reference, and asserts he actually stocks planks so the comparison
 cannot go vacuous.
+
+## The sawmill is free, and the clerk no longer sells logs (August 2026)
+
+Sam's call, after the fee cut turned out not to go far enough. The complaint was
+that milling was never worth it — and the fee cut only made milling *cheaper
+than buying a board*, not *profitable*. It should be profitable: the whole
+economy is gather → process → vendor.
+
+**Both halves shipped together, and neither is safe alone:**
+
+- **The four logs came out of `GE_STOCK`.** The clerk still *buys* logs, he just
+  will not sell them. Chopping is now the only way to get one.
+- **Every sawmill fee is 0.**
+
+Chop → saw → vendor now pays **+72 / +280 / +960 / +2,800** a board, which is
+exactly the bargain smithing makes: buy the ore and all 55 smithing recipes land
+underwater by design, gather it yourself and the vendor price is all profit.
+Sawing had been breaking that rule in the wrong direction — even with your own
+logs, the old 6,200 fee against a 2,800 birch board lost 3,400 a plank.
+
+**The rate was modelled, not guessed** — real node tables and action timings
+(20 birch, cap ~12, 18s respawn, a roll every 1.2s, a board every 1.2s, walking
+300ms/tile and running 150ms/tile over actual map distances):
+
+| method | requirement | gp/hr |
+|---|---|---|
+| birch → planks | Woodcutting 45 | 1.4M *(at unlock)* |
+| birch → planks | Woodcutting 99 | **2.9M** |
+| runite → rune platebody | Mining 85 + Smithing 87 | **3.1M** |
+
+So it lands at 0.95× the best existing method at max level, 0.46× at unlock —
+underneath it, not replacing it.
+
+**The load-bearing constraint is that the clerk sells no logs.** A purchasable
+log plus a free mill is ~8M gp/hr of pure clicking at Woodcutting 1, with no
+gathering — roughly 2.6× the best legitimate method. A level gate does *not*
+substitute: a WC45 player would still buy birch logs and mill them, and buying
+beats chopping on speed. `milltest` fails the moment a log returns to
+`GE_STOCK`, and both sabotages were confirmed red.
+
+Two older harnesses asserted fee behaviour that is now correctly gone and were
+updated rather than deleted: `sawtest` now asserts the mill is free at every
+tier, and `shiptest` turns "refuses when the fee is unaffordable" into
+**"a penniless player can still mill"** — which is the case that now has to work.

@@ -59,46 +59,49 @@ and hire staff — so no stage may want more planks than fit comfortably in an u
 - **`HOUSE_FURNITURE`** — 118 pieces. Each is `{name, cat, cost, req, planks, nails, xp, plankId}`.
 - **`HOUSE_FLOORS`** — room type → floor style (see §6).
 - **`BUTLERS`** — 5 hires (see §7).
-- **`SAWMILL`** — `[logId, plankId, feePerBoard]` × 4. Fees are **90 / 350 / 1,200 / 3,500** —
-  50% of each plank's `val`. **That number is pinned inside a band and neither edge is arbitrary:**
+- **`SAWMILL`** — `[logId, plankId, feePerBoard]` × 4. **The mill is FREE** — every fee is 0.
 
-  | | clerk pays (40% of val) | **fee** | Exchange ref (60% of val) |
-  |---|---|---|---|
-  | plain | 72 | **90** | 108 |
-  | oak | 280 | **350** | 420 |
-  | willow | 960 | **1,200** | 1,440 |
-  | birch | 2,800 | **3,500** | 4,200 |
+  **The profit comes from chopping the log yourself, which is the bargain smithing already makes.**
+  The clerk sells ore at full `val` and buys the finished item at 40%, so *buying* the raw material
+  and processing it loses on all 55 smithing recipes by design, while *gathering* it makes the whole
+  vendor price profit. Sawing used to break that rule in the wrong direction — even with your own
+  logs, a 6,200 gp fee against a 2,800 gp birch board lost 3,400 a plank — which is exactly why
+  players bought boards instead of milling them.
 
-  **The clerk quotes two prices for the same board, and the fee sits between them.** He *sells*
-  planks (they are in `GE_STOCK`) at full `val`, and *buys* them back at 40% of `val` out of infinite
-  gold. Each edge does a different job:
+  | | chop → saw → vendor |
+  |---|---|
+  | plain | **+72** |
+  | oak | **+280** |
+  | willow | **+960** |
+  | birch | **+2,800** |
 
-  | | he charges you | **mill it yourself** | you save | *was, at the old fee* |
-  |---|---|---|---|---|
-  | plain | 180 | **90** | 50% | *17%* |
-  | oak | 700 | **350** | 50% | *14%* |
-  | willow | 2,400 | **1,200** | 50% | *13%* |
-  | birch | 7,000 | **3,500** | 50% | *11%* |
+  **The rate was modelled, not guessed**, against the real node tables and action timings (20 birch,
+  cap ~12, 18 s respawn, a gather roll every 1.2 s, a board every 1.2 s, walking 300 ms/tile and
+  running 150 ms/tile over actual map distances):
 
-  **The upper edge is why anyone walks to the mill.** The old fees were 83–89% of the clerk's asking
-  price — an 11–17% saving in exchange for chopping the log and making the trip, which is why players
-  simply bought instead. That is the complaint, exactly. Milling now costs half his price (44–49%
-  even if you buy the log off him rather than chopping it), and *that saving is where the money in
-  Construction actually is* — not in selling boards, but in not paying double for them.
+  | method | requirement | gp/hr |
+  |---|---|---|
+  | birch → planks | Woodcutting 45 | 1.4M *(at unlock)* |
+  | birch → planks | Woodcutting 99 | **2.9M** |
+  | runite → rune platebody | Mining 85 + Smithing 87 | **3.1M** |
 
-  **The lower edge is a gold faucet.** He buys at 40% of `val` from infinite gold and a log is free
-  off a tree, so the instant a fee reaches his buying price, chop → saw → **vendor** prints money —
-  ~2,800 gp a birch board at Woodcutting 45, against runite ore at Mining 85 for 2,700. At 50% it
-  loses 10% of `val` a board (−18 / −70 / −240 / −700), which is what it should do.
+  Free milling lands at **0.95×** the best existing method at max level and 0.46× where it unlocks —
+  underneath it, not replacing it.
 
-  **Selling boards to other players** on the Player Market tab is a separate matter and is meant to
-  pay: any price between the mill cost and the clerk's asking price beats both sides' alternatives.
-  That market moves gold between players rather than creating it, so it needs no guard. (`gePrice()`,
-  60% of `val`, is **not** a venue — it never transacts, and is only the reference drawn in the
-  tooltip and examine line. Do not reason about the economy from it.)
+  > ### The clerk must never sell logs again
+  >
+  > This is the only thing making a free mill safe, and it is one line from being undone. A
+  > purchasable log plus a free conversion is a money printer needing **no gathering and no levels**:
+  > buy a birch log for 90, saw it, sell the board for 2,800 — about **8M gp/hr of pure clicking**,
+  > roughly 2.6× the best legitimate method, available at Woodcutting 1.
+  >
+  > The four logs were removed from `GE_STOCK` for exactly this. He still *buys* logs (`sellId` takes
+  > anything with a `val`), so nothing you chop is stranded — he just will not hand them out.
+  > **A level gate is not a substitute:** gating birch milling behind Woodcutting 45 still leaves a
+  > WC45 player buying logs and milling them, and buying is *faster* than chopping.
+  >
+  > `harness/milltest.mjs` fails the moment a log returns to `GE_STOCK`.
 
-  `harness/milltest.mjs` asserts both edges per tier and drives a real conversion. **If a plank's
-  `val` ever changes, its fee has to move with it** — the harness will name the tier.
 - **`PLANK_LABEL`** — timber names for UI ("plain plank", not just "plank").
 
 ### Room costs (flat — no escalator, as in OSRS)

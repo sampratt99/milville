@@ -97,9 +97,12 @@ for(const r of rows){
   S.ok(`  ${r.plank} has a timber label`,         !!r.label, String(r.label));
   S.eq(`  ${r.plank} does NOT stack`,             r.plankStacks, false);
 }
-S.ok('fees rise with tier',
-     rows.every((r, k) => k === 0 || r.fee > rows[k - 1].fee),
-     rows.map(r => r.fee).join(' < '));
+/* The fee used to rise with tier. It is now ZERO at every tier: the mill is free and
+   the profit comes from chopping the log, exactly as smithing profits from mining your
+   own ore. The tier progression lives in the BOARD VALUES, asserted just below. */
+S.ok('THE MILL IS FREE AT EVERY TIER',
+     rows.every(r => r.fee === 0),
+     rows.map(r => `${r.plank} ${r.fee}`).join('  '));
 S.ok('board values rise with tier',
      rows.every((r, k) => k === 0 || r.plankValue > rows[k - 1].plankValue),
      rows.map(r => r.plankValue).join(' < '));
