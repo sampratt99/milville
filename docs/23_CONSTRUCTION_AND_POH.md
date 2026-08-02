@@ -69,32 +69,33 @@ and hire staff — so no stage may want more planks than fit comfortably in an u
   | willow | 960 | **1,200** | 1,440 |
   | birch | 2,800 | **3,500** | 4,200 |
 
-  **Sawing IS meant to be profitable — just not against an NPC.** There are two buyers for a board
-  and only one of them creates gold:
+  **The clerk quotes two prices for the same board, and the fee sits between them.** He *sells*
+  planks (they are in `GE_STOCK`) at full `val`, and *buys* them back at 40% of `val` out of infinite
+  gold. Each edge does a different job:
 
-  | | fee | vendor to the clerk | sell to a player at reference (−2% tax) |
-  |---|---|---|---|
-  | plain | 90 | −18 | **+15** |
-  | oak | 350 | −70 | **+61** |
-  | willow | 1,200 | −240 | **+211** |
-  | birch | 3,500 | −700 | **+616** |
+  | | he charges you | **mill it yourself** | you save | *was, at the old fee* |
+  |---|---|---|---|---|
+  | plain | 180 | **90** | 50% | *17%* |
+  | oak | 700 | **350** | 50% | *14%* |
+  | willow | 2,400 | **1,200** | 50% | *13%* |
+  | birch | 7,000 | **3,500** | 50% | *11%* |
 
-  and the log was free. Break-even list prices are 92 / 358 / 1,225 / 3,572, so there is ~15%
-  headroom below the displayed reference. Under the old fees every one of those was a loss
-  (−45 / −189 / −689 / −2,084), which is precisely the complaint.
+  **The upper edge is why anyone walks to the mill.** The old fees were 83–89% of the clerk's asking
+  price — an 11–17% saving in exchange for chopping the log and making the trip, which is why players
+  simply bought instead. That is the complaint, exactly. Milling now costs half his price (44–49%
+  even if you buy the log off him rather than chopping it), and *that saving is where the money in
+  Construction actually is* — not in selling boards, but in not paying double for them.
 
-  **The lower edge is a gold faucet.** `sellSlot()` lets any NPC clerk buy any valued item at 40% of
-  `val`, paying out of nowhere, and a log is free off a tree — so the instant a fee reaches its
-  clerk price, chop → saw → **vendor** prints money. (`gePrice()`, 60% of `val`, never transacts —
-  it is only the reference shown in the tooltip and examine line, so the Exchange creates no gold.) Birch is the dangerous tier: Woodcutting **45**, twenty
-  nodes, an 88.8% roll at 99, versus runite ore (2,700 gp, the nearest-valued gather) at Mining **85**
-  with two nodes and 26.8% — roughly **1.87M gp/hr against 543k, at half the level**. This is the
-  whole reason the mill is not free, and it is why "just make it free" has to be refused.
+  **The lower edge is a gold faucet.** He buys at 40% of `val` from infinite gold and a log is free
+  off a tree, so the instant a fee reaches his buying price, chop → saw → **vendor** prints money —
+  ~2,800 gp a birch board at Woodcutting 45, against runite ore at Mining 85 for 2,700. At 50% it
+  loses 10% of `val` a board (−18 / −70 / −240 / −700), which is what it should do.
 
-  **The upper edge is why anyone uses the mill at all.** The fees used to be 150/600/2,100/6,200 —
-  about **143% of each plank's own value** — so sawing cost half again what the board was worth and
-  every player sensibly bought planks off the Exchange instead. Below the 60% Exchange reference,
-  making beats buying, which is the OSRS relationship.
+  **Selling boards to other players** on the Player Market tab is a separate matter and is meant to
+  pay: any price between the mill cost and the clerk's asking price beats both sides' alternatives.
+  That market moves gold between players rather than creating it, so it needs no guard. (`gePrice()`,
+  60% of `val`, is **not** a venue — it never transacts, and is only the reference drawn in the
+  tooltip and examine line. Do not reason about the economy from it.)
 
   `harness/milltest.mjs` asserts both edges per tier and drives a real conversion. **If a plank's
   `val` ever changes, its fee has to move with it** — the harness will name the tier.

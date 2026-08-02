@@ -5,33 +5,25 @@
 
        fee  >  what an NPC clerk pays for the plank  (40% of its val)
 
-   THIS IS ABOUT THE NPC CLERK, NOT THE EXCHANGE -- the distinction matters and
-   is easy to garble. There are two different buyers for a plank:
+   THE CLERK IS BOTH THE SHOP AND THE BUYER, at two very different prices, and
+   the fee has to sit between them:
 
-     * the NPC clerk, sellSlot(), pays 40% of val OUT OF NOWHERE. Infinite gold.
-     * other players, on the Exchange, pay whatever they agree. No gold created.
-       gePrice() (60% of val) never transacts -- it is only a reference shown in
-       the tooltip and the examine line.
+     * he SELLS planks at full val   -- 180 / 700 / 2,400 / 7,000 (they are in
+       GE_STOCK), which is what you pay if you do not mill your own.
+     * he BUYS them back at 40% of val -- 72 / 280 / 960 / 2,800, paid OUT OF
+       NOWHERE. Infinite gold.
 
-   So the fee has to sit ABOVE the clerk price (or chop -> saw -> vendor prints
-   money from a free log) and BELOW the Exchange reference (or nobody mills).
-   SAWING FOR PROFIT IS SUPPOSED TO WORK; it just has to be player-to-player.
-   At the current fees a board nets roughly +15/+61/+211/+616 sold at reference
-   after the 2% tax, against -18/-70/-240/-700 vendored.
+   UPPER EDGE: milling must be much cheaper than buying, or the mill is
+   decoration. The old fees were 83-89% of the clerk's asking price -- an
+   11-17% saving for chopping the log and walking there, which is why players
+   just bought. At 50% of val milling costs HALF his price.
 
-   Birch is the dangerous tier for the faucet: Woodcutting 45, twenty nodes, an
-   88.8% roll at 99, against runite ore (the nearest-valued gather) at Mining 85
-   with two nodes and 26.8% -- roughly 1.87M gp/hr against 543k, at half the
-   level requirement.
+   LOWER EDGE: the fee must exceed 40% of val, or chop -> saw -> VENDOR prints
+   gold from a free log (~2,800gp a birch board at Woodcutting 45, against
+   runite ore at Mining 85 for 2,700 -- roughly 1.87M gp/hr against 543k).
 
-   THE OTHER HALF, which is what players actually complained about: the fee used
-   to be ~143% of a plank's own value, so sawing cost more than the board was
-   worth and everybody bought planks off the Exchange instead. Making has to be
-   cheaper than buying or the mill is decoration.
-
-   Both directions are asserted per tier, so the fee is pinned inside a band:
-   above the clerk price, below the Exchange reference. Change a plank's val and
-   this file tells you exactly which fee to move.
+   Selling boards to PLAYERS on the market tab is meant to pay and needs no
+   guard here: that market moves gold between players, it does not create it.
 
    Run: node harness/milltest.mjs
    ========================================================================== */
@@ -49,6 +41,8 @@ const T = runPass(PRELUDE + String.raw`
     const clerkPaysLog = countItem('coins') - l0;
     return {log, plank, fee, clerkPays, clerkPaysLog,
             plankVal: ITEMS[plank].val, logVal: ITEMS[log].val, geRef: gePrice(plank),
+            /* what he CHARGES for the same board — 0 if he does not stock it at all */
+            clerkSellsAt: GE_STOCK.includes(plank) ? ITEMS[plank].val : 0,
             roundTrip: clerkPays - fee};
   });
   since();
@@ -88,22 +82,28 @@ S.ok('every fee exceeds 40% of its plank value',
      T.tiers.every(t => t.fee > Math.floor(t.plankVal * 0.4)),
      T.tiers.map(t => `${t.plank} ${t.fee}>${Math.floor(t.plankVal * 0.4)}`).join('  '));
 
-/* ================== but making must beat buying ========================== */
+/* ============ but milling must be much cheaper than buying =============== */
+/* the comparison is the price the CLERK CHARGES for the same board, not the
+   gePrice() reference — that is a tooltip number and never transacts */
+S.ok('the clerk really does sell planks (or the comparison is vacuous)',
+     T.tiers.every(t => t.clerkSellsAt > 0),
+     T.tiers.map(t => `${t.plank} ${t.clerkSellsAt}`).join('  '));
 for(const t of T.tiers)
-  S.ok(`${t.plank}: making is cheaper than buying`,
-       t.fee < t.geRef,
-       `fee ${t.fee} vs Exchange reference ${t.geRef}`);
-S.ok('NO FEE EXCEEDS ITS OWN PLANK\'S VALUE',
-     T.tiers.every(t => t.fee < t.plankVal),
-     'the old fees were ~143% of value, which is why everyone bought planks instead');
-S.ok('  and every fee sits near half of value',
-     T.tiers.every(t => { const r = t.fee / t.plankVal; return r > 0.42 && r < 0.58; }),
-     T.tiers.map(t => `${t.plank} ${(t.fee / t.plankVal * 100).toFixed(0)}%`).join('  '));
+  S.ok(`${t.plank}: milling undercuts the clerk`,
+       t.fee < t.clerkSellsAt,
+       `mill ${t.fee} vs his price ${t.clerkSellsAt}`);
+S.ok('MILLING COSTS ABOUT HALF THE CLERK\'S PRICE',
+     T.tiers.every(t => t.fee / t.clerkSellsAt <= 0.55),
+     T.tiers.map(t => `${t.plank} ${(t.fee / t.clerkSellsAt * 100).toFixed(0)}%`).join('  ')
+     + '  — the old fees were 83-89%, an 11-17% saving nobody walked to the mill for');
+S.ok('  and still undercuts him even if you BUY the log too',
+     T.tiers.every(t => (t.fee + t.logVal) < t.clerkSellsAt * 0.6),
+     T.tiers.map(t => `${t.plank} ${(((t.fee + t.logVal) / t.clerkSellsAt) * 100).toFixed(0)}%`).join('  '));
 
-/* the band, stated as one thing: clerk price < fee < Exchange reference */
+/* the band, stated as one thing: what he pays you < fee < what he charges you */
 S.ok('every fee sits inside the safe band',
-     T.tiers.every(t => t.clerkPays < t.fee && t.fee < t.geRef),
-     T.tiers.map(t => `${t.clerkPays} < ${t.fee} < ${t.geRef}`).join('   |   '));
+     T.tiers.every(t => t.clerkPays < t.fee && t.fee < t.clerkSellsAt),
+     T.tiers.map(t => `${t.clerkPays} < ${t.fee} < ${t.clerkSellsAt}`).join('   |   '));
 
 /* ================== better trees are still worth felling ================= */
 S.ok('the tiers are ordered by fee',
@@ -131,12 +131,13 @@ S.ok('the sawmill converts one board at a time, not the whole pack',
 
 /* source: the reason the fee is not zero must stay written down next to it */
 S.ok('the anti-faucet reason is recorded at the table',
-     /cannot be made FREE/.test(SRC) && /40% of the plank/.test(SRC),
+     /why it cannot be FREE/.test(SRC) && /prints money/.test(SRC) &&
+     /MILLING COSTS HALF THE CLERK/.test(SRC),   /* the phrase wraps a line, so match its head */
      'the next person to read a complaint about the fee needs to see why it exists');
 
 S.report(
-  'Every sawmill fee sits inside a band: above what an NPC CLERK pays (so vendoring a board always '
-  + 'loses money and the infinite-gold faucet stays shut) and below the Exchange reference (so making '
-  + 'is cheaper than buying, and selling boards to PLAYERS turns a profit). Both edges, per tier.',
+  'Every sawmill fee sits between the two prices the clerk quotes for the same board: above what he '
+  + 'PAYS you (40% of val, from infinite gold, so vendoring always loses and the faucet stays shut) '
+  + 'and at about half what he CHARGES you (so milling your own is the obvious move). Per tier.',
   'whether the new prices FEEL right over a real Construction grind — that is a playtest, and the '
   + 'Exchange is a player order book, so the real price of a plank is whatever players list it at.');

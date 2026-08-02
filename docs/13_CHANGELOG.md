@@ -382,23 +382,37 @@ player-to-player instead, where the only sink is the Exchange's 2% tax — so
 routing that demand back through the mill should sink *more* gold overall, not
 less.
 
-### Clarification to the entry above (same day)
+### Correction to the entry above (same day)
 
-The first write-up of the sawmill change said "chop → saw → sell always loses
-money" without saying **which buyer**, which reads as though sawing is
-unprofitable by design. It is not, and that was the whole point of the change.
+The first two write-ups of this change both got the venue wrong, so the numbers
+in them are not to be trusted. The correct picture:
 
-There are two buyers for a plank and only one creates gold:
+**There is one selling venue, the Grand Exchange clerk, and he quotes two prices
+for the same board.** He SELLS planks — they are in `GE_STOCK` — at full `val`
+(180 / 700 / 2,400 / 7,000), and BUYS them back at 40% of `val`
+(72 / 280 / 960 / 2,800) out of infinite gold. `gePrice()` (60% of `val`) is
+**not a venue at all**: it never transacts, and only feeds the tooltip and
+examine lines. An earlier draft reasoned about profit from it, which was wrong.
 
-- **The NPC clerk** (`sellSlot`, 40% of `val`) pays out of nowhere. Vendoring a
-  board must always lose money or a free log prints gold: −18 / −70 / −240 / −700.
-- **Other players**, on the Exchange, pay whatever they agree. `gePrice()` (60%
-  of `val`) never transacts — it is only the reference shown in the tooltip.
-  Selling a board there nets **+15 / +61 / +211 / +616** after the 2% tax, on a
-  free log. Under the old fees those same four were −45 / −189 / −689 / −2,084.
+So the real before/after is much better than first reported:
 
-Break-even list prices are 92 / 358 / 1,225 / 3,572 — about 15% under the shown
-reference — so there is real headroom before milling stops paying.
+| | clerk charges | mill it yourself | you save | *was* |
+|---|---|---|---|---|
+| plain | 180 | 90 | 50% | *17%* |
+| oak | 700 | 350 | 50% | *14%* |
+| willow | 2,400 | 1,200 | 50% | *13%* |
+| birch | 7,000 | 3,500 | 50% | *11%* |
 
-The wording is corrected in the `SAWMILL` comment, in `milltest`'s header and
-assertion names, and in docs/23.
+Milling used to save 11–17% over just buying the board — not worth chopping a
+log and walking there, which is precisely why players bought instead. It now
+costs half the clerk's price, or 44–49% even if you buy the log off him too.
+
+**Can you profit by sawing?** Not by vendoring — mill for 90 and he pays 72 back,
+and that must stay negative or a free log prints gold. But you profit twice over
+elsewhere: you halve the cost of every board you build with, and boards sold to
+other players on the Player Market tab fetch anything between the mill cost and
+the clerk's asking price, which beats both sides' alternatives.
+
+`milltest` now compares the fee against **the clerk's asking price** rather than
+the `gePrice` reference, and asserts he actually stocks planks so the comparison
+cannot go vacuous.

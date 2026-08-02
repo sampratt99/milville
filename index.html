@@ -42955,21 +42955,27 @@ function houseVisitPanel(){
    Logs are not planks. The mill converts them for a fee, which gives Woodcutting a real sink and
    makes the better boards worth felling better trees for.  [log, plank, fee per board]
 
-   ** THE FEE IS 50% OF THE PLANK'S VALUE, AND IT CANNOT GO TO ZERO. **
+   ** THE FEE IS 50% OF THE PLANK'S VALUE: HALF WHAT THE CLERK CHARGES FOR THE SAME BOARD. **
 
-   It used to be ~143% of the plank's own value (150 against a 108gp plain plank, 6,200 against a
-   4,200gp birch one), which meant sawing cost half again what the board was worth and every player
-   sensibly bought planks off the Exchange instead. At 50% of value, making a board is cheaper than
-   buying one at the 60%-of-value Exchange reference -- which is the OSRS relationship, and the point
-   of having a mill at all.
+   The Grand Exchange clerk both SELLS planks (at full val: 180 / 700 / 2,400 / 7,000, they are in
+   GE_STOCK) and BUYS them back (at 40% of val: 72 / 280 / 960 / 2,800). Those two prices are the
+   fence the fee has to sit inside, and each edge does a different job.
 
-   It cannot be made FREE, and this is the whole reason the fee exists. Note WHICH buyer this is
-   about: the NPC clerk, sellSlot(), pays 40% of value OUT OF NOWHERE, and logs are free off a tree.
-   (The Exchange is player-to-player and creates no gold; gePrice(), 60% of value, never transacts --
-   it is only the reference shown in the tooltip.) So SELLING BOARDS TO PLAYERS IS MEANT TO PROFIT,
-   and does: about +15/+61/+211/+616 a board at reference after the 2% tax. What must never pay is
-   VENDORING one. A zero fee makes chop -> saw -> vendor a pure gold faucet worth ~2,800gp a birch
-   board. Birch is
+   UPPER EDGE -- why anyone walks to the mill at all. The fee used to be 150/600/2,100/6,200, which
+   is 83-89% of what the clerk charges: milling your own board saved a miserable 11-17% over simply
+   buying one, so nobody bothered and everybody bought. At 50% of val, MILLING COSTS HALF THE CLERK'S
+   PRICE (44-49% even if you buy the log from him rather than chopping it). That is the complaint
+   fixed, and it is where the real money in Construction is -- not in selling boards, but in not
+   paying double for them.
+
+   LOWER EDGE -- why it cannot be FREE. The clerk buys at 40% of val OUT OF NOWHERE, with infinite
+   gold, and a log is free off a tree. So the fee must stay above 40% of val or chop -> saw -> VENDOR
+   prints money: ~2,800gp a birch board, at Woodcutting 45. At 50% it loses 10% of val a board
+   (-18/-70/-240/-700), which is exactly what it should do.
+
+   Selling boards to other players on the Player Market tab is a different matter and IS meant to
+   pay: anything between the mill cost and the clerk's asking price beats both sides' alternatives.
+   That market creates no gold, so it needs no guard. Birch is
    Woodcutting 45 with TWENTY nodes and an 88.8% roll at 99, against runite ore (2,700gp, the nearest
    comparison) at Mining 85 with TWO nodes and a 26.8% roll: about 1.87M gp/hr against 543k, at half
    the level. THE INVARIANT IS fee > 40% of the plank's val, so the round trip always loses money.
