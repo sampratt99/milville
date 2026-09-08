@@ -968,3 +968,4 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   peaks; the boots and gloves of speed and haste polished metal with sparks when you run; the
   golden bodkins turn the dagger to gold with a glint.
 - Ember obsidian: the crack glow cut to a quarter (0.22 to 0.38 instead of 0.8 to 1.5); flames, embers and the heart unchanged.
+- Two orbs per cast: the game's flat overlay orb was still drawn under the HD 3D bolt; it is skipped under HDX now, as the flat arrow already was.

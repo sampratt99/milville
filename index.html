@@ -41165,7 +41165,7 @@ function drawOverlay(now){
       octx.fillStyle='#e6e0cf';
       octx.beginPath();octx.moveTo(-10,0);octx.lineTo(-13,-3);octx.lineTo(-7,-1);octx.closePath();octx.fill();
       octx.beginPath();octx.moveTo(-10,0);octx.lineTo(-13,3);octx.lineTo(-7,1);octx.closePath();octx.fill();
-    }else if(pr.kind!=='arrow'){
+    }else if(pr.kind!=='arrow'&&!HDX){   /* HD flies a 3D bolt instead */
       const R=5.5+Math.sin(now/50)*1.3;
       const gd=octx.createRadialGradient(0,0,0,0,0,R*2.1);
       gd.addColorStop(0,'#ffffff');gd.addColorStop(0.35,pr.col);gd.addColorStop(1,'rgba(0,0,0,0)');
