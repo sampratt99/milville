@@ -928,4 +928,9 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
 - Casting and shooting from range now animate: the game's attack pose only ran for an adjacent
   target (a melee-era rule), so a spell from four tiles showed the bolt and no arm. Under HDX
   the pose condition reaches eight tiles for the ranged and magic styles.
+- The staff flipped back over the shoulder during a cast: the game keeps a staff or a bow
+  vertical by countering the arm's rotation each frame, but the elbow bone under the hand is
+  HD's, and its bend (0.2 rad at rest, 0.6 at full raise) tilted the tool back. The elbow
+  tick now counters its own bend on the tools tagged upright (staff, cindermaw staff, bows;
+  a remote rig's staff by its orb), so the staff stays vertical and rises with the arm.
 
