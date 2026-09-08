@@ -925,4 +925,7 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   over it did not. Each clone now has its own material with `skinning=true`; the colour
   follows the source material each tick so tints still apply. The pilot character was
   unarmoured, which is why it was never seen.
+- Casting and shooting from range now animate: the game's attack pose only ran for an adjacent
+  target (a melee-era rule), so a spell from four tiles showed the bolt and no arm. Under HDX
+  the pose condition reaches eight tiles for the ranged and magic styles.
 

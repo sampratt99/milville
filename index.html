@@ -45289,7 +45289,9 @@ function render(now){
   const pwx=player.px+0.5,pwz=player.py+0.5,pwy=groundH(pwx,pwz);
   pm.g.position.set(pwx,pwy,pwz);
   const at=actionTarget();
-  const acting=at&&!pMoving&&!player.path.length&&dist1(player.x,player.y,at[0],at[1])<=1;
+  /* HD: a bow or a spell is used from range, so the attack pose runs out to eight tiles for those styles; melee keeps its adjacency */
+  const _hdReach=(HDX&&player.action&&(player.action.type==='attack'||player.action.type==='datk')&&typeof currentWeaponStyle==='function'&&(currentWeaponStyle()==='ranged'||currentWeaponStyle()==='magic'))?8:1;
+  const acting=at&&!pMoving&&!player.path.length&&dist1(player.x,player.y,at[0],at[1])<=_hdReach;
   let ht=null;
   if(acting)ht=Math.atan2(at[0]-player.px,at[1]-player.py);
   else if(pMoving)ht=Math.atan2(player.x-player.px,player.y-player.py);

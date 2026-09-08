@@ -58,4 +58,5 @@ with `HDX === null`, which is also the path a browser without WebGL2 takes.
 | 35 | index.html | Multiplayer `selfApp()` carries `sex`, `skin` and `size` under `HDX` (vanilla payload unchanged); `_isDefaultApp` treats a non-default build as a real look so peers do not get a random shirt instead. The relay passes `app` through untouched. |
 | 38 | index.html | Three `bake()` calls for round window discs pre-rotate the geometry (`.rotateX(Math.PI/2)`) and pass only `ry`; previously `ry,1,Math.PI/2,0` left the disc perpendicular on ±x walls. Pure visual fix, no gameplay path. |
 | launch | index.html | The service-worker registration is the live one-liner again (the clone had unregistered workers during development). |
+| hotfix | index.html | The attack pose's `acting` test reaches eight tiles for the ranged and magic weapon styles under `HDX` (the bow draw and the cast sweep had only run for an adjacent target, so spells from range showed the bolt with no arm movement). Vanilla keeps adjacency. Visual only: heading and pose, never the hit. |
 
