@@ -32,7 +32,7 @@
        entries were keyed WITH the query and so accumulated one shell per ?v=.
    v2: purged v1, which had wrongly cached market API responses.
    ============================================================================ */
-const CACHE_VERSION = 'milville-v3';
+const CACHE_VERSION = 'milville-v4';   /* v4: the HD layer (vendor/ + hd/) precached and served network-first */
 
 /* The game shell + its one external dependency (Three.js from cdnjs).
    Caching the CDN file is what lets the game run with NO network after the first visit. */
@@ -41,8 +41,50 @@ const PRECACHE = [
   './',
   SHELL,
   './manifest.webmanifest',
-  'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'
+  /* the HD layer: Three.js is vendored now, so no CDN file; every script the page loads */
+  './vendor/three/loaders/GLTFLoader.js',
+  './vendor/three/loaders/RGBELoader.js',
+  './vendor/three/math/SimplexNoise.js',
+  './vendor/three/objects/Reflector.js',
+  './vendor/three/objects/Sky.js',
+  './vendor/three/objects/Water.js',
+  './vendor/three/postprocessing/EffectComposer.js',
+  './vendor/three/postprocessing/MaskPass.js',
+  './vendor/three/postprocessing/Pass.js',
+  './vendor/three/postprocessing/RenderPass.js',
+  './vendor/three/postprocessing/SMAAPass.js',
+  './vendor/three/postprocessing/SSAOPass.js',
+  './vendor/three/postprocessing/ShaderPass.js',
+  './vendor/three/postprocessing/UnrealBloomPass.js',
+  './vendor/three/shaders/CopyShader.js',
+  './vendor/three/shaders/FXAAShader.js',
+  './vendor/three/shaders/GammaCorrectionShader.js',
+  './vendor/three/shaders/LuminosityHighPassShader.js',
+  './vendor/three/shaders/SMAAShader.js',
+  './vendor/three/shaders/SSAOShader.js',
+  './vendor/three/three.min.js',
+  './hd/hd-body.js',
+  './hd/hd-buildings.js',
+  './hd/hd-chars.js',
+  './hd/hd-foliage.js',
+  './hd/hd-fx.js',
+  './hd/hd-gear.js',
+  './hd/hd-icons.js',
+  './hd/hd-lobby.js',
+  './hd/hd-magic.js',
+  './hd/hd-map.js',
+  './hd/hd-mobs.js',
+  './hd/hd-post.js',
+  './hd/hd-pre.js',
+  './hd/hd-props.js',
+  './hd/hd-terrain.js',
+  './hd/hd-ui.css',
+  './hd/icons/index.json'
 ];
+/* the layer's scripts and styles change with every deploy: network-first, cache as the
+   fallback, so a fresh deploy shows on the next load without a version bump here */
+const LAYER = /\/(hd|vendor)\/.*\.(js|css|json)$/;
+const LAYER_TIMEOUT_MS = 4000;
 
 /* How long a navigation waits for the network before falling back to the cached
    shell. Only ever reached on a HANGING connection: a fetch that fails outright
@@ -154,7 +196,16 @@ self.addEventListener('fetch', event => {
     return;
   }
 
-  /* Everything else (the CDN script, icons, og image): cache-first for instant, offline loads;
+  if (sameOrigin && LAYER.test(new URL(req.url).pathname)) {
+    const net = fetch(req).then(res => { putIfGood(req, res); return res; }).catch(() => null);
+    const timeout = new Promise(resolve => setTimeout(() => resolve(null), LAYER_TIMEOUT_MS));
+    event.respondWith(
+      Promise.race([net, timeout]).then(first => first || caches.match(req).then(hit => hit || net).then(r => r || new Response('', { status: 504 })))
+    );
+    return;
+  }
+
+  /* Everything else (icons, og image): cache-first for instant, offline loads;
      fill the cache in the background on a miss. */
   event.respondWith(
     caches.match(req).then(cached => cached || fetch(req).then(res => {

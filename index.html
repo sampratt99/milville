@@ -1874,10 +1874,27 @@ try{
   </div>
 </div>
 
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js" crossorigin="anonymous"></script>
+<script src="vendor/three/three.min.js"></script>
+<script src="vendor/three/math/SimplexNoise.js"></script>
+<script src="vendor/three/shaders/CopyShader.js"></script>
+<script src="vendor/three/shaders/LuminosityHighPassShader.js"></script>
+<script src="vendor/three/shaders/SSAOShader.js"></script>
+<script src="vendor/three/shaders/GammaCorrectionShader.js"></script>
+<script src="vendor/three/shaders/FXAAShader.js"></script>
+<script src="vendor/three/postprocessing/Pass.js"></script>
+<script src="vendor/three/postprocessing/EffectComposer.js"></script>
+<script src="vendor/three/postprocessing/RenderPass.js"></script>
+<script src="vendor/three/postprocessing/ShaderPass.js"></script>
+<script src="vendor/three/postprocessing/MaskPass.js"></script>
+<script src="vendor/three/postprocessing/UnrealBloomPass.js"></script>
+<script src="vendor/three/postprocessing/SSAOPass.js"></script>
+<script src="vendor/three/objects/Sky.js"></script>
+<script src="hd/hd-pre.js"></script>
 <script>window.addEventListener("error",function(e){try{console.error("[Milville error]",e.message,"@",e.filename,e.lineno+":"+e.colno,e.error&&e.error.stack);}catch(_){}} );</script>
 <script>
 'use strict';
+/* HD layer handle: null in the offline harness and in any browser without the layer */
+const HDX=(typeof window!=='undefined'&&window.HD&&window.HD.preReady)?window.HD:null;
 /* ============================== utils ============================== */
 const clamp=(v,a,b)=>v<a?a:(v>b?b:v);
 const rnd=(a,b)=>a+Math.random()*(b-a);
@@ -2195,7 +2212,7 @@ ITEMS.key_tyrant={name:'Emberforged Key',ex:'A key of molten-gold iron that neve
 const EMBER_PIPE_REQ=500, EMBER_PIPE_WARRANTS=10;
 let _emberFenceTiles=null;   /* map 'x,y' -> gate obj; the gate's own tile is the door */
 let _emberDockTiles=null;    /* set of 'x,y' plank tiles that are walkable over the molten pool */
-let EMBER_DEV_BYPASS=false;   /* DEV: descend the vault door + sealed stair without filling pipes / draining conduits; also opens warden gates without keys */
+let EMBER_DEV_BYPASS=!!(HDX&&HDX.pilot);   /* HD clone pilot mode: every Emberdeep gate open */   /* DEV: descend the vault door + sealed stair without filling pipes / draining conduits; also opens warden gates without keys */
 /* ===================== RAIDS (Daemonheim-style, mirrors OSRS CoX) =====================
    Master feature flag. OFF ships an inert skeleton (state exists, but nothing reads it in an
    active path, no entrance object, curInterior() unaffected). Flipped ON only when a batch is
@@ -7498,7 +7515,7 @@ function playerTick(){
   }
   else if(a.type==='entersos'){
     if(!adjacentTo(a.o.x,a.o.y)){if(!player.path.length)walkTo(a.o.x,a.o.y,'adj');return;}
-    if(player.quests.sos.s<1){msg('Cold air breathes up from the dark, but the way is sealed by Safety Department writ. Speak to Glen first \u2014 he can deputize you.','#4a3f5e');cancelAction();return;}
+    if(player.quests.sos.s<1&&!(HDX&&HDX.pilot)){msg('Cold air breathes up from the dark, but the way is sealed by Safety Department writ. Speak to Glen first \u2014 he can deputize you.','#4a3f5e');cancelAction();return;}   /* HD pilot: unsealed */
     enterSos();cancelAction();
   }
   else if(a.type==='leavesos'){
@@ -10395,7 +10412,7 @@ function optionsAt(tx,ty){
         label:'Leave your cottage',fn:()=>setAction({type:'exithouse',o},o.x,o.y)},
         {html:'Examine <span class="t">Cottage door</span>',fn:()=>msg(OBJ_DEFS.house_exit.ex)});
     }else if(o.def==='rectorydoor'){
-      if(player.quests.rxmas.s>=1)opts.push({html:'Enter <span class="t">Rectory</span>',
+      if(player.quests.rxmas.s>=1||(HDX&&HDX.pilot))opts.push({html:'Enter <span class="t">Rectory</span>',   /* HD pilot: always open */
         label:'Enter Rectory',fn:()=>setAction({type:'enterrectory',o},o.x,o.y)});
       else opts.push({html:'Enter <span class="t">Rectory</span>',
         label:'Enter Rectory',fn:()=>msg('The Rectory door is shut. Perhaps the family will invite you in \u2014 speak to Martha by the gate.','#103a8c')});
@@ -14751,7 +14768,7 @@ let terra=null;
   g.setAttribute('position',new THREE.Float32BufferAttribute(pos,3));
   g.setAttribute('color',new THREE.Float32BufferAttribute(col,3));
   g.computeVertexNormals();
-  terra=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));
+  terra=new THREE.Mesh(g,HDX?HDX.terrainMaterial():new THREE.MeshLambertMaterial({vertexColors:true}));
   terra.receiveShadow=true;
   scene.add(terra);
 })();
@@ -14828,14 +14845,18 @@ function bake(out,geo,hex,px,py,pz,ry,sc,rx,rz){
   const pa=g.attributes.position.array,na=g.attributes.normal.array;
   for(let i=0;i<pa.length;i++){out.pos.push(pa[i]);out.nor.push(na[i]);}
   for(let i=0;i<pa.length;i+=3)out.col.push(c.r,c.g,c.b);
+  /* HD: per-vertex surface id (brick, wood, stone...) classified from the colour */
+  if(HDX){const _mid=HDX.classify(hex);if(!out.mid)out.mid=[];for(let i=0;i<pa.length;i+=3)out.mid.push(_mid);}
 }
 function bakeMesh(out,shadow){
   const g=new THREE.BufferGeometry();
   g.setAttribute('position',new THREE.Float32BufferAttribute(out.pos,3));
   g.setAttribute('normal',new THREE.Float32BufferAttribute(out.nor,3));
   g.setAttribute('color',new THREE.Float32BufferAttribute(out.col,3));
+  if(out.mid&&out.mid.length*3===out.pos.length)g.setAttribute('mid',new THREE.Float32BufferAttribute(out.mid,1));
   const m=new THREE.Mesh(g,new THREE.MeshLambertMaterial({vertexColors:true}));
   m.castShadow=!!shadow;
+  if(HDX)m.receiveShadow=true;
   scene.add(m);
   return m;
 }
@@ -14920,11 +14941,11 @@ function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFa
           inb(x+d[0],y+d[1])&&tiles[y+d[1]][x+d[0]]===T_LAVA);
         if(nearLava&&h1<0.5){
           bake(out,peb,h2<0.5?0x3a302a:0x2e2622,wx,gy+0.03,wz,h2*6,0.9+h3*0.8);
-          if(h3<0.4)bake(out,peb,0xe86a20,wx+0.2,gy+0.02,wz-0.15,h1*6,0.5);
+          if(h3<0.4&&!HDX)bake(out,peb,0xe86a20,wx+0.2,gy+0.02,wz-0.15,h1*6,0.5);
         }else if(h1<0.05){
           for(let i=0;i<2;i++){
             const hh=tileHash(x*19+i*7,y*23+i*5);
-            bake(out,blade,i?0x6a5d44:0x756749,
+            if(!HDX)bake(out,blade,i?0x6a5d44:0x756749,
               wx+(hh-0.5)*0.3,gy,wz+(tileHash(x+i,y-i)-0.5)*0.3,
               hh*6.28,0.7+hh*0.8);
           }
@@ -14947,13 +14968,14 @@ function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFa
         const n=h1<0.015?3:2;
         for(let i=0;i<n;i++){
           const hh=tileHash(x*19+i*7,y*23+i*5);
-          bake(out,blade,greens[(i+Math.floor(h2*4))%4],
+          if(!HDX)bake(out,blade,greens[(i+Math.floor(h2*4))%4],
             wx+(hh-0.5)*0.3,gy,wz+(tileHash(x+i,y-i)-0.5)*0.3,
             hh*6.28,0.8+hh*0.9);
         }
       }else if(h1<0.075){
         /* white daisies with gold hearts, sometimes a little cluster */
         const dz=(k,ox,oz)=>{
+          if(HDX)return;   /* HD: the flat blade/petal/pebble clutter reads as litter on textured ground */
           bake(out,stem,0x4e7030,wx+ox,gy+0.1,wz+oz,0);
           bake(out,petal,0xeceadf,wx+ox,gy+0.235,wz+oz,k*6);
           bake(out,petal,0xd9b04a,wx+ox,gy+0.252,wz+oz,k*6,0.4);
@@ -15395,6 +15417,7 @@ function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFa
     skirack(55.0,20.0,0); skirack(55.0,22.5,0); skirack(51.0,25.5,Math.PI/2);
     /* ===== snow-laden pines + rocks over the broad mountain ===== */
     function pine(x,z,sc){ const g=groundH(x,z);
+      if(HDX&&HDX.pine){HDX.pine(x,z,sc);return;}   /* HD: instanced snow pines take these spots */
       Babs(new THREE.CylinderGeometry(0.12*sc,0.16*sc,1.0*sc,6),0x4a3a28,x,g+0.5*sc,z);
       for(let k=0;k<3;k++){ const r=(0.95-k*0.24)*sc, yy=g+(0.95+k*0.7)*sc;
         Babs(new THREE.ConeGeometry(r,0.85*sc,7),PINE,x,yy,z);
@@ -15424,7 +15447,7 @@ function recolorTrees(on){ on=!!on; if(_treeMesh&&_treeFall===on)return; _treeFa
   })();
   if(out.pos.length){
     const dm=bakeMesh(out,false);
-    dm.material.side=THREE.DoubleSide;
+    dm.material.side=THREE.DoubleSide;   /* (HD skips only the clutter above; the asylum, high school, quarry rig and Pat's Peak are in this mesh too) */
   }
 })();
 
@@ -18644,6 +18667,93 @@ function updateObjVisual(o){
     const cx=b.x+b.w/2,cz=b.y+b.h/2,y0=b.base,hg=b.hgt;
     const RY=alongX?0:Math.PI/2;
     const P=(lx,lz)=>alongX?[cx+lx,cz+lz]:[cx+lz,cz+lx];
+    /* ===== HD architectural kit, shared by every style branch. World coordinates throughout;
+       ry is the wall's facing rotation (0 = a wall whose outward normal is +z). ===== */
+    const HDK={STONE:0x8e8a80,STONE2:0x9a9286,WHITE:0xe8e2d4,GRAN:0x6f6b63,TRIMW:0xd6d0c2};
+    /* a proud granite plinth with a stone lip around a footprint rectangle (tile coords) */
+    const hdPlinth=(x0,z0,w,h,yb)=>{
+      bake(out,box(w+0.36,0.34,h+0.36),HDK.GRAN,x0+w/2,yb+0.17,z0+h/2,0);
+      bake(out,box(w+0.28,0.08,h+0.28),HDK.STONE2,x0+w/2,yb+0.36,z0+h/2,0);
+    };
+    /* alternating long/short stone quoins up the four corners of a rectangle */
+    const hdQuoins=(x0,z0,w,h,yb,hgt)=>{
+      const nq=Math.max(5,Math.round((hgt-0.5)/0.34)),step=(hgt-0.55)/nq;
+      for(const ex of[0,1])for(const ez of[0,1]){
+        const qx=x0+(ex?w-0.04:0.04),qz=z0+(ez?h-0.04:0.04);
+        for(let k=0;k<nq;k++){const lng=k%2===0;bake(out,box(lng?0.66:0.44,step*0.92,lng?0.44:0.66),k%2?0xcfc8b8:0xdcd5c5,qx,yb+0.42+(k+0.5)*step,qz,0);}
+      }
+    };
+    /* a stone string course around a rectangle at height y */
+    const hdBand=(x0,z0,w,h,y,col)=>bake(out,box(w+0.2,0.1,h+0.2),col||HDK.STONE2,x0+w/2,y,z0+h/2,0);
+    /* cornice under the eaves: stone band, dentils on every face, white fascia */
+    const hdCornice=(x0,z0,w,h,ytop)=>{
+      const cx2=x0+w/2,cz2=z0+h/2;
+      bake(out,box(w+0.3,0.12,h+0.3),HDK.STONE2,cx2,ytop-0.2,cz2,0);
+      bake(out,box(w+0.46,0.16,h+0.46),HDK.WHITE,cx2,ytop-0.02,cz2,0);
+      const nd=Math.round((w+0.2)/0.34);
+      for(let i=0;i<nd;i++){const x=x0-0.1+0.17+i*0.34;for(const sd of[-1,1])bake(out,box(0.14,0.1,0.12),HDK.WHITE,x,ytop-0.3,cz2+sd*(h/2+0.19),0);}
+      const nd2=Math.round((h+0.2)/0.34);
+      for(let i=0;i<nd2;i++){const z=z0-0.1+0.17+i*0.34;for(const sd of[-1,1])bake(out,box(0.12,0.1,0.14),HDK.WHITE,cx2+sd*(w/2+0.19),ytop-0.3,z,0);}
+    };
+    /* a six-over-six sash window at a wall point: white reveal, glass set back, sill, lintel, keystone */
+    const hdSash=(wx,wz,wy,ry,glass,scale)=>{
+      const s=scale||1,ww=0.46*s,wh=0.64*s;
+      bake(out,box(ww+0.2*s,wh+0.2*s,0.1),HDK.WHITE,wx,wy,wz,ry);
+      bake(out,box(ww,wh,0.06),glass||WIN,wx,wy,wz,ry);
+      bake(out,box(ww,0.035,0.14),HDK.WHITE,wx,wy,wz,ry);
+      bake(out,box(0.03,wh,0.14),HDK.WHITE,wx,wy,wz,ry);
+      for(const oy of[-0.33,0.33])bake(out,box(ww,0.02,0.13),HDK.TRIMW,wx,wy+oy*wh,wz,ry);
+      for(const ox of[-0.34,0.34]){const dx=Math.cos(ry)*ox*ww,dz=-Math.sin(ry)*ox*ww;bake(out,box(0.02,wh,0.13),HDK.TRIMW,wx+dx,wy,wz+dz,ry);}
+      bake(out,box(ww+0.32*s,0.09,0.24),HDK.STONE2,wx,wy-wh/2-0.09,wz,ry);
+      bake(out,box(ww+0.26*s,0.12,0.16),HDK.STONE2,wx,wy+wh/2+0.14,wz,ry);
+      bake(out,box(0.14,0.18,0.2),0xb3ada0,wx,wy+wh/2+0.15,wz,ry);
+    };
+    /* a pedimented entrance: pilasters, entablature, fanlight, six-panel door, three steps, lanterns.
+       (wx,wz) is the wall face, (nx,nz) the outward unit normal, ry the facing rotation. */
+    const hdDoor=(wx,wz,yb,ry,nx,nz,col)=>{
+      const tx=nz,tz=-nx;                                   /* along the wall */
+      const at=(a,o)=>[wx+tx*a+nx*o,wz+tz*a+nz*o];
+      const dc=col||DOOR;
+      bake(out,box(0.66,1.05,0.1),dc,wx,yb+0.55,wz,ry);
+      for(const px of[-0.15,0.15])for(const py of[0.2,0.5,0.8]){const p=at(px,0.02);bake(out,box(0.22,0.22,0.1),dk(dc,1.35),p[0],yb+py,p[1],ry);}
+      {const p=at(0.2,0.06);bake(out,box(0.05,0.05,0.06),0xd9b04a,p[0],yb+0.55,p[1],ry);}
+      for(const s of[-1,1]){const p=at(s*0.5,0.02);bake(out,box(0.18,1.62,0.2),HDK.WHITE,p[0],yb+0.83,p[1],ry);bake(out,box(0.26,0.1,0.26),HDK.WHITE,p[0],yb+1.62,p[1],ry);}
+      bake(out,box(1.3,0.16,0.26),HDK.WHITE,wx,yb+1.72,wz,ry);
+      bake(out,new THREE.CylinderGeometry(0.34,0.34,0.06,16,1,false,0,Math.PI).rotateX(Math.PI/2),WIN2,wx,yb+1.1,wz,ry);   /* stood up before the facing turn: a disc is symmetric about its axis, so ry after rx did nothing on ±x walls */
+      {const sh=new THREE.Shape();sh.moveTo(-0.75,0);sh.lineTo(0.75,0);sh.lineTo(0,0.42);sh.closePath();
+       const ped=new THREE.ExtrudeGeometry(sh,{depth:0.22,bevelEnabled:false});ped.translate(0,0,-0.11);
+       bake(out,ped,HDK.WHITE,wx,yb+1.8,wz,ry);}
+      for(let s=0;s<3;s++){const p=at(0,0.22+s*0.28);bake(out,box(1.2+s*0.2,0.1,0.34),HDK.GRAN,p[0],yb+0.3-s*0.1,p[1],ry);}
+      for(const s of[-1,1]){const p=at(s*0.72,0.08);bake(out,box(0.14,0.2,0.14),0x2a2622,p[0],yb+1.5,p[1],ry);bake(out,box(0.1,0.12,0.1),0xffe4a8,p[0],yb+1.5,p[1],ry);}
+    };
+    /* a true triangular gable (brick), with an oculus, standing at a wall point facing ry */
+    const hdGable=(wx,wz,ybase,width,rise,ry,col,oculus)=>{
+      const sh=new THREE.Shape();sh.moveTo(-width/2,0);sh.lineTo(width/2,0);sh.lineTo(0,rise);sh.closePath();
+      const g=new THREE.ExtrudeGeometry(sh,{depth:0.2,bevelEnabled:false});g.translate(0,0,-0.1);
+      bake(out,g,col,wx,ybase,wz,ry);
+      if(oculus!==false){
+        const nx=Math.sin(ry),nz=Math.cos(ry);
+        bake(out,new THREE.CylinderGeometry(0.27,0.27,0.08,16).rotateX(Math.PI/2),HDK.WHITE,wx+nx*0.12,ybase+rise*0.42,wz+nz*0.12,ry);
+        bake(out,new THREE.CylinderGeometry(0.2,0.2,0.1,16).rotateX(Math.PI/2),WIN,wx+nx*0.12,ybase+rise*0.42,wz+nz*0.12,ry);
+      }
+    };
+    /* a brick chimney stack with a stone cap and two pots */
+    const hdChimney=(wx,wz,ybase,h,col,ry)=>{
+      bake(out,box(0.72,h,0.72),dk(col||b.col,0.85),wx,ybase+h/2,wz,ry||0);
+      bake(out,box(0.9,0.14,0.9),HDK.STONE2,wx,ybase+h-0.06,wz,ry||0);
+      const c=Math.cos(ry||0),s=Math.sin(ry||0);
+      for(const px of[-0.18,0.18])bake(out,new THREE.CylinderGeometry(0.1,0.12,0.4,10),0x6b4a3a,wx+c*px,ybase+h+0.2,wz-s*px,0);
+    };
+    /* a gabled dormer with a sash window, sitting on a roof slope at a wall point */
+    const hdDormer=(wx,wz,ybase,ry,col,roofCol)=>{
+      const nx=Math.sin(ry),nz=Math.cos(ry);
+      bake(out,box(0.96,0.92,0.84),col,wx,ybase+0.3,wz,ry);
+      bake(out,box(1.06,0.1,0.94),HDK.WHITE,wx,ybase+0.72,wz,ry);
+      const g2=new THREE.Shape();g2.moveTo(-0.55,0);g2.lineTo(0.55,0);g2.lineTo(0,0.42);g2.closePath();
+      const gg=new THREE.ExtrudeGeometry(g2,{depth:0.9,bevelEnabled:false});gg.translate(0,0,-0.45);
+      bake(out,gg,dk(roofCol,0.95),wx,ybase+0.76,wz,ry);
+      hdSash(wx+nx*0.42,wz+nz*0.42,ybase+0.36,ry,WIN,0.8);
+    };
     if(b.kind==='kehaya'){
       /* Kehaya - shingle-style dorm: orange-brick ground storey under a
          huge steep slate roof, three slate-clad box dormers corbelled
@@ -21150,6 +21260,30 @@ function updateObjVisual(o){
       bake(out,new THREE.SphereGeometry(orr*0.94,9,6),0xb8bec6,cx,y0+2.05,cz,0);
       bake(out,box(0.18,0.5,1.1),0x2f2a26,cx,y0+2.6,cz,0);
       bake(out,box(0.7,1.0,0.14),DOOR,cx,y0+0.52,cz+orr+0.02,0);
+      {
+        /* HD kit: granite plinth ring, a stone band, a dentilled cornice ring under the dome,
+           meridian ribs and an equatorial ring on the dome, a stone doorway frame, and three small sashes */
+        const dr=orr*0.94;
+        bake(out,new THREE.CylinderGeometry(orr+0.26,orr+0.32,0.32,18),HDK.GRAN,cx,y0+0.16,cz,0);
+        bake(out,new THREE.CylinderGeometry(orr+0.2,orr+0.22,0.08,18),HDK.STONE2,cx,y0+0.36,cz,0);
+        bake(out,new THREE.CylinderGeometry(orr+0.12,orr+0.14,0.1,18),HDK.STONE2,cx,y0+1.72,cz,0);
+        for(let k=0;k<22;k++){const t=k*Math.PI*2/22;bake(out,box(0.12,0.1,0.14),HDK.WHITE,cx+(orr+0.1)*Math.sin(t),y0+1.82,cz+(orr+0.1)*Math.cos(t),t);}
+        bake(out,new THREE.CylinderGeometry(orr+0.2,orr+0.2,0.14,18),HDK.WHITE,cx,y0+1.95,cz,0);
+        bake(out,new THREE.CylinderGeometry(dr+0.05,dr+0.05,0.08,24),0xd8dde2,cx,y0+2.05,cz,0);
+        for(let k=0;k<8;k++)bake(out,new THREE.TorusGeometry(dr+0.03,0.035,6,24,Math.PI),0xd8dde2,cx,y0+2.05,cz,k*Math.PI/8);
+        bake(out,new THREE.CylinderGeometry(0.06,0.06,0.5,8),0x2f2a26,cx,y0+2.05+dr+0.2,cz,0);
+        bake(out,new THREE.SphereGeometry(0.1,8,6),0xd9b04a,cx,y0+2.05+dr+0.5,cz,0);
+        const dz=cz+orr+0.04;
+        for(const sx of[-0.46,0.46])bake(out,box(0.16,1.24,0.18),HDK.WHITE,cx+sx,y0+0.62,dz,0);
+        bake(out,box(1.1,0.16,0.22),HDK.STONE2,cx,y0+1.3,dz,0);
+        bake(out,box(0.16,0.2,0.24),0xb3ada0,cx,y0+1.34,dz,0);
+        for(const px of[-0.16,0.16])for(const py of[0.3,0.72])bake(out,box(0.22,0.28,0.04),dk(DOOR,1.35),cx+px,y0+py,cz+orr+0.1,0);
+        bake(out,box(0.05,0.05,0.05),0xd9b04a,cx+0.22,y0+0.55,cz+orr+0.11,0);
+        bake(out,box(1.1,0.1,0.44),HDK.GRAN,cx,y0+0.05,cz+orr+0.3,0);
+        hdSash(cx,cz-orr-0.02,y0+1.05,Math.PI,WIN,0.8);
+        hdSash(cx+orr+0.02,cz,y0+1.05,Math.PI/2,WIN,0.8);
+        hdSash(cx-orr-0.02,cz,y0+1.05,-Math.PI/2,WIN,0.8);
+      }
       continue;
     }
     if(b.kind==='rectory'){
@@ -22408,8 +22542,9 @@ function updateObjVisual(o){
         b.x+hl-0.1,y0+hg+0.65,b.y+0.15,0);
       continue;
     }
-    /* stone footing, then walls laid in brick courses */
-    bake(out,box(L+0.1,0.26,D+0.1),0x6a675f,cx,y0+0.13,cz,RY);
+    /* ===== the generic hall, HD: a Georgian brick block built from the shared kit. Same
+       footprint, same heights, same door tiles as before. ===== */
+    hdPlinth(b.x,b.y,b.w,b.h,y0);
     {
       const shades=[dk(b.col,0.78),dk(b.col,0.9),b.col,dk(b.col,1.1)];
       const rows3=Math.max(3,Math.round(hg/0.62));
@@ -22423,11 +22558,11 @@ function updateObjVisual(o){
             tx2+0.25+bx2*0.5,y0+(row+0.5)*bh,ty2+0.25+bz2*0.5,0);
         }
       }
-      /* light stone cornice tucked under the eaves */
-      bake(out,box(L+0.14,0.14,D+0.14),0x9a9286,cx,y0+hg-0.05,cz,RY);
     }
-    /* windows along both long faces */
     const rows=hg>3.6?3:(hg>2.5?2:1);
+    for(let r2=1;r2<rows;r2++)hdBand(b.x,b.y,b.w,b.h,y0+hg*(rows===2?0.56:(r2===1?0.40:0.64)));
+    hdCornice(b.x,b.y,b.w,b.h,y0+hg);
+    /* windows along both long faces (the ground-floor middle bay is the door) */
     const nw=Math.max(1,Math.floor((L-1.2)/1.15));
     for(let i=0;i<nw;i++){
       const lx=-((nw-1)/2)*1.15+i*1.15;
@@ -22435,10 +22570,9 @@ function updateObjVisual(o){
         const wy=y0+(rows===1?hg*0.55:rows===2?(r2===0?hg*0.38:hg*0.74)
           :(r2===0?hg*0.28:r2===1?hg*0.52:hg*0.76));
         for(const sd of[1,-1]){
+          if(r2===0&&Math.abs(lx)<0.6)continue;
           const q=P(lx,sd*(D/2+0.02));
-          bake(out,box(0.42,0.56,0.12),(i+r2)%3?WIN:WIN2,q[0],wy,q[1],RY);
-          bake(out,box(0.56,0.08,0.14),0x9a9286,q[0],wy+0.33,q[1],RY);
-          bake(out,box(0.56,0.07,0.14),0x9a9286,q[0],wy-0.32,q[1],RY);
+          hdSash(q[0],q[1],wy,RY,(i+r2)%3?WIN:WIN2);
         }
       }
     }
@@ -22450,30 +22584,28 @@ function updateObjVisual(o){
         const wy=y0+(rows===1?hg*0.55:rows===2?(r2===0?hg*0.38:hg*0.74)
           :(r2===0?hg*0.28:r2===1?hg*0.52:hg*0.76));
         for(const se of[1,-1]){
+          if(se===1&&r2===0&&Math.abs(lz)<0.6)continue;
           const q=P(se*(L/2+0.02),lz);
-          bake(out,box(0.42,0.56,0.12),(i+r2+1)%3?WIN:WIN2,q[0],wy,q[1],RY+Math.PI/2);
-          bake(out,box(0.56,0.08,0.14),0x9a9286,q[0],wy+0.33,q[1],RY+Math.PI/2);
-          bake(out,box(0.56,0.07,0.14),0x9a9286,q[0],wy-0.32,q[1],RY+Math.PI/2);
+          hdSash(q[0],q[1],wy,RY+Math.PI/2,(i+r2+1)%3?WIN:WIN2);
         }
       }
     }
     /* doors: front + rear long faces + one gable end */
-    {const q=P(0,D/2);
-     bake(out,box(0.66,1.05,0.16),DOOR,q[0],y0+0.55,q[1],RY);
-     const q2=P(0,D/2+0.32);
-     bake(out,box(1.0,0.12,0.55),0x9a9286,q2[0],y0+0.06,q2[1],RY);
-     const qr=P(0,-D/2);
-     bake(out,box(0.66,1.05,0.16),DOOR,qr[0],y0+0.55,qr[1],RY);
-     const qe=P(L/2+0.02,0);
-     bake(out,box(0.5,1.0,0.16),DOOR,qe[0],y0+0.52,qe[1],RY+Math.PI/2);}
-    /* gabled roof */
+    {
+      const n1=alongX?[0,1]:[1,0],n2=alongX?[0,-1]:[-1,0],n3=alongX?[1,0]:[0,1];
+      const q1=P(0,D/2+0.03),q2=P(0,-D/2-0.03),q3=P(L/2+0.03,0);
+      hdDoor(q1[0],q1[1],y0,RY,n1[0],n1[1]);
+      hdDoor(q2[0],q2[1],y0,RY,n2[0],n2[1]);
+      hdDoor(q3[0],q3[1],y0,RY+Math.PI/2,n3[0],n3[1]);
+    }
+    /* gabled roof: thicker slabs, a deeper eave, a white fascia board, a ridge cap */
     const steep=b.kind==='chapel'||b.kind==='oldchapel';
     const riseF=b.kind==='rink'?0.26:(steep?0.62:0.40);
     const rise=D*riseF;
-    const ang=Math.atan2(rise,D/2+0.3);
-    const slabLen=Math.hypot(D/2+0.32,rise)+0.12;
+    const ang=Math.atan2(rise,D/2+0.42);
+    const slabLen=Math.hypot(D/2+0.44,rise)+0.14;
     const ry2=y0+hg+rise/2-0.04;
-    const zo=(D/2+0.3)/2;
+    const zo=(D/2+0.42)/2;
     if(b.kind==='oldchapel'){
       /* polychrome roof in striped bands */
       const seg=(L+0.5)/3,bands=[0x7a4a3a,0x4e5862,0x7a4a3a];
@@ -22489,19 +22621,28 @@ function updateObjVisual(o){
         }
       }
     }else if(alongX){
-      bake(out,box(L+0.5,0.13,slabLen),b.roof,cx,ry2,cz+zo,0,1, ang,0);
-      bake(out,box(L+0.5,0.13,slabLen),b.roof,cx,ry2,cz-zo,0,1,-ang,0);
+      bake(out,box(L+0.7,0.16,slabLen),b.roof,cx,ry2,cz+zo,0,1, ang,0);
+      bake(out,box(L+0.7,0.16,slabLen),b.roof,cx,ry2,cz-zo,0,1,-ang,0);
+      bake(out,box(L+0.74,0.14,0.08),HDK.WHITE,cx,y0+hg+0.02,cz+D/2+0.44,0);
+      bake(out,box(L+0.74,0.14,0.08),HDK.WHITE,cx,y0+hg+0.02,cz-D/2-0.44,0);
     }else{
-      bake(out,box(slabLen,0.13,L+0.5),b.roof,cx+zo,ry2,cz,0,1,0,-ang);
-      bake(out,box(slabLen,0.13,L+0.5),b.roof,cx-zo,ry2,cz,0,1,0, ang);
+      bake(out,box(slabLen,0.16,L+0.7),b.roof,cx+zo,ry2,cz,0,1,0,-ang);
+      bake(out,box(slabLen,0.16,L+0.7),b.roof,cx-zo,ry2,cz,0,1,0, ang);
+      bake(out,box(0.08,0.14,L+0.74),HDK.WHITE,cx+D/2+0.44,y0+hg+0.02,cz,0);
+      bake(out,box(0.08,0.14,L+0.74),HDK.WHITE,cx-D/2-0.44,y0+hg+0.02,cz,0);
     }
-    if(alongX)bake(out,box(L+0.55,0.15,0.3),dk(b.roof,0.7),cx,y0+hg+rise,cz,0);
-    else bake(out,box(0.3,0.15,L+0.55),dk(b.roof,0.7),cx,y0+hg+rise,cz,0);
-    /* stepped gable ends */
-    for(const e of[1,-1])for(let s2=0;s2<3;s2++){
-      const gw=D*(1-(s2+0.5)/3.2);
-      const q=P(e*(L/2-0.07),0);
-      bake(out,box(0.16,rise/3+0.06,gw),b.col,q[0],y0+hg+rise/6+s2*rise/3,q[1],RY);
+    if(alongX)bake(out,box(L+0.75,0.16,0.34),dk(b.roof,0.7),cx,y0+hg+rise,cz,0);
+    else bake(out,box(0.34,0.16,L+0.75),dk(b.roof,0.7),cx,y0+hg+rise,cz,0);
+    /* true gable ends: a brick triangle with a round attic window */
+    for(const e of[1,-1]){const q=P(e*(L/2-0.1),0);hdGable(q[0],q[1],y0+hg,D+0.2,rise-0.02,RY+Math.PI/2+(e<0?Math.PI:0),dk(b.col,0.96));}
+    /* halls: two dormers a side and a chimney at each end of the ridge */
+    if(b.kind==='hall'&&L>=6){
+      const dz=D*0.26,sh=y0+hg+rise*(1-dz/(D/2+0.42));
+      for(const lx of[-L*0.25,L*0.25])for(const sd of[1,-1]){
+        const q=P(lx,sd*dz);
+        hdDormer(q[0],q[1],sh,RY+(sd<0?Math.PI:0),b.col,b.roof);
+      }
+      for(const lx of[-(L/2-1.1),L/2-1.1]){const q=P(lx,0);hdChimney(q[0],q[1],y0+hg-0.3,rise+1.1,b.col,RY);}
     }
     /* landmark extras */
     if(b.kind==='oldchapel'){
@@ -22605,7 +22746,7 @@ function updateObjVisual(o){
         for(let rw=0;rw<rows2;rw++)for(let bx2=0;bx2<2;bx2++)for(let bz2=0;bz2<2;bz2++){
           const bh2=tileHash(x*17+rw*5+bx2,y*13+bz2*7+rw);
           if(rw===rows2-1&&bh2<0.35)continue;
-          bake(out,box(0.5,0.34,0.5),RST[Math.floor(bh2*4)%4],
+          bake(out,(HDX&&HDX.ruinBlock)?HDX.ruinBlock(bh2):box(0.5,0.34,0.5),RST[Math.floor(bh2*4)%4],   /* HD: weathered block */
             x+0.25+bx2*0.5,groundH(x+0.5,y+0.5)+0.17+rw*0.34,y+0.25+bz2*0.5,0);
         }
       }
@@ -23022,13 +23163,13 @@ let chapelGlass=[];   /* emissive panels, toggled with visits (kept always for s
   for(let y=0;y<H;y++)for(let x=0;x<W;x++)if(tiles[y][x]===T_FENCE){
     const gy=groundH(x+0.5,y+0.5);
     const hsh=tileHash(x*3+1,y*5+2);
-    bake(out,post,hsh<0.5?0x5e4126:0x68492c,x+0.5,gy+0.4,y+0.5,(hsh-0.5)*0.2);
+    bake(out,(HDX&&HDX.fencePost)?HDX.fencePost(hsh):post,hsh<0.5?0x5e4126:0x68492c,x+0.5,gy+0.4,y+0.5,(hsh-0.5)*0.2);   /* HD: turned post */
     for(const dd of[[1,0],[0,1]]){
       const nx=x+dd[0],ny=y+dd[1];
       if(!inb(nx,ny)||tiles[ny][nx]!==T_FENCE)continue;
       const mx=x+0.5+dd[0]*0.5,mz=y+0.5+dd[1]*0.5;
       const my=(gy+groundH(nx+0.5,ny+0.5))/2;
-      const rail=dd[0]===1?railX:railZ;
+      const rail=(HDX&&HDX.fenceRail)?HDX.fenceRail(dd[0]===1?'x':'z',tileHash(x*7+nx,y*11+ny)):(dd[0]===1?railX:railZ);   /* HD: split-rail log */
       if(tileHash(x*7+nx,y*11+ny)<0.85)bake(out,rail,0x77573a,mx,my+0.6,mz,0);
       bake(out,rail,0x6b4d30,mx,my+0.31,mz,0);
     }
@@ -39304,7 +39445,7 @@ function _computeVolcWallDist(){
 }
 function _volcWD(x,y){const v=_volcWallDist?_volcWallDist[x+','+y]:undefined;return (v===undefined)?4:v;}
 const _VOLC_WALLH=1.75,_VOLC_WALLMAX=3.3,_VOLC_LAVADROP=0.9;
-function _volcCornerH(cx,cy){
+function _volcCornerH(cx,cy,noSink){   /* HD: noSink gives the bank height the melt sits under */
   if(cx>=192&&cx<=248&&cy>=78&&cy<=115)return _volcFY;   /* HEART ARENA: dead-flat architectural floor */
   if(cx>=192&&cx<=247&&cy>=16&&cy<=75)return _volcFY;   /* SIPHON VAULT: dead-flat metal floor, no cave undulation */
   let sum=0; for(const o of [[-1,-1],[0,-1],[-1,0],[0,0]])sum+=Math.min(_volcWD(cx+o[0],cy+o[1]),4);
@@ -39312,7 +39453,9 @@ function _volcCornerH(cx,cy){
   const und=Math.sin(cx*0.7)*Math.cos(cy*0.55)*0.12;
   const jag=(dist>0.3)?Math.sin(cx*1.7+cy*1.3)*0.5*Math.min(dist,2):0;
   let lavaN=0;for(const o of [[-1,-1],[0,-1],[-1,0],[0,0]]){const tx=cx+o[0],ty=cy+o[1];if(volcTiles[ty]&&(volcTiles[ty][tx]===T_LAVA||volcTiles[ty][tx]===T_WATER))lavaN++;}
-  const sink=(lavaN>0&&dist<0.85)?-_VOLC_LAVADROP*(lavaN/4):0;
+  /* HD: every lava and pool corner sinks (a carved moat, eased at the bank), not only those by the walls */
+  /* HD: the drop follows a gaussian over the liquid tiles, so a shoreline is a curve, not four steps */
+  const sink=noSink?0:(HDX&&HDX.volcSink?-_VOLC_LAVADROP*HDX.volcSink(cx,cy,volcTiles,T_LAVA,T_WATER):((lavaN>0&&dist<0.85)?-_VOLC_LAVADROP*(lavaN/4):0));
   return _volcFY + Math.min(dist,_VOLC_WALLMAX)*_VOLC_WALLH + und + jag + sink;
 }
 function _volcFlatten(){if(!_volcWallDist)_computeVolcWallDist();for(const s of _volcSnap)hts[s[1]][s[0]]=_volcCornerH(s[0],s[1]);}
@@ -39461,6 +39604,7 @@ let volcFloor=null;
     const cold=coldAt(x,y);
     const dungeon=dungeonAt(x,y);
     const tech=techAt(x,y);
+    if(HDX&&(t===T_WATER||t===T_LAVA))return t===T_WATER?0x142028:0x1c1512;   /* HD: the bed under a real liquid is dark rock */
     if(t===T_WATER){const WA=[0x0c6058,0x11897d,0x1ab9a9,0x2ad6c4,0x63e7da,0x0a4a44];const v=tileHash(x>>1,(y>>1)+23)*0.6+h*0.4;return WA[Math.min(5,Math.floor(v*6))];}
     if(t===T_LAVAHOT){const HC=[0x5c2010,0x792a12,0x943414,0xb84a18,0xd8621c,0x481a0a];const v=tileHash(x,y+13)*0.6+h*0.4;return HC[Math.min(5,Math.floor(v*6))];}
     if(t===T_LAVA){const LA=[0xb8360f,0xd8481a,0xef6420,0xff8a2e,0xffc258,0x922808];const v=tileHash(x>>1,(y>>1)+41)*0.6+h*0.4;return LA[Math.min(5,Math.floor(v*6))];}
@@ -39659,7 +39803,7 @@ let volcFloor=null;
   /* real rippling liquid surfaces, built per chamber so they hide with their room */
   (function(){
     const isCold=(x,y)=>{const c=EMBER_CHAMBERS.find(z=>x>=z.x0&&x<=z.x1&&y>=z.y0&&y<=z.y1);return c&&c.cold;};
-    const lavaMat=new THREE.MeshPhongMaterial({vertexColors:true,transparent:true,opacity:0.96,shininess:1,specular:0x000000,emissive:0x9a2c08});
+    const lavaMat=(HDX&&HDX.lavaMaterial)?HDX.lavaMaterial(true):new THREE.MeshPhongMaterial({vertexColors:true,transparent:true,opacity:0.96,shininess:1,specular:0x000000,emissive:0x9a2c08});   /* HD: flowing lava shader */
     const poolMat=new THREE.MeshPhongMaterial({vertexColors:true,transparent:true,opacity:0.86,shininess:26,specular:0x33504b,emissive:0x0a3e39});
     const LP=[[1.0,0.36,0.10],[1.0,0.50,0.16],[1.0,0.24,0.05],[0.88,0.20,0.04]];
     const PP=[[0.10,0.80,0.74],[0.16,0.92,0.84],[0.30,0.97,0.90],[0.07,0.62,0.58]];
@@ -39667,7 +39811,7 @@ let volcFloor=null;
       const c=EMBER_CHAMBERS[ci],pos=[],col=[];
       for(let y=c.y0;y<=c.y1;y++)for(let x=c.x0;x<=c.x1;x++){
         if(!pick(x,y))continue;
-        const hh=(a,b)=>_volcCornerH(a,b)+0.02, cc=pal[((x*3+y*7)%pal.length+pal.length)%pal.length];
+        const hh=(a,b)=>(HDX?_volcFY-0.26:_volcCornerH(a,b))+0.02, cc=pal[   /* HD: a level melt below the cave floor; the walls rise out of it instead of it climbing them */((x*3+y*7)%pal.length+pal.length)%pal.length];
         pos.push(x,hh(x,y),y,  x,hh(x,y+1),y+1,  x+1,hh(x+1,y),y,
                  x+1,hh(x+1,y),y,  x,hh(x,y+1),y+1,  x+1,hh(x+1,y+1),y+1);
         for(let k=0;k<6;k++)col.push(cc[0],cc[1],cc[2]);
@@ -39680,7 +39824,7 @@ let volcFloor=null;
       const mm=new THREE.Mesh(gg,mat); mm.renderOrder=2; volcChamberGroups[ci].add(mm);
       if(isPool)volcPoolMeshes.push({mesh:mm,base:gg.attributes.position.array.slice()});
     };
-    const redMat=new THREE.MeshPhongMaterial({vertexColors:true,transparent:true,opacity:0.9,shininess:52,specular:0x7a2a18,emissive:0x5a1206});
+    const redMat=(HDX&&HDX.lavaMaterial)?HDX.lavaMaterial(true):new THREE.MeshPhongMaterial({vertexColors:true,transparent:true,opacity:0.9,shininess:52,specular:0x7a2a18,emissive:0x5a1206});   /* HD: the same melt */
     const RP=[[0.74,0.13,0.05],[0.86,0.22,0.08],[0.66,0.10,0.04],[0.80,0.17,0.06]];
     for(let ci=0;ci<EMBER_CHAMBERS.length;ci++){
       if(ci===2)build(ci,(x,y)=>volcTiles[y]&&volcTiles[y][x]===T_LAVA,RP,redMat,true);      /* the combat-room pool: molten but rendered as real rippling water */
@@ -41014,14 +41158,14 @@ function drawOverlay(now){
     const pp=sample(f);if(!pp)continue;
     const p2=sample(f+0.05);const ang=p2?Math.atan2(p2.y-pp.y,p2.x-pp.x):0;
     octx.save();octx.translate(pp.x,pp.y);octx.rotate(ang);
-    if(pr.kind==='arrow'){
+    if(pr.kind==='arrow'&&!HDX){   /* HD flies a 3D arrow instead */
       octx.strokeStyle='#7a5230';octx.lineWidth=2;octx.lineCap='round';
       octx.beginPath();octx.moveTo(-10,0);octx.lineTo(7,0);octx.stroke();
       octx.fillStyle=pr.col;octx.beginPath();octx.moveTo(11,0);octx.lineTo(5,-3);octx.lineTo(5,3);octx.closePath();octx.fill();
       octx.fillStyle='#e6e0cf';
       octx.beginPath();octx.moveTo(-10,0);octx.lineTo(-13,-3);octx.lineTo(-7,-1);octx.closePath();octx.fill();
       octx.beginPath();octx.moveTo(-10,0);octx.lineTo(-13,3);octx.lineTo(-7,1);octx.closePath();octx.fill();
-    }else{
+    }else if(pr.kind!=='arrow'){
       const R=5.5+Math.sin(now/50)*1.3;
       const gd=octx.createRadialGradient(0,0,0,0,0,R*2.1);
       gd.addColorStop(0,'#ffffff');gd.addColorStop(0.35,pr.col);gd.addColorStop(1,'rgba(0,0,0,0)');
@@ -45226,12 +45370,12 @@ function render(now){
   }
   if(showTool==='axe'){axe.visible=true;_tintTool(axe,'woodcutting');}
   else if(showTool==='pick'){pick.visible=true;_tintTool(pick,'mining');}
-  else if(showTool==='sword'){const _sm9=(player.equip.weapon&&isEmberbrand(player.equip.weapon.id))?emberSwM:sword;_sm9.visible=true;_sm9.rotation.x=_swRest?-1.5:_swT;}
-  else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?-1.5:_swT;}
-  else if(showTool==='maul'){const _fm=(player.equip.weapon&&player.equip.weapon.id==='frostmaul')?fmaul:maul;_fm.visible=true;_fm.rotation.x=_swRest?-1.5:0;}
+  else if(showTool==='sword'){const _sm9=(player.equip.weapon&&isEmberbrand(player.equip.weapon.id))?emberSwM:sword;_sm9.visible=true;_sm9.rotation.x=_swRest?(HDX?-0.55:-1.5):_swT;}
+  else if(showTool==='scim'){scim.visible=true;scim.rotation.x=_swRest?(HDX?-0.55:-1.5):_swT;}
+  else if(showTool==='maul'){const _fm=(player.equip.weapon&&player.equip.weapon.id==='frostmaul')?fmaul:maul;_fm.visible=true;_fm.rotation.x=_swRest?(HDX?-2.4:-1.5):0;}
   else if(showTool==='whip'){whipM.visible=true;whipM.rotation.x=0;poseWhip(whipM,_wpSwA,performance.now());}
-  else if(showTool==='leafsw'){leafSwM.visible=true;leafSwM.rotation.x=_swRest?-1.5:_swT;}
-  else if(showTool==='leafax'){leafAxM.visible=true;leafAxM.rotation.x=_swRest?-1.5:_swT;}
+  else if(showTool==='leafsw'){leafSwM.visible=true;leafSwM.rotation.x=_swRest?(HDX?-0.55:-1.5):_swT;}
+  else if(showTool==='leafax'){leafAxM.visible=true;leafAxM.rotation.x=_swRest?(HDX?-0.55:-1.5):_swT;}
   else if(showTool==='bow'){((player.equip.weapon&&isAshfang(player.equip.weapon.id))?ashBowM:bowM).visible=true;}
   else if(showTool==='staff')staffM.visible=true;
   else if(showTool==='rod')rod.visible=true;
@@ -45901,6 +46045,7 @@ function render(now){
     scene.fog.near=camDist+20;
     scene.fog.far=camDist+46;
   }
+  if(HDX&&HDX.ready)HDX.frame(now,pwx,pwy,pwz,camDist,curInterior());
 
 
   syncGroundItems();
@@ -46274,7 +46419,7 @@ function render(now){
     }
     m2.group.rotation.x=rx2;
   }
-  if(renderer)renderer.render(scene,camera);
+  if(renderer){if(HDX&&HDX.ready)HDX.render();else renderer.render(scene,camera);}
   drawOverlay(now);
   drawMini();
 }
@@ -46369,6 +46514,7 @@ function fit(){
   if(renderer)renderer.setSize(w,h,false);
   camera.aspect=w/h;
   camera.updateProjectionMatrix();
+  if(HDX&&HDX.ready)HDX.resize(w,h);
   fitQuestLog();
 }
 window.addEventListener('resize',fit);
@@ -46691,8 +46837,9 @@ const MP = (function () {
   function duelClear() { duelReqIn.clear(); duelReqOut.clear(); _duelSetupClose(); }
 
   const BASE_APP = { skin: 0xd9a066, shirt: 0x8a8148, pants: 0x2f5d33, hair: 0x6b4423, boots: 0x5a3a26, belt: 0x6e2419 };
-  function selfApp() { const c = player.cosmetic || {}; return { skin: 0xd9a066, shirt: (typeof c.shirt === 'number' ? c.shirt : 0x8a8148), pants: (typeof c.pants === 'number' ? c.pants : 0x2f5d33), hair: (typeof c.hair === 'number' ? c.hair : 0x6b4423), hairstyle: c.hairstyle || 'short', shirtStyle: c.shirtStyle || 'tee', pantsStyle: c.pantsStyle || 'trousers', boots: 0x5a3a26, belt: 0x6e2419 }; }
-  function _isDefaultApp(a) { return !!a && a.shirt === 0x8a8148 && a.pants === 0x2f5d33 && a.hair === 0x6b4423 && (a.hairstyle || 'short') === 'short' && (a.shirtStyle || 'tee') === 'tee' && (a.pantsStyle || 'trousers') === 'trousers'; }
+  function selfApp() { const c = player.cosmetic || {}; if (HDX) { const a = _selfAppBase(c); a.sex = c.sex || 'm'; if (typeof c.skin === 'number') a.skin = c.skin; if (c.size) a.size = c.size; return a; } return _selfAppBase(c); }   /* HD: the build travels with the look */
+  function _selfAppBase(c) { return { skin: 0xd9a066, shirt: (typeof c.shirt === 'number' ? c.shirt : 0x8a8148), pants: (typeof c.pants === 'number' ? c.pants : 0x2f5d33), hair: (typeof c.hair === 'number' ? c.hair : 0x6b4423), hairstyle: c.hairstyle || 'short', shirtStyle: c.shirtStyle || 'tee', pantsStyle: c.pantsStyle || 'trousers', boots: 0x5a3a26, belt: 0x6e2419 }; }
+  function _isDefaultApp(a) { if (HDX && a && (a.sex === 'f' || typeof a.skin === 'number' && a.skin !== 0xd9a066 || (a.size && a.size !== 'average'))) return false; return !!a && a.shirt === 0x8a8148 && a.pants === 0x2f5d33 && a.hair === 0x6b4423 && (a.hairstyle || 'short') === 'short' && (a.shirtStyle || 'tee') === 'tee' && (a.pantsStyle || 'trousers') === 'trousers'; }
   function _resolveApp(uid, pa) { const i = huid(uid); if (pa && typeof pa === 'object' && !_isDefaultApp(pa)) return Object.assign({}, BASE_APP, pa); return Object.assign({}, BASE_APP, { shirt: SHIRTS[i % SHIRTS.length], hair: HAIRS[(i >> 3) % HAIRS.length] }); }
   function refreshApp() { if (!active() || !conn) return; send({ t: 'hello', name: player.name, x: player.x, y: player.y, h: player.heading, gear: selfGear(), hp: player.hp, mhp: maxHp(), in: _mpRoom(), title: player.title || null, app: selfApp(), pet: _selfPetId() , ho: (typeof houseOpen === 'function' && houseOpen()) ? 1 : 0 }); sendPetId(true); }
   const SHIRTS = [0x8a8148, 0x7a4a8a, 0x46788a, 0x8a4a46, 0x4a8a5a, 0x8a7a4a, 0x5a5a8a, 0x8a5a7a];
@@ -49536,5 +49683,19 @@ try{ setTimeout(function(){ try{
 
 requestAnimationFrame(render);
 </script>
+<script src="hd/hd-post.js"></script>
+<script src="hd/hd-terrain.js"></script>
+<script src="hd/hd-foliage.js"></script>
+<script src="hd/hd-chars.js"></script>
+<script src="hd/hd-body.js"></script>
+<script src="hd/hd-lobby.js"></script>
+<script src="hd/hd-map.js"></script>
+<script src="hd/hd-gear.js"></script>
+<script src="hd/hd-mobs.js"></script>
+<script src="hd/hd-magic.js"></script>
+<script src="hd/hd-props.js"></script>
+<script src="hd/hd-buildings.js"></script>
+<script src="hd/hd-fx.js"></script>
+<script src="hd/hd-icons.js"></script>
 </body>
 </html>

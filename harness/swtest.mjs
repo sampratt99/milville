@@ -233,10 +233,20 @@ const NAV = 'navigate';
   S.eq('a leaderboard GET is passed through too',   out2, 'passthrough');
 }
 {
+  /* the HD layer: Three.js is vendored, so the CDN file is an ordinary cross-origin request */
   const env = makeEnv({netMode: 'ok'});
   const out = await go(env, 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js');
-  S.ok('the precached CDN script IS handled',       out !== 'passthrough');
+  S.eq('the old CDN script is no longer handled',   out, 'passthrough');
+  const outL = await go(env, BASE + 'hd/hd-post.js');
+  S.ok('a layer script IS handled',                 outL !== 'passthrough' && outL !== 'NEVER-ANSWERED');
+  S.eq('  online, the network copy is served',      outL.tag, 'network-fresh');
   S.eq('  and cached for offline play',             env.log.puts.length, 1);
+  const off = makeEnv({netMode: 'fail', seeded: {[VER]: {[BASE + 'hd/hd-post.js']: 'cached-layer'}}});
+  const outO = await go(off, BASE + 'hd/hd-post.js');
+  S.eq('  offline, the cached copy is served',      outO.tag, 'cached-layer');
+  const hang = makeEnv({netMode: 'hang', seeded: {[VER]: {[BASE + 'vendor/three/three.min.js']: 'cached-three'}}});
+  const outH = await go(hang, BASE + 'vendor/three/three.min.js');
+  S.eq('  a hanging network falls back to the cache', outH.tag, 'cached-three');
 }
 {
   const env = makeEnv({netMode: 'ok'});
@@ -247,7 +257,7 @@ const NAV = 'navigate';
 }
 
 /* ---- version + housekeeping ---------------------------------------------- */
-S.ok('CACHE_VERSION was bumped for this change',    VER === 'milville-v3', VER);
+S.ok('CACHE_VERSION was bumped for this change',    VER === 'milville-v4', VER);
 S.ok('the file documents that it must be bumped by hand',
      /MUST BE BUMPED BY HAND/.test(SW_SRC));
 S.ok('  and says why it cannot be derived',

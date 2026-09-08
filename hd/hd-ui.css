@@ -1,0 +1,238 @@
+/* ============================================================================
+   Milville HD — interface skin.  Injected by hd/hd-pre.js after the game's
+   own stylesheet (never under ?hd=off).
+
+   Direction: the RuneScape 3 client's dark skin, but with the RuneScape faces
+   the game already ships (RSFont / RSFontSmall / RSFontQuill) kept everywhere.
+   Panels go dark slate with steel-blue bevels and gold trim; corners stay
+   nearly square; the chat and dialogue keep their parchment because the game
+   colours every chat line inline for it. Same ids, same DOM, no logic.
+   ========================================================================== */
+:root{
+  --hd-panel:#1a2029; --hd-panel2:#222a36; --hd-panel3:#2a3443;
+  --hd-edge:#0a0d12; --hd-bevel-hi:#4a5a72; --hd-bevel-lo:#0f141c;
+  --hd-border:#33405a; --hd-gold:#e8b94f; --hd-accent:#f2a33a; --hd-blue:#3fa9f5;
+  --hd-text:#e6e8ec; --hd-muted:#9aa3b2;
+}
+html,body{background:radial-gradient(1300px 800px at 50% -10%,#1d2534 0%,#0b0e13 70%) fixed !important;}
+body{color:var(--hd-text) !important;}
+
+/* frame + title */
+#frame{
+  background:linear-gradient(180deg,#171d27,#0f131a) !important;
+  border:2px solid var(--hd-edge) !important;border-radius:6px !important;
+  box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 24px 70px rgba(0,0,0,.65) !important;
+  padding:12px !important;max-width:1180px !important;
+}
+#title{color:var(--hd-gold) !important;text-shadow:0 2px 0 #000,0 0 18px rgba(232,185,79,.35) !important;}
+#title small{color:var(--hd-muted) !important;}
+
+/* the viewport */
+#viewwrap{
+  border:2px solid var(--hd-edge) !important;border-radius:4px !important;
+  box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 10px 34px rgba(0,0,0,.55) !important;
+}
+#hdq{background:rgba(14,18,25,.75) !important;border:1px solid var(--hd-border) !important;border-radius:3px !important;color:var(--hd-gold) !important;opacity:.9 !important;font-family:RSFont,Verdana,sans-serif !important;font-size:12px !important;font-weight:bold !important;}
+
+/* chat: parchment kept (the game colours lines inline for it), framed in the dark skin */
+#chat{
+  border:2px solid var(--hd-edge) !important;border-radius:3px !important;
+  box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 6px 18px rgba(0,0,0,.35) !important;
+}
+#chatentry{
+  background:#0f141c !important;color:var(--hd-text) !important;border:2px solid var(--hd-edge) !important;
+  border-radius:3px !important;box-shadow:0 0 0 1px var(--hd-bevel-hi) inset !important;
+}
+#chatentry:focus{border-color:var(--hd-blue) !important;box-shadow:0 0 0 1px var(--hd-blue) inset !important;background:#121924 !important;}
+#chatentry::placeholder{color:var(--hd-muted) !important;}
+#chatsend{background:linear-gradient(#2c8f5a,#1f6b42) !important;border:2px solid var(--hd-edge) !important;border-radius:3px !important;color:#fff !important;box-shadow:0 0 0 1px #4fb37a inset !important;}
+.ctab{
+  background:linear-gradient(var(--hd-panel3),var(--hd-panel)) !important;border:1px solid var(--hd-edge) !important;border-radius:3px !important;
+  color:#dfe3ea !important;box-shadow:0 0 0 1px var(--hd-bevel-hi) inset !important;
+}
+.ctab:hover{background:linear-gradient(#34405a,#222a36) !important;}
+.ctab.on{background:linear-gradient(#3a4c6d,#25324a) !important;color:#fff !important;box-shadow:0 0 0 1px var(--hd-blue) inset !important;}
+.ctab span{color:#5fd07a !important;}
+.ctab.report{color:#ff7b6b !important;}
+
+/* sidebar panels */
+.stone{
+  background:linear-gradient(180deg,#1f2734,#141922) !important;
+  border:2px solid var(--hd-edge) !important;border-radius:4px !important;
+  box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 0 0 3px #0c1016,0 8px 22px rgba(0,0,0,.45) !important;
+}
+.panel{
+  background:linear-gradient(160deg,#151b25,#10141b) !important;
+  border-radius:3px !important;box-shadow:0 0 0 1px var(--hd-border) inset,0 0 0 2px var(--hd-edge) !important;
+}
+.tab{
+  background:linear-gradient(var(--hd-panel3),var(--hd-panel)) !important;border:1px solid var(--hd-edge) !important;border-radius:3px !important;
+  box-shadow:0 1px 0 var(--hd-bevel-hi) inset,0 -2px 4px rgba(0,0,0,.35) inset !important;
+}
+.tab:hover{background:linear-gradient(#34405a,#222a36) !important;}
+.tab.on{
+  background:linear-gradient(#3a4c6d,#25324a) !important;
+  box-shadow:0 1px 0 #6f86ad inset,0 0 10px rgba(63,169,245,.35) !important;
+}
+.tab.dis{opacity:.35 !important;}
+
+/* minimap block */
+#minimap{border:3px solid var(--hd-edge) !important;box-shadow:0 0 0 2px var(--hd-bevel-hi),0 0 0 4px #0c1016,0 0 24px rgba(0,0,0,.6) !important;}
+
+/* grids and slots */
+.slot{
+  border:1px solid var(--hd-edge) !important;border-radius:3px !important;
+  background:radial-gradient(circle at 38% 32%,#2a3443,#171d27 72%) !important;
+  box-shadow:0 1px 0 rgba(0,0,0,.5) inset,0 0 0 1px #2a3344 !important;
+}
+.slot:hover{box-shadow:0 0 0 1px var(--hd-blue) inset !important;}
+.skill{background:linear-gradient(#222a36,#171d27) !important;border:1px solid var(--hd-edge) !important;border-radius:3px !important;box-shadow:0 0 0 1px #2a3344 inset !important;}
+.skill.maxed{border-color:var(--hd-gold) !important;box-shadow:0 0 0 1px rgba(232,185,79,.5) inset,0 0 8px rgba(232,185,79,.4) !important;}
+#totallevel,#slayerpts,#combatlvlbox,#cbtweapon{color:var(--hd-gold) !important;}
+.spellcell,.emotebtn,.eslot,.prayrow{border-radius:3px !important;border:1px solid var(--hd-edge) !important;background:linear-gradient(#222a36,#171d27) !important;}
+.spellcell:hover,.emotebtn:hover,.prayrow:hover{box-shadow:0 0 0 1px var(--hd-blue) inset !important;}
+.spellcell.on,.prayrow.on{box-shadow:0 0 0 1px var(--hd-gold) inset,0 0 8px rgba(232,185,79,.35) !important;}
+.stylebtn,#retalbtn,#specbtn,.sbtn,.os-btn,.gebtn,.geicnbtn,.slbtn,.mktconfirmbtn,.btn,.gbtn,.getab,#eqstatsbtn,#importbtn,#newbtn,#playbtn,.hcell,.hrow{
+  background:linear-gradient(var(--hd-panel3),var(--hd-panel)) !important;color:var(--hd-gold) !important;
+  border:1px solid var(--hd-edge) !important;border-radius:3px !important;
+  box-shadow:inset 1px 1px 0 var(--hd-bevel-hi),inset -1px -1px 0 var(--hd-bevel-lo) !important;
+}
+.stylebtn:hover,#retalbtn:hover,.sbtn:hover,.os-btn:hover,.gebtn:hover,.geicnbtn:hover,.slbtn:hover,.mktconfirmbtn:hover,.btn:hover,.gbtn:hover,.getab:hover,#eqstatsbtn:hover,#importbtn:hover,#newbtn:hover,#playbtn:hover{
+  background:linear-gradient(#34405a,#222a36) !important;color:#ffd27a !important;filter:none !important;
+}
+.stylebtn.on,#retalbtn.on,.hrow.on{background:linear-gradient(#3a4c6d,#25324a) !important;color:#fff !important;}
+.os-btn--accept,.mktconfirmbtn,.slbtn,.gbtn.gacc{color:#5fd07a !important;}
+.os-btn--decline,.gbtn.gdec,.gbtn.gleave{color:#ff7b6b !important;}
+
+/* right-click menu */
+#ctx{
+  background:#141922 !important;border:1px solid var(--hd-edge) !important;border-radius:3px !important;
+  box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 12px 30px rgba(0,0,0,.6) !important;
+}
+#ctx .hd{background:#0c1016 !important;color:var(--hd-muted) !important;}
+#ctx .opt{color:#e6e8ec !important;}
+#ctx .opt .t{color:var(--hd-gold) !important;}
+#ctx .opt:hover{background:#2a3850 !important;color:#fff !important;}
+
+/* dialogue box: parchment kept, framed in the skin */
+#dlgbox{border:2px solid var(--hd-edge) !important;border-radius:4px !important;box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 16px 40px rgba(0,0,0,.6) !important;}
+#dlgface{border:1px solid var(--hd-edge) !important;border-radius:3px !important;}
+
+/* tooltips and small overlays */
+#skilltip,#partytimer,#wildbadge,.buffchip,#pethud .petchip{border-radius:3px !important;border:1px solid var(--hd-edge) !important;background:rgba(20,25,34,.95) !important;box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 10px 24px rgba(0,0,0,.5) !important;}
+#skilltip .stipfill{background:linear-gradient(90deg,#3fa9f5,#7bd0ff) !important;}
+
+/* big modals: bank, exchange, shops, house, logs */
+#bankui,#geui,#houseui,#logui,#encui,#forgeui,#embershopui,#cageshopui,#duelui,#fashionui,#capeui,#eqstatui,.gepanel,#codebox,#wmapframe,#guidewrap{
+  background:linear-gradient(180deg,#1b2230,#10141b) !important;border:2px solid var(--hd-edge) !important;border-radius:5px !important;
+  box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 20px 60px rgba(0,0,0,.65) !important;
+}
+.gebar,#mkthdr,#bkL,#bkR,#wmapbar,#equiphead,#stylehead,#prayhead,#spellhead,#emotehead,.subhead,.eqsecthd,.ghead,#gesellhead,#housetitle,.housesub{color:var(--hd-gold) !important;}
+.friendrow,.grow,.slrow,.sgrow,.geslot,.mktrow{border-radius:3px !important;border:1px solid var(--hd-edge) !important;background:linear-gradient(#222a36,#171d27) !important;}
+.friendrow:nth-child(odd),.grow:nth-child(odd){background:linear-gradient(#26303f,#1a212c) !important;}
+.friendrow:hover{background:#2a3850 !important;}
+::-webkit-scrollbar{width:10px;height:10px;}
+::-webkit-scrollbar-track{background:#0c1016;}
+::-webkit-scrollbar-thumb{background:#33405a;border:2px solid #0c1016;border-radius:3px;}
+::-webkit-scrollbar-thumb:hover{background:#465579;}
+
+/* title screen: keeps the game's medieval flavour -- dark oak, parchment, gold rule */
+#splash{background:radial-gradient(1100px 700px at 50% 35%,rgba(58,42,24,.96),rgba(12,9,6,.985)) !important;}
+#splash p{color:#d9c79f !important;text-shadow:0 1px 0 #000;}
+#charselect{border:2px solid #0d0b08;border-radius:3px;padding:14px 16px;background:linear-gradient(#3a2f20,#241c12);box-shadow:0 0 0 1px #6e5a3a inset,0 0 0 3px #1a140c,0 14px 40px rgba(0,0,0,.6);}
+.slotrow{background:linear-gradient(#4a3d2a,#33291b) !important;border:2px solid #0d0b08 !important;border-radius:2px !important;box-shadow:0 0 0 1px #7a6543 inset !important;}
+.slotrow .sname{color:#ffe8b0 !important;text-shadow:1px 1px 0 #000;}
+.slotrow .smeta{color:#c4ad80 !important;}
+.slotrow .sload{background:linear-gradient(#2e5b3a,#1f4329) !important;border:2px solid #0d0b08 !important;color:#ffe8b0 !important;border-radius:2px !important;box-shadow:0 0 0 1px #4f8a5f inset !important;}
+.slotrow .sdel{color:#ff7b6b !important;}
+#namefield,#importfield{background:#f3e7c8 !important;border:2px solid #0d0b08 !important;border-radius:2px !important;color:#1d1812 !important;box-shadow:0 0 0 1px #b8a87a inset !important;}
+#namefield::placeholder,#importfield::placeholder{color:#6b5c40 !important;font-style:italic;}
+#newbtn,#importbtn,#playbtn{background:linear-gradient(#7a2e22,#5b1f16) !important;border:2px solid #0d0b08 !important;color:#ffe8b0 !important;border-radius:2px !important;box-shadow:0 0 0 2px #a8553f inset,0 4px 12px rgba(0,0,0,.5) !important;}
+#charhint,#importmsg{color:#bba37a !important;}
+#codearea{background:#f3e7c8 !important;color:#1d1812 !important;border:2px solid #0d0b08 !important;}
+
+/* ---------------------------------------------------------------- lobby */
+#splash.hdlobby{background:#0b0906 url(lobby.jpg) center/cover no-repeat !important;gap:6px;padding:16px;}
+#splash.hdlobby::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,.05) 0%,rgba(0,0,0,.35)70%,rgba(0,0,0,.6) 100%);pointer-events:none;}
+#splash.hdlobby>*{position:relative;}
+#splash.hdlobby>p{display:none;}
+#splash.hdlobby #logocv{width:min(620px,92vw);filter:drop-shadow(0 6px 14px rgba(0,0,0,.8));margin-bottom:10px;}
+#hdbox{width:440px;max-width:94vw;background:linear-gradient(#3b2b1b,#241a10 60%,#1c130b);border:2px solid #0b0805;
+  box-shadow:0 0 0 1px #8a6a2a inset,0 0 0 3px #1a1208 inset,0 18px 50px rgba(0,0,0,.75);padding:10px 14px 14px;transition:width .2s;}
+#hdbox.creating{width:900px;}
+.hdbox-title{color:#ffd98c;font:bold 20px RSFont,Georgia,serif;letter-spacing:2px;text-align:center;padding:4px 0 10px;
+  border-bottom:1px solid #6a5028;margin-bottom:10px;text-shadow:0 2px 0 #000;}
+#hdbox #charselect{width:100%;max-width:none;gap:10px;}
+#hdbox #slotlist{max-height:46vh;overflow:auto;padding-right:2px;}
+#hdlobbyrow{display:flex;flex-direction:column;gap:8px;align-items:center;}
+#hdcreate,#hdcr-go,#hdcr-back{font:bold 15px RSFont,Georgia,serif;font-variant:small-caps;letter-spacing:2px;padding:10px 30px;cursor:pointer;color:#2a1a08;
+  background:linear-gradient(#f2cf6a,#c9962b 55%,#a87a1c);border:2px solid #0b0805;box-shadow:0 0 0 1px #ffe9a8 inset,0 3px 8px rgba(0,0,0,.5);}
+#hdcreate:hover,#hdcr-go:hover{filter:brightness(1.08);}
+#hdcr-back{background:linear-gradient(#6d5a3c,#4a3a24);color:#ffe8b0;box-shadow:0 0 0 1px #8a7048 inset,0 3px 8px rgba(0,0,0,.5);}
+.hdlink{background:none;border:none;color:#c9b07a;font:12px RSFont,Georgia,serif;cursor:pointer;text-decoration:underline;padding:2px 6px;}
+#hdbox #charhint{color:#bda87e;font-size:11px;}
+#hdbox #importsave{margin-top:4px;}
+/* the creator */
+#hdcr{display:flex;gap:16px;align-items:stretch;}
+#hdcr-stage{position:relative;width:340px;flex:0 0 340px;background:radial-gradient(ellipse at 50% 70%,#3a2d1e,#120d08 75%);border:1px solid #0b0805;box-shadow:0 0 0 1px #5a4628 inset;}
+#hdcr-cv{width:340px;height:460px;display:block;}
+.hdcr-hint{position:absolute;bottom:6px;left:0;right:0;text-align:center;color:#9a8660;font:11px RSFont,Georgia,serif;}
+#hdcr-ctl{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;text-align:left;}
+#hdbox.creating #charselect{display:none;}
+.hdcr-row{display:flex;flex-direction:column;gap:5px;}
+.hdcr-row label{color:#ffd98c;font:bold 13px RSFont,Georgia,serif;letter-spacing:1px;}
+#hdcr-name{font:15px RSFont,Georgia,serif;padding:8px 12px;color:#ffe8b0;background:#241f18;border:2px solid #0d0b08;box-shadow:0 0 0 1px #5d5141 inset;outline:none;}
+#hdcr-name.bad{border-color:#c0392b;}
+.hdcr-opts{display:flex;flex-wrap:wrap;gap:5px;}
+.hdcr-chip{font:12px RSFont,Georgia,serif;color:#e8d8b0;padding:4px 9px;background:#2b2118;border:1px solid #0b0805;box-shadow:0 0 0 1px #5a4628 inset;cursor:pointer;}
+.hdcr-chip.sel{background:linear-gradient(#c9962b,#8a6418);color:#1a1004;box-shadow:0 0 0 1px #ffe9a8 inset;}
+.hdcr-sw{width:22px;height:22px;border:1px solid #0b0805;box-shadow:0 0 0 1px #5a4628 inset;cursor:pointer;}
+.hdcr-sw.sel{outline:2px solid #ffd98c;outline-offset:1px;}
+.hdcr-foot{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:8px;}
+.hdcr-sp{flex:1;}
+#hdcr-msg{color:#e8a090;font:12px RSFont,Georgia,serif;min-height:14px;}
+@media (max-width:940px){#hdbox.creating{width:94vw;}#hdcr{flex-direction:column;}#hdcr-stage{width:100%;flex:none;}#hdcr-cv{width:100%;height:300px;}}
+
+/* the world map fits any window: the canvas gives way to the legend and the chrome */
+#wmapc{max-width:calc(96vw - 270px) !important;max-height:calc(100vh - 150px) !important;image-rendering:auto !important;}
+#wmapframe{max-width:96vw !important;}
+@media (max-width:900px){#wmapc{max-width:92vw !important;}}
+
+/* the world map search */
+#hdmapsearch{display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:10px;}
+#hdmapq{font:12px RSFont,Georgia,serif;padding:3px 8px;width:180px;color:#ffe8b0;background:#241f18;border:1px solid #0d0b08;box-shadow:0 0 0 1px #5d5141 inset;outline:none;}
+#hdmapq::placeholder{color:#8a7a5a;}
+#hdmapn{color:#bda87e;font:11px RSFont,Verdana,sans-serif;min-width:60px;}
+/* the live vista behind the lobby */
+#splash.hdlobby>#hdlobbycv{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
+#splash.hdlobby::before{z-index:1;}
+#splash.hdlobby>*:not(#hdlobbycv){z-index:2;}
+#splash.hdlobby.live{background:#0b0906 !important;}
+
+/* the world map zooms inside its frame */
+#hdmapwrap{overflow:hidden;position:relative;line-height:0;cursor:grab;max-width:calc(96vw - 270px);max-height:calc(100vh - 150px);}
+#hdmapwrap:active{cursor:grabbing;}
+#hdmapwrap #wmapc{max-width:none !important;max-height:none !important;width:min(calc(96vw - 270px),1600px);height:auto;display:block;}
+
+/* the world map on a phone: the frame takes the width, the legend drops below */
+@media (max-width:760px){
+  #hdmapwrap{max-width:94vw;max-height:60vh;}
+  #hdmapwrap #wmapc{width:94vw;}
+  #wmaprow{flex-direction:column;}
+  #wmaplegend{max-width:94vw;}
+}
+
+/* the tutorial's corner escape */
+#hdtutskip{position:absolute;right:8px;top:8px;z-index:31;font:bold 12px RSFont,Georgia,serif;letter-spacing:1px;padding:6px 12px;cursor:pointer;color:#ffe8b0;background:linear-gradient(#5b3a2a,#3a2418);border:2px solid #0d0b08;box-shadow:0 0 0 1px #8a5a3f inset,0 3px 8px rgba(0,0,0,.5);}
+#hdtutskip:hover{background:linear-gradient(#7a4a32,#4a2c1c);}
+@media (max-width:760px){#hdtutskip{right:6px;top:6px;padding:8px 12px;}}
+
+/* a MacBook browser window: the whole frame fits the viewport height, so nothing scrolls
+   (the view keeps its aspect; the frame width follows the height that is left for it) */
+@media (min-width:761px){
+  #frame{max-width:min(1040px,calc((100dvh - 215px) * 532 / 364)) !important;}
+}
+
+/* the title screen shows nothing of the old layout while the HD lobby builds behind it */
+#splash:not(.live) > *{visibility:hidden;}
+#splash:not(.live)::after{content:'Loading Milville';visibility:visible;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ffd98c;font:bold 22px RSFont,Georgia,serif;letter-spacing:3px;}

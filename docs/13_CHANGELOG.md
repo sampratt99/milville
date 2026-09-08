@@ -578,3 +578,18 @@ it and `gePrice` zeroed on it, but `sellSlot`/`sellId`/`sellItem` checked only
 `noSell`, so a blocked item could still be sold by clicking it in the pack. All
 three paths now honour it, and `selltest` drives every `SELL_BLOCK` entry down
 all three.
+
+## HD launch — the RS3-style graphics layer
+
+The whole HD layer lands in one commit: `hd/` (fourteen classic scripts and a stylesheet
+loaded after the game script, plus the RS wiki item icons), `vendor/three/` (Three.js r128
+vendored with the post-processing passes; no CDN dependency at runtime), `docs-hd/` (the
+visual changelog stage by stage, every line of game logic the layer touches, and the pilot
+notes), `docs/29_HD_RENDERING.md`, and `tools/` (the dev server and shot receiver used to
+pilot it). `index.html` carries only guarded `HDX` hooks and the vendored script tags; every
+game rule is byte-identical to the previous release (`docs-hd/LOGIC_TOUCHED.md` is the full
+list). Save keys, the multiplayer and market endpoints and the leaderboard are unchanged, so
+characters carry over. The service worker is v4: it precaches the layer and serves it
+network-first. Pilot mode is off. A `Classic world` option on the quality button shows the
+original terrain, water and buildings under the HD characters.
+

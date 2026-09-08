@@ -5,3 +5,4 @@ mp-server/.wrangler/
 *.bak
 *.bak.*
 *.zip
+shots/
