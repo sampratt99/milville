@@ -197,7 +197,9 @@ self.addEventListener('fetch', event => {
   }
 
   if (sameOrigin && LAYER.test(new URL(req.url).pathname)) {
-    const net = fetch(req).then(res => { putIfGood(req, res); return res; }).catch(() => null);
+    /* revalidate with the server every time: Pages sends max-age=600 on these, and a plain reload
+       would otherwise keep a ten-minute-old script after a deploy (a 304 costs one round trip) */
+    const net = fetch(req.url, { cache: 'no-cache', credentials: 'same-origin' }).then(res => { putIfGood(req, res); return res; }).catch(() => null);
     const timeout = new Promise(resolve => setTimeout(() => resolve(null), LAYER_TIMEOUT_MS));
     event.respondWith(
       Promise.race([net, timeout]).then(first => first || caches.match(req).then(hit => hit || net).then(r => r || new Response('', { status: 504 })))

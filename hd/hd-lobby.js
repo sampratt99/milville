@@ -217,3 +217,6 @@ console.log('[HD] lobby ready');
   b.hidden=true;vw.appendChild(b);
   setInterval(()=>{const on=!!(TUT&&TUT.active&&!TUT.done);if(b.hidden===on)b.hidden=!on;},300);
 })();
+
+/* the build stamp: which layer is this browser actually running */
+(function(){try{const el=document.createElement('div');el.id='hdbuild';el.textContent='HD build '+HD.build;el.style.cssText='position:fixed;right:8px;bottom:6px;z-index:101;font:11px RSFont,Verdana,sans-serif;color:rgba(255,232,176,.55);pointer-events:none;';document.body.appendChild(el);}catch(e){}})();

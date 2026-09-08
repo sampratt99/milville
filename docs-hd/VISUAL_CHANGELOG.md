@@ -941,4 +941,9 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   subtraction, safe for the tools the game resets every frame (staff, bows) and a runaway for
   the one it never resets (the Cindermaw staff). The upright angle is now set absolutely each
   frame from the arm and the elbow.
+- Stale layer after a deploy (the owner kept seeing the previous build): GitHub Pages sends
+  `max-age=600` on `hd/*.js`, and the worker's network-first fetch honoured the browser's HTTP
+  cache, so a plain reload could run a ten-minute-old script. The worker now fetches layer
+  files with `cache: 'no-cache'` (a 304 when unchanged). `HD.build` is a per-deploy stamp,
+  logged to the console and shown bottom-right of the lobby, so a browser can be checked.
 
