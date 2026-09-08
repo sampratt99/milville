@@ -59,4 +59,5 @@ with `HDX === null`, which is also the path a browser without WebGL2 takes.
 | 38 | index.html | Three `bake()` calls for round window discs pre-rotate the geometry (`.rotateX(Math.PI/2)`) and pass only `ry`; previously `ry,1,Math.PI/2,0` left the disc perpendicular on ±x walls. Pure visual fix, no gameplay path. |
 | launch | index.html | The service-worker registration is the live one-liner again (the clone had unregistered workers during development). |
 | hotfix | index.html | The attack pose's `acting` test reaches eight tiles for the ranged and magic weapon styles under `HDX` (the bow draw and the cast sweep had only run for an adjacent target, so spells from range showed the bolt with no arm movement). Vanilla keeps adjacency. Visual only: heading and pose, never the hit. |
+| hotfix | index.html | The magic cast pose under `HDX`: raise to 1.7 rad (just past vertical), slam to +0.4 (forward and down), return to rest, instead of a 2.5 rad sweep that carried the hand behind the head. Vanilla keeps its sweep. Pose only. |
 

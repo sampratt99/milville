@@ -933,4 +933,8 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   HD's, and its bend (0.2 rad at rest, 0.6 at full raise) tilted the tool back. The elbow
   tick now counters its own bend on the tools tagged upright (staff, cindermaw staff, bows;
   a remote rig's staff by its orb), so the staff stays vertical and rises with the arm.
+- The cast itself: the game swung the staff arm 143°, past vertical, so even a plumb staff
+  stood behind the head at the peak. Under HDX the cast raises to just past vertical, slams
+  the butt of the staff to the ground ahead and returns, over the same 480 ms; the staff stays
+  perpendicular to the ground throughout.
 

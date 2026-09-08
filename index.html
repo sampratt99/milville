@@ -45339,7 +45339,14 @@ function render(now){
         /* casting: sweep the staff overhead to the sky (OSRS-style raise) */
         armR=-0.55;armL=-0.22;
         if(swA<480){const lift=Math.sin(Math.PI*(swA/480));
-          armR=-0.55-1.95*lift;armL=-0.22-0.30*lift;}
+          if(HDX){
+            /* HD: a staff cast the RS way — raise to just past vertical, slam the butt to the ground ahead, return;
+               the staff itself stays plumb throughout (the arm and elbow are countered elsewhere) */
+            const t=swA/480,ss=x=>x*x*(3-2*x);
+            if(t<0.40){const u=ss(t/0.40);armR=-0.55-1.15*u;armL=-0.22-0.25*u;}
+            else if(t<0.72){const u=ss((t-0.40)/0.32);armR=-1.70+2.10*u;armL=-0.47+0.30*u;}
+            else{const u=ss((t-0.72)/0.28);armR=0.40-0.95*u;armL=-0.17-0.05*u;}
+          }else{armR=-0.55-1.95*lift;armL=-0.22-0.30*lift;}}
       }else if(wEq==='whip'){
         /* whip: coil back then a fast forward crack (tendril solved per-frame in poseWhip) */
         _wpSwA=swA;
