@@ -123,7 +123,8 @@ body{color:var(--hd-text) !important;}
 #skilltip .stipfill{background:linear-gradient(90deg,#3fa9f5,#7bd0ff) !important;}
 
 /* big modals: bank, exchange, shops, house, logs */
-#bankui,#geui,#houseui,#logui,#encui,#forgeui,#embershopui,#cageshopui,#duelui,#fashionui,#capeui,#eqstatui,.gepanel,#codebox,#wmapframe,#guidewrap{
+/* the modal containers (#bankui, #geui...) are full-screen backdrops: they keep the game's dim so the world shows round the panel; only the panels inside take the chrome */
+.gepanel,.fashpanel,#codebox,#wmapframe,#guidewrap{
   background:linear-gradient(180deg,#1b2230,#10141b) !important;border:2px solid var(--hd-edge) !important;border-radius:5px !important;
   box-shadow:0 0 0 1px var(--hd-bevel-hi) inset,0 20px 60px rgba(0,0,0,.65) !important;
 }
@@ -236,3 +237,10 @@ body{color:var(--hd-text) !important;}
 /* the title screen shows nothing of the old layout while the HD lobby builds behind it */
 #splash:not(.live) > *{visibility:hidden;}
 #splash:not(.live)::after{content:'Loading Milville';visibility:visible;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ffd98c;font:bold 22px RSFont,Georgia,serif;letter-spacing:3px;}
+
+/* the backdrop behind a popup: a light dim, never a wall */
+.gemodal{background:rgba(0,0,0,.28) !important;}
+
+/* the marker's cancel, at the minimap's corner */
+#hdmarkx{position:absolute;right:-2px;top:-2px;z-index:6;width:20px;height:20px;line-height:18px;padding:0;font:bold 11px RSFont,Verdana,sans-serif;color:#ffe8b0;background:#3a2418;border:1px solid #0d0b08;border-radius:50%;cursor:pointer;box-shadow:0 0 0 1px #8a5a3f inset;}
+#hdmarkx:hover{background:#5b3a2a;}

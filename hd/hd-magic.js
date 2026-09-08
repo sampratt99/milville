@@ -212,5 +212,7 @@ HD.tick.push(function(now){
   }
 });
 HD.teleportFx=teleportFx;HD.burstFx=burst;
+/* shared with hd-lux.js: flames and rising embers on any group, ticked here */
+HD.emberise=function(grp,spots,emberSpots){emberise(grp,spots,emberSpots);embers.add(grp);};HD.motes=motes;HD.discTex=disc;
 console.log('[HD] magic effects ready');
 })();

@@ -313,3 +313,50 @@ drawExtras=function(){_de();try{
 try{ICON_PTS=null;}catch(e){}
 console.log('[HD] map painted',MW+'x'+MH);
 })();
+
+/* ---- a destination marker: click the world map to set it, a yellow arrow on the round minimap
+   points the way (or the flag itself when it is inside the circle), and it clears itself when
+   you arrive. Cancel: click the flag on the world map again, or the x by the minimap. ---- */
+(function(){
+  const c=document.getElementById('wmapc');if(!c||typeof player==='undefined')return;
+  const KEY='milville-hd-marker';
+  HD.marker=null;try{const s=localStorage.getItem(KEY);if(s)HD.marker=JSON.parse(s);}catch(e){}
+  const save=()=>{try{if(HD.marker)localStorage.setItem(KEY,JSON.stringify(HD.marker));else localStorage.removeItem(KEY);}catch(e){}};
+  const btn=document.createElement('button');btn.id='hdmarkx';btn.textContent='✕';btn.title='Clear the map marker';btn.hidden=true;
+  btn.addEventListener('mousedown',e=>e.stopPropagation());btn.addEventListener('click',e=>{e.stopPropagation();HD.clearMarker();});
+  const wrap=document.getElementById('minimapwrap');if(wrap)wrap.appendChild(btn);
+  const flagOnMap=()=>{if(!HD.marker)return;const g=c.getContext('2d');const x=(HD.marker.x+0.5)*6,y=(HD.marker.y+0.5)*6;
+    g.save();g.lineWidth=3;g.strokeStyle='#1a1206';g.beginPath();g.arc(x,y,7.5,0,7);g.stroke();g.strokeStyle='#ffd23d';g.lineWidth=1.8;g.beginPath();g.arc(x,y,7.5,0,7);g.stroke();
+    g.strokeStyle='#1a1206';g.lineWidth=3;g.beginPath();g.moveTo(x,y);g.lineTo(x,y-20);g.stroke();g.strokeStyle='#ffd23d';g.lineWidth=1.6;g.beginPath();g.moveTo(x,y);g.lineTo(x,y-20);g.stroke();
+    g.fillStyle='#ffd23d';g.strokeStyle='#1a1206';g.lineWidth=1.2;g.beginPath();g.moveTo(x,y-20);g.lineTo(x+13,y-15.5);g.lineTo(x,y-11);g.closePath();g.fill();g.stroke();g.restore();};
+  const refresh=()=>{btn.hidden=!HD.marker;const wm=document.getElementById('wmap');if(wm&&wm.classList.contains('on')&&typeof openWorldMap==='function')openWorldMap();};
+  HD.setMarker=function(x,y){HD.marker={x,y};save();refresh();if(typeof msg==='function')msg('Marker set. The yellow arrow on the minimap points the way.','#4d432f');};
+  HD.clearMarker=function(quiet){HD.marker=null;save();refresh();if(!quiet&&typeof msg==='function')msg('Marker cleared.','#4d432f');};
+  c.addEventListener('click',function(e){
+    if(HD.pilot||HD._indoors)return;
+    const r=c.getBoundingClientRect();const tx=Math.floor((e.clientX-r.left)*(c.width/r.width)/6),ty=Math.floor((e.clientY-r.top)*(c.height/r.height)/6);
+    if(typeof inb==='function'&&!inb(tx,ty))return;
+    if(HD.marker&&Math.abs(HD.marker.x-tx)<=1&&Math.abs(HD.marker.y-ty)<=1){HD.clearMarker();return;}
+    HD.setMarker(tx,ty);
+  });
+  if(typeof openWorldMap==='function'){const _o=openWorldMap;openWorldMap=function(){const r=_o.apply(this,arguments);try{flagOnMap();}catch(e){}return r;};}
+  /* the round minimap: the marker in map space is rotated by camYaw round the player */
+  if(typeof drawMini==='function'&&typeof mctx!=='undefined'){const _dm=drawMini;drawMini=function(){const r=_dm.apply(this,arguments);try{
+    if(!HD.marker||(typeof curInterior==='function'&&curInterior()))return r;
+    const dx=(HD.marker.x+0.5)-(player.px+0.5),dy=(HD.marker.y+0.5)-(player.py+0.5);
+    if(Math.max(Math.abs(HD.marker.x-player.x),Math.abs(HD.marker.y-player.y))<=1){HD.clearMarker(true);if(typeof msg==='function')msg('You have reached your marker.','#4d432f');return r;}
+    const z=(typeof MM_Z!=='undefined')?MM_Z:1;const cy=typeof camYaw!=='undefined'?camYaw:0;
+    const sx=(dx*Math.cos(cy)-dy*Math.sin(cy))*4*z,sy=(dx*Math.sin(cy)+dy*Math.cos(cy))*4*z;
+    const d=Math.hypot(sx,sy);const R=72;
+    mctx.save();mctx.translate(84,84);
+    if(d<R){/* inside the circle: the flag itself */
+      mctx.translate(sx,sy);mctx.lineWidth=2.5;mctx.strokeStyle='#1a1206';mctx.beginPath();mctx.moveTo(0,0);mctx.lineTo(0,-11);mctx.stroke();mctx.strokeStyle='#ffd23d';mctx.lineWidth=1.4;mctx.beginPath();mctx.moveTo(0,0);mctx.lineTo(0,-11);mctx.stroke();
+      mctx.fillStyle='#ffd23d';mctx.strokeStyle='#1a1206';mctx.lineWidth=1;mctx.beginPath();mctx.moveTo(0,-11);mctx.lineTo(8,-8);mctx.lineTo(0,-5);mctx.closePath();mctx.fill();mctx.stroke();
+    }else{/* at the rim: an arrow pointing the way */
+      const a=Math.atan2(sy,sx);mctx.rotate(a);mctx.translate(R,0);
+      mctx.fillStyle='#ffd23d';mctx.strokeStyle='#1a1206';mctx.lineWidth=1.6;mctx.beginPath();mctx.moveTo(9,0);mctx.lineTo(-5,-6.5);mctx.lineTo(-2,0);mctx.lineTo(-5,6.5);mctx.closePath();mctx.fill();mctx.stroke();
+    }
+    mctx.restore();
+  }catch(e){}return r;};}
+  refresh();
+})();

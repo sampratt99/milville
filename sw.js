@@ -72,6 +72,7 @@ const PRECACHE = [
   './hd/hd-icons.js',
   './hd/hd-lobby.js',
   './hd/hd-magic.js',
+  './hd/hd-lux.js',
   './hd/hd-map.js',
   './hd/hd-mobs.js',
   './hd/hd-post.js',

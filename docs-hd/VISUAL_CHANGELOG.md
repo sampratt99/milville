@@ -947,3 +947,24 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   files with `cache: 'no-cache'` (a 304 when unchanged). `HD.build` is a per-deploy stamp,
   logged to the console and shown bottom-right of the lobby, so a browser can be checked.
 
+## Stage 41 — map marker, popups, the Ember set, the luxury wares
+
+- A destination marker: click the expanded world map to set it (a yellow flag on the map);
+  the round minimap shows a yellow arrow at its rim pointing the way, or the flag itself when
+  it is inside the circle; it clears when you arrive, when you click the flag again, or with
+  the x at the minimap's corner. Persists in `milville-hd-marker`. Pilot mode's teleport
+  click takes precedence when it is on.
+- Popups (bank, exchange, wiki, shops…): the HD stylesheet had styled the full-screen modal
+  containers with the panel gradient, so the world vanished behind them. Only the panels take
+  the chrome now; the backdrop is a 28% dim.
+- Plate reads as one metal: `steel` is now metalness 0.60 / roughness 0.30 beside `trim` at
+  0.62 / 0.28 (the cuirass had read matte next to its gorget and rims).
+- The Ember set (`hd/hd-lux.js`): every worn plate of the set becomes obsidian, black glass
+  with lava cracks that pulse; flames lick the pauldron spikes and the helm's crest; embers
+  rise from the shoulders, the heart and the knees; the heart core breathes.
+- The luxury wares: the Crown of Wizardry gets a gold band, crystal spires, sparkling gems, an
+  arcane halo and drifting motes; the Halcyon Grimoire leather boards, gold spine and clasp, a
+  breathing rune ring; the Shield of the Mountain dark stone, a gold frame and snowy granite
+  peaks; the boots and gloves of speed and haste polished metal with sparks when you run; the
+  golden bodkins turn the dagger to gold with a glint.
+

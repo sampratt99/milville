@@ -81,8 +81,8 @@ const clothTex=()=>painted('gear:cloth',256,(g,S)=>{
 function remat(m,kind){
   const col=m.material&&m.material.color?m.material.color.getHex():0xffffff;
   const P={color:col};
-  if(kind==='steel'){P.map=steelTex();P.roughness=0.42;P.metalness=0.35;}
-  else if(kind==='trim'){P.map=steelTex();P.roughness=0.36;P.metalness=0.45;}
+  if(kind==='steel'){P.map=steelTex();P.roughness=0.30;P.metalness=0.60;}   /* the plates reflect like the trim does (the cuirass had read matte beside its gorget and rims) */
+  else if(kind==='trim'){P.map=steelTex();P.roughness=0.28;P.metalness=0.62;}
   else if(kind==='mail'){P.map=mailTex();P.roughness=0.5;P.metalness=0.35;}
   else if(kind==='leather'){P.map=leatherTex();P.roughness=0.8;P.metalness=0;}
   else if(kind==='wood'){P.map=woodTex();P.roughness=0.75;P.metalness=0;}
@@ -502,4 +502,6 @@ HD.tick.push(function(now){
 });
 let n0=0;for(const b of HD.bodies){try{n0+=dressRig(b);}catch(e){console.warn('[HD] gear',e);}}
 console.log('[HD] gear pieces fitted:',n0);
+/* shared with hd-lux.js */
+HD.gearKit={steelTex,leatherTex,woodTex,remat,par,gtype,setGeo,sampled,ascending,G,Buf,footRings,armRings,REST,LARM,RARM,LLEG,RLEG};
 })();

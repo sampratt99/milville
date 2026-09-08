@@ -30,7 +30,7 @@ try{performance.mark('hd:hd-pre');}catch(e){}
 if(typeof THREE==='undefined')return;
 /* ?hd=off loads the original renderer for side-by-side comparison */
 if(/[?&]hd=off\b/.test(location.search))return;
-const HD=window.HD={ready:false,tex:{},detail:null,quality:'high',version:'hd-1',build:'2026-09-08b'};   /* build: bump with every deploy; shown in the lobby and the console */
+const HD=window.HD={ready:false,tex:{},detail:null,quality:'high',version:'hd-1',build:'2026-09-08c'};   /* build: bump with every deploy; shown in the lobby and the console */
 console.log('[HD] build',HD.build);
 /* the interface theme: appended after the game's own <style>, so it wins the cascade;
    never added under ?hd=off, so the original look stays intact for comparison */
