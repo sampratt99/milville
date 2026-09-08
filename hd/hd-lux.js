@@ -33,7 +33,7 @@ const crackTex=()=>tex('lux:cracks',()=>{const S=256,c=document.createElement('c
   const glow=document.createElement('canvas');glow.width=glow.height=S;const gg=glow.getContext('2d');gg.filter='blur(6px)';gg.drawImage(c,0,0);g.globalCompositeOperation='lighter';g.globalAlpha=0.7;g.drawImage(glow,0,0);
   return c;});
 /* obsidian: black glass, cracks glowing through */
-function obsidian(){const m=new THREE.MeshStandardMaterial({color:0x0c0705,roughness:0.34,metalness:0.25,emissive:0xff6a2a,emissiveMap:crackTex(),emissiveIntensity:1.1});m.userData.hdObsidian=1;m.userData.hdMid=0;return m;}
+function obsidian(){const m=new THREE.MeshStandardMaterial({color:0x0c0705,roughness:0.34,metalness:0.25,emissive:0xff6a2a,emissiveMap:crackTex(),emissiveIntensity:0.3});m.userData.hdObsidian=1;   /* the cracks glow, they do not light the wearer */m.userData.hdMid=0;return m;}
 function gold(hex){const m=new THREE.MeshStandardMaterial({color:hex||0xc9932a,roughness:0.28,metalness:0.78,emissive:0x3a2405,emissiveIntensity:0.25,map:K.steelTex?K.steelTex():null});m.userData.hdMid=0;return m;}
 function silver(hex){const m=new THREE.MeshStandardMaterial({color:hex||0xb9c2cc,roughness:0.24,metalness:0.8,map:K.steelTex?K.steelTex():null});m.userData.hdMid=0;return m;}
 function crystal(hex){const m=new THREE.MeshPhysicalMaterial({color:hex,roughness:0.08,metalness:0.0,transmission:0.55,thickness:0.25,emissive:hex,emissiveIntensity:0.35,clearcoat:1,clearcoatRoughness:0.1});m.userData.hdMid=0;return m;}
@@ -137,7 +137,7 @@ HD.tick.push(function(now){
   if(heartHalo)heartHalo.material.opacity=0.2+0.2*p;
   if(helmWisp)helmWisp.material.opacity=0.15+0.15*p;
   /* the game re-tints every 'tint' mesh each frame; obsidian keeps its black after it */
-  for(const slot of Object.keys(obsSets)){const gs=obsSets[slot];if(!gs)continue;for(const g of gs)g.traverse(m=>{if(m.isMesh&&m.material&&m.material.userData.hdObsidian){m.material.emissiveIntensity=0.8+0.7*p;m.material.color.setHex(0x0c0705);}});}
+  for(const slot of Object.keys(obsSets)){const gs=obsSets[slot];if(!gs)continue;for(const g of gs)g.traverse(m=>{if(m.isMesh&&m.material&&m.material.userData.hdObsidian){m.material.emissiveIntensity=0.22+0.16*p;m.material.color.setHex(0x0c0705);}});}
   for(const f of luxTick)try{f(now);}catch(e){}
 });
 console.log('[HD] ember set and luxury wares ready');

@@ -967,4 +967,4 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   breathing rune ring; the Shield of the Mountain dark stone, a gold frame and snowy granite
   peaks; the boots and gloves of speed and haste polished metal with sparks when you run; the
   golden bodkins turn the dagger to gold with a glint.
-
+- Ember obsidian: the crack glow cut to a quarter (0.22 to 0.38 instead of 0.8 to 1.5); flames, embers and the heart unchanged.
