@@ -751,7 +751,7 @@ function animBodies(now){
       for(const c of grp.children.slice()){if(c.userData&&c.userData.hdThumb)continue;
         if(c.isBone||c.userData.hdElbowed||c.userData.hdGear||c.userData.gaunt||c.userData.hdBodyPart)continue;if(c.position.y>-0.3)continue;if(c.isMesh&&(!c.geometry||!c.geometry.attributes.position||!c.geometry.attributes.position.count))continue;
         c.userData.hdElbowed=1;c.position.y-=ELB_Y;e.add(c);}}
-    for(const gc of b.gearClones)gc.clone.visible=_vis(gc.src);
+    for(const gc of b.gearClones){gc.clone.visible=_vis(gc.src);const sm=gc.src.material,cm=gc.clone.material;if(sm&&cm&&sm.color&&cm.color&&!cm.color.equals(sm.color))cm.color.copy(sm.color);}
     /* distance detail: far figures drop the head's small parts and the hair locks */
     if(typeof camera!=='undefined'&&b.headG){if(!b._lodT||now-b._lodT>250){b._lodT=now;b.headG.getWorldPosition(_lodV);let inScene=false;{let p=b.g;while(p){if(p===scene){inScene=true;break;}p=p.parent;}}const far=inScene&&_lodV.distanceTo(camera.position)>22;   /* a preview rig in its own scene is never far */if(far!==b._far){b._far=far;for(const c of b.headG.children){if(c.userData&&c.userData.hdHead)continue;c.visible=!far;}if(b.hair)for(let i=1;i<b.hair.length;i++)b.hair[i].visible=!far;}}}
     /* life in the torso: breathing, a slow look about when idle, a twist into each swing, a

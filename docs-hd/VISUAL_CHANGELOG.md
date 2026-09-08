@@ -919,4 +919,10 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   `HDX`); a remote rig now takes its build at construction, a packet change updates the rig's
   stored packet before the body rebuilds (it had rebuilt from the stale one and kept the old
   sex and skin), and the build size follows any packet change, not only your own rig.
+- Trap (an armoured character slid instead of walking, on live): the limb armour clones
+  bound to the skeleton shared the game's materials, which have no `skinning` flag, and Three
+  r128 renders such a SkinnedMesh in its rest pose. The body underneath animated, the plate
+  over it did not. Each clone now has its own material with `skinning=true`; the colour
+  follows the source material each tick so tints still apply. The pilot character was
+  unarmoured, which is why it was never seen.
 

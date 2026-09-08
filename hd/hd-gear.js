@@ -437,7 +437,10 @@ function skinGroup(body,grp,bone){
     for(let i=0;i<n;i++){const y=pos.getY(i);let w2=(split+0.03-y)/0.06;w2=Math.max(0,Math.min(1,w2));si[i*4]=bone;si[i*4+1]=B2;sw[i*4]=1-w2;sw[i*4+1]=w2;}
     geo.setAttribute('skinIndex',new THREE.BufferAttribute(si,4));geo.setAttribute('skinWeight',new THREE.BufferAttribute(sw,4));
     geo.applyMatrix4(frame);
-    const sm=new THREE.SkinnedMesh(geo,m.material);sm.castShadow=true;sm.receiveShadow=true;sm.frustumCulled=false;sm.userData.hdGear=1;sm.userData.hdBodyPart=1;sm.userData.hdSkinOf=1;
+    /* its own material with skinning on: r128 renders a SkinnedMesh whose material lacks the flag
+       in the rest pose, so armour stood still while the body walked. The colour follows the source each tick. */
+    const mat=m.material.clone();mat.skinning=true;mat.needsUpdate=true;
+    const sm=new THREE.SkinnedMesh(geo,mat);sm.castShadow=true;sm.receiveShadow=true;sm.frustumCulled=false;sm.userData.hdGear=1;sm.userData.hdBodyPart=1;sm.userData.hdSkinOf=1;
     body.g.add(sm);sm.bind(body.skeleton,new THREE.Matrix4());
     body.gearClones.push({clone:sm,src:m});
     m.geometry=EMPTY;
