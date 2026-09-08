@@ -937,4 +937,8 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   stood behind the head at the peak. Under HDX the cast raises to just past vertical, slams
   the butt of the staff to the ground ahead and returns, over the same 480 ms; the staff stays
   perpendicular to the ground throughout.
+- Trap (the Cindermaw staff spun like a wheel, even idle): the elbow counter was a per-frame
+  subtraction, safe for the tools the game resets every frame (staff, bows) and a runaway for
+  the one it never resets (the Cindermaw staff). The upright angle is now set absolutely each
+  frame from the arm and the elbow.
 
