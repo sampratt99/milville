@@ -392,10 +392,10 @@ HD.openGraphics=function(){
   const h=document.createElement('h3');h.textContent='Graphics';p.appendChild(h);
   const rebuild=()=>{p.remove();HD.openGraphics();};
   const row=(label,opts,cur,fn)=>{const r=document.createElement('div');r.className='hdgfx-row';const l=document.createElement('label');l.textContent=label;r.appendChild(l);const o=document.createElement('div');o.className='hdgfx-opts';
-    for(const [v,t,dim] of opts){const b=document.createElement('div');b.className='hdgfx-chip'+(String(v)===String(cur)?' sel':'')+(dim?' dim':'');b.textContent=t;b.addEventListener('click',()=>{fn(v);rebuild();});o.appendChild(b);}
+    for(const [v,t,dim] of opts){const b=document.createElement('div');b.className='hdgfx-chip'+(String(v)===String(cur)?' sel':'')+(dim?' dim':'');b.textContent=t;b.addEventListener('click',()=>{if(fn(v)===false){p.remove();return;}rebuild();});o.appendChild(b);}
     r.appendChild(o);p.appendChild(r);};
   const onoff=[[0,'Off'],[1,'On']];
-  row('Mode',[['hd','HD'],['off','Old School']],'hd',v=>{if(v==='off')HD.mode.notice('Switch to Old School graphics? The game saves and reloads.',[['Switch to Old School',()=>HD.mode.setMode('off')],['Cancel']]);});
+  row('Mode',[['hd','HD'],['off','Old School']],'hd',v=>{if(v==='off'){HD.mode.notice('Switch to Old School graphics? The game saves and reloads.',[['Switch to Old School',()=>HD.mode.setMode('off')],['Cancel',()=>HD.openGraphics()]]);return false;}});
   row('Preset',[['low','Low'],['medium','Medium'],['high','High'],['custom','Custom',1]],g.preset,v=>{if(v!=='custom')HD.setPreset(v);});
   row('Draw distance',[['short','Short'],['medium','Medium'],['long','Long']],g.draw,v=>HD.setGfx('draw',v));
   row('Shadows',[[0,'Off'],[1024,'Low'],[2048,'Medium'],[4096,'High',HD.phone]],g.shadow,v=>HD.setGfx('shadow',v));

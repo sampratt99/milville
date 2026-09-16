@@ -28,7 +28,7 @@
 'use strict';
 try{performance.mark('hd:hd-pre');}catch(e){}
 if(typeof THREE==='undefined')return;
-const BUILD='2026-09-15b';   /* bump with every deploy; shown in the lobby and the console */
+const BUILD='2026-09-15c';   /* bump with every deploy; shown in the lobby and the console */
 /* ------------------------------ graphics mode ----------------------------------
    Two modes, remembered as localStorage 'milville-hd-mode':
      'off'  Old School. This file returns right here, before it touches THREE, so the game runs
@@ -66,7 +66,7 @@ GM.setMode=function(m){
 GM.notice=function(text,buttons){
   const old=document.getElementById('hdnotice');if(old)old.remove();
   const d=document.createElement('div');d.id='hdnotice';
-  d.style.cssText='position:fixed;left:50%;top:14%;transform:translateX(-50%);z-index:100000;max-width:min(520px,92vw);background:#1c150c;color:#ffe8b0;border:2px solid #0b0805;box-shadow:0 0 0 1px #8a7048 inset,0 8px 30px rgba(0,0,0,.7);padding:14px 18px;font:14px/1.45 Georgia,serif;text-align:center';
+  d.style.cssText='position:fixed;left:50%;top:14%;transform:translateX(-50%);z-index:100001;max-width:min(520px,92vw);background:#1c150c;color:#ffe8b0;border:2px solid #0b0805;box-shadow:0 0 0 1px #8a7048 inset,0 8px 30px rgba(0,0,0,.7);padding:14px 18px;font:14px/1.45 Georgia,serif;text-align:center';
   const t=document.createElement('div');t.textContent=text;d.appendChild(t);
   const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px';
   for(const [label,fn] of buttons||[]){const b=document.createElement('button');b.textContent=label;b.style.cssText='font:bold 13px Georgia,serif;padding:7px 14px;cursor:pointer;color:#ffe8b0;background:linear-gradient(#6d5a3c,#4a3a24);border:2px solid #0b0805;border-radius:3px';b.addEventListener('click',()=>{d.remove();if(fn)fn();});row.appendChild(b);}
