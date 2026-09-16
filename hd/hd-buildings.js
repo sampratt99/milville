@@ -207,7 +207,7 @@ function dress(e){
 
 /* ------------------------------ assembly --------------------------------- */
 function finish(){
-  const mk=(B,mat,name)=>{if(!B.pos.length)return null;const g=toGeo(B);const m=new THREE.Mesh(g,mat);m.name=name;if(HD.world==='classic')m.visible=false;m.castShadow=mat.transparent?false:true;m.receiveShadow=!mat.transparent;m.frustumCulled=false;m.userData.hdNoAO=!!mat.transparent;worldGroup.add(m);return m;};
+  const mk=(B,mat,name)=>{if(!B.pos.length)return null;const g=toGeo(B);const m=new THREE.Mesh(g,mat);m.name=name;m.castShadow=mat.transparent?false:true;m.receiveShadow=!mat.transparent;m.frustumCulled=false;m.userData.hdNoAO=!!mat.transparent;worldGroup.add(m);return m;};
   const opq=new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.72,metalness:0.06});opq.userData.hdMid=0;
   mk(OPQ,opq,'hdBuildingDetail');
   mk(BRASS,new THREE.MeshStandardMaterial({vertexColors:true,roughness:0.28,metalness:0.85}),'hdBuildingBrass');
@@ -219,7 +219,7 @@ function finish(){
   const ivy=mk(IVYB,ivyMat,'hdBuildingIvy');if(ivy&&HD.foliageDepth)ivy.customDepthMaterial=HD.foliageDepth('leaf');
   /* the windows light as the sun goes down */
   HD.tick=HD.tick||[];
-  HD.tick.push(function(now){if(!glow)return;const y=HD.sunDir?HD.sunDir.y:1;const lit=Math.min(1,Math.max(0,(0.32-y)/0.22));glowMat.opacity=0.85*lit;glow.visible=HD.world!=='classic'&&lit>0.01;});
+  HD.tick.push(function(now){if(!glow)return;const y=HD.sunDir?HD.sunDir.y:1;const lit=Math.min(1,Math.max(0,(0.32-y)/0.22));glowMat.opacity=0.85*lit;glow.visible=lit>0.01;});
   console.log('[HD] buildings dressed:',BUILDINGS.length,'lit panes',litPanes);
 }
 const list=survey();

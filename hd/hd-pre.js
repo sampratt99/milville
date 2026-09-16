@@ -28,19 +28,88 @@
 'use strict';
 try{performance.mark('hd:hd-pre');}catch(e){}
 if(typeof THREE==='undefined')return;
-/* ?hd=off loads the original renderer for side-by-side comparison */
-if(/[?&]hd=off\b/.test(location.search))return;
-const HD=window.HD={ready:false,tex:{},detail:null,quality:'high',version:'hd-1',build:'2026-09-08e'};   /* build: bump with every deploy; shown in the lobby and the console */
-console.log('[HD] build',HD.build);
-/* the interface theme: appended after the game's own <style>, so it wins the cascade;
-   never added under ?hd=off, so the original look stays intact for comparison */
+const BUILD='2026-09-15a';   /* bump with every deploy; shown in the lobby and the console */
+/* ------------------------------ graphics mode ----------------------------------
+   Two modes, remembered as localStorage 'milville-hd-mode':
+     'off'  Old School. This file returns right here, before it touches THREE, so the game runs
+            exactly as it shipped before the HD layer: its own materials, lobby, sky, trees and
+            blob shadows. Every other hd-*.js file sees no HD.preReady and returns too.
+     'hd'   the HD layer.
+   A phone starts Old School, a desktop starts HD; the player switches either way from the
+   Graphics button (lobby and in game). A browser without WebGL2 cannot compile the HD shaders
+   and is Old School whatever was chosen. ?hd=on / ?hd=off in the URL set the mode.
+   A boot marker catches a crash: written when the HD layer starts, cleared after thirty seconds
+   of frames or a normal page close. A load that finds it still set knows the last HD session
+   died before then, and comes back Old School with a notice. */
+const GM=window.HDMODE={build:BUILD};
+const LS=(k,v)=>{try{if(v===undefined)return localStorage.getItem(k);if(v===null)localStorage.removeItem(k);else localStorage.setItem(k,v);}catch(e){return null;}};
+GM.phone=false;try{GM.phone=(window.matchMedia&&matchMedia('(pointer:coarse)').matches)||Math.min(screen.width,screen.height)<=760;}catch(e){}
+GM.gl2=false;try{const c=document.createElement('canvas');GM.gl2=!!c.getContext('webgl2');}catch(e){}
+{const q=location.search;
+ if(/[?&]hd=off\b/.test(q))LS('milville-hd-mode','off');
+ if(/[?&]hd=on\b/.test(q)){LS('milville-hd-mode','hd');LS('milville-hd-boot',null);LS('milville-hd-fell',null);}
+ let mode=LS('milville-hd-mode');
+ if(LS('milville-hd-boot')){LS('milville-hd-boot',null);if(!/[?&]hd=on\b/.test(q)){mode='off';LS('milville-hd-mode','off');LS('milville-hd-fell','crash');}}
+ if(mode!=='hd'&&mode!=='off')mode=GM.phone?'off':'hd';
+ if(!GM.gl2){mode='off';GM.noGL2=true;}
+ GM.mode=mode;}
+console.log('[HD] build',BUILD,'graphics',GM.mode==='hd'?'HD':'Old School');
+/* switching modes saves the game (when one is running) and reloads the page */
+GM.setMode=function(m){
+  if(m!=='hd'&&m!=='off')return;
+  LS('milville-hd-mode',m);LS('milville-hd-boot',null);LS('milville-hd-fell',null);
+  let p=null;try{if(typeof saveGame==='function'&&typeof player!=='undefined'&&player)p=saveGame(true);}catch(e){}
+  const go=()=>{try{location.replace(location.pathname+'?v=gfx'+Date.now());}catch(e){location.reload();}};
+  if(p&&p.then)Promise.race([p,new Promise(r=>setTimeout(r,1500))]).then(go,go);else go();
+};
+/* a notice over everything: a line of text and a button or two */
+GM.notice=function(text,buttons){
+  const old=document.getElementById('hdnotice');if(old)old.remove();
+  const d=document.createElement('div');d.id='hdnotice';
+  d.style.cssText='position:fixed;left:50%;top:14%;transform:translateX(-50%);z-index:100000;max-width:min(520px,92vw);background:#1c150c;color:#ffe8b0;border:2px solid #0b0805;box-shadow:0 0 0 1px #8a7048 inset,0 8px 30px rgba(0,0,0,.7);padding:14px 18px;font:14px/1.45 Georgia,serif;text-align:center';
+  const t=document.createElement('div');t.textContent=text;d.appendChild(t);
+  const row=document.createElement('div');row.style.cssText='display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin-top:12px';
+  for(const [label,fn] of buttons||[]){const b=document.createElement('button');b.textContent=label;b.style.cssText='font:bold 13px Georgia,serif;padding:7px 14px;cursor:pointer;color:#ffe8b0;background:linear-gradient(#6d5a3c,#4a3a24);border:2px solid #0b0805;border-radius:3px';b.addEventListener('click',()=>{d.remove();if(fn)fn();});row.appendChild(b);}
+  d.appendChild(row);document.body.appendChild(d);return d;
+};
+/* the Graphics button: bottom-right of the view in game, a line under the character list in
+   the lobby. In HD the full panel (hd-post) opens; Old School has the one choice */
+GM.openPanel=function(){
+  if(window.HD&&window.HD.openGraphics){window.HD.openGraphics();return;}
+  const why=GM.noGL2?'HD graphics need WebGL2, which this browser does not have.':(LS('milville-hd-fell')==='crash'?'HD graphics were switched off because the last HD session crashed.':'Old School graphics: the game as it first shipped.');
+  GM.notice(why+(GM.noGL2?'':' Switch to HD graphics? The game saves and reloads.'),GM.noGL2?[['OK']]:[['Switch to HD graphics',()=>GM.setMode('hd')],['Stay Old School']]);
+};
+function installButtons(){
+  const vw=document.getElementById('viewwrap');
+  if(vw&&!document.getElementById('hdq')){const b=document.createElement('button');b.id='hdq';b.textContent=GM.mode==='hd'?'Graphics':'Graphics: Old School';b.title='Graphics settings';
+    b.style.cssText='position:absolute;right:6px;bottom:6px;z-index:30;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.42);color:#fff;cursor:pointer;opacity:.75';
+    b.addEventListener('click',ev=>{ev.stopPropagation();GM.openPanel();});b.addEventListener('mousedown',ev=>ev.stopPropagation());vw.appendChild(b);if(window.HD&&window.HD.gfxLabel)window.HD.gfxLabel();}
+  const sp=document.getElementById('splash');
+  if(sp&&!document.getElementById('hdlobbygfx')){const r=document.createElement('div');r.id='hdlobbygfx';r.style.cssText='margin-top:10px;font:12px Georgia,serif;color:#bba37a;text-align:center';
+    const b=document.createElement('button');b.textContent=GM.mode==='hd'?'Graphics: HD':'Graphics: Old School';b.style.cssText='font:12px Georgia,serif;padding:4px 10px;cursor:pointer;color:#ffe8b0;background:#3a2f20;border:1px solid #0b0805;border-radius:3px';
+    b.addEventListener('click',ev=>{ev.stopPropagation();GM.openPanel();});r.appendChild(b);
+    const st=document.createElement('span');st.textContent='  build '+BUILD;st.style.opacity='.6';r.appendChild(st);sp.appendChild(r);}
+  /* the view's WebGL context going away is the crash players see as a black, frozen game */
+  const view=document.getElementById('view');
+  if(view&&!view._hdLost){view._hdLost=1;view.addEventListener('webglcontextlost',function(){
+    console.error('[HD] WebGL context lost');
+    if(GM.mode==='hd')GM.notice('The graphics crashed (the browser lost the 3D context). Reload in Old School graphics? Your game is saved first.',[['Reload in Old School',()=>GM.setMode('off')],['Reload and keep HD',()=>GM.setMode('hd')]]);
+    else GM.notice('The graphics crashed (the browser lost the 3D context). The game will save and reload.',[['Reload',()=>GM.setMode('off')]]);
+  });}
+  if(LS('milville-hd-fell')==='crash'&&GM.mode==='off'&&!GM._told){GM._told=1;LS('milville-hd-fell','told');
+    GM.notice('HD graphics were switched off because the last HD session crashed. The game is running in Old School graphics; the Graphics button turns HD back on.',[['OK']]);}
+}
+if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',installButtons);else installButtons();
+if(GM.mode!=='hd')return;   /* OLD SCHOOL: nothing below runs; the game is its original self */
+LS('milville-hd-boot',String(Date.now()));
+window.addEventListener('pagehide',()=>{if(!GM.crashed)LS('milville-hd-boot',null);});
+GM.bootOK=function(){LS('milville-hd-boot',null);};
+const HD=window.HD={ready:false,tex:{},detail:null,quality:'medium',version:'hd-1',build:BUILD};
+HD.mode=GM;HD.LS=LS;
+/* the interface theme: appended after the game's own <style>, so it wins the cascade */
 {const l=document.createElement('link');l.rel='stylesheet';l.href='hd/hd-ui.css';document.head.appendChild(l);}
 /* the pixel logo canvas stays: the owner wants the RuneScape faces kept */
-/* a phone (coarse pointer or a narrow screen) starts on Low with a short draw distance; the
-   player can still pick a higher setting, which is remembered */
-HD.phone=false;try{HD.phone=(window.matchMedia&&matchMedia('(pointer:coarse)').matches)||Math.min(screen.width,screen.height)<=760;}catch(e){}
-try{ HD.quality=localStorage.getItem('milville-hd-quality')||(HD.phone?'low':'high'); }catch(e){HD.quality=HD.phone?'low':'high';}
-if(HD.phone){HD.drawNear=52;HD.drawFar=150;}
+HD.phone=GM.phone;
 
 /* ----------------------------- noise kit ------------------------------- */
 function mulberry(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
@@ -529,7 +598,9 @@ HD.bakeMaterial=function(){ return new THREE.MeshLambertMaterial({vertexColors:t
    posts and prisms and are left alone. */
 const Cyl=THREE.CylinderGeometry;
 const bump=(n,lo,hi)=>{n=(n===undefined)?8:n;return n<=4?n:Math.min(hi,Math.max(n,lo));};
-class HDCylinder extends Cyl{constructor(rt,rb,h,rs,hs,op,ts,tl){super(rt,rb,h,bump(rs,14,32),hs,op,ts,tl);}}
+/* 12..24 radial segments (was 14..32): a third fewer vertices in every baked mesh, and the
+   silhouettes still read round at game scale */
+class HDCylinder extends Cyl{constructor(rt,rb,h,rs,hs,op,ts,tl){super(rt,rb,h,bump(rs,12,24),hs,op,ts,tl);}}
 HDCylinder.prototype.type='CylinderGeometry';
 THREE.CylinderGeometry=HDCylinder;
 class HDCone extends HDCylinder{constructor(r,h,rs,hs,op,ts,tl){super(0,r,h,rs,hs,op,ts,tl);this.parameters={radius:r,height:h,radialSegments:rs,heightSegments:hs,openEnded:op,thetaStart:ts,thetaLength:tl};}}
@@ -537,7 +608,7 @@ HDCone.prototype.type='ConeGeometry';
 THREE.ConeGeometry=HDCone;
 const Sph=THREE.SphereGeometry;
 class HDSphere extends Sph{constructor(r,ws,hs,ps,pl,ts,tl){ws=(ws===undefined)?8:ws;hs=(hs===undefined)?6:hs;
-  super(r,ws<6?ws:Math.min(40,Math.max(ws,20)),hs<5?hs:Math.min(28,Math.max(hs,14)),ps,pl,ts,tl);}}
+  super(r,ws<6?ws:Math.min(32,Math.max(ws,16)),hs<5?hs:Math.min(20,Math.max(hs,12)),ps,pl,ts,tl);}}   /* 16x12 .. 32x20 (was 20x14 .. 40x28): ~40% fewer vertices */
 HDSphere.prototype.type='SphereGeometry';
 THREE.SphereGeometry=HDSphere;
 

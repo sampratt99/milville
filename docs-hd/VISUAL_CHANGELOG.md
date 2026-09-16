@@ -969,3 +969,30 @@ Everything merges into five meshes for the whole map (detail, brass, decals, glo
   golden bodkins turn the dagger to gold with a glint.
 - Ember obsidian: the crack glow cut to a quarter (0.22 to 0.38 instead of 0.8 to 1.5); flames, embers and the heart unchanged.
 - Two orbs per cast: the game's flat overlay orb was still drawn under the HD 3D bolt; it is skipped under HDX now, as the flat arrow already was.
+
+## Stage 42 — playable on every device (build 2026-09-15a)
+Players on phones and desktops reported crashes even on "Classic world". An audit (pilot on an
+M4, 1280x720, lobby view) found why: Classic world only hid the HD terrain, water and forest;
+every HD mesh, body, texture and shadow map was still built and drawn through the PBR shader,
+at 23 ms a frame against the old game's 7.4 ms. The HD lobby was the heaviest scene in the game
+(the whole campus full-screen with the composer on, copied into a 2D canvas every frame, plus a
+second WebGL context), and the first thing every player saw. Memory was tripled (718 MB heap
+against 237 MB; 335 MB of geometry, 178 MB of it hidden; 369 canvas textures).
+- **Old School is real now.** A mode switch at the top of `hd-pre.js` returns before THREE
+  is touched: the game as it first shipped, nothing of the HD layer loaded. A phone starts
+  there; a desktop starts HD on Medium. Classic world is gone (it was neither).
+- **The HD lobby is cut.** The game's own title screen is back for both modes. The character
+  creator (sex, size, skin, hair, top, legs, tutorial or skip) still opens from Create new
+  character, in place of the character list, with its own small renderer only while open.
+- **A Graphics panel** replaces the quality button: mode, preset, draw distance, shadows,
+  resolution, ambient occlusion, bloom, reflections, ground cover, auto-adjust.
+- **Safety net.** A crash marker brings a killed session back Old School with a notice; a lost
+  WebGL context and repeated hook exceptions offer the Old School reload; every HD hook call in
+  the game loop is in a try/catch, so an HD error can no longer freeze the frame.
+- **Memory.** The game's own baked forest (84 MB, 2.2M vertices under the HD segment counts,
+  hidden under the HD forest) is disposed. Segment bumps lowered (cylinders 12-24 was 14-32;
+  spheres 16x12-32x20 was 20x14-40x28). Face textures 256 (was 512). Bodies past 70 units skip
+  joint animation. Measured after: geometry 228 MB (was 335), textures 121 MB (was 231), heap
+  554 MB (was 718) in HD; Old School 231 MB heap.
+- Auto-adjust is continuous: two slow windows step the preset down, then the draw distance and
+  cover, then it offers Old School.

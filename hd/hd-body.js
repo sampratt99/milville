@@ -69,7 +69,7 @@ const HV=y=>(y+0.15)/0.33;
 function faceTex(hairHex,seed,female){
   const key='face:'+hairHex+':'+(seed%5)+':'+(female?1:0);
   return tex(key,()=>{
-    const S=512,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');
+    const S=256,c=document.createElement('canvas');c.width=c.height=S;const g=c.getContext('2d');   /* 256: a head is a few dozen pixels on screen; at 512 the faces alone were ~100 MB of texture */
     const base=noiseCanvas(256,(u,v)=>0.9+0.12*fbm(u*5,v*5,3));g.drawImage(base,0,0,S,S);
     const hair='#'+new THREE.Color(hairHex).getHexString();
     const Y=v=>(1-v)*S,X=u=>u*S,YY=y=>Y(HV(y));
@@ -729,9 +729,11 @@ HD.rebuildBody=rebuildBody;
    (the tool, a shield, an NPC's weapon) is moved into the elbow bone so it rides the forearm. */
 const _vis=o=>{while(o){if(!o.visible)return false;o=o.parent;if(o&&o.isScene)break;}return true;};
 const _lodV=new THREE.Vector3();
-function animBodies(now){
+function animBodies(now,px,py,pz){
   for(const b of bodies){
     if(!b.g.parent||!b.groups)continue;
+    /* joints only animate within 70 units of the player: past that a figure is a few pixels in the fog */
+    if(px!==undefined){const e=b.g.matrixWorld.elements;const dx=e[12]-px,dz=e[14]-pz;if(dx*dx+dz*dz>4900)continue;}
     const sk=b.skeleton.bones;const dt=b.prevT?Math.max(8,Math.min(60,now-b.prevT)):16;b.prevT=now;
     for(let i=0;i<2;i++){const grp=b.groups[LLEG+i];if(!grp)continue;const rot=grp.rotation.x;const v=(rot-b.prev[i])/dt;b.prev[i]=rot;
       const target=Math.min(1,Math.max(0,-v/0.0075))*0.85+0.05;const k=sk[LKNEE+i];k.rotation.x+=(target-k.rotation.x)*0.35;}

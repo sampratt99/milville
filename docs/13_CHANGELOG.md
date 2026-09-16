@@ -593,3 +593,19 @@ characters carry over. The service worker is v4: it precaches the layer and serv
 network-first. Pilot mode is off. A `Classic world` option on the quality button shows the
 original terrain, water and buildings under the HD characters.
 
+
+### HD stage 42 — playable on every device (build 2026-09-15a)
+Players reported crashes on phones and desktops even on "Classic world". Root causes, from an
+audit of the live build: Classic world only hid the HD terrain (every HD mesh, body, texture
+and shadow map still ran, three times the old game's frame cost); the HD lobby rendered the
+whole campus full-screen with the composer on and was the heaviest scene in the game; memory
+was tripled by geometry the player never saw; WebGL1 browsers got broken shaders; nothing
+caught a lost context or a hook exception. Now: **Old School** is a true mode (the HD layer
+does not load at all; phones default to it; a browser without WebGL2 is forced to it; the
+lobby and in-game **Graphics** button switch, saving first). The HD lobby is cut; the game's
+own title screen is back, with the character creator still reachable from Create new
+character. A Graphics panel offers preset, draw distance, shadows, resolution, AO, bloom,
+reflections, ground cover and auto-adjust. A crash marker brings a killed session back Old
+School with a notice; context loss and repeated HD errors offer the same. The game's baked
+forest is disposed under HD (84 MB), segment counts and face textures are lowered. Details in
+`docs-hd/VISUAL_CHANGELOG.md` stage 42 and `docs-hd/README.md`.

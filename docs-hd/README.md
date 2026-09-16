@@ -21,13 +21,31 @@ then open <http://localhost:8787/>. No backend, no internet: Three.js r128 and
 its example modules are vendored under `vendor/three/`, and every texture is
 synthesised at load (about one second, once per page load).
 
-- `?hd=off` loads the original renderer and the original interface for a side-by-side.
-- The sun crosses the sky over 25 minutes; `HD.day.t` (0 dawn .. 1 dusk) and
+- **Two graphics modes**, remembered as `localStorage['milville-hd-mode']`:
+  **Old School** (`off`) returns from the top of `hd-pre.js` before THREE is
+  touched, so the game is byte-for-byte its pre-HD self: own materials, lobby,
+  sky, trees, blob shadows; every other `hd-*.js` sees no `HD.preReady` and
+  returns. **HD** (`hd`) is the layer. A phone starts Old School, a desktop HD;
+  a browser without WebGL2 is Old School regardless (the HD shaders need
+  `sampler2DArray`). `?hd=on` / `?hd=off` set the mode. Switching saves the
+  game and reloads.
+- **Crash marker**: `milville-hd-boot` is written when the HD layer starts and
+  cleared after thirty seconds in the world or a normal page close. A load that
+  finds it set knows the last HD session died (tab killed for memory, a hang)
+  and comes back Old School with a notice. A lost WebGL context shows a notice
+  offering the Old School reload; three HD hook exceptions inside two seconds
+  switch the hooks off for the session and offer the same.
+- The **Graphics** button (bottom-right of the view, and under the character
+  list in the lobby) opens the panel: Mode, Preset (Low / Medium / High),
+  Draw distance (the camera's far plane: 150 / 300 / 520 units, fog to match),
+  Shadows (off / 1K / 2K / 4K), Resolution (75-150%), Ambient occlusion, Bloom,
+  Reflections (planar water + the glass cube map), Ground cover (grass, bushes,
+  clutter), Auto-adjust. Settings are JSON in `milville-hd-gfx`; a preset sets
+  every field, a hand change makes it Custom. Auto-adjust steps the preset down
+  after two 240-frame windows over 30 ms, then shortens the draw distance and
+  drops the cover, then offers Old School. A phone is capped at 125% and a 2K map.
+- The sun crosses the sky over 15 minutes; `HD.day.t` (0 dawn .. 1 dusk) and
   `HD.day.paused` are exposed on the console for screenshots.
-- The **HD: High / Medium / Low** button at the top-left of the view cycles the
-  quality tier. High = ambient occlusion + bloom + 4K shadows; Medium = bloom +
-  2K shadows; Low = direct render. A tier that cannot hold ~45 fps during the
-  first seconds drops one step automatically, unless you chose it by hand.
 - Your real character: saves live in the browser's storage per origin, so the
   live game's character is not visible on localhost. Use **Save code** in the
   live game and **Load from save code** on the clone's title screen. The save

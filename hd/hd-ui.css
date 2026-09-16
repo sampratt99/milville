@@ -138,48 +138,20 @@ body{color:var(--hd-text) !important;}
 ::-webkit-scrollbar-thumb:hover{background:#465579;}
 
 /* title screen: keeps the game's medieval flavour -- dark oak, parchment, gold rule */
-#splash{background:radial-gradient(1100px 700px at 50% 35%,rgba(58,42,24,.96),rgba(12,9,6,.985)) !important;}
-#splash p{color:#d9c79f !important;text-shadow:0 1px 0 #000;}
-#charselect{border:2px solid #0d0b08;border-radius:3px;padding:14px 16px;background:linear-gradient(#3a2f20,#241c12);box-shadow:0 0 0 1px #6e5a3a inset,0 0 0 3px #1a140c,0 14px 40px rgba(0,0,0,.6);}
-.slotrow{background:linear-gradient(#4a3d2a,#33291b) !important;border:2px solid #0d0b08 !important;border-radius:2px !important;box-shadow:0 0 0 1px #7a6543 inset !important;}
-.slotrow .sname{color:#ffe8b0 !important;text-shadow:1px 1px 0 #000;}
-.slotrow .smeta{color:#c4ad80 !important;}
-.slotrow .sload{background:linear-gradient(#2e5b3a,#1f4329) !important;border:2px solid #0d0b08 !important;color:#ffe8b0 !important;border-radius:2px !important;box-shadow:0 0 0 1px #4f8a5f inset !important;}
-.slotrow .sdel{color:#ff7b6b !important;}
-#namefield,#importfield{background:#f3e7c8 !important;border:2px solid #0d0b08 !important;border-radius:2px !important;color:#1d1812 !important;box-shadow:0 0 0 1px #b8a87a inset !important;}
-#namefield::placeholder,#importfield::placeholder{color:#6b5c40 !important;font-style:italic;}
-#newbtn,#importbtn,#playbtn{background:linear-gradient(#7a2e22,#5b1f16) !important;border:2px solid #0d0b08 !important;color:#ffe8b0 !important;border-radius:2px !important;box-shadow:0 0 0 2px #a8553f inset,0 4px 12px rgba(0,0,0,.5) !important;}
-#charhint,#importmsg{color:#bba37a !important;}
-#codearea{background:#f3e7c8 !important;color:#1d1812 !important;border:2px solid #0d0b08 !important;}
 
 /* ---------------------------------------------------------------- lobby */
-#splash.hdlobby{background:#0b0906 url(lobby.jpg) center/cover no-repeat !important;gap:6px;padding:16px;}
-#splash.hdlobby::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 50% 40%,rgba(0,0,0,.05) 0%,rgba(0,0,0,.35)70%,rgba(0,0,0,.6) 100%);pointer-events:none;}
-#splash.hdlobby>*{position:relative;}
-#splash.hdlobby>p{display:none;}
-#splash.hdlobby #logocv{width:min(620px,92vw);filter:drop-shadow(0 6px 14px rgba(0,0,0,.8));margin-bottom:10px;}
-#hdbox{width:440px;max-width:94vw;background:linear-gradient(#3b2b1b,#241a10 60%,#1c130b);border:2px solid #0b0805;
-  box-shadow:0 0 0 1px #8a6a2a inset,0 0 0 3px #1a1208 inset,0 18px 50px rgba(0,0,0,.75);padding:10px 14px 14px;transition:width .2s;}
-#hdbox.creating{width:900px;}
-.hdbox-title{color:#ffd98c;font:bold 20px RSFont,Georgia,serif;letter-spacing:2px;text-align:center;padding:4px 0 10px;
-  border-bottom:1px solid #6a5028;margin-bottom:10px;text-shadow:0 2px 0 #000;}
-#hdbox #charselect{width:100%;max-width:none;gap:10px;}
-#hdbox #slotlist{max-height:46vh;overflow:auto;padding-right:2px;}
-#hdlobbyrow{display:flex;flex-direction:column;gap:8px;align-items:center;}
-#hdcreate,#hdcr-go,#hdcr-back{font:bold 15px RSFont,Georgia,serif;font-variant:small-caps;letter-spacing:2px;padding:10px 30px;cursor:pointer;color:#2a1a08;
+#hdcr-go,#hdcr-back{font:bold 15px RSFont,Georgia,serif;font-variant:small-caps;letter-spacing:2px;padding:10px 30px;cursor:pointer;color:#2a1a08;
   background:linear-gradient(#f2cf6a,#c9962b 55%,#a87a1c);border:2px solid #0b0805;box-shadow:0 0 0 1px #ffe9a8 inset,0 3px 8px rgba(0,0,0,.5);}
-#hdcreate:hover,#hdcr-go:hover{filter:brightness(1.08);}
+#hdcr-go:hover{filter:brightness(1.08);}
 #hdcr-back{background:linear-gradient(#6d5a3c,#4a3a24);color:#ffe8b0;box-shadow:0 0 0 1px #8a7048 inset,0 3px 8px rgba(0,0,0,.5);}
 .hdlink{background:none;border:none;color:#c9b07a;font:12px RSFont,Georgia,serif;cursor:pointer;text-decoration:underline;padding:2px 6px;}
-#hdbox #charhint{color:#bda87e;font-size:11px;}
-#hdbox #importsave{margin-top:4px;}
 /* the creator */
-#hdcr{display:flex;gap:16px;align-items:stretch;}
+/* the creator sits on the game's own title screen, in place of the character list while it is open */
+#hdcr{display:flex;gap:16px;align-items:stretch;width:min(900px,94vw);margin:8px auto;box-sizing:border-box;background:linear-gradient(#3b2b1b,#241a10 60%,#1c130b);border:2px solid #0b0805;box-shadow:0 0 0 1px #8a6a2a inset,0 8px 30px rgba(0,0,0,.6);padding:12px 14px;}
 #hdcr-stage{position:relative;width:340px;flex:0 0 340px;background:radial-gradient(ellipse at 50% 70%,#3a2d1e,#120d08 75%);border:1px solid #0b0805;box-shadow:0 0 0 1px #5a4628 inset;}
 #hdcr-cv{width:340px;height:460px;display:block;}
 .hdcr-hint{position:absolute;bottom:6px;left:0;right:0;text-align:center;color:#9a8660;font:11px RSFont,Georgia,serif;}
 #hdcr-ctl{flex:1;display:flex;flex-direction:column;gap:8px;min-width:0;text-align:left;}
-#hdbox.creating #charselect{display:none;}
 .hdcr-row{display:flex;flex-direction:column;gap:5px;}
 .hdcr-row label{color:#ffd98c;font:bold 13px RSFont,Georgia,serif;letter-spacing:1px;}
 #hdcr-name{font:15px RSFont,Georgia,serif;padding:8px 12px;color:#ffe8b0;background:#241f18;border:2px solid #0d0b08;box-shadow:0 0 0 1px #5d5141 inset;outline:none;}
@@ -192,7 +164,7 @@ body{color:var(--hd-text) !important;}
 .hdcr-foot{display:flex;gap:8px;align-items:center;margin-top:auto;padding-top:8px;}
 .hdcr-sp{flex:1;}
 #hdcr-msg{color:#e8a090;font:12px RSFont,Georgia,serif;min-height:14px;}
-@media (max-width:940px){#hdbox.creating{width:94vw;}#hdcr{flex-direction:column;}#hdcr-stage{width:100%;flex:none;}#hdcr-cv{width:100%;height:300px;}}
+@media (max-width:940px){#hdcr{flex-direction:column;}#hdcr-stage{width:100%;flex:none;}#hdcr-cv{width:100%;height:300px;}}
 
 /* the world map fits any window: the canvas gives way to the legend and the chrome */
 #wmapc{max-width:calc(96vw - 270px) !important;max-height:calc(100vh - 150px) !important;image-rendering:auto !important;}
@@ -204,11 +176,6 @@ body{color:var(--hd-text) !important;}
 #hdmapq{font:12px RSFont,Georgia,serif;padding:3px 8px;width:180px;color:#ffe8b0;background:#241f18;border:1px solid #0d0b08;box-shadow:0 0 0 1px #5d5141 inset;outline:none;}
 #hdmapq::placeholder{color:#8a7a5a;}
 #hdmapn{color:#bda87e;font:11px RSFont,Verdana,sans-serif;min-width:60px;}
-/* the live vista behind the lobby */
-#splash.hdlobby>#hdlobbycv{position:absolute;inset:0;width:100%;height:100%;z-index:0;pointer-events:none;}
-#splash.hdlobby::before{z-index:1;}
-#splash.hdlobby>*:not(#hdlobbycv){z-index:2;}
-#splash.hdlobby.live{background:#0b0906 !important;}
 
 /* the world map zooms inside its frame */
 #hdmapwrap{overflow:hidden;position:relative;line-height:0;cursor:grab;max-width:calc(96vw - 270px);max-height:calc(100vh - 150px);}
@@ -244,3 +211,17 @@ body{color:var(--hd-text) !important;}
 /* the marker's cancel, at the minimap's corner */
 #hdmarkx{position:absolute;right:-2px;top:-2px;z-index:6;width:20px;height:20px;line-height:18px;padding:0;font:bold 11px RSFont,Verdana,sans-serif;color:#ffe8b0;background:#3a2418;border:1px solid #0d0b08;border-radius:50%;cursor:pointer;box-shadow:0 0 0 1px #8a5a3f inset;}
 #hdmarkx:hover{background:#5b3a2a;}
+
+/* ---------------------------------------------------------------- graphics panel */
+#hdgfx{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:100000;width:min(460px,94vw);max-height:92vh;overflow:auto;box-sizing:border-box;
+  background:linear-gradient(#3b2b1b,#241a10 60%,#1c130b);border:2px solid #0b0805;box-shadow:0 0 0 1px #8a6a2a inset,0 0 0 3px #1a1208 inset,0 18px 50px rgba(0,0,0,.75);padding:12px 16px 14px;color:#ffe8b0;font:13px RSFont,Georgia,serif;}
+#hdgfx h3{margin:0 0 8px;color:#ffd98c;font:bold 18px RSFont,Georgia,serif;letter-spacing:2px;text-align:center;border-bottom:1px solid #6a5028;padding-bottom:6px;}
+.hdgfx-row{display:flex;align-items:center;gap:8px;padding:4px 0;flex-wrap:wrap;}
+.hdgfx-row label{flex:0 0 120px;color:#ffd98c;font-weight:bold;letter-spacing:1px;}
+.hdgfx-opts{display:flex;flex-wrap:wrap;gap:4px;}
+.hdgfx-chip{font:12px RSFont,Georgia,serif;color:#e8d8b0;padding:4px 9px;background:#2b2118;border:1px solid #0b0805;box-shadow:0 0 0 1px #5a4628 inset;cursor:pointer;user-select:none;}
+.hdgfx-chip.sel{background:linear-gradient(#c9962b,#8a6418);color:#1a1004;box-shadow:0 0 0 1px #ffe9a8 inset;}
+.hdgfx-chip.dim{opacity:.55;}
+.hdgfx-note{color:#bda87e;font-size:11px;margin:6px 0 2px;line-height:1.4;}
+.hdgfx-foot{display:flex;gap:8px;justify-content:flex-end;margin-top:10px;}
+#hdgfx button{font:bold 13px RSFont,Georgia,serif;padding:6px 14px;cursor:pointer;color:#ffe8b0;background:linear-gradient(#6d5a3c,#4a3a24);border:2px solid #0b0805;border-radius:3px;box-shadow:0 0 0 1px #8a7048 inset;}

@@ -6,8 +6,8 @@
 
    Sets up: the physical sky + environment lighting, the sun as a real shadow
    caster, the terrain and water materials, clouds, atmospheric fog, and the
-   post-processing chain (ambient occlusion, bloom, gamma). The game calls
-   HD.render() / HD.resize() / HD.frame() from three guarded hooks.
+   post-processing chain (ambient occlusion, bloom, gamma), and the graphics settings panel.
+   The game calls HD.render() / HD.resize() / HD.frame() from three guarded hooks.
    ========================================================================== */
 (function(){
 'use strict';
@@ -24,14 +24,26 @@ console.log('[HD] textures synthesised in',Math.round(performance.now()-t0),'ms'
 
 try{performance.mark('hd:hd-post/renderer');}catch(e){}
 /* ------------------------------ renderer ------------------------------- */
-const PR={high:1.5,medium:1.25,low:1.0};
-function applyRendererQuality(){
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,HD.phone?Math.min(PR[HD.quality]||1,1.25):(PR[HD.quality]||1.5)));   /* a phone never renders above 1.25× */
-  renderer.shadowMap.enabled=true;
-  renderer.shadowMap.type=THREE.PCFSoftShadowMap;
-  const sm=HD.phone?(HD.quality==='high'?2048:1024):(HD.quality==='high'?4096:2048);sun.shadow.mapSize.set(sm,sm);
-  if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
+/* ------------------------------ graphics settings ------------------------------
+   HD.gfx, remembered as JSON in localStorage 'milville-hd-gfx'. A preset sets every field; a
+   field changed by hand makes the preset 'custom'. Old School is not a setting here: it is the
+   whole layer off (hd-pre decides that before THREE is touched), reached from the same panel.
+   Defaults: a desktop starts on Medium, a phone on Low with a short draw distance and no
+   ground cover (and a phone is capped at 1.25x resolution and a 2K shadow map). */
+const PRESETS={
+  low:   {shadow:1024,res:1.0, ao:0,bloom:0,refl:0,cover:1,draw:'medium'},
+  medium:{shadow:2048,res:1.25,ao:0,bloom:1,refl:1,cover:1,draw:'medium'},
+  high:  {shadow:4096,res:1.5, ao:1,bloom:1,refl:1,cover:1,draw:'long'}
+};
+/* draw distance: the camera's far plane culls whole objects past it; the fog hides the cut */
+const DRAW={short:{far:150,near:40,fog:110},medium:{far:300,near:70,fog:210},long:{far:520,near:90,fog:300}};
+function loadGfx(){
+  let g=null;try{g=JSON.parse(localStorage.getItem('milville-hd-gfx')||'null');}catch(e){}
+  if(!g||(!PRESETS[g.preset]&&g.preset!=='custom')){const p=HD.phone?'low':'medium';g=Object.assign({preset:p,auto:1},PRESETS[p]);if(HD.phone){g.draw='short';g.cover=0;}}
+  if(g.auto===undefined)g.auto=1;
+  HD.gfx=g;
 }
+function saveGfx(){try{localStorage.setItem('milville-hd-gfx',JSON.stringify(HD.gfx));}catch(e){}}
 renderer.outputEncoding=THREE.sRGBEncoding;
 renderer.toneMapping=THREE.ACESFilmicToneMapping;
 renderer.toneMappingExposure=0.95;
@@ -331,10 +343,10 @@ HD.GradeShader={
 };
 function buildComposer(){
   if(composer){composer.renderTarget1.dispose();composer.renderTarget2.dispose();composer=null;ssao=null;bloom=null;}
-  if(HD.quality==='low')return;
+  if(!HD.gfx.ao&&!HD.gfx.bloom)return;   /* neither effect: the plain renderer draws straight to the screen */
   const [w,h]=targetSize();
   composer=new THREE.EffectComposer(renderer,msaaTarget(w,h));
-  if(HD.quality==='high'){
+  if(HD.gfx.ao){
     ssao=new THREE.SSAOPass(scene,camera,w,h);
     ssao.beautyRenderTarget.dispose();
     ssao.beautyRenderTarget=msaaTarget(w,h);
@@ -347,42 +359,58 @@ function buildComposer(){
   }else{
     composer.addPass(new THREE.RenderPass(scene,camera));
   }
-  bloom=new THREE.UnrealBloomPass(new THREE.Vector2(w,h),0.16,0.6,0.97);
-  composer.addPass(bloom);
+  if(HD.gfx.bloom){bloom=new THREE.UnrealBloomPass(new THREE.Vector2(w,h),0.16,0.6,0.97);composer.addPass(bloom);}
   composer.addPass(new THREE.ShaderPass(HD.GradeShader));
 }
-HD.setQuality=function(q,auto){
-  HD.quality=q;
-  try{localStorage.setItem('milville-hd-quality',q);if(!auto)localStorage.setItem('milville-hd-quality-manual','1');}catch(e){}
-  applyRendererQuality();
+function applyGfx(){
+  const g=HD.gfx;
+  if(HD.phone){g.res=Math.min(g.res,1.25);g.shadow=Math.min(g.shadow,2048);}
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio||1,g.res||1));
+  const sh=g.shadow|0;
+  renderer.shadowMap.enabled=sh>0;renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+  sun.castShadow=sh>0&&!HD._indoors;
+  if(sh>0)sun.shadow.mapSize.set(sh,sh);
+  if(sun.shadow.map){sun.shadow.map.dispose();sun.shadow.map=null;}
+  if(typeof BLOB_MAT!=='undefined')BLOB_MAT.visible=sh===0;   /* shadow maps off: the game's blob shadows come back */
+  const d=DRAW[g.draw]||DRAW.medium;camera.far=d.far;camera.updateProjectionMatrix();HD.drawNear=d.near;HD.drawFar=d.fog;
+  if(HD.refl)HD.refl.on=!!g.refl;
+  coverSweep();
   buildComposer();
-  const s=renderer.getSize(new THREE.Vector2());
-  HD.resize(s.x,s.y);
-  HD.qualityLabel();
+  const s=renderer.getSize(new THREE.Vector2());HD.resize(s.x,s.y);
+  HD.gfxLabel();
+}
+HD.gfxLabel=function(){const b=document.getElementById('hdq');if(!b||!HD.gfx)return;const p=HD.gfx.preset;b.textContent='Graphics: '+(p==='custom'?'Custom':p[0].toUpperCase()+p.slice(1));};
+HD.setPreset=function(p){if(!PRESETS[p])return;Object.assign(HD.gfx,PRESETS[p]);HD.gfx.preset=p;saveGfx();applyGfx();};
+HD.setGfx=function(k,v){HD.gfx[k]=v;if(k!=='auto')HD.gfx.preset='custom';saveGfx();applyGfx();};
+/* ground cover (grass tufts, bushes, clutter) is the bulk of the outdoor draw calls; the meshes
+   are direct children of the world group, rebuilt with the seasons, so the sweep repeats */
+function coverSweep(){const on=!!HD.gfx.cover;const root=(typeof worldGroup!=='undefined'&&worldGroup)?worldGroup:scene;for(const o of root.children){if(o.name==='hdGrass'||o.name==='hdBush'||o.name==='hdCover')o.visible=on;}}
+/* ------------------------------ the panel ------------------------------ */
+HD.openGraphics=function(){
+  const old=document.getElementById('hdgfx');if(old){old.remove();return;}
+  const p=document.createElement('div');p.id='hdgfx';const g=HD.gfx;
+  const h=document.createElement('h3');h.textContent='Graphics';p.appendChild(h);
+  const rebuild=()=>{p.remove();HD.openGraphics();};
+  const row=(label,opts,cur,fn)=>{const r=document.createElement('div');r.className='hdgfx-row';const l=document.createElement('label');l.textContent=label;r.appendChild(l);const o=document.createElement('div');o.className='hdgfx-opts';
+    for(const [v,t,dim] of opts){const b=document.createElement('div');b.className='hdgfx-chip'+(String(v)===String(cur)?' sel':'')+(dim?' dim':'');b.textContent=t;b.addEventListener('click',()=>{fn(v);rebuild();});o.appendChild(b);}
+    r.appendChild(o);p.appendChild(r);};
+  const onoff=[[0,'Off'],[1,'On']];
+  row('Mode',[['hd','HD'],['off','Old School']],'hd',v=>{if(v==='off')HD.mode.notice('Switch to Old School graphics? The game saves and reloads.',[['Switch to Old School',()=>HD.mode.setMode('off')],['Cancel']]);});
+  row('Preset',[['low','Low'],['medium','Medium'],['high','High'],['custom','Custom',1]],g.preset,v=>{if(v!=='custom')HD.setPreset(v);});
+  row('Draw distance',[['short','Short'],['medium','Medium'],['long','Long']],g.draw,v=>HD.setGfx('draw',v));
+  row('Shadows',[[0,'Off'],[1024,'Low'],[2048,'Medium'],[4096,'High',HD.phone]],g.shadow,v=>HD.setGfx('shadow',v));
+  row('Resolution',[[0.75,'75%'],[1,'100%'],[1.25,'125%'],[1.5,'150%',HD.phone]],g.res,v=>HD.setGfx('res',v));
+  row('Ambient occlusion',onoff,g.ao,v=>HD.setGfx('ao',v));
+  row('Bloom',onoff,g.bloom,v=>HD.setGfx('bloom',v));
+  row('Reflections',onoff,g.refl,v=>HD.setGfx('refl',v));
+  row('Ground cover',onoff,g.cover,v=>HD.setGfx('cover',v));
+  row('Auto-adjust',onoff,g.auto,v=>HD.setGfx('auto',v));
+  const note=document.createElement('div');note.className='hdgfx-note';
+  note.textContent='Auto-adjust steps the preset down while frames run long. Old School is the game as it first shipped, with no HD layer at all: the lightest choice on any device. Build '+HD.build+(HD._ft.avg?'. Frame '+HD._ft.avg.toFixed(0)+' ms':'')+'.';p.appendChild(note);
+  const foot=document.createElement('div');foot.className='hdgfx-foot';const c=document.createElement('button');c.textContent='Close';c.addEventListener('click',()=>p.remove());foot.appendChild(c);p.appendChild(foot);
+  p.addEventListener('mousedown',ev=>ev.stopPropagation());p.addEventListener('click',ev=>ev.stopPropagation());
+  document.body.appendChild(p);
 };
-HD.qualityLabel=function(){const b=document.getElementById('hdq');if(!b)return;b.textContent=HD.world==='classic'?'Classic world':('HD: '+HD.quality[0].toUpperCase()+HD.quality.slice(1));};
-/* ---- the classic world: the game's own terrain, water and forest and bare buildings, under HD
-   characters, sky and effects. The HD terrain chunks, liquids, forest, ground cover and building
-   props hide; the game's terra (kept for the click raycast), waterMesh and _treeMesh show. ---- */
-HD.world='hd';
-const CLASSIC_HIDE=new Set(['hdTerrain','hdWater','hdLava','hdForest','hdGrass','hdBush','hdCover','hdBuildingDetail','hdBuildingBrass','hdBuildingDecal','hdBuildingGlow']);
-HD.classicHides=function(name){return CLASSIC_HIDE.has(name);};
-HD.setWorld=function(mode){
-  const classic=mode==='classic';HD.world=classic?'classic':'hd';
-  try{localStorage.setItem('milville-hd-world',HD.world);}catch(e){}
-  scene.traverse(o=>{if(o.name&&CLASSIC_HIDE.has(o.name))o.visible=!classic;
-    /* Pat's Peak's pines exist only in the HD forest (the game hands their spots over instead of baking cones): they stay */
-    if(o.name==='hdForest'&&o.userData.forestKind==='snow')o.visible=true;});
-  if(typeof terra!=='undefined'&&terra){
-    if(!HD._terraHD)HD._terraHD=terra.material;
-    if(classic){if(!HD._terraClassic)HD._terraClassic=new THREE.MeshLambertMaterial({vertexColors:true});terra.material=HD._terraClassic;terra.visible=true;}
-    else{terra.material=HD._terraHD;terra.visible=false;}
-  }
-  if(typeof waterMesh!=='undefined'&&waterMesh)waterMesh.visible=classic;
-  if(typeof _treeMesh!=='undefined'&&_treeMesh)_treeMesh.visible=classic;
-  HD.qualityLabel();
-};
-setTimeout(()=>{try{if(localStorage.getItem('milville-hd-world')==='classic')HD.setWorld('classic');}catch(e){}},0);
 HD.render=function(){
   /* shadow maps once per frame; the reflection, AO and beauty passes all reuse them */
   renderer.shadowMap.autoUpdate=false;renderer.shadowMap.needsUpdate=true;
@@ -472,7 +500,7 @@ scene.add(worldCubeCam);
 HD.worldCube=worldCubeRT.texture;
 let _cubeFace=0,_cubeTick=0;
 function updateWorldCube(px,py,pz){
-  if(HD._indoors||HD.quality==='low')return;
+  if(HD._indoors||!HD.gfx.refl)return;
   if((++_cubeTick)%3!==0)return;
   worldCubeCam.position.set(px,py+1.4,pz);worldCubeCam.updateMatrixWorld();
   const cam=worldCubeCam.children[_cubeFace];
@@ -507,7 +535,7 @@ function nearestWaterLevel(px,pz){
 function renderReflection(px,py,pz){
   const R=HD.refl;
   R.active=false;
-  if(!R.on||HD._indoors||HD.quality==='low')return;
+  if(!R.on||HD._indoors)return;
   const lv=nearestWaterLevel(px,pz);
   if(lv===null)return;
   R.y=lv;
@@ -550,21 +578,34 @@ const _coolCol=new THREE.Color(0x9fb0c4);
 const _hazeCol=new THREE.Color(0xd8e6f4).convertSRGBToLinear();
 const _emberFog=new THREE.Color(0x2a1408).convertSRGBToLinear();
 const _delveFog=new THREE.Color(0x07070c).convertSRGBToLinear();
-/* auto quality: the first 240 frames are timed; a tier that cannot hold ~45 fps drops one
-   step, unless the player picked a tier with the button (then it is theirs to keep) */
-HD._ft={n:0,sum:0,last:0,done:false};
-try{HD._ft.done=!!localStorage.getItem('milville-hd-quality-manual');}catch(e){}
+/* auto-adjust: frames are timed in windows of 240; two slow windows in a row (over 30 ms each,
+   about eight seconds of play) step the preset down, then shorten the draw distance and drop
+   the ground cover, then offer Old School. Off from the panel. */
+HD._ft={n:0,sum:0,last:0,slow:0,avg:0};
 function autoQuality(now){
-  const f=HD._ft;if(f.done)return;
+  const f=HD._ft,g=HD.gfx;
   if(f.last){const dt=now-f.last;if(dt<200){f.n++;f.sum+=dt;}}
   f.last=now;
-  if(f.n>=240){
-    const avg=f.sum/f.n;f.n=0;f.sum=0;
-    if(avg>22&&HD.quality==='high'){HD.setQuality('medium',true);console.log('[HD] auto: high ran at',avg.toFixed(1),'ms, dropping to medium');}
-    else if(avg>30&&HD.quality==='medium'){HD.setQuality('low',true);console.log('[HD] auto: medium ran at',avg.toFixed(1),'ms, dropping to low');}
-    else f.done=true;
-  }
+  if(f.n<240)return;
+  const avg=f.sum/f.n;f.n=0;f.sum=0;f.avg=avg;
+  if(!g.auto)return;
+  if(avg<=30){f.slow=0;return;}
+  if(++f.slow<2)return;f.slow=0;
+  const step=['high','medium','low'];const i=step.indexOf(g.preset);
+  if(g.preset==='custom'){HD.setPreset('low');console.log('[HD] auto: custom ran at',avg.toFixed(1),'ms, dropping to low');return;}
+  if(i>=0&&i<2){HD.setPreset(step[i+1]);console.log('[HD] auto:',step[i],'ran at',avg.toFixed(1),'ms, dropping to',step[i+1]);return;}
+  if(g.draw!=='short'||g.cover){g.draw='short';g.cover=0;saveGfx();applyGfx();console.log('[HD] auto: low ran at',avg.toFixed(1),'ms; short draw distance, no ground cover');return;}
+  if(!HD._askedOS){HD._askedOS=true;HD.mode.notice('Milville is running slowly on this device even at the lowest HD settings. Switch to Old School graphics? The game saves and reloads.',[['Switch to Old School',()=>HD.mode.setMode('off')],['Keep HD']]);}
 }
+/* a hook that throws three times inside two seconds is switched off for the session; the game
+   keeps drawing through its own renderer.render (index.html falls back when HD.render throws) */
+HD._failT=[];
+HD.fail=function(e){
+  const now=performance.now();HD._failT.push(now);while(HD._failT.length&&now-HD._failT[0]>2000)HD._failT.shift();
+  if(HD._failT.length<=3)console.error('[HD] hook failed',e);
+  if(HD._failT.length>=3&&HD.ready){HD.ready=false;HD.mode.crashed=true;
+    HD.mode.notice('The HD graphics hit an error and were switched off for this session. Reload in Old School graphics, or keep playing as is.',[['Reload in Old School',()=>HD.mode.setMode('off')],['Keep playing']]);}
+};
 HD.frame=function(now,px,py,pz,camDist,interior){
   HD._frameArgs=[px,py,pz];
   const indoors=!!interior;
@@ -572,7 +613,7 @@ HD.frame=function(now,px,py,pz,camDist,interior){
     HD._indoors=indoors;
     sky.visible=!indoors;clouds.visible=!indoors;
     /* the sky environment stays on indoors: worn metal needs something to reflect */
-    sun.castShadow=!indoors;     /* interiors were lit through their ceilings by design; keep that */
+    sun.castShadow=!indoors&&HD.gfx.shadow>0;     /* interiors were lit through their ceilings by design; keep that */
   }
   const dtms=Math.min(200,now-(HD._lastNow||now));
   if(!HD.day.paused){HD.day.t+=dtms*0.001/HD.day.length;if(HD.day.t>=1)HD.day.t-=1;}
@@ -624,7 +665,9 @@ HD.frame=function(now,px,py,pz,camDist,interior){
     clouds.material.uniforms.uWind.value.set(HD.wind.x,HD.wind.z);
     const ci=clouds.userData.cirrus;if(ci){ci.position.copy(clouds.position);ci.position.y+=40;ci.material.uniforms.uTime.value=clouds.material.uniforms.uTime.value;ci.material.uniforms.uCover.value=Math.min(0.9,0.42+0.5*W);ci.material.uniforms.uWind.value.set(HD.wind.x*1.7,HD.wind.z*1.7);ci.material.uniforms.uSun.value.copy(clouds.material.uniforms.uSun.value);ci.material.uniforms.uShade.value.copy(clouds.material.uniforms.uShade.value);}}
   clouds.position.set(px,py+150,pz);
-  if(now-HD._lastSweep>2500){HD._lastSweep=now;sweepShadows();}
+  if(now-HD._lastSweep>2500){HD._lastSweep=now;sweepShadows();coverSweep();}
+  /* the boot marker clears after thirty seconds in the world; a load that finds it set knows this session died */
+  if(!HD._bootOK){const sp=document.getElementById('splash');if(!HD._bootT&&(!sp||sp.style.display==='none'))HD._bootT=now;if(HD._bootT&&now-HD._bootT>30000){HD._bootOK=1;HD.mode.bootOK();}}
   if(HD.tick)for(const f of HD.tick)f(now,px,py,pz);
   if(!indoors)dynamicShadowCasters(now,px,pz);
   autoQuality(now);
@@ -663,20 +706,8 @@ if(HD.pilot){
   console.log('[HD] PILOT MODE: doors open, levels read 99, purse bottomless');
 }
 try{performance.mark('hd:hd-post/quality-button');}catch(e){}
-/* ----------------------------- quality button --------------------------- */
-(function(){
-  const vw=document.getElementById('viewwrap');if(!vw)return;
-  const b=document.createElement('button');b.id='hdq';
-  b.style.cssText='position:absolute;right:6px;bottom:6px;z-index:30;opacity:.75;font:600 11px/1 system-ui,sans-serif;padding:4px 7px;border-radius:4px;border:1px solid rgba(255,255,255,.35);background:rgba(0,0,0,.42);color:#fff;cursor:pointer;opacity:.75';
-  b.title='Render quality: High = ambient occlusion + bloom + 4K shadows; Medium = bloom; Low = direct; Classic world = the original terrain, water and buildings under HD characters';
-  b.addEventListener('click',ev=>{ev.stopPropagation();const order=['high','medium','low','classic'];const cur=HD.world==='classic'?'classic':HD.quality;const next=order[(order.indexOf(cur)+1)%4];if(next==='classic'){HD.setWorld('classic');HD.setQuality('low');}else{HD.setWorld('hd');HD.setQuality(next);}});
-  b.addEventListener('mousedown',ev=>ev.stopPropagation());
-  vw.appendChild(b);
-})();
-
-applyRendererQuality();
-buildComposer();
-HD.setQuality(HD.quality,true);
+loadGfx();
+applyGfx();
 HD.ready=true;
-console.log('[HD] ready, quality',HD.quality,'in',Math.round(performance.now()-t0),'ms');
+console.log('[HD] ready, preset',HD.gfx.preset,'in',Math.round(performance.now()-t0),'ms');
 })();

@@ -521,7 +521,7 @@ HD.tick.push(function(now){
   for(const wm of HD.flatWaterMats){wm.uniforms.uTime.value=now*0.001;if(HD.water){wm.uniforms.uZen.value=HD.water.zen;wm.uniforms.uHor.value=HD.water.hor;wm.uniforms.uSunDir.value=HD.water.sunDir;wm.uniforms.uSunCol.value=HD.water.sunCol;}}
   if(HD.refl){waterMat.uniforms.tRefl.value=HD.refl.rt.texture;waterMat.uniforms.uReflMat.value.copy(HD.refl.matrix);waterMat.uniforms.uReflY.value=HD.refl.y;waterMat.uniforms.uReflOn.value=HD.refl.active?1:0;}
   if(HD.weather)waterMat.uniforms.uRain.value=HD.weather.w.rain;
-  if(typeof waterMesh!=='undefined'&&waterMesh&&waterMesh.visible&&HD.world!=='classic')waterMesh.visible=false;
+  if(typeof waterMesh!=='undefined'&&waterMesh&&waterMesh.visible)waterMesh.visible=false;
 });
 /* the picture's own ground height (bilinear + shore easing + relief), for decals */
 HD.terrainY=function(x,z){

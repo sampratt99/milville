@@ -46054,7 +46054,7 @@ function render(now){
     scene.fog.near=camDist+20;
     scene.fog.far=camDist+46;
   }
-  if(HDX&&HDX.ready)HDX.frame(now,pwx,pwy,pwz,camDist,curInterior());
+  if(HDX&&HDX.ready){try{HDX.frame(now,pwx,pwy,pwz,camDist,curInterior());}catch(_he){if(HDX.fail)HDX.fail(_he);}}   /* an HD exception must never freeze the frame */
 
 
   syncGroundItems();
@@ -46428,7 +46428,7 @@ function render(now){
     }
     m2.group.rotation.x=rx2;
   }
-  if(renderer){if(HDX&&HDX.ready)HDX.render();else renderer.render(scene,camera);}
+  if(renderer){let _hdDrew=false;if(HDX&&HDX.ready){try{HDX.render();_hdDrew=true;}catch(_he){if(HDX.fail)HDX.fail(_he);}}if(!_hdDrew)renderer.render(scene,camera);}
   drawOverlay(now);
   drawMini();
 }
@@ -46523,7 +46523,7 @@ function fit(){
   if(renderer)renderer.setSize(w,h,false);
   camera.aspect=w/h;
   camera.updateProjectionMatrix();
-  if(HDX&&HDX.ready)HDX.resize(w,h);
+  if(HDX&&HDX.ready){try{HDX.resize(w,h);}catch(_he){if(HDX.fail)HDX.fail(_he);}}
   fitQuestLog();
 }
 window.addEventListener('resize',fit);

@@ -562,8 +562,9 @@ function buildHDForest(){
       worldGroup.add(im);forestMeshes.push(im);
     }
   }
-  if(typeof _treeMesh!=='undefined'&&_treeMesh)_treeMesh.visible=false;
-  if(HD.world==='classic'&&HD.setWorld)HD.setWorld('classic');   /* a rebuild in the classic world keeps the game's trees showing */
+  /* the game's own baked forest is replaced, not just hidden: under the HD segment counts it was
+     an 84 MB mesh (2.2M vertices) sitting in memory and on the GPU for nothing */
+  if(typeof _treeMesh!=='undefined'&&_treeMesh){_treeMesh.visible=false;if(_treeMesh.geometry&&_treeMesh.geometry.attributes&&_treeMesh.geometry.attributes.position){_treeMesh.geometry.dispose();_treeMesh.geometry=new THREE.BufferGeometry();}}
   console.log('[HD] forest:',chunks.size,'instanced chunks');
 }
 HD.tick=HD.tick||[];

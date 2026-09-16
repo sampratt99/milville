@@ -318,6 +318,7 @@ console.log('[HD] map painted',MW+'x'+MH);
    points the way (or the flag itself when it is inside the circle), and it clears itself when
    you arrive. Cancel: click the flag on the world map again, or the x by the minimap. ---- */
 (function(){
+  const HD=window.HD;if(!HD||!HD.ready)return;   /* Old School: no HD object at all (this block sits outside the guarded one above) */
   const c=document.getElementById('wmapc');if(!c||typeof player==='undefined')return;
   const KEY='milville-hd-marker';
   HD.marker=null;try{const s=localStorage.getItem(KEY);if(s)HD.marker=JSON.parse(s);}catch(e){}

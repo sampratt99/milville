@@ -1,9 +1,7 @@
 /* ============================================================================
-   Milville HD — the lobby and character creation.  Loaded after hd-body.js.
+   Milville HD — character creation.  Loaded after hd-body.js.
 
-   The title screen becomes an RS3-style lobby: a vista of the grounds behind,
-   the logo above, one box in the middle holding the saved characters and the
-   way in for a new one. "Create new character" opens a creator with a live
+   The title screen is the game's own. "Create new character" opens a creator with a live
    model: name, body (male / female), skin tone, hair style and colour, top and
    legs. The choices go into player.cosmetic exactly as the fashion shop would
    set them (sex and skin ride along; only the HD body reads those), then the
@@ -26,21 +24,15 @@ const cap=s=>s.charAt(0).toUpperCase()+s.slice(1);
 const NAMES={tee:'T-shirt',sleeveless:'Sleeveless',longsleeve:'Long sleeve',tunic:'Tunic',trousers:'Trousers',shorts:'Shorts',skirt:'Skirt',
   short:'Short',long:'Long',pony:'Ponytail',bun:'Bun',bob:'Bob',spiky:'Spiky',mohawk:'Mohawk',bald:'Bald',wavy:'Wavy',braid:'Braid',curly:'Curly',crop:'Crop'};
 
-/* ------------------------------ the lobby box ------------------------------ */
-splash.classList.add('hdlobby');
-const box=document.createElement('div');box.id='hdbox';
-box.innerHTML='<div class="hdbox-title" id="hdbox-title">Welcome!</div><div id="hdbox-body"></div>';
-cs.parentNode.insertBefore(box,cs);document.getElementById('hdbox-body').appendChild(cs);
-const newchar=document.getElementById('newchar'),imp=document.getElementById('importsave');
-if(newchar)newchar.style.display='none';if(imp)imp.style.display='none';
-const row=document.createElement('div');row.id='hdlobbyrow';
-row.innerHTML='<button id="hdcreate">Create new character</button><button id="hdimport" class="hdlink">Load from a save code</button>';
-cs.appendChild(row);
-document.getElementById('hdimport').addEventListener('click',()=>{if(imp)imp.style.display=(imp.style.display==='none')?'':'none';});
-document.getElementById('hdcreate').addEventListener('click',()=>openCreate());
-/* the game's own button and the Enter key in its name field now open the creator */
-const _sn=startNew;
-const nb=document.getElementById('newbtn');if(nb)nb.removeEventListener('click',_sn);
+/* ------------------------------ the old lobby, plus the creator ------------------------------
+   The title screen is the game's own again. The HD vista lobby was cut: it rendered the whole
+   campus full-screen behind the box every frame, with the composer on and a second WebGL
+   context for the creator, the heaviest scene in the game and the first one every player saw.
+   Only 'Create new character' changes: it opens the creator in place of the character list. */
+const imp=document.getElementById('importsave');
+/* the game's own button listener holds the original startNew, so it is intercepted a level up
+   in the capture phase; the Enter key in the name field reaches the reassigned startNew */
+{const nc=document.getElementById('newchar');if(nc)nc.addEventListener('click',e=>{if(e.target&&e.target.id==='newbtn'){e.stopPropagation();e.preventDefault();openCreate();}},true);}
 startNew=function(){openCreate();};
 
 /* ------------------------------- the creator ------------------------------- */
@@ -58,7 +50,7 @@ cr.innerHTML=
   '<div class="hdcr-foot"><button id="hdcr-rand" class="hdlink">Surprise me</button><span class="hdcr-sp"></span><button id="hdcr-back">Back</button><button id="hdcr-go">Begin</button></div>'+
   '<div id="hdcr-msg"></div>'+
  '</div>';
-document.getElementById('hdbox-body').appendChild(cr);
+cs.parentNode.insertBefore(cr,cs.nextSibling);
 
 let work=null,open=false,ren=null,scene=null,cam=null,holder=null,rig=null,raf=0,rotY=Math.PI-0.4,auto=true,drag=null;   /* the rig faces -z: start on its face */
 function fresh(){return {start:'tutorial',sex:'m',size:'average',skin:0xd9a066,hairstyle:'short',hair:0x6b4423,shirt:0x8a8148,pants:0x2f5d33,shirtStyle:'tee',pantsStyle:'trousers'};}
@@ -118,20 +110,14 @@ function openCreate(){
   work=fresh();
   const nf=document.getElementById('namefield');const nm=document.getElementById('hdcr-name');
   if(nf&&nf.value)nm.value=nf.value;
-  const sl=document.getElementById('slotlist'),hint=document.getElementById('charhint');
-  if(sl)sl.style.display='none';row.style.display='none';if(imp)imp.style.display='none';if(hint)hint.style.display='none';
-  document.getElementById('hdbox-title').textContent='Create your character';
-  box.classList.add('creating');cr.style.display='';
+  cs.style.display='none';cr.style.display='';
   init3D();opts();build();
   open=true;auto=true;if(!raf)raf=requestAnimationFrame(tick);
   setTimeout(()=>{try{nm.focus();}catch(e){}},50);
 }
 function closeCreate(){
   open=false;
-  const sl=document.getElementById('slotlist'),hint=document.getElementById('charhint');
-  if(sl)sl.style.display='';row.style.display='';if(hint)hint.style.display='';
-  document.getElementById('hdbox-title').textContent='Welcome!';
-  box.classList.remove('creating');cr.style.display='none';
+  cs.style.display='';cr.style.display='none';
 }
 function begin(){
   const nm=document.getElementById('hdcr-name');const msg=document.getElementById('hdcr-msg');
@@ -159,50 +145,6 @@ document.getElementById('hdcr-rand').addEventListener('click',()=>{
   work=Object.assign(work,{sex:pick(['m','f']),size:pick(['slight','average','broad']),skin:pick(SKINS),hairstyle:pick(COS_HAIRSTYLES),hair:pick(COS_HAIRCOLS),shirtStyle:pick(COS_SHIRTSTYLES),shirt:pick(COS_SHIRTCOLS),pantsStyle:pick(COS_PANTSSTYLES),pants:pick(COS_PANTSCOLS)});
   opts();build();
 });
-/* ------------------------------ the live vista ------------------------------ */
-/* Behind the lobby the grounds themselves turn slowly, seen from a medium-high angle round
-   Hargate. The game's own loop keeps rendering while the title is up; the camera it places is
-   overridden while the lobby is open, the renderer is sized to the window, and each frame is
-   copied onto a full-screen canvas behind the box. Entering the game restores everything. */
-(function(){
-  if(typeof camera==='undefined'||typeof renderer==='undefined'||typeof enterGame!=='function')return;
-  const lcv=document.createElement('canvas');lcv.id='hdlobbycv';splash.insertBefore(lcv,splash.firstChild);
-  splash.classList.add('live');
-  const CX=209.5,CZ=61;const gy=(HD.terrainY?HD.terrainY(CX,CZ):0)||0;
-  let on=true,ang=0.6,raf=0,last=0;
-  const _la=camera.lookAt.bind(camera);
-  camera.lookAt=function(x,y,z){
-    if(on){camera.position.set(CX+Math.sin(ang)*30,gy+15,CZ+Math.cos(ang)*30);return _la(CX,gy+1.5,CZ);}
-    return _la.apply(null,arguments);
-  };
-  const dayWas={t:HD.day&&HD.day.t,paused:HD.day&&HD.day.paused};
-  if(HD.day){HD.day.t=0.40;HD.day.paused=true;}
-  if(HD.weather){HD.weather.force='sun';}
-  if(typeof pm!=='undefined'&&pm&&pm.g)pm.g.visible=false;
-  function frame(now){
-    if(!on){raf=0;return;}
-    const dt=last?Math.min(50,now-last):16;last=now;ang+=dt*0.00007;   /* a full turn in about 90 s */
-    const w=innerWidth,h=innerHeight;
-    if(lcv.width!==w||lcv.height!==h){lcv.width=w;lcv.height=h;}
-    if(renderer.domElement.width!==w||renderer.domElement.height!==h){try{renderer.setSize(w,h,false);camera.aspect=w/h;camera.updateProjectionMatrix();if(HD.resize)HD.resize(w,h);}catch(e){}}
-    try{lcv.getContext('2d').drawImage(renderer.domElement,0,0,w,h);}catch(e){}
-    raf=requestAnimationFrame(frame);
-  }
-  raf=requestAnimationFrame(frame);
-  /* belt and braces: whichever path hides the splash, the lobby view ends and the player shows */
-  try{new MutationObserver(()=>{if(splash.style.display==='none'&&on){on=false;if(typeof pm!=='undefined'&&pm&&pm.g)pm.g.visible=true;try{lcv.remove();}catch(e){}}}).observe(splash,{attributes:true,attributeFilter:['style']});}catch(e){}
-  const _eg=enterGame;
-  enterGame=function(){
-    on=false;
-    if(typeof pm!=='undefined'&&pm&&pm.g)pm.g.visible=true;
-    if(HD.day){HD.day.paused=!!dayWas.paused;}
-    if(HD.weather){HD.weather.force=null;}
-    const r=_eg.apply(this,arguments);
-    try{if(typeof fit==='function')fit();}catch(e){}
-    try{lcv.remove();}catch(e){}
-    return r;
-  };
-})();
 HD.lobby={openCreate,closeCreate,work:()=>work};
 console.log('[HD] lobby ready');
 })();
@@ -218,5 +160,3 @@ console.log('[HD] lobby ready');
   setInterval(()=>{const on=!!(TUT&&TUT.active&&!TUT.done);if(b.hidden===on)b.hidden=!on;},300);
 })();
 
-/* the build stamp: which layer is this browser actually running */
-(function(){try{const el=document.createElement('div');el.id='hdbuild';el.textContent='HD build '+HD.build;el.style.cssText='position:fixed;right:8px;bottom:6px;z-index:101;font:11px RSFont,Verdana,sans-serif;color:rgba(255,232,176,.55);pointer-events:none;';document.body.appendChild(el);}catch(e){}})();
