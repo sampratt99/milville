@@ -28,7 +28,7 @@
 'use strict';
 try{performance.mark('hd:hd-pre');}catch(e){}
 if(typeof THREE==='undefined')return;
-const BUILD='2026-09-15a';   /* bump with every deploy; shown in the lobby and the console */
+const BUILD='2026-09-15b';   /* bump with every deploy; shown in the lobby and the console */
 /* ------------------------------ graphics mode ----------------------------------
    Two modes, remembered as localStorage 'milville-hd-mode':
      'off'  Old School. This file returns right here, before it touches THREE, so the game runs

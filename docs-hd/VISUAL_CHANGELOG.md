@@ -996,3 +996,5 @@ against 237 MB; 335 MB of geometry, 178 MB of it hidden; 369 canvas textures).
   554 MB (was 718) in HD; Old School 231 MB heap.
 - Auto-adjust is continuous: two slow windows step the preset down, then the draw distance and
   cover, then it offers Old School.
+- Hotfix 2026-09-15b: the title screen stayed on 'Loading Milville' in HD. A CSS rule from the
+  cut vista lobby hid every splash child until a `live` class the vista used to add.

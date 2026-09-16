@@ -201,9 +201,6 @@ body{color:var(--hd-text) !important;}
   #frame{max-width:min(1040px,calc((100dvh - 215px) * 532 / 364)) !important;}
 }
 
-/* the title screen shows nothing of the old layout while the HD lobby builds behind it */
-#splash:not(.live) > *{visibility:hidden;}
-#splash:not(.live)::after{content:'Loading Milville';visibility:visible;position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);color:#ffd98c;font:bold 22px RSFont,Georgia,serif;letter-spacing:3px;}
 
 /* the backdrop behind a popup: a light dim, never a wall */
 .gemodal{background:rgba(0,0,0,.28) !important;}
